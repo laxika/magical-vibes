@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.RhysTheRedeemed;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,16 +18,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ShieldOfTheOversoul.class, GrizzlyBears.class, EliteVanguard.class, FugitiveWizard.class, FountainOfYouth.class, RhysTheRedeemed.class, Scuttlemutt.class})
 class ShieldOfTheOversoulTest extends BaseCardTest {
-
-    // ===== Casting and resolving =====
 
     @Test
     @DisplayName("Resolving Shield of the Oversoul attaches it to the target creature")
     void resolvingAttachesToTarget() {
-        Permanent target = new Permanent(new GrizzlyBears());
-        target.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(target);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new ShieldOfTheOversoul()));
         harness.addMana(player1, ManaColor.GREEN, 3);
@@ -41,17 +39,13 @@ class ShieldOfTheOversoulTest extends BaseCardTest {
                         && p.getAttachedTo().equals(target.getId()));
     }
 
-    // ===== Green enchanted creature: +1/+1 and indestructible =====
-
     @Test
     @DisplayName("Green enchanted creature gets +1/+1 and indestructible, but no flying")
     void greenCreatureGetsBoostAndIndestructible() {
-        Permanent green = new Permanent(new GrizzlyBears()); // 2/2 green
-        gd.playerBattlefields.get(player1.getId()).add(green);
+        Permanent green = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears()); // 2/2 green
 
-        Permanent shield = new Permanent(new ShieldOfTheOversoul());
+        Permanent shield = harness.addToBattlefieldAndReturn(player1, new ShieldOfTheOversoul());
         shield.setAttachedTo(green.getId());
-        gd.playerBattlefields.get(player1.getId()).add(shield);
 
         assertThat(gqs.getEffectivePower(gd, green)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, green)).isEqualTo(3);
@@ -59,17 +53,13 @@ class ShieldOfTheOversoulTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, green, Keyword.FLYING)).isFalse();
     }
 
-    // ===== White enchanted creature: +1/+1 and flying =====
-
     @Test
     @DisplayName("White enchanted creature gets +1/+1 and flying, but is not indestructible")
     void whiteCreatureGetsBoostAndFlying() {
-        Permanent white = new Permanent(new EliteVanguard()); // 2/1 white
-        gd.playerBattlefields.get(player1.getId()).add(white);
+        Permanent white = harness.addToBattlefieldAndReturn(player1, new EliteVanguard()); // 2/1 white
 
-        Permanent shield = new Permanent(new ShieldOfTheOversoul());
+        Permanent shield = harness.addToBattlefieldAndReturn(player1, new ShieldOfTheOversoul());
         shield.setAttachedTo(white.getId());
-        gd.playerBattlefields.get(player1.getId()).add(shield);
 
         assertThat(gqs.getEffectivePower(gd, white)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, white)).isEqualTo(2);
@@ -77,17 +67,13 @@ class ShieldOfTheOversoulTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, white, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
-    // ===== Green and white enchanted creature: both bonuses stack =====
-
     @Test
     @DisplayName("A green-and-white enchanted creature gets +2/+2, indestructible, and flying")
     void greenWhiteCreatureGetsBothBonuses() {
-        Permanent gw = new Permanent(new RhysTheRedeemed()); // 1/1 green/white
-        gd.playerBattlefields.get(player1.getId()).add(gw);
+        Permanent gw = harness.addToBattlefieldAndReturn(player1, new RhysTheRedeemed()); // 1/1 green/white
 
-        Permanent shield = new Permanent(new ShieldOfTheOversoul());
+        Permanent shield = harness.addToBattlefieldAndReturn(player1, new ShieldOfTheOversoul());
         shield.setAttachedTo(gw.getId());
-        gd.playerBattlefields.get(player1.getId()).add(shield);
 
         assertThat(gqs.getEffectivePower(gd, gw)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, gw)).isEqualTo(3);
@@ -95,17 +81,13 @@ class ShieldOfTheOversoulTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, gw, Keyword.FLYING)).isTrue();
     }
 
-    // ===== Neither green nor white: no bonuses =====
-
     @Test
     @DisplayName("A creature that is neither green nor white gets no bonuses")
     void nonGreenNonWhiteGetsNothing() {
-        Permanent blue = new Permanent(new FugitiveWizard()); // 1/1 blue
-        gd.playerBattlefields.get(player1.getId()).add(blue);
+        Permanent blue = harness.addToBattlefieldAndReturn(player1, new FugitiveWizard()); // 1/1 blue
 
-        Permanent shield = new Permanent(new ShieldOfTheOversoul());
+        Permanent shield = harness.addToBattlefieldAndReturn(player1, new ShieldOfTheOversoul());
         shield.setAttachedTo(blue.getId());
-        gd.playerBattlefields.get(player1.getId()).add(shield);
 
         assertThat(gqs.getEffectivePower(gd, blue)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, blue)).isEqualTo(1);
@@ -113,17 +95,13 @@ class ShieldOfTheOversoulTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, blue, Keyword.FLYING)).isFalse();
     }
 
-    // ===== Bonuses fall off when the aura leaves =====
-
     @Test
     @DisplayName("Bonuses are removed when Shield of the Oversoul leaves the battlefield")
     void bonusesRemovedWhenAuraRemoved() {
-        Permanent green = new Permanent(new GrizzlyBears()); // 2/2 green
-        gd.playerBattlefields.get(player1.getId()).add(green);
+        Permanent green = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears()); // 2/2 green
 
-        Permanent shield = new Permanent(new ShieldOfTheOversoul());
+        Permanent shield = harness.addToBattlefieldAndReturn(player1, new ShieldOfTheOversoul());
         shield.setAttachedTo(green.getId());
-        gd.playerBattlefields.get(player1.getId()).add(shield);
 
         assertThat(gqs.getEffectivePower(gd, green)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, green, Keyword.INDESTRUCTIBLE)).isTrue();
@@ -135,7 +113,33 @@ class ShieldOfTheOversoulTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, green, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
-    // ===== Targeting restriction =====
+    @Test
+    @CardUsed({ShieldOfTheOversoul.class, RhysTheRedeemed.class, Scuttlemutt.class})
+    @DisplayName("Bonuses follow the enchanted opponent creature's current colors")
+    void bonusesFollowColorChanges() {
+        Permanent mutt = addCreatureReady(player1, new Scuttlemutt());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new RhysTheRedeemed());
+        harness.setHand(player1, List.of(new ShieldOfTheOversoul()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castEnchantment(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "BLUE");
+        harness.handleListChoice(player1, "DONE");
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(mutt.isTapped()).isTrue();
+    }
 
     @Test
     @DisplayName("Cannot target a noncreature permanent with Shield of the Oversoul")
