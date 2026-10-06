@@ -67,7 +67,7 @@ class RustmouthOgreTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("No trigger occurs when the damaged player controls no artifacts")
+    @DisplayName("No ability remains on the stack when there are no legal artifact targets")
     void noTriggerWithoutArtifacts() {
         Permanent ogre = addCreatureReady(player1, new RustmouthOgre());
         ogre.setAttacking(true);
@@ -93,5 +93,43 @@ class RustmouthOgreTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player2, "Bonesplitter");
+    }
+
+    @Test
+    @DisplayName("The triggered ability resolves even if the Ogre leaves the battlefield")
+    void destructionResolvesWithoutOgre() {
+        Permanent ogre = addCreatureReady(player1, new RustmouthOgre());
+        ogre.setAttacking(true);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new Bonesplitter());
+
+        resolveCombat();
+        harness.handlePermanentChosen(player1, artifact.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(ogre);
+        gd.playerGraveyards.get(player1.getId()).add(ogre.getCard());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInGraveyard(player1, "Rustmouth Ogre");
+        harness.assertNotOnBattlefield(player2, "Bonesplitter");
+        harness.assertInGraveyard(player2, "Bonesplitter");
+    }
+
+    @Test
+    @DisplayName("An artifact that leaves before resolution is not replaced by another target")
+    void missingTargetDoesNotRetarget() {
+        Permanent ogre = addCreatureReady(player1, new RustmouthOgre());
+        ogre.setAttacking(true);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new Bonesplitter());
+        Permanent otherArtifact = harness.addToBattlefieldAndReturn(player2, new Bonesplitter());
+
+        resolveCombat();
+        harness.handlePermanentChosen(player1, artifact.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(artifact);
+        gd.playerGraveyards.get(player2.getId()).add(artifact.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanents(player2, "Bonesplitter")).containsExactly(otherArtifact);
     }
 }
