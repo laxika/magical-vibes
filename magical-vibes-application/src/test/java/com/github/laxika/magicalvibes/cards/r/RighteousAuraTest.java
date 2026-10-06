@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({RighteousAura.class, KingCheetah.class, Archangel.class, Fireblast.class})
 class RighteousAuraTest extends BaseCardTest {
@@ -146,6 +147,79 @@ class RighteousAuraTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerSourceNextDamageShields).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Life is paid immediately, before the ability resolves")
+    void lifeIsPaidBeforeResolution() {
+        harness.setLife(player1, 20);
+        addReadyAura(player1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertLife(player1, 18);
+        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, gd.playerBattlefields.get(player1.getId()).getFirst().getId());
+    }
+
+    @Test
+    @DisplayName("Cannot activate without enough life to pay the cost")
+    void cannotActivateWithOneLife() {
+        harness.setLife(player1, 1);
+        addReadyAura(player1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertLife(player1, 1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Only the first damage event from the chosen source is prevented")
+    void subsequentDamageFromChosenSourceIsNotPrevented() {
+        harness.setLife(player1, 20);
+        addReadyAura(player1);
+        Permanent attacker = addReadyKingCheetah(player2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, attacker.getId());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        attacker.setAttacking(true);
+        harness.resolveCombatDamage();
+        harness.assertLife(player1, 18);
+
+        harness.resolveCombatDamage();
+
+        harness.assertLife(player1, 15);
+    }
+
+    @Test
+    @DisplayName("An object still referred to by a spell is a legal source after leaving the battlefield")
+    void departedSpellTargetIsLegalSourceChoice() {
+        addReadyAura(player1);
+        Permanent target = addReadyKingCheetah(player2);
+        harness.setHand(player2, List.of(new Fireblast()));
+        harness.addMana(player2, ManaColor.RED, 6);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castInstant(player2, 0, target.getId());
+
+        // Model the target dying while Fireblast remains on the stack.
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerGraveyards.get(player2.getId()).add(target.getCard());
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .contains(target.getId());
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
     }
 
     private Permanent addReadyAura(Player player) {
