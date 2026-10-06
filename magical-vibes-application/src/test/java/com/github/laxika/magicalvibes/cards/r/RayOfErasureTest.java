@@ -31,8 +31,7 @@ class RayOfErasureTest extends BaseCardTest {
         int deckBefore = deck.size();
         int gyBefore = gd.playerGraveyards.get(player2.getId()).size();
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckBefore - 1);
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(gyBefore + 1);
@@ -51,8 +50,7 @@ class RayOfErasureTest extends BaseCardTest {
         harness.setHand(player1, List.of(new RayOfErasure()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
         int deckBefore = gd.playerDecks.get(player1.getId()).size();
@@ -77,8 +75,7 @@ class RayOfErasureTest extends BaseCardTest {
         List<Card> deck = gd.playerDecks.get(player1.getId());
         int deckBefore = deck.size();
 
-        harness.castInstant(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player1.getId());
 
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 1);
         assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).hasSize(1);
@@ -95,6 +92,61 @@ class RayOfErasureTest extends BaseCardTest {
                 harness.getPermanentId(player2, "Balduvian Bears")))
                 .isInstanceOf(IllegalStateException.class);
 
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("An empty target library does not prevent the delayed draw")
+    void emptyLibraryStillAllowsDelayedDraw() {
+        harness.setLibrary(player2, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new BalduvianBears()));
+        harness.setHand(player1, List.of(new RayOfErasure()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+
+        StepTriggerService stepTriggerService = GameTestEngineContext.get().getBean(StepTriggerService.class);
+        gd.turnNumber++;
+        gd.activePlayerId = player2.getId();
+        harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gd));
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Balduvian Bears");
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The delayed draw waits for another turn and triggers only once")
+    void drawWaitsForNextTurnAndTriggersOnce() {
+        harness.setLibrary(player1, List.of(new BalduvianBears(), new BalduvianBears()));
+        harness.setLibrary(player2, List.of(new BalduvianBears()));
+        harness.setHand(player1, List.of(new RayOfErasure()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        StepTriggerService stepTriggerService = GameTestEngineContext.get().getBean(StepTriggerService.class);
+        harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gd));
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+
+        gd.turnNumber++;
+        harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gd));
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+
+        gd.turnNumber++;
+        harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gd));
+        assertThat(gd.stack).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 }
