@@ -91,6 +91,10 @@ class RiptideReplicatorTest extends BaseCardTest {
     }
 
     private Permanent castReplicatorWithChoices(int xValue) {
+        return castReplicatorWithChoices(xValue, CardColor.RED, CardSubtype.GOBLIN);
+    }
+
+    private Permanent castReplicatorWithChoices(int xValue, CardColor color, CardSubtype subtype) {
         harness.setHand(player1, List.of(new RiptideReplicator()));
         harness.addMana(player1, ManaColor.COLORLESS, 4 + xValue);
 
@@ -98,9 +102,47 @@ class RiptideReplicatorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
-        harness.handleListChoice(player1, "RED");
-        harness.handleListChoice(player1, "GOBLIN");
+        harness.handleListChoice(player1, color.name());
+        harness.handleListChoice(player1, subtype.name());
         return findPermanent(player1, "Riptide Replicator");
+    }
+
+    @Test
+    @DisplayName("Creates a token using alternate color and creature type choices made during entry")
+    void createsTokenWithAlternateEntryChoices() {
+        castReplicatorWithChoices(2, CardColor.BLUE, CardSubtype.WIZARD);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        Permanent token = findToken(player1);
+        assertThat(token.getCard().getPower()).isEqualTo(2);
+        assertThat(token.getCard().getToughness()).isEqualTo(2);
+        assertThat(token.getCard().getColor()).isEqualTo(CardColor.BLUE);
+        assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.WIZARD);
+    }
+
+    @Test
+    @DisplayName("Uses counters immediately before destruction rather than counters at activation")
+    void usesCountersAtDepartureAfterTheyChange() {
+        Permanent replicator = addChosenReplicator(2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.activateAbility(player1, 0, null, null);
+        replicator.setCounterCount(CounterType.CHARGE, 4);
+
+        harness.setHand(player2, List.of(new Naturalize()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, replicator.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Riptide Replicator");
+        Permanent token = findToken(player1);
+        assertThat(token.getCard().getPower()).isEqualTo(4);
+        assertThat(token.getCard().getToughness()).isEqualTo(4);
+        assertThat(token.getCard().getColor()).isEqualTo(CardColor.RED);
+        assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.GOBLIN);
     }
 
     private Permanent addChosenReplicator(int chargeCounters) {
