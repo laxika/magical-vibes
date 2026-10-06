@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.f.FirstVolley;
 import com.github.laxika.magicalvibes.cards.f.Frostling;
 import com.github.laxika.magicalvibes.cards.g.GoryosVengeance;
 import com.github.laxika.magicalvibes.cards.h.HerosDemise;
-import com.github.laxika.magicalvibes.cards.s.SickeningShoal;
 import com.github.laxika.magicalvibes.cards.t.ThreadsOfDisloyalty;
 import com.github.laxika.magicalvibes.cards.t.ToshiroUmezawa;
 import com.github.laxika.magicalvibes.model.Card;
@@ -12,7 +11,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.DelayedGraveyardToBattlefieldUnderControl;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -31,11 +29,10 @@ class ShireiShizosCaretakerTest extends BaseCardTest {
     private void firstVolleyAt(Player caster, Player victimController, String victimName) {
         prepareMainPhase(caster);
 
-        Permanent victim = findPermanent(victimController, victimName);
         harness.setHand(caster, List.of(new FirstVolley()));
         harness.addMana(caster, ManaColor.RED, 1);
         harness.addMana(caster, ManaColor.COLORLESS, 1);
-        harness.castInstant(caster, 0, victim.getId());
+        harness.castInstant(caster, 0, harness.getPermanentId(victimController, victimName));
         harness.passBothPriorities();
     }
 
@@ -43,11 +40,10 @@ class ShireiShizosCaretakerTest extends BaseCardTest {
     private void herosDemiseAt(Player caster, Player victimController, String victimName) {
         prepareMainPhase(caster);
 
-        Permanent victim = findPermanent(victimController, victimName);
         harness.setHand(caster, List.of(new HerosDemise()));
         harness.addMana(caster, ManaColor.BLACK, 1);
         harness.addMana(caster, ManaColor.COLORLESS, 1);
-        harness.castInstant(caster, 0, victim.getId());
+        harness.castInstant(caster, 0, harness.getPermanentId(victimController, victimName));
         harness.passBothPriorities();
     }
 
@@ -55,11 +51,10 @@ class ShireiShizosCaretakerTest extends BaseCardTest {
     private void sickeningShoalForTwoAt(String victimName) {
         prepareMainPhase(player1);
 
-        Permanent victim = findPermanent(player1, victimName);
         harness.setHand(player1, List.of(new SickeningShoal()));
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castInstant(player1, 0, 2, victim.getId());
+        harness.castInstant(player1, 0, 2, harness.getPermanentId(player1, victimName));
         harness.passBothPriorities();
     }
 
@@ -73,10 +68,9 @@ class ShireiShizosCaretakerTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    private void resolveShireiMay(boolean accepted) {
+    private void resolveDeathTrigger() {
         resolveAllTriggers();
-        assertThat(gd.interaction.isAwaitingInput()).isTrue();
-        harness.handleMayAbilityChosen(player1, accepted);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     private void prepareMainPhase(Player activePlayer) {
@@ -88,7 +82,11 @@ class ShireiShizosCaretakerTest extends BaseCardTest {
     /** Advances from the precombat main phase to the end step, firing the delayed return. */
     private void advanceToEndStep() {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        gs.advanceStep(gd);
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
+        if (gd.interaction.isAwaitingInput()) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
     }
 
     @Test
@@ -98,9 +96,8 @@ class ShireiShizosCaretakerTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Frostling());
 
         firstVolleyAt(player1, player1, "Frostling");
-        resolveShireiMay(true);
+        resolveDeathTrigger();
 
-        assertThat(gd.getDelayedActions(DelayedGraveyardToBattlefieldUnderControl.class)).hasSize(1);
         harness.assertInGraveyard(player1, "Frostling");
 
         advanceToEndStep();
@@ -116,11 +113,13 @@ class ShireiShizosCaretakerTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Frostling());
 
         firstVolleyAt(player1, player1, "Frostling");
-        resolveShireiMay(false);
+        resolveDeathTrigger();
 
-        assertThat(gd.getDelayedActions(DelayedGraveyardToBattlefieldUnderControl.class)).isEmpty();
-
-        advanceToEndStep();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handleMayAbilityChosen(player1, false);
 
         harness.assertNotOnBattlefield(player1, "Frostling");
         harness.assertInGraveyard(player1, "Frostling");
@@ -133,8 +132,8 @@ class ShireiShizosCaretakerTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ToshiroUmezawa());
 
         herosDemiseAt(player1, player1, "Toshiro Umezawa");
-
-        assertThat(gd.getDelayedActions(DelayedGraveyardToBattlefieldUnderControl.class)).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
 
         advanceToEndStep();
 
@@ -149,7 +148,7 @@ class ShireiShizosCaretakerTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Frostling());
 
         firstVolleyAt(player1, player1, "Frostling");
-        resolveShireiMay(true);
+        resolveDeathTrigger();
 
         herosDemiseAt(player1, player1, "Shirei, Shizo's Caretaker");
 
@@ -166,9 +165,8 @@ class ShireiShizosCaretakerTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ToshiroUmezawa());
 
         sickeningShoalForTwoAt("Toshiro Umezawa");
-        resolveShireiMay(true);
+        resolveDeathTrigger();
 
-        assertThat(gd.getDelayedActions(DelayedGraveyardToBattlefieldUnderControl.class)).hasSize(1);
         harness.assertInGraveyard(player1, "Toshiro Umezawa");
 
         advanceToEndStep();
@@ -188,9 +186,8 @@ class ShireiShizosCaretakerTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Frostling");
 
         firstVolleyAt(player2, player2, "Frostling");
-        resolveShireiMay(true);
+        resolveDeathTrigger();
 
-        assertThat(gd.getDelayedActions(DelayedGraveyardToBattlefieldUnderControl.class)).hasSize(1);
         harness.assertInGraveyard(player1, "Frostling");
 
         advanceToEndStep();
@@ -206,7 +203,7 @@ class ShireiShizosCaretakerTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Frostling());
 
         firstVolleyAt(player1, player1, "Frostling");
-        resolveShireiMay(true);
+        resolveDeathTrigger();
         herosDemiseAt(player1, player1, "Shirei, Shizo's Caretaker");
 
         Card shireiCard = gd.playerGraveyards.get(player1.getId()).stream()
@@ -226,5 +223,59 @@ class ShireiShizosCaretakerTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Frostling");
         harness.assertInGraveyard(player1, "Frostling");
+    }
+
+    @Test
+    @DisplayName("The end-step return uses the stack and can be stopped by removing Shirei")
+    void canRemoveShireiInResponseToDelayedReturn() {
+        harness.addToBattlefield(player1, new ShireiShizosCaretaker());
+        harness.addToBattlefield(player1, new Frostling());
+        firstVolleyAt(player1, player1, "Frostling");
+        resolveDeathTrigger();
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        harness.assertInGraveyard(player1, "Frostling");
+        harness.assertNotOnBattlefield(player1, "Frostling");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.setHand(player1, List.of(new HerosDemise()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, harness.getPermanentId(player1, "Shirei, Shizo's Caretaker"));
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Frostling");
+        harness.assertNotOnBattlefield(player1, "Frostling");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A creature that leaves its graveyard and dies again is a new object")
+    void doesNotReturnNewGraveyardObjectFromEarlierDeath() {
+        harness.addToBattlefield(player1, new ShireiShizosCaretaker());
+        harness.addToBattlefield(player1, new ToshiroUmezawa());
+        sickeningShoalForTwoAt("Toshiro Umezawa");
+        resolveDeathTrigger();
+
+        Card toshiro = gd.playerGraveyards.get(player1.getId()).stream()
+                .filter(card -> card.getName().equals("Toshiro Umezawa"))
+                .findFirst().orElseThrow();
+        prepareMainPhase(player1);
+        harness.setHand(player1, List.of(new GoryosVengeance()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, toshiro.getId());
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Toshiro Umezawa");
+
+        herosDemiseAt(player1, player1, "Toshiro Umezawa");
+        resolveAllTriggers();
+        advanceToEndStep();
+
+        harness.assertInGraveyard(player1, "Toshiro Umezawa");
+        harness.assertNotOnBattlefield(player1, "Toshiro Umezawa");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 }
