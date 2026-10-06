@@ -111,4 +111,50 @@ class SacredGuideTest extends BaseCardTest {
     private List<Card> exiledCards(GameData gd) {
         return gd.exiledCards.stream().map(ExiledCardEntry::card).toList();
     }
+
+    @Test
+    @DisplayName("Stops at a white card on top without exiling cards below it")
+    void whiteCardOnTopStopsReveal() {
+        addCreatureReady(player1, new SacredGuide());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        Card whiteCard = new SacredGuide();
+        Card leftover = new TrainedArmodon();
+        harness.setLibrary(player1, List.of(whiteCard, leftover));
+        harness.setHand(player1, List.of());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(whiteCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(leftover);
+        assertThat(exiledCards(gd)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can activate while tapped and summoning sick, paying sacrifice before resolution")
+    void tappedSummoningSickGuidePaysCostBeforeResolution() {
+        var guide = harness.addToBattlefieldAndReturn(player1, new SacredGuide());
+        guide.setSummoningSick(true);
+        guide.setTapped(true);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        Card redCard = new LightningElemental();
+        Card whiteCard = new SacredGuide();
+        harness.setLibrary(player1, List.of(redCard, whiteCard));
+        harness.setHand(player1, List.of());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Sacred Guide");
+        harness.assertInGraveyard(player1, "Sacred Guide");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(redCard, whiteCard);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(exiledCards(gd)).isEmpty();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(whiteCard);
+        assertThat(exiledCards(gd)).containsExactly(redCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
 }
