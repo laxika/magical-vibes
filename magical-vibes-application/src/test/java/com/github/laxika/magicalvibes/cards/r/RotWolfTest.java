@@ -8,6 +8,9 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.cards.g.GoForTheThroat;
+import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,9 +19,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({RotWolf.class, GrizzlyBears.class, CruelEdict.class, GoForTheThroat.class, TurnToFrog.class})
 class RotWolfTest extends BaseCardTest {
-
-    // ===== Combat: infect kills blocker, accept may =====
 
     @Test
     @DisplayName("Rot Wolf kills a creature via infect in combat, accept may, draws a card")
@@ -42,13 +44,9 @@ class RotWolfTest extends BaseCardTest {
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
         // Pass 1: DECLARE_BLOCKERS -> COMBAT_DAMAGE -> damage resolves -> trigger on stack
         // Pass 2: resolve triggered ability -> MayEffect prompts player
-        harness.passBothPriorities();
+        resolveCombat();
         harness.passBothPriorities();
 
         // Blocker should be dead (from -1/-1 counters via infect)
@@ -62,11 +60,9 @@ class RotWolfTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, true);
 
-        // CR 603.5: MayEffect resolves inline — draw happens immediately
+        // Accepting the optional draw completes the resolving ability.
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore + 1);
     }
-
-    // ===== Combat: infect kills blocker, decline may =====
 
     @Test
     @DisplayName("Rot Wolf kills a creature via infect in combat, decline may, no card drawn")
@@ -90,12 +86,8 @@ class RotWolfTest extends BaseCardTest {
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
         // Resolve combat and trigger
-        harness.passBothPriorities();
+        resolveCombat();
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Grizzly Bears");
@@ -110,8 +102,6 @@ class RotWolfTest extends BaseCardTest {
         // No card drawn
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore);
     }
-
-    // ===== Damaged creature dies later the same turn =====
 
     @Test
     @DisplayName("Creature damaged by Rot Wolf via infect dies later the same turn, triggers may draw")
@@ -133,12 +123,8 @@ class RotWolfTest extends BaseCardTest {
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
         // Resolve combat - Rot Wolf puts 2 -1/-1 counters on blocker, blocker survives (3 toughness left)
-        harness.passBothPriorities();
+        resolveCombat();
 
         // Blocker should still be alive with -1/-1 counters
         harness.assertOnBattlefield(player2, "Grizzly Bears");
@@ -172,7 +158,55 @@ class RotWolfTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore - 1 + 1);
     }
 
-    // ===== No trigger when undamaged creature dies =====
+    @Test
+    @DisplayName("Rot Wolf draws when both combatants die simultaneously")
+    void drawsWhenBothCombatantsDie() {
+        Permanent wolf = harness.addToBattlefieldAndReturn(player1, new RotWolf());
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        wolf.setSummoningSick(false);
+        wolf.setAttacking(true);
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+        resolveCombat();
+        harness.assertInGraveyard(player1, "Rot Wolf");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
+    }
+
+    @Test
+    @DisplayName("Rot Wolf does not trigger after losing its abilities")
+    void noDrawAfterLosingAbilities() {
+        Permanent wolf = harness.addToBattlefieldAndReturn(player1, new RotWolf());
+        GrizzlyBears toughCreature = new GrizzlyBears();
+        toughCreature.setPower(0);
+        toughCreature.setToughness(5);
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, toughCreature);
+        wolf.setSummoningSick(false);
+        wolf.setAttacking(true);
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+        resolveCombat();
+        assertThat(blocker.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Rot Wolf");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new TurnToFrog(), new GoForTheThroat()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castAndResolveInstant(player1, 0, wolf.getId());
+        harness.assertOnBattlefield(player1, "Rot Wolf");
+        harness.castAndResolveInstant(player1, 0, blocker.getId());
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.stack).noneMatch(entry -> entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                && entry.getCard().getName().equals("Rot Wolf"));
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+    }
 
     @Test
     @DisplayName("Rot Wolf does not trigger when a creature it did not damage dies")
@@ -189,8 +223,7 @@ class RotWolfTest extends BaseCardTest {
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         // Creature died but was not damaged by Rot Wolf - no trigger
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
