@@ -161,6 +161,71 @@ class SkullmaneBakuTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Accepting an Arcane spell's trigger adds a ki counter")
+    void arcaneSpellAddsKiCounter() {
+        Permanent baku = addBaku();
+        prepareMainPhase();
+        harness.castFromHand(player1, new ReachThroughMists(), "{U}");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(baku.getCounterCount(CounterType.KI)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("With no ki counters, X can be zero and the creature can target itself")
+    void zeroCountersAllowsSelfTarget() {
+        Permanent baku = addBaku();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, baku.getId());
+        harness.passBothPriorities();
+
+        assertThat(baku.getCounterCount(CounterType.KI)).isZero();
+        assertThat(baku.isTapped()).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(baku);
+        assertThat(gqs.getEffectivePower(gd, baku)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, baku)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Counters are paid immediately and X remains fixed if the source leaves")
+    void abilityResolvesAfterSourceLeaves() {
+        Permanent baku = addBaku();
+        baku.setCounterCount(CounterType.KI, 2);
+        Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 2, giant.getId());
+
+        assertThat(baku.getCounterCount(CounterType.KI)).isZero();
+        assertThat(baku.isTapped()).isTrue();
+        assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(3);
+
+        gd.playerBattlefields.get(player1.getId()).remove(baku);
+        gd.playerGraveyards.get(player1.getId()).add(baku.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Skullmane Baku cannot pay the tap cost")
+    void summoningSicknessPreventsActivation() {
+        Permanent baku = harness.addToBattlefieldAndReturn(player1, new SkullmaneBaku());
+        baku.setSummoningSick(true);
+        baku.setCounterCount(CounterType.KI, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, baku.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(baku.isTapped()).isFalse();
+        assertThat(baku.getCounterCount(CounterType.KI)).isEqualTo(1);
+    }
+
     private Permanent addBaku() {
         return addCreatureReady(player1, new SkullmaneBaku());
     }
