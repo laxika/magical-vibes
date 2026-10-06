@@ -2,11 +2,13 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.o.OpenTheVaults;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SentinelsMark.class, GrizzlyBears.class, FountainOfYouth.class, OpenTheVaults.class})
 class SentinelsMarkTest extends BaseCardTest {
 
     @Test
@@ -66,9 +69,7 @@ class SentinelsMarkTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
@@ -86,5 +87,61 @@ class SentinelsMarkTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Returning Sentinel's Mark without casting it does not trigger Addendum")
+    void returningWithoutCastingDoesNotGrantLifelink() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setGraveyard(player1, List.of(new SentinelsMark()));
+
+        harness.castFromHand(player1, new OpenTheVaults(), "{4}{W}{W}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Sentinel's Mark");
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.VIGILANCE)).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.LIFELINK)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Casting during the opponent's main phase does not grant Addendum lifelink")
+    void opponentsMainPhaseDoesNotGrantLifelink() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SentinelsMark()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.LIFELINK)).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Casting during your postcombat main phase grants lifelink to an opposing creature")
+    void postcombatMainPhaseGrantsLifelinkToOpposingCreature() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SentinelsMark()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.LIFELINK)).isTrue();
     }
 }
