@@ -129,8 +129,44 @@ class SlateOfAncestryTest extends BaseCardTest {
     }
 
     private Permanent addReadySlate(Player player) {
-        Permanent perm = harness.addToBattlefieldAndReturn(player, new SlateOfAncestry());
-        perm.setSummoningSick(false);
-        return perm;
+        return addCreatureReady(player, new SlateOfAncestry());
+    }
+
+    @Test
+    @DisplayName("A noncreature Slate can activate the turn it enters")
+    void activatesTheTurnItEnters() {
+        Permanent slate = harness.enterBattlefieldAndReturn(player1, new SlateOfAncestry());
+        harness.addToBattlefield(player1, new ElvishWarrior());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.setHand(player1, List.of(new ElvishWarrior()));
+        harness.setLibrary(player1, List.of(new ElvishWarrior(), new ElvishWarrior()));
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(slate.isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The ability still draws after Slate leaves the battlefield")
+    void resolvesAfterSlateLeavesBattlefield() {
+        Permanent slate = addReadySlate(player1);
+        harness.addToBattlefield(player1, new ElvishWarrior());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new ElvishWarrior(), new ElvishWarrior()));
+
+        harness.activateAbility(player1, 0, null, null);
+        gd.playerBattlefields.get(player1.getId()).remove(slate);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }
 }
