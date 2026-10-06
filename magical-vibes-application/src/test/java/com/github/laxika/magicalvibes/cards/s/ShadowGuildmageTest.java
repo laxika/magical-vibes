@@ -114,4 +114,86 @@ class ShadowGuildmageTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, island.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Targeting yourself with the damage ability deals a total of 2 damage")
+    void burnsControllerTwiceWhenTargetingSelf() {
+        addCreatureReady(player1, new ShadowGuildmage());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, 1, null, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Damaging Shadow Guildmage itself still deals the damage to its controller")
+    void burnsItselfAndController() {
+        Permanent guildmage = addCreatureReady(player1, new ShadowGuildmage());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, 1, null, guildmage.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Shadow Guildmage");
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
+    }
+
+    @Test
+    @DisplayName("An illegal damage target prevents the entire ability from resolving")
+    void doesNotDamageControllerWhenTargetLeaves() {
+        Permanent guildmage = addCreatureReady(player1, new ShadowGuildmage());
+        addCreatureReady(player1, new ShadowGuildmage());
+        Permanent falcon = addCreatureReady(player1, new BayFalcon());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, 1, null, falcon.getId());
+        harness.activateAbility(player1, 1, 0, null, falcon.getId());
+        resolveAllTriggers();
+
+        assertThat(guildmage.isTapped()).isTrue();
+        assertThat(gd.playerDecks.get(player1.getId()).get(0)).isSameAs(falcon.getCard());
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("The damage ability resolves even after Shadow Guildmage leaves the battlefield")
+    void damageResolvesAfterSourceLeaves() {
+        Permanent guildmage = addCreatureReady(player1, new ShadowGuildmage());
+        addCreatureReady(player1, new ShadowGuildmage());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, 1, null, player2.getId());
+        harness.activateAbility(player1, 1, 0, null, guildmage.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerDecks.get(player1.getId()).get(0)).isSameAs(guildmage.getCard());
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+    }
+
+    @Test
+    @DisplayName("A controlled creature owned by the opponent goes to its owner's library")
+    void tucksCreatureIntoOwnersLibrary() {
+        addCreatureReady(player1, new ShadowGuildmage());
+        BayFalcon card = new BayFalcon();
+        card.setOwnerId(player2.getId());
+        Permanent falcon = addCreatureReady(player1, card);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, 0, null, falcon.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Bay Falcon");
+        assertThat(gd.playerDecks.get(player2.getId()).get(0)).isSameAs(card);
+        assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(card);
+    }
 }
