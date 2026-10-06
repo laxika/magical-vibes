@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,9 +16,9 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SelkieHedgeMage.class, Forest.class, Island.class, GrizzlyBears.class})
 class SelkieHedgeMageTest extends BaseCardTest {
 
-    // ===== Forest gate: may gain 3 life =====
 
     @Test
     @DisplayName("With two Forests, ETB may gain 3 life")
@@ -55,7 +56,6 @@ class SelkieHedgeMageTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
     }
 
-    // ===== Island gate: may return target tapped creature to hand =====
 
     @Test
     @DisplayName("With two Islands, ETB may return a tapped creature to its owner's hand")
@@ -116,7 +116,6 @@ class SelkieHedgeMageTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).anyMatch(p -> p.getId().equals(bears.getId()));
     }
 
-    // ===== Neither gate met =====
 
     @Test
     @DisplayName("With no Forests or Islands, neither ability triggers")
@@ -129,8 +128,75 @@ class SelkieHedgeMageTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
     }
 
-    // ===== Helpers =====
 
+    @Test
+    @DisplayName("Both land conditions create separate triggered abilities")
+    void bothConditionsCreateSeparateTriggers() {
+        addLands(player1, 2, 2);
+        Permanent bears = addBears(player2);
+        bears.tap();
+        castSelkie();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, bears.getId());
+
+        assertThat(gd.stack).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("The Forest condition is checked again at resolution")
+    void losingForestBeforeResolutionPreventsLifeGain() {
+        addLands(player1, 2, 0);
+        castSelkie();
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player1.getId()).removeFirst();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("The Island condition is checked again at resolution")
+    void losingIslandBeforeResolutionPreventsBounce() {
+        addLands(player1, 0, 2);
+        Permanent bears = addBears(player2);
+        bears.tap();
+        castSelkie();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, bears.getId());
+        gd.playerBattlefields.get(player1.getId()).removeFirst();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("A creature untapped in response is no longer a legal bounce target")
+    void untappedTargetIsNotReturned() {
+        addLands(player1, 0, 2);
+        Permanent bears = addBears(player2);
+        bears.tap();
+        castSelkie();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, bears.getId());
+        bears.untap();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+    @Test
+    @DisplayName("No legal bounce target does not suppress the separate life-gain ability")
+    void bothConditionsWithoutTappedCreatureStillGainLife() {
+        addLands(player1, 2, 2);
+        castSelkie();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, 23);
+    }
     private void castSelkie() {
         harness.setHand(player1, List.of(new SelkieHedgeMage()));
         harness.addMana(player1, ManaColor.GREEN, 3);
