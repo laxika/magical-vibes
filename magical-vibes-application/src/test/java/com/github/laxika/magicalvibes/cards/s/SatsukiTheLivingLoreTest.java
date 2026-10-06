@@ -1,11 +1,14 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.b.BoseijuReachesSkyward;
+import com.github.laxika.magicalvibes.cards.j.JukaiNaturalist;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -15,8 +18,9 @@ import java.util.List;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(SatsukiTheLivingLore.class)
+@CardUsed({SatsukiTheLivingLore.class, BoseijuReachesSkyward.class, JukaiNaturalist.class})
 class SatsukiTheLivingLoreTest extends BaseCardTest {
 
     private static final String RETURN_BATTLEFIELD_MODE =
@@ -106,6 +110,61 @@ class SatsukiTheLivingLoreTest extends BaseCardTest {
                 .contains(saga.getId());
         assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getId)
                 .doesNotContain(saga.getCard().getId());
+    }
+
+    @Test
+    void addingLoreCounterTriggersTheNextSagaChapter() {
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new BoseijuReachesSkyward());
+        saga.setCounterCount(CounterType.LORE, 2);
+        Permanent satsuki = harness.addToBattlefieldAndReturn(player1, new SatsukiTheLivingLore());
+        satsuki.setSummoningSick(false);
+
+        harness.activateAbility(player1, battlefieldIndex(satsuki), 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(3);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(saga.getId());
+    }
+
+    @Test
+    void tapAbilityCannotBeActivatedOutsideMainPhase() {
+        Permanent satsuki = harness.addToBattlefieldAndReturn(player1, new SatsukiTheLivingLore());
+        satsuki.setSummoningSick(false);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(satsuki), 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(satsuki.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void tapAbilityCannotBeActivatedWhileSummoningSick() {
+        Permanent satsuki = harness.addToBattlefieldAndReturn(player1, new SatsukiTheLivingLore());
+        satsuki.setSummoningSick(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(satsuki), 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(satsuki.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void deathTriggerReturnsControlledEnchantmentCreatureToItsOwner() {
+        Card naturalist = new JukaiNaturalist();
+        naturalist.setOwnerId(player2.getId());
+        Permanent stolenCreature = harness.addToBattlefieldAndReturn(player1, naturalist);
+        harness.addToBattlefield(player1, new SatsukiTheLivingLore());
+
+        killSatsuki();
+        harness.handleListChoice(player1, RETURN_BATTLEFIELD_MODE);
+        harness.handlePermanentChosen(player1, stolenCreature.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Jukai Naturalist");
+        harness.assertInHand(player2, "Jukai Naturalist");
+        harness.assertNotInHand(player1, "Jukai Naturalist");
     }
 
     private int battlefieldIndex(Permanent permanent) {
