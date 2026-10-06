@@ -7,12 +7,14 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ScouringSands.class, FugitiveWizard.class, GrizzlyBears.class})
 class ScouringSandsTest extends BaseCardTest {
 
     @Test
@@ -23,8 +25,7 @@ class ScouringSandsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ScouringSands()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNotNull();
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
@@ -42,12 +43,47 @@ class ScouringSandsTest extends BaseCardTest {
         List<Card> deck = gd.playerDecks.get(player1.getId());
         Card top = deck.get(0);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
 
         assertThat(gd.playerDecks.get(player1.getId()).get(0)).isNotSameAs(top);
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Scouring Sands");
+    }
+
+    @Test
+    void canKeepTheTopCardWithoutOpposingCreatures() {
+        Card top = new FugitiveWizard();
+        Card second = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(top, second));
+        harness.setHand(player1, List.of(new ScouringSands()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNotNull();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top, second);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Scouring Sands");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void stillDealsDamageAndFinishesWithAnEmptyLibrary() {
+        harness.setLibrary(player1, List.of());
+        harness.addToBattlefield(player2, new FugitiveWizard());
+        harness.setHand(player1, List.of(new ScouringSands()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        harness.assertInGraveyard(player2, "Fugitive Wizard");
+        harness.assertNotOnBattlefield(player2, "Fugitive Wizard");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Scouring Sands");
+        assertThat(gd.stack).isEmpty();
     }
 }
