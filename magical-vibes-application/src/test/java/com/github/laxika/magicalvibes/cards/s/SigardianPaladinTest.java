@@ -32,8 +32,7 @@ class SigardianPaladinTest extends BaseCardTest {
         harness.setHand(player1, List.of(new TakeUpTheShield()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castInstant(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bears.getId());
 
         assertThat(gqs.hasKeyword(gd, paladin, Keyword.TRAMPLE)).isTrue();
         assertThat(gqs.hasKeyword(gd, paladin, Keyword.LIFELINK)).isTrue();
@@ -81,5 +80,83 @@ class SigardianPaladinTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void counterOnOpponentsCreatureEnablesKeywordsOnlyForPlacingPlayer() {
+        Permanent paladin = harness.addToBattlefieldAndReturn(player1, new SigardianPaladin());
+        Permanent opponentPaladin = harness.addToBattlefieldAndReturn(player2, new SigardianPaladin());
+        harness.setHand(player1, List.of(new TakeUpTheShield()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0, opponentPaladin.getId());
+
+        assertThat(gqs.hasKeyword(gd, paladin, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, paladin, Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opponentPaladin, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    void staticKeywordsPersistAfterCounterRemovalAndResetNextTurn() {
+        Permanent paladin = harness.addToBattlefieldAndReturn(player1, new SigardianPaladin());
+        Permanent recipient = harness.addToBattlefieldAndReturn(player1, new SigardianPaladin());
+        harness.setHand(player1, List.of(new TakeUpTheShield()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, recipient.getId());
+        recipient.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+
+        assertThat(gqs.hasKeyword(gd, paladin, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, paladin, Keyword.LIFELINK)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, paladin, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, paladin, Keyword.LIFELINK)).isFalse();
+    }
+
+    @Test
+    void opponentPuttingCounterOnYourCreatureDoesNotEnableKeywords() {
+        Permanent paladin = harness.addToBattlefieldAndReturn(player1, new SigardianPaladin());
+        Permanent recipient = harness.addToBattlefieldAndReturn(player1, new SigardianPaladin());
+        harness.setHand(player2, List.of(new TakeUpTheShield()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0, recipient.getId());
+
+        assertThat(gqs.hasKeyword(gd, paladin, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, paladin, Keyword.LIFELINK)).isFalse();
+    }
+
+    @Test
+    void activatedAbilityCannotTargetOpponentsCounteredCreature() {
+        harness.addToBattlefield(player1, new SigardianPaladin());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SigardianPaladin());
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void activatedAbilityDoesNotResolveWhenTargetLosesItsLastCounter() {
+        harness.addToBattlefield(player1, new SigardianPaladin());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new SigardianPaladin());
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, target.getId());
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.LIFELINK)).isFalse();
     }
 }
