@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -81,5 +82,60 @@ class SlipstreamEelTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+    @Test
+    void cyclingDiscardsBeforeDrawing() {
+        harness.setHand(player1, List.of(new SlipstreamEel()));
+        harness.setLibrary(player1, List.of(new Mountain()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertInGraveyard(player1, "Slipstream Eel");
+        harness.assertNotInHand(player1, "Slipstream Eel");
+        harness.assertNotInHand(player1, "Mountain");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+        harness.assertInHand(player1, "Mountain");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cyclingRequiresGenericManaAsWellAsBlue() {
+        harness.setHand(player1, List.of(new SlipstreamEel()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Slipstream Eel");
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void islandInGraveyardDoesNotAllowAttacking() {
+        harness.setGraveyard(player2, List.of(new Island()));
+        addCreatureReady(player1, new SlipstreamEel());
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void canBlockWhenAttackingPlayerControlsNoIsland() {
+        addCreatureReady(player1, new SlipstreamEel());
+        var blocker = harness.addToBattlefieldAndReturn(player2, new SlipstreamEel());
+        harness.addToBattlefield(player2, new Island());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+        resolveCombat();
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Slipstream Eel");
+        harness.assertInGraveyard(player2, "Slipstream Eel");
     }
 }
