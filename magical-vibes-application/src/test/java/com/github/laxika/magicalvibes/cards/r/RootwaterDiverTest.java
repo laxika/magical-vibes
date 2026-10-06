@@ -20,21 +20,18 @@ class RootwaterDiverTest extends BaseCardTest {
     @Test
     @DisplayName("Returns targeted artifact card from graveyard to hand and sacrifices itself")
     void returnsArtifactFromGraveyardToHand() {
-        var diver = addCreatureReady(player1, new RootwaterDiver());
+        addCreatureReady(player1, new RootwaterDiver());
         Card artifact = new CursedScroll();
         harness.setGraveyard(player1, List.of(artifact));
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
         harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(artifact.getId()));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getId().equals(diver.getCard().getId()));
+        harness.assertInGraveyard(player1, "Rootwater Diver");
         resolveAllTriggers();
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getId().equals(artifact.getId()));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getId().equals(artifact.getId()));
+        harness.assertInHand(player1, "Cursed Scroll");
+        harness.assertNotInGraveyard(player1, "Cursed Scroll");
     }
 
     @Test
@@ -84,5 +81,43 @@ class RootwaterDiverTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getId().equals(diver.getId()));
+    }
+
+    @Test
+    @DisplayName("Cannot activate the tap ability while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        var diver = harness.addToBattlefieldAndReturn(player1, new RootwaterDiver());
+        diver.setSummoningSick(true);
+        Card artifact = new CursedScroll();
+        harness.setGraveyard(player1, List.of(artifact));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() ->
+                harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(artifact.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(diver.isTapped()).isFalse();
+        harness.assertOnBattlefield(player1, "Rootwater Diver");
+        harness.assertInGraveyard(player1, "Cursed Scroll");
+    }
+
+    @Test
+    @DisplayName("An artifact leaving the graveyard before resolution is not returned")
+    void targetLeavingGraveyardIsNotReturned() {
+        addCreatureReady(player1, new RootwaterDiver());
+        Card artifact = new CursedScroll();
+        harness.setGraveyard(player1, List.of(artifact));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(artifact.getId()));
+        harness.getPermanentRemovalService().removeCardFromGraveyardById(gd, artifact.getId());
+        harness.setExile(player1, List.of(artifact));
+        resolveAllTriggers();
+
+        harness.assertNotInHand(player1, "Cursed Scroll");
+        harness.assertInGraveyard(player1, "Rootwater Diver");
+        harness.assertNotOnBattlefield(player1, "Rootwater Diver");
+        assertThat(gd.stack).isEmpty();
     }
 }
