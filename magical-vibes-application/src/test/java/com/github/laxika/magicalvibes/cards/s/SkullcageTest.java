@@ -83,6 +83,33 @@ class SkullcageTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Deals damage even when the opponent's hand is empty")
+    void dealsDamageWithEmptyHand() {
+        harness.addToBattlefield(player1, new Skullcage());
+        harness.setHand(player2, List.of());
+        int lifeBefore = gd.getLife(player2.getId());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, lifeBefore - 2);
+    }
+
+    @Test
+    @DisplayName("Deals no damage if the opponent's hand grows to three cards before resolution")
+    void checksSafeHandSizeAtResolution() {
+        harness.addToBattlefield(player1, new Skullcage());
+        harness.setHand(player2, handOf(2));
+        int lifeBefore = gd.getLife(player2.getId());
+
+        advanceToUpkeep(player2);
+        harness.setHand(player2, handOf(3));
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, lifeBefore);
+    }
+
+    @Test
     @DisplayName("Does not trigger during the controller's upkeep")
     void doesNotTriggerDuringOwnUpkeep() {
         harness.addToBattlefield(player1, new Skullcage());
