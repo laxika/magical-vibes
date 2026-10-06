@@ -39,9 +39,8 @@ class ShelteringBoughsTest extends BaseCardTest {
     @DisplayName("Enchanted creature gets +1/+3")
     void boostsEnchantedCreature() {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent aura = new Permanent(new ShelteringBoughs());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new ShelteringBoughs());
         aura.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(5);
@@ -51,9 +50,8 @@ class ShelteringBoughsTest extends BaseCardTest {
     @DisplayName("Removing Sheltering Boughs removes its boost")
     void effectsStopWhenRemoved() {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent aura = new Permanent(new ShelteringBoughs());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new ShelteringBoughs());
         aura.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         gd.playerBattlefields.get(player1.getId()).remove(aura);
 
@@ -86,6 +84,50 @@ class ShelteringBoughsTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Enchanting an opponent's creature boosts it but draws for the Aura controller")
+    void enchantsOpponentsCreatureAndDrawsForAuraController() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new ShelteringBoughs()));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new FountainOfYouth()));
+        addMana();
+
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(5);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.assertInHand(player1, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The enter trigger still draws after the Aura leaves the battlefield")
+    void drawTriggerSurvivesAuraRemoval() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new ShelteringBoughs()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new FountainOfYouth()));
+        addMana();
+
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+        Permanent aura = findPermanent(player1, "Sheltering Boughs");
+        gd.playerBattlefields.get(player1.getId()).remove(aura);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.assertInHand(player1, "Grizzly Bears");
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
     private void addMana() {
