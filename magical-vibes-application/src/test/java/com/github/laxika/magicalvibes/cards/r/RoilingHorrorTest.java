@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.p.PlatinumAngel;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -13,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(RoilingHorror.class)
+@CardUsed({RoilingHorror.class, PlatinumAngel.class})
 class RoilingHorrorTest extends BaseCardTest {
 
     @Test
@@ -83,8 +84,7 @@ class RoilingHorrorTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, player2.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent horror = findPermanent(player1, "Roiling Horror");
         assertThat(gqs.hasKeyword(gd, horror, Keyword.HASTE)).isTrue();
@@ -111,6 +111,72 @@ class RoilingHorrorTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(targetLife - 1);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(controllerLife + 1);
+    }
+
+    @Test
+    void negativeOpponentLifeTotalIncreasesPowerAndToughness() {
+        harness.addToBattlefield(player2, new PlatinumAngel());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, -3);
+        Permanent horror = harness.addToBattlefieldAndReturn(player1, new RoilingHorror());
+        harness.runStateBasedActions();
+
+        assertThat(gqs.getEffectivePower(gd, horror)).isEqualTo(23);
+        assertThat(gqs.getEffectiveToughness(gd, horror)).isEqualTo(23);
+    }
+
+    @Test
+    void powerAndToughnessUpdateWhenControllerLifeChanges() {
+        harness.setLife(player1, 15);
+        harness.setLife(player2, 10);
+        Permanent horror = harness.addToBattlefieldAndReturn(player1, new RoilingHorror());
+
+        assertThat(gqs.getEffectivePower(gd, horror)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, horror)).isEqualTo(5);
+
+        harness.setLife(player1, 18);
+
+        assertThat(gqs.getEffectivePower(gd, horror)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, horror)).isEqualTo(8);
+    }
+
+    @Test
+    void normallyCastHorrorDiesWhenLifeTotalsAreEqual() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.castFromHand(player1, new RoilingHorror(), "{3}{B}{B}");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Roiling Horror");
+        harness.assertInGraveyard(player1, "Roiling Horror");
+    }
+
+    @Test
+    void opponentUpkeepDoesNotRemoveTimeCounter() {
+        RoilingHorror card = suspendCard(2);
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 2);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void timeCounterTriggerCanTargetItsController() {
+        RoilingHorror card = suspendCard(2);
+        harness.setLife(player1, 1);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 1);
+        harness.assertLife(player1, 1);
+        harness.assertLife(player2, 20);
+        assertThat(gd.status).isNotEqualTo(com.github.laxika.magicalvibes.model.GameStatus.FINISHED);
     }
 
     private RoilingHorror suspendCard(int xValue) {
