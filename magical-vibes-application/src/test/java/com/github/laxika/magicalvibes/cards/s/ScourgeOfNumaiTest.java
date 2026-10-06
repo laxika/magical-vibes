@@ -89,4 +89,32 @@ class ScourgeOfNumaiTest extends BaseCardTest {
 
         harness.assertLife(player1, 20);
     }
+
+    @Test
+    @DisplayName("Each Scourge causes its own life loss without an Ogre")
+    void multipleScourgesEachCauseLifeLoss() {
+        harness.addToBattlefield(player1, new ScourgeOfNumai());
+        harness.addToBattlefield(player1, new ScourgeOfNumai());
+        harness.setLife(player1, 20);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 16);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Removing Scourge after it triggers does not stop the life loss")
+    void lifeLossAfterSourceLeavesBattlefield() {
+        Permanent scourge = harness.addToBattlefieldAndReturn(player1, new ScourgeOfNumai());
+        harness.setLife(player1, 20);
+
+        advanceToUpkeep(player1);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, scourge));
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+    }
 }
