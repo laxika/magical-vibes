@@ -74,10 +74,31 @@ class ShoreUpTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Can target your own untapped hexproof creature and stack the boosts")
+    void canTargetOwnHexproofCreatureAndStackBoosts() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        castShoreUp(creature);
+        castShoreUp(creature);
+
+        assertThat(creature.isTapped()).isFalse();
+        assertThat(creature.getPowerModifier()).isEqualTo(2);
+        assertThat(creature.getToughnessModifier()).isEqualTo(2);
+        assertThat(creature.getGrantedKeywords()).contains(Keyword.HEXPROOF);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(creature.getPowerModifier()).isZero();
+        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(creature.getGrantedKeywords()).doesNotContain(Keyword.HEXPROOF);
+    }
+
     private void castShoreUp(Permanent creature) {
         harness.setHand(player1, List.of(new ShoreUp()));
         harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.castInstant(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, creature.getId());
     }
 }
