@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -12,7 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SigardasSummons.class, GrizzlyBears.class})
+@CardUsed({SigardasSummons.class, GrizzlyBears.class, Opalescence.class})
 class SigardasSummonsTest extends BaseCardTest {
 
     @Test
@@ -26,7 +27,7 @@ class SigardasSummonsTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isTrue();
         assertThat(gqs.computeStaticBonus(gd, creature).grantedSubtypes()).contains(CardSubtype.ANGEL);
-        assertThat(creature.getCard().getSubtypes()).contains(CardSubtype.BEAR);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, creature)).containsExactlyInAnyOrder(CardSubtype.BEAR, CardSubtype.ANGEL);
     }
 
     @Test
@@ -46,5 +47,76 @@ class SigardasSummonsTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, opponentCreature)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.FLYING)).isFalse();
         assertThat(gqs.computeStaticBonus(gd, opponentCreature).grantedSubtypes()).doesNotContain(CardSubtype.ANGEL);
+    }
+
+    @Test
+    @DisplayName("The effect follows counters being added and the last counter being removed")
+    void followsCounterChanges() {
+        harness.addToBattlefield(player1, new SigardasSummons());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, creature, CardSubtype.ANGEL)).isFalse();
+
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(7);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, creature, CardSubtype.ANGEL)).isTrue();
+
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isFalse();
+        assertThat(gqs.effectiveCreatureSubtypes(gd, creature)).containsExactly(CardSubtype.BEAR);
+    }
+
+    @Test
+    @DisplayName("Removing the enchantment restores the creature while retaining its counters")
+    void stopsApplyingWhenSummonsLeaves() {
+        Permanent summons = harness.addToBattlefieldAndReturn(player1, new SigardasSummons());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(6);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, creature, CardSubtype.ANGEL)).isTrue();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, summons));
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isFalse();
+        assertThat(gqs.effectiveCreatureSubtypes(gd, creature)).containsExactly(CardSubtype.BEAR);
+    }
+
+    @Test
+    @DisplayName("Other kinds of counters do not qualify a creature")
+    void ignoresOtherCounterTypes() {
+        harness.addToBattlefield(player1, new SigardasSummons());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        creature.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, creature, CardSubtype.ANGEL)).isFalse();
+    }
+
+    @Test
+    @CardUsed({SigardasSummons.class, Opalescence.class})
+    @DisplayName("An animated Sigarda's Summons affects itself when it has a +1/+1 counter")
+    void affectsItselfWhenAnimated() {
+        harness.enterBattlefieldAndReturn(player1, new Opalescence());
+        Permanent summons = harness.enterBattlefieldAndReturn(player1, new SigardasSummons());
+        summons.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        assertThat(gqs.getEffectivePower(gd, summons)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, summons)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, summons, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, summons, CardSubtype.ANGEL)).isTrue();
     }
 }
