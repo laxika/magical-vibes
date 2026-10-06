@@ -60,6 +60,34 @@ class SisterHospitallerTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Shock");
     }
 
+    @Test
+    @DisplayName("ETB cannot target creatures in an opponent's graveyard")
+    void etbDoesNotTargetOpponentsGraveyard() {
+        harness.setGraveyard(player2, List.of(new GrizzlyBears()));
+
+        castAndResolveHospitaller();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("ETB gains no life when its target leaves the graveyard before resolution")
+    void etbDoesNotGainLifeWhenTargetLeavesGraveyard() {
+        HillGiant giant = new HillGiant();
+        harness.setGraveyard(player1, List.of(giant));
+
+        castAndResolveHospitaller();
+        harness.handleMultipleCardsChosen(player1, List.of(giant.getId()));
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(giant));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Hill Giant");
+        harness.assertLife(player1, 20);
+    }
     private void castAndResolveHospitaller() {
         harness.castFromHand(player1, new SisterHospitaller(), "{4}{W}{B}");
         harness.passBothPriorities();
