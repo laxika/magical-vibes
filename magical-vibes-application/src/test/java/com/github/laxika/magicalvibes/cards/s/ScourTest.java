@@ -16,6 +16,53 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Scour.class, InTheWebOfWar.class, GnarledMass.class})
 class ScourTest extends BaseCardTest {
+    @Test
+    @DisplayName("May leave hidden-zone matches unfound while graveyard matches are mandatory")
+    void mayLeaveHiddenZoneMatchesUnfound() {
+        var target = harness.addToBattlefieldAndReturn(player2, new InTheWebOfWar());
+        var handCopy = new InTheWebOfWar();
+        var graveyardCopy = new InTheWebOfWar();
+        var libraryCopy = new InTheWebOfWar();
+        harness.setHand(player2, List.of(handCopy));
+        harness.setGraveyard(player2, List.of(graveyardCopy));
+        harness.setLibrary(player2, List.of(libraryCopy));
+        harness.setHand(player1, List.of(new Scour()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(com.github.laxika.magicalvibes.model.PendingInteraction.MultiZoneExileChoice.class);
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .contains(target.getOriginalCard(), graveyardCopy);
+        harness.assertNotInGraveyard(player2, "In the Web of War");
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(handCopy);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(libraryCopy);
+    }
+
+    @Test
+    @DisplayName("Searches using the enchantment's current name rather than its printed name")
+    void searchesUsingChangedName() {
+        var target = harness.addToBattlefieldAndReturn(player2, new InTheWebOfWar());
+        target.setPersistentName("Gnarled Mass");
+        var matchingCard = new GnarledMass();
+        var printedNameCopy = new InTheWebOfWar();
+        harness.setGraveyard(player2, List.of(matchingCard, printedNameCopy));
+        harness.setHand(player1, List.of(new Scour()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "In the Web of War");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .contains(target.getOriginalCard(), matchingCard)
+                .doesNotContain(printedNameCopy);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(printedNameCopy);
+    }
 
     @Test
     @DisplayName("Exiles the target enchantment and every same-name copy from graveyard, hand, and library")
