@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.h.Humble;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -14,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RockJockey.class, Mountain.class})
+@CardUsed({RockJockey.class, Mountain.class, Humble.class})
 class RockJockeyTest extends BaseCardTest {
 
     @Test
@@ -101,5 +102,53 @@ class RockJockeyTest extends BaseCardTest {
         assertThat(availability.getPlayableCardIndices(gd, player1.getId())).contains(0);
         harness.playLand(player1, 0);
         harness.assertOnBattlefield(player1, "Mountain");
+    }
+
+    @Test
+    @DisplayName("Losing all abilities removes the land-play restriction")
+    void losingAbilitiesAllowsLandPlay() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player1, new RockJockey(), "{2}{R}");
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Humble(), new Mountain()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Rock Jockey"));
+
+        assertThat(harness.getGameActionAvailabilityService()
+                .getPlayableCardIndices(gd, player1.getId())).contains(0);
+        harness.playLand(player1, 0);
+        harness.assertOnBattlefield(player1, "Mountain");
+    }
+
+    @Test
+    @DisplayName("Putting a land onto the battlefield does not prevent casting")
+    void canBeCastAfterLandEntersWithoutBeingPlayed() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.enterBattlefieldAndReturn(player1, new Mountain());
+
+        harness.castFromHand(player1, new RockJockey(), "{2}{R}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Rock Jockey");
+    }
+
+    @Test
+    @DisplayName("A land played on a previous turn does not prevent casting")
+    void canBeCastOnTurnAfterPlayingLand() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new Mountain()));
+        harness.playLand(player1, 0);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+
+        harness.castFromHand(player1, new RockJockey(), "{2}{R}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Rock Jockey");
     }
 }
