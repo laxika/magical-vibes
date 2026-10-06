@@ -71,6 +71,69 @@ class RockslideSorcererTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
     }
 
+    @Test
+    @CardUsed({RockslideSorcerer.class})
+    @DisplayName("Does not trigger for its own cast before entering the battlefield")
+    void doesNotTriggerForItsOwnCast() {
+        harness.setHand(player1, List.of(new RockslideSorcerer()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        resolveAllTriggers();
+        harness.assertOnBattlefield(player1, "Rockslide Sorcerer");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @CardUsed({RockslideSorcerer.class})
+    @DisplayName("An existing Sorcerer triggers for another Sorcerer and can target its controller")
+    void triggersForAnotherSorcererAndCanTargetController() {
+        addRockslideSorcerer();
+        harness.setHand(player1, List.of(new RockslideSorcerer()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castCreature(player1, 0);
+        chooseTriggerTarget(player1.getId());
+
+        harness.assertLife(player1, 19);
+        assertThat(countPermanents(player1, "Rockslide Sorcerer")).isEqualTo(2);
+    }
+
+    @Test
+    @CardUsed({RockslideSorcerer.class})
+    @DisplayName("Can target itself with its damage trigger")
+    void canTargetItself() {
+        addRockslideSorcerer();
+        var source = findPermanent(player1, "Rockslide Sorcerer");
+        harness.setHand(player1, List.of(new RockslideSorcerer()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castCreature(player1, 0);
+        chooseTriggerTarget(source.getId());
+
+        assertThat(source.getMarkedDamage()).isEqualTo(1);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @CardUsed({RockslideSorcerer.class})
+    @DisplayName("Does not trigger for an opponent's Wizard spell")
+    void doesNotTriggerForOpponentsWizard() {
+        addRockslideSorcerer();
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new RockslideSorcerer()));
+        harness.addMana(player2, ManaColor.RED, 4);
+
+        harness.castCreature(player2, 0);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        resolveAllTriggers();
+        harness.assertOnBattlefield(player2, "Rockslide Sorcerer");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
     private void addRockslideSorcerer() {
         harness.addToBattlefield(player1, new RockslideSorcerer());
     }
@@ -78,7 +141,6 @@ class RockslideSorcererTest extends BaseCardTest {
     private void chooseTriggerTarget(java.util.UUID targetId) {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
         harness.handlePermanentChosen(player1, targetId);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 }
