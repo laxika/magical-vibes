@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 
 @CardUsed({RisingWaters.class, KorHaven.class, SpinelessThug.class, Forest.class})
@@ -111,6 +112,65 @@ class RisingWatersTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A player with a land cannot decline the mandatory upkeep choice")
+    void upkeepUntapCannotBeDeclined() {
+        harness.addToBattlefield(player1, new RisingWaters());
+        Permanent land = addTapped(player1, new KorHaven());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+
+        harness.handleMultiplePermanentsChosen(player1, List.of(land.getId()));
+        assertThat(land.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The upkeep choice may select an already untapped land")
+    void canChooseUntappedLand() {
+        harness.addToBattlefield(player1, new RisingWaters());
+        Permanent tappedLand = addTapped(player1, new KorHaven());
+        Permanent untappedLand = harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        var choice = gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).contains(tappedLand.getId(), untappedLand.getId());
+
+        harness.handleMultiplePermanentsChosen(player1, List.of(untappedLand.getId()));
+
+        assertThat(tappedLand.isTapped()).isTrue();
+        assertThat(untappedLand.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Each copy provides a separate upkeep untap")
+    void multipleCopiesUntapSeparately() {
+        harness.addToBattlefield(player1, new RisingWaters());
+        harness.addToBattlefield(player2, new RisingWaters());
+        Permanent landA = addTapped(player1, new KorHaven());
+        Permanent landB = addTapped(player1, new Forest());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of(landA.getId()));
+
+        assertThat(landA.isTapped()).isFalse();
+        assertThat(landB.isTapped()).isTrue();
+
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of(landB.getId()));
+
+        assertThat(landA.isTapped()).isFalse();
+        assertThat(landB.isTapped()).isFalse();
     }
 
     private Permanent addTapped(Player player, Card card) {
