@@ -20,6 +20,60 @@ import static org.assertj.core.api.Assertions.assertThat;
 class SkitteringSkirgeTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Does not trigger from its own casting")
+    void doesNotSacrificeItselfWhenItIsCast() {
+        harness.setHand(player1, List.of(new SkitteringSkirge()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Skittering Skirge");
+        harness.assertNotInGraveyard(player1, "Skittering Skirge");
+    }
+
+    @Test
+    @DisplayName("Casting another Skirge sacrifices the existing one before the new one enters")
+    void sacrificesOnlyTheExistingSkirgeWhenAnotherIsCast() {
+        SkitteringSkirge existing = new SkitteringSkirge();
+        harness.addToBattlefieldAndReturn(player1, existing);
+        SkitteringSkirge incoming = new SkitteringSkirge();
+        harness.setHand(player1, List.of(incoming));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(existing);
+        harness.assertNotOnBattlefield(player1, "Skittering Skirge");
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(Permanent::getCard).contains(incoming);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(incoming);
+    }
+
+    @Test
+    @DisplayName("Each Skirge sacrifices itself when a creature spell is cast")
+    void sacrificesEveryControlledSkirge() {
+        SkitteringSkirge first = new SkitteringSkirge();
+        SkitteringSkirge second = new SkitteringSkirge();
+        harness.addToBattlefieldAndReturn(player1, first);
+        harness.addToBattlefieldAndReturn(player1, second);
+        harness.setHand(player1, List.of(new GorillaWarrior()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(first, second);
+        harness.assertNotOnBattlefield(player1, "Skittering Skirge");
+        harness.assertOnBattlefield(player1, "Gorilla Warrior");
+    }
+
+    @Test
     @DisplayName("Sacrifices itself when its controller casts a creature spell")
     void sacrificesItselfWhenControllerCastsCreatureSpell() {
         harness.addToBattlefieldAndReturn(player1, new SkitteringSkirge());
