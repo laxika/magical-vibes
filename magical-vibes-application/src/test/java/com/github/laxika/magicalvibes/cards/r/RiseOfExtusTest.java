@@ -83,6 +83,109 @@ class RiseOfExtusTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("May decline graveyard exile even when a legal target exists")
+    void declinesOptionalGraveyardTarget() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Card instant = new HolyDay();
+        harness.setGraveyard(player2, List.of(instant));
+        Card lesson = new EnvironmentalSciences();
+        gd.playerSideboards.put(player1.getId(), new ArrayList<>(List.of(lesson)));
+
+        castRiseOfExtus(target);
+        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(target.getCard());
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(instant);
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(lesson);
+    }
+
+    @Test
+    @DisplayName("Exiles a sorcery from your own graveyard and learns by discarding and drawing")
+    void exilesOwnSorceryAndDiscardsToDraw() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Card sorcery = new EnvironmentalSciences();
+        Card discarded = new GrizzlyBears();
+        Card drawn = new Forest();
+        harness.setGraveyard(player1, List.of(sorcery));
+        harness.setLibrary(player1, List.of(drawn));
+        harness.setHand(player1, List.of(new RiseOfExtus(), discarded));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+
+        harness.castSorcery(player1, 0, List.of(target.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(sorcery.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(sorcery);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(target.getCard());
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(discarded);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+    }
+
+    @Test
+    @DisplayName("Still learns and exiles the graveyard target when the creature target leaves")
+    void resolvesWithOnlyGraveyardTargetStillLegal() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Card instant = new HolyDay();
+        harness.setGraveyard(player2, List.of(instant));
+        Card lesson = new EnvironmentalSciences();
+        gd.playerSideboards.put(player1.getId(), new ArrayList<>(List.of(lesson)));
+
+        castRiseOfExtus(target);
+        harness.handleMultipleCardsChosen(player1, List.of(instant.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        harness.setHand(player2, List.of(target.getCard()));
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(instant);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(target.getCard());
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(lesson);
+    }
+
+    @Test
+    @DisplayName("Still exiles the creature and learns when the graveyard target leaves")
+    void resolvesWithOnlyCreatureTargetStillLegal() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Card instant = new HolyDay();
+        harness.setGraveyard(player2, List.of(instant));
+        Card lesson = new EnvironmentalSciences();
+        gd.playerSideboards.put(player1.getId(), new ArrayList<>(List.of(lesson)));
+
+        castRiseOfExtus(target);
+        harness.handleMultipleCardsChosen(player1, List.of(instant.getId()));
+        harness.setGraveyard(player2, List.of());
+        harness.setHand(player2, List.of(instant));
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(target.getCard());
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(instant);
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(lesson);
+    }
+
+    @Test
+    @DisplayName("Does not learn when its only chosen target is illegal")
+    void doesNotLearnWhenAllTargetsAreIllegal() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Card lesson = new EnvironmentalSciences();
+        gd.playerSideboards.put(player1.getId(), new ArrayList<>(List.of(lesson)));
+
+        castRiseOfExtus(target);
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        harness.setHand(player2, List.of(target.getCard()));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerSideboards.get(player1.getId())).containsExactly(lesson);
+        harness.assertInGraveyard(player1, "Rise of Extus");
+    }
+
     private void castRiseOfExtus(Permanent target) {
         harness.setHand(player1, List.of(new RiseOfExtus()));
         harness.addMana(player1, ManaColor.WHITE, 6);
