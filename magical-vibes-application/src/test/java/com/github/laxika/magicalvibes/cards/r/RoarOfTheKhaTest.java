@@ -72,7 +72,6 @@ class RoarOfTheKhaTest extends BaseCardTest {
         assertThat(ownCreature.getEffectivePower()).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(ownCreature.getEffectivePower()).isEqualTo(2);
@@ -91,11 +90,78 @@ class RoarOfTheKhaTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Boost mode does not untap creatures")
+    void boostModeLeavesCreaturesTapped() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new LeoninSkyhunter());
+        creature.tap();
+
+        cast(new int[]{0}, false);
+
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(creature.getEffectivePower()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Untap mode does not boost creatures")
+    void untapModeDoesNotBoost() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new LeoninSkyhunter());
+        creature.tap();
+
+        cast(new int[]{1}, false);
+
+        assertThat(creature.isTapped()).isFalse();
+        assertThat(creature.getEffectivePower()).isEqualTo(2);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Both modes affect creatures that enter before resolution")
+    void creaturesEnteringBeforeResolutionAreAffected() {
+        prepareCast(new int[]{0, 1}, true);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new LeoninSkyhunter());
+        creature.tap();
+
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isFalse();
+        assertThat(creature.getEffectivePower()).isEqualTo(3);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Creatures entering after resolution do not receive the boost")
+    void creaturesEnteringAfterResolutionAreNotBoosted() {
+        Permanent original = harness.addToBattlefieldAndReturn(player1, new LeoninSkyhunter());
+        cast(new int[]{0}, false);
+
+        Permanent newcomer = harness.addToBattlefieldAndReturn(player1, new LeoninSkyhunter());
+
+        assertThat(original.getEffectivePower()).isEqualTo(3);
+        assertThat(newcomer.getEffectivePower()).isEqualTo(2);
+        assertThat(newcomer.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("An entwined spell resolves with no creatures on the battlefield")
+    void entwinedWithNoCreatures() {
+        cast(new int[]{0, 1}, true);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof RoarOfTheKha);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+    }
+
     private void cast(int[] modes, boolean entwined) {
+        prepareCast(modes, entwined);
+        harness.passBothPriorities();
+    }
+
+    private void prepareCast(int[] modes, boolean entwined) {
         harness.setHand(player1, List.of(new RoarOfTheKha()));
         harness.addMana(player1, ManaColor.WHITE, entwined ? 2 : 1);
         harness.addMana(player1, ManaColor.COLORLESS, entwined ? 2 : 1);
         harness.castModalInstantWithModes(player1, 0, 1, 2, modes, List.of());
-        harness.passBothPriorities();
     }
 }
