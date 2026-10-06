@@ -79,4 +79,39 @@ class RankAndFileTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, laterGreenCreature)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, laterGreenCreature)).isEqualTo(2);
     }
+
+    @Test
+    @DisplayName("ETB affects green creatures that enter while the trigger is pending")
+    void etbChecksCreaturesAtResolution() {
+        harness.castFromHand(player1, new RankAndFile(), "{2}{B}{B}");
+        harness.passBothPriorities();
+
+        Permanent greenCreature = harness.enterBattlefieldAndReturn(player2, new LoneWolf());
+        assertThat(gqs.getEffectivePower(gd, greenCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, greenCreature)).isEqualTo(2);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, greenCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, greenCreature)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Two ETB penalties accumulate and kill a green 2/2")
+    void multipleEtbPenaltiesAccumulate() {
+        harness.addToBattlefield(player2, new LoneWolf());
+
+        harness.castFromHand(player1, new RankAndFile(), "{2}{B}{B}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Lone Wolf");
+
+        harness.castFromHand(player1, new RankAndFile(), "{2}{B}{B}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Lone Wolf");
+        harness.assertInGraveyard(player2, "Lone Wolf");
+        harness.assertOnBattlefield(player1, "Rank and File");
+    }
 }
