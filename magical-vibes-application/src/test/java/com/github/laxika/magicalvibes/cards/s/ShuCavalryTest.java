@@ -48,4 +48,20 @@ class ShuCavalryTest extends BaseCardTest {
 
         assertThat(blockerPerm.isBlocking()).isTrue();
     }
+
+    @Test
+    @DisplayName("Shu Cavalry can block a creature without horsemanship")
+    void canBlockCreatureWithoutHorsemanship() {
+        Permanent blocker = addCreatureReady(player2, new ShuCavalry());
+        Permanent attacker = addCreatureReady(player1, new ShuFootSoldiers());
+        attacker.setAttacking(true);
+        prepareDeclareBlockers();
+
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
 }
