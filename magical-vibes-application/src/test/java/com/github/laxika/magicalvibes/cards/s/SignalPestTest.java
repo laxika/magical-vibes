@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -19,9 +19,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SignalPest.class, AvenFisher.class, GiantSpider.class, GrizzlyBears.class})
 class SignalPestTest extends BaseCardTest {
-
-    // ===== Blocking restrictions =====
 
     @Test
     @DisplayName("Signal Pest cannot be blocked by a normal creature")
@@ -29,9 +28,8 @@ class SignalPestTest extends BaseCardTest {
         Permanent pest = attackingPest();
         gd.playerBattlefields.get(player1.getId()).add(pest);
 
-        Permanent bears = new Permanent(new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bears);
 
         prepareDeclareBlockers();
 
@@ -46,9 +44,8 @@ class SignalPestTest extends BaseCardTest {
         Permanent pest = attackingPest();
         gd.playerBattlefields.get(player1.getId()).add(pest);
 
-        Permanent flyer = new Permanent(new AvenFisher());
+        Permanent flyer = harness.addToBattlefieldAndReturn(player2, new AvenFisher());
         flyer.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(flyer);
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -62,9 +59,8 @@ class SignalPestTest extends BaseCardTest {
         Permanent pest = attackingPest();
         gd.playerBattlefields.get(player1.getId()).add(pest);
 
-        Permanent spider = new Permanent(new GiantSpider());
+        Permanent spider = harness.addToBattlefieldAndReturn(player2, new GiantSpider());
         spider.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(spider);
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -72,25 +68,16 @@ class SignalPestTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("declares 1 blocker"));
     }
 
-    // ===== Battle cry =====
-
     @Test
     @DisplayName("Signal Pest's battle cry triggers when attacking")
     void battleCryTriggersOnAttack() {
-        Permanent pest = new Permanent(new SignalPest());
+        Permanent pest = harness.addToBattlefieldAndReturn(player1, new SignalPest());
         pest.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(pest);
 
-        Permanent bears = new Permanent(new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        gs.declareAttackers(gd, player1, List.of(0, 1));
+        declareAttackers(List.of(0, 1));
 
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
@@ -101,20 +88,13 @@ class SignalPestTest extends BaseCardTest {
     @Test
     @DisplayName("Signal Pest's battle cry gives +1/+0 to other attacking creatures")
     void battleCryBoostsOtherAttackers() {
-        Permanent pest = new Permanent(new SignalPest());
+        Permanent pest = harness.addToBattlefieldAndReturn(player1, new SignalPest());
         pest.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(pest);
 
-        Permanent bears = new Permanent(new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        gs.declareAttackers(gd, player1, List.of(0, 1));
+        declareAttackers(List.of(0, 1));
         harness.passBothPriorities();
 
         assertThat(bears.getPowerModifier()).isEqualTo(1);
@@ -125,20 +105,13 @@ class SignalPestTest extends BaseCardTest {
     @Test
     @DisplayName("Signal Pest does not get its own battle cry boost")
     void battleCryDoesNotBoostSelf() {
-        Permanent pest = new Permanent(new SignalPest());
+        Permanent pest = harness.addToBattlefieldAndReturn(player1, new SignalPest());
         pest.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(pest);
 
-        Permanent bears = new Permanent(new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        gs.declareAttackers(gd, player1, List.of(0, 1));
+        declareAttackers(List.of(0, 1));
         harness.passBothPriorities();
 
         // Signal Pest (0/1) should NOT boost itself
@@ -146,7 +119,58 @@ class SignalPestTest extends BaseCardTest {
         assertThat(pest.getToughnessModifier()).isEqualTo(0);
     }
 
-    // ===== Helpers =====
+    @Test
+    void battleCryDoesNotBoostNonattackingCreatures() {
+        Permanent pest = harness.addToBattlefieldAndReturn(player1, new SignalPest());
+        pest.setSummoningSick(false);
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        attacker.setSummoningSick(false);
+        Permanent nonattacker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        declareAttackers(List.of(0, 1));
+        harness.passBothPriorities();
+
+        assertThat(attacker.getPowerModifier()).isEqualTo(1);
+        assertThat(nonattacker.getPowerModifier()).isZero();
+        assertThat(opponent.getPowerModifier()).isZero();
+    }
+
+    @Test
+    void multipleBattleCryTriggersBoostEachOtherButNotTheirOwnSource() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new SignalPest());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new SignalPest());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        first.setSummoningSick(false);
+        second.setSummoningSick(false);
+        bears.setSummoningSick(false);
+
+        declareAttackers(List.of(0, 1, 2));
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(first.getPowerModifier()).isEqualTo(1);
+        assertThat(second.getPowerModifier()).isEqualTo(1);
+        assertThat(bears.getPowerModifier()).isEqualTo(2);
+        assertThat(bears.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    void battleCryResolvesAfterSourceLeavesBattlefield() {
+        Permanent pest = harness.addToBattlefieldAndReturn(player1, new SignalPest());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        pest.setSummoningSick(false);
+        bears.setSummoningSick(false);
+
+        declareAttackers(List.of(0, 1));
+        gd.playerBattlefields.get(player1.getId()).remove(pest);
+        gd.playerGraveyards.get(player1.getId()).add(pest.getCard());
+        harness.passBothPriorities();
+
+        assertThat(bears.getPowerModifier()).isEqualTo(1);
+        assertThat(bears.getToughnessModifier()).isZero();
+    }
 
     private Permanent attackingPest() {
         Permanent pest = new Permanent(new SignalPest());
