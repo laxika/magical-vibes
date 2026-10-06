@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.a.Abolish;
 import com.github.laxika.magicalvibes.cards.r.RibCageSpider;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -66,12 +65,28 @@ class SearchForSurvivorsTest extends BaseCardTest {
                 .noneMatch(card -> card.getId().equals(movedCard.getId()));
     }
 
+    @Test
+    @DisplayName("Uses only your graveyard and puts the spell there after resolution")
+    void leavesOpponentsGraveyardUntouched() {
+        Card opposingCreature = new RibCageSpider();
+        Card opposingNoncreature = new Abolish();
+        harness.setGraveyard(player2, List.of(opposingCreature, opposingNoncreature));
+
+        castWithGraveyardCards(new RibCageSpider());
+
+        harness.assertOnBattlefield(player1, "Rib Cage Spider");
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .containsExactly(opposingCreature, opposingNoncreature);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Search for Survivors");
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
     private void castWithGraveyardCards(Card... graveyardCards) {
         harness.setGraveyard(player1, List.of(graveyardCards));
-        harness.setHand(player1, List.of(new SearchForSurvivors()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
-        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new SearchForSurvivors(), "{2}{R}");
+        harness.passBothPriorities();
     }
 }
