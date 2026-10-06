@@ -126,6 +126,56 @@ class RetaliateTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(damagedCreature);
     }
 
+    @Test
+    @DisplayName("Does not destroy a creature that damaged another player")
+    void ignoresDamageToAnotherPlayer() {
+        Permanent sorcerer = addCreatureReady(player2, new VulshokSorcerer());
+
+        harness.activateAbility(player2, indexOf(player2, sorcerer), null, player2.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player2, 19);
+        harness.assertLife(player1, 20);
+
+        harness.castFromHand(player1, new Retaliate(), "{2}{W}{W}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(sorcerer);
+        harness.assertNotInGraveyard(player2, "Vulshok Sorcerer");
+    }
+
+    @Test
+    @DisplayName("Does not destroy a creature that damaged only one of your creatures")
+    void ignoresDamageToYourCreature() {
+        Permanent sorcerer = addCreatureReady(player2, new VulshokSorcerer());
+        Permanent damagedCreature = addCreatureReady(player1, new SkyhunterProwler());
+
+        harness.activateAbility(player2, indexOf(player2, sorcerer), null, damagedCreature.getId());
+        harness.passBothPriorities();
+        assertThat(damagedCreature.getMarkedDamage()).isEqualTo(1);
+        harness.assertLife(player1, 20);
+
+        harness.castFromHand(player1, new Retaliate(), "{2}{W}{W}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(sorcerer);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(damagedCreature);
+    }
+
+    @Test
+    @DisplayName("Includes damage dealt in response to Retaliate")
+    void checksDamageHistoryAtResolution() {
+        Permanent sorcerer = addCreatureReady(player2, new VulshokSorcerer());
+
+        harness.castFromHand(player1, new Retaliate(), "{2}{W}{W}");
+        harness.activateAbility(player2, indexOf(player2, sorcerer), null, player1.getId());
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 19);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(sorcerer);
+        harness.assertInGraveyard(player2, "Vulshok Sorcerer");
+        harness.assertInGraveyard(player1, "Retaliate");
+    }
+
     private int indexOf(com.github.laxika.magicalvibes.model.Player player, Permanent permanent) {
         return gd.playerBattlefields.get(player.getId()).indexOf(permanent);
     }
