@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.a.AwakenedSkyclave;
 import com.github.laxika.magicalvibes.cards.c.ChandraHopesBeacon;
+import com.github.laxika.magicalvibes.cards.f.FiendslayerPaladin;
+import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.InvasionOfZendikar;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
@@ -22,7 +24,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AwakenedSkyclave.class, ChandraHopesBeacon.class, GrizzlyBears.class,
+@CardUsed({AwakenedSkyclave.class, ChandraHopesBeacon.class, FiendslayerPaladin.class,
+        GiantSpider.class, GrizzlyBears.class,
         InvasionOfZendikar.class, Mountain.class, Shock.class})
 class ShockTest extends BaseCardTest {
 
@@ -44,11 +47,11 @@ class ShockTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Shock targeting a creature puts it on the stack")
     void castingTargetingCreaturePutsItOnStack() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID targetId = target.getId();
         harness.castInstant(player1, 0, targetId);
 
         GameData gd = harness.getGameData();
@@ -90,11 +93,11 @@ class ShockTest extends BaseCardTest {
     @Test
     @DisplayName("Shock cannot target a land")
     void cannotTargetLand() {
-        harness.addToBattlefield(player2, new Mountain());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Mountain());
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        UUID targetId = harness.getPermanentId(player2, "Mountain");
+        UUID targetId = target.getId();
         assertThatThrownBy(() -> harness.castInstant(player1, 0, targetId))
                 .isInstanceOf(IllegalStateException.class);
     }
@@ -136,11 +139,11 @@ class ShockTest extends BaseCardTest {
     @Test
     @DisplayName("Shock deals 2 damage to target creature, destroying a 2/2")
     void deals2DamageToCreatureDestroysIt() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID targetId = target.getId();
         harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
@@ -150,10 +153,10 @@ class ShockTest extends BaseCardTest {
     @Test
     @DisplayName("Shock does not deal damage when its target leaves before resolution")
     void doesNotDealDamageWhenTargetLeavesBeforeResolution() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setLife(player2, 20);
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID targetId = target.getId();
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castInstant(player1, 0, targetId);
@@ -167,6 +170,51 @@ class ShockTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Shock");
         harness.assertInGraveyard(player2, "Shock");
+    }
+
+    @Test
+    @CardUsed({Shock.class, GiantSpider.class})
+    @DisplayName("Shock marks 2 damage on a surviving creature its controller owns")
+    void marksDamageOnOwnSurvivingCreature() {
+        Permanent spider = harness.addToBattlefieldAndReturn(player1, new GiantSpider());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, spider.getId());
+
+        harness.assertOnBattlefield(player1, "Giant Spider");
+        assertThat(spider.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @CardUsed({Shock.class, FiendslayerPaladin.class})
+    @DisplayName("Shock cannot target an opposing Fiendslayer Paladin")
+    void cannotTargetOpposingFiendslayerPaladin() {
+        Permanent paladin = harness.addToBattlefieldAndReturn(player2, new FiendslayerPaladin());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, paladin.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player2, "Fiendslayer Paladin");
+        assertThat(paladin.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @CardUsed({Shock.class, FiendslayerPaladin.class})
+    @DisplayName("Shock can target its controller's Fiendslayer Paladin")
+    void canTargetOwnFiendslayerPaladin() {
+        Permanent paladin = harness.addToBattlefieldAndReturn(player1, new FiendslayerPaladin());
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, paladin.getId());
+
+        harness.assertNotOnBattlefield(player1, "Fiendslayer Paladin");
+        harness.assertInGraveyard(player1, "Fiendslayer Paladin");
+        harness.assertLife(player1, 20);
     }
 
     @Test
