@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.a.ArcTrail;
+import com.github.laxika.magicalvibes.cards.b.BrothersOfFire;
 import com.github.laxika.magicalvibes.cards.i.Inquisition;
 import com.github.laxika.magicalvibes.cards.s.Squire;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ReflectingMirror.class, Inquisition.class, Squire.class, ArcTrail.class})
+@CardUsed({ReflectingMirror.class, Inquisition.class, Squire.class, ArcTrail.class, BrothersOfFire.class})
 class ReflectingMirrorTest extends BaseCardTest {
 
     @Test
@@ -95,9 +96,9 @@ class ReflectingMirrorTest extends BaseCardTest {
     }
 
     @Test
-    void canOnlyTargetASpellThatTargetsTheMirrorController() {
+    void canTargetSpellNotTargetingYouButDoesNotRedirectIt() {
         Inquisition inquisition = new Inquisition();
-        harness.setHand(player1, List.of(inquisition));
+        harness.setHand(player1, List.of(inquisition, new Squire()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         Permanent mirror = harness.addToBattlefieldAndReturn(player2, new ReflectingMirror());
@@ -106,13 +107,80 @@ class ReflectingMirrorTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-
         harness.castSorcery(player1, 0, player1.getId());
         harness.passPriority(player1);
+        harness.activateAbility(player2, gd.playerBattlefields.get(player2.getId()).indexOf(mirror), null, inquisition.getId());
 
-        assertThatThrownBy(() -> harness.activateAbility(
-                player2, gd.playerBattlefields.get(player2.getId()).indexOf(mirror), null, inquisition.getId()))
+        assertThat(mirror.isTapped()).isTrue();
+        harness.passBothPriorities();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void cannotRedirectAnActivatedAbility() {
+        harness.addToBattlefield(player1, new BrothersOfFire());
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addToBattlefield(player2, new ReflectingMirror());
+        harness.addMana(player2, ManaColor.COLORLESS, 6);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        var abilityId = gd.stack.getLast().getTargetableId();
+        harness.passPriority(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, abilityId))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void tappedMirrorCannotBeActivated() {
+        Inquisition inquisition = new Inquisition();
+        harness.setHand(player1, List.of(inquisition));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        Permanent mirror = harness.addToBattlefieldAndReturn(player2, new ReflectingMirror());
+        mirror.setTapped(true);
+        harness.addMana(player2, ManaColor.COLORLESS, 6);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passPriority(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, inquisition.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void abilityStillRedirectsAfterMirrorLeavesBattlefield() {
+        Inquisition inquisition = new Inquisition();
+        harness.setHand(player1, List.of(inquisition, new Squire()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        Permanent mirror = harness.addToBattlefieldAndReturn(player2, new ReflectingMirror());
+        harness.addMana(player2, ManaColor.COLORLESS, 6);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passPriority(player1);
+        harness.activateAbility(player2, 0, null, inquisition.getId());
+        assertThat(mirror.isTapped()).isTrue();
+        gd.playerBattlefields.get(player2.getId()).remove(mirror);
+        gd.playerGraveyards.get(player2.getId()).add(mirror.getCard());
+
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player2, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 20);
     }
 
     @Test
