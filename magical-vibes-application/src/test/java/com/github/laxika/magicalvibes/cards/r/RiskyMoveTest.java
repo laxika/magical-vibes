@@ -29,15 +29,15 @@ class RiskyMoveTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Risky Move does not flip when its new controller controls no creatures")
-    void noCreatureMeansNoCoinFlip() {
+    @DisplayName("Risky Move still flips when its new controller controls no creatures")
+    void noCreatureStillFlips() {
         Permanent riskyMove = harness.addToBattlefieldAndReturn(player1, new RiskyMove());
 
         advanceToUpkeep(player2);
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(riskyMove);
-        assertThat(gameLogContains("coin flip for Risky Move")).isFalse();
+        assertThat(gameLogContains("coin flip for Risky Move")).isTrue();
     }
 
     @Test
@@ -85,12 +85,66 @@ class RiskyMoveTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(riskyMove);
-        assertThat(gameLogContains("coin flip for Risky Move")).isFalse();
+        assertThat(gameLogContains("coin flip for Risky Move")).isTrue();
 
         advanceToUpkeep(player1);
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(riskyMove);
+        assertThat(gd.gameLog.stream()
+                .filter(entry -> entry.plainText().contains("coin flip for Risky Move"))
+                .count()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Entering the battlefield is not gaining control from another player")
+    void enteringBattlefieldDoesNotFlip() {
+        harness.addToBattlefield(player1, new ElvishWarrior());
+        Permanent riskyMove = harness.enterBattlefieldAndReturn(player1, new RiskyMove());
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(riskyMove);
+        assertThat(gameLogContains("coin flip for Risky Move")).isFalse();
+    }
+
+    @Test
+    @DisplayName("Only the chosen creature can change control after the flip")
+    void onlyChosenCreatureCanChangeControl() {
+        harness.addToBattlefield(player1, new RiskyMove());
+        Permanent chosen = harness.addToBattlefieldAndReturn(player2, new ElvishWarrior());
+        Permanent unchosen = harness.addToBattlefieldAndReturn(player2, new ElvishWarrior());
+        Permanent opponentsCreature = harness.addToBattlefieldAndReturn(player1, new ElvishWarrior());
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+        harness.handlePermanentChosen(player2, chosen.getId());
+
         assertThat(gameLogContains("coin flip for Risky Move")).isTrue();
+        boolean won = gameLogContains("wins the coin flip for Risky Move");
+        assertThat(gd.playerBattlefields.get(won ? player2.getId() : player1.getId())).contains(chosen);
+        assertThat(gd.playerBattlefields.get(won ? player1.getId() : player2.getId())).doesNotContain(chosen);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(unchosen);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(opponentsCreature);
+    }
+
+    @Test
+    @DisplayName("The control-change trigger resolves even after Risky Move leaves")
+    void controlChangeTriggerSurvivesSourceLeaving() {
+        Permanent riskyMove = harness.addToBattlefieldAndReturn(player1, new RiskyMove());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new ElvishWarrior());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(riskyMove);
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToGraveyard(gd, riskyMove));
+        resolveAllTriggers();
+
+        assertThat(gameLogContains("coin flip for Risky Move")).isTrue();
+        boolean won = gameLogContains("wins the coin flip for Risky Move");
+        assertThat(gd.playerBattlefields.get(won ? player2.getId() : player1.getId())).contains(creature);
+        assertThat(gd.playerBattlefields.get(won ? player1.getId() : player2.getId())).doesNotContain(creature);
+        harness.assertInGraveyard(player1, "Risky Move");
     }
 }
