@@ -57,6 +57,30 @@ class SereneHeartTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Hall of Gemstone");
     }
 
+    @Test
+    @DisplayName("Destroys multiple Auras attached to the same creature without destroying it")
+    void destroysMultipleAurasOnSameCreature() {
+        Permanent mantis = addCreatureReady(player1, new GiantMantis());
+        attachAura(player1, new FavorableDestiny(), mantis);
+        attachAura(player2, new Pacifism(), mantis);
+
+        castSereneHeart();
+
+        harness.assertNotOnBattlefield(player1, "Favorable Destiny");
+        harness.assertNotOnBattlefield(player2, "Pacifism");
+        harness.assertInGraveyard(player1, "Favorable Destiny");
+        harness.assertInGraveyard(player2, "Pacifism");
+        harness.assertOnBattlefield(player1, "Giant Mantis");
+    }
+
+    @Test
+    @DisplayName("Resolves without targets when the battlefield is empty")
+    void resolvesOnEmptyBattlefield() {
+        castSereneHeart();
+
+        harness.assertInGraveyard(player1, "Serene Heart");
+    }
+
     private void castSereneHeart() {
         harness.castFromHand(player1, new SereneHeart(), "{1}{G}");
         harness.passBothPriorities();
