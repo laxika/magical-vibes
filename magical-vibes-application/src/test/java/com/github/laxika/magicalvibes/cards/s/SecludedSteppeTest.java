@@ -67,6 +67,43 @@ class SecludedSteppeTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
     }
 
+    @Test
+    @DisplayName("A newly played tapped Steppe cannot produce mana")
+    void tappedSteppeCannotProduceMana() {
+        harness.setHand(player1, List.of(new SecludedSteppe()));
+        harness.playLand(player1, 0);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Cycling pays mana and discards immediately but draws only on resolution")
+    void cyclingPaysCostsBeforeDrawing() {
+        SecludedSteppe steppe = new SecludedSteppe();
+        GlorySeeker drawnCard = new GlorySeeker();
+        harness.setHand(player1, List.of(steppe));
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(steppe);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addLandReady(Player player) {
         Permanent land = harness.addToBattlefieldAndReturn(player, new SecludedSteppe());
         land.setSummoningSick(false);
