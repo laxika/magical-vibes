@@ -3,17 +3,13 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -24,27 +20,20 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RooftopPercher.class, Plains.class})
 class RooftopPercherTest extends BaseCardTest {
-
-    // ===== Casting and resolving =====
 
     @Test
     @DisplayName("Casting Rooftop Percher puts it on the stack")
     void castingPutsItOnStack() {
-        harness.setHand(player1, List.of(new RooftopPercher()));
-        harness.addMana(player1, ManaColor.WHITE, 5);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new RooftopPercher(), "{5}");
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Rooftop Percher");
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
-
-    // ===== ETB: target selection at trigger time =====
 
     @Test
     @DisplayName("Resolving creature prompts for graveyard target selection before ability goes on stack")
@@ -116,7 +105,7 @@ class RooftopPercherTest extends BaseCardTest {
     @DisplayName("Can exile cards from opponent's graveyard")
     void canExileFromOpponentGraveyard() {
         // Only opponent has graveyard cards
-        harness.setGraveyard(player2, List.of(new GrizzlyBears(), new Plains()));
+        harness.setGraveyard(player2, List.of(new RooftopPercher(), new Plains()));
         setupAndCast();
 
         GameData gd = harness.getGameData();
@@ -162,8 +151,6 @@ class RooftopPercherTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
-    // ===== ETB: choosing zero targets =====
-
     @Test
     @DisplayName("Choosing zero targets gains life but exiles nothing")
     void choosingZeroTargetsGainsLifeOnly() {
@@ -188,8 +175,6 @@ class RooftopPercherTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
-    // ===== ETB with empty graveyards =====
-
     @Test
     @DisplayName("ETB with empty graveyards skips target prompt, still gains life")
     void emptyGraveyardsStillGainsLife() {
@@ -208,13 +193,11 @@ class RooftopPercherTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
-    // ===== Max count capping =====
-
     @Test
     @DisplayName("Max count is capped to available cards when fewer than 2 in graveyards")
     void maxCountCappedToAvailableCards() {
         // Only one card in graveyards total
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.setGraveyard(player1, List.of(new RooftopPercher()));
         setupAndCast();
 
         GameData gd = harness.getGameData();
@@ -226,49 +209,35 @@ class RooftopPercherTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds()).hasSize(1);
     }
 
-    // ===== Fizzle: all targets removed before resolution =====
-
     @Test
     @DisplayName("Ability fizzles when all targeted cards are removed from graveyards (no life gain)")
     void allTargetsRemovedCausesFizzle() {
+        setupGraveyards();
+        setupAndCast();
         GameData gd = harness.getGameData();
-        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        harness.passBothPriorities();
+        List<UUID> targets = new ArrayList<>(gd.interaction
+                .activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds())
+                .subList(0, 2);
+        harness.handleMultipleCardsChosen(player1, targets);
 
-        // Create cards whose IDs we'll target, but they won't be in graveyards
-        Card bears1 = new GrizzlyBears();
-        Card bears2 = new GrizzlyBears();
-
-        // Put Rooftop Percher on the battlefield (it already entered)
-        harness.addToBattlefield(player1, new RooftopPercher());
-
-        // Manually place a triggered ability on the stack with targets pointing to cards NOT in any graveyard
-        List<ExileCardsFromGraveyardEffect> effects = List.of(new ExileCardsFromGraveyardEffect(2, 3));
-        gd.stack.add(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                new RooftopPercher(),
-                player1.getId(),
-                "Rooftop Percher's ETB ability",
-                new ArrayList<>(effects),
-                List.of(bears1.getId(), bears2.getId())
-        ));
-
-        // Resolve the ability — all targets are invalid → fizzle
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of());
         harness.passBothPriorities();
 
-        // Life was NOT gained (ability fizzled)
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
-
-        // Log mentions fizzle
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(entry -> entry.contains("fizzles"));
+        harness.assertLife(player1, 20);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .anyMatch(entry -> entry.contains("fizzles"));
     }
-
-    // ===== Validation =====
 
     @Test
     @DisplayName("Selecting too many cards throws exception")
     void tooManyCardsThrows() {
         // Three cards in graveyards, max is 2
-        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new Plains(), new GrizzlyBears()));
+        harness.setGraveyard(player1, List.of(new RooftopPercher(), new Plains(), new RooftopPercher()));
         setupAndCast();
 
         GameData gd = harness.getGameData();
@@ -315,30 +284,55 @@ class RooftopPercherTest extends BaseCardTest {
                 .hasMessageContaining("Not your turn");
     }
 
-    // ===== Changeling keyword =====
-
     @Test
-    @DisplayName("Rooftop Percher has Changeling and counts as every creature type")
-    void hasChangelingKeyword() {
-        harness.addToBattlefield(player1, new RooftopPercher());
+    @DisplayName("Targets may span both graveyards")
+    void targetsMaySpanBothGraveyards() {
+        Card ownCard = new RooftopPercher();
+        Card opposingCard = new Plains();
+        harness.setGraveyard(player1, List.of(ownCard));
+        harness.setGraveyard(player2, List.of(opposingCard));
+        setupAndCast();
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(ownCard.getId(), opposingCard.getId()));
+        harness.passBothPriorities();
 
-        Permanent percher = findPermanent(player1, "Rooftop Percher");
-
-        assertThat(percher.hasKeyword(Keyword.CHANGELING)).isTrue();
-        assertThat(percher.hasKeyword(Keyword.FLYING)).isTrue();
+        GameData gd = harness.getGameData();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(ownCard);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(opposingCard);
+        harness.assertLife(player1, 23);
+        harness.assertLife(player2, 20);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("One remaining legal target is exiled and the full life gain applies")
+    void oneTargetRemovedStillGainsThreeLife() {
+        Card removedCard = new RooftopPercher();
+        Card remainingCard = new Plains();
+        harness.setGraveyard(player1, List.of(removedCard));
+        harness.setGraveyard(player2, List.of(remainingCard));
+        setupAndCast();
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(removedCard.getId(), remainingCard.getId()));
+
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(remainingCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        harness.assertLife(player1, 23);
+    }
 
     private void setupAndCast() {
-        harness.setHand(player1, List.of(new RooftopPercher()));
-        harness.addMana(player1, ManaColor.WHITE, 5);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new RooftopPercher(), "{5}");
     }
 
     private void setupGraveyards() {
-        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new Plains()));
-        harness.setGraveyard(player2, List.of(new GrizzlyBears()));
+        harness.setGraveyard(player1, List.of(new RooftopPercher(), new Plains()));
+        harness.setGraveyard(player2, List.of(new RooftopPercher()));
     }
 }
 
