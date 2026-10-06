@@ -114,6 +114,47 @@ class SeaSniddTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("A summoning-sick Sea Snidd cannot pay the tap cost")
+    void cannotActivateWhileSummoningSick() {
+        harness.addToBattlefield(player1, new SeaSnidd());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new RithsGrove());
+        harness.forceActivePlayer(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, land.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped Sea Snidd cannot activate again")
+    void cannotActivateWhileTapped() {
+        Permanent seaSnidd = addCreatureReady(player1, new SeaSnidd());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new RithsGrove());
+        seaSnidd.setTapped(true);
+        harness.forceActivePlayer(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, land.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("No land type is chosen if the target leaves before resolution")
+    void targetLeavingBeforeResolutionPreventsChoice() {
+        addCreatureReady(player1, new SeaSnidd());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new RithsGrove());
+        harness.forceActivePlayer(player1);
+        harness.activateAbility(player1, 0, null, land.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(land);
+        gd.playerHands.get(player1.getId()).add(land.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNull();
+    }
+
     private Permanent becomeIsland(com.github.laxika.magicalvibes.model.Player player) {
         addCreatureReady(player, new SeaSnidd());
         Permanent land = harness.addToBattlefieldAndReturn(player, new RithsGrove());
