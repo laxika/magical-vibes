@@ -145,6 +145,76 @@ class RuneOfProtectionWhiteTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A second damage event from the chosen source is not prevented")
+    void secondDamageEventIsNotPrevented() {
+        harness.setLife(player1, 20);
+        addReadyRune(player1);
+        Permanent whiteSource = addReadyWhiteCreature(player2);
+        Permanent study = harness.addToBattlefieldAndReturn(player2, new HermeticStudy());
+        study.setAttachedTo(whiteSource.getId());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, whiteSource.getId());
+
+        harness.activateAbility(player2, 0, 0, null, player1.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player1, 20);
+
+        whiteSource.setTapped(false);
+        harness.activateAbility(player2, 0, 0, null, player1.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player1, 19);
+    }
+
+    @Test
+    @DisplayName("Damage to another player does not consume the prevention shield")
+    void damageToAnotherPlayerDoesNotConsumeShield() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        addReadyRune(player1);
+        Permanent whiteSource = addReadyWhiteCreature(player2);
+        Permanent study = harness.addToBattlefieldAndReturn(player2, new HermeticStudy());
+        study.setAttachedTo(whiteSource.getId());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, whiteSource.getId());
+
+        harness.activateAbility(player2, 0, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player2, 19);
+
+        whiteSource.setTapped(false);
+        harness.activateAbility(player2, 0, 0, null, player1.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("A departed white source referenced by a spell on the stack can be chosen")
+    void canChooseDepartedSourceReferencedByStackSpell() {
+        addReadyRune(player1);
+        Permanent whiteSource = addReadyWhiteCreature(player2);
+        harness.setHand(player2, List.of(new HealingSalve()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.castModalInstant(player2, 0, 1, List.of(whiteSource.getId()));
+
+        gd.playerBattlefields.get(player2.getId()).remove(whiteSource);
+        gd.playerGraveyards.get(player2.getId()).add(whiteSource.getCard());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validPermanentIds()).containsAnyOf(whiteSource.getId(), whiteSource.getCard().getId());
+    }
+
+    @Test
     @DisplayName("The prevention shield expires at the end of the turn")
     void shieldClearedAtEndOfTurn() {
         addReadyRune(player1);
