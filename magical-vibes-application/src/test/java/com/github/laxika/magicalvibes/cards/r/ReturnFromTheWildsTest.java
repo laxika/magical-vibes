@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -48,6 +47,32 @@ class ReturnFromTheWildsTest extends BaseCardTest {
         assertThat(findPermanent(player1, "Food").getCard().isToken()).isTrue();
     }
 
+    @Test
+    void failingToFindLandStillCreatesHuman() {
+        cast(0, 1);
+        harness.handleCardChosen(player1, -1);
+
+        harness.assertNotOnBattlefield(player1, "Forest");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(countPermanents(player1, "Human")).isEqualTo(1);
+        harness.assertNotOnBattlefield(player1, "Food");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void emptyLibraryStillCreatesFood() {
+        harness.setHand(player1, List.of(new ReturnFromTheWilds()));
+        harness.setLibrary(player1, List.of());
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.castModalSorceryWithModes(player1, 0, 2, new int[]{0, 2}, List.of());
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Food")).isEqualTo(1);
+        harness.assertNotOnBattlefield(player1, "Human");
+        harness.assertNotOnBattlefield(player1, "Forest");
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void cast(int... modes) {
         harness.setHand(player1, List.of(new ReturnFromTheWilds()));
         harness.setLibrary(player1, List.of(new Forest()));
@@ -57,7 +82,6 @@ class ReturnFromTheWildsTest extends BaseCardTest {
     }
 
     private void chooseForest() {
-        harness.getGameService().handleInteractionAnswer(
-                gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
     }
 }
