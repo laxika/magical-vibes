@@ -12,16 +12,17 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({SlickshotShowOff.class, Shock.class, GrizzlyBears.class})
 class SlickshotShowOffTest extends BaseCardTest {
 
     private Permanent addShowOff() {
-        harness.addToBattlefield(player1, new SlickshotShowOff());
+        Permanent showOff = harness.addToBattlefieldAndReturn(player1, new SlickshotShowOff());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        return gd.playerBattlefields.get(player1.getId()).getFirst();
+        return showOff;
     }
 
     @Test
@@ -33,7 +34,7 @@ class SlickshotShowOffTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, showOff)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, showOff)).isEqualTo(2);
@@ -72,5 +73,127 @@ class SlickshotShowOffTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(showOff);
         assertThat(gd.plottedCardIds).contains(showOff.getId());
+    }
+
+    @Test
+    void multipleNoncreatureSpellsGiveCumulativeBoosts() {
+        Permanent showOff = addShowOff();
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+        harness.castInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, showOff)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, showOff)).isEqualTo(2);
+    }
+
+    @Test
+    void opponentsNoncreatureSpellDoesNotPump() {
+        Permanent showOff = addShowOff();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.passPriority(player1);
+
+        harness.castInstant(player2, 0, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, showOff)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, showOff)).isEqualTo(2);
+    }
+
+    @Test
+    void boostResolvesBeforeTheSpellThatTriggeredIt() {
+        Permanent showOff = addShowOff();
+        Shock shock = new Shock();
+        harness.setHand(player1, List.of(shock));
+        harness.addMana(player1, ManaColor.RED, 1);
+        int lifeBefore = gd.getLife(player2.getId());
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, showOff)).isEqualTo(3);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore);
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 2);
+    }
+
+    @Test
+    void plottedCardCanBeCastForFreeOnlyOnALaterTurn() {
+        SlickshotShowOff showOff = new SlickshotShowOff();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(showOff));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castWithAlternateCost(player1, 0, List.of());
+
+        harness.assertNotInHand(player1, "Slickshot Show-Off");
+        harness.assertNotOnBattlefield(player1, "Slickshot Show-Off");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThatThrownBy(() -> harness.castFromExile(player1, showOff.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.setHand(player2, List.of());
+        assertThatThrownBy(() -> harness.castFromExile(player1, showOff.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.castFromExile(player1, showOff.getId());
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Slickshot Show-Off");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(showOff);
+    }
+
+    @Test
+    void plottingIsUnavailableOutsideAMainPhase() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.setHand(player1, List.of(new SlickshotShowOff()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castWithAlternateCost(player1, 0, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Slickshot Show-Off");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void plottingDoesNotTriggerAnotherShowOff() {
+        Permanent battlefieldShowOff = addShowOff();
+        harness.setHand(player1, List.of(new SlickshotShowOff()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castWithAlternateCost(player1, 0, List.of());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, battlefieldShowOff)).isEqualTo(1);
+    }
+
+    @Test
+    void plottingIsUnavailableWhileASpellIsOnTheStack() {
+        addShowOff();
+        harness.setHand(player1, List.of(new Shock(), new SlickshotShowOff()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, player2.getId());
+
+        assertThatThrownBy(() -> harness.castWithAlternateCost(player1, 0, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Slickshot Show-Off");
+        resolveAllTriggers();
     }
 }
