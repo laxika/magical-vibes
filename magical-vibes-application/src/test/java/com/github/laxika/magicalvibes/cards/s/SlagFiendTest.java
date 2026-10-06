@@ -1,14 +1,13 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.d.DarksteelAxe;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.PorcelainLegionnaire;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,9 +16,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SlagFiend.class, Sickleslicer.class, Plains.class, PorcelainLegionnaire.class})
 class SlagFiendTest extends BaseCardTest {
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting Slag Fiend puts it on the stack")
@@ -31,7 +29,7 @@ class SlagFiendTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Slag Fiend");
+        assertThat(gd.stack.getFirst().getCard()).isInstanceOf(SlagFiend.class);
     }
 
     @Test
@@ -61,12 +59,10 @@ class SlagFiendTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Slag Fiend");
     }
 
-    // ===== Dynamic power/toughness =====
-
     @Test
     @DisplayName("Slag Fiend is 0/0 with no artifact cards in any graveyard")
     void isZeroZeroWithEmptyGraveyards() {
-        Permanent perm = addSlagFiendReady(player1);
+        Permanent perm = harness.addToBattlefieldAndReturn(player1, new SlagFiend());
 
         assertThat(gqs.getEffectivePower(gd, perm)).isEqualTo(0);
         assertThat(gqs.getEffectiveToughness(gd, perm)).isEqualTo(0);
@@ -75,7 +71,7 @@ class SlagFiendTest extends BaseCardTest {
     @Test
     @DisplayName("Slag Fiend P/T equals number of artifact cards in controller's graveyard")
     void ptEqualsArtifactCountInOwnGraveyard() {
-        Permanent perm = addSlagFiendReady(player1);
+        Permanent perm = harness.addToBattlefieldAndReturn(player1, new SlagFiend());
         harness.setGraveyard(player1, createArtifactCards(3));
 
         assertThat(gqs.getEffectivePower(gd, perm)).isEqualTo(3);
@@ -85,7 +81,7 @@ class SlagFiendTest extends BaseCardTest {
     @Test
     @DisplayName("Slag Fiend P/T counts artifact cards in ALL graveyards")
     void ptCountsAllGraveyards() {
-        Permanent perm = addSlagFiendReady(player1);
+        Permanent perm = harness.addToBattlefieldAndReturn(player1, new SlagFiend());
         harness.setGraveyard(player1, createArtifactCards(2));
         harness.setGraveyard(player2, createArtifactCards(3));
 
@@ -96,12 +92,12 @@ class SlagFiendTest extends BaseCardTest {
     @Test
     @DisplayName("Slag Fiend only counts artifact cards, not non-artifact cards")
     void onlyCountsArtifactCards() {
-        Permanent perm = addSlagFiendReady(player1);
+        Permanent perm = harness.addToBattlefieldAndReturn(player1, new SlagFiend());
 
         List<Card> graveyard = new ArrayList<>();
         graveyard.addAll(createArtifactCards(2));
         graveyard.add(new Plains());
-        graveyard.add(new GrizzlyBears());
+        graveyard.add(new SlagFiend());
         harness.setGraveyard(player1, graveyard);
 
         assertThat(gqs.getEffectivePower(gd, perm)).isEqualTo(2);
@@ -111,13 +107,13 @@ class SlagFiendTest extends BaseCardTest {
     @Test
     @DisplayName("Slag Fiend P/T updates when artifacts are added to graveyard")
     void ptUpdatesWhenArtifactsAddedToGraveyard() {
-        Permanent perm = addSlagFiendReady(player1);
+        Permanent perm = harness.addToBattlefieldAndReturn(player1, new SlagFiend());
         harness.setGraveyard(player1, createArtifactCards(1));
 
         assertThat(gqs.getEffectivePower(gd, perm)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, perm)).isEqualTo(1);
 
-        gd.playerGraveyards.get(player1.getId()).add(new DarksteelAxe());
+        gd.playerGraveyards.get(player1.getId()).add(new Sickleslicer());
 
         assertThat(gqs.getEffectivePower(gd, perm)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, perm)).isEqualTo(2);
@@ -126,11 +122,11 @@ class SlagFiendTest extends BaseCardTest {
     @Test
     @DisplayName("Slag Fiend P/T counts artifact creatures (they are artifacts)")
     void ptCountsArtifactCreatures() {
-        Permanent perm = addSlagFiendReady(player1);
+        Permanent perm = harness.addToBattlefieldAndReturn(player1, new SlagFiend());
 
         List<Card> graveyard = new ArrayList<>();
-        graveyard.add(new Sickleslicer()); // Artifact creature (equipment with living weapon)
-        graveyard.add(new DarksteelAxe()); // Pure artifact
+        graveyard.add(new PorcelainLegionnaire());
+        graveyard.add(new Sickleslicer());
         harness.setGraveyard(player1, graveyard);
 
         assertThat(gqs.getEffectivePower(gd, perm)).isEqualTo(2);
@@ -140,27 +136,53 @@ class SlagFiendTest extends BaseCardTest {
     @Test
     @DisplayName("Slag Fiend P/T counts opponent's graveyard artifacts too")
     void ptCountsOpponentsGraveyard() {
-        Permanent perm = addSlagFiendReady(player1);
+        Permanent perm = harness.addToBattlefieldAndReturn(player1, new SlagFiend());
         harness.setGraveyard(player2, createArtifactCards(4));
 
         assertThat(gqs.getEffectivePower(gd, perm)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, perm)).isEqualTo(4);
     }
 
-    // ===== Helper methods =====
+    @Test
+    @DisplayName("Slag Fiend shrinks when artifact cards leave either graveyard")
+    void ptUpdatesWhenArtifactsLeaveGraveyards() {
+        harness.setGraveyard(player1, createArtifactCards(2));
+        harness.setGraveyard(player2, createArtifactCards(3));
+        Permanent perm = harness.addToBattlefieldAndReturn(player1, new SlagFiend());
 
-    private Permanent addSlagFiendReady(Player player) {
-        SlagFiend card = new SlagFiend();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        assertThat(gqs.getEffectivePower(gd, perm)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, perm)).isEqualTo(5);
+
+        harness.setGraveyard(player1, List.of());
+        assertThat(gqs.getEffectivePower(gd, perm)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, perm)).isEqualTo(3);
+
+        harness.setGraveyard(player2, createArtifactCards(1));
+        assertThat(gqs.getEffectivePower(gd, perm)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, perm)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Slag Fiend defines its power and toughness in hand and graveyard")
+    void characteristicAbilityWorksOutsideBattlefield() {
+        SlagFiend fiend = new SlagFiend();
+        harness.setHand(player1, List.of(fiend));
+        harness.setGraveyard(player1, createArtifactCards(2));
+        harness.setGraveyard(player2, createArtifactCards(1));
+
+        assertThat(gqs.getEffectiveCardPower(gd, fiend)).isEqualTo(3);
+        assertThat(gqs.getEffectiveCardToughness(gd, fiend)).isEqualTo(3);
+
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of(fiend));
+        assertThat(gqs.getEffectiveCardPower(gd, fiend)).isEqualTo(1);
+        assertThat(gqs.getEffectiveCardToughness(gd, fiend)).isEqualTo(1);
     }
 
     private List<Card> createArtifactCards(int count) {
         List<Card> artifacts = new ArrayList<>();
         for (int i = 0; i < count; i++) {
-            artifacts.add(new DarksteelAxe());
+            artifacts.add(new Sickleslicer());
         }
         return artifacts;
     }
