@@ -14,8 +14,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SerpentGenerator.class})
+@CardUsed({SerpentGenerator.class, Delirium.class, PitScorpion.class})
 class SerpentGeneratorTest extends BaseCardTest {
 
     private Permanent addReadyGenerator() {
@@ -57,6 +58,7 @@ class SerpentGeneratorTest extends BaseCardTest {
         token.setAttacking(true);
 
         resolveCombat();
+        harness.passBothPriorities();
 
         assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(1);
     }
@@ -87,7 +89,7 @@ class SerpentGeneratorTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(PitScorpion.class)
+    @CardUsed({SerpentGenerator.class, PitScorpion.class})
     @DisplayName("The created Snake token does not give poison when it deals damage to a creature")
     void snakeTokenDoesNotGivePoisonWhenBlocked() {
         Permanent token = createSnakeToken();
@@ -101,4 +103,61 @@ class SerpentGeneratorTest extends BaseCardTest {
 
         assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isZero();
     }
+
+    @Test
+    @DisplayName("A newly controlled noncreature Generator can activate immediately")
+    void newlyControlledGeneratorCanActivate() {
+        harness.addToBattlefield(player1, new SerpentGenerator());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Snake")).isEqualTo(1);
+        assertThat(findPermanent(player1, "Snake").isSummoningSick()).isTrue();
+        assertThat(findPermanent(player1, "Snake").isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Activation requires all four mana")
+    void cannotActivateWithInsufficientMana() {
+        Permanent generator = addReadyGenerator();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(generator.isTapped()).isFalse();
+        assertThat(countPermanents(player1, "Snake")).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("A tapped Generator cannot activate again even with enough mana")
+    void cannotActivateTappedGenerator() {
+        createSnakeToken();
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(countPermanents(player1, "Snake")).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("The activated ability creates its token even after the Generator leaves")
+    void abilityResolvesWithoutGenerator() {
+        Permanent generator = addReadyGenerator();
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.activateAbility(player1, 0, null, null);
+        gd.playerBattlefields.get(player1.getId()).remove(generator);
+        gd.playerGraveyards.get(player1.getId()).add(generator.getCard());
+
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Snake")).isEqualTo(1);
+        assertThat(countPermanents(player1, "Serpent Generator")).isZero();
+    }
+
 }
