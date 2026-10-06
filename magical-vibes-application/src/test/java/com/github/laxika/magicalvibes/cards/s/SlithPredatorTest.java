@@ -66,4 +66,44 @@ class SlithPredatorTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
         assertThat(predator.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
+
+    @Test
+    @DisplayName("Gets exactly one counter when dealing multiple combat damage to a player")
+    void getsOneCounterRegardlessOfDamageAmount() {
+        Permanent predator = addCreatureReady(player1, new SlithPredator());
+        predator.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat();
+
+        harness.assertLife(player2, 17);
+        assertThat(predator.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+
+        harness.passBothPriorities();
+
+        assertThat(predator.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Trample damage to a player triggers a counter after combat damage")
+    void getsCounterFromTrampleDamage() {
+        Permanent predator = addCreatureReady(player1, new SlithPredator());
+        predator.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        Permanent blocker = addCreatureReady(player2, new OmegaMyr());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+        harness.handleCombatDamageAssigned(player1, 0,
+                Map.of(blocker.getId(), 2, player2.getId(), 1));
+
+        harness.assertLife(player2, 19);
+        harness.assertInGraveyard(player2, "Omega Myr");
+        assertThat(predator.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+
+        harness.passBothPriorities();
+
+        assertThat(predator.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
 }
