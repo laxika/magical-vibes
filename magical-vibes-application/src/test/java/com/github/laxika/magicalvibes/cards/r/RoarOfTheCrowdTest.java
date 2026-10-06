@@ -30,8 +30,7 @@ class RoarOfTheCrowdTest extends BaseCardTest {
         harness.setLife(player2, 20);
         handSpellAndMana();
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleListChoice(player1, CardSubtype.KITHKIN.name());
 
         harness.assertLife(player2, 18);
@@ -46,8 +45,7 @@ class RoarOfTheCrowdTest extends BaseCardTest {
         handSpellAndMana();
 
         UUID targetId = harness.getPermanentId(player2, "Burrenton Bombardier");
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetId);
         harness.handleListChoice(player1, CardSubtype.KITHKIN.name());
 
         harness.assertNotOnBattlefield(player2, "Burrenton Bombardier");
@@ -61,8 +59,7 @@ class RoarOfTheCrowdTest extends BaseCardTest {
         harness.setLife(player2, 20);
         handSpellAndMana();
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleListChoice(player1, CardSubtype.GOBLIN.name());
 
         harness.assertLife(player2, 20);
@@ -75,8 +72,7 @@ class RoarOfTheCrowdTest extends BaseCardTest {
         harness.setLife(player2, 20);
         handSpellAndMana();
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleListChoice(player1, CardSubtype.KITHKIN.name());
 
         harness.assertLife(player2, 20);
@@ -89,8 +85,7 @@ class RoarOfTheCrowdTest extends BaseCardTest {
         harness.setLife(player2, 20);
         handSpellAndMana();
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleListChoice(player1, CardSubtype.GOBLIN.name());
 
         harness.assertLife(player2, 19);
@@ -103,10 +98,39 @@ class RoarOfTheCrowdTest extends BaseCardTest {
         harness.setLife(player2, 20);
         handSpellAndMana();
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleListChoice(player1, CardSubtype.FAERIE.name());
 
         harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Can target its controller and counts each matching permanent only once")
+    void canDamageControllerWithMixedMatchingPermanents() {
+        harness.addToBattlefield(player1, new Bitterblossom());
+        harness.addToBattlefield(player1, new MothdustChangeling());
+        harness.addToBattlefield(player1, new BurrentonBombardier());
+        harness.setLife(player1, 20);
+        handSpellAndMana();
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+        harness.handleListChoice(player1, CardSubtype.FAERIE.name());
+
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("Counts permanents present at resolution rather than at casting")
+    void countsPermanentsAtResolution() {
+        harness.addToBattlefield(player1, new BurrentonBombardier());
+        harness.setLife(player2, 20);
+        handSpellAndMana();
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.addToBattlefield(player1, new BurrentonBombardier());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, CardSubtype.SOLDIER.name());
+
+        harness.assertLife(player2, 18);
     }
 }
