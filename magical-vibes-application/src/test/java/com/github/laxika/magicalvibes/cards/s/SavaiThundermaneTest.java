@@ -3,6 +3,9 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.c.Censor;
 import com.github.laxika.magicalvibes.cards.c.Compulsion;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AlmightyBrushwagg;
+import com.github.laxika.magicalvibes.cards.h.HeartlessAct;
+import com.github.laxika.magicalvibes.cards.m.MemoryLeak;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,7 +18,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SavaiThundermane.class, Censor.class, Compulsion.class, GrizzlyBears.class})
+@CardUsed({SavaiThundermane.class, Censor.class, Compulsion.class, GrizzlyBears.class,
+        AlmightyBrushwagg.class, HeartlessAct.class, MemoryLeak.class})
 class SavaiThundermaneTest extends BaseCardTest {
 
     @Test
@@ -40,9 +44,7 @@ class SavaiThundermaneTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(2);
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         harness.assertLife(player1, 20);
-        while (!gd.stack.isEmpty()) {
-            harness.passBothPriorities();
-        }
+        resolveAllTriggers();
 
         harness.assertLife(player1, 22);
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
@@ -66,9 +68,7 @@ class SavaiThundermaneTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, false);
-        while (!gd.stack.isEmpty()) {
-            harness.passBothPriorities();
-        }
+        resolveAllTriggers();
 
         harness.assertLife(player1, 20);
         harness.assertOnBattlefield(player2, "Grizzly Bears");
@@ -92,5 +92,78 @@ class SavaiThundermaneTest extends BaseCardTest {
         harness.assertLife(player1, 20);
         harness.assertInGraveyard(player1, "Censor");
         harness.assertInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Opponent cycling does not trigger Savai Thundermane")
+    void opponentCyclingDoesNotTrigger() {
+        harness.addToBattlefield(player1, new SavaiThundermane());
+        harness.setHand(player2, List.of(new MemoryLeak()));
+        harness.setLibrary(player2, List.of(new AlmightyBrushwagg()));
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateHandAbility(player2, 0, null);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
+        harness.assertInHand(player2, "Almighty Brushwagg");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Removing the reflexive ability's target prevents life gain")
+    void illegalTargetPreventsLifeGain() {
+        harness.addToBattlefield(player1, new SavaiThundermane());
+        harness.addToBattlefield(player2, new AlmightyBrushwagg());
+        UUID targetId = harness.getPermanentId(player2, "Almighty Brushwagg");
+        harness.setHand(player1, List.of(new MemoryLeak()));
+        harness.setLibrary(player1, List.of(new AlmightyBrushwagg()));
+        harness.setHand(player2, List.of(new HeartlessAct()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, targetId);
+        harness.castInstant(player2, 0, 0, targetId);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Almighty Brushwagg");
+        harness.assertLife(player1, 20);
+        harness.assertInHand(player1, "Almighty Brushwagg");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Payment and the reflexive trigger still work after Savai Thundermane leaves")
+    void sourceRemovedBeforePaymentStillDealsDamageAndGainsLife() {
+        harness.addToBattlefield(player1, new SavaiThundermane());
+        UUID sourceId = harness.getPermanentId(player1, "Savai Thundermane");
+        harness.addToBattlefield(player2, new AlmightyBrushwagg());
+        UUID targetId = harness.getPermanentId(player2, "Almighty Brushwagg");
+        harness.setHand(player1, List.of(new MemoryLeak()));
+        harness.setLibrary(player1, List.of(new AlmightyBrushwagg()));
+        harness.setHand(player2, List.of(new HeartlessAct()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.castInstant(player2, 0, 0, sourceId);
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Savai Thundermane");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, targetId);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Almighty Brushwagg");
+        harness.assertLife(player1, 22);
+        harness.assertInHand(player1, "Almighty Brushwagg");
     }
 }
