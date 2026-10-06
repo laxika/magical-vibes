@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,8 +12,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SkyclaveAerialist.class, SkyclaveInvader.class, Forest.class, GrizzlyBears.class})
+@CardUsed({SkyclaveAerialist.class, SkyclaveInvader.class, Forest.class})
 class SkyclaveAerialistTest extends BaseCardTest {
 
     @Test
@@ -49,7 +49,7 @@ class SkyclaveAerialistTest extends BaseCardTest {
 
     @Test
     void nonlandTopCardGoesDirectlyToHand() {
-        GrizzlyBears topCard = new GrizzlyBears();
+        SkyclaveAerialist topCard = new SkyclaveAerialist();
         harness.setLibrary(player1, List.of(topCard));
         Permanent aerialist = addAerialist();
 
@@ -72,6 +72,76 @@ class SkyclaveAerialistTest extends BaseCardTest {
         assertThat(aerialist.isTransformed()).isTrue();
     }
 
+    @Test
+    void emptyLibraryDoesNotDrawOrOfferAChoice() {
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of());
+        Permanent aerialist = addAerialist();
+
+        transform(aerialist);
+
+        assertThat(aerialist.isTransformed()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void greenManaPaymentDoesNotCostLife() {
+        harness.setLibrary(player1, List.of());
+        Permanent aerialist = addAerialist();
+
+        transform(aerialist);
+
+        assertThat(aerialist.isTransformed()).isTrue();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+    }
+
+    @Test
+    void cannotActivateOutsideMainPhase() {
+        Permanent aerialist = addAerialist();
+        prepareMainPhase();
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.addMana(player1, ManaColor.GREEN, 5);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(aerialist), null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(aerialist.isTransformed()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotActivateWhileStackIsNonempty() {
+        Permanent aerialist = addAerialist();
+        prepareMainPhase();
+        harness.addMana(player1, ManaColor.GREEN, 10);
+        harness.activateAbility(player1, battlefieldIndex(aerialist), null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(aerialist), null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    void transformTriggerStillResolvesAfterSourceLeavesBattlefield() {
+        SkyclaveAerialist topCard = new SkyclaveAerialist();
+        harness.setLibrary(player1, List.of(topCard));
+        Permanent aerialist = addAerialist();
+        prepareMainPhase();
+        harness.addMana(player1, ManaColor.GREEN, 5);
+        harness.activateAbility(player1, battlefieldIndex(aerialist), null, null);
+        harness.passBothPriorities();
+        assertThat(aerialist.isTransformed()).isTrue();
+        assertThat(gd.stack).hasSize(1);
+
+        gd.playerBattlefields.get(player1.getId()).remove(aerialist);
+        gd.playerGraveyards.get(player1.getId()).add(aerialist.getOriginalCard());
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(topCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
     private Permanent addAerialist() {
         return harness.addToBattlefieldAndReturn(player1, new SkyclaveAerialist());
     }
@@ -82,8 +152,7 @@ class SkyclaveAerialistTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.activateAbility(player1, battlefieldIndex(aerialist), null, null);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
     private void prepareMainPhase() {
