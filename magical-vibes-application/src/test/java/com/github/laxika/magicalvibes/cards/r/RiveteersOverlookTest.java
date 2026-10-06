@@ -1,15 +1,16 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CivicGardener;
+import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.j.JetmirsGarden;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -19,7 +20,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RiveteersOverlook.class, Forest.class, GrizzlyBears.class, Mountain.class, Swamp.class})
+@CardUsed({RiveteersOverlook.class, Forest.class, CivicGardener.class, Mountain.class, Swamp.class,
+        Island.class, Plains.class, JetmirsGarden.class})
 class RiveteersOverlookTest extends BaseCardTest {
 
     @Test
@@ -48,7 +50,7 @@ class RiveteersOverlookTest extends BaseCardTest {
         Card swamp = new Swamp();
         Card mountain = new Mountain();
         Card forest = new Forest();
-        setLibrary(swamp, mountain, forest, new GrizzlyBears());
+        setLibrary(swamp, mountain, forest, new CivicGardener(), new Island(), new Plains(), new JetmirsGarden());
 
         resolveToSearchPrompt();
 
@@ -67,16 +69,14 @@ class RiveteersOverlookTest extends BaseCardTest {
         setLibrary(swamp, new Mountain(), new Forest());
 
         resolveToSearchPrompt();
-        GameData gameData = harness.getGameData();
-        harness.getGameService().handleInteractionAnswer(gameData, player1,
-                new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
-        Permanent chosenLand = gameData.playerBattlefields.get(player1.getId()).stream()
+        Permanent chosenLand = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().getId().equals(swamp.getId()))
                 .findFirst().orElseThrow();
         assertThat(chosenLand.isTapped()).isTrue();
         harness.assertLife(player1, 21);
-        assertThat(gameData.interaction.activeInteraction()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test
@@ -84,12 +84,80 @@ class RiveteersOverlookTest extends BaseCardTest {
     void noMatchingLandDoesNotPrompt() {
         harness.setLife(player1, 20);
         playOverlook();
-        setLibrary(new GrizzlyBears());
+        setLibrary(new CivicGardener());
 
         resolveToSearchPrompt();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertLife(player1, 21);
+    }
+
+    @Test
+    void sacrificeQueuesSeparateSearchTrigger() {
+        harness.setLife(player1, 20);
+        setLibrary(new Swamp());
+        playOverlook();
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Riveteers Overlook");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertLife(player1, 20);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNotNull();
+        harness.assertLife(player1, 20);
+        harness.handleCardChosen(player1, 0);
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void failingToFindStillGainsLife() {
+        harness.setLife(player1, 20);
+        Card swamp = new Swamp();
+        setLibrary(swamp);
+        playOverlook();
+        resolveToSearchPrompt();
+
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(swamp);
+        harness.assertNotOnBattlefield(player1, "Swamp");
+        harness.assertLife(player1, 21);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void emptyLibraryStillGainsLife() {
+        harness.setLife(player1, 20);
+        setLibrary();
+        playOverlook();
+
+        resolveToSearchPrompt();
+
+        harness.assertLife(player1, 21);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void sourceLeavingBeforeTriggerResolvesPreventsSearchAndLifeGain() {
+        harness.setLife(player1, 20);
+        setLibrary(new Swamp());
+        playOverlook();
+        Card overlook = gd.playerBattlefields.get(player1.getId()).getFirst().getCard();
+        gd.playerBattlefields.get(player1.getId()).clear();
+        gd.playerGraveyards.get(player1.getId()).add(overlook);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertLife(player1, 20);
+        harness.assertNotOnBattlefield(player1, "Swamp");
     }
 
     private void playOverlook() {
@@ -103,7 +171,6 @@ class RiveteersOverlookTest extends BaseCardTest {
     }
 
     private void setLibrary(Card... cards) {
-        harness.getGameData().playerDecks.get(player1.getId()).clear();
-        harness.getGameData().playerDecks.get(player1.getId()).addAll(List.of(cards));
+        harness.setLibrary(player1, List.of(cards));
     }
 }
