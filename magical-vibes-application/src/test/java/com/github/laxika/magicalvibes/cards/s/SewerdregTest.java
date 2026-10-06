@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Sewerdreg.class, GrizzlyBears.class, Swamp.class})
+@CardUsed({Sewerdreg.class, SellSwordBrute.class, Swamp.class})
 class SewerdregTest extends BaseCardTest {
 
     @Test
@@ -24,7 +23,7 @@ class SewerdregTest extends BaseCardTest {
     void swampwalkPreventsBlockingWithSwamp() {
         Permanent attacker = addCreatureReady(player1, new Sewerdreg());
         attacker.setAttacking(true);
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new SellSwordBrute());
         harness.addToBattlefield(player2, new Swamp());
 
         prepareDeclareBlockers();
@@ -42,7 +41,7 @@ class SewerdregTest extends BaseCardTest {
     void swampwalkAllowsBlockingWithoutSwamp() {
         Permanent attacker = addCreatureReady(player1, new Sewerdreg());
         attacker.setAttacking(true);
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new SellSwordBrute());
 
         prepareDeclareBlockers();
 
@@ -56,7 +55,7 @@ class SewerdregTest extends BaseCardTest {
     @Test
     @DisplayName("Sacrifices itself and exiles a target card from an opponent's graveyard")
     void sacrificesItselfAndExilesCardFromOpponentsGraveyard() {
-        Card target = new GrizzlyBears();
+        Card target = new SellSwordBrute();
         harness.setGraveyard(player2, List.of(target));
         harness.addToBattlefield(player1, new Sewerdreg());
 
@@ -65,28 +64,28 @@ class SewerdregTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Sewerdreg");
         harness.assertInGraveyard(player1, "Sewerdreg");
-        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotInGraveyard(player2, "Sell-Sword Brute");
         assertThat(exiledCards(player2)).contains(target);
     }
 
     @Test
     @DisplayName("Can exile a target card from its controller's graveyard")
     void exilesCardFromOwnGraveyard() {
-        Card target = new GrizzlyBears();
+        Card target = new SellSwordBrute();
         harness.setGraveyard(player1, List.of(target));
         harness.addToBattlefield(player1, new Sewerdreg());
 
         harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId()));
         harness.passBothPriorities();
 
-        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Sell-Sword Brute");
         assertThat(exiledCards(player1)).contains(target);
     }
 
     @Test
     @DisplayName("Still sacrifices itself when the target leaves the graveyard before resolution")
     void sacrificesItselfWhenTargetLeavesBeforeResolution() {
-        Card target = new GrizzlyBears();
+        Card target = new SellSwordBrute();
         harness.setGraveyard(player2, List.of(target));
         harness.addToBattlefield(player1, new Sewerdreg());
 
@@ -96,14 +95,14 @@ class SewerdregTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Sewerdreg");
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Sell-Sword Brute");
         assertThat(exiledCards(player2)).doesNotContain(target);
     }
 
     @Test
     @DisplayName("Cannot target a card that is not in a graveyard")
     void cannotTargetBattlefieldCard() {
-        Card target = new GrizzlyBears();
+        Card target = new SellSwordBrute();
         harness.addToBattlefield(player2, target);
         harness.addToBattlefield(player1, new Sewerdreg());
 
@@ -111,6 +110,91 @@ class SewerdregTest extends BaseCardTest {
                 player1, 0, 0, List.of(target.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("graveyard");
+    }
+
+    @Test
+    @DisplayName("Exiles a land card and sacrifices before resolution even while tapped and summoning sick")
+    void exilesLandWhileTappedAndSummoningSick() {
+        Card target = new Swamp();
+        harness.setGraveyard(player2, List.of(target));
+        harness.addToBattlefield(player1, new Sewerdreg());
+        Permanent source = findPermanent(player1, "Sewerdreg");
+        source.setTapped(true);
+        source.setSummoningSick(true);
+
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId()));
+
+        harness.assertNotOnBattlefield(player1, "Sewerdreg");
+        harness.assertInGraveyard(player1, "Sewerdreg");
+        harness.assertInGraveyard(player2, "Swamp");
+        assertThat(exiledCards(player2)).doesNotContain(target);
+
+        harness.passBothPriorities();
+
+        harness.assertNotInGraveyard(player2, "Swamp");
+        assertThat(exiledCards(player2)).contains(target);
+    }
+
+    @Test
+    @DisplayName("Cannot sacrifice itself without announcing a graveyard target")
+    void cannotActivateWithoutTarget() {
+        harness.addToBattlefield(player1, new Sewerdreg());
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, 0, 0, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Sewerdreg");
+        harness.assertNotInGraveyard(player1, "Sewerdreg");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot target itself before paying its sacrifice cost")
+    void cannotTargetItselfBeforeSacrifice() {
+        Card source = new Sewerdreg();
+        harness.addToBattlefield(player1, source);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, 0, 0, List.of(source.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Sewerdreg");
+        harness.assertNotInGraveyard(player1, "Sewerdreg");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot announce more than one graveyard target")
+    void cannotTargetTwoCards() {
+        Card first = new Swamp();
+        Card second = new Swamp();
+        harness.setGraveyard(player2, List.of(first, second));
+        harness.addToBattlefield(player1, new Sewerdreg());
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, 0, 0, List.of(first.getId(), second.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Sewerdreg");
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(first, second);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A Swamp controlled only by the attacker does not prevent blocking")
+    void attackersSwampDoesNotPreventBlocking() {
+        Permanent attacker = addCreatureReady(player1, new Sewerdreg());
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new SellSwordBrute());
+        harness.addToBattlefield(player1, new Swamp());
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
+
+        assertThat(blocker.isBlocking()).isTrue();
     }
 
     private List<Card> exiledCards(Player player) {
