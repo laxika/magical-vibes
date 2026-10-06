@@ -58,6 +58,44 @@ class SkyskipperDuoTest extends BaseCardTest {
                 .hasMessageContaining("another creature you control");
     }
 
+    @Test
+    void returnsAtOpponentsNextEndStep() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        castSkyskipperDuo(bears);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void returnsToOwnerEvenAfterSkyskipperLeaves() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        gd.stolenCreatures.put(bears.getId(), player2.getId());
+        castSkyskipperDuo(bears);
+        harness.getPermanentRemovalService().removePermanentToGraveyard(
+                gd, findPermanent(player1, "Skyskipper Duo"));
+
+        advanceToEndStep();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void canExileAnotherSkyskipperDuo() {
+        Permanent otherDuo = harness.addToBattlefieldAndReturn(player1, new SkyskipperDuo());
+        castSkyskipperDuo(otherDuo);
+
+        assertThat(countPermanents(player1, "Skyskipper Duo")).isEqualTo(1);
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getId().equals(otherDuo.getCard().getId()));
+    }
     private void castSkyskipperDuo(Permanent target) {
         harness.setHand(player1, List.of(new SkyskipperDuo()));
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -71,7 +109,7 @@ class SkyskipperDuoTest extends BaseCardTest {
     private void advanceToEndStep() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
     }
 }
