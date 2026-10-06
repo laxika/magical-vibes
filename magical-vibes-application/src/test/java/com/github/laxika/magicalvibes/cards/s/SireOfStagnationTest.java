@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LeylineOfSanctity;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -9,12 +10,14 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SireOfStagnation.class, Forest.class, GrizzlyBears.class, Mountain.class})
+@CardUsed({SireOfStagnation.class, Forest.class, GrizzlyBears.class, Mountain.class, LeylineOfSanctity.class})
 class SireOfStagnationTest extends BaseCardTest {
 
     @Test
@@ -64,5 +67,71 @@ class SireOfStagnationTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Player hexproof does not stop the non-targeting land trigger")
+    @CardUsed({SireOfStagnation.class, Forest.class, Mountain.class, LeylineOfSanctity.class})
+    void opponentHexproofDoesNotStopExileOrDraw() {
+        Card firstExiled = new Forest();
+        Card secondExiled = new Mountain();
+        Card firstDrawn = new Forest();
+        Card secondDrawn = new Mountain();
+        harness.addToBattlefield(player1, new SireOfStagnation());
+        harness.addToBattlefield(player2, new LeylineOfSanctity());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(firstDrawn, secondDrawn));
+        harness.setLibrary(player2, List.of(firstExiled, secondExiled));
+
+        harness.enterBattlefieldAndReturn(player2, new Forest());
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(firstExiled, secondExiled);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDrawn, secondDrawn);
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {0, 1})
+    @DisplayName("The controller draws two even when the opponent cannot exile two cards")
+    void shortOpponentLibraryDoesNotPreventDraw(int librarySize) {
+        Card topCard = new Forest();
+        Card firstDrawn = new Forest();
+        Card secondDrawn = new Mountain();
+        harness.addToBattlefield(player1, new SireOfStagnation());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(firstDrawn, secondDrawn));
+        harness.setLibrary(player2, librarySize == 0 ? List.of() : List.of(topCard));
+
+        harness.enterBattlefieldAndReturn(player2, new Forest());
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .containsExactlyElementsOf(librarySize == 0 ? List.of() : List.of(topCard));
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDrawn, secondDrawn);
+    }
+
+    @Test
+    @DisplayName("A land trigger still resolves after Sire of Stagnation leaves the battlefield")
+    void triggerSurvivesSourceLeavingBattlefield() {
+        Card firstExiled = new Forest();
+        Card secondExiled = new Mountain();
+        Card firstDrawn = new Forest();
+        Card secondDrawn = new Mountain();
+        var sire = harness.addToBattlefieldAndReturn(player1, new SireOfStagnation());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(firstDrawn, secondDrawn));
+        harness.setLibrary(player2, List.of(firstExiled, secondExiled));
+
+        harness.enterBattlefieldAndReturn(player2, new Forest());
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(sire);
+        harness.setGraveyard(player1, List.of(sire.getCard()));
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(firstExiled, secondExiled);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDrawn, secondDrawn);
     }
 }
