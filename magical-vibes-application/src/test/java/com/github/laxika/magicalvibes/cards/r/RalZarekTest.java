@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.c.ChanceEncounter;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -9,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RalZarek.class, GrizzlyBears.class, Mountain.class, ChanceEncounter.class})
 class RalZarekTest extends BaseCardTest {
 
     @Test
@@ -104,20 +107,77 @@ class RalZarekTest extends BaseCardTest {
         assertThat(gd.extraTurns).allMatch(id -> id.equals(player1.getId()));
     }
 
+    @Test
+    @DisplayName("+1 still untaps the second target after the first leaves the battlefield")
+    void plusOneUntapsWhenFirstTargetLeaves() {
+        addReadyRal(player1, 4);
+        Permanent toTap = addPermanent(player2, new GrizzlyBears());
+        Permanent toUntap = addPermanent(player1, new Mountain());
+        toUntap.tap();
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(toTap.getId(), toUntap.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(toTap);
+        gd.playerGraveyards.get(player2.getId()).add(toTap.getCard());
+        harness.passBothPriorities();
+
+        assertThat(toUntap.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("+1 still taps the first target after the second leaves the battlefield")
+    void plusOneTapsWhenSecondTargetLeaves() {
+        addReadyRal(player1, 4);
+        Permanent toTap = addPermanent(player2, new GrizzlyBears());
+        Permanent toUntap = addPermanent(player1, new Mountain());
+        toUntap.tap();
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(toTap.getId(), toUntap.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(toUntap);
+        gd.playerGraveyards.get(player1.getId()).add(toUntap.getCard());
+        harness.passBothPriorities();
+
+        assertThat(toTap.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("-2 can damage an opposing planeswalker")
+    void minusTwoDamagesPlaneswalker() {
+        addReadyRal(player1, 4);
+        Permanent opposingRal = harness.addToBattlefieldAndReturn(player2, new RalZarek());
+        opposingRal.setCounterCount(CounterType.LOYALTY, 4);
+
+        harness.activateAbility(player1, 0, 1, null, opposingRal.getId());
+        harness.passBothPriorities();
+
+        assertThat(opposingRal.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Ral Zarek");
+    }
+
+    @Test
+    @DisplayName("-7 coin flips have no winners and do not trigger Chance Encounter")
+    void minusSevenDoesNotTriggerCoinFlipWins() {
+        addReadyRal(player1, 7);
+        Permanent encounter = harness.addToBattlefieldAndReturn(player1, new ChanceEncounter());
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(encounter.getCounterCount(CounterType.LUCK)).isZero();
+    }
+
     private Permanent addReadyRal(Player player, int loyalty) {
-        Permanent perm = new Permanent(new RalZarek());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new RalZarek());
         perm.setCounterCount(CounterType.LOYALTY, loyalty);
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return perm;
     }
 
     private Permanent addPermanent(Player player, Card card) {
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, card);
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }
