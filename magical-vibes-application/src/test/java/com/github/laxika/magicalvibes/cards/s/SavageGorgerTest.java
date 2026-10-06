@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SavageGorger.class, Shock.class})
 class SavageGorgerTest extends BaseCardTest {
 
     @Test
@@ -51,6 +52,59 @@ class SavageGorgerTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    @DisplayName("Multiple life-loss events still produce only one counter at the end step")
+    void multipleLifeLossEventsProduceOneCounter() {
+        Permanent gorger = addReadyGorger();
+        dealDamage(player2);
+        dealDamage(player2);
+
+        advanceToEndStep(player1);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gorger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.passBothPriorities();
+
+        assertThat(gorger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Life lost before Savage Gorger entered still satisfies its condition")
+    void lifeLostBeforeEnteringCounts() {
+        dealDamage(player2);
+        Permanent gorger = addReadyGorger();
+
+        advanceToEndStep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gorger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Savage Gorger does not trigger during the opponent's end step")
+    void doesNotTriggerDuringOpponentEndStep() {
+        Permanent gorger = addReadyGorger();
+        dealDamage(player2);
+
+        advanceToEndStep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gorger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Life lost after the end step begins cannot retroactively trigger Savage Gorger")
+    void lifeLostAfterEndStepBeginsDoesNotTrigger() {
+        Permanent gorger = addReadyGorger();
+        advanceToEndStep(player1);
+        assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
+        assertThat(gd.stack).isEmpty();
+
+        dealDamage(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gorger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
     private Permanent addReadyGorger() {
         Permanent gorger = harness.addToBattlefieldAndReturn(player1, new SavageGorger());
         gorger.setSummoningSick(false);
@@ -60,8 +114,7 @@ class SavageGorgerTest extends BaseCardTest {
     private void dealDamage(Player target) {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 
     private void advanceToEndStep(Player activePlayer) {
