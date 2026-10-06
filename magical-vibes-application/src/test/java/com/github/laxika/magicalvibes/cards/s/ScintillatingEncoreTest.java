@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.d.DoomBlade;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -18,7 +19,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ScintillatingEncore.class, DoomBlade.class, GrizzlyBears.class})
+@CardUsed({ScintillatingEncore.class, DoomBlade.class, GrizzlyBears.class, TurnToFrog.class})
 class ScintillatingEncoreTest extends BaseCardTest {
 
     @Test
@@ -47,8 +48,7 @@ class ScintillatingEncoreTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ScintillatingEncore(), new DoomBlade()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         harness.castInstant(player1, 0, target.getId());
         resolveStack();
@@ -73,11 +73,100 @@ class ScintillatingEncoreTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature you control");
     }
 
+    @Test
+    @DisplayName("Perpetual +2/+0 applies after an effect sets base power and toughness")
+    void perpetualBoostSurvivesBasePowerToughnessOverride() {
+        Permanent target = addCreature(player1);
+        castEncore(target.getId());
+
+        harness.setHand(player1, List.of(new TurnToFrog()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The Encore caster controls the delayed trigger even when the creature has another owner")
+    void casterControlsReturnTriggerForBorrowedCreature() {
+        Permanent target = addCreature(player1);
+        gd.stolenCreatures.put(target.getId(), player2.getId());
+        castEncore(target.getId());
+
+        harness.setHand(player1, List.of(new DoomBlade()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .singleElement().satisfies(returned -> {
+                    assertThat(returned.isTapped()).isTrue();
+                    assertThat(gqs.getEffectivePower(gd, returned)).isEqualTo(4);
+                });
+    }
+
+    @Test
+    @DisplayName("The delayed return has Encore as its source")
+    void encoreIsSourceOfReturnTrigger() {
+        Permanent target = addCreature(player1);
+        castEncore(target.getId());
+
+        harness.setHand(player1, List.of(new DoomBlade()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isInstanceOf(ScintillatingEncore.class);
+        harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("The boost persists but the return expires after the turn")
+    void returnExpiresAtEndOfTurn() {
+        Permanent target = addCreature(player1);
+        castEncore(target.getId());
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+
+        harness.setHand(player1, List.of(new DoomBlade()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("The returned creature does not return again when it dies a second time")
+    void returnedCreatureDoesNotReturnAgain() {
+        Permanent target = addCreature(player1);
+        castEncore(target.getId());
+
+        harness.setHand(player1, List.of(new DoomBlade(), new DoomBlade()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        UUID returnedId = harness.getPermanentId(player1, "Grizzly Bears");
+        harness.castAndResolveInstant(player1, 0, returnedId);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
     private void castEncore(UUID targetId) {
         harness.setHand(player1, List.of(new ScintillatingEncore()));
         harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
     }
 
     private void resolveStack() {
@@ -88,9 +177,8 @@ class ScintillatingEncoreTest extends BaseCardTest {
     }
 
     private Permanent addCreature(Player player) {
-        Permanent permanent = new Permanent(new GrizzlyBears());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new GrizzlyBears());
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 }
