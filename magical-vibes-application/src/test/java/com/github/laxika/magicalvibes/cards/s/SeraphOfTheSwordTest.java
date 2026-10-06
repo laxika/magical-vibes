@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +13,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SeraphOfTheSword.class, SerraAngel.class, Shock.class})
 class SeraphOfTheSwordTest extends BaseCardTest {
 
     @Test
@@ -22,17 +23,12 @@ class SeraphOfTheSwordTest extends BaseCardTest {
         seraph.setBlocking(true);
         seraph.addBlockingTarget(0);
 
-        Permanent attacker = new Permanent(new AirElemental());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player2, new SerraAngel());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player2.getId()).add(attacker);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat(player2);
 
-        // Air Elemental's 4 damage would be lethal to a 3/3, but it is prevented.
+        // Serra Angel's 4 damage would be lethal to a 3/3, but it is prevented.
         harness.assertOnBattlefield(player1, "Seraph of the Sword");
         assertThat(seraph.getMarkedDamage()).isZero();
     }
@@ -44,15 +40,10 @@ class SeraphOfTheSwordTest extends BaseCardTest {
         seraph.setBlocking(true);
         seraph.addBlockingTarget(0);
 
-        Permanent attacker = new Permanent(new AirElemental());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player2, new SerraAngel());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player2.getId()).add(attacker);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat(player2);
 
         // Unlike Fog Bank, only the damage dealt *to* the Seraph is prevented.
         assertThat(attacker.getMarkedDamage()).isEqualTo(3);
@@ -71,5 +62,37 @@ class SeraphOfTheSwordTest extends BaseCardTest {
 
         // Only combat damage is prevented, so Shock's 2 damage is marked normally.
         assertThat(seraph.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Combat damage from a blocker is prevented while Seraph still damages the blocker")
+    void combatDamageToAttackingSeraphIsPrevented() {
+        Permanent seraph = addCreatureReady(player1, new SeraphOfTheSword());
+        Permanent blocker = addCreatureReady(player2, new SerraAngel());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertOnBattlefield(player1, "Seraph of the Sword");
+        assertThat(seraph.getMarkedDamage()).isZero();
+        assertThat(blocker.getMarkedDamage()).isEqualTo(3);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Lethal noncombat damage destroys Seraph of the Sword")
+    void lethalNoncombatDamageIsNotPrevented() {
+        Permanent seraph = addCreatureReady(player2, new SeraphOfTheSword());
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castInstant(player1, 0, seraph.getId());
+        harness.passBothPriorities();
+        harness.castInstant(player1, 0, seraph.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Seraph of the Sword");
+        harness.assertInGraveyard(player2, "Seraph of the Sword");
     }
 }
