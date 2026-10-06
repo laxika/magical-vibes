@@ -102,6 +102,33 @@ class RoninCavekeeperTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, ronin)).isEqualTo(5);
     }
 
+    @Test
+    @DisplayName("Bushido uses the stack and its bonus persists through the end step")
+    void bushidoBonusRequiresResolutionAndLastsThroughEndStep() {
+        Permanent ronin = addReadyRonin(player1);
+        ronin.setAttacking(true);
+        addReadyGodosIrregulars(player2);
+
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            prepareDeclareBlockers();
+            gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(ronin.getPowerModifier()).isZero();
+            assertThat(ronin.getToughnessModifier()).isZero();
+
+            resolveAllTriggers();
+        });
+
+        assertThat(ronin.getPowerModifier()).isEqualTo(2);
+        assertThat(ronin.getToughnessModifier()).isEqualTo(2);
+
+        harness.forceStep(TurnStep.END_STEP);
+
+        assertThat(ronin.getPowerModifier()).isEqualTo(2);
+        assertThat(ronin.getToughnessModifier()).isEqualTo(2);
+    }
+
     private Permanent addReadyRonin(Player player) {
         return addCreatureReady(player, new RoninCavekeeper());
     }
