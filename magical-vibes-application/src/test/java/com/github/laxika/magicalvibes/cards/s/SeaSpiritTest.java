@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(SeaSpirit.class)
+@CardUsed({SeaSpirit.class})
 class SeaSpiritTest extends BaseCardTest {
 
     @Test
@@ -92,9 +92,44 @@ class SeaSpiritTest extends BaseCardTest {
         assertThat(seaSpirit.getPowerModifier()).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(seaSpirit.getPowerModifier()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Activations use the stack and boost only their source")
+    void pendingActivationsBoostOnlyTheirSource() {
+        Permanent source = addCreatureReady(player1, new SeaSpirit());
+        Permanent other = addCreatureReady(player1, new SeaSpirit());
+        Permanent opposing = addCreatureReady(player2, new SeaSpirit());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(source.getPowerModifier()).isZero();
+        harness.passBothPriorities();
+        assertThat(source.getPowerModifier()).isEqualTo(1);
+        harness.passBothPriorities();
+
+        assertThat(source.getPowerModifier()).isEqualTo(2);
+        assertThat(source.getToughnessModifier()).isZero();
+        assertThat(other.getPowerModifier()).isZero();
+        assertThat(opposing.getPowerModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Each activation consumes one blue mana without tapping the creature")
+    void activationConsumesBlueMana() {
+        Permanent seaSpirit = addCreatureReady(player1, new SeaSpirit());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(seaSpirit.isTapped()).isFalse();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(seaSpirit.getPowerModifier()).isEqualTo(1);
     }
 }
