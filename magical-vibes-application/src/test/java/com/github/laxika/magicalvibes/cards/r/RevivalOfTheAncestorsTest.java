@@ -3,7 +3,8 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
+import com.github.laxika.magicalvibes.cards.y.YathanRoadwatcher;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -15,18 +16,12 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RevivalOfTheAncestors.class, GrizzlyBears.class})
+@CardUsed({RevivalOfTheAncestors.class, GrizzlyBears.class, Opalescence.class, YathanRoadwatcher.class})
 class RevivalOfTheAncestorsTest extends BaseCardTest {
 
     @Test
     void chapterICreatesThreeSpiritTokens() {
-        harness.setHand(player1, List.of(new RevivalOfTheAncestors()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new RevivalOfTheAncestors(), "{1}{W}{B}{G}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -35,6 +30,10 @@ class RevivalOfTheAncestorsTest extends BaseCardTest {
                         && permanent.getCard().getName().equals("Spirit"))
                 .count();
         assertThat(spiritCount).isEqualTo(3);
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken()
+                        && permanent.getCard().getName().equals("Spirit")))
+                .allSatisfy(spirit -> assertThat(gqs.hasKeyword(gd, spirit, Keyword.FLYING)).isFalse());
     }
 
     @Test
@@ -79,5 +78,54 @@ class RevivalOfTheAncestorsTest extends BaseCardTest {
                 .contains(Keyword.TRAMPLE, Keyword.LIFELINK);
         assertThat(opponentCreature.getGrantedKeywords())
                 .doesNotContain(Keyword.TRAMPLE, Keyword.LIFELINK);
+    }
+
+    @Test
+    void chapterIICanPutAllThreeCountersOnOneCreature() {
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new RevivalOfTheAncestors());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new YathanRoadwatcher());
+        saga.setCounterCount(CounterType.LORE, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DRAW);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of(creature.getId()));
+        harness.handleListChoice(player1, "3");
+        harness.passBothPriorities();
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    void chapterIICanGiveOneCounterToEachOfThreeCreatures() {
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new RevivalOfTheAncestors());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new YathanRoadwatcher());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new YathanRoadwatcher());
+        Permanent third = harness.addToBattlefieldAndReturn(player1, new YathanRoadwatcher());
+        saga.setCounterCount(CounterType.LORE, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DRAW);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of(first.getId(), second.getId(), third.getId()));
+        harness.handleListChoice(player1, "1");
+        harness.handleListChoice(player1, "1");
+        harness.handleListChoice(player1, "1");
+        harness.passBothPriorities();
+        assertThat(List.of(first, second, third))
+                .allSatisfy(creature -> assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1));
+    }
+
+    @Test
+    void chapterIIIAlsoGrantsKeywordsToTheSagaWhenItIsACreature() {
+        harness.addToBattlefield(player2, new Opalescence());
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new RevivalOfTheAncestors());
+        saga.setCounterCount(CounterType.LORE, 2);
+        assertThat(gqs.isCreature(gd, saga)).isTrue();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DRAW);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(saga.getGrantedKeywords()).contains(Keyword.TRAMPLE, Keyword.LIFELINK);
     }
 }
