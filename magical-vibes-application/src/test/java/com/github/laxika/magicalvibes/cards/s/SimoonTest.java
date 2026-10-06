@@ -65,6 +65,48 @@ class SimoonTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Resolves against an opponent with no creatures without damaging either player")
+    void resolvesAgainstOpponentWithNoCreatures() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        castSimoon(player2.getId());
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Simoon");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot target an opponent's creature directly")
+    void cannotTargetCreature() {
+        Permanent enemyPanther = addCreatureReady(player2, new NoblePanther());
+        harness.setHand(player1, List.of(new Simoon()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, enemyPanther.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Damages creatures that enter after casting but before resolution")
+    void damagesCreaturesPresentAtResolution() {
+        harness.setHand(player1, List.of(new Simoon()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castInstant(player1, 0, player2.getId());
+
+        Permanent latePanther = harness.enterBattlefieldAndReturn(player2, new NoblePanther());
+        harness.passBothPriorities();
+
+        assertThat(latePanther.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Noble Panther");
+        harness.assertInGraveyard(player1, "Simoon");
+    }
+
     private void castSimoon(java.util.UUID targetPlayerId) {
         harness.setHand(player1, List.of(new Simoon()));
         harness.addMana(player1, ManaColor.RED, 1);
