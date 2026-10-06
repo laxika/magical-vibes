@@ -130,11 +130,9 @@ class SamitePilgrimTest extends BaseCardTest {
     void preventsCombatDamageToTargetCreature() {
         Permanent pilgrim = addReadyPilgrim();
         harness.addToBattlefield(player1, new Plains());
-        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
-        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        blocker.setSummoningSick(false);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
         activate(pilgrim, blocker);
 
@@ -167,6 +165,89 @@ class SamitePilgrimTest extends BaseCardTest {
         int pilgrimIndex = gd.playerBattlefields.get(player1.getId()).indexOf(pilgrim);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, pilgrimIndex, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Unused prevention carries over to later damage events")
+    void shieldIsConsumedAcrossMultipleDamageEvents() {
+        Permanent pilgrim = addReadyPilgrim();
+        harness.addToBattlefield(player1, new Plains());
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new Forest());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        activate(pilgrim, target);
+
+        harness.setHand(player2, List.of(new Shock(), new Shock()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player2, 0, target.getId());
+
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(target.getDamagePreventionShield()).isEqualTo(1);
+
+        harness.castAndResolveInstant(player2, 0, target.getId());
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+    }
+
+    @Test
+    @DisplayName("Can target itself and pays the tap cost")
+    void canProtectItself() {
+        Permanent pilgrim = addReadyPilgrim();
+        harness.addToBattlefield(player1, new Plains());
+        harness.addToBattlefield(player1, new Forest());
+
+        activate(pilgrim, pilgrim);
+
+        assertThat(pilgrim.isTapped()).isTrue();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, pilgrim.getId());
+
+        assertThat(pilgrim.getMarkedDamage()).isZero();
+        assertThat(pilgrim.getDamagePreventionShield()).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(pilgrim);
+    }
+
+    @Test
+    @DisplayName("Cannot activate while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        Permanent pilgrim = harness.addToBattlefieldAndReturn(player1, new SamitePilgrim());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        int pilgrimIndex = gd.playerBattlefields.get(player1.getId()).indexOf(pilgrim);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, pilgrimIndex, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate again while tapped")
+    void cannotActivateWhileTapped() {
+        Permanent pilgrim = addReadyPilgrim();
+        harness.addToBattlefield(player1, new Plains());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        activate(pilgrim, target);
+        int pilgrimIndex = gd.playerBattlefields.get(player1.getId()).indexOf(pilgrim);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, pilgrimIndex, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(target.getDamagePreventionShield()).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot target a noncreature land")
+    void cannotTargetNoncreatureLand() {
+        Permanent pilgrim = addReadyPilgrim();
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Plains());
+        int pilgrimIndex = gd.playerBattlefields.get(player1.getId()).indexOf(pilgrim);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, pilgrimIndex, null, land.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
