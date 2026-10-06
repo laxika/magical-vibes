@@ -59,11 +59,76 @@ class RaiseThePalisadeTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Raise the Palisade");
     }
 
+    @Test
+    void choosingEitherOfMultipleCreatureTypesKeepsTheCreature() {
+        harness.addToBattlefield(player2, new GoblinPiker());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        castRaiseThePalisade();
+
+        harness.handleListChoice(player1, "WARRIOR");
+
+        harness.assertOnBattlefield(player2, "Goblin Piker");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInHand(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void canChooseATypeAbsentFromTheBattlefield() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GoblinPiker());
+        castRaiseThePalisade();
+
+        harness.handleListChoice(player1, "DRAGON");
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Goblin Piker");
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player2, "Goblin Piker");
+    }
+
+    @Test
+    void returnsStolenCreatureToItsOwnerRatherThanItsController() {
+        var stolenBears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        gd.stolenCreatures.put(stolenBears.getId(), player2.getId());
+        castRaiseThePalisade();
+
+        harness.handleListChoice(player1, "GOBLIN");
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInHand(player2, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void resolvesWithNoCreaturesOnTheBattlefield() {
+        harness.addToBattlefield(player2, new GloriousAnthem());
+        castRaiseThePalisade();
+
+        harness.handleListChoice(player1, "GOBLIN");
+
+        harness.assertOnBattlefield(player2, "Glorious Anthem");
+        harness.assertInGraveyard(player1, "Raise the Palisade");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void subsequentCastMakesANewCreatureTypeChoice() {
+        harness.addToBattlefield(player2, new GoblinPiker());
+        castRaiseThePalisade();
+        harness.handleListChoice(player1, "GOBLIN");
+        harness.assertOnBattlefield(player2, "Goblin Piker");
+
+        castRaiseThePalisade();
+        harness.handleListChoice(player1, "BEAR");
+
+        harness.assertNotOnBattlefield(player2, "Goblin Piker");
+        harness.assertInHand(player2, "Goblin Piker");
+    }
+
     private void castRaiseThePalisade() {
         harness.setHand(player1, List.of(new RaiseThePalisade()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
     }
 }
