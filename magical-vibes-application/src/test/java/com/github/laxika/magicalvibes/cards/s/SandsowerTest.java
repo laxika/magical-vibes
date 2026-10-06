@@ -95,4 +95,62 @@ class SandsowerTest extends BaseCardTest {
         assertThat(creatureB.isTapped()).isFalse();
     }
 
+    @Test
+    @DisplayName("Summoning-sick creatures including Sandsower can pay the cost")
+    void summoningSickCreaturesCanPayCost() {
+        Permanent sandsower = harness.addToBattlefieldAndReturn(player1, new Sandsower());
+        Permanent creatureA = harness.addToBattlefieldAndReturn(player1, new BorosRecruit());
+        Permanent creatureB = harness.addToBattlefieldAndReturn(player1, new BorosRecruit());
+        Permanent target = addCreatureReady(player2, new BorosRecruit());
+        sandsower.setSummoningSick(true);
+        creatureA.setSummoningSick(true);
+        creatureB.setSummoningSick(true);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        assertThat(sandsower.isTapped()).isTrue();
+        assertThat(creatureA.isTapped()).isTrue();
+        assertThat(creatureB.isTapped()).isTrue();
+        assertThat(target.isTapped()).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Tapped Sandsower can activate by tapping three other creatures")
+    void tappedSandsowerCanActivate() {
+        Permanent sandsower = addCreatureReady(player1, new Sandsower());
+        sandsower.tap();
+        Permanent creatureA = addCreatureReady(player1, new BorosRecruit());
+        Permanent creatureB = addCreatureReady(player1, new BorosRecruit());
+        Permanent creatureC = addCreatureReady(player1, new BorosRecruit());
+        Permanent target = addCreatureReady(player2, new BorosRecruit());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(creatureA.isTapped()).isTrue();
+        assertThat(creatureB.isTapped()).isTrue();
+        assertThat(creatureC.isTapped()).isTrue();
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A creature tapped to pay the cost can also be the target")
+    void costPayerCanAlsoBeTarget() {
+        Permanent sandsower = addCreatureReady(player1, new Sandsower());
+        Permanent creatureA = addCreatureReady(player1, new BorosRecruit());
+        Permanent creatureB = addCreatureReady(player1, new BorosRecruit());
+
+        harness.activateAbility(player1, 0, null, sandsower.getId());
+        harness.passBothPriorities();
+
+        assertThat(sandsower.isTapped()).isTrue();
+        assertThat(creatureA.isTapped()).isTrue();
+        assertThat(creatureB.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
 }
