@@ -86,10 +86,55 @@ class RimrockKnightTest extends BaseCardTest {
         assertThat(gd.findExiledCard(card.getId())).isNull();
     }
 
+    @Test
+    void adventureBoostsAnOpponentsCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new RimrockKnight());
+        harness.setHand(player1, List.of(new RimrockKnight()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAdventure(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getPowerModifier()).isEqualTo(2);
+        assertThat(target.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    void adventureWithMissingTargetGoesToGraveyardWithoutExilePermission() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new RimrockKnight());
+        RimrockKnight card = new RimrockKnight();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAdventure(player1, 0, target.getId());
+        target.setMarkedDamage(1);
+        harness.runStateBasedActions();
+        harness.assertNotOnBattlefield(player2, "Rimrock Knight");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
+        assertThat(gd.findExiledCard(card.getId())).isNull();
+        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+    }
+
+    @Test
+    void creatureCanBeCastDirectlyWithoutGoingOnAdventure() {
+        RimrockKnight card = new RimrockKnight();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Rimrock Knight");
+        assertThat(gd.findExiledCard(card.getId())).isNull();
+        harness.assertNotInGraveyard(player1, "Rimrock Knight");
+    }
+
     private Permanent addReadyCreature(com.github.laxika.magicalvibes.model.Player player, Card card) {
-        Permanent permanent = new Permanent(card);
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, card);
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 
