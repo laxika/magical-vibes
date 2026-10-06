@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AlabasterHostSanctifier;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,26 +16,25 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ScornBladeBerserker.class, GrizzlyBears.class, Island.class})
+@CardUsed({ScornBladeBerserker.class, AlabasterHostSanctifier.class, Island.class})
 class ScornBladeBerserkerTest extends BaseCardTest {
 
     @Test
     @DisplayName("Backup puts a counter on another creature and grants the sacrifice draw ability")
     void backsUpAnotherCreature() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        bears.setSummoningSick(false);
+        Permanent sanctifier = harness.addToBattlefieldAndReturn(player1, new AlabasterHostSanctifier());
         castScornBladeBerserker();
-        resolveEtbTargeting(bears);
+        resolveEtbTargeting(sanctifier);
         harness.setLibrary(player1, List.of(new Island()));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        int bearsIndex = gd.playerBattlefields.get(player1.getId()).indexOf(bears);
-        harness.activateAbility(player1, bearsIndex, null, null);
+        int sanctifierIndex = gd.playerBattlefields.get(player1.getId()).indexOf(sanctifier);
+        harness.activateAbility(player1, sanctifierIndex, null, null);
         harness.passBothPriorities();
 
-        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(sanctifier.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         harness.assertInHand(player1, "Island");
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Alabaster Host Sanctifier");
     }
 
     @Test
@@ -50,18 +49,80 @@ class ScornBladeBerserkerTest extends BaseCardTest {
     @Test
     @DisplayName("The granted sacrifice draw ability expires at the end of the turn")
     void grantedAbilityExpiresAtEndOfTurn() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent sanctifier = harness.addToBattlefieldAndReturn(player1, new AlabasterHostSanctifier());
         castScornBladeBerserker();
-        resolveEtbTargeting(bears);
+        resolveEtbTargeting(sanctifier);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        int bearsIndex = gd.playerBattlefields.get(player1.getId()).indexOf(bears);
-        assertThatThrownBy(() -> harness.activateAbility(player1, bearsIndex, null, null))
+        int sanctifierIndex = gd.playerBattlefields.get(player1.getId()).indexOf(sanctifier);
+        assertThatThrownBy(() -> harness.activateAbility(player1, sanctifierIndex, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("no activated ability");
+    }
+
+    @Test
+    @DisplayName("The Berserker can sacrifice itself while summoning sick and draws only on resolution")
+    void sacrificesItselfToDraw() {
+        Permanent berserker = castScornBladeBerserker();
+        resolveEtbTargeting(berserker);
+        harness.setLibrary(player1, List.of(new Island()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        int index = gd.playerBattlefields.get(player1.getId()).indexOf(berserker);
+        harness.activateAbility(player1, index, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Scorn-Blade Berserker");
+        harness.assertInGraveyard(player1, "Scorn-Blade Berserker");
+        harness.assertNotInHand(player1, "Island");
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Island");
+    }
+
+    @Test
+    @DisplayName("Backup can target an opponent's creature and its controller draws the card")
+    void backsUpOpponentsCreature() {
+        Permanent sanctifier = harness.addToBattlefieldAndReturn(player2, new AlabasterHostSanctifier());
+        castScornBladeBerserker();
+        resolveEtbTargeting(sanctifier);
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(new Island()));
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        assertThat(sanctifier.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        int index = gd.playerBattlefields.get(player2.getId()).indexOf(sanctifier);
+        harness.activateAbility(player2, index, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Alabaster Host Sanctifier");
+        harness.assertInHand(player2, "Island");
+        harness.assertNotInHand(player1, "Island");
+        harness.assertOnBattlefield(player1, "Scorn-Blade Berserker");
+    }
+
+    @Test
+    @DisplayName("The granted ability remains usable after the Berserker is sacrificed")
+    void grantedAbilitySurvivesSourceLeaving() {
+        Permanent sanctifier = harness.addToBattlefieldAndReturn(player1, new AlabasterHostSanctifier());
+        Permanent berserker = castScornBladeBerserker();
+        resolveEtbTargeting(sanctifier);
+        harness.setLibrary(player1, List.of(new Island(), new Island()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        int sourceIndex = gd.playerBattlefields.get(player1.getId()).indexOf(berserker);
+        harness.activateAbility(player1, sourceIndex, null, null);
+        harness.passBothPriorities();
+        int targetIndex = gd.playerBattlefields.get(player1.getId()).indexOf(sanctifier);
+        harness.activateAbility(player1, targetIndex, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Scorn-Blade Berserker");
+        harness.assertInGraveyard(player1, "Alabaster Host Sanctifier");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
     }
 
     private Permanent castScornBladeBerserker() {
