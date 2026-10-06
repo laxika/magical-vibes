@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,9 +17,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RallyingRoar.class, GrizzlyBears.class, Island.class})
 class RallyingRoarTest extends BaseCardTest {
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting puts it on the stack as INSTANT_SPELL")
@@ -31,10 +31,8 @@ class RallyingRoarTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Rallying Roar");
+        assertThat(entry.getCard()).isInstanceOf(RallyingRoar.class);
     }
-
-    // ===== Resolving — boost =====
 
     @Test
     @DisplayName("Resolving boosts all own creatures +1/+1")
@@ -44,8 +42,7 @@ class RallyingRoarTest extends BaseCardTest {
         harness.setHand(player1, List.of(new RallyingRoar()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
         for (Permanent p : battlefield) {
@@ -66,8 +63,7 @@ class RallyingRoarTest extends BaseCardTest {
         harness.setHand(player1, List.of(new RallyingRoar()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         List<Permanent> p2Battlefield = gd.playerBattlefields.get(player2.getId());
         for (Permanent p : p2Battlefield) {
@@ -78,24 +74,18 @@ class RallyingRoarTest extends BaseCardTest {
         }
     }
 
-    // ===== Resolving — untap =====
-
     @Test
     @DisplayName("Untaps all tapped creatures you control")
     void untapsAllTappedCreaturesYouControl() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
-        Permanent bear1 = battlefield.get(0);
+        Permanent bear1 = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent bear2 = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         bear1.tap();
-        Permanent bear2 = battlefield.get(1);
         bear2.tap();
 
         harness.setHand(player1, List.of(new RallyingRoar()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(bear1.isTapped()).isFalse();
         assertThat(bear2.isTapped()).isFalse();
@@ -104,15 +94,13 @@ class RallyingRoarTest extends BaseCardTest {
     @Test
     @DisplayName("Does not untap opponent's creatures")
     void doesNotUntapOpponentCreatures() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent opponentBear = gd.playerBattlefields.get(player2.getId()).getFirst();
+        Permanent opponentBear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         opponentBear.tap();
 
         harness.setHand(player1, List.of(new RallyingRoar()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(opponentBear.isTapped()).isTrue();
     }
@@ -120,33 +108,27 @@ class RallyingRoarTest extends BaseCardTest {
     @Test
     @DisplayName("Does not untap non-creature permanents")
     void doesNotUntapNonCreaturePermanents() {
-        harness.addToBattlefield(player1, new Island());
-        Permanent island = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
         island.tap();
 
         harness.setHand(player1, List.of(new RallyingRoar()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(island.isTapped()).isTrue();
     }
 
-    // ===== Both effects together =====
-
     @Test
     @DisplayName("Both boosts and untaps creatures in a single resolution")
     void boostsAndUntapsInSingleResolution() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        Permanent bear = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         bear.tap();
 
         harness.setHand(player1, List.of(new RallyingRoar()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(bear.isTapped()).isFalse();
         assertThat(bear.getPowerModifier()).isEqualTo(1);
@@ -155,8 +137,6 @@ class RallyingRoarTest extends BaseCardTest {
         assertThat(bear.getEffectiveToughness()).isEqualTo(3);
     }
 
-    // ===== Cleanup =====
-
     @Test
     @DisplayName("Boost resets at cleanup step")
     void boostResetsAtCleanup() {
@@ -164,8 +144,7 @@ class RallyingRoarTest extends BaseCardTest {
         harness.setHand(player1, List.of(new RallyingRoar()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -182,18 +161,74 @@ class RallyingRoarTest extends BaseCardTest {
         }
     }
 
-    // ===== Graveyard =====
-
     @Test
     @DisplayName("Goes to graveyard after resolving")
     void goesToGraveyardAfterResolving() {
         harness.setHand(player1, List.of(new RallyingRoar()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Rallying Roar");
+    }
+
+    @Test
+    @DisplayName("Creatures entering before resolution are boosted and untapped")
+    void affectsCreaturesPresentAtResolution() {
+        harness.setHand(player1, List.of(new RallyingRoar()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castInstant(player1, 0);
+
+        Permanent bear = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+        bear.tap();
+        harness.passBothPriorities();
+
+        assertThat(bear.isTapped()).isFalse();
+        assertThat(bear.getEffectivePower()).isEqualTo(3);
+        assertThat(bear.getEffectiveToughness()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Creatures entering after resolution receive neither effect")
+    void doesNotAffectCreaturesEnteringAfterResolution() {
+        Permanent original = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        original.tap();
+        harness.setHand(player1, List.of(new RallyingRoar()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castAndResolveInstant(player1, 0);
+
+        Permanent lateArrival = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+        lateArrival.tap();
+
+        assertThat(original.isTapped()).isFalse();
+        assertThat(original.getEffectivePower()).isEqualTo(3);
+        assertThat(original.getEffectiveToughness()).isEqualTo(3);
+        assertThat(lateArrival.isTapped()).isTrue();
+        assertThat(lateArrival.getEffectivePower()).isEqualTo(2);
+        assertThat(lateArrival.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Repeated casts stack their boosts and untap creatures again")
+    void repeatedCastsStackBoostsAndUntapAgain() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new RallyingRoar(), new RallyingRoar()));
+        harness.addMana(player1, ManaColor.WHITE, 6);
+
+        harness.castAndResolveInstant(player1, 0);
+        bear.tap();
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(bear.isTapped()).isFalse();
+        assertThat(bear.getEffectivePower()).isEqualTo(4);
+        assertThat(bear.getEffectiveToughness()).isEqualTo(4);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(bear.getEffectivePower()).isEqualTo(2);
+        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
     }
 }
