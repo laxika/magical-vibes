@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.d.DazzlingTheaterPropRoom;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -27,8 +26,7 @@ class ScrabblingSkullcrabTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castEnchantment(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
@@ -54,6 +52,43 @@ class ScrabblingSkullcrabTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
     }
 
+    @Test
+    @DisplayName("A Room entering triggers once and can mill its controller with a short library")
+    void roomEntryCanMillControllerWithShortLibrary() {
+        harness.addToBattlefield(player1, new ScrabblingSkullcrab());
+        Forest topCard = new Forest();
+        harness.setLibrary(player1, List.of(topCard));
+
+        castRoom();
+        Permanent room = gd.playerBattlefields.get(player1.getId()).getLast();
+        harness.handlePermanentChosen(player1, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(room.isRoomFullyUnlocked()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An opponent's enchantment entering does not trigger eerie")
+    void opponentsEnchantmentDoesNotTrigger() {
+        harness.addToBattlefield(player2, new ScrabblingSkullcrab());
+        setLibrary(player1, 3);
+        setLibrary(player2, 3);
+
+        castRoom();
+        resolveAllTriggers();
+
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(3);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
     private Permanent castRoom() {
         harness.setHand(player1, List.of(new DazzlingTheaterPropRoom()));
         harness.addMana(player1, ManaColor.WHITE, 4);
@@ -63,8 +98,6 @@ class ScrabblingSkullcrabTest extends BaseCardTest {
     }
 
     private void setLibrary(com.github.laxika.magicalvibes.model.Player player, int size) {
-        List<Card> library = List.of(new Forest(), new Forest(), new Forest());
-        gd.playerDecks.get(player.getId()).clear();
-        gd.playerDecks.get(player.getId()).addAll(library.subList(0, size));
+        harness.setLibrary(player, List.of(new Forest(), new Forest(), new Forest()).subList(0, size));
     }
 }
