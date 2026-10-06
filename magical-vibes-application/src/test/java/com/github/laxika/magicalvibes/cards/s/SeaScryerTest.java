@@ -61,6 +61,50 @@ class SeaScryerTest extends BaseCardTest {
         assertThat(scryer.isTapped()).isFalse();
     }
 
+    @Test
+    @DisplayName("Colored mana can pay the generic cost of the blue mana ability")
+    void blueAbilityAcceptsColoredManaAndResolvesImmediately() {
+        Permanent scryer = addCreatureReady(player1, new SeaScryer());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(mana(ManaColor.RED)).isZero();
+        assertThat(mana(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(scryer.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Sea Scryer cannot use its blue ability after tapping for colorless")
+    void cannotUseBothAbilitiesWithoutUntapping() {
+        Permanent scryer = addCreatureReady(player1, new SeaScryer());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.stack).isEmpty();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(mana(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(mana(ManaColor.BLUE)).isZero();
+        assertThat(scryer.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Summoning sickness prevents the blue ability without spending its mana cost")
+    void summoningSickCannotTapForBlue() {
+        Permanent scryer = harness.addToBattlefieldAndReturn(player1, new SeaScryer());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(mana(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(mana(ManaColor.BLUE)).isZero();
+        assertThat(scryer.isTapped()).isFalse();
+    }
+
     private int mana(ManaColor color) {
         return gd.playerManaPools.get(player1.getId()).get(color);
     }
