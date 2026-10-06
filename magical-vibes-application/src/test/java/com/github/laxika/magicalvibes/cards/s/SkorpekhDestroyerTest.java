@@ -54,9 +54,32 @@ class SkorpekhDestroyerTest extends BaseCardTest {
         assertThat(destroyer.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(destroyer.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
+    void itsOwnArtifactEntryGrantsFirstStrike() {
+        Permanent destroyer = harness.enterBattlefieldAndReturn(player1, new SkorpekhDestroyer());
+
+        assertThat(destroyer.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(destroyer.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
+    void firstStrikeIsGrantedOnlyWhenTheTriggerResolves() {
+        Permanent destroyer = harness.addToBattlefieldAndReturn(player1, new SkorpekhDestroyer());
+
+        harness.enterBattlefieldAndReturn(player1, new FountainOfYouth());
+
+        assertThat(destroyer.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(destroyer.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
     }
 }
