@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
+import com.github.laxika.magicalvibes.cards.c.ConeOfFlame;
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -19,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({SigilTracer.class, Boomerang.class, CounselOfTheSoratami.class,
-        FugitiveWizard.class, GrizzlyBears.class})
+        FugitiveWizard.class, GrizzlyBears.class, ConeOfFlame.class})
 class SigilTracerTest extends BaseCardTest {
 
     private int prepareTracer(int extraWizards) {
@@ -153,5 +154,89 @@ class SigilTracerTest extends BaseCardTest {
                 .noneMatch(permanent -> permanent.getId().equals(newTarget.getId()));
         assertThat(gd.playerHands.get(player1.getId()))
                 .anyMatch(card -> card.getId().equals(newTarget.getCard().getId()));
+    }
+
+    @Test
+    @DisplayName("Summoning-sick Wizards, including Sigil Tracer, can pay the tap cost")
+    void summoningSickWizardsCanPayCost() {
+        Permanent tracer = harness.addToBattlefieldAndReturn(player2, new SigilTracer());
+        Permanent wizard = harness.addToBattlefieldAndReturn(player2, new FugitiveWizard());
+        tracer.setSummoningSick(true);
+        wizard.setSummoningSick(true);
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        CounselOfTheSoratami counsel = new CounselOfTheSoratami();
+        harness.castFromHand(player1, counsel, "{2}{U}");
+        harness.passPriority(player1);
+
+        harness.activateAbility(player2, 0, null, counsel.getId());
+        harness.handlePermanentChosen(player2, tracer.getId());
+        harness.handlePermanentChosen(player2, wizard.getId());
+        harness.passBothPriorities();
+
+        assertThat(tracer.isTapped()).isTrue();
+        assertThat(wizard.isTapped()).isTrue();
+        assertThat(gd.stack).filteredOn(StackEntry::isCopy).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Declining new targets keeps the original target and leaves the original spell unchanged")
+    void canKeepOriginalTarget() {
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        Boomerang boomerang = new Boomerang();
+        harness.setHand(player1, List.of(boomerang));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        int tracerIdx = prepareTracer(1);
+        harness.castInstant(player1, 0, target.getId());
+        harness.passPriority(player1);
+        harness.activateAbility(player2, tracerIdx, null, boomerang.getId());
+        tapWizards(2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getId().equals(target.getId()));
+        assertThat(gd.playerHands.get(player1.getId()))
+                .anyMatch(card -> card.getId().equals(target.getCard().getId()));
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(target.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId()))
+                .filteredOn(card -> card.getId().equals(target.getCard().getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("All three targets of a copied Cone of Flame can be changed")
+    void canChangeEveryTargetOfMultiTargetCopy() {
+        List<Permanent> originalTargets = List.of(
+                addCreatureReady(player1, new GrizzlyBears()),
+                addCreatureReady(player1, new GrizzlyBears()),
+                addCreatureReady(player1, new GrizzlyBears()));
+        List<Permanent> newTargets = List.of(
+                addCreatureReady(player1, new GrizzlyBears()),
+                addCreatureReady(player1, new GrizzlyBears()),
+                addCreatureReady(player1, new GrizzlyBears()));
+        ConeOfFlame cone = new ConeOfFlame();
+        int tracerIdx = prepareTracer(1);
+        harness.setHand(player1, List.of(cone));
+        harness.addMana(player1, ManaColor.RED, 5);
+        harness.castSorcery(player1, 0, originalTargets.stream().map(Permanent::getId).toList());
+        harness.passPriority(player1);
+        harness.activateAbility(player2, tracerIdx, null, cone.getId());
+        tapWizards(2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        for (Permanent target : newTargets) {
+            harness.handlePermanentChosen(player2, target.getId());
+        }
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .containsAll(originalTargets)
+                .contains(newTargets.getFirst())
+                .doesNotContain(newTargets.get(1), newTargets.get(2));
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getTargetIds())
+                .containsExactlyElementsOf(originalTargets.stream().map(Permanent::getId).toList());
     }
 }
