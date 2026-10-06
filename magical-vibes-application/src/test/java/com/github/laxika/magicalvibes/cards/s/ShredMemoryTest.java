@@ -188,4 +188,110 @@ class ShredMemoryTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Shred Memory");
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(matchingCard);
     }
+
+    @Test
+    void canBeCastWithEmptyGraveyards() {
+        ShredMemory shredMemory = new ShredMemory();
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of());
+        harness.setHand(player1, List.of(shredMemory));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(shredMemory);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void exilesRemainingLegalTargetAfterAnotherTargetIsExiledInResponse() {
+        Card removedInResponse = new BorosRecruit();
+        Card remainingTarget = new BorosSignet();
+        harness.setGraveyard(player2, List.of(removedInResponse, remainingTarget));
+        harness.setHand(player1, List.of(new ShredMemory()));
+        harness.setHand(player2, List.of(new ShredMemory()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player1, 0);
+        harness.handleMultipleCardsChosen(player1,
+                List.of(removedInResponse.getId(), remainingTarget.getId()));
+        harness.castInstant(player2, 0);
+        harness.handleMultipleCardsChosen(player2, List.of(removedInResponse.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(removedInResponse);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(remainingTarget);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .containsExactlyInAnyOrder(removedInResponse, remainingTarget);
+        assertThat(gd.playerGraveyards.get(player2.getId())).doesNotContain(remainingTarget);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void transmuteMayFailToFindEvenWhenAMatchingCardExists() {
+        ShredMemory shredMemory = new ShredMemory();
+        Card matchingCard = new BorosSignet();
+        harness.setHand(player1, List.of(shredMemory));
+        harness.setLibrary(player1, List.of(matchingCard));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(shredMemory);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(matchingCard);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gameLogContains("Library is shuffled")).isTrue();
+    }
+    @Test
+    void transmuteStillSearchesAfterItsSourceIsExiledInResponse() {
+        ShredMemory shredMemory = new ShredMemory();
+        Card matchingCard = new BorosSignet();
+        Card nonMatchingCard = new BorosRecruit();
+        harness.setHand(player1, List.of(shredMemory));
+        harness.setLibrary(player1, List.of(matchingCard, nonMatchingCard));
+        harness.setHand(player2, List.of(new ShredMemory()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.castInstant(player2, 0);
+        harness.handleMultipleCardsChosen(player2, List.of(shredMemory.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(shredMemory);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+
+        harness.passBothPriorities();
+        PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search).isNotNull();
+        assertThat(search.params().cards()).containsExactly(matchingCard);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(matchingCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nonMatchingCard);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(shredMemory);
+        assertThat(gameLogContains("Library is shuffled")).isTrue();
+    }
+
 }
