@@ -22,11 +22,7 @@ class SigardianEvangelTest extends BaseCardTest {
     void conjuresAReplicatedEvangelAndTapsAnOpponentsPermanent() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         SigardianEvangel evangel = new SigardianEvangel();
-        harness.setHand(player1, List.of(evangel));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, evangel, "{1}{W}");
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.PermanentChoice.class);
@@ -74,14 +70,37 @@ class SigardianEvangelTest extends BaseCardTest {
     void cannotTargetAPermanentYouControl() {
         Permanent ownPermanent = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new SigardianEvangel()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SigardianEvangel(), "{1}{W}");
         harness.passBothPriorities();
 
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, ownPermanent.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void conjuresEvenWhenTheOpponentControlsNoPermanents() {
+        harness.castFromHand(player1, new SigardianEvangel(), "{1}{W}");
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Sigardian Evangel");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.assertInHand(player1, "Sigardian Evangel");
+    }
+
+    @Test
+    void putsConjureAndTapOnTheStackAsSeparateAbilities() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SigardianEvangel());
+        harness.castFromHand(player1, new SigardianEvangel(), "{1}{W}");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+
+        assertThat(gd.stack).hasSize(2);
+        resolveAllTriggers();
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.assertInHand(player1, "Sigardian Evangel");
     }
 }
