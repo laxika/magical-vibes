@@ -142,10 +142,62 @@ class RapidFireTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("A single blocker gives no rampage bonus")
+    void singleBlockerGivesNoBonus() {
+        Permanent target = addCreatureReady(player1, new BarbaryApes());
+        castRapidFire(target);
+        addCreatureReady(player2, new KoboldsOfKherKeep());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        assertThat(target.getPowerModifier()).isZero();
+        assertThat(target.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Repeated Rapid Fire spells do not stack rampage")
+    void repeatedSpellsDoNotStackRampage() {
+        Permanent target = addCreatureReady(player1, new BarbaryApes());
+        castRapidFire(target);
+        castRapidFire(target);
+        addCreatureReady(player2, new BarbaryApes());
+        addCreatureReady(player2, new BarbaryApes());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0)));
+        harness.passBothPriorities();
+
+        assertThat(target.getPowerModifier()).isEqualTo(2);
+        assertThat(target.getToughnessModifier()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Rapid Fire can grant its abilities to an opponent's creature")
+    void grantsAbilitiesToOpponentsCreature() {
+        Permanent target = addCreatureReady(player2, new BarbaryApes());
+        castRapidFire(target);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isTrue();
+        addCreatureReady(player1, new BarbaryApes());
+        addCreatureReady(player1, new BarbaryApes());
+
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0)));
+        harness.passBothPriorities();
+
+        assertThat(target.getPowerModifier()).isEqualTo(2);
+        assertThat(target.getToughnessModifier()).isEqualTo(2);
+    }
+
     private void castRapidFire(Permanent target) {
         prepareRapidFireInHand();
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 
     private void prepareRapidFireInHand() {
