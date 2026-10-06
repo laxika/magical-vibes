@@ -19,8 +19,7 @@ class SaprazzanRaiderTest extends BaseCardTest {
         addCreatureReady(player1, new SaprazzanRaider());
         addCreatureReady(player2, new FreshVolunteers());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveAllTriggers();
 
@@ -38,6 +37,41 @@ class SaprazzanRaiderTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Saprazzan Raider");
         harness.assertNotInHand(player1, "Saprazzan Raider");
+    }
+
+    @Test
+    @DisplayName("Returns before combat damage when blocked by multiple creatures")
+    void returnsBeforeCombatDamageWhenMultiplyBlocked() {
+        addCreatureReady(player1, new SaprazzanRaider());
+        addCreatureReady(player2, new FreshVolunteers());
+        addCreatureReady(player2, new FreshVolunteers());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+        resolveAllTriggers();
+        resolveCombat();
+
+        harness.assertInHand(player1, "Saprazzan Raider");
+        harness.assertNotOnBattlefield(player1, "Saprazzan Raider");
+        harness.assertNotInGraveyard(player1, "Saprazzan Raider");
+        harness.assertOnBattlefield(player2, "Fresh Volunteers");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Does not return to hand when it blocks another creature")
+    void doesNotReturnWhenBlocking() {
+        addCreatureReady(player1, new SaprazzanRaider());
+        addCreatureReady(player2, new SaprazzanRaider());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveAllTriggers();
+        resolveCombat();
+
+        harness.assertInHand(player1, "Saprazzan Raider");
+        harness.assertOnBattlefield(player2, "Saprazzan Raider");
+        harness.assertNotInHand(player2, "Saprazzan Raider");
     }
 
     @Test
