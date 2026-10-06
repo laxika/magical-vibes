@@ -15,6 +15,28 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class RonomUnicornTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Tapped summoning-sick Unicorn pays sacrifice cost before resolution")
+    void tappedSummoningSickUnicornPaysSacrificeCostBeforeResolution() {
+        Permanent unicorn = harness.addToBattlefieldAndReturn(player1, new RonomUnicorn());
+        unicorn.setTapped(true);
+        unicorn.setSummoningSick(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new CoverOfWinter());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Ronom Unicorn");
+        harness.assertInGraveyard(player1, "Ronom Unicorn");
+        harness.assertOnBattlefield(player2, "Cover of Winter");
+        harness.assertNotInGraveyard(player2, "Cover of Winter");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Cover of Winter");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Sacrifice ability destroys target enchantment")
     void sacrificeAbilityDestroysTargetEnchantment() {
         harness.addToBattlefield(player1, new RonomUnicorn());
