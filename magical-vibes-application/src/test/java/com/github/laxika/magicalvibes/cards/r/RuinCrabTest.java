@@ -45,6 +45,81 @@ class RuinCrabTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(5);
     }
 
+    @Test
+    @DisplayName("Landfall mills the top three cards only when its trigger resolves")
+    void millsTopThreeOnResolution() {
+        harness.addToBattlefield(player1, new RuinCrab());
+        Card first = new Forest();
+        Card second = new Forest();
+        Card third = new Forest();
+        Card fourth = new Forest();
+        harness.setLibrary(player2, List.of(first, second, third, fourth));
+        harness.setHand(player1, List.of(new Forest()));
+
+        harness.playLand(player1, 0);
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(first, second, third, fourth);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(fourth);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactlyInAnyOrder(first, second, third);
+    }
+
+    @Test
+    @DisplayName("Landfall mills all remaining cards from a library with fewer than three cards")
+    void millsShortLibrary() {
+        harness.addToBattlefield(player1, new RuinCrab());
+        Card first = new Forest();
+        Card second = new Forest();
+        harness.setLibrary(player2, List.of(first, second));
+        harness.setHand(player1, List.of(new Forest()));
+
+        harness.playLand(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactlyInAnyOrder(first, second);
+    }
+
+    @Test
+    @DisplayName("Landfall resolves harmlessly when an opponent's library is empty")
+    void emptyLibraryDoesNotPreventResolution() {
+        harness.addToBattlefield(player1, new RuinCrab());
+        harness.setLibrary(player2, List.of());
+        harness.setHand(player1, List.of(new Forest()));
+
+        harness.playLand(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Each Ruin Crab triggers independently for the same land")
+    void multipleCrabsEachMillThree() {
+        harness.addToBattlefield(player1, new RuinCrab());
+        harness.addToBattlefield(player1, new RuinCrab());
+        harness.setLibrary(player2, List.of(
+                new Forest(), new Forest(), new Forest(),
+                new Forest(), new Forest(), new Forest(), new Forest()));
+        harness.setHand(player1, List.of(new Forest()));
+
+        harness.playLand(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(4);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(3);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(6);
+    }
+
     private List<Card> libraryWithFiveCards() {
         return List.of(
                 new GrizzlyBears(),
