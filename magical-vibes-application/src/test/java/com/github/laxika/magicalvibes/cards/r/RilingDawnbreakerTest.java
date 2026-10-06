@@ -57,4 +57,76 @@ class RilingDawnbreakerTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).contains(card);
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(card);
     }
+
+    @Test
+    @DisplayName("Omen puts exactly one physical card into the library")
+    void omenDoesNotDuplicateTheCardInLibrary() {
+        RilingDawnbreaker card = new RilingDawnbreaker();
+        harness.setHand(player1, java.util.List.of(card));
+        harness.setLibrary(player1, java.util.List.of());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castWithAlternateCost(player1, 0, java.util.List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(card);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(card);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(card);
+    }
+
+    @Test
+    @DisplayName("Beginning of combat cannot target itself or an opponent's creature")
+    void noLegalTargetWhenOnlySelfAndOpponentCreatureExist() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new RilingDawnbreaker());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new RilingDawnbreaker());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.passUntil(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, opponent)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Beginning of combat does not trigger on an opponent's turn")
+    void doesNotTriggerOnOpponentsTurn() {
+        harness.addToBattlefield(player1, new RilingDawnbreaker());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.passUntil(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Combat boost lasts through postcombat main and expires at end of turn")
+    void boostExpiresAtEndOfTurn() {
+        harness.addToBattlefield(player1, new RilingDawnbreaker());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.BEGINNING_OF_COMBAT);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.POSTCOMBAT_MAIN);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+    }
 }
