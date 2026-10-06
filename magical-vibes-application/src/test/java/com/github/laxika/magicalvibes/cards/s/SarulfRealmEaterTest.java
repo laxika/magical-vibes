@@ -5,15 +5,20 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.Set;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SarulfRealmEater.class, AirElemental.class, Forest.class, GrizzlyBears.class, LlanowarElves.class})
 class SarulfRealmEaterTest extends BaseCardTest {
 
     @Test
@@ -90,6 +95,109 @@ class SarulfRealmEaterTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player2.getId())).doesNotContain(bears.getCard());
+    }
+
+    @Test
+    void opponentLandGoingToGraveyardAlsoAddsCounter() {
+        Permanent sarulf = addSarulf(player1, 0);
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, forest));
+        harness.passBothPriorities();
+
+        assertThat(sarulf.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void opponentPermanentBeingExiledDoesNotAddCounter() {
+        Permanent sarulf = addSarulf(player1, 0);
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToExile(gd, bears));
+        harness.passBothPriorities();
+
+        assertThat(sarulf.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void upkeepDoesNotTriggerWithoutPlusOneCounters() {
+        Permanent sarulf = addSarulf(player1, 0);
+        sarulf.setCounterCount(CounterType.CHARGE, 2);
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(sarulf.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
+    }
+
+    @Test
+    void opponentsUpkeepDoesNotTriggerAbility() {
+        Permanent sarulf = addSarulf(player1, 2);
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(sarulf.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void losingCountersBeforeResolutionPreventsExile() {
+        Permanent sarulf = addSarulf(player1, 2);
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        advanceToUpkeep(player1);
+        sarulf.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).doesNotContain(bears.getCard());
+    }
+
+    @Test
+    void countsCountersAtResolutionAndLeavesOtherCounterTypes() {
+        Permanent sarulf = addSarulf(player1, 1);
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        sarulf.setCounterCount(CounterType.CHARGE, 3);
+
+        advanceToUpkeep(player1);
+        sarulf.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(sarulf.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(sarulf.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(bears.getCard());
+    }
+
+    @Test
+    void lethalDamageAfterRemovingCountersDoesNotPreventExile() {
+        Permanent sarulf = addSarulf(player1, 2);
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        advanceToUpkeep(player1);
+        sarulf.setMarkedDamage(3);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(bears.getCard());
+        harness.assertInGraveyard(player1, "Sarulf, Realm Eater");
+        harness.assertNotOnBattlefield(player1, "Sarulf, Realm Eater");
+    }
+
+    @Test
+    void exilesFaceDownCreatureBasedOnItsZeroManaValue() {
+        addSarulf(player1, 1);
+        Permanent faceDown = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        faceDown.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(faceDown.getCard());
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(faceDown);
     }
 
     private Permanent addSarulf(Player player, int counterCount) {
