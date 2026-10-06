@@ -23,7 +23,7 @@ class ScrapWelderTest extends BaseCardTest {
     @Test
     @DisplayName("Sacrifices an artifact and returns a cheaper artifact with haste")
     void sacrificesArtifactAndReturnsCheaperArtifactWithHaste() {
-        addReadyCreature(new ScrapWelder());
+        addCreatureReady(player1, new ScrapWelder());
         Permanent fodder = harness.addToBattlefieldAndReturn(player1, new FellwarStone());
         Card target = new Ornithopter();
         harness.setGraveyard(player1, List.of(target));
@@ -40,7 +40,7 @@ class ScrapWelderTest extends BaseCardTest {
     @Test
     @DisplayName("Rejects an artifact whose mana value equals the sacrificed artifact")
     void rejectsArtifactWithEqualManaValue() {
-        addReadyCreature(new ScrapWelder());
+        addCreatureReady(player1, new ScrapWelder());
         Permanent fodder = harness.addToBattlefieldAndReturn(player1, new FellwarStone());
         Card target = new FellwarStone();
         harness.setGraveyard(player1, List.of(target));
@@ -56,7 +56,7 @@ class ScrapWelderTest extends BaseCardTest {
     @Test
     @DisplayName("Returned artifact loses the temporary haste at end of turn")
     void returnedArtifactLosesHasteAtEndOfTurn() {
-        addReadyCreature(new ScrapWelder());
+        addCreatureReady(player1, new ScrapWelder());
         harness.addToBattlefieldAndReturn(player1, new FellwarStone());
         Card target = new Ornithopter();
         harness.setGraveyard(player1, List.of(target));
@@ -74,7 +74,76 @@ class ScrapWelderTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, returned, Keyword.HASTE)).isFalse();
     }
 
-    private Permanent addReadyCreature(Card card) {
-        return addCreatureReady(player1, card);
+    @Test
+    void rejectsArtifactInOpponentsGraveyard() {
+        addCreatureReady(player1, new ScrapWelder());
+        Permanent fodder = harness.addToBattlefieldAndReturn(player1, new FellwarStone());
+        Card target = new Ornithopter();
+        harness.setGraveyard(player2, List.of(target));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(fodder);
+        harness.assertInGraveyard(player2, "Ornithopter");
+    }
+
+    @Test
+    void rejectsNonartifactTarget() {
+        addCreatureReady(player1, new ScrapWelder());
+        Permanent fodder = harness.addToBattlefieldAndReturn(player1, new FellwarStone());
+        Card target = new ScrapWelder();
+        harness.setGraveyard(player1, List.of(target));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(fodder);
+        harness.assertInGraveyard(player1, "Scrap Welder");
+    }
+
+    @Test
+    void zeroManaValueSacrificeCannotReturnZeroManaValueArtifact() {
+        addCreatureReady(player1, new ScrapWelder());
+        Permanent fodder = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
+        Card target = new Ornithopter();
+        harness.setGraveyard(player1, List.of(target));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("mana value");
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(fodder);
+        harness.assertInGraveyard(player1, "Ornithopter");
+    }
+
+    @Test
+    void targetLeavingGraveyardDoesNotRefundSacrifice() {
+        addCreatureReady(player1, new ScrapWelder());
+        Permanent fodder = harness.addToBattlefieldAndReturn(player1, new FellwarStone());
+        Card target = new Ornithopter();
+        harness.setGraveyard(player1, List.of(target));
+
+        harness.activateAbility(player1, 0, null, target.getId(), Zone.GRAVEYARD);
+        harness.setGraveyard(player1, List.of(fodder.getCard()));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Ornithopter");
+        harness.assertNotOnBattlefield(player1, "Fellwar Stone");
+        harness.assertInGraveyard(player1, "Fellwar Stone");
+    }
+
+    @Test
+    void summoningSickWelderCannotActivateTapAbility() {
+        harness.addToBattlefield(player1, new ScrapWelder());
+        Permanent fodder = harness.addToBattlefieldAndReturn(player1, new FellwarStone());
+        Card target = new Ornithopter();
+        harness.setGraveyard(player1, List.of(target));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(fodder);
+        harness.assertInGraveyard(player1, "Ornithopter");
     }
 }
