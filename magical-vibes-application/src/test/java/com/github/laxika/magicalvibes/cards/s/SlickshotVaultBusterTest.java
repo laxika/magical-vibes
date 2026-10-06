@@ -51,10 +51,70 @@ class SlickshotVaultBusterTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, vaultBuster)).isEqualTo(1);
     }
 
+    @Test
+    void gainsBoostBeforeCrimeSpellResolves() {
+        Permanent vaultBuster = harness.addToBattlefieldAndReturn(player1, new SlickshotVaultBuster());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.getEffectivePower(gd, vaultBuster)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, vaultBuster)).isEqualTo(4);
+    }
+
+    @Test
+    void gainsBoostWhenEnteringAfterCrime() {
+        castShockAt(player2.getId());
+
+        Permanent vaultBuster = harness.addToBattlefieldAndReturn(player1, new SlickshotVaultBuster());
+
+        assertThat(gqs.getEffectivePower(gd, vaultBuster)).isEqualTo(3);
+    }
+
+    @Test
+    void multipleCrimesDoNotMultiplyBoost() {
+        Permanent vaultBuster = harness.addToBattlefieldAndReturn(player1, new SlickshotVaultBuster());
+        castShockAt(player2.getId());
+        castShockAt(player2.getId());
+
+        assertThat(gqs.getEffectivePower(gd, vaultBuster)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, vaultBuster)).isEqualTo(4);
+    }
+
+    @Test
+    void crimeBoostsOnlyItsControllersCreatures() {
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new SlickshotVaultBuster());
+        Permanent opposing = harness.addToBattlefieldAndReturn(player2, new SlickshotVaultBuster());
+
+        castShockAt(opposing.getId());
+
+        assertThat(gqs.getEffectivePower(gd, own)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, opposing)).isEqualTo(1);
+    }
+
+    @Test
+    void targetingOwnCreatureDoesNotCommitCrime() {
+        Permanent vaultBuster = harness.addToBattlefieldAndReturn(player1, new SlickshotVaultBuster());
+
+        castShockAt(vaultBuster.getId());
+
+        assertThat(gqs.getEffectivePower(gd, vaultBuster)).isEqualTo(1);
+    }
+
+    @Test
+    void vigilanceKeepsAttackerUntapped() {
+        Permanent vaultBuster = addCreatureReady(player1, new SlickshotVaultBuster());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThat(vaultBuster.isAttacking()).isTrue();
+        assertThat(vaultBuster.isTapped()).isFalse();
+    }
     private void castShockAt(java.util.UUID targetId) {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
     }
 }
