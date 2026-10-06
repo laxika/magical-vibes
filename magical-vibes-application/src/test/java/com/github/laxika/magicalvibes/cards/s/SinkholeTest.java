@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MishrasFactory;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -11,7 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Sinkhole.class, Forest.class, GrizzlyBears.class})
+@CardUsed({Sinkhole.class, Forest.class, GrizzlyBears.class, MishrasFactory.class})
 class SinkholeTest extends BaseCardTest {
 
     @Test
@@ -38,6 +39,22 @@ class SinkholeTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Forest");
         harness.assertInGraveyard(player1, "Forest");
+    }
+
+    @Test
+    void destroysAnimatedNonbasicLand() {
+        harness.addToBattlefield(player1, new MishrasFactory());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Sinkhole()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castSorcery(player1, 0, harness.getPermanentId(player1, "Mishra's Factory"));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Mishra's Factory");
+        harness.assertInGraveyard(player1, "Mishra's Factory");
     }
 
     @Test
