@@ -13,7 +13,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 
 
-@CardUsed(SkylineDespot.class)
+@CardUsed({SkylineDespot.class, QueenMarchesa.class})
 class SkylineDespotTest extends BaseCardTest {
 
     @Test
@@ -87,6 +87,57 @@ class SkylineDespotTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
+        assertThat(findPermanents(player1, "Dragon")).isEmpty();
+    }
+
+    @Test
+    void doesNotTriggerWhenThereIsNoMonarch() {
+        harness.addToBattlefield(player1, new SkylineDespot());
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanents(player1, "Dragon")).isEmpty();
+    }
+
+    @Test
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        harness.enterBattlefieldAndReturn(player1, new SkylineDespot());
+        resolveAllTriggers();
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanents(player1, "Dragon")).isEmpty();
+    }
+
+    @Test
+    void doesNotCreateDragonIfMonarchyIsLostBeforeResolution() {
+        harness.enterBattlefieldAndReturn(player1, new SkylineDespot());
+        resolveAllTriggers();
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.enterBattlefieldAndReturn(player2, new QueenMarchesa());
+        harness.passBothPriorities();
+        assertThat(gd.monarchPlayerId).isEqualTo(player2.getId());
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Dragon")).isEmpty();
+    }
+
+    @Test
+    void becomingMonarchAfterUpkeepBeginsDoesNotCreateDragon() {
+        harness.addToBattlefield(player1, new SkylineDespot());
+        harness.enterBattlefieldAndReturn(player2, new QueenMarchesa());
+        resolveAllTriggers();
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).isEmpty();
+        harness.enterBattlefieldAndReturn(player1, new QueenMarchesa());
+        resolveAllTriggers();
+
+        assertThat(gd.monarchPlayerId).isEqualTo(player1.getId());
         assertThat(findPermanents(player1, "Dragon")).isEmpty();
     }
 
