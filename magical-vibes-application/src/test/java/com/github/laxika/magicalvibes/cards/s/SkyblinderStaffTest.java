@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SkyblinderStaff.class, GrizzlyBears.class, SuntailHawk.class})
 class SkyblinderStaffTest extends BaseCardTest {
 
     @Test
@@ -52,9 +54,8 @@ class SkyblinderStaffTest extends BaseCardTest {
     @DisplayName("Unattached Skyblinder Staff does not stop fliers from blocking")
     void unattachedStaffDoesNotRestrictBlocks() {
         addStaffReady(player1);
-        Permanent attacker = new Permanent(new GrizzlyBears());
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         attacker.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
         Permanent blocker = addBlocker(new SuntailHawk());
 
         attacker.setAttacking(true);
@@ -63,11 +64,56 @@ class SkyblinderStaffTest extends BaseCardTest {
         assertThat(blocker.isBlocking()).isTrue();
     }
 
+    @Test
+    @DisplayName("Reequipping moves both the boost and the flying blocker restriction")
+    void reequippingMovesBothBenefits() {
+        Permanent original = equipStaffTo(new GrizzlyBears());
+        Permanent next = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        next.setSummoningSick(false);
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.activateAbility(player1, 0, null, next.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, original)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, next)).isEqualTo(3);
+        Permanent blocker = addBlocker(new SuntailHawk());
+        assertThatThrownBy(() -> declareBlock(blocker, next))
+                .isInstanceOf(IllegalStateException.class);
+        next.setAttacking(false);
+        declareBlock(blocker, original);
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Equip cannot target an opponent's creature")
+    void cannotEquipOpponentsCreature() {
+        Permanent staff = addStaffReady(player1);
+        Permanent opponentCreature = addBlocker(new GrizzlyBears());
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, opponentCreature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(staff.getAttachedTo()).isNull();
+    }
+
+    @Test
+    @DisplayName("Equip cannot be activated during combat")
+    void cannotEquipDuringCombat() {
+        Permanent staff = addStaffReady(player1);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(staff.getAttachedTo()).isNull();
+    }
+
     private Permanent equipStaffTo(Card creatureCard) {
         addStaffReady(player1);
-        Permanent creature = new Permanent(creatureCard);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, creatureCard);
         creature.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(creature);
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.activateAbility(player1, 0, null, creature.getId());
@@ -77,16 +123,14 @@ class SkyblinderStaffTest extends BaseCardTest {
     }
 
     private Permanent addStaffReady(Player player) {
-        Permanent perm = new Permanent(new SkyblinderStaff());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new SkyblinderStaff());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
     private Permanent addBlocker(Card card) {
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player2, card);
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(perm);
         return perm;
     }
 
