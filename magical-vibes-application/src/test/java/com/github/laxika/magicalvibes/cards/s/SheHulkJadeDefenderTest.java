@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.n.Naturalize;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -11,10 +12,12 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SheHulkJadeDefender.class, FountainOfYouth.class, AngelicChorus.class, GrizzlyBears.class})
+@CardUsed({SheHulkJadeDefender.class, FountainOfYouth.class, AngelicChorus.class, GrizzlyBears.class, Naturalize.class})
 class SheHulkJadeDefenderTest extends BaseCardTest {
 
     @Test
@@ -86,6 +89,78 @@ class SheHulkJadeDefenderTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("only once");
+    }
+
+    @Test
+    @DisplayName("An illegal target prevents the counter and still consumes the power-up")
+    void illegalTargetPreventsCounterAndConsumesActivation() {
+        Permanent sheHulk = addReadySheHulk();
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+        harness.setHand(player2, List.of(new Naturalize()));
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, artifact.getId());
+        harness.castAndResolveInstant(player2, 0, artifact.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Fountain of Youth");
+        assertThat(sheHulk.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("only once");
+    }
+
+    @Test
+    @DisplayName("Power-up can destroy its controller's own artifact")
+    void powerUpCanDestroyOwnArtifact() {
+        Permanent sheHulk = addReadySheHulk();
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, artifact.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Fountain of Youth");
+        assertThat(sheHulk.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Power-up cannot be activated again while its first activation is on the stack")
+    void cannotActivateAgainBeforeResolution() {
+        Permanent sheHulk = addReadySheHulk();
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("only once");
+        harness.passBothPriorities();
+        assertThat(sheHulk.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A She-Hulk that did not enter this turn requires the full cost")
+    void olderPermanentRequiresFullManaCost() {
+        Permanent sheHulk = addReadySheHulk();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("mana");
+        assertThat(sheHulk.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(sheHulk.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     private Permanent addReadySheHulk() {
