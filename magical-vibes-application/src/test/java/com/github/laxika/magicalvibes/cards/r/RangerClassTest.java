@@ -65,8 +65,7 @@ class RangerClassTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(bears));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
-        harness.castFromLibraryTop(player1);
-        harness.passBothPriorities();
+        harness.castAndResolveFromLibraryTop(player1);
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(bears);
@@ -82,6 +81,142 @@ class RangerClassTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castFromLibraryTop(player1))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(forest);
+    }
+
+    @Test
+    void levelOneDoesNotTriggerWhenAttacking() {
+        harness.addToBattlefield(player1, new RangerClass());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(List.of(1));
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        resolveAllTriggers();
+        assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void multipleAttackersReceiveOnlyOneCounterAndNonattackerIsNotEligible() {
+        Permanent rangerClass = harness.addToBattlefieldAndReturn(player1, new RangerClass());
+        Permanent first = addCreatureReady(player1, new GrizzlyBears());
+        Permanent second = addCreatureReady(player1, new GrizzlyBears());
+        Permanent nonattacker = addCreatureReady(player1, new GrizzlyBears());
+        levelUpToThree(rangerClass);
+
+        declareAttackers(List.of(1, 2));
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(first.getId(), second.getId())
+                .doesNotContain(nonattacker.getId());
+        harness.handlePermanentChosen(player1, first.getId());
+        resolveAllTriggers();
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(nonattacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void levelThreePrivatelyShowsTopCardDuringOpponentsTurn() {
+        Permanent rangerClass = harness.addToBattlefieldAndReturn(player1, new RangerClass());
+        levelUpToThree(rangerClass);
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.forceActivePlayer(player2);
+        harness.ensurePriority(player2);
+        harness.clearMessages();
+
+        harness.publishState();
+
+        assertThat(harness.getConn1().getSentMessages())
+                .anyMatch(message -> message.contains("\"revealedLibraryTopCards\":[[{")
+                        && message.contains("Forest"));
+        assertThat(harness.getConn2().getSentMessages())
+                .anyMatch(message -> message.contains("\"revealedLibraryTopCards\":[[],[]]"));
+    }
+
+    @Test
+    void levelTwoDoesNotAllowCastingFromLibrary() {
+        Permanent rangerClass = harness.addToBattlefieldAndReturn(player1, new RangerClass());
+        levelUpToTwo(rangerClass);
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(bears));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        assertThatThrownBy(() -> harness.castFromLibraryTop(player1))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(bears);
+    }
+
+    @Test
+    void levelThreeDoesNotAllowCastingNoncreatureSpellFromLibrary() {
+        Permanent rangerClass = harness.addToBattlefieldAndReturn(player1, new RangerClass());
+        levelUpToThree(rangerClass);
+        RangerClass topCard = new RangerClass();
+        harness.setLibrary(player1, List.of(topCard));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        assertThatThrownBy(() -> harness.castFromLibraryTop(player1))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+    }
+
+    @Test
+    void cannotSkipLevelTwoOrActivateLevelTwoAgain() {
+        Permanent rangerClass = harness.addToBattlefieldAndReturn(player1, new RangerClass());
+        prepareForSorcery();
+        harness.addMana(player1, ManaColor.GREEN, 6);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(rangerClass), 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.activateAbility(player1, battlefieldIndex(rangerClass), 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(rangerClass.getClassLevel()).isEqualTo(2);
+        assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(rangerClass), 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void levelAbilityCannotBeActivatedOutsideMainPhase() {
+        Permanent rangerClass = harness.addToBattlefieldAndReturn(player1, new RangerClass());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(rangerClass), 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(rangerClass.getClassLevel()).isEqualTo(1);
+    }
+
+    @Test
+    void libraryCastingStillRequiresManaAndNormalCreatureTiming() {
+        Permanent rangerClass = harness.addToBattlefieldAndReturn(player1, new RangerClass());
+        levelUpToThree(rangerClass);
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(bears));
+
+        assertThatThrownBy(() -> harness.castFromLibraryTop(player1))
+                .isInstanceOf(IllegalStateException.class);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.forceStep(TurnStep.UPKEEP);
+        assertThatThrownBy(() -> harness.castFromLibraryTop(player1))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(bears);
+    }
+
+    @Test
+    void canCastSuccessiveCreaturesFromLibraryInSameTurn() {
+        Permanent rangerClass = harness.addToBattlefieldAndReturn(player1, new RangerClass());
+        levelUpToThree(rangerClass);
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castAndResolveFromLibraryTop(player1);
+        harness.castAndResolveFromLibraryTop(player1);
+
+        assertThat(countPermanents(player1, "Grizzly Bears")).isEqualTo(2);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 
     private void levelUpToTwo(Permanent rangerClass) {
