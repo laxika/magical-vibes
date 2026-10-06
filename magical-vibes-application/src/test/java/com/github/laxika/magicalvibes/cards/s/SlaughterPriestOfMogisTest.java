@@ -112,7 +112,7 @@ class SlaughterPriestOfMogisTest extends BaseCardTest {
     void tappedSummoningSickPriestCanActivate() {
         Permanent priest = harness.addToBattlefieldAndReturn(player1, new SlaughterPriestOfMogis());
         priest.setSummoningSick(true);
-        priest.setTapped(true);
+        priest.tap();
         harness.addToBattlefield(player1, new OmenOfTheForge());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 

@@ -94,7 +94,7 @@ class SkywayRobberTest extends BaseCardTest {
         assertThat(gd.getCardsExiledByPermanent(robber.getId())).contains(instant);
         assertThat(gd.pendingMayAbilities).isEmpty();
 
-        robber.setTapped(false);
+        robber.untap();
         dealCombatDamage(robber);
         assertThat(gd.pendingMayAbilities).extracting(PendingMayAbility::targetCardId)
                 .containsExactly(instant.getId());

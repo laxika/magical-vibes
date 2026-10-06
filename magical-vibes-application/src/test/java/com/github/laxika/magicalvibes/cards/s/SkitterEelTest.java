@@ -78,7 +78,7 @@ class SkitterEelTest extends BaseCardTest {
     void adaptCanBeActivatedWhileTappedAndSummoningSick() {
         Permanent eel = harness.addToBattlefieldAndReturn(player1, new SkitterEel());
         eel.setSummoningSick(true);
-        eel.setTapped(true);
+        eel.tap();
         addAdaptMana();
 
         harness.activateAbility(player1, 0, null, null);

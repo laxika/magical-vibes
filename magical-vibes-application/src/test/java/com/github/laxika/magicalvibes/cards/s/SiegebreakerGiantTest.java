@@ -107,7 +107,7 @@ class SiegebreakerGiantTest extends BaseCardTest {
     @DisplayName("The ability works while the Giant is tapped and summoning sick")
     void abilityDoesNotRequireTappingOrHaste() {
         Permanent giant = harness.addToBattlefieldAndReturn(player1, new SiegebreakerGiant());
-        giant.setTapped(true);
+        giant.tap();
         giant.setSummoningSick(true);
         Permanent target = addReadyCreature(player2);
         addAbilityMana();

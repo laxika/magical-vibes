@@ -185,7 +185,7 @@ class SidequestHuntTheMarkTest extends BaseCardTest {
     @DisplayName("Yiazmat can activate while tapped and summoning sick")
     void yiazmatCanActivateWhileTappedAndSummoningSick() {
         Permanent yiazmat = addTransformedYiazmat(player1);
-        yiazmat.setTapped(true);
+        yiazmat.tap();
         yiazmat.setSummoningSick(true);
         Permanent artifact = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
         harness.addMana(player1, ManaColor.BLACK, 1);

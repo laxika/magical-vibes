@@ -61,7 +61,7 @@ class SiegeWurmTest extends BaseCardTest {
     @DisplayName("An already tapped creature cannot convoke")
     void cannotConvokeWithTappedCreature() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new ElvesOfDeepShadow());
-        creature.setTapped(true);
+        creature.tap();
         harness.setHand(player1, List.of(new SiegeWurm()));
         harness.addMana(player1, ManaColor.GREEN, 7);
 

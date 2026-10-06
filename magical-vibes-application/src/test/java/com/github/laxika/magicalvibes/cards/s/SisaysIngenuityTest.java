@@ -110,7 +110,7 @@ class SisaysIngenuityTest extends BaseCardTest {
     void tappedNewCreatureCanChangeItsOwnColorRepeatedly() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new MoggSentry());
         creature.setSummoningSick(true);
-        creature.setTapped(true);
+        creature.tap();
         attachAuraTo(player1, creature);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.addMana(player1, ManaColor.BLUE, 2);

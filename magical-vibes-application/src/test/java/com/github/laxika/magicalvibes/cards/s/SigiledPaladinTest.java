@@ -77,7 +77,7 @@ class SigiledPaladinTest extends BaseCardTest {
     void multipleExaltedAbilitiesStack() {
         Permanent attacker = addCreatureReady(player1, new SigiledPaladin());
         Permanent supporter = addCreatureReady(player1, new SigiledPaladin());
-        supporter.setTapped(true);
+        supporter.tap();
 
         declareAttackers(List.of(0));
         resolveAllTriggers();

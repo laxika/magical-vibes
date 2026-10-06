@@ -61,7 +61,7 @@ class ShipwreckMorayTest extends BaseCardTest {
     void paysEnergyImmediatelyAndCanActivateWhileSummoningSickAndTapped() {
         Permanent moray = harness.addToBattlefieldAndReturn(player1, new ShipwreckMoray());
         moray.setSummoningSick(true);
-        moray.setTapped(true);
+        moray.tap();
         gd.playerEnergyCounters.put(player1.getId(), 1);
 
         harness.activateAbility(player1, 0, null, null);

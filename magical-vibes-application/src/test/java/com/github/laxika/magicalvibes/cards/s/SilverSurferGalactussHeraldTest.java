@@ -93,7 +93,7 @@ class SilverSurferGalactussHeraldTest extends BaseCardTest {
         resolveCombat();
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
-        surfer.setTapped(true);
+        surfer.tap();
 
         assertThatThrownBy(() -> declareAttackers(player1, List.of()))
                 .isInstanceOf(IllegalStateException.class)
@@ -108,8 +108,8 @@ class SilverSurferGalactussHeraldTest extends BaseCardTest {
         resolveCombat();
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
-        surfer.setTapped(true);
-        target.setTapped(true);
+        surfer.tap();
+        target.tap();
 
         declareAttackers(player1, List.of());
 
@@ -146,7 +146,7 @@ class SilverSurferGalactussHeraldTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("too few attack requirements");
 
-        target.setTapped(true);
+        target.tap();
         declareAttackers(player1, List.of());
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
         harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);

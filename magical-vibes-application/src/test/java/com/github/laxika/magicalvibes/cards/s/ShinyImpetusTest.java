@@ -119,7 +119,7 @@ class ShinyImpetusTest extends BaseCardTest {
         Permanent enchanted = addReadyCreature(player1);
         Permanent other = addReadyCreature(player1);
         attachAura(player1, enchanted);
-        enchanted.setTapped(true);
+        enchanted.tap();
 
         assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(2);

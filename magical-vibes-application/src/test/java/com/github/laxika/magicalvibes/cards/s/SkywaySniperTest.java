@@ -62,7 +62,7 @@ class SkywaySniperTest extends BaseCardTest {
     @DisplayName("Can activate repeatedly while tapped and summoning sick")
     void canActivateRepeatedlyWhileTappedAndSummoningSick() {
         Permanent sniper = harness.addToBattlefieldAndReturn(player1, new SkywaySniper());
-        sniper.setTapped(true);
+        sniper.tap();
         Permanent firstHawk = harness.addToBattlefieldAndReturn(player2, new SuntailHawk());
         Permanent secondHawk = harness.addToBattlefieldAndReturn(player2, new SuntailHawk());
         harness.addMana(player1, ManaColor.GREEN, 2);

@@ -113,7 +113,7 @@ class ShinkaTheBloodsoakedKeepTest extends BaseCardTest {
         Permanent shinka = addReadyShinka(player1);
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new IsamaruHoundOfKonda());
         harness.addMana(player1, ManaColor.RED, 1);
-        shinka.setTapped(true);
+        shinka.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
                 .isInstanceOf(IllegalStateException.class);

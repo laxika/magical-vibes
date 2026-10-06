@@ -79,7 +79,7 @@ class ShivTest extends BaseCardTest {
     void opposingTappedSummoningSickCreatureCanActivateRepeatedlyUntilEndOfTurn() {
         Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         creature.setSummoningSick(true);
-        creature.setTapped(true);
+        creature.tap();
         harness.addMana(player2, ManaColor.RED, 2);
         harness.passPriority(player1);
 

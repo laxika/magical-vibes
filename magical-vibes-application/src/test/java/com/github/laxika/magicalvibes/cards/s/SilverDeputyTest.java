@@ -177,7 +177,7 @@ class SilverDeputyTest extends BaseCardTest {
     @Test
     void activatedAbilityCannotBeUsedWhileTapped() {
         Permanent deputy = addCreatureReady(player1, new SilverDeputy());
-        deputy.setTapped(true);
+        deputy.tap();
         Permanent target = addCreatureReady(player1, new SterlingHound());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(deputy), null, target.getId()))

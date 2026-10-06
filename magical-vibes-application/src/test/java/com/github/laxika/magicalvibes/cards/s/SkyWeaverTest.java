@@ -201,7 +201,7 @@ class SkyWeaverTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent weaver = harness.addToBattlefieldAndReturn(player1, new SkyWeaver());
         weaver.setSummoningSick(true);
-        weaver.setTapped(true);
+        weaver.tap();
         Permanent target = addCreatureReady(player1, new SteadfastGuard());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 

@@ -132,7 +132,7 @@ class SilklashSpiderTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent spider = harness.addToBattlefieldAndReturn(player1, new SilklashSpider());
         spider.setSummoningSick(true);
-        spider.setTapped(true);
+        spider.tap();
         addCreatureReady(player2, new StormCrow());
         harness.addMana(player1, ManaColor.GREEN, 4);
 

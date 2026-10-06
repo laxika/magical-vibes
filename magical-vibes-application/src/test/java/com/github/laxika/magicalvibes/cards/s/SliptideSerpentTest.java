@@ -26,7 +26,7 @@ class SliptideSerpentTest extends BaseCardTest {
     @Test
     void canActivateWhileTappedAndSummoningSickWithGenericAndBlueMana() {
         var serpent = harness.addToBattlefieldAndReturn(player1, new SliptideSerpent());
-        serpent.setTapped(true);
+        serpent.tap();
         serpent.setSummoningSick(true);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.addMana(player1, ManaColor.BLUE, 1);

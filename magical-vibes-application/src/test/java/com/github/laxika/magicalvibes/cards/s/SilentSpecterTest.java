@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.s;
+import java.util.Set;
+import com.github.laxika.magicalvibes.model.CardType;
 
 import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
 import com.github.laxika.magicalvibes.cards.g.GoblinSharpshooter;
-import com.github.laxika.magicalvibes.model.BlockerAssignment;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -135,7 +137,7 @@ class SilentSpecterTest extends BaseCardTest {
     void faceDownCombatDoesNotTriggerDiscard() {
         harness.setHand(player2, List.of(new ElvishWarrior(), new ElvishWarrior()));
         Permanent specter = addCreatureReady(player1, new SilentSpecter());
-        specter.setFaceDown(true);
+        specter.setFaceDown(2, 2, Set.of(CardType.CREATURE));
         specter.setAttacking(true);
 
         resolveCombat();
@@ -152,7 +154,7 @@ class SilentSpecterTest extends BaseCardTest {
     void turningFaceUpRestoresDiscardTrigger() {
         harness.setHand(player2, List.of(new ElvishWarrior(), new ElvishWarrior()));
         Permanent specter = addCreatureReady(player1, new SilentSpecter());
-        specter.setFaceDown(true);
+        specter.setFaceDown(2, 2, Set.of(CardType.CREATURE));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.turnFaceUp(player1, 0);

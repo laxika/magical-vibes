@@ -81,7 +81,7 @@ class ShoreSnapperTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent snapper = harness.addToBattlefieldAndReturn(player1, new ShoreSnapper());
         snapper.setSummoningSick(true);
-        snapper.setTapped(true);
+        snapper.tap();
         Permanent other = addCreatureReady(player1, new ShoreSnapper());
         harness.addMana(player1, ManaColor.BLUE, 1);
 

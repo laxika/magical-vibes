@@ -78,7 +78,7 @@ class ShipwreckSingerTest extends BaseCardTest {
     void firstAbilityDoesNotRequireTapOrHaste() {
         Permanent singer = harness.addToBattlefieldAndReturn(player1, new ShipwreckSinger());
         singer.setSummoningSick(true);
-        singer.setTapped(true);
+        singer.tap();
         Permanent target = addCreatureReady(player2, new ShipwreckSinger());
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -112,7 +112,7 @@ class ShipwreckSingerTest extends BaseCardTest {
     void forcedTappedCreatureMayStayOutOfCombat() {
         addCreatureReady(player1, new ShipwreckSinger());
         Permanent target = addCreatureReady(player2, new ShipwreckSinger());
-        target.setTapped(true);
+        target.tap();
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.activateAbility(player1, 0, 0, null, target.getId());
@@ -136,7 +136,7 @@ class ShipwreckSingerTest extends BaseCardTest {
                 .hasMessageContaining("summoning sickness");
 
         singer.setSummoningSick(false);
-        singer.setTapped(true);
+        singer.tap();
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("tapped");

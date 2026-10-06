@@ -61,7 +61,7 @@ class SleepWithTheFishesTest extends BaseCardTest {
     @Test
     void alreadyTappedCreatureStillCreatesExactlyOneFish() {
         Permanent creature = addCreatureReady(player2);
-        creature.setTapped(true);
+        creature.tap();
 
         castSleepWithTheFishes(creature);
 

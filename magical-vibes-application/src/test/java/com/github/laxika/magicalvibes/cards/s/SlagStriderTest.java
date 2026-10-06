@@ -150,14 +150,14 @@ class SlagStriderTest extends BaseCardTest {
     @Test
     void tappedSummoningSickSourceCanActivateRepeatedlyAndSacrificeTappedArtifactCreatures() {
         var strider = harness.addToBattlefieldAndReturn(player1, new SlagStrider());
-        strider.setTapped(true);
+        strider.tap();
         strider.setSummoningSick(true);
         harness.setLife(player2, 20);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         for (int i = 0; i < 2; i++) {
             var artifact = harness.addToBattlefieldAndReturn(player1, new OrnithopterOfParadise());
-            artifact.setTapped(true);
+            artifact.tap();
             harness.activateAbility(player1, 0, null, player2.getId());
             harness.assertNotOnBattlefield(player1, "Ornithopter of Paradise");
             harness.assertLife(player2, 20 - i);

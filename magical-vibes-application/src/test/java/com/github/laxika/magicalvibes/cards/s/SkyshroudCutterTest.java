@@ -59,7 +59,7 @@ class SkyshroudCutterTest extends BaseCardTest {
     @DisplayName("A tapped Forest enables the alternate cost and remains on the battlefield")
     void tappedForestEnablesAlternateCost() {
         var forest = harness.addToBattlefieldAndReturn(player1, new Forest());
-        forest.setTapped(true);
+        forest.tap();
         harness.setHand(player1, List.of(new SkyshroudCutter()));
 
         harness.castWithAlternateCost(player1, 0, (UUID) null);

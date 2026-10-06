@@ -110,7 +110,7 @@ class SkeletalSwarmingTest extends BaseCardTest {
     void tappedAndSummoningSickSkeletonsAreNotRequiredToAttack() {
         harness.addToBattlefield(player1, new SkeletalSwarming());
         Permanent tapped = addCreatureReady(player1, new ClatteringSkeletons());
-        tapped.setTapped(true);
+        tapped.tap();
         harness.addToBattlefield(player1, new ClatteringSkeletons());
 
         declareAttackers(player1, List.of());

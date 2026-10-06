@@ -121,7 +121,7 @@ class SkyshooterTest extends BaseCardTest {
     @DisplayName("Cannot activate while tapped")
     void cannotActivateWhileTapped() {
         Permanent skyshooter = addCreatureReady(player1, new Skyshooter());
-        skyshooter.setTapped(true);
+        skyshooter.tap();
         Permanent target = addCombatCreature(player2, new AvenFlock(), true, false);
         addActivationMana();
 

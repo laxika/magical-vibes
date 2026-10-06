@@ -108,7 +108,7 @@ class SlagdrillScrapperTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent scrapper = addCreatureReady(player1, new SlagdrillScrapper());
-        scrapper.setTapped(true);
+        scrapper.tap();
         harness.addToBattlefield(player1, new Forest());
         addActivationMana(player1);
         prepareMainPhase();

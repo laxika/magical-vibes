@@ -133,7 +133,7 @@ class SlayersStrongholdTest extends BaseCardTest {
     void cannotActivateWhileTapped() {
         Permanent stronghold = harness.addToBattlefieldAndReturn(player1, new SlayersStronghold());
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new MoorlandInquisitor());
-        stronghold.setTapped(true);
+        stronghold.tap();
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
 

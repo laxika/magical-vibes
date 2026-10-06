@@ -43,7 +43,7 @@ class SiltCrawlerTest extends BaseCardTest {
     void tapsLandsAtTriggerResolution() {
         Permanent originalLand = harness.addToBattlefieldAndReturn(player1, new RhysticCave());
         Permanent alreadyTappedLand = harness.addToBattlefieldAndReturn(player1, new RhysticCave());
-        alreadyTappedLand.setTapped(true);
+        alreadyTappedLand.tap();
         harness.castFromHand(player1, new SiltCrawler(), "{2}{G}");
 
         harness.passBothPriorities();

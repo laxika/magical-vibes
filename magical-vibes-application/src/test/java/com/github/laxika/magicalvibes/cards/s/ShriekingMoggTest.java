@@ -92,9 +92,9 @@ class ShriekingMoggTest extends BaseCardTest {
     @DisplayName("ETB leaves an already tapped source and other tapped creatures tapped")
     void etbDoesNotUntapAlreadyTappedCreatures() {
         Permanent otherCreature = harness.addToBattlefieldAndReturn(player2, new SpinelessThug());
-        otherCreature.setTapped(true);
+        otherCreature.tap();
         Permanent mogg = harness.enterBattlefieldAndReturn(player1, new ShriekingMogg());
-        mogg.setTapped(true);
+        mogg.tap();
 
         resolveAllTriggers();
 

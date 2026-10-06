@@ -124,7 +124,7 @@ class SkyfireKirinTest extends BaseCardTest {
     @DisplayName("Gaining control does not untap the creature or let it use a tap ability immediately")
     void stolenCreatureRemainsTappedAndCannotUseTapAbility() {
         Permanent scout = prepareArcaneCast();
-        scout.setTapped(true);
+        scout.tap();
 
         harness.handlePermanentChosen(player1, scout.getId());
         harness.passBothPriorities();
@@ -133,7 +133,7 @@ class SkyfireKirinTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Sakura-Tribe Scout");
         assertThat(scout.isTapped()).isTrue();
-        scout.setTapped(false);
+        scout.untap();
         harness.ensurePriority(player1);
         assertThatThrownBy(() -> harness.activateAbility(player1,
                 gd.playerBattlefields.get(player1.getId()).indexOf(scout), null, null))

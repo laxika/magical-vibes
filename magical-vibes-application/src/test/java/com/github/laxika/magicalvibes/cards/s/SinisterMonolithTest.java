@@ -132,7 +132,7 @@ class SinisterMonolithTest extends BaseCardTest {
     @Test
     void cannotActivateWhenTapped() {
         Permanent monolith = addReadyMonolith();
-        monolith.setTapped(true);
+        monolith.tap();
         harness.setLife(player1, 20);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

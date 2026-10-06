@@ -122,7 +122,7 @@ class SkullProphetTest extends BaseCardTest {
     @Test
     void tappedProphetCannotActivateEitherAbility() {
         Permanent prophet = addReadyProphet();
-        prophet.setTapped(true);
+        prophet.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);

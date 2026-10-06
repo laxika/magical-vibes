@@ -129,7 +129,7 @@ class SkillBorrowerTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new ObeliskOfEsper()));
 
         harness.activateAbility(player1, 0, null, null);
-        harness.handleListChoice(player1, BLUE);
+        harness.handleListChoice(player1, "BLUE");
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLUE)).isZero();

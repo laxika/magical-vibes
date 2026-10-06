@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.GameLogEntry;
-import com.github.laxika.magicalvibes.model.InteractionAnswer;
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.cards.t.TellingTime;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 

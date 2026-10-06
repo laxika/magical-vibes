@@ -105,7 +105,7 @@ class SilvosRogueElementalTest extends BaseCardTest {
     void tappedSummoningSickSilvosCanActivateRepeatedly() {
         Permanent silvos = harness.addToBattlefieldAndReturn(player1, new SilvosRogueElemental());
         silvos.setSummoningSick(true);
-        silvos.setTapped(true);
+        silvos.tap();
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.activateAbility(player1, 0, null, null);

@@ -121,8 +121,8 @@ class SkeletalVampireTest extends BaseCardTest {
         castSkeletalVampire();
         Permanent vampire = findPermanent(player1, "Skeletal Vampire");
         Permanent bat = bats().getFirst();
-        vampire.setTapped(true);
-        bat.setTapped(true);
+        vampire.tap();
+        bat.tap();
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.handlePermanentChosen(player1, bat.getId());

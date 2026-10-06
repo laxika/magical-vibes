@@ -56,7 +56,7 @@ class SlinkingSerpentTest extends BaseCardTest {
     @DisplayName("A tapped Forest still prevents Slinking Serpent from being blocked")
     void cannotBeBlockedWhenDefendersForestIsTapped() {
         Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
-        forest.setTapped(true);
+        forest.tap();
         Permanent blocker = addCreatureReady(player2, new RagingKavu());
         Permanent serpent = addCreatureReady(player1, new SlinkingSerpent());
         serpent.setAttacking(true);

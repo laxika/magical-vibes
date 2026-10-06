@@ -90,7 +90,7 @@ class SilentClearingTest extends BaseCardTest {
     @DisplayName("A tapped Clearing cannot activate either mana ability or the draw ability")
     void tappedLandCannotActivate() {
         Permanent clearing = addReadyClearing(player1);
-        clearing.setTapped(true);
+        clearing.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         for (int abilityIndex = 0; abilityIndex < 3; abilityIndex++) {

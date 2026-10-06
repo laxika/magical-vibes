@@ -92,7 +92,7 @@ class SkullOfOrmTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent skull = harness.addToBattlefieldAndReturn(player1, new SkullOfOrm());
-        skull.setTapped(true);
+        skull.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 5);
         Card pacifism = new Pacifism();
         harness.setGraveyard(player1, List.of(pacifism));

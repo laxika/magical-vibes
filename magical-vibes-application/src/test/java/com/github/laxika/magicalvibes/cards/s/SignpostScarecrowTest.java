@@ -38,7 +38,7 @@ class SignpostScarecrowTest extends BaseCardTest {
     @EnumSource(value = ManaColor.class, names = {"WHITE", "BLUE", "BLACK", "RED", "GREEN"})
     void manaAbilityCanProduceEveryColorWhileTappedAndSummoningSick(ManaColor color) {
         Permanent scarecrow = harness.addToBattlefieldAndReturn(player1, new SignpostScarecrow());
-        scarecrow.setTapped(true);
+        scarecrow.tap();
         scarecrow.setSummoningSick(true);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 

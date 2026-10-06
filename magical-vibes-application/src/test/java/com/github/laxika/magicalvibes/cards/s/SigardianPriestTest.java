@@ -132,7 +132,7 @@ class SigardianPriestTest extends BaseCardTest {
     @DisplayName("Cannot activate when the Priest is already tapped")
     void cannotActivateWhileTapped() {
         Permanent priest = addCreatureReady(player1, new SigardianPriest());
-        priest.setTapped(true);
+        priest.tap();
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -147,7 +147,7 @@ class SigardianPriestTest extends BaseCardTest {
     void canTargetTappedCreature() {
         Permanent priest = addCreatureReady(player1, new SigardianPriest());
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
-        target.setTapped(true);
+        target.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());

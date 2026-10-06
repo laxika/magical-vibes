@@ -80,7 +80,7 @@ class SilentArbiterTest extends BaseCardTest {
     @DisplayName("A tapped Arbiter still limits blockers")
     void tappedArbiterStillLimitsBlockers() {
         Permanent arbiter = addCreatureReady(player1, new SilentArbiter());
-        arbiter.setTapped(true);
+        arbiter.tap();
         addCreatureReady(player1, new DrossCrocodile());
         addCreatureReady(player2, new DrossCrocodile());
         addCreatureReady(player2, new DrossCrocodile());

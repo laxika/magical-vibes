@@ -117,7 +117,7 @@ class SkullCatapultTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate a tapped Skull Catapult")
     void cannotActivateWhenTapped() {
-        harness.addToBattlefieldAndReturn(player1, new SkullCatapult()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new SkullCatapult()).tap();
         harness.addToBattlefield(player1, new EkunduGriffin());
         harness.forceActivePlayer(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -133,7 +133,7 @@ class SkullCatapultTest extends BaseCardTest {
     @DisplayName("A tapped, newly entered creature can be sacrificed and damage can target you")
     void sacrificesTappedCreatureToDamageController() {
         harness.addToBattlefield(player1, new SkullCatapult());
-        harness.addToBattlefieldAndReturn(player1, new EkunduGriffin()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new EkunduGriffin()).tap();
         harness.setLife(player1, 20);
         harness.forceActivePlayer(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);

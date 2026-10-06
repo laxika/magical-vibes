@@ -93,7 +93,7 @@ class SilentHallcreeperTest extends BaseCardTest {
     void cannotChooseCountersAgainOnALaterCombat() {
         Permanent hallcreeper = addCreatureReady(player1, new SilentHallcreeper());
         dealCombatDamageAndChoose(COUNTERS);
-        hallcreeper.setTapped(false);
+        hallcreeper.untap();
         hallcreeper.setAttacking(false);
 
         declareAttackers(List.of(0));
@@ -110,7 +110,7 @@ class SilentHallcreeperTest extends BaseCardTest {
         Permanent hallcreeper = addCreatureReady(player1, new SilentHallcreeper());
         Permanent target = addCreatureReady(player1, new SilentHallcreeper());
         dealCombatDamageAndChoose(COUNTERS);
-        hallcreeper.setTapped(false);
+        hallcreeper.untap();
         hallcreeper.setAttacking(false);
 
         declareAttackers(List.of(0));
@@ -119,7 +119,7 @@ class SilentHallcreeperTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
         assertThat(hallcreeper.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        hallcreeper.setTapped(false);
+        hallcreeper.untap();
         hallcreeper.setAttacking(false);
 
         dealCombatDamageAndChoose(COUNTERS);

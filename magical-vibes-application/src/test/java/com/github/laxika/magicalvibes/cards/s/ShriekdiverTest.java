@@ -70,7 +70,7 @@ class ShriekdiverTest extends BaseCardTest {
     @DisplayName("Its ability can be activated while tapped and does not untap it")
     void canActivateWhileTapped() {
         Permanent shriekdiver = addShriekdiver();
-        shriekdiver.setTapped(true);
+        shriekdiver.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, null);

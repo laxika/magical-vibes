@@ -126,7 +126,7 @@ class SilentGravestoneTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        gravestone.setTapped(true);
+        gravestone.tap();
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }

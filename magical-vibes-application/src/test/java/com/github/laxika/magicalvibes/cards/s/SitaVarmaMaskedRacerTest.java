@@ -150,7 +150,7 @@ class SitaVarmaMaskedRacerTest extends BaseCardTest {
     void exhaustWorksWhileTappedAndSummoningSick() {
         Permanent sita = harness.addToBattlefieldAndReturn(player1, new SitaVarmaMaskedRacer());
         sita.setSummoningSick(true);
-        sita.setTapped(true);
+        sita.tap();
         addManaForX(1);
 
         harness.activateAbility(player1, 0, 0, 1, null);

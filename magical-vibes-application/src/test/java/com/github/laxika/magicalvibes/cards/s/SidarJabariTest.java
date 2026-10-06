@@ -102,7 +102,7 @@ class SidarJabariTest extends BaseCardTest {
         void canTargetTappedCreature() {
             addReadyJabari(player1);
             Permanent falcon = harness.addToBattlefieldAndReturn(player2, new BayFalcon());
-            falcon.setTapped(true);
+            falcon.tap();
 
             declareAttackers(List.of(0));
             harness.handlePermanentChosen(player1, falcon.getId());

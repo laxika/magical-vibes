@@ -116,7 +116,7 @@ class SkyshipStalkerTest extends BaseCardTest {
     void firstStrikeDoesNotRequireTapping() {
         Permanent stalker = addStalkerReady(player1);
         Permanent other = addStalkerReady(player2);
-        stalker.setTapped(true);
+        stalker.tap();
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, 1, null, null);

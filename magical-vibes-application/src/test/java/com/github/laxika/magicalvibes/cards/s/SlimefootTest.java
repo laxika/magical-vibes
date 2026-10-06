@@ -179,7 +179,7 @@ class SlimefootTest extends BaseCardTest {
     void activatesWhileTappedAndSummoningSick() {
         Permanent slimefoot = harness.addToBattlefieldAndReturn(player1, new Slimefoot());
         slimefoot.setSummoningSick(true);
-        slimefoot.setTapped(true);
+        slimefoot.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.activateAbility(player1, 0, null, null);

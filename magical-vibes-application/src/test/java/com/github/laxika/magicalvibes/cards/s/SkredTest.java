@@ -87,7 +87,7 @@ class SkredTest extends BaseCardTest {
     @Test
     @DisplayName("Skred counts snow creatures and tapped snow lands and can target its controller's creature")
     void countsSnowCreaturesAndTappedLands() {
-        addSnowPermanent(player1).setTapped(true);
+        addSnowPermanent(player1).tap();
         Permanent target = harness.addToBattlefieldAndReturn(player1, new AdarkarValkyrie());
 
         castSkred(target.getId());

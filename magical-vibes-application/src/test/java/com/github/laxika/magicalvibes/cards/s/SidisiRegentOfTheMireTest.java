@@ -106,7 +106,7 @@ class SidisiRegentOfTheMireTest extends BaseCardTest {
     @Test
     void cannotActivateWhenTapped() {
         Permanent sidisi = addReadySidisi();
-        sidisi.setTapped(true);
+        sidisi.tap();
         Permanent fodder = addCreatureReady(player1, new GrizzlyBears());
         Card target = new BenalishKnight();
         harness.setGraveyard(player1, List.of(target));

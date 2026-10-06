@@ -90,7 +90,7 @@ class SigiledStarfishTest extends BaseCardTest {
     @Test
     @DisplayName("An already-tapped Starfish cannot activate its tap ability")
     void tappedCannotActivate() {
-        addCreatureReady(player1, new SigiledStarfish()).setTapped(true);
+        addCreatureReady(player1, new SigiledStarfish()).tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);

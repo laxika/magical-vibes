@@ -90,7 +90,7 @@ class SkyclaveSquidTest extends BaseCardTest {
     @DisplayName("Landfall does not allow a tapped Squid to attack")
     void landfallDoesNotOverrideBeingTapped() {
         Permanent squid = addCreatureReady(player1, new SkyclaveSquid());
-        squid.setTapped(true);
+        squid.tap();
         harness.setHand(player1, List.of(new Forest()));
 
         harness.playLand(player1, 0);

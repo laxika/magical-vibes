@@ -92,7 +92,7 @@ class SistersOfStoneDeathTest extends BaseCardTest {
     @Test
     @DisplayName("The exile ability cannot target a creature outside combat with Sisters of Stone Death")
     void blackGreenAbilityRejectsCreatureOutsideCombat() {
-        addCreatureReady(player1, new SistersOfStoneDeath());
+        Permanent sisters = addCreatureReady(player1, new SistersOfStoneDeath());
         Permanent blocker = addCreatureReady(player2, new Watchwolf());
         Permanent bystander = addCreatureReady(player2, new Watchwolf());
 

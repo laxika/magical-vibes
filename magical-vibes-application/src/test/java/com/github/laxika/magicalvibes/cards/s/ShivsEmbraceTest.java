@@ -306,8 +306,8 @@ class ShivsEmbraceTest extends BaseCardTest {
     void tappedAuraCanPumpTappedCreature() {
         Permanent creature = addCreatureReady(player1, new GoblinRaider());
         Permanent aura = addAttachedEmbrace(creature);
-        creature.setTapped(true);
-        aura.setTapped(true);
+        creature.tap();
+        aura.tap();
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 1, null, null);

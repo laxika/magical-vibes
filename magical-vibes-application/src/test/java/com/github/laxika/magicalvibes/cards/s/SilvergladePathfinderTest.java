@@ -120,7 +120,7 @@ class SilvergladePathfinderTest extends BaseCardTest {
     @DisplayName("Cannot activate while tapped")
     void cannotActivateWhileTapped() {
         Permanent pathfinder = addReadyPathfinder();
-        pathfinder.setTapped(true);
+        pathfinder.tap();
         harness.setHand(player1, List.of(new Forest()));
         addMana();
 

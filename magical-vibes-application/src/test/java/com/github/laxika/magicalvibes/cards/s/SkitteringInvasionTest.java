@@ -72,7 +72,7 @@ class SkitteringInvasionTest extends BaseCardTest {
         castAndResolve();
 
         Permanent spawn = findPermanents(player1, "Eldrazi Spawn").getFirst();
-        spawn.setTapped(true);
+        spawn.tap();
         int spawnIndex = gd.playerBattlefields.get(player1.getId()).indexOf(spawn);
         harness.activateAbility(player1, spawnIndex, 0, null, null);
 

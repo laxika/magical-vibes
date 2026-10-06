@@ -67,7 +67,7 @@ class SkyshaperTest extends BaseCardTest {
     @DisplayName("A tapped Skyshaper is sacrificed as a cost before flying is granted")
     void tappedSourceIsSacrificedBeforeResolution() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new Skyshaper());
-        source.setTapped(true);
+        source.tap();
         Permanent creature = addCreatureReady(player1, new RagingGoblin());
 
         harness.activateAbility(player1, indexOf("Skyshaper"), null, null);

@@ -173,7 +173,7 @@ class SlickshotLockpickerTest extends BaseCardTest {
     @Test
     void plottingIsRestrictedToSorceryTiming() {
         harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.BEGIN_COMBAT);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
         SlickshotLockpicker lockpicker = new SlickshotLockpicker();
         harness.setHand(player1, List.of(lockpicker));
         harness.addMana(player1, ManaColor.BLUE, 1);

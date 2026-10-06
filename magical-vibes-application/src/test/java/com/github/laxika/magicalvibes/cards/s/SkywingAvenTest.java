@@ -63,7 +63,7 @@ class SkywingAvenTest extends BaseCardTest {
     @Test
     void discardIsPaidBeforeResolutionEvenWhenTappedAndSummoningSick() {
         Permanent skywing = harness.addToBattlefieldAndReturn(player1, new SkywingAven());
-        skywing.setTapped(true);
+        skywing.tap();
         skywing.setSummoningSick(true);
         harness.setHand(player1, List.of(new CephalidAristocrat()));
 

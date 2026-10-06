@@ -165,7 +165,7 @@ class ShuriWakandanInventorTest extends BaseCardTest {
         Permanent shuri = addReadyShuri();
         Permanent target = harness.addToBattlefieldAndReturn(player1, new UrzasSylex());
         Permanent copySource = harness.addToBattlefieldAndReturn(player1, new WornPowerstone());
-        copySource.setTapped(true);
+        copySource.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbilityWithMultiTargets(player1, indexOf(shuri), 0,

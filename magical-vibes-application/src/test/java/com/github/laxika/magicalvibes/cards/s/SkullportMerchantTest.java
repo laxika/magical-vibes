@@ -117,7 +117,7 @@ class SkullportMerchantTest extends BaseCardTest {
         harness.setHand(player1, List.of());
         Permanent merchant = harness.addToBattlefieldAndReturn(player1, new SkullportMerchant());
         merchant.setSummoningSick(true);
-        merchant.setTapped(true);
+        merchant.tap();
         harness.addToBattlefield(player1, new DireWolfProwler());
         addAbilityMana();
 

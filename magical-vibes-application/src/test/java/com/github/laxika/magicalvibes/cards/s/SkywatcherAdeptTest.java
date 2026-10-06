@@ -42,7 +42,7 @@ class SkywatcherAdeptTest extends BaseCardTest {
     void levelUpUsesStackAndDoesNotRequireTap() {
         Permanent adept = addCreatureReady(player1, new SkywatcherAdept());
         adept.setSummoningSick(true);
-        adept.setTapped(true);
+        adept.tap();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();

@@ -97,7 +97,7 @@ class SkolaGrovedancerTest extends BaseCardTest {
     @DisplayName("A tapped summoning-sick Grovedancer can activate repeatedly")
     void activatesRepeatedlyWithoutTapping() {
         harness.addToBattlefield(player1, new SkolaGrovedancer());
-        gd.playerBattlefields.get(player1.getId()).getFirst().setTapped(true);
+        gd.playerBattlefields.get(player1.getId()).getFirst().tap();
         gd.playerBattlefields.get(player1.getId()).getFirst().setSummoningSick(true);
         harness.setLibrary(player1, List.of(new Forest(), new Forest()));
         harness.setLife(player1, 20);

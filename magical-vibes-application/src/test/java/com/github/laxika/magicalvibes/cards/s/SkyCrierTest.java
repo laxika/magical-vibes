@@ -98,7 +98,7 @@ class SkyCrierTest extends BaseCardTest {
     @DisplayName("Sky Crier can activate its ability while tapped")
     void canActivateWhileTapped() {
         Permanent skyCrier = addCreatureReady(player1, new SkyCrier());
-        skyCrier.setTapped(true);
+        skyCrier.tap();
         addActivationMana(player1);
         prepareDraws();
 

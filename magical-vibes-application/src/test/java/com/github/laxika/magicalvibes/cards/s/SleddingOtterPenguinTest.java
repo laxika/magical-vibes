@@ -68,7 +68,7 @@ class SleddingOtterPenguinTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent penguin = harness.addToBattlefieldAndReturn(player1, new SleddingOtterPenguin());
         penguin.setSummoningSick(true);
-        penguin.setTapped(true);
+        penguin.tap();
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.activateAbility(player1, 0, null, null);

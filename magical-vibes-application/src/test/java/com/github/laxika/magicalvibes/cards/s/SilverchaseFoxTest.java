@@ -121,7 +121,7 @@ class SilverchaseFoxTest extends BaseCardTest {
     void canActivateWhileSummoningSickAndTapped() {
         Permanent fox = harness.addToBattlefieldAndReturn(player1, new SilverchaseFox());
         fox.setSummoningSick(true);
-        fox.setTapped(true);
+        fox.tap();
         Permanent target = addEnchantment(player2);
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);

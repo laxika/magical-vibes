@@ -112,7 +112,7 @@ class SkirsdagFlayerTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent flayer = addReadyFlayer(player1);
-        flayer.setTapped(true);
+        flayer.tap();
         Permanent target = harness.addToBattlefieldAndReturn(player2, new HeadlessSkaab());
         addAbilityMana(player1);
 
@@ -137,7 +137,7 @@ class SkirsdagFlayerTest extends BaseCardTest {
     void canSacrificeTappedSummoningSickHuman() {
         Permanent flayer = addReadyFlayer(player1);
         Permanent human = harness.addToBattlefieldAndReturn(player1, new SkirsdagFlayer());
-        human.setTapped(true);
+        human.tap();
         human.setSummoningSick(true);
         Permanent target = harness.addToBattlefieldAndReturn(player2, new HeadlessSkaab());
         addAbilityMana(player1);

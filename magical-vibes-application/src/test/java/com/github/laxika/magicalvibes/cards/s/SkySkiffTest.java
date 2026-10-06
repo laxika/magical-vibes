@@ -176,7 +176,7 @@ class SkySkiffTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(skiff);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(blocker);
-        assertThat(player2.getLife()).isEqualTo(20);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
     }
 
     private Permanent addSkiffReady(Player player) {

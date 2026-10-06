@@ -62,7 +62,7 @@ class SkulltapTest extends BaseCardTest {
     @DisplayName("A tapped creature can be sacrificed")
     void canSacrificeTappedCreature() {
         Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new ScornfulEgotist());
-        sacrifice.setTapped(true);
+        sacrifice.tap();
         harness.setHand(player1, List.of(new Skulltap()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);

@@ -59,7 +59,7 @@ class SlaughterDroneTest extends BaseCardTest {
         Permanent drone = harness.addToBattlefieldAndReturn(player1, new SlaughterDrone());
         Permanent otherDrone = harness.addToBattlefieldAndReturn(player1, new SlaughterDrone());
         Permanent opposingDrone = harness.addToBattlefieldAndReturn(player2, new SlaughterDrone());
-        drone.setTapped(true);
+        drone.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, null);

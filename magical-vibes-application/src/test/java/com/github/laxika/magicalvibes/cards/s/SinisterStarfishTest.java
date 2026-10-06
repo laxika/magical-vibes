@@ -54,7 +54,7 @@ class SinisterStarfishTest extends BaseCardTest {
     @Test
     void tappedStarfishCannotActivate() {
         Permanent starfish = addReadyStarfish();
-        starfish.setTapped(true);
+        starfish.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);

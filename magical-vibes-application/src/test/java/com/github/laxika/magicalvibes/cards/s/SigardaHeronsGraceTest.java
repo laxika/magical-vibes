@@ -83,7 +83,7 @@ class SigardaHeronsGraceTest extends BaseCardTest {
     @DisplayName("A tapped Sigarda can exile a creature card without tapping again")
     void tappedSigardaCanExileCreatureCard() {
         Permanent sigarda = harness.addToBattlefieldAndReturn(player1, new SigardaHeronsGrace());
-        sigarda.setTapped(true);
+        sigarda.tap();
         harness.setGraveyard(player1, List.of(new ThrabenInspector()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 

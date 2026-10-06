@@ -146,7 +146,7 @@ class SkybindTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Skybind());
         UUID creatureId = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears()).getId();
         gd.stolenCreatures.put(creatureId, player2.getId());
-        findPermanent(player1, "Grizzly Bears").setTapped(true);
+        findPermanent(player1, "Grizzly Bears").tap();
         harness.setHand(player1, List.of(new GloriousAnthem()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 

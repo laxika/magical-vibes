@@ -119,7 +119,7 @@ class SimianBrawlerTest extends BaseCardTest {
     @DisplayName("A tapped Simian Brawler can activate repeatedly and the boosts accumulate")
     void tappedBrawlerCanActivateRepeatedly() {
         Permanent brawler = harness.addToBattlefieldAndReturn(player1, new SimianBrawler());
-        brawler.setTapped(true);
+        brawler.tap();
         int basePower = gqs.getEffectivePower(gd, brawler);
         int baseToughness = gqs.getEffectiveToughness(gd, brawler);
         harness.setHand(player1, List.of(new SnowCoveredForest(), new SnowCoveredForest()));

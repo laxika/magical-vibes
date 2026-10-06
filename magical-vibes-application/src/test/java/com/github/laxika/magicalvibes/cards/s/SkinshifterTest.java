@@ -163,7 +163,7 @@ class SkinshifterTest extends BaseCardTest {
     void canActivateWhileSummoningSickAndTapped() {
         Permanent skinshifter = harness.addToBattlefieldAndReturn(player1, new Skinshifter());
         skinshifter.setSummoningSick(true);
-        skinshifter.setTapped(true);
+        skinshifter.tap();
 
         activate(player1, 2);
 

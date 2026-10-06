@@ -122,7 +122,7 @@ class SkygamesTest extends BaseCardTest {
     void tappedLandCannotPayActivationCost() {
         Permanent land = attachSkygames(player1);
         Permanent creature = addCreatureReady(player1, new GreensideWatcher());
-        land.setTapped(true);
+        land.tap();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 

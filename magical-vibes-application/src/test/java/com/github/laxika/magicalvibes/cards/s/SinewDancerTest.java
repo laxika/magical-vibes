@@ -99,7 +99,7 @@ class SinewDancerTest extends BaseCardTest {
     void eitherAbilityCanTargetAnAlreadyTappedCreature(int abilityIndex) {
         Permanent dancer = addCreatureReady(player1, new SinewDancer());
         Permanent target = addCreatureReady(player2, new SinewDancer());
-        target.setTapped(true);
+        target.tap();
         gd.playerPoisonCounters.put(player2.getId(), 3);
         harness.addMana(player1, ManaColor.WHITE, 1);
         if (abilityIndex == 0) {
@@ -118,7 +118,7 @@ class SinewDancerTest extends BaseCardTest {
     @ValueSource(ints = {0, 1})
     void eitherAbilityRequiresAnUntappedSource(int abilityIndex) {
         Permanent dancer = addCreatureReady(player1, new SinewDancer());
-        dancer.setTapped(true);
+        dancer.tap();
         Permanent target = addCreatureReady(player2, new SinewDancer());
         gd.playerPoisonCounters.put(player2.getId(), 3);
         harness.addMana(player1, ManaColor.WHITE, 1);

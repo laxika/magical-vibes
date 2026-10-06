@@ -91,7 +91,7 @@ class SkirsdagSupplicantTest extends BaseCardTest {
     @DisplayName("Cannot activate while tapped")
     void cannotActivateWhileTapped() {
         Permanent supplicant = addCreatureReady(player1, new SkirsdagSupplicant());
-        supplicant.setTapped(true);
+        supplicant.tap();
         harness.setHand(player1, List.of(new SkirsdagSupplicant()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
