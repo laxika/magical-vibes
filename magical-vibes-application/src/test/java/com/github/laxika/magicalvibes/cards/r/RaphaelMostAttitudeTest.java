@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.b.BuzzBots;
 import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,8 +17,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RaphaelMostAttitude.class, Divination.class, Forest.class, GrizzlyBears.class})
+@CardUsed({RaphaelMostAttitude.class, Divination.class, Forest.class, GrizzlyBears.class, BuzzBots.class})
 class RaphaelMostAttitudeTest extends BaseCardTest {
 
     @Test
@@ -24,10 +27,7 @@ class RaphaelMostAttitudeTest extends BaseCardTest {
         Permanent raphael = addRaphael();
         Card topCard = new Forest();
         harness.setLibrary(player1, List.of(topCard));
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -42,10 +42,7 @@ class RaphaelMostAttitudeTest extends BaseCardTest {
         addRaphael();
         Card topCard = new Forest();
         harness.setLibrary(player1, List.of(topCard));
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
@@ -101,6 +98,155 @@ class RaphaelMostAttitudeTest extends BaseCardTest {
         assertThat(harness.getCastingPermissionService().getCastableExiledCardIds(gd, player1.getId()))
                 .doesNotContain(exiled.getId());
         assertThat(gd.getCardsExiledByPermanent(raphael.getId())).containsExactly(exiled);
+    }
+
+    @Test
+    void attackPermissionIncludesCardsExiledLaterInTheTurn() {
+        Permanent raphael = addRaphael();
+        Card earlierCard = new Forest();
+        gd.addToExile(player1.getId(), earlierCard, raphael.getId());
+        assertCanPlayCardExiledAfterAttacking(raphael);
+    }
+
+    @Test
+    void attackPermissionExistsEvenWhenNoCardsWereExiledAtResolution() {
+        assertCanPlayCardExiledAfterAttacking(addRaphael());
+    }
+
+    private void assertCanPlayCardExiledAfterAttacking(Permanent raphael) {
+        Card laterCard = new Forest();
+        harness.setLibrary(player1, List.of(laterCard));
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castFromHand(player1, new BuzzBots(), "{1}{U}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.getCardsExiledByPermanent(raphael.getId())).contains(laterCard);
+        harness.castFromExile(player1, laterCard.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(laterCard.getId()));
+        assertThat(harness.getCastingPermissionService().getCastableExiledCardIds(gd, player1.getId()))
+                .isEmpty();
+    }
+
+    @Test
+    void playingAnExiledLandConsumesTheOneCardPermission() {
+        Permanent raphael = addRaphael();
+        Card land = new Forest();
+        Card creature = new BuzzBots();
+        gd.addToExile(player1.getId(), land, raphael.getId());
+        gd.addToExile(player1.getId(), creature, raphael.getId());
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castFromExile(player1, land.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(land.getId()));
+        assertThat(gd.landsPlayedThisTurn.get(player1.getId())).isEqualTo(1);
+        assertThat(gd.getCardsExiledByPermanent(raphael.getId())).containsExactly(creature);
+        assertThat(harness.getCastingPermissionService().getCastableExiledCardIds(gd, player1.getId()))
+                .isEmpty();
+    }
+
+    @Test
+    void attackPermissionDoesNotBypassCreatureTimingOrManaCosts() {
+        Permanent raphael = addRaphael();
+        Card creature = new BuzzBots();
+        gd.addToExile(player1.getId(), creature, raphael.getId());
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        assertThatThrownBy(() -> harness.castFromExile(player1, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        assertThatThrownBy(() -> harness.castFromExile(player1, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getCardsExiledByPermanent(raphael.getId())).containsExactly(creature);
+
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castFromExile(player1, creature.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(creature.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+    }
+
+    @Test
+    void attackPermissionRespectsLandTimingAndTheLandPlayLimit() {
+        Permanent raphael = addRaphael();
+        Card exiledLand = new Forest();
+        gd.addToExile(player1.getId(), exiledLand, raphael.getId());
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        assertThatThrownBy(() -> harness.castFromExile(player1, exiledLand.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new Forest()));
+        harness.playLand(player1, 0);
+        assertThatThrownBy(() -> harness.castFromExile(player1, exiledLand.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getCardsExiledByPermanent(raphael.getId())).containsExactly(exiledLand);
+        assertThat(harness.getCastingPermissionService().getCastableExiledCardIds(gd, player1.getId()))
+                .contains(exiledLand.getId());
+    }
+
+    @Test
+    void acceptingAllianceWithAnEmptyLibraryDoesNotLoseTheGame() {
+        Permanent raphael = addRaphael();
+        harness.setLibrary(player1, List.of());
+        harness.castFromHand(player1, new BuzzBots(), "{1}{U}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.getCardsExiledByPermanent(raphael.getId())).isEmpty();
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+    }
+
+    @Test
+    void allianceDoesNotTriggerForRaphaelHimself() {
+        Card topCard = new Forest();
+        harness.setLibrary(player1, List.of(topCard));
+        harness.castFromHand(player1, new RaphaelMostAttitude(), "{3}{R}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+    }
+
+    @Test
+    void allianceDoesNotTriggerForAnOpponentsCreature() {
+        Permanent raphael = addRaphael();
+        Card topCard = new Forest();
+        harness.setLibrary(player1, List.of(topCard));
+        harness.forceActivePlayer(player2);
+        harness.clearPriorityPassed();
+        harness.castFromHand(player2, new BuzzBots(), "{1}{U}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.getCardsExiledByPermanent(raphael.getId())).isEmpty();
     }
 
     private Permanent addRaphael() {
