@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -18,6 +18,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SeizeTheInitiative.class, GrizzlyBears.class, FountainOfYouth.class})
 class SeizeTheInitiativeTest extends BaseCardTest {
 
     
@@ -77,7 +78,7 @@ class SeizeTheInitiativeTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(harness.getGameData().gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+        assertThat(gameLogContains("fizzles")).isTrue();
     }
 
     @Test
@@ -121,5 +122,53 @@ class SeizeTheInitiativeTest extends BaseCardTest {
         assertThat(bear.getPowerModifier()).isEqualTo(1);
         assertThat(bear.getToughnessModifier()).isEqualTo(1);
         assertThat(bear.getGrantedKeywords()).contains(Keyword.FIRST_STRIKE);
+    }
+
+    @Test
+    @DisplayName("Repeated casts stack the boost and expire together")
+    void repeatedCastsStackAndExpireTogether() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SeizeTheInitiative(), new SeizeTheInitiative()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
+
+        harness.castInstant(player1, 0, targetId);
+        harness.passBothPriorities();
+        harness.castInstant(player1, 0, targetId);
+        harness.passBothPriorities();
+
+        Permanent target = findPermanent(player1, "Grizzly Bears");
+        assertThat(target.getEffectivePower()).isEqualTo(4);
+        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(target.getEffectivePower()).isEqualTo(2);
+        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Only the chosen creature receives either effect")
+    void onlyChosenCreatureReceivesEffects() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SeizeTheInitiative()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castInstant(player1, 0, harness.getPermanentId(player1, "Grizzly Bears"));
+        harness.passBothPriorities();
+
+        Permanent target = findPermanent(player1, "Grizzly Bears");
+        Permanent other = findPermanent(player2, "Grizzly Bears");
+        assertThat(target.getEffectivePower()).isEqualTo(3);
+        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(other.getEffectivePower()).isEqualTo(2);
+        assertThat(other.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, other, Keyword.FIRST_STRIKE)).isFalse();
     }
 }
