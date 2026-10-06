@@ -83,4 +83,49 @@ class ScareTacticsTest extends BaseCardTest {
         assertThat(creatureBeforeResolution.getEffectivePower()).isEqualTo(2);
         assertThat(creatureAfterResolution.getEffectivePower()).isEqualTo(1);
     }
+
+    @Test
+    void boostsCreaturesEnteringBeforeResolution() {
+        harness.setHand(player1, List.of(new ScareTactics()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castInstant(player1, 0);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new RagingGoblin());
+        harness.passBothPriorities();
+
+        assertThat(creature.getEffectivePower()).isEqualTo(2);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(1);
+    }
+
+    @Test
+    void resolvesWithoutAnyCreatures() {
+        harness.setHand(player1, List.of(new ScareTactics()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveInstant(player1, 0);
+
+        harness.assertInGraveyard(player1, "Scare Tactics");
+        assertThat(gd.stack).isEmpty();
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new RagingGoblin());
+        assertThat(creature.getEffectivePower()).isEqualTo(1);
+    }
+
+    @Test
+    void multipleCastsGiveCumulativeBoostsUntilCleanup() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new RagingGoblin());
+        harness.setHand(player1, List.of(new ScareTactics(), new ScareTactics()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveInstant(player1, 0);
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(creature.getEffectivePower()).isEqualTo(3);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(1);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(TurnStep.CLEANUP);
+
+        assertThat(creature.getEffectivePower()).isEqualTo(1);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(1);
+    }
 }
