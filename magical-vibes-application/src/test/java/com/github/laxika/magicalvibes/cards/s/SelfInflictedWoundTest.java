@@ -63,11 +63,46 @@ class SelfInflictedWoundTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void automaticallySacrificesTheOnlyGreenCreatureAndLosesLife() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new AirElemental());
+
+        cast();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Air Elemental");
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    void automaticallySacrificesTheOnlyWhiteCreatureAndLosesLife() {
+        harness.addToBattlefield(player2, new SavannahLions());
+
+        cast();
+
+        harness.assertInGraveyard(player2, "Savannah Lions");
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    void opponentsEmptyBattlefieldDoesNotSacrificeControllersCreatureOrLoseLife() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+
+        cast();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Self-Inflicted Wound");
+    }
+
     private void cast() {
         harness.setHand(player1, List.of(new SelfInflictedWound()));
         addMana();
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
     }
 
     private void addMana() {
