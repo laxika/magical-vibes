@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.h.HallarTheFirefletcher;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(Rakavolver.class)
+@CardUsed({Rakavolver.class, HallarTheFirefletcher.class})
 class RakavolverTest extends BaseCardTest {
 
     @Test
@@ -97,6 +98,34 @@ class RakavolverTest extends BaseCardTest {
         assertThat(gd.getLife(player1.getId())).isEqualTo(25);
     }
 
+    @Test
+    @DisplayName("The white kicker grants its ability during entry without an ETB trigger")
+    void whiteKickerDoesNotCreateAnEtbTrigger() {
+        castWithWhiteKicker();
+
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Paying only the blue kicker triggers Hallar")
+    void blueKickerTriggersKickedSpellAbilities() {
+        Permanent hallar = addCreatureReady(player1, new HallarTheFirefletcher());
+        harness.setLife(player2, 20);
+
+        addMana(ManaColor.COLORLESS, 2);
+        addMana(ManaColor.RED, 1);
+        addMana(ManaColor.BLUE, 1);
+        harness.setHand(player1, List.of(new Rakavolver()));
+        harness.castCreatureWithRepeatedCosts(player1, 0, List.of("{U}"));
+        resolveAllTriggers();
+
+        Permanent rakavolver = findRakavolver();
+        assertThat(hallar.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(19);
+        assertThat(rakavolver.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, rakavolver, Keyword.FLYING)).isTrue();
+    }
+
     private Permanent castRakavolver() {
         addMana(ManaColor.COLORLESS, 2);
         addMana(ManaColor.RED, 1);
@@ -111,9 +140,7 @@ class RakavolverTest extends BaseCardTest {
         addMana(ManaColor.RED, 1);
         addMana(ManaColor.WHITE, 1);
         harness.setHand(player1, List.of(new Rakavolver()));
-        gs.playCard(gd, player1, 0, 0, null, null, List.of(), List.of(), false,
-                null, null, null, null, null, true, null, null, null, null,
-                List.of(), false);
+        harness.castKickedCreature(player1, 0);
         harness.passBothPriorities();
         return findRakavolver();
     }
@@ -123,9 +150,7 @@ class RakavolverTest extends BaseCardTest {
         addMana(ManaColor.RED, 1);
         addMana(ManaColor.BLUE, 1);
         harness.setHand(player1, List.of(new Rakavolver()));
-        gs.playCard(gd, player1, 0, 0, null, null, List.of(), List.of(), false,
-                null, null, null, null, null, false, null, null, null, null,
-                List.of("{U}"), false);
+        harness.castCreatureWithRepeatedCosts(player1, 0, List.of("{U}"));
         harness.passBothPriorities();
         return findRakavolver();
     }
