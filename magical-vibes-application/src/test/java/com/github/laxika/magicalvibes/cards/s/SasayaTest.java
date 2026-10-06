@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.c.CityOfBrass;
 import com.github.laxika.magicalvibes.cards.g.GnatMiser;
+import com.github.laxika.magicalvibes.cards.m.MossfireValley;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +17,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Sasaya.class, SasayasEssence.class, Forest.class, GnatMiser.class, CityOfBrass.class})
+@CardUsed({Sasaya.class, SasayasEssence.class, Forest.class, GnatMiser.class, CityOfBrass.class,
+        MossfireValley.class})
 class SasayaTest extends BaseCardTest {
 
     @Test
@@ -86,6 +88,103 @@ class SasayaTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Checks the seven-land condition when the ability resolves")
+    void doesNotFlipIfHandDropsBelowSevenLandsInResponse() {
+        Permanent sasaya = addSasaya();
+        harness.setHand(player1, lands(7));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.setHand(player1, lands(6));
+        harness.passBothPriorities();
+
+        assertThat(sasaya.isTransformed()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Can flip if the seventh land enters the hand before resolution")
+    void flipsIfHandReachesSevenLandsInResponse() {
+        Permanent sasaya = addSasaya();
+        harness.setHand(player1, lands(6));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.setHand(player1, lands(7));
+        harness.passBothPriorities();
+
+        assertThat(sasaya.isTransformed()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Flipping Sasaya does not perform a transformation")
+    void flipsRatherThanTransforms() {
+        addSasaya();
+        harness.setHand(player1, lands(7));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gameLogContains(" flips to ")).isTrue();
+        assertThat(gameLogContains(" transforms into ")).isFalse();
+    }
+
+    @Test
+    @DisplayName("The creature face does not grant additional mana")
+    void frontFaceDoesNotAddMana() {
+        addSasaya();
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
+
+        harness.tapPermanent(player1, 1);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("An opponent's same-name land does not increase the bonus")
+    void doesNotCountOpponentsMatchingLands() {
+        addTransformedSasaya();
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new Forest());
+        harness.addToBattlefield(player2, new Forest());
+
+        harness.tapPermanent(player1, 1);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Different land names do not increase the bonus")
+    void doesNotCountDifferentlyNamedLands() {
+        addTransformedSasaya();
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new CityOfBrass());
+
+        harness.tapPermanent(player1, 1);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A land producing two types grants only one bonus mana per other matching land")
+    void multiTypeLandDoesNotMultiplyBonusByNumberOfTypes() {
+        addTransformedSasaya();
+        harness.addToBattlefield(player1, new MossfireValley());
+        harness.addToBattlefield(player1, new MossfireValley());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 1, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isLessThanOrEqualTo(3);
+        harness.handleListChoice(player1, "RED");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
     }
 
     private Permanent addSasaya() {
