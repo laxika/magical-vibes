@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
-import com.github.laxika.magicalvibes.cards.h.HolyDay;
+import com.github.laxika.magicalvibes.cards.v.VictimOfNight;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,9 +19,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RunicRepetition.class, RollingTemblor.class, VictimOfNight.class})
 class RunicRepetitionTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Runic Repetition returns target exiled card with flashback to hand")
@@ -30,8 +30,7 @@ class RunicRepetitionTest extends BaseCardTest {
         harness.setHand(player1, List.of(new RunicRepetition()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
-        harness.castSorcery(player1, 0, flashbackCard.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, flashbackCard.getId());
 
         GameData gd = harness.getGameData();
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getId().equals(flashbackCard.getId()));
@@ -42,7 +41,7 @@ class RunicRepetitionTest extends BaseCardTest {
     @Test
     @DisplayName("Runic Repetition cannot target exiled card without flashback")
     void cannotTargetExiledCardWithoutFlashback() {
-        Card noFlashbackCard = new HolyDay();
+        Card noFlashbackCard = new VictimOfNight();
         harness.setExile(player1, List.of(noFlashbackCard));
         harness.setHand(player1, List.of(new RunicRepetition()));
         harness.addMana(player1, ManaColor.BLUE, 3);
@@ -107,5 +106,48 @@ class RunicRepetitionTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, 0))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Runic Repetition cannot target a face-down exiled card")
+    void cannotTargetFaceDownExiledCard() {
+        Card flashbackCard = new RollingTemblor();
+        gd.addToExile(player1.getId(), flashbackCard, null, true);
+        harness.setHand(player1, List.of(new RunicRepetition()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, flashbackCard.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Runic Repetition cannot return a flashback card from the graveyard")
+    void cannotTargetFlashbackCardInGraveyard() {
+        Card flashbackCard = new RollingTemblor();
+        harness.setGraveyard(player1, List.of(flashbackCard));
+        harness.setHand(player1, List.of(new RunicRepetition()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, flashbackCard.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Runic Repetition returns a card after it resolves with flashback")
+    void returnsCardExiledAfterFlashback() {
+        Card flashbackCard = new RollingTemblor();
+        harness.setGraveyard(player1, List.of(flashbackCard));
+        harness.setHand(player1, List.of(new RunicRepetition()));
+        harness.addMana(player1, ManaColor.RED, 6);
+        harness.castFlashback(player1, 0);
+        harness.passBothPriorities();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(flashbackCard);
+
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.castAndResolveSorcery(player1, 0, flashbackCard.getId());
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(flashbackCard);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Runic Repetition");
     }
 }
