@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SeraphOfTheScales.class, WrathOfGod.class})
 class SeraphOfTheScalesTest extends BaseCardTest {
 
     @Test
@@ -62,8 +64,7 @@ class SeraphOfTheScalesTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Seraph of the Scales");
         List<Permanent> tokens = findPermanents(player1, "Spirit");
@@ -78,6 +79,43 @@ class SeraphOfTheScalesTest extends BaseCardTest {
             assertThat(token.getCard().getSubtypes()).contains(CardSubtype.SPIRIT);
             assertThat(token.getCard().getKeywords()).contains(Keyword.FLYING);
         });
+    }
+
+    @Test
+    @DisplayName("Both abilities can be activated while tapped and summoning sick")
+    void abilitiesWorkWhileTappedAndSummoningSick() {
+        harness.addToBattlefield(player1, new SeraphOfTheScales());
+        Permanent seraph = findPermanent(player1, "Seraph of the Scales");
+        seraph.setSummoningSick(true);
+        seraph.setTapped(true);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+        harness.activateAbility(player1, 0, 1, null, null);
+        resolveAllTriggers();
+
+        assertThat(gqs.hasKeyword(gd, seraph, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, seraph, Keyword.DEATHTOUCH)).isTrue();
+        assertThat(seraph.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Simultaneous deaths give each controller their own afterlife tokens")
+    void simultaneousDeathsCreateTokensForEachController() {
+        harness.addToBattlefield(player1, new SeraphOfTheScales());
+        harness.addToBattlefield(player2, new SeraphOfTheScales());
+        harness.setHand(player1, List.of(new WrathOfGod()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castSorcery(player1, 0, 0);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Seraph of the Scales");
+        harness.assertInGraveyard(player2, "Seraph of the Scales");
+        assertThat(findPermanents(player1, "Spirit")).hasSize(2);
+        assertThat(findPermanents(player2, "Spirit")).hasSize(2);
     }
 
     private Permanent addReadySeraph() {
