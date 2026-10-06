@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.b.BriarberryCohort;
 import com.github.laxika.magicalvibes.cards.b.BurnTrail;
 import com.github.laxika.magicalvibes.cards.d.DrownerInitiate;
 import com.github.laxika.magicalvibes.cards.w.WheelOfSunAndMoon;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -14,6 +15,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -22,8 +24,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({RunedHalo.class, BurnTrail.class, BriarberryCohort.class,
         WheelOfSunAndMoon.class, DrownerInitiate.class})
 class RunedHaloTest extends BaseCardTest {
-
-    // ===== Card name choice on enter =====
 
     @Test
     @DisplayName("Resolving Runed Halo awaits a card name choice and records it on the permanent")
@@ -38,8 +38,6 @@ class RunedHaloTest extends BaseCardTest {
         Permanent halo = findPermanent(player1, "Runed Halo");
         assertThat(halo.getChosenName()).isEqualTo("Burn Trail");
     }
-
-    // ===== Protection from targeting =====
 
     @Test
     @DisplayName("A spell with the chosen name can't target the protected player")
@@ -146,8 +144,6 @@ class RunedHaloTest extends BaseCardTest {
                 .hasMessageContaining("protection");
     }
 
-    // ===== Protection from combat damage =====
-
     @Test
     @DisplayName("A creature with the chosen name deals no combat damage to the protected player")
     void chosenNameAttackerDealsNoCombatDamage() {
@@ -157,10 +153,7 @@ class RunedHaloTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player2, new BriarberryCohort());
         attacker.setAttacking(true);
 
-        prepareDeclareBlockers(player2);
-
-        gs.declareBlockers(gd, player1, List.of());
-        harness.passBothPriorities();
+        resolveCombat(player2);
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
     }
@@ -174,15 +167,92 @@ class RunedHaloTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player2, new BriarberryCohort());
         attacker.setAttacking(true);
 
-        prepareDeclareBlockers(player2);
-
-        gs.declareBlockers(gd, player1, List.of());
-        harness.passBothPriorities();
+        resolveCombat(player2);
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("A face-down attacker has no name and its damage is not prevented")
+    void faceDownAttackerDoesNotMatchChosenName() {
+        addReadyRunedHalo(player1, "Briarberry Cohort");
+        harness.setLife(player1, 20);
+        Permanent attacker = addCreatureReady(player2, new BriarberryCohort());
+        attacker.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        attacker.setAttacking(true);
+
+        resolveCombat(player2);
+
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("A name that is not a real card name cannot be chosen")
+    void rejectsNonexistentCardName() {
+        harness.setHand(player1, List.of(new RunedHalo()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleListChoice(player1, "Not a real Magic card name"))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    @DisplayName("An already attached Aura with the chosen name is put into its owner's graveyard")
+    void chosenNameAuraAlreadyAttachedBecomesIllegal() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new WheelOfSunAndMoon()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+        harness.castEnchantment(player2, 0, player1.getId());
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Wheel of Sun and Moon");
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new RunedHalo()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "Wheel of Sun and Moon");
+
+        harness.assertNotOnBattlefield(player2, "Wheel of Sun and Moon");
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .anyMatch(card -> card instanceof WheelOfSunAndMoon);
+    }
+
+    @Test
+    @DisplayName("A named spell loses its player target if protection is gained before resolution")
+    void protectionGainedBeforeResolutionMakesTargetIllegal() {
+        harness.setLife(player1, 20);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new BurnTrail()));
+        harness.addMana(player2, ManaColor.RED, 4);
+        harness.castSorcery(player2, 0, player1.getId());
+
+        addReadyRunedHalo(player1, "Burn Trail");
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Protection also forbids the controller's own spell from targeting them")
+    void ownNamedSpellCannotTargetProtectedController() {
+        addReadyRunedHalo(player1, "Burn Trail");
+        harness.setHand(player1, List.of(new BurnTrail()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, player1.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection");
+    }
 
     private Permanent addReadyRunedHalo(Player player, String chosenName) {
         Permanent perm = harness.addToBattlefieldAndReturn(player, new RunedHalo());
