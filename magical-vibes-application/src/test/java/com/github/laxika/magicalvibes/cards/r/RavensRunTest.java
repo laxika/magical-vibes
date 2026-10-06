@@ -94,4 +94,69 @@ class RavensRunTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, first.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    void chaosDoesNothingWithoutCreatures() {
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.inMutationScope(() -> harness.getTriggerCollectionService()
+                .processNextETBTokenMultiTargetTrigger(gd));
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void chaosCannotResolveWithOnlyTwoCreatures() {
+        Permanent first = addCreatureReady(player1, new GiantSpider());
+        Permanent second = addCreatureReady(player2, new GiantSpider());
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.inMutationScope(() -> harness.getTriggerCollectionService()
+                .processNextETBTokenMultiTargetTrigger(gd));
+        harness.handlePermanentChosen(player1, first.getId());
+        harness.handlePermanentChosen(player1, second.getId());
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(first.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        assertThat(second.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+    }
+
+    @Test
+    void creaturesLoseGrantedWitherWhenPlaneLeaves() {
+        Permanent ownCreature = addCreatureReady(player1, new GiantSpider());
+        Permanent opposingCreature = addCreatureReady(player2, new GiantSpider());
+
+        assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.WITHER)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opposingCreature, Keyword.WITHER)).isTrue();
+
+        harness.inMutationScope(() -> gd.planechase.faceUp.clear());
+
+        assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.WITHER)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opposingCreature, Keyword.WITHER)).isFalse();
+    }
+
+    @Test
+    void chaosStillUsesOriginalCounterAmountsWhenMiddleTargetLeaves() {
+        Permanent first = addCreatureReady(player1, new GiantSpider());
+        Permanent second = addCreatureReady(player2, new GiantSpider());
+        Permanent third = addCreatureReady(player2, new GiantSpider());
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.inMutationScope(() -> harness.getTriggerCollectionService()
+                .processNextETBTokenMultiTargetTrigger(gd));
+        harness.handlePermanentChosen(player1, first.getId());
+        harness.handlePermanentChosen(player1, second.getId());
+        harness.handlePermanentChosen(player1, third.getId());
+
+        harness.inMutationScope(() -> {
+            gd.playerBattlefields.get(player2.getId()).remove(second);
+            gd.playerGraveyards.get(player2.getId()).add(second.getCard());
+        });
+        harness.passBothPriorities();
+
+        assertThat(first.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(third.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(3);
+        assertThat(second.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+    }
 }
