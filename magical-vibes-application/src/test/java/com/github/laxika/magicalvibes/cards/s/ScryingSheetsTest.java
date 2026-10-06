@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.t.ThrummingStone;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -110,6 +111,56 @@ class ScryingSheetsTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).contains(topCard);
         assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(topCard);
+    }
+
+    @Test
+    @DisplayName("Looking at a nonsnow card shows its identity only to the controller")
+    void privatelyShowsNonSnowTopCard() {
+        harness.addToBattlefield(player1, new ScryingSheets());
+        harness.setLibrary(player1, List.of(new ThrummingStone()));
+        addAbilityMana();
+        harness.clearMessages();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(harness.getConn1().getMessagesContaining("Thrumming Stone")).isNotEmpty();
+        assertThat(harness.getConn2().getMessagesContaining("Thrumming Stone")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An empty library offers no reveal and does not lose the game")
+    void emptyLibraryDoesNothing() {
+        Permanent sheets = harness.addToBattlefieldAndReturn(player1, new ScryingSheets());
+        harness.setLibrary(player1, List.of());
+        addAbilityMana();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(sheets.isTapped()).isTrue();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    @DisplayName("The ability looks at the library when it resolves, even after its source leaves")
+    void resolvesAfterSourceLeavesUsingCurrentTopCard() {
+        harness.addToBattlefield(player1, new ScryingSheets());
+        harness.setLibrary(player1, List.of(new ThrummingStone()));
+        addAbilityMana();
+        harness.activateAbility(player1, 0, 1, null, null);
+        gd.playerBattlefields.get(player1.getId()).clear();
+        Card topCard = new SnowCoveredForest();
+        harness.setLibrary(player1, List.of(topCard));
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(topCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 
     private void addAbilityMana() {
