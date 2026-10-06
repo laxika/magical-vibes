@@ -112,13 +112,51 @@ class RemembranceTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    @DisplayName("May fail to find even when a same-named card is available")
+    void mayFailToFindAvailableMatch() {
+        harness.addToBattlefield(player1, new Remembrance());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new Acridian());
+        Card found = new Acridian();
+        harness.setLibrary(player1, List.of(found));
+
+        destroyCreature(player2, creature);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+        assertThat(gd.playerHands.get(player1.getId()))
+                .noneMatch(card -> card.getId().equals(found.getId()));
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .extracting(Card::getId).containsExactly(found.getId());
+    }
+
+    @Test
+    @DisplayName("Finds only one card when multiple same-named cards are available")
+    void findsOnlyOneMatchingCard() {
+        harness.addToBattlefield(player1, new Remembrance());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new Acridian());
+        Card first = new Acridian();
+        Card second = new Acridian();
+        harness.setLibrary(player1, List.of(first, second));
+
+        destroyCreature(player2, creature);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+        assertThat(gd.playerHands.get(player1.getId()))
+                .extracting(Card::getId).contains(second.getId()).doesNotContain(first.getId());
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .extracting(Card::getId).containsExactly(first.getId());
+    }
+
     private void destroyCreature(Player destroyer, Permanent creature) {
         harness.forceActivePlayer(destroyer);
         harness.clearPriorityPassed();
         harness.setHand(destroyer, List.of(new Expunge()));
         harness.addMana(destroyer, ManaColor.BLACK, 3);
-        harness.castInstant(destroyer, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(destroyer, 0, creature.getId());
         harness.passBothPriorities();
     }
 
