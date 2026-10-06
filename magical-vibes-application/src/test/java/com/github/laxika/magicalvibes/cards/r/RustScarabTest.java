@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,21 +16,20 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RustScarab.class, GrizzlyBears.class, FountainOfYouth.class, AngelicChorus.class})
 class RustScarabTest extends BaseCardTest {
 
     private Permanent addAttacker() {
-        Permanent attacker = new Permanent(new RustScarab());
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new RustScarab());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
         attacker.setAttackTarget(player2.getId());
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
         return attacker;
     }
 
     private Permanent addBlocker() {
-        Permanent blocker = new Permanent(new GrizzlyBears());
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
         return blocker;
     }
 
@@ -121,6 +121,57 @@ class RustScarabTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
 
+        harness.assertOnBattlefield(player1, "Fountain of Youth");
+    }
+
+    @Test
+    @DisplayName("An ordinary defending creature is not a legal target")
+    void ordinaryCreatureIsNotALegalTarget() {
+        Permanent attacker = addAttacker();
+        Permanent blocker = addBlocker();
+
+        declareBlock(attacker, blocker);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("The blocked trigger still resolves after Rust Scarab leaves the battlefield")
+    void triggerResolvesAfterSourceLeaves() {
+        Permanent attacker = addAttacker();
+        Permanent blocker = addBlocker();
+        harness.addToBattlefield(player2, new FountainOfYouth());
+
+        declareBlock(attacker, blocker);
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Fountain of Youth"));
+        gd.playerBattlefields.get(player1.getId()).remove(attacker);
+        gd.playerGraveyards.get(player1.getId()).add(attacker.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player2, "Fountain of Youth");
+        harness.assertInGraveyard(player2, "Fountain of Youth");
+    }
+
+    @Test
+    @DisplayName("The target becomes illegal if the attacking player gains control of it")
+    void targetChangingControllerDoesNotResolve() {
+        Permanent attacker = addAttacker();
+        Permanent blocker = addBlocker();
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+
+        declareBlock(attacker, blocker);
+        harness.handlePermanentChosen(player1, artifact.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(artifact);
+        gd.playerBattlefields.get(player1.getId()).add(artifact);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Fountain of Youth");
     }
 }
