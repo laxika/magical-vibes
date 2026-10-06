@@ -1,12 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.cards.e.EagleOfTheWatch;
+import com.github.laxika.magicalvibes.cards.g.GoldenHind;
+import com.github.laxika.magicalvibes.cards.w.WarWingSiren;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,23 +13,16 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SkyspearCavalry.class, GoldenHind.class, WarWingSiren.class, EagleOfTheWatch.class})
 class SkyspearCavalryTest extends BaseCardTest {
 
     @Test
     @DisplayName("Flying prevents a non-flying creature from blocking")
     void flyingPreventsNonFlyingCreatureFromBlocking() {
-        Permanent cavalry = addReadyCreature(player1, new SkyspearCavalry());
-        addReadyCreature(player2, creature("Ground Blocker", 2, 2));
+        addCreatureReady(player1, new SkyspearCavalry());
+        addCreatureReady(player2, new GoldenHind());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player1, List.of(0));
-
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class);
@@ -39,35 +31,41 @@ class SkyspearCavalryTest extends BaseCardTest {
     @Test
     @DisplayName("Double strike deals first-strike and regular combat damage")
     void doubleStrikeDealsDamageInBothCombatDamageSteps() {
-        Permanent cavalry = addReadyCreature(player1, new SkyspearCavalry());
-        cavalry.setAttacking(true);
+        addCreatureReady(player1, new SkyspearCavalry());
+        addCreatureReady(player2, new WarWingSiren());
 
-        Permanent blocker = addReadyCreature(player2, creature("Ground Blocker", 1, 3));
-        blocker.setBlocking(true);
-        blocker.addBlockingTarget(0);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
 
         harness.assertOnBattlefield(player1, "Skyspear Cavalry");
-        harness.assertInGraveyard(player2, "Ground Blocker");
+        harness.assertInGraveyard(player2, "War-Wing Siren");
+        harness.assertLife(player2, 20);
     }
 
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent permanent = harness.addToBattlefieldAndReturn(player, card);
-        permanent.setSummoningSick(false);
-        return permanent;
+    @Test
+    @DisplayName("Unblocked double strike deals damage twice to the defending player")
+    void unblockedDoubleStrikeDealsFourDamage() {
+        addCreatureReady(player1, new SkyspearCavalry());
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+
+        harness.assertLife(player2, 16);
     }
 
-    private static Card creature(String name, int power, int toughness) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{1}");
-        card.setPower(power);
-        card.setToughness(toughness);
-        return card;
+    @Test
+    @DisplayName("A blocker killed by first strike cannot retaliate or let damage through")
+    void firstStrikeKillsFlyingBlockerWithoutDamageSpillingToPlayer() {
+        addCreatureReady(player1, new SkyspearCavalry());
+        addCreatureReady(player2, new EagleOfTheWatch());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertOnBattlefield(player1, "Skyspear Cavalry");
+        harness.assertInGraveyard(player2, "Eagle of the Watch");
+        harness.assertLife(player2, 20);
     }
 }
