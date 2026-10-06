@@ -124,4 +124,64 @@ class RoterothopterTest extends BaseCardTest {
 
         assertThat(thopter.getEffectivePower()).isEqualTo(1);
     }
+
+    @Test
+    @DisplayName("Unresolved activations count toward the twice-per-turn limit")
+    void unresolvedActivationsCountTowardLimit() {
+        Permanent thopter = addCreatureReady(player1, new Roterothopter());
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(thopter.getEffectivePower()).isZero();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("no more than 2 times each turn");
+
+        resolveAllTriggers();
+
+        assertThat(thopter.getEffectivePower()).isEqualTo(2);
+        assertThat(thopter.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Each copy has its own activation limit and boosts only itself")
+    void separateCopiesHaveIndependentLimits() {
+        Permanent first = addCreatureReady(player1, new Roterothopter());
+        Permanent second = addCreatureReady(player1, new Roterothopter());
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(first.getEffectivePower()).isEqualTo(2);
+        assertThat(second.getEffectivePower()).isZero();
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.activateAbility(player1, 1, null, null);
+        resolveAllTriggers();
+
+        assertThat(first.getEffectivePower()).isEqualTo(2);
+        assertThat(second.getEffectivePower()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A tapped creature can activate on the opponent's turn using colored mana")
+    void canActivateWhileTappedOnOpponentsTurn() {
+        Permanent thopter = addCreatureReady(player1, new Roterothopter());
+        thopter.setTapped(true);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(thopter.getEffectivePower()).isEqualTo(1);
+        assertThat(thopter.getEffectiveToughness()).isEqualTo(2);
+        assertThat(thopter.isTapped()).isTrue();
+    }
 }
