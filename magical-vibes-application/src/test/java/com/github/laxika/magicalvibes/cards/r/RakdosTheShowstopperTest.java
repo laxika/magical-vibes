@@ -1,12 +1,15 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.c.CatacombCrocodile;
+import com.github.laxika.magicalvibes.cards.c.ChanceEncounter;
 import com.github.laxika.magicalvibes.cards.f.FetidImp;
 import com.github.laxika.magicalvibes.cards.f.FoulImp;
 import com.github.laxika.magicalvibes.cards.f.ForgeDevil;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.s.SpawnOfMayhem;
+import com.github.laxika.magicalvibes.cards.u.UnbreakableFormation;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
@@ -16,7 +19,8 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({RakdosTheShowstopper.class, FoulImp.class, ForgeDevil.class, FetidImp.class,
-        GrizzlyBears.class, HillGiant.class})
+        GrizzlyBears.class, HillGiant.class, SpawnOfMayhem.class, ChanceEncounter.class,
+        CatacombCrocodile.class, UnbreakableFormation.class})
 class RakdosTheShowstopperTest extends BaseCardTest {
 
     @Test
@@ -52,13 +56,56 @@ class RakdosTheShowstopperTest extends BaseCardTest {
     }
 
     private void castRakdos() {
-        harness.setHand(player1, List.of(new RakdosTheShowstopper()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new RakdosTheShowstopper(), "{4}{B}{R}");
         harness.passBothPriorities();
         harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("Rakdos leaves other Demons and itself on the battlefield without flipping")
+    void leavesDemonsOnBattlefield() {
+        harness.addToBattlefield(player2, new SpawnOfMayhem());
+
+        castRakdos();
+
+        harness.assertOnBattlefield(player1, "Rakdos, the Showstopper");
+        harness.assertOnBattlefield(player2, "Spawn of Mayhem");
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .noneMatch(log -> log.contains("coin flip for Rakdos, the Showstopper"));
+    }
+
+    @Test
+    @DisplayName("Heads and tails flips do not trigger Chance Encounter or affect noncreatures")
+    void flipsHaveNoWinnerAndIgnoreNoncreatures() {
+        harness.addToBattlefield(player1, new ChanceEncounter());
+        for (int i = 0; i < 32; i++) {
+            harness.addToBattlefield(player2, new CatacombCrocodile());
+        }
+
+        castRakdos();
+
+        harness.assertOnBattlefield(player1, "Chance Encounter");
+        harness.assertOnBattlefield(player1, "Rakdos, the Showstopper");
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)
+                .filter(log -> log.contains("coin flip for Rakdos, the Showstopper")))
+                .hasSize(32);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Indestructible creatures still receive coin flips but survive tails")
+    void indestructibleCreatureStillReceivesCoinFlip() {
+        harness.addToBattlefield(player1, new CatacombCrocodile());
+        harness.castFromHand(player1, new UnbreakableFormation(), "{2}{W}");
+        harness.passBothPriorities();
+
+        castRakdos();
+
+        harness.assertOnBattlefield(player1, "Catacomb Crocodile");
+        harness.assertNotInGraveyard(player1, "Catacomb Crocodile");
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)
+                .filter(log -> log.contains("coin flip for Rakdos, the Showstopper")))
+                .hasSize(1);
     }
 
     private void assertOutcomeMatchesZone(List<String> logs, String creatureName) {
