@@ -130,7 +130,7 @@ class RootrunnerTest extends BaseCardTest {
     @Test
     @DisplayName("A tapped Rootrunner can sacrifice itself to put its controller's land on top")
     void tappedRootrunnerCanTargetOwnLand() {
-        harness.addToBattlefieldAndReturn(player1, new Rootrunner()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new Rootrunner()).tap();
         Card land = new Forest();
         harness.addToBattlefield(player1, land);
         harness.addMana(player1, ManaColor.GREEN, 2);

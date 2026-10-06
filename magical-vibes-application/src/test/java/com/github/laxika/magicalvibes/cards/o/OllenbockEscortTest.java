@@ -69,7 +69,7 @@ class OllenbockEscortTest extends BaseCardTest {
     @DisplayName("Sacrifice is paid immediately, even by a tapped summoning-sick Escort")
     void sacrificesImmediatelyWithoutTapOrSummoningSicknessRestriction() {
         Permanent escort = harness.addToBattlefieldAndReturn(player1, new OllenbockEscort());
-        escort.setTapped(true);
+        escort.tap();
         escort.setSummoningSick(true);
         Permanent target = harness.addToBattlefieldAndReturn(player1, new TravelingMinister());
         target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);

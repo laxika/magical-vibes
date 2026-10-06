@@ -103,7 +103,7 @@ class SewerCrocodileTest extends BaseCardTest {
     void tappedSummoningSickCrocodileCanActivateAbility() {
         Permanent crocodile = harness.addToBattlefieldAndReturn(player1, new SewerCrocodile());
         crocodile.setSummoningSick(true);
-        crocodile.setTapped(true);
+        crocodile.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.addMana(player1, ManaColor.BLUE, 1);
 

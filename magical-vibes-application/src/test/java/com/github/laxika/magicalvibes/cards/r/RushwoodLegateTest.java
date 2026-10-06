@@ -94,8 +94,8 @@ class RushwoodLegateTest extends BaseCardTest {
     void tappedLandsPermitAlternateCast() {
         var forest = harness.addToBattlefieldAndReturn(player1, new Forest());
         var island = harness.addToBattlefieldAndReturn(player2, new Island());
-        forest.setTapped(true);
-        island.setTapped(true);
+        forest.tap();
+        island.tap();
         harness.setHand(player1, List.of(new RushwoodLegate()));
 
         harness.castWithAlternateCost(player1, 0, (UUID) null);

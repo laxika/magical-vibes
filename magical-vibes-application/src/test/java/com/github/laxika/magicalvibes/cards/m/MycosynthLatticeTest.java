@@ -236,7 +236,7 @@ class MycosynthLatticeTest extends BaseCardTest {
     void colorlessSpellTriggersNettleDrone() {
         harness.addToBattlefield(player1, new MycosynthLattice());
         Permanent drone = harness.addToBattlefieldAndReturn(player1, new NettleDrone());
-        drone.setTapped(true);
+        drone.tap();
         harness.castFromHand(player1, new CrazedGoblin(), "{R}");
 
         assertThat(gd.stack).hasSize(2);

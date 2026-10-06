@@ -95,7 +95,7 @@ class OgreMenialTest extends BaseCardTest {
     void pumpsWhileTappedAndSummoningSick() {
         Permanent perm = harness.addToBattlefieldAndReturn(player1, new OgreMenial());
         perm.setSummoningSick(true);
-        perm.setTapped(true);
+        perm.tap();
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, null);

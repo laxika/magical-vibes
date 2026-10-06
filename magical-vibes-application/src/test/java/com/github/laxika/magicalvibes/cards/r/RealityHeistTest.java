@@ -189,7 +189,7 @@ class RealityHeistTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(artifact));
         harness.setHand(player1, List.of(new RealityHeist()));
         harness.addToBattlefield(player1, new NetworkTerminal());
-        gd.playerBattlefields.get(player1.getId()).getFirst().setTapped(true);
+        gd.playerBattlefields.get(player1.getId()).getFirst().tap();
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 

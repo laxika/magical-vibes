@@ -77,7 +77,7 @@ class HarrierStrixTest extends BaseCardTest {
     @DisplayName("ETB can target an already tapped permanent")
     void etbCanTargetTappedPermanent() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
-        target.setTapped(true);
+        target.tap();
         harness.setHand(player1, List.of(new HarrierStrix()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
@@ -116,7 +116,7 @@ class HarrierStrixTest extends BaseCardTest {
     @DisplayName("A tapped, summoning sick Strix can activate twice on the opponent's turn")
     void canActivateRepeatedlyWhileTappedAndSummoningSickOnOpponentsTurn() {
         Permanent harrier = harness.addToBattlefieldAndReturn(player1, new HarrierStrix());
-        harrier.setTapped(true);
+        harrier.tap();
         harrier.setSummoningSick(true);
         Card kept = new Forest();
         Card firstDraw = new Island();

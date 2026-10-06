@@ -103,7 +103,7 @@ class RacecourseFuryTest extends BaseCardTest {
     void cannotActivateTappedLand() {
         Permanent land = attachFury(player1);
         Permanent creature = addCreatureReady(player1, new DrudgeBeetle());
-        land.setTapped(true);
+        land.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, creature.getId()))
                 .isInstanceOf(IllegalStateException.class);

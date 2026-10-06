@@ -162,8 +162,8 @@ class MultaniYavimayasAvatarTest extends BaseCardTest {
         void canReturnTappedLands() {
             MultaniYavimayasAvatar multani = new MultaniYavimayasAvatar();
             harness.setGraveyard(player1, List.of(multani));
-            harness.addToBattlefieldAndReturn(player1, new Forest()).setTapped(true);
-            harness.addToBattlefieldAndReturn(player1, new Forest()).setTapped(true);
+            harness.addToBattlefieldAndReturn(player1, new Forest()).tap();
+            harness.addToBattlefieldAndReturn(player1, new Forest()).tap();
             harness.addMana(player1, ManaColor.GREEN, 2);
 
             harness.activateGraveyardAbility(player1, 0);

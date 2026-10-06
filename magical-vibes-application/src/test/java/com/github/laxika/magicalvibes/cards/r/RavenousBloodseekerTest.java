@@ -135,7 +135,7 @@ class RavenousBloodseekerTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         Permanent source = harness.addToBattlefieldAndReturn(player1, new RavenousBloodseeker());
-        source.setTapped(true);
+        source.tap();
         source.setSummoningSick(true);
         int basePower = gqs.getEffectivePower(gd, source);
         int baseToughness = gqs.getEffectiveToughness(gd, source);

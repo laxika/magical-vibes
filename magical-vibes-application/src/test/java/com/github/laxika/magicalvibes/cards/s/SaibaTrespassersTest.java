@@ -83,7 +83,7 @@ class SaibaTrespassersTest extends BaseCardTest {
     @Test
     void alreadyTappedCreatureSkipsOnlyItsControllersNextUntap() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new SaibaTrespassers());
-        target.setTapped(true);
+        target.tap();
         prepareChannel();
 
         harness.activateHandAbilityWithMultiTargets(player1, 0, List.of(target.getId()));

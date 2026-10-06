@@ -100,7 +100,7 @@ class HagraSharpshooterTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSickOnOpponentsTurn() {
         readySharpshooter();
         Permanent source = findPermanent(player1, "Hagra Sharpshooter");
-        source.setTapped(true);
+        source.tap();
         source.setSummoningSick(true);
         Permanent target = addCreatureReady(player2, new HagraSharpshooter());
         harness.forceActivePlayer(player2);

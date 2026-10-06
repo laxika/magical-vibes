@@ -75,7 +75,7 @@ class MawOfKozilekTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent maw = harness.addToBattlefieldAndReturn(player1, new MawOfKozilek());
         maw.setSummoningSick(true);
-        maw.setTapped(true);
+        maw.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, null);

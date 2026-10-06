@@ -118,7 +118,7 @@ class MercilessResolveTest extends BaseCardTest {
     @DisplayName("A tapped land can be sacrificed")
     void canSacrificeTappedLand() {
         Permanent land = harness.addToBattlefieldAndReturn(player1, new Swamp());
-        land.setTapped(true);
+        land.tap();
         harness.setHand(player1, List.of(new MercilessResolve()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 

@@ -157,7 +157,7 @@ class SemblanceScannerTest extends BaseCardTest {
     @Test
     void reconfigureWorksWhileTappedAndSummoningSick() {
         Permanent scanner = harness.addToBattlefieldAndReturn(player1, new SemblanceScanner());
-        scanner.setTapped(true);
+        scanner.tap();
         scanner.setSummoningSick(true);
         Permanent creature = addReadyScanner();
         harness.addMana(player1, ManaColor.COLORLESS, 1);

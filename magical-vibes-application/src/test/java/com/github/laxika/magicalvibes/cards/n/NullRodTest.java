@@ -86,7 +86,7 @@ class NullRodTest extends BaseCardTest {
     @Test
     void tappedNullRodStillPreventsArtifactAbilities() {
         Permanent nullRod = harness.addToBattlefieldAndReturn(player1, new NullRod());
-        nullRod.setTapped(true);
+        nullRod.tap();
         harness.addToBattlefield(player2, new MindStone());
 
         assertThatThrownBy(() -> harness.activateAbility(player2, 0, 0, null, null))

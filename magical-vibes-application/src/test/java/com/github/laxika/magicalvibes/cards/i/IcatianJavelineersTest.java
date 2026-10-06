@@ -103,7 +103,7 @@ class IcatianJavelineersTest extends BaseCardTest {
     @DisplayName("Cannot activate while tapped even with a javelin counter")
     void cannotActivateWhileTapped() {
         Permanent javelineers = addReadyJavelineers();
-        javelineers.setTapped(true);
+        javelineers.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -117,7 +117,7 @@ class IcatianJavelineersTest extends BaseCardTest {
         Permanent javelineers = addReadyJavelineers();
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
-        javelineers.setTapped(false);
+        javelineers.untap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);

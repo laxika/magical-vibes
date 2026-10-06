@@ -138,7 +138,7 @@ class SawtoothThresherTest extends BaseCardTest {
     void tappedSummoningSickThresherCanActivate() {
         Permanent thresher = addReadyThresher(2);
         thresher.setSummoningSick(true);
-        thresher.setTapped(true);
+        thresher.tap();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 

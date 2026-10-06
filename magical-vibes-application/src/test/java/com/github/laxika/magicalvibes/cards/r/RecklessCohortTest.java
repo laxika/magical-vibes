@@ -61,7 +61,7 @@ class RecklessCohortTest extends BaseCardTest {
     @Test
     void tappedCohortIsNotRequiredToAttack() {
         Permanent cohort = addCreatureReady(player1, new RecklessCohort());
-        cohort.setTapped(true);
+        cohort.tap();
 
         assertThatCode(() -> declareAttackers(List.of())).doesNotThrowAnyException();
     }
@@ -78,7 +78,7 @@ class RecklessCohortTest extends BaseCardTest {
     void tappedSummoningSickAllyStillLetsCohortStayHome() {
         addCreatureReady(player1, new RecklessCohort());
         Permanent ally = addCreatureReady(player1, new ExpeditionEnvoy());
-        ally.setTapped(true);
+        ally.tap();
         ally.setSummoningSick(true);
 
         assertThatCode(() -> declareAttackers(List.of())).doesNotThrowAnyException();

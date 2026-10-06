@@ -154,7 +154,7 @@ class MartyrOfSporesTest extends BaseCardTest {
         harness.setHand(player1, List.of(greenCard));
         Permanent martyr = addCreatureReady(player1, new MartyrOfSpores());
         martyr.setSummoningSick(true);
-        martyr.setTapped(true);
+        martyr.tap();
         Permanent target = addCreatureReady(player1, new BorealDruid());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

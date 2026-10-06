@@ -62,7 +62,7 @@ class OjutaisBreathTest extends BaseCardTest {
     @Test
     void restrictionExpiresAfterOnlyTheCreaturesControllersNextUntap() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new AncientCarp());
-        creature.setTapped(true);
+        creature.tap();
         harness.setHand(player1, List.of(new OjutaisBreath()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 

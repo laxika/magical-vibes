@@ -83,7 +83,7 @@ class RedrockSentinelTest extends BaseCardTest {
     @DisplayName("Cannot activate while tapped")
     void cannotActivateWhileTapped() {
         var sentinel = addCreatureReady(player1, new RedrockSentinel());
-        sentinel.setTapped(true);
+        sentinel.tap();
         harness.addToBattlefield(player1, new Forest());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
@@ -124,7 +124,7 @@ class RedrockSentinelTest extends BaseCardTest {
         addCreatureReady(player1, new RedrockSentinel());
         var keptLand = harness.addToBattlefieldAndReturn(player1, new Forest());
         var sacrificedLand = harness.addToBattlefieldAndReturn(player1, new Forest());
-        sacrificedLand.setTapped(true);
+        sacrificedLand.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Forest()));

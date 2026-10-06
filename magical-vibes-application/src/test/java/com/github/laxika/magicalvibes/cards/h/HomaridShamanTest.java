@@ -71,7 +71,7 @@ class HomaridShamanTest extends BaseCardTest {
     @DisplayName("Can activate while tapped and summoning sick")
     void canActivateWhileTappedAndSummoningSick() {
         Permanent shaman = harness.addToBattlefieldAndReturn(player1, new HomaridShaman());
-        shaman.setTapped(true);
+        shaman.tap();
         shaman.setSummoningSick(true);
         Permanent scout = harness.addToBattlefieldAndReturn(player2, new ElvishScout());
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -101,7 +101,7 @@ class HomaridShamanTest extends BaseCardTest {
     void canTargetAlreadyTappedCreature() {
         harness.addToBattlefield(player1, new HomaridShaman());
         Permanent scout = harness.addToBattlefieldAndReturn(player2, new ElvishScout());
-        scout.setTapped(true);
+        scout.tap();
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, null, scout.getId());

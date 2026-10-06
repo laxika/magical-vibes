@@ -135,7 +135,7 @@ class IkiralOutriderTest extends BaseCardTest {
     void levelUpWorksWhileTappedAndSummoningSick() {
         Permanent outrider = addCreatureReady(player1, new IkiralOutrider());
         outrider.setSummoningSick(true);
-        outrider.setTapped(true);
+        outrider.tap();
         prepareForLeveling(player1);
 
         levelUp(player1);

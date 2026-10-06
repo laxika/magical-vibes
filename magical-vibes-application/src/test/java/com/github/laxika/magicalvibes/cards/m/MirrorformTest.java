@@ -79,7 +79,7 @@ class MirrorformTest extends BaseCardTest {
     @Test
     void canCopyOpponentPermanentWithoutCopyingTappedStatusOrCounters() {
         Permanent target = addCreatureReady(player2, new HillGiant());
-        target.setTapped(true);
+        target.tap();
         target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);

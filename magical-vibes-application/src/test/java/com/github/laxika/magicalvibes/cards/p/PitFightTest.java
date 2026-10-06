@@ -160,8 +160,8 @@ class PitFightTest extends BaseCardTest {
     void tappedCreaturesDealNonlethalDamage() {
         Permanent first = harness.addToBattlefieldAndReturn(player1, new HillGiant());
         Permanent second = harness.addToBattlefieldAndReturn(player2, new HillGiant());
-        first.setTapped(true);
-        second.setTapped(true);
+        first.tap();
+        second.tap();
         first.setPowerModifier(-1);
         second.setPowerModifier(-2);
         harness.setHand(player1, List.of(new PitFight()));

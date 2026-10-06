@@ -126,7 +126,7 @@ class OcularHaloTest extends BaseCardTest {
     @DisplayName("A tapped enchanted creature cannot activate the draw ability")
     void tappedCreatureCannotDraw() {
         Permanent creature = addCreatureWithAura();
-        creature.setTapped(true);
+        creature.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)

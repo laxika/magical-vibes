@@ -100,7 +100,7 @@ class RecklessBruteTest extends BaseCardTest {
     @DisplayName("Reckless Brute must attack again when untapped for another combat in the same turn")
     void mustAttackEachCombat() {
         Permanent brute = addCreatureReady(player1, new RecklessBrute());
-        harness.withAutoStop(TurnStep.END_COMBAT, () -> declareAttackers(List.of(0)));
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> declareAttackers(List.of(0)));
         brute.untap();
 
         assertThatThrownBy(() -> declareAttackers(List.of()))

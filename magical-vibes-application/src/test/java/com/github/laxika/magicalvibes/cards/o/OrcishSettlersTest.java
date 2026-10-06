@@ -177,7 +177,7 @@ class OrcishSettlersTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent settlers = addCreatureReady(player1, new OrcishSettlers());
-        settlers.setTapped(true);
+        settlers.tap();
         harness.addMana(player1, ManaColor.RED, 1);
 
         assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(

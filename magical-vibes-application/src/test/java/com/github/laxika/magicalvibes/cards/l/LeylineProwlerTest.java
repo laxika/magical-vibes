@@ -85,7 +85,7 @@ class LeylineProwlerTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent prowler = addCreatureReady(player1, new LeylineProwler());
-        prowler.setTapped(true);
+        prowler.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)

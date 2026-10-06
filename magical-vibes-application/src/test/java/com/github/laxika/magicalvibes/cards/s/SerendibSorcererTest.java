@@ -109,7 +109,7 @@ class SerendibSorcererTest extends BaseCardTest {
     void cannotActivateWhileTapped() {
         Permanent sorcerer = addCreatureReady(player1, new SerendibSorcerer());
         Permanent target = addCreatureReady(player2, new SerendibSorcerer());
-        sorcerer.setTapped(true);
+        sorcerer.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);

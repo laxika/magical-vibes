@@ -112,7 +112,7 @@ class MinionsReturnTest extends BaseCardTest {
     @DisplayName("The returned creature is a fresh untapped permanent and dies normally a second time")
     void returnsFreshPermanentAndDoesNotReturnAgain() {
         Permanent creature = addCreatureReady(player2, new GrizzlyBears());
-        creature.setTapped(true);
+        creature.tap();
         Card creatureCard = creature.getCard();
         castMinionsReturn(player1, creature);
 

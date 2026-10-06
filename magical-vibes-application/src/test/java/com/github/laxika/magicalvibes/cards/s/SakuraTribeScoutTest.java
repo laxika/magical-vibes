@@ -29,7 +29,7 @@ class SakuraTribeScoutTest extends BaseCardTest {
     @DisplayName("Cannot activate while already tapped")
     void cannotActivateWhileTapped() {
         Permanent scout = addCreatureReady(player1, new SakuraTribeScout());
-        scout.setTapped(true);
+        scout.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)

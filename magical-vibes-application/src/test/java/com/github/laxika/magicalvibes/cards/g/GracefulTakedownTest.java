@@ -114,7 +114,7 @@ class GracefulTakedownTest extends BaseCardTest {
         prepareSpell();
         harness.castSorcery(player1, 0, List.of(victim.getId(), other.getId(), enchanted.getId()));
 
-        gd.battlefield.get(player1.getId()).removeIf(p -> enchanted.getId().equals(p.getAttachedTo()));
+        gd.playerBattlefields.get(player1.getId()).removeIf(p -> enchanted.getId().equals(p.getAttachedTo()));
         harness.passBothPriorities();
 
         assertThat(victim.getMarkedDamage()).isEqualTo(1);
@@ -127,8 +127,8 @@ class GracefulTakedownTest extends BaseCardTest {
         prepareSpell();
         harness.castSorcery(player1, 0, List.of(victim.getId(), source.getId()));
 
-        gd.battlefield.get(player2.getId()).remove(victim);
-        gd.battlefield.get(player1.getId()).add(victim);
+        gd.playerBattlefields.get(player2.getId()).remove(victim);
+        gd.playerBattlefields.get(player1.getId()).add(victim);
         harness.passBothPriorities();
 
         assertThat(victim.getMarkedDamage()).isZero();

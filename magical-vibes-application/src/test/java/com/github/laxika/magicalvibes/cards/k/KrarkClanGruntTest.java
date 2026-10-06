@@ -118,10 +118,10 @@ class KrarkClanGruntTest extends BaseCardTest {
     @DisplayName("A tapped, summoning-sick Grunt can sacrifice a tapped artifact")
     void canActivateWhileTappedAndSummoningSick() {
         Permanent grunt = harness.addToBattlefieldAndReturn(player1, new KrarkClanGrunt());
-        grunt.setTapped(true);
+        grunt.tap();
         grunt.setSummoningSick(true);
         Permanent jar = harness.addToBattlefieldAndReturn(player1, new WeldingJar());
-        jar.setTapped(true);
+        jar.tap();
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();

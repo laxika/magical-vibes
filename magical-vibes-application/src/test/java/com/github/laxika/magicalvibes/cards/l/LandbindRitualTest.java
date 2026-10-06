@@ -44,8 +44,8 @@ class LandbindRitualTest extends BaseCardTest {
     @Test
     @DisplayName("Tapped Plains still count toward life gained")
     void countsTappedPlains() {
-        harness.addToBattlefieldAndReturn(player1, new Plains()).setTapped(true);
-        harness.addToBattlefieldAndReturn(player1, new Plains()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new Plains()).tap();
+        harness.addToBattlefieldAndReturn(player1, new Plains()).tap();
         harness.setLife(player1, 10);
         prepareLandbindRitual();
 

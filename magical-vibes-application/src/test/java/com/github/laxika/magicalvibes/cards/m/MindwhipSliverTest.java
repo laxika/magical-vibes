@@ -187,7 +187,7 @@ class MindwhipSliverTest extends BaseCardTest {
         addCreatureReady(player1, new MindwhipSliver());
         Permanent newSliver = harness.addToBattlefieldAndReturn(player1, new HornedSliver());
         newSliver.setSummoningSick(true);
-        newSliver.setTapped(true);
+        newSliver.tap();
         harness.setHand(player2, List.of(new HornedTurtle()));
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

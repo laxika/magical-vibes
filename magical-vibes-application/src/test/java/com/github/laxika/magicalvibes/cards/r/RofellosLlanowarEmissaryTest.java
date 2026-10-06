@@ -48,7 +48,7 @@ class RofellosLlanowarEmissaryTest extends BaseCardTest {
     void tappedForestsCountAndManaIsAddedImmediately() {
         addCreatureReady(player1, new RofellosLlanowarEmissary());
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
-        forest.setTapped(true);
+        forest.tap();
 
         harness.activateAbility(player1, 0, null, null);
 

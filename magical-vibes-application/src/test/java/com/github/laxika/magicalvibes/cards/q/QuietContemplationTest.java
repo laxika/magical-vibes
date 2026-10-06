@@ -114,7 +114,7 @@ class QuietContemplationTest extends BaseCardTest {
     void alreadyTappedCreatureStillGetsUntapRestriction() {
         harness.addToBattlefield(player1, new QuietContemplation());
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        bears.setTapped(true);
+        bears.tap();
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 2);
 

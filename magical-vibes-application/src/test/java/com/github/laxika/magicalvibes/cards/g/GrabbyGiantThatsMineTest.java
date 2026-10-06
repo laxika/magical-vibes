@@ -77,7 +77,7 @@ class GrabbyGiantThatsMineTest extends BaseCardTest {
     @Test
     void canActivateWhileTapped() {
         Permanent giant = addCreatureReady(player1, new GrabbyGiantThatsMine());
-        giant.setTapped(true);
+        giant.tap();
         Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
         GrabbyGiantThatsMine draw = new GrabbyGiantThatsMine();
         harness.setLibrary(player1, List.of(draw));

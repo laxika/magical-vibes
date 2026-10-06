@@ -55,7 +55,7 @@ class PressurePointTest extends BaseCardTest {
     @DisplayName("Draws a card even when the target creature is already tapped")
     void drawsWhenTargetIsAlreadyTapped() {
         var target = harness.addToBattlefieldAndReturn(player2, new DukharaPeafowl());
-        target.setTapped(true);
+        target.tap();
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
         harness.setHand(player1, List.of(new PressurePoint()));
         harness.addMana(player1, ManaColor.WHITE, 2);

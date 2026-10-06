@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -83,7 +84,7 @@ class MistSyndicateNagaTest extends BaseCardTest {
         addCreatureReady(player2, new MistSyndicateNaga());
 
         declareAttackersAndPrepareBlockers(List.of(0));
-        gs.declareBlockers(gd, player2, java.util.Map.of(0, 0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
         resolveAllTriggers();
 

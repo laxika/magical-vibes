@@ -132,7 +132,7 @@ class MyojinOfToweringMightTest extends BaseCardTest {
     @Test
     void canTargetItselfWhileTappedAndSummoningSick() {
         Permanent myojin = addReadyMyojin(player1);
-        myojin.setTapped(true);
+        myojin.tap();
         myojin.setSummoningSick(true);
 
         harness.activateAbilityWithDamageAssignments(player1, 0, 0, null,

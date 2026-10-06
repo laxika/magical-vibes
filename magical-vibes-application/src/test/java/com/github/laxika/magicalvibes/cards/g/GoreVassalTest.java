@@ -123,7 +123,7 @@ class GoreVassalTest extends BaseCardTest {
     @DisplayName("Can activate while summoning sick and tapped because the cost only sacrifices")
     void canActivateWhileSummoningSickAndTapped() {
         Permanent vassal = harness.addToBattlefieldAndReturn(player1, new GoreVassal());
-        vassal.setTapped(true);
+        vassal.tap();
         Permanent target = harness.addToBattlefieldAndReturn(player2, new PhyrexianRager());
 
         harness.activateAbility(player1, 0, null, target.getId());

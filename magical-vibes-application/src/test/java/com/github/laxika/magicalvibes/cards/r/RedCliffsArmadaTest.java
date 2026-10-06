@@ -50,7 +50,7 @@ class RedCliffsArmadaTest extends BaseCardTest {
     @DisplayName("A tapped Island still permits Red Cliffs Armada to attack")
     void canAttackWhenDefendersIslandIsTapped() {
         harness.setLife(player2, 20);
-        harness.addToBattlefieldAndReturn(player2, new Island()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player2, new Island()).tap();
         addCreatureReady(player1, new RedCliffsArmada());
 
         declareAttackers(List.of(0));

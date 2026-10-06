@@ -123,7 +123,7 @@ class SafewrightCavalryTest extends BaseCardTest {
     void canBoostItselfWhileTappedAndSummoningSick() {
         Permanent cavalry = harness.addToBattlefieldAndReturn(player1, new SafewrightCavalry());
         cavalry.setSummoningSick(true);
-        cavalry.setTapped(true);
+        cavalry.tap();
         harness.addMana(player1, ManaColor.WHITE, 5);
 
         harness.activateAbility(player1, 0, null, cavalry.getId());

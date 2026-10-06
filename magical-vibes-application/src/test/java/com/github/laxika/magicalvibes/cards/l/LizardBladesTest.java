@@ -116,7 +116,7 @@ class LizardBladesTest extends BaseCardTest {
     void reconfigureDoesNotRequireHasteOrUntapping() {
         Permanent blades = harness.addToBattlefieldAndReturn(player1, new LizardBlades());
         blades.setSummoningSick(true);
-        blades.setTapped(true);
+        blades.tap();
         Permanent creature = addCreatureReady(player1, new BearerOfMemory());
         addReconfigureMana();
 

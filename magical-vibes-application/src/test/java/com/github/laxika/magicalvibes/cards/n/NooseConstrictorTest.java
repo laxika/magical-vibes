@@ -99,7 +99,7 @@ class NooseConstrictorTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         Permanent constrictor = harness.addToBattlefieldAndReturn(player1, new NooseConstrictor());
-        constrictor.setTapped(true);
+        constrictor.tap();
         constrictor.setSummoningSick(true);
         int basePower = gqs.getEffectivePower(gd, constrictor);
         int baseToughness = gqs.getEffectiveToughness(gd, constrictor);

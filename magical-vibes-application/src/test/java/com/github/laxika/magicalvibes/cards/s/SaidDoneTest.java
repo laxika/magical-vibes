@@ -182,7 +182,7 @@ class SaidDoneTest extends BaseCardTest {
     @Test
     void doneLocksAnAlreadyTappedCreatureForOnlyItsControllersNextUntap() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GoblinAnarchomancer());
-        creature.setTapped(true);
+        creature.tap();
         harness.setHand(player1, List.of(new SaidDone()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);

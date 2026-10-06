@@ -93,7 +93,7 @@ class MidnightCrusaderShuttleTest extends BaseCardTest {
         addCreatureReady(player1, new AdiposeOffspring());
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new AdiposeOffspring());
         creature.setSummoningSick(true);
-        creature.setTapped(true);
+        creature.tap();
         crewShuttle();
 
         declareAttackers(List.of(0));

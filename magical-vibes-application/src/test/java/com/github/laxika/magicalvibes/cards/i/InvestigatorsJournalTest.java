@@ -109,7 +109,7 @@ class InvestigatorsJournalTest extends BaseCardTest {
     void cannotActivateCounterAbilityWhileTapped() {
         Permanent journal = harness.addToBattlefieldAndReturn(player1, new InvestigatorsJournal());
         journal.setCounterCount(CounterType.SUSPECT, 1);
-        journal.setTapped(true);
+        journal.tap();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.COLORLESS, 2);

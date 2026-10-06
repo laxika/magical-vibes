@@ -38,7 +38,7 @@ class NyleasDiscipleTest extends BaseCardTest {
     @Test
     @DisplayName("Tapped noncreature permanents contribute only their mana-cost symbols")
     void countsTappedNoncreatureManaCostOnce() {
-        harness.addToBattlefieldAndReturn(player1, new BowOfNylea()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new BowOfNylea()).tap();
         harness.setHand(player1, List.of(new NyleasDisciple()));
         harness.addMana(player1, ManaColor.GREEN, 4);
 

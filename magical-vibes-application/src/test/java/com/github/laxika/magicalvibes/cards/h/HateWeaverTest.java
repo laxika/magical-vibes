@@ -138,7 +138,7 @@ class HateWeaverTest extends BaseCardTest {
     void activatesWhileTappedAndSummoningSick() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new HateWeaver());
         source.setSummoningSick(true);
-        source.setTapped(true);
+        source.tap();
         Permanent target = addCreatureReady(player2, new SkyWeaver());
         int basePower = gqs.getEffectivePower(gd, target);
         harness.addMana(player1, ManaColor.BLUE, 1);

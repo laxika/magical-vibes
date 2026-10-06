@@ -74,7 +74,7 @@ class LotusRingTest extends BaseCardTest {
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent ring = addRingReady(player1);
         ring.setAttachedTo(creature.getId());
-        creature.setTapped(true);
+        creature.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);

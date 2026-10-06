@@ -83,7 +83,7 @@ class MerfolkSkydiverTest extends BaseCardTest {
     @DisplayName("Proliferate adds each existing counter kind to selected permanents and players")
     void proliferatesOpposingPermanentAndPlayer() {
         Permanent skydiver = harness.addToBattlefieldAndReturn(player1, new MerfolkSkydiver());
-        skydiver.setTapped(true);
+        skydiver.tap();
         Permanent selected = harness.addToBattlefieldAndReturn(player2, new Snarespinner());
         selected.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         selected.setCounterCount(CounterType.STUN, 1);

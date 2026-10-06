@@ -61,7 +61,7 @@ class MirrorGalleryTest extends BaseCardTest {
     @DisplayName("A tapped Mirror Gallery still protects duplicate legends")
     void tappedGalleryStillProtectsLegends() {
         Permanent gallery = harness.addToBattlefieldAndReturn(player1, new MirrorGallery());
-        gallery.setTapped(true);
+        gallery.tap();
         harness.addToBattlefield(player2, new KiraGreatGlassSpinner());
         harness.addToBattlefield(player2, new KiraGreatGlassSpinner());
 

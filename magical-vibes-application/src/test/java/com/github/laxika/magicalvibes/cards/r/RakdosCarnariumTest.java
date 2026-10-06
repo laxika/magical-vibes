@@ -96,7 +96,7 @@ class RakdosCarnariumTest extends BaseCardTest {
     @DisplayName("Mana resolves immediately while the return-land trigger is on the stack")
     void manaAbilityResolvesWithReturnTriggerPending() {
         Permanent carnarium = harness.enterBattlefieldAndReturn(player1, new RakdosCarnarium());
-        carnarium.setTapped(false);
+        carnarium.untap();
         assertThat(gd.stack).hasSize(1);
 
         harness.activateAbility(player1, 0, 0, null, null);

@@ -52,7 +52,7 @@ class ScarecrowGuideTest extends BaseCardTest {
     @Test
     void canActivateWhileTappedAndSummoningSick() {
         var guide = harness.addToBattlefieldAndReturn(player1, new ScarecrowGuide());
-        guide.setTapped(true);
+        guide.tap();
         guide.setSummoningSick(true);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

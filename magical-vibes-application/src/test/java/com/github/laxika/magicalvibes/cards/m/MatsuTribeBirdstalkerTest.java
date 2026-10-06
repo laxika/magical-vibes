@@ -115,7 +115,7 @@ class MatsuTribeBirdstalkerTest extends BaseCardTest {
     @DisplayName("Reach activation works while tapped and summoning sick and affects only its source")
     void activationWorksWhileTappedAndSummoningSick() {
         Permanent birdstalker = harness.enterBattlefieldAndReturn(player1, new MatsuTribeBirdstalker());
-        birdstalker.setTapped(true);
+        birdstalker.tap();
         birdstalker.setSummoningSick(true);
         Permanent otherBirdstalker = addBirdstalkerReady(player1);
         Permanent opposingBirdstalker = addBirdstalkerReady(player2);

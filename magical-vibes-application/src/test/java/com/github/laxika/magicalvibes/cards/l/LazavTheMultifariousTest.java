@@ -135,7 +135,7 @@ class LazavTheMultifariousTest extends BaseCardTest {
     @Test
     void copyingDoesNotTriggerCopiedEnterAbilityOrChangePermanentState() {
         Permanent lazav = addReadyLazav();
-        lazav.setTapped(true);
+        lazav.tap();
         lazav.setSummoningSick(true);
         Card informant = new DimirInformant();
         Card topCard = new WallOfMist();

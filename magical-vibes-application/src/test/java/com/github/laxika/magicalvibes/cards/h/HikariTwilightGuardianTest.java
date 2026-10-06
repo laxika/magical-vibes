@@ -153,7 +153,7 @@ class HikariTwilightGuardianTest extends BaseCardTest {
     @DisplayName("The Spirit spell resolves after Hikari is exiled and Hikari returns untapped as a new permanent")
     void spiritSpellResolvesAfterHikariExiles() {
         var original = harness.addToBattlefieldAndReturn(player1, new HikariTwilightGuardian());
-        original.setTapped(true);
+        original.tap();
         harness.setHand(player1, List.of(new HarshDeceiver()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);

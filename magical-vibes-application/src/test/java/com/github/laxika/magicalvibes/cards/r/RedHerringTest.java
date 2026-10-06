@@ -71,7 +71,7 @@ class RedHerringTest extends BaseCardTest {
     @DisplayName("A tapped Red Herring is not required to attack")
     void tappedCreatureNeedNotAttack() {
         Permanent redHerring = addCreatureReady(player1, new RedHerring());
-        redHerring.setTapped(true);
+        redHerring.tap();
 
         declareAttackers(List.of());
 
@@ -84,7 +84,7 @@ class RedHerringTest extends BaseCardTest {
     void canActivateWhileTappedOnOpponentsTurn() {
         Permanent redHerring = harness.addToBattlefieldAndReturn(player1, new RedHerring());
         redHerring.setSummoningSick(true);
-        redHerring.setTapped(true);
+        redHerring.tap();
         RedHerring drawnCard = new RedHerring();
         harness.setLibrary(player1, List.of(drawnCard));
         harness.forceActivePlayer(player2);

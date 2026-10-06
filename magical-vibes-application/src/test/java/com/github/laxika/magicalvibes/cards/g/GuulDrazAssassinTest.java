@@ -147,7 +147,7 @@ class GuulDrazAssassinTest extends BaseCardTest {
     void levelUpDoesNotRequireTappingButAssassinationDoes() {
         Permanent assassin = addCreatureReady(player1, new GuulDrazAssassin());
         Permanent target = addCreatureReady(player2, new UlamogsCrusher());
-        assassin.setTapped(true);
+        assassin.tap();
         prepareForLeveling(player1, 3);
         levelUp(player1);
         levelUp(player1);

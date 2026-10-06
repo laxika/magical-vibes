@@ -63,7 +63,7 @@ class MetropolisSpriteTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent sprite = harness.addToBattlefieldAndReturn(player1, new MetropolisSprite());
         sprite.setSummoningSick(true);
-        sprite.setTapped(true);
+        sprite.tap();
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, null, null);

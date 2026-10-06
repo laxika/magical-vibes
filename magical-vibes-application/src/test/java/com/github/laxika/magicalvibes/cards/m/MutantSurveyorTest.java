@@ -64,7 +64,7 @@ class MutantSurveyorTest extends BaseCardTest {
 
         harness.activateGraveyardAbility(player1, 0);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
-        assertThat(gd.playerExiledCards.get(player1.getId())).containsExactly(surveyor);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(surveyor);
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(drawnCard);
         harness.passBothPriorities();
 
@@ -102,7 +102,7 @@ class MutantSurveyorTest extends BaseCardTest {
         harness.activateGraveyardAbility(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerExiledCards.get(player1.getId())).containsExactly(surveyor);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(surveyor);
         assertThat(gd.playerHands.get(player1.getId())).contains(drawnCard);
     }
 

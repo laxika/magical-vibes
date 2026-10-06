@@ -57,7 +57,7 @@ class OpportunistTest extends BaseCardTest {
     @DisplayName("Cannot activate while already tapped")
     void cannotActivateWhileTapped() {
         Permanent opportunist = addCreatureReady(player1, new Opportunist());
-        opportunist.setTapped(true);
+        opportunist.tap();
         harness.addToBattlefield(player2, new MoggConscripts());
         UUID targetId = harness.getPermanentId(player2, "Mogg Conscripts");
         gd.permanentsDealtDamageThisTurn.add(targetId);

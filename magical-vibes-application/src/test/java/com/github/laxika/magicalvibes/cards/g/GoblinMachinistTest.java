@@ -136,7 +136,7 @@ class GoblinMachinistTest extends BaseCardTest {
     void repeatedActivationsAccumulate() {
         Permanent machinist = harness.addToBattlefieldAndReturn(player1, new GoblinMachinist());
         machinist.setSummoningSick(true);
-        machinist.setTapped(true);
+        machinist.tap();
         Shock first = new Shock();
         GoblinMachinist second = new GoblinMachinist();
         harness.setLibrary(player1, List.of(first, second));

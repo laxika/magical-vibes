@@ -147,7 +147,7 @@ class JasmineSeerTest extends BaseCardTest {
     @DisplayName("Cannot activate while tapped")
     void cannotActivateWhileTapped() {
         Permanent seer = addCreatureReady(player1, new JasmineSeer());
-        seer.setTapped(true);
+        seer.tap();
         addAbilityMana();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

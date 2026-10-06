@@ -95,7 +95,7 @@ class ScaledNurturerTest extends BaseCardTest {
     void twoManaFromSameNurturerGainFourLife() {
         Permanent nurturer = addReadyNurturer();
         harness.activateAbility(player1, 0, null, null);
-        nurturer.setTapped(false);
+        nurturer.untap();
         harness.activateAbility(player1, 0, null, null);
         harness.setHand(player1, List.of(new ScaledNurturer()));
 

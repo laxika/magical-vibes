@@ -104,7 +104,7 @@ class PathmakerInitiateTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent initiate = addInitiate();
-        initiate.setTapped(true);
+        initiate.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, initiate.getId()))
                 .isInstanceOf(IllegalStateException.class);

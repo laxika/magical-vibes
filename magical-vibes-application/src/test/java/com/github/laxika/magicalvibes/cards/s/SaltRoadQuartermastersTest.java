@@ -83,7 +83,7 @@ class SaltRoadQuartermastersTest extends BaseCardTest {
     void canTargetItselfWhileSummoningSickAndTapped() {
         Permanent quartermasters = harness.enterBattlefieldAndReturn(player1, new SaltRoadQuartermasters());
         quartermasters.setSummoningSick(true);
-        quartermasters.setTapped(true);
+        quartermasters.tap();
         harness.addMana(player1, ManaColor.GREEN, 3);
 
         harness.activateAbility(player1, 0, null, quartermasters.getId());

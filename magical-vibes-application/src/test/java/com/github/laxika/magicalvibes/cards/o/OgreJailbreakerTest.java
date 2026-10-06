@@ -77,7 +77,7 @@ class OgreJailbreakerTest extends BaseCardTest {
     void canAttackWithTappedGate() {
         Permanent ogre = readyJailbreaker();
         Permanent gate = harness.addToBattlefieldAndReturn(player1, new RakdosGuildgate());
-        gate.setTapped(true);
+        gate.tap();
 
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(ogre)));
 

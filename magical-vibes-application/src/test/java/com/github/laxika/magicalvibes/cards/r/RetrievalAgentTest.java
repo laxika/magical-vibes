@@ -72,7 +72,7 @@ class RetrievalAgentTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent retrievalAgent = harness.addToBattlefieldAndReturn(player1, new RetrievalAgent());
         retrievalAgent.setSummoningSick(true);
-        retrievalAgent.setTapped(true);
+        retrievalAgent.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, null, null);

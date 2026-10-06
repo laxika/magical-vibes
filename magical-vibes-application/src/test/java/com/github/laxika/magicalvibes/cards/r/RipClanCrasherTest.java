@@ -30,7 +30,7 @@ class RipClanCrasherTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent crasher = findPermanent(player1, "Rip-Clan Crasher");
-        crasher.setTapped(true);
+        crasher.tap();
 
         assertThat(als.canAttack(gd, crasher, player1.getId())).isFalse();
     }

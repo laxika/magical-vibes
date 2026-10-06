@@ -155,7 +155,7 @@ class ScarbladeEliteTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent elite = setup();
-        elite.setTapped(true);
+        elite.tap();
         harness.setGraveyard(player1, List.of(new ScarbladeElite()));
         UUID targetId = addCreatureReady(player2, new IndomitableAncients()).getId();
 

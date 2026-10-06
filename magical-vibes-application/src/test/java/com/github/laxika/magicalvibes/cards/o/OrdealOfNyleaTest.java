@@ -117,7 +117,7 @@ class OrdealOfNyleaTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Forest");
         harness.assertNotOnBattlefield(player1, "Plains");
-        assertThat(gd.playerLibraries.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
@@ -135,7 +135,7 @@ class OrdealOfNyleaTest extends BaseCardTest {
 
         assertThat(findPermanent(player1, "Forest").isTapped()).isTrue();
         harness.assertNotOnBattlefield(player1, "Plains");
-        assertThat(gd.playerLibraries.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
@@ -160,7 +160,7 @@ class OrdealOfNyleaTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Ordeal of Nylea");
         assertThat(findPermanent(player1, "Forest").isTapped()).isTrue();
         harness.assertNotOnBattlefield(player2, "Plains");
-        assertThat(gd.playerLibraries.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
     }
 
     @Test

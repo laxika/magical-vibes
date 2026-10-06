@@ -96,7 +96,7 @@ class RakdosRiteknifeTest extends BaseCardTest {
         Permanent riteknife = harness.addToBattlefieldAndReturn(player1, new RakdosRiteknife());
         Permanent creature = addCreatureReady(player1, new MistralCharger());
         riteknife.setAttachedTo(creature.getId());
-        riteknife.setTapped(true);
+        riteknife.tap();
 
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();

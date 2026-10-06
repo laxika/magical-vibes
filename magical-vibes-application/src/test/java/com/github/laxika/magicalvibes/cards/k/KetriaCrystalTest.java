@@ -62,7 +62,7 @@ class KetriaCrystalTest extends BaseCardTest {
     @Test
     void tappedCrystalCannotProduceMoreMana() {
         var crystal = harness.addToBattlefieldAndReturn(player1, new KetriaCrystal());
-        crystal.setTapped(true);
+        crystal.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);

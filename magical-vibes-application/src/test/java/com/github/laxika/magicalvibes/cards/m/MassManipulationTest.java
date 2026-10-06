@@ -126,7 +126,7 @@ class MassManipulationTest extends BaseCardTest {
     @DisplayName("Can target your own creature without untapping it or making it summoning sick")
     void canTargetOwnCreature() {
         Permanent creature = addCreatureReady(player1, new AxebaneBeast());
-        creature.setTapped(true);
+        creature.tap();
         harness.setHand(player1, List.of(new MassManipulation()));
         harness.addMana(player1, ManaColor.BLUE, 6);
         harness.castSorcery(player1, 0, 1, List.of(creature.getId()));
@@ -142,7 +142,7 @@ class MassManipulationTest extends BaseCardTest {
     @DisplayName("Control lasts beyond cleanup and the spell entering the graveyard")
     void controlPersistsIntoNextTurn() {
         Permanent creature = addCreatureReady(player2, new AxebaneBeast());
-        creature.setTapped(true);
+        creature.tap();
         harness.setHand(player1, List.of(new MassManipulation()));
         harness.addMana(player1, ManaColor.BLUE, 6);
         harness.castSorcery(player1, 0, 1, List.of(creature.getId()));

@@ -44,7 +44,7 @@ class ShakeTheFoundationsTest extends BaseCardTest {
 
         harness.assertInHand(player1, "Grizzly Bears");
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
-        assertThat(gd.playerLibraries.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 20);
         harness.assertInGraveyard(player1, "Shake the Foundations");

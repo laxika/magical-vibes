@@ -200,7 +200,7 @@ class PalaceGuardTest extends BaseCardTest {
     @DisplayName("Tapped Palace Guard cannot block multiple attackers")
     void tappedGuardCannotBlock() {
         Permanent guard = harness.addToBattlefieldAndReturn(player2, new PalaceGuard());
-        guard.setTapped(true);
+        guard.tap();
         for (int i = 0; i < 2; i++) {
             harness.addToBattlefieldAndReturn(player1, new RuneclawBear()).setAttacking(true);
         }

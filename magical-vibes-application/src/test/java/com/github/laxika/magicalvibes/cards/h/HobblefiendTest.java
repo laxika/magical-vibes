@@ -53,7 +53,7 @@ class HobblefiendTest extends BaseCardTest {
     void activatesWhileTappedAndSummoningSick() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new Hobblefiend());
         source.setSummoningSick(true);
-        source.setTapped(true);
+        source.tap();
         Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new Hobblefiend());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

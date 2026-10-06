@@ -123,7 +123,7 @@ class LifeOfToshiroUmezawaTest extends BaseCardTest {
     @DisplayName("Chapter III returns a new untapped creature without lore counters")
     void transformationReturnsNewSummoningSickPermanent() {
         Permanent saga = addSagaWithLore(2);
-        saga.setTapped(true);
+        saga.tap();
         advanceToNextChapter();
         harness.passBothPriorities();
 

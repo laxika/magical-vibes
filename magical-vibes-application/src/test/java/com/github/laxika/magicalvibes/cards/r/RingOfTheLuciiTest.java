@@ -88,7 +88,7 @@ class RingOfTheLuciiTest extends BaseCardTest {
     void canTargetAnAlreadyTappedPermanent() {
         addRing();
         Permanent target = harness.addToBattlefieldAndReturn(player2, new RingOfTheLucii());
-        target.setTapped(true);
+        target.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.setLife(player1, 20);
 
@@ -119,7 +119,7 @@ class RingOfTheLuciiTest extends BaseCardTest {
     @Test
     void cannotActivateEitherAbilityWhenRingIsTapped() {
         Permanent ring = addRing();
-        ring.setTapped(true);
+        ring.tap();
         Permanent target = harness.addToBattlefieldAndReturn(player2, new RingOfTheLucii());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.setLife(player1, 20);

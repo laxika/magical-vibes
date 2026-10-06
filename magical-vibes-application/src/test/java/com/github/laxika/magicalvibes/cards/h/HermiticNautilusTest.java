@@ -52,7 +52,7 @@ class HermiticNautilusTest extends BaseCardTest {
     void activatesWhileTappedAndSummoningSick() {
         Permanent nautilus = harness.addToBattlefieldAndReturn(player1, new HermiticNautilus());
         nautilus.setSummoningSick(true);
-        nautilus.setTapped(true);
+        nautilus.tap();
         int basePower = gqs.getEffectivePower(gd, nautilus);
         int baseToughness = gqs.getEffectiveToughness(gd, nautilus);
         addActivationMana();

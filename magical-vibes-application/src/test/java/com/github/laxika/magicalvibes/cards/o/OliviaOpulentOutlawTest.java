@@ -107,7 +107,7 @@ class OliviaOpulentOutlawTest extends BaseCardTest {
 
     @Test
     void opposingOutlawDoesNotTriggerOlivia() {
-        addCreatureReady(player1, new OliviaOpulentOutlaw()).setTapped(true);
+        addCreatureReady(player1, new OliviaOpulentOutlaw()).tap();
         addCreatureReady(player2, new NighthawkScavenger());
 
         declareAttackers(player2, List.of(0));

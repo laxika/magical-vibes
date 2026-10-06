@@ -100,7 +100,7 @@ class HypnoticGrifterTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent grifter = harness.addToBattlefieldAndReturn(player1, new HypnoticGrifter());
         grifter.setSummoningSick(true);
-        grifter.setTapped(true);
+        grifter.tap();
         harness.setHand(player1, List.of(new Mountain()));
         harness.setLibrary(player1, List.of(new BrokersVeteran()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);

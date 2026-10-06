@@ -115,7 +115,7 @@ class HellkiteOverlordTest extends BaseCardTest {
     void abilitiesDoNotRequireTappingOrHaste() {
         Permanent overlord = harness.addToBattlefieldAndReturn(player1, new HellkiteOverlord());
         overlord.setSummoningSick(true);
-        overlord.setTapped(true);
+        overlord.tap();
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);

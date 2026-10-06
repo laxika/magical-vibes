@@ -140,7 +140,7 @@ class HollowhengeSpiritTest extends BaseCardTest {
     @DisplayName("Can remove its controller's own attacking creature")
     void canRemoveOwnAttacker() {
         Permanent attacker = addAttacker(player1);
-        attacker.setTapped(true);
+        attacker.tap();
         harness.setHand(player1, List.of(new HollowhengeSpirit()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
@@ -178,7 +178,7 @@ class HollowhengeSpiritTest extends BaseCardTest {
     @DisplayName("A target that leaves combat before resolution remains on the battlefield")
     void targetLeavesCombatBeforeResolution() {
         Permanent attacker = addAttacker(player2);
-        attacker.setTapped(true);
+        attacker.tap();
         harness.setHand(player1, List.of(new HollowhengeSpirit()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 

@@ -92,7 +92,7 @@ class ScytheTigerTest extends BaseCardTest {
     void choosesOneTappedLand() {
         var unchosenLand = harness.addToBattlefieldAndReturn(player1, new Mountain());
         var chosenLand = harness.addToBattlefieldAndReturn(player1, new Mountain());
-        chosenLand.setTapped(true);
+        chosenLand.tap();
         castScytheTiger();
 
         harness.handleMayAbilityChosen(player1, true);

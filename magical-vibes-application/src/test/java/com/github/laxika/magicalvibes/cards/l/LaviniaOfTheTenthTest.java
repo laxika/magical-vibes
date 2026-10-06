@@ -134,7 +134,7 @@ class LaviniaOfTheTenthTest extends BaseCardTest {
     @Test
     void opponentLandIsNotDetained() {
         Permanent gate = harness.addToBattlefieldAndReturn(player2, new AzoriusGuildgate());
-        gate.setTapped(false);
+        gate.untap();
         castLavinia();
 
         assertThatCode(() -> harness.activateAbility(player2, indexOf(player2, gate), 0, null, null))

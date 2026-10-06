@@ -62,7 +62,7 @@ class RelentlessRaptorTest extends BaseCardTest {
 
     @Test
     void tappedRaptorIsNotRequiredToAttack() {
-        addCreatureReady(player1, new RelentlessRaptor()).setTapped(true);
+        addCreatureReady(player1, new RelentlessRaptor()).tap();
 
         assertThatCode(() -> declareAttackers(player1, List.of()))
                 .doesNotThrowAnyException();
@@ -78,7 +78,7 @@ class RelentlessRaptorTest extends BaseCardTest {
 
     @Test
     void tappedRaptorIsNotRequiredToBlock() {
-        addCreatureReady(player2, new RelentlessRaptor()).setTapped(true);
+        addCreatureReady(player2, new RelentlessRaptor()).tap();
         addCreatureReady(player1, new RaptorCompanion());
         declareAttackersAndPrepareBlockers(player1, List.of(0));
 

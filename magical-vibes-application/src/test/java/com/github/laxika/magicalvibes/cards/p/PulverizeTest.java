@@ -83,8 +83,8 @@ class PulverizeTest extends BaseCardTest {
     void alternateCostAcceptsTappedMountains() {
         var mountain1 = harness.addToBattlefieldAndReturn(player1, new Mountain());
         var mountain2 = harness.addToBattlefieldAndReturn(player1, new Mountain());
-        mountain1.setTapped(true);
-        mountain2.setTapped(true);
+        mountain1.tap();
+        mountain2.tap();
         harness.addToBattlefield(player2, new KyrenToy());
         harness.setHand(player1, List.of(new Pulverize()));
 

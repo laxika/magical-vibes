@@ -99,7 +99,7 @@ class PardicSwordsmithTest extends BaseCardTest {
     @DisplayName("A tapped swordsmith can activate twice and the boosts accumulate")
     void repeatedActivationsWhileTapped() {
         Permanent swordsmith = harness.addToBattlefieldAndReturn(player1, new PardicSwordsmith());
-        swordsmith.setTapped(true);
+        swordsmith.tap();
         harness.setHand(player1, List.of(new Forest(), new Forest()));
         harness.addMana(player1, ManaColor.RED, 2);
 

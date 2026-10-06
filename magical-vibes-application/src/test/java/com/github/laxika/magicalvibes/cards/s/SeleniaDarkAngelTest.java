@@ -79,7 +79,7 @@ class SeleniaDarkAngelTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent selenia = harness.addToBattlefieldAndReturn(player1, new SeleniaDarkAngel());
         selenia.setSummoningSick(true);
-        selenia.setTapped(true);
+        selenia.tap();
         harness.setLife(player1, 20);
 
         harness.activateAbility(player1, 0, null, null);

@@ -171,7 +171,7 @@ class RagDealerTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent dealer = addCreatureReady(player1, new RagDealer());
-        dealer.setTapped(true);
+        dealer.tap();
         harness.addMana(player1, ManaColor.BLACK, 3);
 
         assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(player1, dealerIndex(dealer), 0,

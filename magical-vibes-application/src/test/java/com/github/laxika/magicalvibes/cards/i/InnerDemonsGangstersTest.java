@@ -105,7 +105,7 @@ class InnerDemonsGangstersTest extends BaseCardTest {
     void repeatedActivationsStackBoost() {
         forceMainPhase();
         Permanent gangsters = harness.addToBattlefieldAndReturn(player1, new InnerDemonsGangsters());
-        gangsters.setTapped(true);
+        gangsters.tap();
         gangsters.setSummoningSick(true);
         harness.setHand(player1, List.of(new InnerDemonsGangsters(), new InnerDemonsGangsters()));
 

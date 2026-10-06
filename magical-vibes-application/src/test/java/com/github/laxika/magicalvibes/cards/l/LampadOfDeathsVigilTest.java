@@ -55,7 +55,7 @@ class LampadOfDeathsVigilTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
         Permanent lampad = harness.addToBattlefieldAndReturn(player1, new LampadOfDeathsVigil());
-        lampad.setTapped(true);
+        lampad.tap();
         lampad.setSummoningSick(true);
         harness.addMana(player1, ManaColor.BLUE, 1);
 

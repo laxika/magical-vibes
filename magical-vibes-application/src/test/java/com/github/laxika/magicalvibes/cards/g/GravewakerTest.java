@@ -87,7 +87,7 @@ class GravewakerTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         int index = addReadyGravewaker();
         Permanent gravewaker = findPermanent(player1, "Gravewaker");
-        gravewaker.setTapped(true);
+        gravewaker.tap();
         gravewaker.setSummoningSick(true);
         Card creature = new GrizzlyBears();
         harness.setGraveyard(player1, List.of(creature));

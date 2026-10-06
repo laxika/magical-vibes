@@ -118,8 +118,8 @@ class MassacreTest extends BaseCardTest {
     void resolvesAfterQualifyingLandsLeaveBattlefield() {
         Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
         Permanent plains = harness.addToBattlefieldAndReturn(player2, new Plains());
-        swamp.setTapped(true);
-        plains.setTapped(true);
+        swamp.tap();
+        plains.tap();
         addCreatureReady(player2, new RootwaterCommando());
         harness.setHand(player1, List.of(new Massacre()));
 

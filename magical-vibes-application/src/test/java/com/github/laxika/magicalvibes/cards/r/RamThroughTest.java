@@ -103,7 +103,7 @@ class RamThroughTest extends BaseCardTest {
         harness.setHand(player1, List.of(new RamThrough()));
         addMana();
         harness.castInstant(player1, 0, List.of(source.getId(), target.getId()));
-        gd.battlefield.get(player1.getId()).remove(source);
+        gd.playerBattlefields.get(player1.getId()).remove(source);
 
         harness.passBothPriorities();
 
@@ -119,7 +119,7 @@ class RamThroughTest extends BaseCardTest {
         harness.setHand(player1, List.of(new RamThrough()));
         addMana();
         harness.castInstant(player1, 0, List.of(source.getId(), target.getId()));
-        gd.battlefield.get(player2.getId()).remove(target);
+        gd.playerBattlefields.get(player2.getId()).remove(target);
 
         harness.passBothPriorities();
 

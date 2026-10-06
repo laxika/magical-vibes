@@ -84,7 +84,7 @@ class ScaldkinTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent scaldkin = harness.addToBattlefieldAndReturn(player1, new Scaldkin());
         scaldkin.setSummoningSick(true);
-        scaldkin.setTapped(true);
+        scaldkin.tap();
         harness.setLife(player1, 20);
         addActivationMana(player1);
 

@@ -129,7 +129,7 @@ class IngeniousSkaabTest extends BaseCardTest {
     void blueAbilityStacksWithoutTapOrHasteRequirement() {
         Permanent skaab = addReadySkaab();
         skaab.setSummoningSick(true);
-        skaab.setTapped(true);
+        skaab.tap();
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         for (int i = 0; i < 2; i++) {

@@ -162,7 +162,7 @@ class LuminousGuardianTest extends BaseCardTest {
     void activatesWhileTappedAndSummoningSick() {
         Permanent guardian = addGuardian();
         guardian.setSummoningSick(true);
-        guardian.setTapped(true);
+        guardian.tap();
         harness.addMana(player2, ManaColor.WHITE, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 2);
 

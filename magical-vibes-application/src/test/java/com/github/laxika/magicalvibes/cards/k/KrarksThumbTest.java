@@ -44,7 +44,7 @@ class KrarksThumbTest extends BaseCardTest {
     void tappedThumbStillApplies() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new AlphaMyr());
         Permanent thumb = harness.addToBattlefieldAndReturn(player1, new KrarksThumb());
-        thumb.setTapped(true);
+        thumb.tap();
         castFieryGambit(target);
 
         assertThat(coinFlipLogs()).anyMatch(log -> log.contains("(flipped 2 coins and ignored 1)"));

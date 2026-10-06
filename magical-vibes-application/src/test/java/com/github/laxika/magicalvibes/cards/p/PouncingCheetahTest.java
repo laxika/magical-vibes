@@ -1,4 +1,4 @@
-﻿package com.github.laxika.magicalvibes.cards.p;
+package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;

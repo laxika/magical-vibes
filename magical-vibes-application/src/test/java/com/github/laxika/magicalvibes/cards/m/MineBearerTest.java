@@ -89,7 +89,7 @@ class MineBearerTest extends BaseCardTest {
     @DisplayName("Cannot activate while tapped and does not sacrifice itself")
     void cannotActivateWhileTapped() {
         Permanent bearer = addReadyMineBearer(player1);
-        bearer.setTapped(true);
+        bearer.tap();
         Permanent attacker = addAttacker(player2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, attacker.getId()))

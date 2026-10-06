@@ -77,7 +77,7 @@ class IgneousCurTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent cur = harness.addToBattlefieldAndReturn(player1, new IgneousCur());
         cur.setSummoningSick(true);
-        cur.setTapped(true);
+        cur.tap();
         harness.addMana(player1, ManaColor.RED, 2);
 
         harness.activateAbility(player1, 0, null, null);

@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.BlockerAssignment;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -104,7 +104,7 @@ class HadaSpyPatrolTest extends BaseCardTest {
     void canLevelBeyondThreeWhileTappedAndSummoningSick() {
         Permanent patrol = harness.addToBattlefieldAndReturn(player1, new HadaSpyPatrol());
         patrol.setSummoningSick(true);
-        patrol.setTapped(true);
+        patrol.tap();
         patrol.setCounterCount(CounterType.LEVEL, 3);
         prepareForLeveling(player1);
 

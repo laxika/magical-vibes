@@ -67,7 +67,7 @@ class IllvoiGalebladeTest extends BaseCardTest {
     @DisplayName("A tapped newly entered creature can pay colored mana to draw for its controller")
     void tappedCreatureCanActivateWithColoredMana() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new IllvoiGaleblade());
-        creature.setTapped(true);
+        creature.tap();
         harness.setLibrary(player2, List.of(new Forest()));
         harness.addMana(player2, ManaColor.BLUE, 2);
         int controllerHandBefore = gd.playerHands.get(player2.getId()).size();

@@ -102,7 +102,7 @@ class NecratogTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(
                 new BenalishInfantry(), new StripedBears(), new Vitalize()));
         Permanent necratog = findPermanent(player1, "Necratog");
-        necratog.setTapped(true);
+        necratog.tap();
 
         harness.activateAbility(player1, 0, null, null);
 

@@ -159,7 +159,7 @@ class OrochiEggwatcherTest extends BaseCardTest {
     @DisplayName("Cannot activate the token ability while tapped")
     void tokenAbilityRequiresUntappedSource() {
         Permanent eggwatcher = addReadyEggwatcher(player1);
-        eggwatcher.setTapped(true);
+        eggwatcher.tap();
         harness.addMana(player1, ManaColor.GREEN, 3);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

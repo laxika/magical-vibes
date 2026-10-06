@@ -129,7 +129,7 @@ class NightveilSpecterTest extends BaseCardTest {
         Card card = new CloudfinRaptor();
         harness.setLibrary(player2, List.of(card, new CloudfinRaptor()));
         resolveCombatAndTrigger();
-        harness.forceStep(TurnStep.BEGIN_COMBAT);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
         harness.clearPriorityPassed();
         harness.addMana(player1, ManaColor.BLUE, 1);
 

@@ -204,7 +204,7 @@ class GoblinFlectomancerTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent flectomancer = harness.addToBattlefieldAndReturn(player2, new GoblinFlectomancer());
         flectomancer.setSummoningSick(true);
-        flectomancer.setTapped(true);
+        flectomancer.tap();
         Pyromatics pyromatics = new Pyromatics();
         harness.setHand(player1, List.of(pyromatics));
         harness.addMana(player1, ManaColor.RED, 2);

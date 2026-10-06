@@ -121,7 +121,7 @@ class ManticoreEternalTest extends BaseCardTest {
     void tappedManticoreIsNotRequiredToAttack() {
         Permanent manticore = harness.addToBattlefieldAndReturn(player1, new ManticoreEternal());
         manticore.setSummoningSick(false);
-        manticore.setTapped(true);
+        manticore.tap();
         prepareAttackerDeclaration();
 
         gs.declareAttackers(gd, player1, List.of());

@@ -106,7 +106,7 @@ class ReptilDinomorpherTest extends BaseCardTest {
             int abilityIndex, int manaCost, int basePower, int baseToughness) {
         Permanent reptil = harness.addToBattlefieldAndReturn(player1, new ReptilDinomorpher());
         reptil.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
-        reptil.setTapped(true);
+        reptil.tap();
         int originalPower = gqs.getEffectivePower(gd, reptil);
         int originalToughness = gqs.getEffectiveToughness(gd, reptil);
         harness.addMana(player1, ManaColor.COLORLESS, manaCost);

@@ -107,7 +107,7 @@ class PatriotShieldWielderTest extends BaseCardTest {
     void cannotActivateWhileTapped() {
         Permanent patriot = addCreatureReady(player1, new PatriotShieldWielder());
         Permanent target = addCreatureReady(player1, new GrizzlyBears());
-        patriot.setTapped(true);
+        patriot.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.forceActivePlayer(player1);
 
@@ -166,7 +166,7 @@ class PatriotShieldWielderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, target, Keyword.HEXPROOF)).isTrue();
-        patriot.setTapped(false);
+        patriot.untap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();

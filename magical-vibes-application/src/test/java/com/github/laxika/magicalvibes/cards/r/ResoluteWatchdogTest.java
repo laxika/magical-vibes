@@ -69,7 +69,7 @@ class ResoluteWatchdogTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent watchdog = harness.addToBattlefieldAndReturn(player1, new ResoluteWatchdog());
         watchdog.setSummoningSick(true);
-        watchdog.setTapped(true);
+        watchdog.tap();
         Permanent target = addCreatureReady(player1, new AxebaneBeast());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -120,7 +120,7 @@ class ResoluteWatchdogTest extends BaseCardTest {
     void protectsAgainstLethalDamageInResponse() {
         addWatchdogReady(player1);
         Permanent target = addCreatureReady(player1, new AxebaneBeast());
-        target.setTapped(true);
+        target.tap();
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player2, List.of(new SummaryJudgment()));

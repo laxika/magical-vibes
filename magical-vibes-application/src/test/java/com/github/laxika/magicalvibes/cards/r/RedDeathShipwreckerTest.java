@@ -108,7 +108,7 @@ class RedDeathShipwreckerTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new RedDeathShipwrecker()));
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
-        target.setTapped(true);
+        target.tap();
 
         declareAttackers(player2, List.of());
 

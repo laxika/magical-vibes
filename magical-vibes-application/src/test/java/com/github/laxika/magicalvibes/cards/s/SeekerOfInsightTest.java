@@ -138,7 +138,7 @@ class SeekerOfInsightTest extends BaseCardTest {
     @DisplayName("A tapped Seeker cannot activate again")
     void tappedSeekerCannotActivate() {
         Permanent seeker = addReadySeeker(player1);
-        seeker.setTapped(true);
+        seeker.tap();
         gd.recordSpellCast(player1.getId(), new Cancel());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

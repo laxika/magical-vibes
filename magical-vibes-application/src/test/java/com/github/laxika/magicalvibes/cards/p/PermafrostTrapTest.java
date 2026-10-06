@@ -87,7 +87,7 @@ class PermafrostTrapTest extends BaseCardTest {
     @Test
     void alreadyTappedCreatureSkipsOnlyItsControllersNextUntap() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new ArborElf());
-        creature.setTapped(true);
+        creature.tap();
         harness.setHand(player1, List.of(new PermafrostTrap()));
         harness.addMana(player1, ManaColor.BLUE, 4);
         harness.castInstant(player1, 0, List.of(creature.getId()));

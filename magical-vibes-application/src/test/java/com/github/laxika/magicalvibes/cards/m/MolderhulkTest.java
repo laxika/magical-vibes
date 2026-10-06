@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -70,7 +71,7 @@ class MolderhulkTest extends BaseCardTest {
     @Test
     void reductionCannotRemoveColoredManaRequirements() {
         harness.setGraveyard(player1, java.util.stream.IntStream.range(0, 9)
-                .mapToObj(i -> new Molderhulk()).toList());
+                .mapToObj(i -> (Card) new Molderhulk()).toList());
         harness.setHand(player1, List.of(new Molderhulk()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);

@@ -122,7 +122,7 @@ class KrosanArcherTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         Permanent archer = harness.addToBattlefieldAndReturn(player1, new KrosanArcher());
-        archer.setTapped(true);
+        archer.tap();
         archer.setSummoningSick(true);
         harness.setHand(player1, List.of(new Forest()));
         harness.addMana(player1, ManaColor.GREEN, 1);

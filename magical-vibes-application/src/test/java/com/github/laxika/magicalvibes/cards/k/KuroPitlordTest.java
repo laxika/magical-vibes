@@ -152,7 +152,7 @@ class KuroPitlordTest extends BaseCardTest {
     @DisplayName("Kuro can target itself while tapped and summoning sick")
     void canTargetItselfWhileTappedAndSummoningSick() {
         Permanent kuro = harness.addToBattlefieldAndReturn(player1, new KuroPitlord());
-        kuro.setTapped(true);
+        kuro.tap();
         kuro.setSummoningSick(true);
         harness.setLife(player1, 20);
 

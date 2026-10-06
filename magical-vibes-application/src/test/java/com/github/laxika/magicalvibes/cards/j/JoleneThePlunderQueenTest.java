@@ -114,9 +114,9 @@ class JoleneThePlunderQueenTest extends BaseCardTest {
     void tappedSummoningSickJoleneCanSacrificeTappedTreasures() {
         Permanent jolene = harness.addToBattlefieldAndReturn(player1, new JoleneThePlunderQueen());
         jolene.setSummoningSick(true);
-        jolene.setTapped(true);
+        jolene.tap();
         for (int i = 0; i < 5; i++) {
-            harness.addToBattlefieldAndReturn(player1, new Treasure()).setTapped(true);
+            harness.addToBattlefieldAndReturn(player1, new Treasure()).tap();
         }
 
         harness.activateAbility(player1, 0, null, null);

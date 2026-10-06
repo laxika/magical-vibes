@@ -72,7 +72,7 @@ class PygmyAllosaurusTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new PygmyAllosaurus());
         Permanent blocker = addCreatureReady(player2, new BalduvianBears());
         Permanent swamp = harness.addToBattlefieldAndReturn(player2, new Swamp());
-        swamp.setTapped(true);
+        swamp.tap();
 
         declareAttackersAndPrepareBlockers(List.of(0));
 

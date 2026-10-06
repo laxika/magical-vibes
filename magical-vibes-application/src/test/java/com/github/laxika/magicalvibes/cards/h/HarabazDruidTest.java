@@ -58,7 +58,7 @@ class HarabazDruidTest extends BaseCardTest {
         addReadyDruid(player1);
         Permanent other = harness.addToBattlefieldAndReturn(player1, new HarabazDruid());
         other.setSummoningSick(true);
-        other.setTapped(true);
+        other.tap();
 
         harness.activateAbility(player1, 0, null, null);
         harness.handleListChoice(player1, ManaColor.BLUE.name());

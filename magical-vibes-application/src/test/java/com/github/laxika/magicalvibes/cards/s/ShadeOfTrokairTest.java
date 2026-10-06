@@ -109,7 +109,7 @@ class ShadeOfTrokairTest extends BaseCardTest {
     void pumpStacksWithoutTapOrSummoningSicknessRestriction() {
         Permanent permanent = addReadyShadeOfTrokair(player1);
         permanent.setSummoningSick(true);
-        permanent.setTapped(true);
+        permanent.tap();
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.activateAbility(player1, 0, null, null);

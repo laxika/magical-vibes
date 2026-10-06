@@ -66,10 +66,10 @@ class KeepWatchTest extends BaseCardTest {
     void drawsOnlyForAttackingCreatures() {
         Permanent attacker = harness.addToBattlefieldAndReturn(player2, new TrainedPronghorn());
         attacker.setAttacking(true);
-        attacker.setTapped(false);
+        attacker.untap();
         attacker.setBlockedThisCombat(true);
         harness.addToBattlefieldAndReturn(player1, new TrainedPronghorn()).setBlocking(true);
-        harness.addToBattlefieldAndReturn(player2, new SuntailHawk()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player2, new SuntailHawk()).tap();
         harness.setHand(player2, java.util.List.of());
 
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();

@@ -30,7 +30,7 @@ class KazarovSengirPurebloodTest extends BaseCardTest {
     void activatedAbilityDoesNotRequireTapAndCanTargetOwnCreatures() {
         Permanent kazarov = harness.addToBattlefieldAndReturn(player1, new KazarovSengirPureblood());
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        kazarov.setTapped(true);
+        kazarov.tap();
         kazarov.setSummoningSick(true);
         harness.addMana(player1, ManaColor.COLORLESS, 6);
         harness.addMana(player1, ManaColor.RED, 2);

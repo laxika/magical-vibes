@@ -1,4 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
+import java.util.Set;
+import com.github.laxika.magicalvibes.model.CardType;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -158,7 +160,7 @@ class HauntedCadaverTest extends BaseCardTest {
     void faceDownCombatDamageDoesNotTrigger() {
         harness.setHand(player2, List.of(new HauntedCadaver()));
         Permanent attacker = addAttacker();
-        attacker.setFaceDown(true);
+        attacker.setFaceDown(2, 2, Set.of(CardType.CREATURE));
 
         resolveCombat();
 

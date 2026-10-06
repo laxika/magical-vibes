@@ -154,7 +154,7 @@ class MishrasFactoryTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, factory)).isEqualTo(2);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
 
-        factory.setTapped(false);
+        factory.untap();
         harness.tapPermanent(player1, 0);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
     }

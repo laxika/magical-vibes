@@ -41,15 +41,15 @@ class PhyrexianAltarTest extends BaseCardTest {
     @DisplayName("A tapped Altar can activate repeatedly by sacrificing tapped creatures")
     void tappedAltarCanActivateRepeatedly() {
         var altar = harness.addToBattlefieldAndReturn(player1, new PhyrexianAltar());
-        altar.setTapped(true);
+        altar.tap();
         var firstCreature = harness.addToBattlefieldAndReturn(player1, new RagingKavu());
-        firstCreature.setTapped(true);
+        firstCreature.tap();
 
         harness.activateAbility(player1, 0, null, null);
         harness.handleListChoice(player1, "BLUE");
 
         var secondCreature = harness.addToBattlefieldAndReturn(player1, new RagingKavu());
-        secondCreature.setTapped(true);
+        secondCreature.tap();
         harness.activateAbility(player1, 0, null, null);
         harness.handleListChoice(player1, "BLACK");
 

@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.cards.i;
+import java.util.UUID;
 
 import com.github.laxika.magicalvibes.cards.a.ArgothianSprite;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -41,7 +42,7 @@ class IronCrawCrusherTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castWithAlternateCost(player1, 0, null);
+        harness.castWithAlternateCost(player1, 0, (UUID) null);
         harness.passBothPriorities();
 
         Permanent crusher = findPermanent(player1, "Iron-Craw Crusher");

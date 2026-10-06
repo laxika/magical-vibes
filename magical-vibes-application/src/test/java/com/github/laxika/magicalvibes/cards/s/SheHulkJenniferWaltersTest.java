@@ -68,10 +68,10 @@ class SheHulkJenniferWaltersTest extends BaseCardTest {
     @Test
     void canActivateWhileTappedAndSummoningSickAndSacrificeATappedLand() {
         Permanent sheHulk = harness.addToBattlefieldAndReturn(player1, new SheHulkJenniferWalters());
-        sheHulk.setTapped(true);
+        sheHulk.tap();
         sheHulk.setSummoningSick(true);
         Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
-        land.setTapped(true);
+        land.tap();
         Forest drawnCard = new Forest();
         harness.setLibrary(player1, List.of(drawnCard));
         harness.addMana(player1, ManaColor.RED, 1);

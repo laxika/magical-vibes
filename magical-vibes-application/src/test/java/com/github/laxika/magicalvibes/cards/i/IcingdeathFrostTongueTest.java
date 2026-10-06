@@ -142,7 +142,7 @@ class IcingdeathFrostTongueTest extends BaseCardTest {
         Permanent equipment = harness.addToBattlefieldAndReturn(player1, new IcingdeathFrostTongue());
         equipment.setAttachedTo(attacker.getId());
         Permanent victim = addCreatureReady(player2, new GrizzlyBears());
-        victim.setTapped(true);
+        victim.tap();
 
         declareAttackers(player1, List.of(0));
         harness.handlePermanentChosen(player1, victim.getId());

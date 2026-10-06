@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -117,7 +118,7 @@ class RonaSheoldredsFaithfulTest extends BaseCardTest {
     @Test
     void graveyardCastingStillRequiresManaAndDoesNotDiscardOnRejection() {
         RonaSheoldredsFaithful rona = new RonaSheoldredsFaithful();
-        var hand = List.of(new RonaSheoldredsFaithful(), new RonaSheoldredsFaithful());
+        List<Card> hand = List.of(new RonaSheoldredsFaithful(), new RonaSheoldredsFaithful());
         harness.setGraveyard(player1, List.of(rona));
         harness.setHand(player1, hand);
 
@@ -131,7 +132,7 @@ class RonaSheoldredsFaithfulTest extends BaseCardTest {
     @Test
     void cannotDiscardTheSameCardTwice() {
         RonaSheoldredsFaithful rona = new RonaSheoldredsFaithful();
-        var hand = List.of(new RonaSheoldredsFaithful(), new RonaSheoldredsFaithful());
+        List<Card> hand = List.of(new RonaSheoldredsFaithful(), new RonaSheoldredsFaithful());
         harness.setGraveyard(player1, List.of(rona));
         harness.setHand(player1, hand);
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -149,7 +150,7 @@ class RonaSheoldredsFaithfulTest extends BaseCardTest {
     @Test
     void graveyardPermissionDoesNotAllowCastingDuringCombat() {
         RonaSheoldredsFaithful rona = new RonaSheoldredsFaithful();
-        var hand = List.of(new RonaSheoldredsFaithful(), new RonaSheoldredsFaithful());
+        List<Card> hand = List.of(new RonaSheoldredsFaithful(), new RonaSheoldredsFaithful());
         harness.setGraveyard(player1, List.of(rona));
         harness.setHand(player1, hand);
         harness.addMana(player1, ManaColor.BLUE, 1);

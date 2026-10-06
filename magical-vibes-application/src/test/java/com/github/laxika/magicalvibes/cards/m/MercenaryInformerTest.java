@@ -197,7 +197,7 @@ class MercenaryInformerTest extends BaseCardTest {
     void canActivateRepeatedlyWhileTappedAndSummoningSick() {
         Permanent informer = harness.addToBattlefieldAndReturn(player1, new MercenaryInformer());
         informer.setSummoningSick(true);
-        informer.setTapped(true);
+        informer.tap();
         Permanent first = addCreatureReady(player2, new AgentOfShauku());
         Permanent second = addCreatureReady(player2, new AgentOfShauku());
         int deckSizeBefore = gd.playerDecks.get(player2.getId()).size();

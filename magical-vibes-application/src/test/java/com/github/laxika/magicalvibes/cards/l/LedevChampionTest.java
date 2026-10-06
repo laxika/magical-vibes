@@ -97,7 +97,7 @@ class LedevChampionTest extends BaseCardTest {
         Permanent newCreature = harness.addToBattlefieldAndReturn(player1, new VernadiShieldmate());
         newCreature.setSummoningSick(true);
         Permanent tappedCreature = addCreatureReady(player1, new VernadiShieldmate());
-        tappedCreature.setTapped(true);
+        tappedCreature.tap();
         Permanent opposingCreature = addCreatureReady(player2, new VernadiShieldmate());
 
         declareAttackers(List.of(0, 1));
@@ -133,7 +133,7 @@ class LedevChampionTest extends BaseCardTest {
     @DisplayName("A tapped summoning-sick Champion can activate repeatedly")
     void tappedSummoningSickChampionCanCreateMultipleSoldiers() {
         Permanent champion = harness.addToBattlefieldAndReturn(player1, new LedevChampion());
-        champion.setTapped(true);
+        champion.tap();
         champion.setSummoningSick(true);
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.addMana(player1, ManaColor.WHITE, 2);

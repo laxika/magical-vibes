@@ -59,7 +59,7 @@ class RidgedKusiteTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent kusite = addCreatureReady(player1, new RidgedKusite());
-        kusite.setTapped(true);
+        kusite.tap();
         harness.setHand(player1, List.of(new PouncingWurm()));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);

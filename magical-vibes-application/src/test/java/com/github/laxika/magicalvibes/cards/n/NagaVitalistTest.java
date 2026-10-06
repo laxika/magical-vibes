@@ -111,7 +111,7 @@ class NagaVitalistTest extends BaseCardTest {
     void tappedLandStillDeterminesAvailableMana() {
         var vitalist = addCreatureReady(player1, new NagaVitalist());
         var forest = harness.addToBattlefieldAndReturn(player1, new Forest());
-        forest.setTapped(true);
+        forest.tap();
 
         harness.activateAbility(player1, 0, null, null);
 

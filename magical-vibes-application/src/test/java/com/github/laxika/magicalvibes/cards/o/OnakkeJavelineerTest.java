@@ -87,7 +87,7 @@ class OnakkeJavelineerTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent javelineer = addCreatureReady(player1, new OnakkeJavelineer());
-        javelineer.setTapped(true);
+        javelineer.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);

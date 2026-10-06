@@ -102,7 +102,7 @@ class LandslideTest extends BaseCardTest {
         Permanent chosen = harness.addToBattlefieldAndReturn(player1, new Mountain());
         Permanent unchosen = harness.addToBattlefieldAndReturn(player1, new Mountain());
         Permanent opposing = harness.addToBattlefieldAndReturn(player2, new Mountain());
-        chosen.setTapped(true);
+        chosen.tap();
         harness.setLife(player2, 20);
         harness.setHand(player1, List.of(new Landslide()));
         harness.addMana(player1, ManaColor.RED, 1);

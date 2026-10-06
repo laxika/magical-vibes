@@ -69,7 +69,7 @@ class PlungeIntoWinterTest extends BaseCardTest {
     @Test
     void canTargetOwnAlreadyTappedCreatureAndStillScryAndDraw() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new UnassumingSage());
-        creature.setTapped(true);
+        creature.tap();
         Card topCard = new Forest();
         harness.setLibrary(player1, List.of(topCard));
         castPlunge(creature.getId());

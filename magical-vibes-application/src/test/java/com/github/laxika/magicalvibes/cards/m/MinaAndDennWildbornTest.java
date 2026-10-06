@@ -73,7 +73,7 @@ class MinaAndDennWildbornTest extends BaseCardTest {
         harness.setHand(player1, List.of());
         Permanent source = harness.addToBattlefieldAndReturn(player1, new MinaAndDennWildborn());
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
-        forest.setTapped(true);
+        forest.tap();
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);
 

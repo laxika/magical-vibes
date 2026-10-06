@@ -67,7 +67,7 @@ class MakindiOxTest extends BaseCardTest {
     void landfallCanTargetTappedCreature() {
         harness.addToBattlefield(player1, new MakindiOx());
         Permanent victim = harness.addToBattlefieldAndReturn(player2, new MakindiOx());
-        victim.setTapped(true);
+        victim.tap();
         harness.setHand(player1, List.of(new Forest()));
 
         harness.playLand(player1, 0);

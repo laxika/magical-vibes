@@ -156,7 +156,7 @@ class OdunosRiverTrawlerTest extends BaseCardTest {
     void activationWorksWhileSummoningSickAndTapped() {
         NyxbornEidolon eidolon = new NyxbornEidolon();
         harness.addToBattlefield(player1, new OdunosRiverTrawler());
-        findPermanent(player1, "Odunos River Trawler").setTapped(true);
+        findPermanent(player1, "Odunos River Trawler").tap();
         harness.setGraveyard(player1, List.of(eidolon));
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

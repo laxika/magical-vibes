@@ -85,7 +85,7 @@ class NeurokProdigyTest extends BaseCardTest {
     @DisplayName("A tapped, newly entered Neurok Prodigy can activate its return ability")
     void tappedProdigyCanReturnToHand() {
         var prodigy = harness.addToBattlefieldAndReturn(player1, new NeurokProdigy());
-        prodigy.setTapped(true);
+        prodigy.tap();
         harness.setHand(player1, List.of(new DarksteelIngot()));
 
         harness.activateAbility(player1, 0, null, null);

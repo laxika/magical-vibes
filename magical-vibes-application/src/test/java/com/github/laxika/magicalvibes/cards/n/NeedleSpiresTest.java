@@ -78,7 +78,7 @@ class NeedleSpiresTest extends BaseCardTest {
     @DisplayName("A tapped Needle Spires can animate without untapping")
     void animatesWhileTapped() {
         Permanent spires = addReadySpires(player1);
-        spires.setTapped(true);
+        spires.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);

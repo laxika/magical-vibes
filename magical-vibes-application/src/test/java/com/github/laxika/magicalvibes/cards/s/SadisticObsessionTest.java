@@ -87,7 +87,7 @@ class SadisticObsessionTest extends BaseCardTest {
     void tappedCreatureCannotActivateGrantedAbility() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         creature.setSummoningSick(false);
-        creature.setTapped(true);
+        creature.tap();
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new SadisticObsession());
         aura.setAttachedTo(creature.getId());
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -126,7 +126,7 @@ class SadisticObsessionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
-        creature.setTapped(false);
+        creature.untap();
         harness.addMana(player1, ManaColor.BLACK, 1);
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);

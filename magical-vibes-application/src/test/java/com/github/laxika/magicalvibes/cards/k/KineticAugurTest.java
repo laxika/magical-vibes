@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import com.github.laxika.magicalvibes.model.BlockerAssignment;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -103,7 +103,7 @@ class KineticAugurTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
-        assertThat(gd.playerLibraries.get(player1.getId())).containsExactly(undrawn);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(undrawn);
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(discarded);
         assertThat(gqs.getEffectivePower(gd, findPermanent(player1, "Kinetic Augur"))).isEqualTo(1);
     }
@@ -120,7 +120,7 @@ class KineticAugurTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        assertThat(gd.playerLibraries.get(player1.getId())).containsExactly(undrawn);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(undrawn);
     }
 
     @Test

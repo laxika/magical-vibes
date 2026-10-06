@@ -115,7 +115,7 @@ class MirrodinsCoreTest extends BaseCardTest {
     @ValueSource(ints = {0, 1, 2})
     void tappedLandCannotActivateAnyAbility(int abilityIndex) {
         Permanent core = addReadyCore(1);
-        core.setTapped(true);
+        core.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, abilityIndex, null, null))
                 .isInstanceOf(IllegalStateException.class);

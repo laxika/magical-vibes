@@ -70,7 +70,7 @@ class RuneSealedWallTest extends BaseCardTest {
     @DisplayName("A tapped wall cannot activate its ability")
     void cannotActivateWhileTapped() {
         Permanent wall = addCreatureReady(player1, new RuneSealedWall());
-        wall.setTapped(true);
+        wall.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)

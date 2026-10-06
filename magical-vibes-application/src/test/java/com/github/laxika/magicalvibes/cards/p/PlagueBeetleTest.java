@@ -85,7 +85,7 @@ class PlagueBeetleTest extends BaseCardTest {
 
     @Test
     void opposingSwampwalkerCannotBlockEvenWhenDefendersSwampIsTapped() {
-        harness.addToBattlefieldAndReturn(player2, new Swamp()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player2, new Swamp()).tap();
         Permanent blockerPerm = addCreatureReady(player2, new PlagueBeetle());
         Permanent attackerPerm = addCreatureReady(player1, new PlagueBeetle());
 

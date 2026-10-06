@@ -37,7 +37,7 @@ class ScornfulEgotistTest extends BaseCardTest {
 
         Permanent egotist = findPermanent(player1, "Scornful Egotist");
         assertThat(egotist.isSummoningSick()).isTrue();
-        egotist.setTapped(true);
+        egotist.tap();
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.UPKEEP);
         harness.clearPriorityPassed();

@@ -1,4 +1,4 @@
-﻿package com.github.laxika.magicalvibes.cards.h;
+package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.m.MazeBehemoth;
 import com.github.laxika.magicalvibes.model.ManaColor;

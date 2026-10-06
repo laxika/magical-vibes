@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.model.BlockerAssignment;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -91,7 +91,7 @@ class HalimarWavewatchTest extends BaseCardTest {
     void levelUpDoesNotRequireTappingOrHaste() {
         Permanent wavewatch = addCreatureReady(player1, new HalimarWavewatch());
         wavewatch.setSummoningSick(true);
-        wavewatch.setTapped(true);
+        wavewatch.tap();
         prepareForLeveling(player1);
 
         levelUp(player1);

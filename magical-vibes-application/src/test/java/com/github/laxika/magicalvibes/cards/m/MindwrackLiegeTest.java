@@ -154,7 +154,7 @@ class MindwrackLiegeTest extends BaseCardTest {
     @DisplayName("Mixed hybrid mana puts a blue creature onto the battlefield without paying its cost")
     void mixedHybridManaPutsBlueCreatureOntoBattlefield() {
         Permanent liege = harness.addToBattlefieldAndReturn(player1, new MindwrackLiege());
-        liege.setTapped(true);
+        liege.tap();
         liege.setSummoningSick(true);
         harness.setHand(player1, List.of(new AirElemental()));
         harness.addMana(player1, ManaColor.BLUE, 2);

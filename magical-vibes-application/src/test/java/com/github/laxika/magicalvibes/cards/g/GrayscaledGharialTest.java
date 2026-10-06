@@ -21,7 +21,7 @@ class GrayscaledGharialTest extends BaseCardTest {
     @DisplayName("Grayscaled Gharial cannot be blocked when defending player controls a tapped nonbasic Island")
     void cannotBeBlockedWhenDefenderControlsTappedNonbasicIsland() {
         Permanent island = harness.addToBattlefieldAndReturn(player2, new WateryGrave());
-        island.setTapped(true);
+        island.tap();
 
         Permanent blocker = addCreatureReady(player2, new BorosRecruit());
         Permanent attacker = addCreatureReady(player1, new GrayscaledGharial());

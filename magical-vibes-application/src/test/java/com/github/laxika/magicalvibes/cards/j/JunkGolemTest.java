@@ -207,7 +207,7 @@ class JunkGolemTest extends BaseCardTest {
     @DisplayName("The counter ability works while tapped and summoning sick")
     void activatesWhileTappedAndSummoningSick() {
         Permanent golem = harness.enterBattlefieldAndReturn(player1, new JunkGolem());
-        golem.setTapped(true);
+        golem.tap();
         golem.setSummoningSick(true);
         harness.setHand(player1, List.of(new AvenFisher()));
         harness.addMana(player1, ManaColor.COLORLESS, 1);

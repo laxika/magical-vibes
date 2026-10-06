@@ -39,7 +39,7 @@ class SatyrHedonistTest extends BaseCardTest {
     @DisplayName("Can activate while tapped and summoning sick without using the stack")
     void activatesWhileTappedAndSummoningSick() {
         var hedonist = harness.addToBattlefieldAndReturn(player1, new SatyrHedonist());
-        hedonist.setTapped(true);
+        hedonist.tap();
         hedonist.setSummoningSick(true);
         harness.forceActivePlayer(player1);
         harness.addMana(player1, ManaColor.RED, 1);

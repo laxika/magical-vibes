@@ -131,7 +131,7 @@ class SeaSniddTest extends BaseCardTest {
     void cannotActivateWhileTapped() {
         Permanent seaSnidd = addCreatureReady(player1, new SeaSnidd());
         Permanent land = harness.addToBattlefieldAndReturn(player1, new RithsGrove());
-        seaSnidd.setTapped(true);
+        seaSnidd.tap();
         harness.forceActivePlayer(player1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, land.getId()))

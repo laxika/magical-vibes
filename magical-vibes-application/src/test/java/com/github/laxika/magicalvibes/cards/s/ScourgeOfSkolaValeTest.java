@@ -109,7 +109,7 @@ class ScourgeOfSkolaValeTest extends BaseCardTest {
     void cannotActivateWhileTapped() {
         Permanent scourge = addCreatureReady(player1, new ScourgeOfSkolaVale());
         scourge.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
-        scourge.setTapped(true);
+        scourge.tap();
         Permanent food = addCreatureReady(player1, new ScourgeOfSkolaVale());
         food.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
 

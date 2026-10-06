@@ -104,7 +104,7 @@ class PhyrexianProwlerTest extends BaseCardTest {
     void stacksBoostsAndPaysCountersBeforeResolution() {
         Permanent prowler = addCreatureReady(player1, new PhyrexianProwler());
         prowler.setSummoningSick(true);
-        prowler.setTapped(true);
+        prowler.tap();
         prowler.setCounterCount(CounterType.FADE, 2);
 
         harness.activateAbility(player1, 0, null, null);

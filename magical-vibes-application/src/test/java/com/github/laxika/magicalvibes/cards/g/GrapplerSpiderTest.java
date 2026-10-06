@@ -55,7 +55,7 @@ class GrapplerSpiderTest extends BaseCardTest {
     @Test
     @DisplayName("A tapped Grappler Spider cannot block a flying creature")
     void tappedSpiderCannotBlockFlyingCreature() {
-        addCreatureReady(player2, new GrapplerSpider()).setTapped(true);
+        addCreatureReady(player2, new GrapplerSpider()).tap();
         addCreatureReady(player1, new HorizonDrake()).setAttacking(true);
 
         prepareDeclareBlockers();

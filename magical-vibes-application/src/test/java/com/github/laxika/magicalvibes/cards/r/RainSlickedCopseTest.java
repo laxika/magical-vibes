@@ -105,7 +105,7 @@ class RainSlickedCopseTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(cycled);
-        assertThat(gd.playerLibraries.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(drawn);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
         assertThat(gd.stack).hasSize(1);
@@ -113,7 +113,7 @@ class RainSlickedCopseTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
-        assertThat(gd.playerLibraries.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(cycled);
     }
 
@@ -136,7 +136,7 @@ class RainSlickedCopseTest extends BaseCardTest {
     @DisplayName("A tapped Copse cannot produce mana")
     void tappedCopseCannotProduceMana() {
         Permanent copse = harness.addToBattlefieldAndReturn(player1, new RainSlickedCopse());
-        copse.setTapped(true);
+        copse.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);

@@ -69,7 +69,7 @@ class KeenGlidemasterTest extends BaseCardTest {
     void canTargetItselfWhileTappedAndSummoningSick() {
         Permanent glidemaster = harness.addToBattlefieldAndReturn(player1, new KeenGlidemaster());
         glidemaster.setSummoningSick(true);
-        glidemaster.setTapped(true);
+        glidemaster.tap();
         harness.addMana(player1, ManaColor.BLUE, 3);
 
         harness.activateAbility(player1, 0, 0, null, glidemaster.getId());

@@ -119,8 +119,8 @@ class ManaSeismTest extends BaseCardTest {
     void sacrificesAllLandsIncludingTappedLands() {
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
         Permanent orchard = harness.addToBattlefieldAndReturn(player1, new ForbiddenOrchard());
-        forest.setTapped(true);
-        orchard.setTapped(true);
+        forest.tap();
+        orchard.tap();
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new WanderingOnes());
         Permanent opposingLand = harness.addToBattlefieldAndReturn(player2, new Mountain());
         castManaSeism();

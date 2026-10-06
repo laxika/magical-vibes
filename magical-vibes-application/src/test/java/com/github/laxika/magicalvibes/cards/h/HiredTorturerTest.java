@@ -139,7 +139,7 @@ class HiredTorturerTest extends BaseCardTest {
     @DisplayName("A tapped Hired Torturer cannot activate its ability")
     void cannotActivateWhileTapped() {
         readyTorturer();
-        gd.playerBattlefields.get(player1.getId()).getFirst().setTapped(true);
+        gd.playerBattlefields.get(player1.getId()).getFirst().tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);

@@ -135,7 +135,7 @@ class HogMonkeyTest extends BaseCardTest {
     void exhaustWorksWhileTappedAndSummoningSick() {
         Permanent monkey = harness.addToBattlefieldAndReturn(player1, new HogMonkey());
         monkey.setSummoningSick(true);
-        monkey.setTapped(true);
+        monkey.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 10);
 
         harness.activateAbility(player1, 0, null, null);

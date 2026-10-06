@@ -77,7 +77,7 @@ class InsatiableGorgersTest extends BaseCardTest {
     @DisplayName("A tapped Gorgers is not required to attack")
     void tappedGorgersDoesNotHaveToAttack() {
         Permanent permanent = addReadyGorgers(player1);
-        permanent.setTapped(true);
+        permanent.tap();
 
         assertThatCode(() -> declareAttackers(player1, List.of())).doesNotThrowAnyException();
     }

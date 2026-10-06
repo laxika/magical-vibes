@@ -83,7 +83,7 @@ class ScarlandThrinaxTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent thrinax = harness.addToBattlefieldAndReturn(player1, new ScarlandThrinax());
         thrinax.setSummoningSick(true);
-        thrinax.setTapped(true);
+        thrinax.tap();
         Permanent minotaur = addCreatureReady(player1, new CanyonMinotaur());
 
         harness.activateAbility(player1, 0, null, null);

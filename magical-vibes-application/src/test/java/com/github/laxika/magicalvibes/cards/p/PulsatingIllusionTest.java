@@ -115,7 +115,7 @@ class PulsatingIllusionTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         Permanent illusion = harness.addToBattlefieldAndReturn(player1, new PulsatingIllusion());
-        illusion.setTapped(true);
+        illusion.tap();
         harness.setHand(player1, List.of(new AvenFlock()));
 
         harness.activateAbility(player1, 0, null, null);

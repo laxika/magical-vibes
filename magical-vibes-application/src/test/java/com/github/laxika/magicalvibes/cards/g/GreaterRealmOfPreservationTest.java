@@ -203,7 +203,7 @@ class GreaterRealmOfPreservationTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.assertLife(player1, 20);
 
-        artillery.setTapped(false);
+        artillery.untap();
         harness.activateAbility(player2, 0, null, player1.getId());
         harness.passBothPriorities();
 

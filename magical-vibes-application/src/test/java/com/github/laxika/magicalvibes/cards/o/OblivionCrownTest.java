@@ -125,7 +125,7 @@ class OblivionCrownTest extends BaseCardTest {
     @DisplayName("A tapped summoning-sick creature can repeatedly discard any card for cumulative boosts")
     void repeatedActivationsDoNotRequireTapOrMana() {
         Permanent creature = addEnchantedCreature();
-        creature.setTapped(true);
+        creature.tap();
         creature.setSummoningSick(true);
         BlindPhantasm discardedCreature = new BlindPhantasm();
         HorizonCanopy discardedLand = new HorizonCanopy();

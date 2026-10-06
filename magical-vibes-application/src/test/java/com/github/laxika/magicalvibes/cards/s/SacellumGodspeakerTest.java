@@ -98,7 +98,7 @@ class SacellumGodspeakerTest extends BaseCardTest {
     @Test
     void cannotActivateWhileAlreadyTapped() {
         Permanent godspeaker = addCreatureReady(player1, new SacellumGodspeaker());
-        godspeaker.setTapped(true);
+        godspeaker.tap();
         harness.setHand(player1, List.of(new Mosstodon()));
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))

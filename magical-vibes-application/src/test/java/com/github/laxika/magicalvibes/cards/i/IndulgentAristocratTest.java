@@ -90,7 +90,7 @@ class IndulgentAristocratTest extends BaseCardTest {
     void abilityDoesNotRequireTappingOrHaste() {
         Permanent aristocrat = addCreatureReady(player1, new IndulgentAristocrat());
         aristocrat.setSummoningSick(true);
-        aristocrat.setTapped(true);
+        aristocrat.tap();
         Permanent fodder = addCreatureReady(player1, new EpitaphGolem());
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);

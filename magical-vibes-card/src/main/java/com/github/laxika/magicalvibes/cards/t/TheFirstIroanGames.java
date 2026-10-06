@@ -37,7 +37,7 @@ public class TheFirstIroanGames extends Card {
                 new DrawCardEffect(2)));
 
         addEffect(EffectSlot.SAGA_CHAPTER_IV, CreateTokenEffect.ofArtifactToken(
-                1, "Gold", List.of(), List.of(new ActivatedAbility(
+                1, "Gold", List.of(CardSubtype.GOLD), List.of(new ActivatedAbility(
                         false, null,
                         List.of(new SacrificeSelfCost(), new AwardAnyColorManaEffect()),
                         "Sacrifice this token: Add one mana of any color."))));

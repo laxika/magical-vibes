@@ -73,7 +73,7 @@ class HaystackTest extends BaseCardTest {
         Permanent creature = addCreatureReady(player1, new Ornithopter());
         Permanent equipment = harness.addToBattlefieldAndReturn(player2, new SwiftfootBoots());
         equipment.setAttachedTo(creature.getId());
-        creature.setTapped(true);
+        creature.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, battlefieldIndex(haystack), 0, null, creature.getId());

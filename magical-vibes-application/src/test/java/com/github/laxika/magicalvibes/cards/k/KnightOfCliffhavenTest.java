@@ -100,7 +100,7 @@ class KnightOfCliffhavenTest extends BaseCardTest {
     @DisplayName("A tapped Knight can level up beyond level four")
     void canLevelUpWhileTappedAndBeyondFinalThreshold() {
         Permanent knight = addCreatureReady(player1, new KnightOfCliffhaven());
-        knight.setTapped(true);
+        knight.tap();
         prepareForLeveling(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 

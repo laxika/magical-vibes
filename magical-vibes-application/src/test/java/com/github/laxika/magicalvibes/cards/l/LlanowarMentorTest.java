@@ -134,7 +134,7 @@ class LlanowarMentorTest extends BaseCardTest {
     @Test
     void cannotActivateWhenAlreadyTapped() {
         Permanent mentor = addReadyMentor();
-        mentor.setTapped(true);
+        mentor.tap();
         harness.setHand(player1, List.of(new LlanowarAugur()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 

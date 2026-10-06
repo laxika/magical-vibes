@@ -213,7 +213,7 @@ class RuneOfProtectionLandsTest extends BaseCardTest {
         harness.activateAbility(player1, 1, 1, null, null);
         harness.assertLife(player1, 20);
 
-        land.setTapped(false);
+        land.untap();
         harness.activateAbility(player1, 1, 1, null, null);
 
         harness.assertLife(player1, 19);

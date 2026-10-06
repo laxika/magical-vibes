@@ -33,7 +33,7 @@ class NestRobberTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent robber = findPermanent(player1, "Nest Robber");
-        robber.setTapped(true);
+        robber.tap();
 
         assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class);

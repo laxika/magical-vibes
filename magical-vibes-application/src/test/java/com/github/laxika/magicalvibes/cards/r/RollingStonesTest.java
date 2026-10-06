@@ -96,7 +96,7 @@ class RollingStonesTest extends BaseCardTest {
     @DisplayName("Rolling Stones does not let a tapped Wall attack")
     void tappedWallCannotAttack() {
         Permanent wall = addCreatureReady(player1, new WallOfAir());
-        wall.setTapped(true);
+        wall.tap();
         harness.addToBattlefield(player1, new RollingStones());
 
         assertThatThrownBy(() -> declareAttackers(List.of(0)))

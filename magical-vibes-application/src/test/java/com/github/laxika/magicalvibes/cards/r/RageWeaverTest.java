@@ -151,7 +151,7 @@ class RageWeaverTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent weaver = harness.addToBattlefieldAndReturn(player1, new RageWeaver());
         weaver.setSummoningSick(true);
-        weaver.setTapped(true);
+        weaver.tap();
         Permanent blackTarget = addCreatureReady(player1, new DrudgeSkeletons());
         Permanent greenTarget = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 4);

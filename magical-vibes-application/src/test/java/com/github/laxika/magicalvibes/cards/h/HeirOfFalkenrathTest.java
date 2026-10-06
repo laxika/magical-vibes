@@ -98,7 +98,7 @@ class HeirOfFalkenrathTest extends BaseCardTest {
     @Test
     void tappedSummoningSickHeirCanTransformAndStaysTapped() {
         Permanent heir = harness.addToBattlefieldAndReturn(player1, new HeirOfFalkenrath());
-        heir.setTapped(true);
+        heir.tap();
         heir.setSummoningSick(true);
         harness.setHand(player1, List.of(new HeirOfFalkenrath()));
 

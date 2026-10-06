@@ -119,7 +119,7 @@ class MaximusKnightApparentTest extends BaseCardTest {
     @DisplayName("Sacrifice is paid on activation and energy is received only on resolution")
     void sacrificeIsPaidBeforeEnergyResolves() {
         Permanent maximus = harness.addToBattlefieldAndReturn(player1, new MaximusKnightApparent());
-        maximus.setTapped(true);
+        maximus.tap();
         Permanent artifact = harness.addToBattlefieldAndReturn(player1, new LightningGreaves());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

@@ -58,7 +58,7 @@ class MagusOfTheCoffersTest extends BaseCardTest {
     void countsTappedSwampsAndResolvesImmediately() {
         Permanent magus = addCreatureReady(player1, new MagusOfTheCoffers());
         Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
-        swamp.setTapped(true);
+        swamp.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(magus), 0, null, null);

@@ -119,7 +119,7 @@ class GolgothianSylexTest extends BaseCardTest {
     @DisplayName("Cannot activate while tapped")
     void cannotActivateWhileTapped() {
         prepareSylex();
-        findPermanent(player1, "Golgothian Sylex").setTapped(true);
+        findPermanent(player1, "Golgothian Sylex").tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);

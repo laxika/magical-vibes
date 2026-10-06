@@ -94,7 +94,7 @@ class RadiantLotusTest extends BaseCardTest {
     void cannotActivateWhileTapped() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new RadiantLotus());
         harness.addToBattlefield(player1, new RadiantLotus());
-        source.setTapped(true);
+        source.tap();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 

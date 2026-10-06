@@ -143,7 +143,7 @@ class RubblebeltMaverickTest extends BaseCardTest {
         harness.activateGraveyardAbility(player1, 0, target.getId());
 
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(source);
-        assertThat(gd.playerExiledCards.get(player1.getId())).contains(source);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(source);
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         harness.passBothPriorities();
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);

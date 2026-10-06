@@ -85,7 +85,7 @@ class MarketbackWalkerTest extends BaseCardTest {
     void tappedWalkerCanActivateRepeatedly() {
         Permanent walker = harness.addToBattlefieldAndReturn(player1, new MarketbackWalker());
         walker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
-        walker.setTapped(true);
+        walker.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 8);
 
         harness.activateAbility(player1, 0, null, null);

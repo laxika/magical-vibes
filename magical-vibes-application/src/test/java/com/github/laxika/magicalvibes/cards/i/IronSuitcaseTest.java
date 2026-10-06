@@ -120,7 +120,7 @@ class IronSuitcaseTest extends BaseCardTest {
         Permanent suitcase = harness.addToBattlefieldAndReturn(player1, new IronSuitcase());
         Permanent otherSuitcase = harness.addToBattlefieldAndReturn(player1, new IronSuitcase());
         Permanent opposingSuitcase = harness.addToBattlefieldAndReturn(player2, new IronSuitcase());
-        suitcase.setTapped(true);
+        suitcase.tap();
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.UPKEEP);
         harness.addMana(player1, ManaColor.COLORLESS, 3);

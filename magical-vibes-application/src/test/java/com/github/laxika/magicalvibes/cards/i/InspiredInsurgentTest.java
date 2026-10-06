@@ -93,7 +93,7 @@ class InspiredInsurgentTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSickToDestroyOwnArtifact() {
         Permanent insurgent = harness.addToBattlefieldAndReturn(player1, new InspiredInsurgent());
         insurgent.setSummoningSick(true);
-        insurgent.setTapped(true);
+        insurgent.tap();
         Permanent target = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
         harness.addMana(player1, ManaColor.WHITE, 1);
 

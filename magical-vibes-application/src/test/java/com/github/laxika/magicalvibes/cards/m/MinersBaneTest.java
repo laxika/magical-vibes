@@ -83,7 +83,7 @@ class MinersBaneTest extends BaseCardTest {
     void activatesWhileTappedAndSummoningSick() {
         Permanent bane = harness.addToBattlefieldAndReturn(player1, new MinersBane());
         bane.setSummoningSick(true);
-        bane.setTapped(true);
+        bane.tap();
         addCost(player1);
 
         harness.activateAbility(player1, 0, null, null);

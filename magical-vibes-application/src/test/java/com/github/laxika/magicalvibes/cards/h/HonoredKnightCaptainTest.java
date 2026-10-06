@@ -88,7 +88,7 @@ class HonoredKnightCaptainTest extends BaseCardTest {
     @DisplayName("A tapped, summoning-sick Knight-Captain can activate its sacrifice ability")
     void tappedSummoningSickSourceCanActivate() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new HonoredKnightCaptain());
-        source.setTapped(true);
+        source.tap();
         harness.setLibrary(player1, List.of(new Hylderblade()));
         addAbilityMana();
 

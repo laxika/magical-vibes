@@ -128,7 +128,7 @@ class MoltenExhaleTest extends BaseCardTest {
     @DisplayName("A tapped Dragon can be beheld on an opponent's turn and remains in play")
     void tappedDragonAllowsCastingOnOpponentsTurn() {
         Permanent dragon = harness.addToBattlefieldAndReturn(player1, new DragonWhelp());
-        dragon.setTapped(true);
+        dragon.tap();
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new MoltenExhale()));
         harness.addMana(player1, ManaColor.RED, 1);

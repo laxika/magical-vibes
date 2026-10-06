@@ -82,7 +82,7 @@ class NewBloodTest extends BaseCardTest {
     @DisplayName("Cannot pay the additional cost with an already tapped Vampire")
     void rejectsTappedVampireAdditionalCost() {
         Permanent vampire = addCreatureReady(player1, new BaronyVampire());
-        vampire.setTapped(true);
+        vampire.tap();
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new NewBlood()));
         harness.addMana(player1, ManaColor.BLACK, 4);

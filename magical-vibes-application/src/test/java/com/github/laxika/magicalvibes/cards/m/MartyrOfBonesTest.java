@@ -199,7 +199,7 @@ class MartyrOfBonesTest extends BaseCardTest {
         Card untouched = new KrovikanScoundrel();
         harness.setGraveyard(player1, List.of(target, untouched));
         Permanent martyr = harness.addToBattlefieldAndReturn(player1, new MartyrOfBones());
-        martyr.setTapped(true);
+        martyr.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         activate(martyr, 2, List.of(target.getId()));

@@ -135,7 +135,7 @@ class KrosanConstrictorTest extends BaseCardTest {
     @DisplayName("A tapped constrictor cannot activate again")
     void cannotActivateWhileTapped() {
         Permanent constrictor = addCreatureReady(player1, new KrosanConstrictor());
-        constrictor.setTapped(true);
+        constrictor.tap();
         Permanent target = addCreatureReady(player2, new CabalTorturer());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))

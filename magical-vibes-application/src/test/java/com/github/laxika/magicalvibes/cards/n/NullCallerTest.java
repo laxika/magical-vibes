@@ -80,7 +80,7 @@ class NullCallerTest extends BaseCardTest {
     void canActivateRepeatedlyWhileTappedAndSummoningSick() {
         harness.addToBattlefield(player1, new NullCaller());
         Permanent caller = findPermanent(player1, "Null Caller");
-        caller.setTapped(true);
+        caller.tap();
         caller.setSummoningSick(true);
         harness.setGraveyard(player1, List.of(new NullCaller(), new NullCaller()));
         harness.addMana(player1, ManaColor.BLACK, 2);

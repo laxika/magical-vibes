@@ -95,7 +95,7 @@ class SeasonedHallowbladeTest extends BaseCardTest {
     @Test
     void canActivateWhileTappedAndAgainWhileIndestructible() {
         Permanent blade = addBladeReady(player1);
-        blade.setTapped(true);
+        blade.tap();
         harness.setHand(player1, List.of(new Island(), new Plains()));
 
         harness.activateAbility(player1, 0, null, null);

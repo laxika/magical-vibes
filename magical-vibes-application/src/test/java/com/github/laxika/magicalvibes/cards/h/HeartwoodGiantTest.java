@@ -115,7 +115,7 @@ class HeartwoodGiantTest extends BaseCardTest {
     void sacrificesTappedForestToDamageController() {
         addCreatureReady(player1, new HeartwoodGiant());
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
-        forest.setTapped(true);
+        forest.tap();
         harness.setLife(player1, 20);
 
         harness.activateAbility(player1, 0, null, player1.getId());
@@ -129,7 +129,7 @@ class HeartwoodGiantTest extends BaseCardTest {
     @DisplayName("Cannot activate an already tapped Heartwood Giant")
     void cannotActivateWhenTapped() {
         Permanent giant = addCreatureReady(player1, new HeartwoodGiant());
-        giant.setTapped(true);
+        giant.tap();
         harness.addToBattlefield(player1, new Forest());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))

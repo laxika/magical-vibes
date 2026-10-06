@@ -71,7 +71,7 @@ class MaximumCarnageTest extends BaseCardTest {
     void chapterIDoesNotForceTappedCreatureToAttack() {
         castAndResolveChapterI();
         Permanent creature = addCreatureReady(player2, new LurkingLizards());
-        creature.setTapped(true);
+        creature.tap();
 
         declareAttackers(player2, List.of());
 

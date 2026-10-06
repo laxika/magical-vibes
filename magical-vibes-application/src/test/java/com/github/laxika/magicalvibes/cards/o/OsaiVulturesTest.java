@@ -143,7 +143,7 @@ class OsaiVulturesTest extends BaseCardTest {
     @Test
     void countersArePaidImmediatelyAndTappedSourceCanActivate() {
         Permanent vultures = addReadyVultures(player1);
-        vultures.setTapped(true);
+        vultures.tap();
         vultures.setCounterCount(CounterType.CARRION, 2);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

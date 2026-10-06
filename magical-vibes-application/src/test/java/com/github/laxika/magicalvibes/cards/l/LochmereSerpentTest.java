@@ -139,10 +139,10 @@ class LochmereSerpentTest extends BaseCardTest {
     @Test
     void tappedSummoningSickSerpentCanSacrificeTappedSwamp() {
         Permanent serpent = harness.addToBattlefieldAndReturn(player1, new LochmereSerpent());
-        serpent.setTapped(true);
+        serpent.tap();
         serpent.setSummoningSick(true);
         Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
-        swamp.setTapped(true);
+        swamp.tap();
         harness.setLibrary(player1, List.of(new Island()));
         harness.setLife(player1, 10);
         harness.addMana(player1, ManaColor.BLACK, 1);

@@ -66,7 +66,7 @@ class KorSkyClimberTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSickOnOpponentsTurn() {
         Permanent skyClimber = harness.addToBattlefieldAndReturn(player1, new KorSkyClimber());
         skyClimber.setSummoningSick(true);
-        skyClimber.setTapped(true);
+        skyClimber.tap();
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.UPKEEP);
         harness.addMana(player1, ManaColor.WHITE, 2);

@@ -96,7 +96,7 @@ class RavineRaiderTest extends BaseCardTest {
     void tappedSummoningSickRaiderCanActivate() {
         Permanent raider = harness.addToBattlefieldAndReturn(player1, new RavineRaider());
         raider.setSummoningSick(true);
-        raider.setTapped(true);
+        raider.tap();
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

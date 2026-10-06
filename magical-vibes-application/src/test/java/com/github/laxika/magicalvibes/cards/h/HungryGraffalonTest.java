@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.cards.h;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.c.Concentrate;
@@ -64,7 +65,7 @@ class HungryGraffalonTest extends BaseCardTest {
         @Test
         void manaEqualToPowerDoesNotTriggerWhenToughnessIsGreater() {
             Permanent graffalon = addGraffalon(player1);
-            graffalon.setPlusOnePlusOneCounters(1);
+            graffalon.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
             setUpMainPhase(player1);
             harness.addMana(player1, ManaColor.GREEN, 4);
             harness.setHand(player1, List.of(new HungryGraffalon()));
@@ -114,7 +115,7 @@ class HungryGraffalonTest extends BaseCardTest {
             harness.castCreature(player1, 0);
             assertThat(gd.stack).hasSize(2);
 
-            graffalon.setPlusOnePlusOneCounters(1);
+            graffalon.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
             harness.passBothPriorities();
 
             assertThat(graffalon.getPlusOnePlusOneCounters()).isEqualTo(1);

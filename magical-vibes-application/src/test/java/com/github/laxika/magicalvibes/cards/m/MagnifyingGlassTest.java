@@ -82,7 +82,7 @@ class MagnifyingGlassTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
         Permanent clue = findPermanent(player1, "Clue");
-        clue.setTapped(true);
+        clue.tap();
         MagnifyingGlass drawnCard = new MagnifyingGlass();
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(drawnCard));
@@ -104,7 +104,7 @@ class MagnifyingGlassTest extends BaseCardTest {
     @DisplayName("A tapped Magnifying Glass cannot activate either tap ability")
     void tappedGlassCannotActivate() {
         Permanent glass = addReadyGlass();
-        glass.setTapped(true);
+        glass.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))

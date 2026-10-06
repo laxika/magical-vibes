@@ -84,7 +84,7 @@ class IntoTheFaeCourtTest extends BaseCardTest {
     @DisplayName("A tapped Faerie cannot block even a flying creature")
     void tappedFaerieCannotBlock() {
         Permanent faerie = castIntoTheFaeCourt();
-        faerie.setTapped(true);
+        faerie.tap();
         addCreatureReady(player2, new SnaremasterSprite()).setAttacking(true);
         prepareDeclareBlockers(player2);
 

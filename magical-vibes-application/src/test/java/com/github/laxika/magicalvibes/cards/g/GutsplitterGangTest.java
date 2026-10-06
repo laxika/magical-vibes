@@ -92,7 +92,7 @@ class GutsplitterGangTest extends BaseCardTest {
     @Test
     void doesNotTriggerDuringPostcombatMainPhase() {
         harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.END_COMBAT);
+        harness.forceStep(TurnStep.END_OF_COMBAT);
         harness.addToBattlefield(player1, new GutsplitterGang());
 
         harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);

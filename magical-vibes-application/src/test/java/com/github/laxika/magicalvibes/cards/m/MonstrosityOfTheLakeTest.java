@@ -82,7 +82,7 @@ class MonstrosityOfTheLakeTest extends BaseCardTest {
     @DisplayName("Already tapped creatures receive another stun counter, but noncreatures do not")
     void alreadyTappedCreaturesReceiveStunCounters() {
         Permanent tappedCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        tappedCreature.setTapped(true);
+        tappedCreature.tap();
         tappedCreature.setCounterCount(CounterType.STUN, 1);
         Permanent untappedCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Permanent opponentLand = harness.addToBattlefieldAndReturn(player2, new Forest());

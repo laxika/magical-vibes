@@ -48,7 +48,7 @@ class MemoryGuardianTest extends BaseCardTest {
 
     @Test
     void affinityCountsArtifactCreaturesAndTappedArtifacts() {
-        harness.addToBattlefieldAndReturn(player1, new MemoryGuardian()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new MemoryGuardian()).tap();
         harness.addToBattlefield(player1, new MemoryGuardian());
 
         harness.castFromHand(player1, new MemoryGuardian(), "{2}{U}");

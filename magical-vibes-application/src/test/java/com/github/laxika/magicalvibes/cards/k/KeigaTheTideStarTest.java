@@ -103,7 +103,7 @@ class KeigaTheTideStarTest extends BaseCardTest {
     void deathTriggerCanTargetOwnCreature() {
         harness.addToBattlefield(player1, new KeigaTheTideStar());
         var mossKami = harness.addToBattlefieldAndReturn(player1, new MossKami());
-        mossKami.setTapped(true);
+        mossKami.tap();
         setupPlayer2Active();
         harness.setHand(player2, List.of(new RendSpirit()));
         harness.addMana(player2, ManaColor.BLACK, 3);

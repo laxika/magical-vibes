@@ -34,7 +34,7 @@ class JalumTomeTest extends BaseCardTest {
     @DisplayName("A tapped Tome cannot activate even with enough mana")
     void cannotActivateWhileTapped() {
         Permanent tome = harness.addToBattlefieldAndReturn(player1, new JalumTome());
-        tome.setTapped(true);
+        tome.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))

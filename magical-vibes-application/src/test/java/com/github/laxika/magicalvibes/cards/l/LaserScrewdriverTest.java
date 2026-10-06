@@ -133,7 +133,7 @@ class LaserScrewdriverTest extends BaseCardTest {
     void tappedGoadedCreatureIsNotRequiredToAttack() {
         harness.addToBattlefield(player1, new LaserScrewdriver());
         Permanent target = addCreatureReady(player2, new SolemnSimulacrum());
-        target.setTapped(true);
+        target.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.activateAbility(player1, 0, 3, null, target.getId());

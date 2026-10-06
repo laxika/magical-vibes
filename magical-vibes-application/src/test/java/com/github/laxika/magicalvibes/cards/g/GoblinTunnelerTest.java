@@ -197,7 +197,7 @@ class GoblinTunnelerTest extends BaseCardTest {
     @Test
     void tappedTunnelerCannotActivate() {
         Permanent tunneler = addCreatureReady(player1, new GoblinTunneler());
-        tunneler.setTapped(true);
+        tunneler.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, tunneler.getId()))
                 .isInstanceOf(IllegalStateException.class);

@@ -108,7 +108,7 @@ class JeweledSpiritTest extends BaseCardTest {
     @DisplayName("A tapped summoning-sick Spirit can activate the ability")
     void tappedSummoningSickSpiritCanActivate() {
         Permanent spirit = addSpiritWithTwoLands();
-        spirit.setTapped(true);
+        spirit.tap();
         spirit.setSummoningSick(true);
 
         harness.activateAbility(player1, 0, null, null);

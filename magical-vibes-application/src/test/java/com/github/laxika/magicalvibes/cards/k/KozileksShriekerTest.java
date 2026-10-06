@@ -88,7 +88,7 @@ class KozileksShriekerTest extends BaseCardTest {
     void activatesWhileTappedAndSummoningSick() {
         Permanent shrieker = harness.addToBattlefieldAndReturn(player1, new KozileksShrieker());
         shrieker.setSummoningSick(true);
-        shrieker.setTapped(true);
+        shrieker.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, null);

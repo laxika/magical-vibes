@@ -125,7 +125,7 @@ class SecurityBlockadeTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, auraId);
         harness.assertInGraveyard(player1, "Security Blockade");
 
-        gd.playerBattlefields.get(player1.getId()).get(landIndex).setTapped(false);
+        gd.playerBattlefields.get(player1.getId()).get(landIndex).untap();
         assertThatThrownBy(() -> harness.activateAbility(player1, landIndex, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
         castFireAt(player1);

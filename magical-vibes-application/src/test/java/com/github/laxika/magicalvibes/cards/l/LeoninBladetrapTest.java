@@ -92,7 +92,7 @@ class LeoninBladetrapTest extends BaseCardTest {
     @Test
     void tappedBladetrapCanDamageItsControllersAttackers() {
         harness.addToBattlefield(player1, new LeoninBladetrap());
-        findPermanent(player1, "Leonin Bladetrap").setTapped(true);
+        findPermanent(player1, "Leonin Bladetrap").tap();
         Permanent attacker = addCreatureReady(player1, new Cathodion());
         attacker.setAttacking(true);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);

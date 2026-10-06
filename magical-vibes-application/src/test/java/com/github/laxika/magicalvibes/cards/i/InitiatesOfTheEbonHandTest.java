@@ -32,7 +32,7 @@ class InitiatesOfTheEbonHandTest extends BaseCardTest {
     void tappedSummoningSickCreatureCanActivate() {
         Permanent initiates = harness.addToBattlefieldAndReturn(player1, new InitiatesOfTheEbonHand());
         initiates.setSummoningSick(true);
-        initiates.setTapped(true);
+        initiates.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, null);

@@ -53,7 +53,7 @@ class NecropolisTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent necropolis = harness.addToBattlefieldAndReturn(player1, new Necropolis());
         necropolis.setSummoningSick(true);
-        necropolis.setTapped(true);
+        necropolis.tap();
         harness.setGraveyard(player1, List.of(new CavePeople()));
 
         harness.activateAbility(player1, 0, null, null);

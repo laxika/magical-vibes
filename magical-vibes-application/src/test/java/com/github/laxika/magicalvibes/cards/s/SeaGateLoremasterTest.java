@@ -109,7 +109,7 @@ class SeaGateLoremasterTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent loremaster = addCreatureReady(player1, new SeaGateLoremaster());
-        loremaster.setTapped(true);
+        loremaster.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)

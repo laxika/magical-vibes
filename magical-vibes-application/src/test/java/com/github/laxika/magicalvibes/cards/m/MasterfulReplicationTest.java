@@ -114,7 +114,7 @@ class MasterfulReplicationTest extends BaseCardTest {
         Permanent key = harness.addToBattlefieldAndReturn(player1, new ManifoldKey());
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
         Permanent opponentKey = harness.addToBattlefieldAndReturn(player2, new ManifoldKey());
-        key.setTapped(true);
+        key.tap();
 
         castMasterfulReplication(1, List.of(target.getId()));
 

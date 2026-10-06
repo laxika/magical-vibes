@@ -161,7 +161,7 @@ class RunawaySteamKinTest extends BaseCardTest {
     void activationRemovesExactlyThreeCountersWithoutTapping() {
         Permanent steamKin = addSteamKin();
         steamKin.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 4);
-        steamKin.setTapped(true);
+        steamKin.tap();
 
         harness.activateAbility(player1, 0, null, null);
 

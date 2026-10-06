@@ -78,7 +78,7 @@ class NeurokSpyTest extends BaseCardTest {
     @DisplayName("A tapped artifact still makes Neurok Spy unblockable")
     void tappedArtifactStillCounts() {
         harness.addToBattlefield(player2, new Bonesplitter());
-        findPermanent(player2, "Bonesplitter").setTapped(true);
+        findPermanent(player2, "Bonesplitter").tap();
         addCreatureReady(player2, new FangrenHunter());
         addCreatureReady(player1, new NeurokSpy());
         declareAttackersAndPrepareBlockers(List.of(0));

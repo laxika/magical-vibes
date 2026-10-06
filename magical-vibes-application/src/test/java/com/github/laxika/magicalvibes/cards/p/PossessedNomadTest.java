@@ -145,7 +145,7 @@ class PossessedNomadTest extends BaseCardTest {
     void cannotActivateWhileTapped() {
         fillGraveyard(player1, 7);
         Permanent nomad = addReadyNomad();
-        nomad.setTapped(true);
+        nomad.tap();
         Permanent target = harness.addToBattlefieldAndReturn(player2, new AvenTrooper());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.BLACK, 1);

@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.b.BaskingRootwalla;
-import com.github.laxika.magicalvibes.model.BlockerAssignment;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -125,7 +125,7 @@ class PardicCollaboratorTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent collaborator = addCollaboratorReady(player1);
         collaborator.setSummoningSick(true);
-        collaborator.setTapped(true);
+        collaborator.tap();
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, null, null);

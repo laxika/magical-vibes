@@ -101,7 +101,7 @@ class GraveRobbersTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent graveRobbers = addReadyGraveRobbers();
-        graveRobbers.setTapped(true);
+        graveRobbers.tap();
         Card artifact = new TormodsCrypt();
         harness.setGraveyard(player2, List.of(artifact));
         harness.addMana(player1, ManaColor.BLACK, 1);

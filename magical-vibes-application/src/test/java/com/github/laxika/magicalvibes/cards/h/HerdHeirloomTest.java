@@ -172,7 +172,7 @@ class HerdHeirloomTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isFalse();
         harness.setHand(player1, List.of());
-        creature.setTapped(false);
+        creature.untap();
         declareAttackers(List.of(1));
         resolveCombat();
         resolveAllTriggers();

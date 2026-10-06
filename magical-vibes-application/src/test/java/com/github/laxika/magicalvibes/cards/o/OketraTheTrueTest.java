@@ -111,7 +111,7 @@ class OketraTheTrueTest extends BaseCardTest {
         addCreatureReady(player1, new OketraTheTrue());
         for (int i = 0; i < 3; i++) {
             Permanent creature = addCreatureReady(player1, new DuneBeetle());
-            creature.setTapped(true);
+            creature.tap();
             creature.setSummoningSick(true);
         }
         harness.setLife(player2, 20);
@@ -126,7 +126,7 @@ class OketraTheTrueTest extends BaseCardTest {
     @DisplayName("The token ability works while Oketra is tapped and summoning sick")
     void canActivateWhileTappedAndSummoningSick() {
         Permanent oketra = addCreatureReady(player1, new OketraTheTrue());
-        oketra.setTapped(true);
+        oketra.tap();
         oketra.setSummoningSick(true);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.addMana(player1, ManaColor.WHITE, 1);

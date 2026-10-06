@@ -98,7 +98,7 @@ class RamsesOverdarkTest extends BaseCardTest {
     void cannotActivateWhileTapped() {
         Permanent ramses = addReadyRamses();
         Permanent target = addEnchantedBoars();
-        ramses.setTapped(true);
+        ramses.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)

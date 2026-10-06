@@ -55,7 +55,7 @@ class HolyJusticiarTest extends BaseCardTest {
     void exilesAlreadyTappedZombieWithoutTriggeringItsDeathAbility() {
         addJusticiar();
         Permanent zombie = harness.addToBattlefieldAndReturn(player2, new UndeadExecutioner());
-        zombie.setTapped(true);
+        zombie.tap();
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.activateAbility(player1, 0, null, zombie.getId());
@@ -168,7 +168,7 @@ class HolyJusticiarTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         addJusticiar();
-        findPermanent(player1, "Holy Justiciar").setTapped(true);
+        findPermanent(player1, "Holy Justiciar").tap();
         Permanent target = harness.addToBattlefieldAndReturn(player2, new MoorlandInquisitor());
         harness.addMana(player1, ManaColor.WHITE, 3);
 

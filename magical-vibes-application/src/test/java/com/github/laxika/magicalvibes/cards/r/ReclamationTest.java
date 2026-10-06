@@ -106,7 +106,7 @@ class ReclamationTest extends BaseCardTest {
         harness.addToBattlefield(player2, new Reclamation());
         addCreatureReady(player1, new MoorFiend());
         var forest = harness.addToBattlefieldAndReturn(player1, new Forest());
-        forest.setTapped(true);
+        forest.tap();
 
         declareAttackers(player1, List.of(0));
 

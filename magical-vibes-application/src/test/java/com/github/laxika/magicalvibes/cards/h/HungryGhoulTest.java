@@ -85,7 +85,7 @@ class HungryGhoulTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent ghoul = harness.addToBattlefieldAndReturn(player1, new HungryGhoul());
         ghoul.setSummoningSick(true);
-        ghoul.setTapped(true);
+        ghoul.tap();
         harness.addToBattlefield(player1, new BearCub());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

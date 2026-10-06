@@ -69,7 +69,7 @@ class KessigProwlerTest extends BaseCardTest {
     void transformsWhileTappedAndSummoningSick() {
         Permanent prowler = harness.addToBattlefieldAndReturn(player1, new KessigProwler());
         prowler.setSummoningSick(true);
-        prowler.setTapped(true);
+        prowler.tap();
         addTransformMana();
 
         harness.activateAbility(player1, 0, null, null);

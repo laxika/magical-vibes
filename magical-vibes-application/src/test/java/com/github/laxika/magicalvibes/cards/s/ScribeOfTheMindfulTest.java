@@ -123,7 +123,7 @@ class ScribeOfTheMindfulTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent scribe = addCreatureReady(player1, new ScribeOfTheMindful());
-        scribe.setTapped(true);
+        scribe.tap();
         Card target = new Cancel();
         harness.setGraveyard(player1, List.of(target));
         harness.addMana(player1, ManaColor.COLORLESS, 1);

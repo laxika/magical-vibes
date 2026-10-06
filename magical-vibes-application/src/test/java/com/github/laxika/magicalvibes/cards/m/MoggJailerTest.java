@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.q.QuirionExplorer;
 import com.github.laxika.magicalvibes.cards.r.RadiantKavu;
 import com.github.laxika.magicalvibes.cards.t.TerminalMoraine;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.BlockerAssignment;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;

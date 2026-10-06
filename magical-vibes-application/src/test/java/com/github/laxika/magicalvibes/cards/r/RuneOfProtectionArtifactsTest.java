@@ -181,7 +181,7 @@ class RuneOfProtectionArtifactsTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.assertLife(player1, 20);
 
-        rod.setTapped(false);
+        rod.untap();
         harness.addMana(player2, ManaColor.COLORLESS, 3);
         harness.activateAbility(player2, 0, null, player1.getId());
         harness.passBothPriorities();
@@ -207,7 +207,7 @@ class RuneOfProtectionArtifactsTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.assertLife(player2, 19);
 
-        rod.setTapped(false);
+        rod.untap();
         harness.addMana(player2, ManaColor.COLORLESS, 3);
         harness.activateAbility(player2, 0, null, player1.getId());
         harness.passBothPriorities();
@@ -230,7 +230,7 @@ class RuneOfProtectionArtifactsTest extends BaseCardTest {
         }
 
         for (int event = 0; event < 3; event++) {
-            rod.setTapped(false);
+            rod.untap();
             harness.addMana(player2, ManaColor.COLORLESS, 3);
             harness.activateAbility(player2, 0, null, player1.getId());
             harness.passBothPriorities();

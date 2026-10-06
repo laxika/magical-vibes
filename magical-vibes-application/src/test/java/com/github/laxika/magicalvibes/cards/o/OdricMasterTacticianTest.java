@@ -169,7 +169,7 @@ class OdricMasterTacticianTest extends BaseCardTest {
         addAlly();
         addAlly();
         Permanent tappedBlocker = addDefender();
-        tappedBlocker.setTapped(true);
+        tappedBlocker.tap();
         addDefender();
 
         declareAttackers(List.of(0, 1, 2, 3));

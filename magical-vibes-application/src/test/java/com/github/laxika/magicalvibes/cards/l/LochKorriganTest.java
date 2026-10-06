@@ -105,7 +105,7 @@ class LochKorriganTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent korrigan = harness.addToBattlefieldAndReturn(player1, new LochKorrigan());
         korrigan.setSummoningSick(true);
-        korrigan.setTapped(true);
+        korrigan.tap();
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, null, null);

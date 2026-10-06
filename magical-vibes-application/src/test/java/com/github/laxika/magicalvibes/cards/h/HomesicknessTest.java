@@ -84,7 +84,7 @@ class HomesicknessTest extends BaseCardTest {
     @DisplayName("Can draw for yourself and stun an already tapped creature you control")
     void drawsForControllerAndStunsTappedCreature() {
         Permanent creature = addCreatureReady(player1, new EternalStudent());
-        creature.setTapped(true);
+        creature.tap();
         creature.setCounterCount(CounterType.STUN, 1);
         harness.setHand(player1, List.of(new Homesickness()));
         harness.addMana(player1, ManaColor.BLUE, 2);

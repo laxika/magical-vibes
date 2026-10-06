@@ -151,7 +151,7 @@ class ShieldOfTheRighteousTest extends BaseCardTest {
         shield.setAttachedTo(blocker.getId());
         Permanent attacker = addCreatureReady(player1, new GrizzledLeotau());
         attacker.setAttacking(true);
-        attacker.setTapped(true);
+        attacker.tap();
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));

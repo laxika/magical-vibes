@@ -71,7 +71,7 @@ class SchemaThiefTest extends BaseCardTest {
         Permanent thief = addCreatureReady(player1, new SchemaThief());
         thief.setAttacking(true);
         Permanent artifact = harness.addToBattlefieldAndReturn(player2, new HowlingMine());
-        artifact.setTapped(true);
+        artifact.tap();
 
         resolveCombat();
         harness.handlePermanentChosen(player1, artifact.getId());

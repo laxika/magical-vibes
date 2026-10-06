@@ -132,11 +132,11 @@ class LimestoneGolemTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
-        assertThat(gd.playerLibraries.get(player2.getId())).containsExactly(topCard, nextCard);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(topCard, nextCard);
 
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(topCard);
-        assertThat(gd.playerLibraries.get(player2.getId())).containsExactly(nextCard);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(nextCard);
     }
 }

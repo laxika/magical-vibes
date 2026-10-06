@@ -156,7 +156,7 @@ class RuneOfMightTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        staff.setTapped(false);
+        staff.untap();
         harness.runStateBasedActions();
         assertThat(gqs.isCreature(gd, equipment)).isFalse();
         harness.activateAbilityWithMultiTargets(player1, 2, 0,

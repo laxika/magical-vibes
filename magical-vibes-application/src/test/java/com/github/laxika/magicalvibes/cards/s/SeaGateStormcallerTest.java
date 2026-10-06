@@ -83,11 +83,11 @@ class SeaGateStormcallerTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0);
         resolveAllTriggers();
-        assertThat(gd.playerLibraries.get(player2.getId())).hasSize(14);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(14);
 
         harness.castSorcery(player1, 0);
         resolveAllTriggers();
-        assertThat(gd.playerLibraries.get(player2.getId())).hasSize(6);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(6);
     }
 
     @Test
@@ -142,7 +142,7 @@ class SeaGateStormcallerTest extends BaseCardTest {
         harness.castKickedSorcery(player1, 0);
         resolveAllTriggers();
 
-        assertThat(gd.playerLibraries.get(player2.getId())).hasSize(8);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(8);
     }
 
     @Test

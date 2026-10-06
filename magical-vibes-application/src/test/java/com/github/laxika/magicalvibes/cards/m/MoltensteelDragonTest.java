@@ -130,7 +130,7 @@ class MoltensteelDragonTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent perm = harness.addToBattlefieldAndReturn(player1, new MoltensteelDragon());
         perm.setSummoningSick(true);
-        perm.setTapped(true);
+        perm.tap();
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, null);

@@ -106,7 +106,7 @@ class RepulsorBlastTest extends BaseCardTest {
     void cannotUseAlreadyTappedCreatureForTeamwork() {
         Permanent target = addCreatureReady(player2, new CrawWurm());
         Permanent teammate = addCreatureReady(player1, new GrizzlyBears());
-        teammate.setTapped(true);
+        teammate.tap();
 
         assertThatThrownBy(() -> cast(target, List.of(teammate.getId())))
                 .isInstanceOf(IllegalStateException.class);

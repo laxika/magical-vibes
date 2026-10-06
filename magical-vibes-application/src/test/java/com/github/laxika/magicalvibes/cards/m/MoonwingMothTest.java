@@ -72,7 +72,7 @@ class MoonwingMothTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent moth = harness.addToBattlefieldAndReturn(player1, new MoonwingMoth());
         moth.setSummoningSick(true);
-        moth.setTapped(true);
+        moth.tap();
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);

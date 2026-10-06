@@ -93,7 +93,7 @@ class InstantRamenTest extends BaseCardTest {
     @DisplayName("A tapped Ramen cannot pay the tap cost")
     void cannotActivateWhileTapped() {
         harness.addToBattlefield(player1, new InstantRamen());
-        gd.playerBattlefields.get(player1.getId()).getFirst().setTapped(true);
+        gd.playerBattlefields.get(player1.getId()).getFirst().tap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

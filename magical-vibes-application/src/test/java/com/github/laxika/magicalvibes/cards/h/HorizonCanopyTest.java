@@ -124,7 +124,7 @@ class HorizonCanopyTest extends BaseCardTest {
     @Test
     void tappedCanopyCannotActivateEitherAbility() {
         addReadyCanopy(player1);
-        findPermanent(player1, "Horizon Canopy").setTapped(true);
+        findPermanent(player1, "Horizon Canopy").tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))

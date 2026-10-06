@@ -93,7 +93,7 @@ class KasetoOrochiArchmageTest extends BaseCardTest {
     void canBoostItselfRepeatedlyWhileTappedAndSummoningSick() {
         Permanent kaseto = harness.addToBattlefieldAndReturn(player1, new KasetoOrochiArchmage());
         kaseto.setSummoningSick(true);
-        kaseto.setTapped(true);
+        kaseto.tap();
 
         activate(kaseto, kaseto);
         activate(kaseto, kaseto);

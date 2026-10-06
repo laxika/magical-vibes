@@ -119,7 +119,7 @@ class JurinLeadingTheChargeTest extends BaseCardTest {
         addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(List.of(0));
-        addCreatureReady(player2, new GrizzlyBears()).setTapped(true);
+        addCreatureReady(player2, new GrizzlyBears()).tap();
         resolveAllTriggers();
 
         assertThat(jurin.getPowerModifier()).isEqualTo(2);
@@ -168,7 +168,7 @@ class JurinLeadingTheChargeTest extends BaseCardTest {
     @Test
     void tappedDefenderDoesNotHaveToBlockJurin() {
         Permanent jurin = addCreatureReady(player1, new JurinLeadingTheCharge());
-        addCreatureReady(player2, new GrizzlyBears()).setTapped(true);
+        addCreatureReady(player2, new GrizzlyBears()).tap();
         jurin.setAttacking(true);
         jurin.setAttackTarget(player2.getId());
 

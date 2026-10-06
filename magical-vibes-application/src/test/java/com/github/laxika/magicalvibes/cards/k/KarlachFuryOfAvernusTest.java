@@ -60,8 +60,8 @@ class KarlachFuryOfAvernusTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         Permanent nonattacker = addCreatureReady(player1, new GrizzlyBears());
         Permanent opponent = addCreatureReady(player2, new GrizzlyBears());
-        nonattacker.setTapped(true);
-        opponent.setTapped(true);
+        nonattacker.tap();
+        opponent.tap();
 
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
             declareAttackers(player1, List.of(1), 1);

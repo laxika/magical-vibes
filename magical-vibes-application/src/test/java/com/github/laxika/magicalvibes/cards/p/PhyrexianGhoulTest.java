@@ -104,7 +104,7 @@ class PhyrexianGhoulTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent ghoul = harness.addToBattlefieldAndReturn(player1, new PhyrexianGhoul());
         ghoul.setSummoningSick(true);
-        ghoul.setTapped(true);
+        ghoul.tap();
         Permanent gorilla = harness.addToBattlefieldAndReturn(player1, new GorillaWarrior());
 
         harness.activateAbility(player1, 0, null, null);

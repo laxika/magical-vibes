@@ -135,7 +135,7 @@ class LeadPipeTest extends BaseCardTest {
         Permanent pipe = addPipeReady(player1);
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         pipe.setAttachedTo(creature.getId());
-        pipe.setTapped(true);
+        pipe.tap();
         Card drawnCard = new GrizzlyBears();
         harness.setLibrary(player1, List.of(drawnCard));
         harness.forceActivePlayer(player2);

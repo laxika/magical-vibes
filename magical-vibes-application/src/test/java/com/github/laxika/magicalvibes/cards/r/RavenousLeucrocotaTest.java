@@ -67,7 +67,7 @@ class RavenousLeucrocotaTest extends BaseCardTest {
     void monstrosityDoesNotRequireTappingOrHaste() {
         Permanent leucrocota = harness.addToBattlefieldAndReturn(player1, new RavenousLeucrocota());
         leucrocota.setSummoningSick(true);
-        leucrocota.setTapped(true);
+        leucrocota.tap();
         addMonstrosityMana();
 
         harness.activateAbility(player1, 0, null, null);

@@ -157,7 +157,7 @@ class MindwarperTest extends BaseCardTest {
         harness.setHand(player2, List.of(new FoulImp()));
         Permanent mindwarper = addReadyMindwarper(player1, 3);
         mindwarper.setSummoningSick(true);
-        mindwarper.setTapped(true);
+        mindwarper.tap();
         prepareSorcerySpeedActivation();
         harness.addMana(player1, ManaColor.BLACK, 3);
 

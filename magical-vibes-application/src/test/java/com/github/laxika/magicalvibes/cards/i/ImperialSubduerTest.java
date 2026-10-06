@@ -71,7 +71,7 @@ class ImperialSubduerTest extends BaseCardTest {
     void alreadyTappedCreatureIsStillALegalTarget() {
         addCreatureReady(player1, new ImperialSubduer());
         Permanent victim = addCreatureReady(player2, new BronzeplateBoar());
-        victim.setTapped(true);
+        victim.tap();
 
         declareAttackers(player1, List.of(0));
 

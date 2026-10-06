@@ -143,7 +143,7 @@ class ReflectingMirrorTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         Permanent mirror = harness.addToBattlefieldAndReturn(player2, new ReflectingMirror());
-        mirror.setTapped(true);
+        mirror.tap();
         harness.addMana(player2, ManaColor.COLORLESS, 6);
 
         harness.forceActivePlayer(player1);

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.cards.d.DwarvenGrunt;
 import com.github.laxika.magicalvibes.cards.m.MorbidHunger;
 import com.github.laxika.magicalvibes.cards.s.ShiftingSky;
 import com.github.laxika.magicalvibes.cards.z.ZombieCannibal;
-import com.github.laxika.magicalvibes.model.BlockerAssignment;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;

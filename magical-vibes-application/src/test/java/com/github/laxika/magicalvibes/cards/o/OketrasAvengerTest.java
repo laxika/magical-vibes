@@ -153,7 +153,7 @@ class OketrasAvengerTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
         harness.passUntil(player2, TurnStep.UPKEEP);
-        avenger.setTapped(false);
+        avenger.untap();
 
         declareAttackers(player2, List.of(0));
         prepareDeclareBlockers(player2);

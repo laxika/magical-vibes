@@ -131,7 +131,7 @@ class GuardianOfFaithTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, creature.getId());
         harness.passBothPriorities();
         creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
-        creature.setTapped(true);
+        creature.tap();
         harness.setLife(player1, 20);
         harness.setHand(player1, List.of(new GuardianOfFaith()));
         harness.addMana(player1, ManaColor.WHITE, 3);

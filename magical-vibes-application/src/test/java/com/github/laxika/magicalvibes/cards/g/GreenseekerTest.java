@@ -188,7 +188,7 @@ class GreenseekerTest extends BaseCardTest {
     @DisplayName("Cannot activate while tapped")
     void cannotActivateWhileTapped() {
         addReadyGreenseeker(player1);
-        findPermanent(player1, "Greenseeker").setTapped(true);
+        findPermanent(player1, "Greenseeker").tap();
         harness.setHand(player1, List.of(new Mountain()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 

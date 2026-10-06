@@ -120,7 +120,7 @@ class JamuraanLionTest extends BaseCardTest {
     @DisplayName("A tapped Lion cannot activate its ability")
     void cannotActivateWhileTapped() {
         Permanent lion = addCreatureReady(player1, new JamuraanLion());
-        lion.setTapped(true);
+        lion.tap();
         Permanent target = addCreatureReady(player2, new PhyrexianWalker());
         harness.addMana(player1, ManaColor.WHITE, 1);
 

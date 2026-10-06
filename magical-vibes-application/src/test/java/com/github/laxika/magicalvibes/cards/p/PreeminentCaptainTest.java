@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.b.BallyrushBanneret;
 import com.github.laxika.magicalvibes.cards.c.ChangelingSentinel;
 import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
 import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
-import com.github.laxika.magicalvibes.model.BlockerAssignment;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;

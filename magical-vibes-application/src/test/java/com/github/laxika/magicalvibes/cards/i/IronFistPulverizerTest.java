@@ -79,7 +79,7 @@ class IronFistPulverizerTest extends BaseCardTest {
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore);
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.battlefield.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
     }
 
     @Test

@@ -107,7 +107,7 @@ class LieutenantKirtarTest extends BaseCardTest {
     @DisplayName("Can activate while tapped and summoning sick")
     void canActivateWhileTappedAndSummoningSick() {
         Permanent kirtar = addReadyKirtar(player1);
-        kirtar.setTapped(true);
+        kirtar.tap();
         kirtar.setSummoningSick(true);
         Permanent attacker = addAttacker(player2);
         harness.addMana(player1, ManaColor.WHITE, 1);

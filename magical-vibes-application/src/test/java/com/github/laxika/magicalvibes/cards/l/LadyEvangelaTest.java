@@ -162,7 +162,7 @@ class LadyEvangelaTest extends BaseCardTest {
     @DisplayName("Cannot activate while tapped")
     void cannotActivateWhileTapped() {
         Permanent evangela = addCreatureReady(player1, new LadyEvangela());
-        evangela.setTapped(true);
+        evangela.tap();
         Permanent target = addCreatureReady(player2, new BarbaryApes());
         addActivationMana();
 

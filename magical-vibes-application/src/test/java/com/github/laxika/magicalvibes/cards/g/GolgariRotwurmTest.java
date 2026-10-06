@@ -62,7 +62,7 @@ class GolgariRotwurmTest extends BaseCardTest {
     void canActivateRepeatedlyWhileTapped() {
         Permanent rotwurm = harness.addToBattlefieldAndReturn(player1, new GolgariRotwurm());
         Permanent fodder = harness.addToBattlefieldAndReturn(player1, new BorosRecruit());
-        rotwurm.setTapped(true);
+        rotwurm.tap();
         rotwurm.setSummoningSick(true);
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);

@@ -82,7 +82,7 @@ class NavSquadCommandosTest extends BaseCardTest {
     @DisplayName("Battalion does not boost or untap a source that did not attack")
     void sourceMustAttackToTriggerBattalion() {
         Permanent commandos = addCreatureReady(player1, new NavSquadCommandos());
-        commandos.setTapped(true);
+        commandos.tap();
         addCreatureReady(player1, new NavSquadCommandos());
         addCreatureReady(player1, new NavSquadCommandos());
         addCreatureReady(player1, new NavSquadCommandos());

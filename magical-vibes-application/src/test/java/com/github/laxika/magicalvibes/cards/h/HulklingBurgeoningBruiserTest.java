@@ -107,7 +107,7 @@ class HulklingBurgeoningBruiserTest extends BaseCardTest {
         Permanent tortoise = harness.enterBattlefieldAndReturn(player1, new GiantTortoise());
         assertThat(gd.stack).hasSize(1);
 
-        tortoise.setTapped(true);
+        tortoise.tap();
         harness.passBothPriorities();
 
         assertThat(hulkling.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();

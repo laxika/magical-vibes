@@ -109,7 +109,7 @@ class LegionVanguardTest extends BaseCardTest {
     void canActivateWhileSummoningSickAndTapped() {
         Permanent vanguard = harness.addToBattlefieldAndReturn(player1, new LegionVanguard());
         vanguard.setSummoningSick(true);
-        vanguard.setTapped(true);
+        vanguard.tap();
         harness.addToBattlefield(player1, new LegionVanguard());
         Forest forest = new Forest();
         harness.setLibrary(player1, List.of(forest));

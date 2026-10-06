@@ -157,7 +157,7 @@ class KeensightMentorTest extends BaseCardTest {
     @Test
     void tappedMentorCannotActivateTapAbility() {
         Permanent mentor = addCreatureReady(player1, new KeensightMentor());
-        mentor.setTapped(true);
+        mentor.tap();
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

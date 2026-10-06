@@ -104,7 +104,7 @@ class KavuChameleonTest extends BaseCardTest {
     @DisplayName("Color is chosen on resolution and a tapped creature can activate")
     void tappedCreatureChoosesColorOnResolution() {
         Permanent kavu = harness.addToBattlefieldAndReturn(player1, new KavuChameleon());
-        kavu.setTapped(true);
+        kavu.tap();
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.activateAbility(player1, 0, null, null);

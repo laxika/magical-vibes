@@ -99,7 +99,7 @@ class SearTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Sear()));
         harness.addMana(player1, ManaColor.RED, 2);
         harness.castInstant(player1, 0, creature.getId());
-        gd.getBattlefield().get(player2.getId()).remove(creature);
+        gd.playerBattlefields.get(player2.getId()).remove(creature);
         harness.setGraveyard(player2, List.of(creature.getCard()));
 
         harness.passBothPriorities();
@@ -107,6 +107,6 @@ class SearTest extends BaseCardTest {
         assertThat(creature.getMarkedDamage()).isZero();
         harness.assertInGraveyard(player1, "Sear");
         harness.assertLife(player2, 20);
-        assertThat(gd.getStack()).isEmpty();
+        assertThat(gd.stack).isEmpty();
     }
 }

@@ -104,7 +104,7 @@ class OhranYetiTest extends BaseCardTest {
     void summoningSickTappedYetiCanTargetItself() {
         Permanent yeti = harness.addToBattlefieldAndReturn(player1, new OhranYeti());
         yeti.setSummoningSick(true);
-        yeti.setTapped(true);
+        yeti.tap();
         addAbilityMana();
 
         harness.activateAbility(player1, 0, 0, yeti.getId());

@@ -71,7 +71,7 @@ class KongmingSleepingDragonTest extends BaseCardTest {
         Permanent kongming = harness.addToBattlefieldAndReturn(player1, new KongmingSleepingDragon());
         Permanent infantry = harness.addToBattlefieldAndReturn(player1, new WuInfantry());
 
-        kongming.setTapped(true);
+        kongming.tap();
 
         assertThat(gqs.getEffectivePower(gd, infantry)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, infantry)).isEqualTo(2);

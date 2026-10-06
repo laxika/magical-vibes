@@ -21,7 +21,7 @@ class NimLasherTest extends BaseCardTest {
         Permanent nim = harness.addToBattlefieldAndReturn(player1, new NimLasher());
         harness.addToBattlefield(player1, new NimLasher());
         Permanent land = harness.addToBattlefieldAndReturn(player1, new SeatOfTheSynod());
-        land.setTapped(true);
+        land.tap();
         harness.addToBattlefield(player2, new SeatOfTheSynod());
 
         assertThat(gqs.getEffectivePower(gd, nim)).isEqualTo(2);

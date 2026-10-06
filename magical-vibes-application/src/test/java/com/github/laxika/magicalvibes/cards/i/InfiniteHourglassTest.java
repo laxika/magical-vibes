@@ -181,7 +181,7 @@ class InfiniteHourglassTest extends BaseCardTest {
     void opponentRemovesCounterDuringOwnUpkeepFromTappedHourglass() {
         Permanent hourglass = harness.addToBattlefieldAndReturn(player1, new InfiniteHourglass());
         hourglass.setCounterCount(CounterType.TIME, 1);
-        hourglass.setTapped(true);
+        hourglass.tap();
         advanceToUpkeep(player2);
         harness.addMana(player2, ManaColor.COLORLESS, 3);
 

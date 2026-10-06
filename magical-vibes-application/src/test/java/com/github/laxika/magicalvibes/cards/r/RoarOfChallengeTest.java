@@ -147,7 +147,7 @@ class RoarOfChallengeTest extends BaseCardTest {
         Permanent attacker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent tappedBlocker = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Permanent ableBlocker = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        tappedBlocker.setTapped(true);
+        tappedBlocker.tap();
         castRoar(attacker);
 
         attacker.setAttacking(true);

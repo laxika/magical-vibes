@@ -1,4 +1,4 @@
-﻿package com.github.laxika.magicalvibes.cards.l;
+package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.r.RiderInNeed;
 import com.github.laxika.magicalvibes.model.CardColor;

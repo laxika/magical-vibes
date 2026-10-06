@@ -107,7 +107,7 @@ class RoughRhinoCavalryTest extends BaseCardTest {
     void exhaustCanBeActivatedWhileTappedAndSummoningSick() {
         Permanent rhino = harness.addToBattlefieldAndReturn(player1, new RoughRhinoCavalry());
         rhino.setSummoningSick(true);
-        rhino.setTapped(true);
+        rhino.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 8);
 
         harness.activateAbility(player1, 0, 0, null, null);

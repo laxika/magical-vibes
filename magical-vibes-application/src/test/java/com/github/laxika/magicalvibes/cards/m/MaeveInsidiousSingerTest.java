@@ -91,7 +91,7 @@ class MaeveInsidiousSingerTest extends BaseCardTest {
     void doesNotDrawForUnwatchedAttacker() {
         addCreatureReady(player1, new MaeveInsidiousSinger());
         Permanent watched = addCreatureReady(player1, new GrizzlyBears());
-        watched.setTapped(true);
+        watched.tap();
         addCreatureReady(player1, new GrizzlyBears());
         harness.setLibrary(player1, List.of(new Island()));
         activateMaeve(watched);

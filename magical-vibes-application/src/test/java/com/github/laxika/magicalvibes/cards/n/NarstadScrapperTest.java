@@ -74,7 +74,7 @@ class NarstadScrapperTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent scrapper = harness.addToBattlefieldAndReturn(player1, new NarstadScrapper());
         scrapper.setSummoningSick(true);
-        scrapper.setTapped(true);
+        scrapper.tap();
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
 

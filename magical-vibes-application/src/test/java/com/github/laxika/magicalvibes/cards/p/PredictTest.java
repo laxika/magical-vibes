@@ -104,9 +104,10 @@ class PredictTest extends BaseCardTest {
         cast(new Peek(), List.of(new CarefulStudy()));
 
         var choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
-        assertThat(choice.options()).satisfiesAnyOf(
-                options -> assertThat(options).doesNotContain("Peek"),
-                options -> assertThat(options).contains("Concentrate"));
+        List<String> options = choice.options();
+        assertThat(!options.contains("Peek") || options.contains("Concentrate"))
+                .as("options %s must not leak hidden names", options)
+                .isTrue();
     }
 
     @Test

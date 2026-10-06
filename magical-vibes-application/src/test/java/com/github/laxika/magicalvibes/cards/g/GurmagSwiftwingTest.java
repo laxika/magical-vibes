@@ -105,9 +105,9 @@ class GurmagSwiftwingTest extends BaseCardTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
         harness.beginBlockerDeclarationInput();
-        harness.withAutoStop(TurnStep.END_COMBAT, () -> {
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> {
             gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
-            harness.passUntil(TurnStep.END_COMBAT);
+            harness.passUntil(TurnStep.END_OF_COMBAT);
         });
 
         harness.assertOnBattlefield(player1, "Gurmag Swiftwing");

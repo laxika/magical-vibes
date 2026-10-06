@@ -121,7 +121,7 @@ class OtarianJuggernautTest extends BaseCardTest {
     void tappedJuggernautIsNotRequiredToAttack() {
         harness.setGraveyard(player1, graveyardCards(7));
         Permanent juggernaut = addCreatureReady(player1, new OtarianJuggernaut());
-        juggernaut.setTapped(true);
+        juggernaut.tap();
 
         declareAttackers(List.of());
 

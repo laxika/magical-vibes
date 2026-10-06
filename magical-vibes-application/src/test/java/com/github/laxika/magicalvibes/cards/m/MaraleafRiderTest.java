@@ -89,7 +89,7 @@ class MaraleafRiderTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent rider = harness.addToBattlefieldAndReturn(player1, new MaraleafRider());
         rider.setSummoningSick(true);
-        rider.setTapped(true);
+        rider.tap();
         Permanent blocker = addCreatureReady(player2, new MaraleafRider());
         createFood();
 
@@ -98,7 +98,7 @@ class MaraleafRiderTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
-        rider.setTapped(false);
+        rider.untap();
         rider.setSummoningSick(false);
         rider.setAttacking(true);
         prepareDeclareBlockers();
@@ -112,7 +112,7 @@ class MaraleafRiderTest extends BaseCardTest {
     void tappedTargetDoesNotHaveToBlock() {
         Permanent rider = addCreatureReady(player1, new MaraleafRider());
         Permanent blocker = addCreatureReady(player2, new MaraleafRider());
-        blocker.setTapped(true);
+        blocker.tap();
         createFood();
 
         harness.activateAbility(player1, indexOf(player1, rider), null, blocker.getId());

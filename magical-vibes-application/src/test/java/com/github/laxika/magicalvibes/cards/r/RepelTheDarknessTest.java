@@ -80,7 +80,7 @@ class RepelTheDarknessTest extends BaseCardTest {
     @DisplayName("An already tapped creature is a legal target and the spell still draws")
     void tappedTargetStillAllowsDraw() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new NestInvader());
-        creature.setTapped(true);
+        creature.tap();
         harness.setHand(player1, List.of(new RepelTheDarkness()));
         harness.setLibrary(player1, List.of(new Island()));
         addMana();

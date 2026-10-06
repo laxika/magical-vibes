@@ -86,7 +86,7 @@ class HematiteGolemTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent golem = harness.addToBattlefieldAndReturn(player1, new HematiteGolem());
         golem.setSummoningSick(true);
-        golem.setTapped(true);
+        golem.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.RED, 1);
 

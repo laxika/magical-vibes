@@ -144,7 +144,7 @@ class MidnightCovenantTest extends BaseCardTest {
     void tappedSummoningSickCreatureCanActivate() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new WanderingOnes());
         creature.setSummoningSick(true);
-        creature.setTapped(true);
+        creature.tap();
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new MidnightCovenant());
         aura.setAttachedTo(creature.getId());
 

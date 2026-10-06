@@ -93,7 +93,7 @@ class RazakethTheFoulbloodedTest extends BaseCardTest {
     @DisplayName("Can activate while tapped and summoning sick and find a creature card")
     void activatesWhileTappedAndSummoningSick() {
         Permanent razaketh = harness.addToBattlefieldAndReturn(player1, new RazakethTheFoulblooded());
-        razaketh.setTapped(true);
+        razaketh.tap();
         razaketh.setSummoningSick(true);
         harness.addToBattlefield(player1, new DefiantKhenra());
         harness.setLibrary(player1, List.of(new DefiantKhenra()));

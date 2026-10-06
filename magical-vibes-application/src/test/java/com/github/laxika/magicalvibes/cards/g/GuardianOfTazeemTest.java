@@ -53,7 +53,7 @@ class GuardianOfTazeemTest extends BaseCardTest {
     void alreadyTappedCreatureSkipsOnlyNextUntap() {
         harness.addToBattlefieldAndReturn(player1, new GuardianOfTazeem());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GuardianOfTazeem());
-        target.setTapped(true);
+        target.tap();
         harness.forceActivePlayer(player1);
 
         playLand(new Island());

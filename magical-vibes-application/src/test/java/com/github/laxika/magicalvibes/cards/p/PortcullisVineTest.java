@@ -56,7 +56,7 @@ class PortcullisVineTest extends BaseCardTest {
     void sacrificesAnotherDefenderAsCost() {
         var vine = addCreatureReady(player1, new PortcullisVine());
         var otherVine = harness.addToBattlefieldAndReturn(player1, new PortcullisVine());
-        otherVine.setTapped(true);
+        otherVine.tap();
         otherVine.setSummoningSick(true);
         harness.setLibrary(player1, List.of(new OnakkeOgre(), new OnakkeOgre()));
         harness.setHand(player1, List.of());
@@ -98,7 +98,7 @@ class PortcullisVineTest extends BaseCardTest {
     @DisplayName("A tapped Vine cannot activate its tap ability")
     void cannotActivateWhileTapped() {
         var vine = addCreatureReady(player1, new PortcullisVine());
-        vine.setTapped(true);
+        vine.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

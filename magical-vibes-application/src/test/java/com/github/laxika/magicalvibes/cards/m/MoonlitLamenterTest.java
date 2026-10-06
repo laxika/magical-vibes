@@ -85,7 +85,7 @@ class MoonlitLamenterTest extends BaseCardTest {
     @Test
     void paysEntryCounterBeforeDrawingEvenWhenTappedAndSummoningSick() {
         Permanent lamenter = harness.enterBattlefieldAndReturn(player1, new MoonlitLamenter());
-        lamenter.setTapped(true);
+        lamenter.tap();
         lamenter.setSummoningSick(true);
         harness.setLibrary(player1, List.of(new MoonlitLamenter()));
         harness.forceActivePlayer(player1);

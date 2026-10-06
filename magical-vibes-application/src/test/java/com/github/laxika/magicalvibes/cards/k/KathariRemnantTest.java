@@ -193,7 +193,7 @@ class KathariRemnantTest extends BaseCardTest {
     @DisplayName("Regeneration can be activated while tapped and summoning sick and shields accumulate")
     void regenerationDoesNotRequireTappingOrHaste() {
         Permanent kathari = harness.addToBattlefieldAndReturn(player1, new KathariRemnant());
-        kathari.setTapped(true);
+        kathari.tap();
         kathari.setSummoningSick(true);
         harness.addMana(player1, ManaColor.BLACK, 2);
 
@@ -211,7 +211,7 @@ class KathariRemnantTest extends BaseCardTest {
     @DisplayName("An activated regeneration shield replaces destruction from Assassinate")
     void activatedShieldPreventsDestruction() {
         Permanent kathari = addKathariReady(player1);
-        kathari.setTapped(true);
+        kathari.tap();
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player2, List.of(new Assassinate()));

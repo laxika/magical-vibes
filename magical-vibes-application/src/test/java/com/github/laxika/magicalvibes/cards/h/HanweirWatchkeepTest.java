@@ -150,7 +150,7 @@ class HanweirWatchkeepTest extends BaseCardTest {
         Permanent watchkeep = addCreatureReady(player1, new HanweirWatchkeep());
         advanceToUpkeep(player1);
         resolveAllTriggers();
-        watchkeep.setTapped(true);
+        watchkeep.tap();
         harness.setLife(player2, 20);
 
         declareAttackers(List.of());

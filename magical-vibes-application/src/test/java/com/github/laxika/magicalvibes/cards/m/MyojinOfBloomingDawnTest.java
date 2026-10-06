@@ -103,7 +103,7 @@ class MyojinOfBloomingDawnTest extends BaseCardTest {
         Permanent myojin = harness.addToBattlefieldAndReturn(player1, new MyojinOfBloomingDawn());
         myojin.setCounterCount(CounterType.INDESTRUCTIBLE, 1);
         myojin.setSummoningSick(true);
-        myojin.setTapped(true);
+        myojin.tap();
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.UPKEEP);
         harness.ensurePriority(player1);

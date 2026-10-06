@@ -51,7 +51,7 @@ class PestilentWolfTest extends BaseCardTest {
     void tappedSummoningSickWolfGrantsOnlyItselfDeathtouch() {
         Permanent wolf = harness.addToBattlefieldAndReturn(player1, new PestilentWolf());
         wolf.setSummoningSick(true);
-        wolf.setTapped(true);
+        wolf.tap();
         Permanent otherWolf = addCreatureReady(player1, new PestilentWolf());
         Permanent opposingWolf = addCreatureReady(player2, new PestilentWolf());
 

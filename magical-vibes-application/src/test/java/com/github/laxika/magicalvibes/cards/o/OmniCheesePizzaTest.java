@@ -88,7 +88,7 @@ class OmniCheesePizzaTest extends BaseCardTest {
     @DisplayName("Neither ability can be activated while the Pizza is tapped")
     void tappedPizzaCannotBeSacrificedForEitherAbility(int abilityIndex) {
         var pizza = harness.addToBattlefieldAndReturn(player1, new OmniCheesePizza());
-        pizza.setTapped(true);
+        pizza.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, abilityIndex, null, null))

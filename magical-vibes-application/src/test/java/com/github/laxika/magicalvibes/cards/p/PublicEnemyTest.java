@@ -74,7 +74,7 @@ class PublicEnemyTest extends BaseCardTest {
         Permanent enchanted = addCreatureReady(player1, new GrizzlyBears());
         addAura(player1, enchanted);
         Permanent tapped = addCreatureReady(player2, new GrizzlyBears());
-        tapped.setTapped(true);
+        tapped.tap();
         Permanent summoningSick = addCreatureReady(player2, new GrizzlyBears());
         summoningSick.setSummoningSick(true);
 

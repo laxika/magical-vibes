@@ -99,7 +99,7 @@ class MantaRidersTest extends BaseCardTest {
     @DisplayName("A tapped Manta Riders can activate repeatedly, paying blue mana each time")
     void canActivateRepeatedlyWhileTapped() {
         Permanent riders = addCreatureReady(player1, new MantaRiders());
-        riders.setTapped(true);
+        riders.tap();
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.activateAbility(player1, 0, null, null);

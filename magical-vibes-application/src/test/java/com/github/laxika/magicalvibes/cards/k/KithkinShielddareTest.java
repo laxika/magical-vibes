@@ -150,7 +150,7 @@ class KithkinShielddareTest extends BaseCardTest {
     @DisplayName("Cannot activate while already tapped")
     void cannotActivateWhileTapped() {
         setupShielddare();
-        findPermanent(player1, "Kithkin Shielddare").setTapped(true);
+        findPermanent(player1, "Kithkin Shielddare").tap();
         Permanent blocker = addBlockingGuardian(player2);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
 

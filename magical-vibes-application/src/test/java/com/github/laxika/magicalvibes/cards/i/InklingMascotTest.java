@@ -83,7 +83,7 @@ class InklingMascotTest extends BaseCardTest {
     void sorceryTargetingOwnCreatureTriggersRepartee() {
         Permanent mascot = harness.addToBattlefieldAndReturn(player1, new InklingMascot());
         Permanent giant = harness.addToBattlefieldAndReturn(player1, new HillGiant());
-        giant.setTapped(true);
+        giant.tap();
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         harness.setHand(player1, List.of(new Assassinate()));
         harness.addMana(player1, ManaColor.BLACK, 3);

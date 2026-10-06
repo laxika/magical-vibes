@@ -21,7 +21,7 @@ class HillcomberGiantTest extends BaseCardTest {
     @DisplayName("A tapped Mountain still makes Hillcomber Giant unblockable")
     void cannotBeBlockedWhenDefendersMountainIsTapped() {
         Permanent mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
-        mountain.setTapped(true);
+        mountain.tap();
         Permanent blocker = addCreatureReady(player2, new GoldmeadowStalwart());
         Permanent attacker = addCreatureReady(player1, new HillcomberGiant());
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);

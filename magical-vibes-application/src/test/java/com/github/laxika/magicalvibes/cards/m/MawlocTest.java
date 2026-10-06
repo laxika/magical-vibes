@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.t.Toxicrene;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -140,7 +141,7 @@ class MawlocTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
 
         declareAttackersAndPrepareBlockers(List.of(0));
-        gs.declareBlockers(gd, player2, java.util.Map.of(0, 0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
 
         harness.assertInGraveyard(player2, "Grizzly Bears");

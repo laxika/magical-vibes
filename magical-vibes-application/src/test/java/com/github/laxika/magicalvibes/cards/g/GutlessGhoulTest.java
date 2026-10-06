@@ -59,7 +59,7 @@ class GutlessGhoulTest extends BaseCardTest {
     @DisplayName("A tapped, summoning-sick Ghoul can sacrifice itself and life is gained only on resolution")
     void tappedSummoningSickGhoulCanActivate() {
         Permanent ghoul = harness.addToBattlefieldAndReturn(player1, new GutlessGhoul());
-        ghoul.setTapped(true);
+        ghoul.tap();
         ghoul.setSummoningSick(true);
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.forceActivePlayer(player1);

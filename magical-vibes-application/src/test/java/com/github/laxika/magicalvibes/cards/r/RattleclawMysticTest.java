@@ -74,7 +74,7 @@ class RattleclawMysticTest extends BaseCardTest {
     void faceUpTriggerWaitsForResolutionEvenWhenMysticIsTappedAndSummoningSick() {
         Permanent mystic = addFaceDownMystic();
         mystic.setSummoningSick(true);
-        mystic.setTapped(true);
+        mystic.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.withAutoStop(gd.currentStep, () -> harness.turnFaceUp(player1, 0));

@@ -162,7 +162,7 @@ class RuneOfProtectionWhiteTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.assertLife(player1, 20);
 
-        whiteSource.setTapped(false);
+        whiteSource.untap();
         harness.activateAbility(player2, 0, 0, null, player1.getId());
         harness.passBothPriorities();
         harness.assertLife(player1, 19);
@@ -187,7 +187,7 @@ class RuneOfProtectionWhiteTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.assertLife(player2, 19);
 
-        whiteSource.setTapped(false);
+        whiteSource.untap();
         harness.activateAbility(player2, 0, 0, null, player1.getId());
         harness.passBothPriorities();
         harness.assertLife(player1, 20);

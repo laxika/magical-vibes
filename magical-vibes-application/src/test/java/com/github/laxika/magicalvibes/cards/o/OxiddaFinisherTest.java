@@ -93,7 +93,7 @@ class OxiddaFinisherTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new CrawlingChorus());
         Permanent equipment = harness.addToBattlefieldAndReturn(player1, new GoldwardensHelm());
         equipment.setAttachedTo(creature.getId());
-        equipment.setTapped(true);
+        equipment.tap();
         harness.setHand(player1, List.of(new OxiddaFinisher()));
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.addMana(player1, ManaColor.RED, 2);

@@ -116,7 +116,7 @@ class PyricSalamanderTest extends BaseCardTest {
     @DisplayName("A tapped, summoning-sick Salamander can activate its ability")
     void canActivateWhileTappedAndSummoningSick() {
         Permanent salamander = harness.addToBattlefieldAndReturn(player1, new PyricSalamander());
-        salamander.setTapped(true);
+        salamander.tap();
         salamander.setSummoningSick(true);
         harness.addMana(player1, ManaColor.RED, 1);
 

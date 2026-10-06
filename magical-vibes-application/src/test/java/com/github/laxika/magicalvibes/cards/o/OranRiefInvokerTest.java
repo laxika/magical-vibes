@@ -85,7 +85,7 @@ class OranRiefInvokerTest extends BaseCardTest {
     void tappedSummoningSickInvokerCanActivate() {
         Permanent invoker = harness.addToBattlefieldAndReturn(player1, new OranRiefInvoker());
         invoker.setSummoningSick(true);
-        invoker.setTapped(true);
+        invoker.tap();
         harness.addMana(player1, ManaColor.GREEN, 8);
 
         harness.activateAbility(player1, 0, null, null);

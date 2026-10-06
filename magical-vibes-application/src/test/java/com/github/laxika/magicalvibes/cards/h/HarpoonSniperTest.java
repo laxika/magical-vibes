@@ -222,7 +222,7 @@ class HarpoonSniperTest extends BaseCardTest {
     @DisplayName("Cannot activate while tapped")
     void requiresUntappedSource() {
         Permanent sniper = addSniperReady(player1);
-        sniper.setTapped(true);
+        sniper.tap();
         Permanent attacker = addAttackingCreature(player2);
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);

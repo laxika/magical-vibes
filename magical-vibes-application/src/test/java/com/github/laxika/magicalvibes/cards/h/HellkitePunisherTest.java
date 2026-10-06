@@ -75,7 +75,7 @@ class HellkitePunisherTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent hellkite = harness.addToBattlefieldAndReturn(player1, new HellkitePunisher());
         hellkite.setSummoningSick(true);
-        hellkite.setTapped(true);
+        hellkite.tap();
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, null);

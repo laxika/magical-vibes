@@ -104,7 +104,7 @@ class PredatoryImpetusTest extends BaseCardTest {
     void tappedCreatureNeedNotAttack() {
         Permanent creature = addCreatureReady(player2, new GrizzlyBears());
         attachAura(player1, creature);
-        creature.setTapped(true);
+        creature.tap();
 
         declareAttackers(player2, List.of());
 
@@ -117,7 +117,7 @@ class PredatoryImpetusTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attachAura(player1, attacker);
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
-        blocker.setTapped(true);
+        blocker.tap();
 
         declareAttackersAndPrepareBlockers(player1, List.of(0));
         gs.declareBlockers(gd, player2, List.of());

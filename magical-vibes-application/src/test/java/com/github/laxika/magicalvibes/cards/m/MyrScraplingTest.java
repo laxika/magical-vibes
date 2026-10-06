@@ -47,7 +47,7 @@ class MyrScraplingTest extends BaseCardTest {
     @DisplayName("A tapped, summoning-sick Scrapling can put a counter on an opponent's creature")
     void canActivateWhileTappedAndSummoningSickTargetingOpponent() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new MyrScrapling());
-        source.setTapped(true);
+        source.tap();
         source.setSummoningSick(true);
         Permanent target = harness.addToBattlefieldAndReturn(player2, new MyrScrapling());
 

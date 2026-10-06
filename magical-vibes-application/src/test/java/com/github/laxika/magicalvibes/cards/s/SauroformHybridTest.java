@@ -64,7 +64,7 @@ class SauroformHybridTest extends BaseCardTest {
     void adaptCanBeActivatedWhileTappedAndSummoningSick() {
         Permanent hybrid = harness.addToBattlefieldAndReturn(player1, new SauroformHybrid());
         hybrid.setSummoningSick(true);
-        hybrid.setTapped(true);
+        hybrid.tap();
         addAdaptMana();
 
         harness.activateAbility(player1, 0, null, null);

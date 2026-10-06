@@ -140,7 +140,7 @@ class HelmOfPossessionTest extends BaseCardTest {
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(helm),
                 null, target.getId());
         helm.untap();
-        helm.setTapped(true);
+        helm.tap();
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);

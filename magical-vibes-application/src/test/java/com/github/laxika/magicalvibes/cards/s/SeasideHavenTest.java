@@ -67,7 +67,7 @@ class SeasideHavenTest extends BaseCardTest {
     void canSacrificeTappedSummoningSickBird() {
         addCreatureReady(player1, new SeasideHaven());
         Permanent bird = harness.addToBattlefieldAndReturn(player1, new SageAven());
-        bird.setTapped(true);
+        bird.tap();
         bird.setSummoningSick(true);
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -115,7 +115,7 @@ class SeasideHavenTest extends BaseCardTest {
     @Test
     void tappedHavenCannotActivateEitherAbility() {
         Permanent haven = addCreatureReady(player1, new SeasideHaven());
-        haven.setTapped(true);
+        haven.tap();
         harness.addToBattlefield(player1, new SageAven());
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);

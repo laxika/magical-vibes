@@ -115,7 +115,7 @@ class RockBadgerTest extends BaseCardTest {
     @DisplayName("A tapped Mountain still prevents Rock Badger from being blocked")
     void cannotBeBlockedWhenDefendersMountainIsTapped() {
         harness.addToBattlefield(player2, new Mountain());
-        findPermanent(player2, "Mountain").setTapped(true);
+        findPermanent(player2, "Mountain").tap();
         Permanent blocker = addCreatureReady(player2, new FreshVolunteers());
         Permanent attacker = addCreatureReady(player1, new RockBadger());
 

@@ -128,7 +128,7 @@ class GwendlynDiCorciTest extends BaseCardTest {
     @DisplayName("Cannot activate while already tapped")
     void cannotActivateWhileTapped() {
         Permanent gwendlyn = setupGwendlynOnMyTurn();
-        gwendlyn.setTapped(true);
+        gwendlyn.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)

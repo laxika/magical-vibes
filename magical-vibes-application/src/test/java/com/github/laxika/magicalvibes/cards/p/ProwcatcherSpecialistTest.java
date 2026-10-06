@@ -88,7 +88,7 @@ class ProwcatcherSpecialistTest extends BaseCardTest {
     @DisplayName("Exhaust can be activated while the Specialist is tapped")
     void exhaustDoesNotRequireUntappedSource() {
         Permanent specialist = harness.addToBattlefieldAndReturn(player1, new ProwcatcherSpecialist());
-        specialist.setTapped(true);
+        specialist.tap();
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 

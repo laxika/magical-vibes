@@ -87,7 +87,7 @@ class MindlinkMechTest extends BaseCardTest {
         assertThat(crewer.isTapped()).isTrue();
         assertThat(mech.isTapped()).isFalse();
 
-        mech.setTapped(true);
+        mech.tap();
         assertThat(gqs.hasKeyword(gd, mech, Keyword.HEXPROOF)).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);

@@ -98,7 +98,7 @@ class PyreChargerTest extends BaseCardTest {
     @DisplayName("A tapped Pyre Charger can activate its pump without untapping")
     void tappedChargerCanPump() {
         Permanent charger = harness.addToBattlefieldAndReturn(player1, new PyreCharger());
-        charger.setTapped(true);
+        charger.tap();
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, null);

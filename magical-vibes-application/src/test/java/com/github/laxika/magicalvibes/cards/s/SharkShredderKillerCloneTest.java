@@ -132,12 +132,12 @@ class SharkShredderKillerCloneTest extends BaseCardTest {
         shark.setAttacking(true);
         shark.setAttackTarget(player2.getId());
 
-        harness.withAutoStop(TurnStep.END_COMBAT, () -> {
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> {
             resolveCombat();
             assertThat(gd.interaction.isAwaitingInput()).isTrue();
             harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
             resolveAllTriggers();
-            harness.passUntil(TurnStep.END_COMBAT);
+            harness.passUntil(TurnStep.END_OF_COMBAT);
         });
 
         harness.assertLife(player2, 14);
@@ -153,12 +153,12 @@ class SharkShredderKillerCloneTest extends BaseCardTest {
         shark.setAttacking(true);
         shark.setAttackTarget(player2.getId());
 
-        harness.withAutoStop(TurnStep.END_COMBAT, () -> {
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> {
             resolveCombat();
             assertThat(gd.interaction.isAwaitingInput()).isTrue();
             harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
             resolveAllTriggers();
-            harness.passUntil(TurnStep.END_COMBAT);
+            harness.passUntil(TurnStep.END_OF_COMBAT);
         });
 
         harness.assertLife(player2, 14);

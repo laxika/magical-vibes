@@ -59,7 +59,7 @@ class OliviasAttendantsTest extends BaseCardTest {
     void activatedAbilityDamagesPlayerWhileTappedAndSummoningSick() {
         Permanent attendants = harness.addToBattlefieldAndReturn(player1, new OliviasAttendants());
         attendants.setSummoningSick(true);
-        attendants.setTapped(true);
+        attendants.tap();
         harness.setLife(player2, 20);
         harness.addMana(player1, ManaColor.RED, 3);
 

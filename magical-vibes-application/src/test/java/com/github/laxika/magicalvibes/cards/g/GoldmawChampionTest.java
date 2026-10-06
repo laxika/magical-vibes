@@ -94,7 +94,7 @@ class GoldmawChampionTest extends BaseCardTest {
     void boastCanTargetItselfWhileTapped() {
         Permanent champion = addCreatureReady(player1, new GoldmawChampion());
         champion.setAttackedThisTurn(true);
-        champion.setTapped(true);
+        champion.tap();
         addBoastMana();
 
         harness.activateAbility(player1, 0, null, champion.getId());

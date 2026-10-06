@@ -121,7 +121,7 @@ class RainOfBladesTest extends BaseCardTest {
     void damageAccumulatesAcrossSpells() {
         harness.forceActivePlayer(player1);
         Permanent attacker = addAttacker(player1, player2, new GrizzlyBears());
-        attacker.setTapped(true);
+        attacker.tap();
 
         castRainOfBlades(player2);
         assertThat(attacker.getMarkedDamage()).isEqualTo(1);

@@ -393,13 +393,13 @@ class HarmsWayTest extends BaseCardTest {
         assertThat(protectedCreature.getMarkedDamage()).isZero();
         harness.assertLife(player2, 19);
 
-        source.setTapped(false);
+        source.untap();
         harness.activateAbility(player2, 0, null, player1.getId());
         harness.passBothPriorities();
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 18);
 
-        source.setTapped(false);
+        source.untap();
         harness.activateAbility(player2, 0, null, player1.getId());
         harness.passBothPriorities();
         harness.assertLife(player1, 19);

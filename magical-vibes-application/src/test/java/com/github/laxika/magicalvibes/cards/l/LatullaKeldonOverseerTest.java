@@ -115,7 +115,7 @@ class LatullaKeldonOverseerTest extends BaseCardTest {
     @DisplayName("Cannot activate while tapped")
     void cannotActivateWhileTapped() {
         Permanent latulla = addCreatureReady(player1, new LatullaKeldonOverseer());
-        latulla.setTapped(true);
+        latulla.tap();
         harness.setHand(player1, List.of(new Forest(), new Forest()));
         harness.addMana(player1, ManaColor.RED, 2);
 

@@ -49,7 +49,7 @@ class MarshalOfZhalfirTest extends BaseCardTest {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new MarshalOfZhalfir());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new MarshalOfZhalfir());
         source.setSummoningSick(false);
-        target.setTapped(true);
+        target.tap();
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
 

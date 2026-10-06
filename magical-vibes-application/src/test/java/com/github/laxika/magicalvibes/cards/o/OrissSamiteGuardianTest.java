@@ -169,7 +169,7 @@ class OrissSamiteGuardianTest extends BaseCardTest {
     @DisplayName("Grandeur works while Oriss is tapped and summoning sick and can target its controller")
     void grandeurCanTargetControllerWithoutTapCost() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new OrissSamiteGuardian());
-        source.setTapped(true);
+        source.tap();
         harness.setHand(player1, List.of(new OrissSamiteGuardian()));
         harness.activateAbility(player1, 0, 1, null, player1.getId());
         harness.handleCardChosen(player1, 0);

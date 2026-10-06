@@ -222,7 +222,7 @@ class RavenousDemonTest extends BaseCardTest {
     void tappedBackFaceStillDealsDamage() {
         Permanent archdemon = addTransformedArchdemon(player1);
         advanceToUpkeep(player1);
-        archdemon.setTapped(true);
+        archdemon.tap();
         harness.passBothPriorities();
 
         assertThat(archdemon.isTapped()).isTrue();

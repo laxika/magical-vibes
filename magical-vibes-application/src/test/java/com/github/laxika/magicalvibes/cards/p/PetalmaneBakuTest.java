@@ -123,7 +123,7 @@ class PetalmaneBakuTest extends BaseCardTest {
     @DisplayName("The mana ability works while tapped and summoning sick and does not use the stack")
     void manaAbilityWorksWhileTappedAndSummoningSick() {
         Permanent baku = addReadyBaku();
-        baku.setTapped(true);
+        baku.tap();
         baku.setSummoningSick(true);
         baku.setCounterCount(CounterType.KI, 3);
         harness.addMana(player1, ManaColor.COLORLESS, 1);

@@ -68,7 +68,7 @@ class SeekerOfSlaaneshTest extends BaseCardTest {
     void opponentWithOnlyTappedCreaturesMayDeclineToAttack() {
         harness.addToBattlefield(player1, new SeekerOfSlaanesh());
         Permanent bears = addCreatureReady(player2, new GrizzlyBears());
-        bears.setTapped(true);
+        bears.tap();
 
         declareAttackers(player2, List.of());
 

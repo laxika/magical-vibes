@@ -79,7 +79,7 @@ class JinSakaiGhostOfTsushimaTest extends BaseCardTest {
         harness.handleListChoice(player1, "Ghost — It can't be blocked this turn");
 
         Permanent additionalAttacker = addCreatureReady(player1, new GrizzlyBears());
-        additionalAttacker.setTapped(true);
+        additionalAttacker.tap();
         additionalAttacker.setAttacking(true);
         additionalAttacker.setAttackTarget(player2.getId());
         harness.passBothPriorities();

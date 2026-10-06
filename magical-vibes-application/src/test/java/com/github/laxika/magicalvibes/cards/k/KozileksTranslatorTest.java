@@ -42,7 +42,7 @@ class KozileksTranslatorTest extends BaseCardTest {
     @DisplayName("A tapped, summoning-sick Translator can produce mana without using the stack")
     void activatesWhileTappedAndSummoningSick() {
         Permanent translator = harness.addToBattlefieldAndReturn(player1, new KozileksTranslator());
-        translator.setTapped(true);
+        translator.tap();
         translator.setSummoningSick(true);
         harness.setLife(player1, 20);
 

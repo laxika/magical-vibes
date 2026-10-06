@@ -22,7 +22,7 @@ class HellraiserGoblinTest extends BaseCardTest {
     @Test
     @DisplayName("A creature its controller controls must attack while Hellraiser Goblin is out")
     void ownCreatureMustAttack() {
-        harness.addToBattlefieldAndReturn(player1, new HellraiserGoblin()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new HellraiserGoblin()).tap();
         addCreatureReady(player1, new DiscipleOfTheOldWays());
 
         assertThatThrownBy(() -> declareAttackers(player1, List.of()))
@@ -100,8 +100,8 @@ class HellraiserGoblinTest extends BaseCardTest {
     void tappedCreaturesAreNotForced() {
         Permanent goblin = harness.addToBattlefieldAndReturn(player1, new HellraiserGoblin());
         Permanent disciple = addCreatureReady(player1, new DiscipleOfTheOldWays());
-        goblin.setTapped(true);
-        disciple.setTapped(true);
+        goblin.tap();
+        disciple.tap();
 
         declareAttackers(player1, List.of());
 

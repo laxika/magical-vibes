@@ -126,7 +126,7 @@ class MatsuTribeDecoyTest extends BaseCardTest {
     void tappedTargetIsUnableToBlock() {
         addCreatureReady(player1, new MatsuTribeDecoy());
         Permanent blocker = addCreatureReady(player2, new KamiOfOldStone());
-        blocker.setTapped(true);
+        blocker.tap();
         harness.addMana(player1, ManaColor.GREEN, 3);
         harness.activateAbility(player1, 0, null, blocker.getId());
         harness.passBothPriorities();

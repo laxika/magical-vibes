@@ -56,7 +56,7 @@ class IrrigationDitchTest extends BaseCardTest {
     @DisplayName("A tapped Irrigation Ditch cannot activate either mana ability")
     void tappedLandCannotActivateEitherAbility() {
         Permanent ditch = harness.addToBattlefieldAndReturn(player1, new IrrigationDitch());
-        ditch.setTapped(true);
+        ditch.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)

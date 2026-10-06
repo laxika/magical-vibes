@@ -106,7 +106,7 @@ class HammerMageTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent hammerMage = addCreatureReady(player1, new HammerMage());
-        hammerMage.setTapped(true);
+        hammerMage.tap();
         harness.setHand(player1, List.of(new FreshVolunteers()));
         harness.addMana(player1, ManaColor.RED, 1);
 

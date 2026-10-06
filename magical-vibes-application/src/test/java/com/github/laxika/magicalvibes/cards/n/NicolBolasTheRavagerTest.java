@@ -146,7 +146,7 @@ class NicolBolasTheRavagerTest extends BaseCardTest {
         prepareMainPhase();
         ravager.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         ravager.setMarkedDamage(1);
-        ravager.setTapped(true);
+        ravager.tap();
         addManaForTransform();
 
         harness.activateAbility(player1, indexOf(ravager), null, null);

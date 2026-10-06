@@ -78,7 +78,7 @@ class NoviceDissectorTest extends BaseCardTest {
     void canTargetItselfWhileTappedAndSummoningSick() {
         Permanent dissector = harness.addToBattlefieldAndReturn(player1, new NoviceDissector());
         dissector.setSummoningSick(true);
-        dissector.setTapped(true);
+        dissector.tap();
         Permanent sacrifice = addCreatureReady(player1, new NoviceDissector());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         prepareMainPhase(player1);

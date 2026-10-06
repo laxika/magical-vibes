@@ -98,7 +98,7 @@ class RavenerTest extends BaseCardTest {
     @DisplayName("A tapped target is not required to attack")
     void tappedTargetCannotAttack() {
         Permanent bear = addCreatureReady(player1, new GrizzlyBears());
-        bear.setTapped(true);
+        bear.tap();
 
         castRavener(1, bear.getId(), player2.getId());
 

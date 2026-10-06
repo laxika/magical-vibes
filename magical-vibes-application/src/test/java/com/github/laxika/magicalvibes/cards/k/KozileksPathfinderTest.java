@@ -138,14 +138,14 @@ class KozileksPathfinderTest extends BaseCardTest {
     void abilityDoesNotRequireTappingOrHaste() {
         Permanent pathfinder = harness.addToBattlefieldAndReturn(player1, new KozileksPathfinder());
         pathfinder.setSummoningSick(true);
-        pathfinder.setTapped(true);
+        pathfinder.tap();
         Permanent blocker = addReadyPathfinder(player2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, blocker.getId());
         harness.passBothPriorities();
 
-        pathfinder.setTapped(false);
+        pathfinder.untap();
         pathfinder.setSummoningSick(false);
         pathfinder.setAttacking(true);
         prepareDeclareBlockers();

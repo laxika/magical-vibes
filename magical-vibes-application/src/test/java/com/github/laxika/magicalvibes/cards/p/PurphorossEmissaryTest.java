@@ -1,4 +1,4 @@
-﻿package com.github.laxika.magicalvibes.cards.p;
+package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.b.BronzeSable;
 import com.github.laxika.magicalvibes.model.Keyword;

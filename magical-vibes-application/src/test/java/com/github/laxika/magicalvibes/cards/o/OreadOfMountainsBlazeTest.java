@@ -73,7 +73,7 @@ class OreadOfMountainsBlazeTest extends BaseCardTest {
     @Test
     void canActivateRepeatedlyWhileTappedAndSummoningSick() {
         Permanent oread = harness.addToBattlefieldAndReturn(player1, new OreadOfMountainsBlaze());
-        oread.setTapped(true);
+        oread.tap();
         oread.setSummoningSick(true);
         Forest firstDiscard = new Forest();
         OreadOfMountainsBlaze secondDiscard = new OreadOfMountainsBlaze();

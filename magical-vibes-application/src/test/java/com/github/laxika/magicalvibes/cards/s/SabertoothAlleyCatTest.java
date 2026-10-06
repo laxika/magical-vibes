@@ -76,7 +76,7 @@ class SabertoothAlleyCatTest extends BaseCardTest {
     @DisplayName("A tapped cat is not required to attack")
     void tappedCatNeedNotAttack() {
         Permanent cat = addCreatureReady(player1, new SabertoothAlleyCat());
-        cat.setTapped(true);
+        cat.tap();
 
         declareAttackers(List.of());
 

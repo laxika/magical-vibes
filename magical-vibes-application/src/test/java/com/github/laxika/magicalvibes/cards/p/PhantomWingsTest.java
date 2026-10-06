@@ -96,7 +96,7 @@ class PhantomWingsTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new KaijinOfTheVanishingTouch());
         Permanent wings = harness.addToBattlefieldAndReturn(player1, new PhantomWings());
         wings.setAttachedTo(creature.getId());
-        wings.setTapped(true);
+        wings.tap();
 
         harness.activateAbility(player1, 1, null, null);
         harness.assertNotOnBattlefield(player1, "Phantom Wings");

@@ -79,7 +79,7 @@ class SecretDoorTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSickInPostcombatMainPhase() {
         Permanent secretDoor = harness.addToBattlefieldAndReturn(player1, new SecretDoor());
         secretDoor.setSummoningSick(true);
-        secretDoor.setTapped(true);
+        secretDoor.tap();
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);

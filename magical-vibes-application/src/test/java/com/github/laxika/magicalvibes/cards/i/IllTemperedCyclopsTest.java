@@ -72,7 +72,7 @@ class IllTemperedCyclopsTest extends BaseCardTest {
     void tappedSummoningSickCyclopsCanBecomeMonstrous() {
         Permanent cyclops = harness.addToBattlefieldAndReturn(player1, new IllTemperedCyclops());
         cyclops.setSummoningSick(true);
-        cyclops.setTapped(true);
+        cyclops.tap();
         addMonstrosityMana();
 
         harness.activateAbility(player1, 0, null, null);

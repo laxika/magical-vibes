@@ -157,8 +157,8 @@ class HaythamKenwayTest extends BaseCardTest {
         Permanent haytham = harness.addToBattlefieldAndReturn(player1, new HaythamKenway());
         Permanent knight = harness.addToBattlefieldAndReturn(player1, new BlackKnight());
         Permanent assassin = harness.addToBattlefieldAndReturn(player2, new RoyalAssassin());
-        haytham.setTapped(true);
-        knight.setTapped(true);
+        haytham.tap();
+        knight.tap();
         assassin.setSummoningSick(false);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

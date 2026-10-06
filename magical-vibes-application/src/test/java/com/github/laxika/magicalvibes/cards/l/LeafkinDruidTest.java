@@ -78,7 +78,7 @@ class LeafkinDruidTest extends BaseCardTest {
         addCreatureReady(player1, new LeafkinDruid());
         for (int i = 0; i < 3; i++) {
             Permanent creature = harness.addToBattlefieldAndReturn(player1, new GreenwoodSentinel());
-            creature.setTapped(true);
+            creature.tap();
             creature.setSummoningSick(true);
         }
 

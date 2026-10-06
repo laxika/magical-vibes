@@ -199,7 +199,7 @@ class LudevicsTestSubjectTest extends BaseCardTest {
     void activatesWhileTappedAndSummoningSick() {
         Permanent subject = harness.addToBattlefieldAndReturn(player1, new LudevicsTestSubject());
         subject.setSummoningSick(true);
-        subject.setTapped(true);
+        subject.tap();
         addAbilityMana();
         int idx = gd.playerBattlefields.get(player1.getId()).indexOf(subject);
         harness.activateAbility(player1, idx, null, null);
@@ -215,7 +215,7 @@ class LudevicsTestSubjectTest extends BaseCardTest {
         Permanent subject = addReadySubject();
         subject.setCounterCount(CounterType.HATCHLING, 4);
         subject.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
-        subject.setTapped(true);
+        subject.tap();
         addAbilityMana();
         int idx = gd.playerBattlefields.get(player1.getId()).indexOf(subject);
         harness.activateAbility(player1, idx, null, null);

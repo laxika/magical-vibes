@@ -77,7 +77,7 @@ class PackMastiffTest extends BaseCardTest {
     void repeatedActivationsStackWithoutTappingCost() {
         Permanent mastiff = harness.addToBattlefieldAndReturn(player1, new PackMastiff());
         mastiff.setSummoningSick(true);
-        mastiff.setTapped(true);
+        mastiff.tap();
         Permanent otherMastiff = addCreatureReady(player1, new PackMastiff());
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);

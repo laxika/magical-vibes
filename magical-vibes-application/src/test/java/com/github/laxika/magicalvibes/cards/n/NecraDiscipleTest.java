@@ -217,7 +217,7 @@ class NecraDiscipleTest extends BaseCardTest {
     @DisplayName("Both abilities require an untapped Disciple")
     void cannotActivateWhileTapped(int abilityIndex) {
         Permanent disciple = addReadyDisciple(player1);
-        disciple.setTapped(true);
+        disciple.tap();
         harness.addMana(player1, abilityIndex == 0 ? ManaColor.GREEN : ManaColor.WHITE, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, abilityIndex, null,

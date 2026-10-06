@@ -130,7 +130,7 @@ class ScavengingOozeTest extends BaseCardTest {
     void activatesWhileTappedAndSummoningSick() {
         Permanent ooze = harness.addToBattlefieldAndReturn(player1, new ScavengingOoze());
         ooze.setSummoningSick(true);
-        ooze.setTapped(true);
+        ooze.tap();
         Card creature = new ElvishMystic();
         harness.setGraveyard(player1, List.of(creature));
         harness.addMana(player1, ManaColor.GREEN, 1);

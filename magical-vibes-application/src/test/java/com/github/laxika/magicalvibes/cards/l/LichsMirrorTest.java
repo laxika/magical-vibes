@@ -59,7 +59,7 @@ class LichsMirrorTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(p1)).isEqualTo(20);
         // Hand, graveyard, and all owned permanents were shuffled into the library, then 7 drawn.
         assertThat(gd.playerHands.get(p1)).hasSize(7);
-        assertThat(gd.playerGraveyards.get(p1)).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.playerBattlefields.get(p1)).isEmpty();
         // 10 library + 2 hand + 1 graveyard + 1 Lich's Mirror = 14, minus 7 drawn = 7 left.
         assertThat(gd.playerDecks.get(p1)).hasSize(7);
@@ -247,9 +247,9 @@ class LichsMirrorTest extends BaseCardTest {
         // death — so no dies trigger fires.
         assertThat(gd.stack).noneMatch(entry -> entry.getCard().getName().equals("Ashes of the Abhorrent"));
         // ...and the token ceases to exist rather than staying somewhere it could be drawn.
-        assertThat(gd.playerDecks.get(p1)).noneMatch(Card::isToken);
-        assertThat(gd.playerHands.get(p1)).noneMatch(Card::isToken);
-        assertThat(gd.playerGraveyards.get(p1)).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).noneMatch(Card::isToken);
+        assertThat(gd.playerHands.get(player1.getId())).noneMatch(Card::isToken);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
     }
 
     @Test
@@ -263,7 +263,7 @@ class LichsMirrorTest extends BaseCardTest {
 
         harness.runStateBasedActions();
 
-        assertThat(gd.playerGraveyards.get(p1)).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         // "If one or more cards left your graveyard this turn" must see the reset.
         assertThat(gd.playersWhoseCardsLeftGraveyardThisTurn).contains(p1);
     }

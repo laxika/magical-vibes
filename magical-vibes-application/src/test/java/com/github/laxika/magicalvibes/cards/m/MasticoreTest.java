@@ -154,7 +154,7 @@ class MasticoreTest extends BaseCardTest {
     void tappedSummoningSickMasticoreCanActivateBothAbilitiesWithColoredMana() {
         harness.addToBattlefield(player1, new Masticore());
         Permanent masticore = findPermanent(player1, "Masticore");
-        masticore.setTapped(true);
+        masticore.tap();
         masticore.setSummoningSick(true);
         harness.addToBattlefield(player2, new Masticore());
         harness.addMana(player1, ManaColor.RED, 4);

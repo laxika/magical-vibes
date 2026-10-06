@@ -69,7 +69,7 @@ class NessianAspTest extends BaseCardTest {
     void monstrosityDoesNotRequireAnUntappedReadyCreature() {
         Permanent asp = harness.addToBattlefieldAndReturn(player1, new NessianAsp());
         asp.setSummoningSick(true);
-        asp.setTapped(true);
+        asp.tap();
         addMonstrosityMana();
 
         harness.activateAbility(player1, 0, null, null);

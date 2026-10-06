@@ -68,7 +68,7 @@ class HardenedTacticianTest extends BaseCardTest {
     @DisplayName("A noncreature token can pay the sacrifice cost before the draw resolves")
     void sacrificesNoncreatureTokenAsCost() {
         Permanent tactician = harness.addToBattlefieldAndReturn(player1, new HardenedTactician());
-        tactician.setTapped(true);
+        tactician.tap();
         Card treasure = new Card();
         treasure.setName("Treasure");
         treasure.setType(CardType.ARTIFACT);

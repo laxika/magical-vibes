@@ -87,7 +87,7 @@ class QuilledWolfTest extends BaseCardTest {
     void tappedSummoningSickWolfCanActivate() {
         Permanent wolf = harness.addToBattlefieldAndReturn(player1, new QuilledWolf());
         wolf.setSummoningSick(true);
-        wolf.setTapped(true);
+        wolf.tap();
         harness.addMana(player1, ManaColor.RED, 5);
         harness.addMana(player1, ManaColor.GREEN, 1);
 

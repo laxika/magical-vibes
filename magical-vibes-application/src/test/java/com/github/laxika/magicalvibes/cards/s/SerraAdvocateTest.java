@@ -110,7 +110,7 @@ class SerraAdvocateTest extends BaseCardTest {
     @DisplayName("Cannot activate while tapped")
     void cannotActivateWhileTapped() {
         Permanent attacker = addSerraAdvocateAndCombatCreature(true, false, player1);
-        findPermanent(player1, "Serra Advocate").setTapped(true);
+        findPermanent(player1, "Serra Advocate").tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, attacker.getId()))
                 .isInstanceOf(IllegalStateException.class);

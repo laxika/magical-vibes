@@ -88,7 +88,7 @@ class QuakeAgentOfSHIELDTest extends BaseCardTest {
     void canTargetTappedCreature() {
         harness.addToBattlefield(player1, new QuakeAgentOfSHIELD());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        target.setTapped(true);
+        target.tap();
         castNoncreatureSpell();
 
         harness.handlePermanentChosen(player1, target.getId());

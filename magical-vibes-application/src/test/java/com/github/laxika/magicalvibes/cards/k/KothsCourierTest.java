@@ -103,7 +103,7 @@ class KothsCourierTest extends BaseCardTest {
     @DisplayName("A tapped Forest still prevents blocking Koth's Courier")
     void tappedForestPreventsBlocking() {
         Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
-        forest.setTapped(true);
+        forest.tap();
         addCreatureReady(player2, new KothsCourier());
         Permanent attacker = addCreatureReady(player1, new KothsCourier());
         attacker.setAttacking(true);

@@ -69,7 +69,7 @@ class IndigoFaerieTest extends BaseCardTest {
     void tappedSummoningSickFaerieCanTargetItself() {
         Permanent faerie = harness.addToBattlefieldAndReturn(player1, new IndigoFaerie());
         faerie.setSummoningSick(true);
-        faerie.setTapped(true);
+        faerie.tap();
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, 0, null, faerie.getId());

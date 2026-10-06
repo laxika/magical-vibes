@@ -41,7 +41,7 @@ class IlluminorSzerasTest extends BaseCardTest {
     void tappedSacrificedCreatureStillProducesItsManaValueImmediately() {
         Permanent szeras = addCreatureReady(player1, new IlluminorSzeras());
         Permanent deathmark = addCreatureReady(player1, new NecronDeathmark());
-        deathmark.setTapped(true);
+        deathmark.tap();
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -96,7 +96,7 @@ class IlluminorSzerasTest extends BaseCardTest {
     @Test
     void tappedSzerasCannotActivateAgain() {
         Permanent szeras = addCreatureReady(player1, new IlluminorSzeras());
-        szeras.setTapped(true);
+        szeras.tap();
         Permanent sacrifice = addCreatureReady(player1, new NecronDeathmark());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

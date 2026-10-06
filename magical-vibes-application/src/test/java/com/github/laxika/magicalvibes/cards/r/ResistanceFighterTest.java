@@ -162,7 +162,7 @@ class ResistanceFighterTest extends BaseCardTest {
         harness.setLife(player1, 20);
         Permanent fighter = harness.addToBattlefieldAndReturn(player1, new ResistanceFighter());
         fighter.setSummoningSick(true);
-        fighter.setTapped(true);
+        fighter.tap();
         Permanent attacker = addAttacker(player2, new Warthog());
 
         activateFighter(attacker);

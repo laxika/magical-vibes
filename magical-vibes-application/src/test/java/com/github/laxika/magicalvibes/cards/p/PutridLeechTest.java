@@ -119,7 +119,7 @@ class PutridLeechTest extends BaseCardTest {
     void activatesWhileTappedAndSummoningSickOnOpponentsTurn() {
         Permanent leech = harness.addToBattlefieldAndReturn(player1, new PutridLeech());
         leech.setSummoningSick(true);
-        leech.setTapped(true);
+        leech.tap();
         harness.setLife(player1, 20);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

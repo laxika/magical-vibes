@@ -110,7 +110,7 @@ class JanJansenChaosCrafterTest extends BaseCardTest {
         Permanent jan = addCreatureReady(player1, new JanJansenChaosCrafter());
         harness.addToBattlefield(player1, new Juggernaut());
         harness.addToBattlefield(player1, new BraidwoodCup());
-        jan.setTapped(true);
+        jan.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);

@@ -157,7 +157,7 @@ class GoblinWizardTest extends BaseCardTest {
     @DisplayName("The tap ability cannot be activated while already tapped")
     void cannotActivateTapAbilityWhileTapped() {
         Permanent wizard = addCreatureReady(player1, new GoblinWizard());
-        wizard.setTapped(true);
+        wizard.tap();
         harness.setHand(player1, List.of(new GoblinHero()));
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
@@ -204,7 +204,7 @@ class GoblinWizardTest extends BaseCardTest {
     @DisplayName("A tapped, summoning-sick Goblin Wizard can give itself protection")
     void grantsProtectionToSelfWhileTappedAndSummoningSick() {
         Permanent wizard = harness.addToBattlefieldAndReturn(player1, new GoblinWizard());
-        wizard.setTapped(true);
+        wizard.tap();
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, 1, null, wizard.getId());

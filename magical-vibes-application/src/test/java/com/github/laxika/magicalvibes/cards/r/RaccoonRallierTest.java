@@ -84,7 +84,7 @@ class RaccoonRallierTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent rallier = addReadyRallier();
-        rallier.setTapped(true);
+        rallier.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, rallier.getId()))
                 .isInstanceOf(IllegalStateException.class)

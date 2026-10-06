@@ -81,7 +81,7 @@ class RemoteFarmTest extends BaseCardTest {
         harness.setHand(player1, List.of(new RemoteFarm()));
         harness.playLand(player1, 0);
         Permanent farm = findPermanent(player1, "Remote Farm");
-        farm.setTapped(false);
+        farm.untap();
 
         harness.activateAbility(player1, 0, null, null);
 

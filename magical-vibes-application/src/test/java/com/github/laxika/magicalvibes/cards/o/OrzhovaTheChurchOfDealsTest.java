@@ -105,7 +105,7 @@ class OrzhovaTheChurchOfDealsTest extends BaseCardTest {
     @DisplayName("A tapped land cannot activate either ability")
     void tappedLandCannotActivate() {
         Permanent orzhova = harness.addToBattlefieldAndReturn(player1, new OrzhovaTheChurchOfDeals());
-        orzhova.setTapped(true);
+        orzhova.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);

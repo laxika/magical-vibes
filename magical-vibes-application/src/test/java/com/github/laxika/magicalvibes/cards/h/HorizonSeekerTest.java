@@ -109,7 +109,7 @@ class HorizonSeekerTest extends BaseCardTest {
     void tappedAttackerCanBoast() {
         Permanent seeker = addCreatureReady(player1, new HorizonSeeker());
         seeker.setAttackedThisTurn(true);
-        seeker.setTapped(true);
+        seeker.tap();
         Card forest = new Forest();
         harness.setLibrary(player1, List.of(forest));
         addBoastMana();

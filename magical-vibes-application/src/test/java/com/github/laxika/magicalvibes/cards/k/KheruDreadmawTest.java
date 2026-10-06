@@ -86,7 +86,7 @@ class KheruDreadmawTest extends BaseCardTest {
     void canActivateWhileSummoningSickAndTapped() {
         Permanent dreadmaw = harness.addToBattlefieldAndReturn(player1, new KheruDreadmaw());
         dreadmaw.setSummoningSick(true);
-        dreadmaw.setTapped(true);
+        dreadmaw.tap();
         harness.addToBattlefield(player1, new ArchersParapet());
         harness.setLife(player1, 10);
         addActivationMana(player1);

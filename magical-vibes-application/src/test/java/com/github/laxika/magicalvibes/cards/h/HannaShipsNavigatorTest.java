@@ -108,7 +108,7 @@ class HannaShipsNavigatorTest extends BaseCardTest {
     void cannotActivateWhileTapped() {
         Card artifact = new ChromaticSphere();
         Permanent hanna = addCreatureReady(player1, new HannaShipsNavigator());
-        hanna.setTapped(true);
+        hanna.tap();
         harness.setGraveyard(player1, List.of(artifact));
         addActivationMana();
 

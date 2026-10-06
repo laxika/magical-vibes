@@ -136,7 +136,7 @@ class ResilientRoadrunnerTest extends BaseCardTest {
     @DisplayName("The restriction can be activated while the source is tapped")
     void tappedRoadrunnerCanActivate() {
         Permanent attacker = addRoadrunner();
-        attacker.setTapped(true);
+        attacker.tap();
         harness.addMana(player1, ManaColor.RED, 3);
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();

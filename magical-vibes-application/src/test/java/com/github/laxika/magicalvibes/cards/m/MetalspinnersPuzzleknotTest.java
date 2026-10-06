@@ -86,7 +86,7 @@ class MetalspinnersPuzzleknotTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(drawnCard));
         harness.setHand(player2, List.of());
         Permanent puzzleknot = harness.addToBattlefieldAndReturn(player2, new MetalspinnersPuzzleknot());
-        puzzleknot.setTapped(true);
+        puzzleknot.tap();
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
         harness.addMana(player2, ManaColor.COLORLESS, 2);

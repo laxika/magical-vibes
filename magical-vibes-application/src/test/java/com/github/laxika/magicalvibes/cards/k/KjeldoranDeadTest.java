@@ -99,7 +99,7 @@ class KjeldoranDeadTest extends BaseCardTest {
     void regenerationCanBeActivatedWhileTappedAndSummoningSick() {
         Permanent perm = harness.addToBattlefieldAndReturn(player1, new KjeldoranDead());
         perm.setSummoningSick(true);
-        perm.setTapped(true);
+        perm.tap();
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, null, null);

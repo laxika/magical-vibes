@@ -121,7 +121,7 @@ class JiangYangguWildcrafterTest extends BaseCardTest {
         creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         harness.activateAbility(player1, 1, null, null);
         harness.handleListChoice(player1, "GREEN");
-        creature.setTapped(false);
+        creature.untap();
         creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, null))

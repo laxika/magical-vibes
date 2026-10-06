@@ -99,7 +99,7 @@ class RagnarTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent source = addCreatureReady(player1, new Ragnar());
-        source.setTapped(true);
+        source.tap();
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);

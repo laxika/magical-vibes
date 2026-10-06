@@ -65,7 +65,7 @@ class GuiseOfFireTest extends BaseCardTest {
     @Test
     void tappedEnchantedCreatureDoesNotHaveToAttack() {
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-        bears.setTapped(true);
+        bears.tap();
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new GuiseOfFire());
         aura.setAttachedTo(bears.getId());
 

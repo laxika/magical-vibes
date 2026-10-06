@@ -153,7 +153,7 @@ class KrovikanSorcererTest extends BaseCardTest {
     @DisplayName("Neither ability can be activated while tapped")
     void cannotActivateWhileTapped(int abilityIndex) {
         Permanent sorcerer = addCreatureReady(player1, new KrovikanSorcerer());
-        sorcerer.setTapped(true);
+        sorcerer.tap();
         harness.setHand(player1, List.of(new GrizzlyBears(), new ScatheZombies()));
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, abilityIndex, null, null))

@@ -50,7 +50,7 @@ class SanguinePraetorTest extends BaseCardTest {
     @DisplayName("A tapped summoning-sick Praetor can activate and destroys matching creatures on both sides")
     void activationDoesNotRequireTapOrHasteAndSacrificeIsPaidBeforeResolution() {
         Permanent praetor = harness.addToBattlefieldAndReturn(player1, new SanguinePraetor());
-        praetor.setTapped(true);
+        praetor.tap();
         Permanent sacrificed = harness.addToBattlefieldAndReturn(player1, new DryadSophisticate());
         harness.addToBattlefield(player1, new GruulGuildmage());
         harness.addToBattlefield(player2, new GruulGuildmage());

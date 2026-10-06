@@ -124,7 +124,7 @@ class ShadesFormTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
-        creature.setTapped(true);
+        creature.tap();
 
         killCreature(player2, player1);
 

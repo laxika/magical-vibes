@@ -163,7 +163,7 @@ class SamiteAlchemistTest extends BaseCardTest {
     void cannotActivateWhileTapped() {
         addAlchemistReady();
         Permanent alchemist = findPermanent(player1, "Samite Alchemist");
-        alchemist.setTapped(true);
+        alchemist.tap();
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, alchemist.getId()))

@@ -95,7 +95,7 @@ class MarduHatebladeTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent hateblade = harness.addToBattlefieldAndReturn(player1, new MarduHateblade());
         hateblade.setSummoningSick(true);
-        hateblade.setTapped(true);
+        hateblade.tap();
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, 0, null, null);

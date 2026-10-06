@@ -101,7 +101,7 @@ class RestlessBonesTest extends BaseCardTest {
     void canRegenerateWhileTappedAndSummoningSick() {
         Permanent bones = harness.addToBattlefieldAndReturn(player1, new RestlessBones());
         bones.setSummoningSick(true);
-        bones.setTapped(true);
+        bones.tap();
         harness.addMana(player1, ManaColor.BLACK, 2);
 
         harness.activateAbility(player1, 0, 1, null, null);

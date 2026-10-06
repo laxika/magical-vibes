@@ -80,7 +80,7 @@ class RiveteersInitiateTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent initiate = addCreatureReady(player1, new RiveteersInitiate());
         initiate.setSummoningSick(true);
-        initiate.setTapped(true);
+        initiate.tap();
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);
 

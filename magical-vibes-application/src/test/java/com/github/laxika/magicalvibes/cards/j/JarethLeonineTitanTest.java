@@ -115,7 +115,7 @@ class JarethLeonineTitanTest extends BaseCardTest {
     @DisplayName("Repeated activations retain protection from both chosen colors even while tapped and summoning sick")
     void repeatedActivationsRetainBothProtections() {
         Permanent jareth = addCreatureReady(player1, new JarethLeonineTitan());
-        jareth.setTapped(true);
+        jareth.tap();
         jareth.setSummoningSick(true);
         harness.addMana(player1, ManaColor.WHITE, 2);
 

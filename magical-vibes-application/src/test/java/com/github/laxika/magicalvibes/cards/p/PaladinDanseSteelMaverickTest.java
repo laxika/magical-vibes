@@ -21,7 +21,7 @@ class PaladinDanseSteelMaverickTest extends BaseCardTest {
     void exileCostIsPaidBeforeProtectionResolves() {
         Permanent paladin = addCreatureReady(player1, new PaladinDanseSteelMaverick());
         paladin.setSummoningSick(true);
-        paladin.setTapped(true);
+        paladin.tap();
         Permanent human = addCreatureReady(player1, new EliteVanguard());
 
         harness.activateAbility(player1, 0, null, null);

@@ -85,8 +85,8 @@ class KyrenLegateTest extends BaseCardTest {
     void tappedLandsAllowAlternateCost() {
         harness.addToBattlefield(player1, new Mountain());
         harness.addToBattlefield(player2, new Plains());
-        findPermanent(player1, "Mountain").setTapped(true);
-        findPermanent(player2, "Plains").setTapped(true);
+        findPermanent(player1, "Mountain").tap();
+        findPermanent(player2, "Plains").tap();
         harness.setHand(player1, List.of(new KyrenLegate()));
 
         harness.castWithAlternateCost(player1, 0, (UUID) null);

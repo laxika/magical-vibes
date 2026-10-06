@@ -111,7 +111,7 @@ class HostileDesertTest extends BaseCardTest {
     void animatesTappedSourceOnly() {
         Permanent desert = addDesertReady(player1);
         Permanent otherDesert = addDesertReady(player1);
-        desert.setTapped(true);
+        desert.tap();
         harness.setGraveyard(player1, List.of(new Forest()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 

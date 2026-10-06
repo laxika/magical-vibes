@@ -65,7 +65,7 @@ class RavingDeadTest extends BaseCardTest {
     @Test
     void tappedCreatureIsNotRequiredToAttack() {
         Permanent ravingDead = addCreatureReady(player1, new RavingDead());
-        ravingDead.setTapped(true);
+        ravingDead.tap();
 
         advanceToBeginningOfCombat(player1);
         resolveAllTriggers();

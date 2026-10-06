@@ -98,7 +98,7 @@ class MonstrousCarabidTest extends BaseCardTest {
     void tappedCarabidDoesNotHaveToAttack() {
         Permanent carabid = harness.addToBattlefieldAndReturn(player1, new MonstrousCarabid());
         carabid.setSummoningSick(false);
-        carabid.setTapped(true);
+        carabid.tap();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();

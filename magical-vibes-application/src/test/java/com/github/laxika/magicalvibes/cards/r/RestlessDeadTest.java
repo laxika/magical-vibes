@@ -103,7 +103,7 @@ class RestlessDeadTest extends BaseCardTest {
     void tappedSummoningSickCreatureCanActivateRepeatedly() {
         Permanent dead = addCreatureReady(player1, new RestlessDead());
         dead.setSummoningSick(true);
-        dead.setTapped(true);
+        dead.tap();
         harness.addMana(player1, ManaColor.BLACK, 2);
 
         harness.activateAbility(player1, 0, null, null);

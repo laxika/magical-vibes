@@ -64,7 +64,7 @@ class PendulumOfPatternsTest extends BaseCardTest {
     @Test
     @DisplayName("A tapped Pendulum cannot activate its ability")
     void tappedArtifactCannotActivate() {
-        harness.addToBattlefieldAndReturn(player1, new PendulumOfPatterns()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new PendulumOfPatterns()).tap();
         harness.addMana(player1, ManaColor.COLORLESS, 5);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

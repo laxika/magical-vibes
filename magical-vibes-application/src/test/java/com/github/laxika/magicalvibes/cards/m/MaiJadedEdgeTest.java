@@ -136,7 +136,7 @@ class MaiJadedEdgeTest extends BaseCardTest {
     @DisplayName("A tapped Mai can exhaust on an opponent's turn")
     void exhaustDoesNotRequireUntappedSourceOrOwnTurn() {
         Permanent mai = addMai();
-        mai.setTapped(true);
+        mai.tap();
         harness.forceActivePlayer(player2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 

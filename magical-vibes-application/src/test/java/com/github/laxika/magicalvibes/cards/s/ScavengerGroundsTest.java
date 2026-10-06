@@ -108,7 +108,7 @@ class ScavengerGroundsTest extends BaseCardTest {
     void sacrificesTappedDesertWithEmptyGraveyards() {
         Permanent grounds = addReadyGrounds(player1);
         Permanent desert = harness.addToBattlefieldAndReturn(player1, new IfnirDeadlands());
-        desert.setTapped(true);
+        desert.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, 1, null, null);

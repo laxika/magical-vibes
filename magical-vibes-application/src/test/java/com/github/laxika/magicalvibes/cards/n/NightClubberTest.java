@@ -183,6 +183,6 @@ class NightClubberTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Night Clubber");
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        assertThat(gd.playerLibraries.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }
 }

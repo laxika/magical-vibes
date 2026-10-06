@@ -120,7 +120,7 @@ class OnslaughtTest extends BaseCardTest {
     void canTargetTappedCreature() {
         harness.addToBattlefield(player1, new Onslaught());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new RagingGoblin());
-        target.setTapped(true);
+        target.tap();
 
         harness.castFromHand(player1, new RagingGoblin(), "{R}");
         harness.handlePermanentChosen(player1, target.getId());

@@ -91,7 +91,7 @@ class RishkarPeemaRenegadeTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
         assertThat(gd.stack).isEmpty();
-        creature.setTapped(false);
+        creature.untap();
         creature.setCounterCount(CounterType.CHARGE, 0);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
@@ -128,7 +128,7 @@ class RishkarPeemaRenegadeTest extends BaseCardTest {
         Permanent rishkar = addCreatureReady(player1, new RishkarPeemaRenegade());
         creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         harness.activateAbility(player1, 0, 0, null, null);
-        creature.setTapped(false);
+        creature.untap();
         gd.playerBattlefields.get(player1.getId()).remove(rishkar);
         gd.playerGraveyards.get(player1.getId()).add(rishkar.getCard());
 

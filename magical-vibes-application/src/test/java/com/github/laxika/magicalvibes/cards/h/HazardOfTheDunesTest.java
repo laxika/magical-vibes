@@ -78,7 +78,7 @@ class HazardOfTheDunesTest extends BaseCardTest {
     @DisplayName("Exhaust can be activated while the creature is tapped")
     void tappedCreatureCanExhaust() {
         Permanent hazard = harness.addToBattlefieldAndReturn(player1, new HazardOfTheDunes());
-        hazard.setTapped(true);
+        hazard.tap();
         addExhaustMana();
 
         harness.activateAbility(player1, 0, 0, null, null);

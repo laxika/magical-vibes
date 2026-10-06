@@ -91,7 +91,7 @@ class PlanarGateTest extends BaseCardTest {
     @Test
     @DisplayName("Tapped Planar Gate still reduces creature costs")
     void tappedGateStillReducesCosts() {
-        harness.addToBattlefieldAndReturn(player1, new PlanarGate()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new PlanarGate()).tap();
 
         harness.castFromHand(player1, new BronzeHorse(), "{5}");
 

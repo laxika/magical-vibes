@@ -67,7 +67,7 @@ class RelentlessHunterTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent hunter = addReadyHunter(player1);
         hunter.setSummoningSick(true);
-        hunter.setTapped(true);
+        hunter.tap();
         addActivationMana(player1);
 
         harness.activateAbility(player1, 0, null, null);

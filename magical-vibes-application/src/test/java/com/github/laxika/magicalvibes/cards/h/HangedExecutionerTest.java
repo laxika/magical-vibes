@@ -82,7 +82,7 @@ class HangedExecutionerTest extends BaseCardTest {
     void activatesWhileTappedAndSummoningSick() {
         Permanent executioner = harness.addToBattlefieldAndReturn(player1, new HangedExecutioner());
         executioner.setSummoningSick(true);
-        executioner.setTapped(true);
+        executioner.tap();
         Permanent target = harness.addToBattlefieldAndReturn(player1, new HangedExecutioner());
         addActivationMana();
 

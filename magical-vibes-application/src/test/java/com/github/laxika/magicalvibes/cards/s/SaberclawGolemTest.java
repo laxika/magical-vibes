@@ -183,7 +183,7 @@ class SaberclawGolemTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Saberclaw Golem");
         harness.assertInGraveyard(player2, "Saberclaw Golem");
-        assertThat(player2.getLife()).isEqualTo(20);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
     }
 
     @Test

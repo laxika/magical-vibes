@@ -32,7 +32,7 @@ class RagingMinotaurTest extends BaseCardTest {
         var minotaur = findPermanent(player1, "Raging Minotaur");
         assertThat(als.canAttack(gd, minotaur, player1.getId())).isTrue();
 
-        minotaur.setTapped(true);
+        minotaur.tap();
 
         assertThat(als.canAttack(gd, minotaur, player1.getId())).isFalse();
     }

@@ -101,7 +101,7 @@ class HornOfGreedTest extends BaseCardTest {
     @Test
     @DisplayName("A tapped Horn still triggers and draws only when its ability resolves")
     void tappedHornDrawsOnResolution() {
-        harness.addToBattlefieldAndReturn(player2, new HornOfGreed()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player2, new HornOfGreed()).tap();
         harness.setHand(player1, List.of(new VolrathsStronghold()));
         harness.setLibrary(player1, List.of(new VolrathsStronghold()));
 

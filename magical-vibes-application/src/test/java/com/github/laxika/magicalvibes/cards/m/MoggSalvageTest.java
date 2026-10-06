@@ -136,8 +136,8 @@ class MoggSalvageTest extends BaseCardTest {
     void tappedLandsQualify() {
         Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
         Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
-        mountain.setTapped(true);
-        island.setTapped(true);
+        mountain.tap();
+        island.tap();
         Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
         harness.setHand(player1, List.of(new MoggSalvage()));
 

@@ -113,7 +113,7 @@ class LeoninSunStandardTest extends BaseCardTest {
     @DisplayName("A tapped Standard can activate during an opponent's turn")
     void activatesWhileTappedOnOpponentsTurn() {
         Permanent standard = addStandard(player1);
-        standard.setTapped(true);
+        standard.tap();
         Permanent creature = addCreatureReady(player1, new AlphaMyr());
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

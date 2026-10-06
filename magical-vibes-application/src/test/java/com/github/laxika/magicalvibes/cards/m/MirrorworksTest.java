@@ -180,7 +180,7 @@ class MirrorworksTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         Permanent sphere = harness.enterBattlefieldAndReturn(player1, new SphereOfTheSuns());
         sphere.setCounterCount(CounterType.CHARGE, 1);
-        sphere.setTapped(false);
+        sphere.untap();
 
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);

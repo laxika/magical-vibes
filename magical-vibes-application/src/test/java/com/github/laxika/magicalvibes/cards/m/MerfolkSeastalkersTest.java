@@ -76,7 +76,7 @@ class MerfolkSeastalkersTest extends BaseCardTest {
     @Test
     void canActivateWhileTappedAndSummoningSick() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new MerfolkSeastalkers());
-        source.setTapped(true);
+        source.tap();
         Permanent target = harness.addToBattlefieldAndReturn(player2, new KrakenHatchling());
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -121,7 +121,7 @@ class MerfolkSeastalkersTest extends BaseCardTest {
     void canTargetAlreadyTappedCreature() {
         addCreatureReady(player1, new MerfolkSeastalkers());
         Permanent target = addCreatureReady(player2, new KrakenHatchling());
-        target.setTapped(true);
+        target.tap();
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 

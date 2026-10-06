@@ -103,7 +103,7 @@ class SecondThoughtsTest extends BaseCardTest {
     @DisplayName("Can exile a tapped, blocked attacker and still draws exactly one card")
     void exilesBlockedAttackerAndDrawsExactlyOneCard() {
         Permanent attacker = addAttacker();
-        attacker.setTapped(true);
+        attacker.tap();
         attacker.setBlockedThisCombat(true);
         harness.setLibrary(player2, List.of(new DwarvenGrunt(), new DwarvenGrunt()));
 

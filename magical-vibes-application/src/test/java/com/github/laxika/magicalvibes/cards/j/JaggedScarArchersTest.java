@@ -194,7 +194,7 @@ class JaggedScarArchersTest extends BaseCardTest {
     @DisplayName("An already tapped source cannot activate again")
     void cannotActivateWhileTapped() {
         Permanent archers = addArchersReady(player1);
-        archers.setTapped(true);
+        archers.tap();
         Permanent hawk = harness.addToBattlefieldAndReturn(player2, new SuntailHawk());
         harness.forceActivePlayer(player1);
 

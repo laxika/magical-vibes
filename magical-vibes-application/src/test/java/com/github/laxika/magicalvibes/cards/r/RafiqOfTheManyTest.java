@@ -51,7 +51,7 @@ class RafiqOfTheManyTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(1));
         resolveAllTriggers();
-        harness.passUntil(TurnStep.END_COMBAT);
+        harness.passUntil(TurnStep.END_OF_COMBAT);
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(14);
     }

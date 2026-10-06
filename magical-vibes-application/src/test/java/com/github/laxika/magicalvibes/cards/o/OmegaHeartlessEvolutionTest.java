@@ -90,7 +90,7 @@ class OmegaHeartlessEvolutionTest extends BaseCardTest {
         harness.addToBattlefield(player1, new EvolvingWilds());
         harness.addToBattlefield(player2, new EvolvingWilds());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        target.setTapped(true);
+        target.tap();
         prepareCast();
         harness.castCreature(player1, 0, List.of(target.getId()));
         harness.passBothPriorities();

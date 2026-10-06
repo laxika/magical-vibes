@@ -99,7 +99,7 @@ class ShiarSoldierTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent soldier = addCreatureReady(player1, new ShiarSoldier());
-        soldier.setTapped(true);
+        soldier.tap();
         Permanent target = harness.addToBattlefieldAndReturn(player1, new ShiarSoldier());
         harness.addMana(player1, ManaColor.BLUE, 1);
 

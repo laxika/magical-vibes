@@ -138,7 +138,7 @@ class HellspurBruteTest extends BaseCardTest {
     @DisplayName("A tapped Hellspur Brute on the battlefield counts as an outlaw")
     void countsTappedBruteOnBattlefield() {
         Permanent brute = harness.addToBattlefieldAndReturn(player1, new HellspurBrute());
-        brute.setTapped(true);
+        brute.tap();
         harness.setHand(player1, List.of(new HellspurBrute()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.addMana(player1, ManaColor.RED, 1);

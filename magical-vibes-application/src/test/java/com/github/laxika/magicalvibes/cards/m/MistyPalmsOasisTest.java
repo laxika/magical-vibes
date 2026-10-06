@@ -78,7 +78,7 @@ class MistyPalmsOasisTest extends BaseCardTest {
     @Test
     void tappedOasisCannotActivateAnyAbility() {
         Permanent oasis = addOasisReady(player1);
-        oasis.setTapped(true);
+        oasis.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         for (int abilityIndex = 0; abilityIndex < 3; abilityIndex++) {

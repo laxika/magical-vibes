@@ -112,7 +112,7 @@ class LodestoneNeedleTest extends BaseCardTest {
     @Test
     void alreadyTappedCreatureStillGetsTwoStunCounters() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new SunshotMilitia());
-        creature.setTapped(true);
+        creature.tap();
         harness.setHand(player1, List.of(new LodestoneNeedle()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);

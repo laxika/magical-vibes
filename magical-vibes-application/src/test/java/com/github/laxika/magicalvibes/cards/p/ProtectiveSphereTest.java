@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -157,7 +156,7 @@ class ProtectiveSphereTest extends BaseCardTest {
         harness.handleListChoice(player1, "BLUE");
 
         declareAttackersAndPrepareBlockers(player2, List.of(0));
-        gs.declareBlockers(gd, player1, Map.of());
+        gs.declareBlockers(gd, player1, List.of());
         resolveCombat(player2);
 
         harness.assertLife(player1, 16);

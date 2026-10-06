@@ -91,7 +91,7 @@ class ScrapdiverSerpentTest extends BaseCardTest {
     @DisplayName("A tapped noncreature artifact also prevents blocking")
     void cantBeBlockedWhenDefenderControlsTappedEquipment() {
         Permanent equipment = harness.addToBattlefieldAndReturn(player2, new AccordersShield());
-        equipment.setTapped(true);
+        equipment.tap();
         harness.addToBattlefield(player2, new MoriokReaver());
         Permanent serpent = harness.addToBattlefieldAndReturn(player1, new ScrapdiverSerpent());
         serpent.setSummoningSick(false);

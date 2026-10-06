@@ -73,7 +73,7 @@ class JeweledLotusTest extends BaseCardTest {
 
     @Test
     void tappedLotusCannotActivateOrBeSacrificedForMana() {
-        harness.addToBattlefieldAndReturn(player1, new JeweledLotus()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new JeweledLotus()).tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);

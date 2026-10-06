@@ -125,7 +125,7 @@ class MegatogTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent megatog = harness.addToBattlefieldAndReturn(player1, new Megatog());
         megatog.setSummoningSick(true);
-        megatog.setTapped(true);
+        megatog.tap();
         harness.addToBattlefield(player1, new LeoninScimitar());
 
         harness.activateAbility(player1, 0, null, null);

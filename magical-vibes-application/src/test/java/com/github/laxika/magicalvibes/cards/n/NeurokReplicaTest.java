@@ -201,7 +201,7 @@ class NeurokReplicaTest extends BaseCardTest {
     @DisplayName("Can activate while tapped because the ability has no tap cost")
     void canActivateWhileTapped() {
         Permanent replica = addReadyReplica(player1);
-        replica.setTapped(true);
+        replica.tap();
         Permanent target = addCreatureReady(player2, new CopperMyr());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);

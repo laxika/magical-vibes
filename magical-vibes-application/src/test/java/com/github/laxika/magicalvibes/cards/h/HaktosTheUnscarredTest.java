@@ -66,7 +66,7 @@ class HaktosTheUnscarredTest extends BaseCardTest {
     @Test
     void tappedHaktosIsNotRequiredToAttack() {
         Permanent haktos = addCreatureReady(player1, new HaktosTheUnscarred());
-        haktos.setTapped(true);
+        haktos.tap();
 
         declareAttackers(List.of());
 

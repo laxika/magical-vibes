@@ -63,7 +63,7 @@ class MosstodonTest extends BaseCardTest {
     @Test
     void canTargetItselfWhileTapped() {
         Permanent source = addCreatureReady(player1, new Mosstodon());
-        source.setTapped(true);
+        source.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, 0, null, source.getId());

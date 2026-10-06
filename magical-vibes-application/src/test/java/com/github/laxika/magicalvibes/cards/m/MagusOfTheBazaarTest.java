@@ -85,7 +85,7 @@ class MagusOfTheBazaarTest extends BaseCardTest {
     @DisplayName("A tapped Magus cannot activate the tap ability")
     void cannotActivateWhileTapped() {
         Permanent magus = addCreatureReady(player1, new MagusOfTheBazaar());
-        magus.setTapped(true);
+        magus.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);

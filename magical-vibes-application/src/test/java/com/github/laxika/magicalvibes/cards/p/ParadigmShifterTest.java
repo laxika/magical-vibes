@@ -65,7 +65,7 @@ class ParadigmShifterTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         gd.playerManaPools.get(player1.getId()).clear();
-        findPermanent(player1, "Paradigm Shifter").setTapped(false);
+        findPermanent(player1, "Paradigm Shifter").untap();
         harness.activateAbility(player1, 0, 0, null, null);
         harness.handleListChoice(player1, ManaColor.BLUE.name());
         harness.handleListChoice(player1, ManaColor.RED.name());

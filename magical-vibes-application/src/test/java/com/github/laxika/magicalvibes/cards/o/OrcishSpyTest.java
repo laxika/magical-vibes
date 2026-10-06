@@ -187,7 +187,7 @@ class OrcishSpyTest extends BaseCardTest {
     @DisplayName("An already tapped Spy cannot activate again")
     void cannotActivateWhileTapped() {
         setupSpy();
-        findPermanent(player1, "Orcish Spy").setTapped(true);
+        findPermanent(player1, "Orcish Spy").tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)

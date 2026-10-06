@@ -92,7 +92,7 @@ class HighFlyingAceTest extends BaseCardTest {
     void canActivateWhileSummoningSickAndTapped() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new HighFlyingAce());
         source.setSummoningSick(true);
-        source.setTapped(true);
+        source.tap();
         Permanent target = addCreatureReady(player1, new FrogButler());
         addMana();
 

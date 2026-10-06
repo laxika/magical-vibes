@@ -102,7 +102,7 @@ class HollowheadSliverTest extends BaseCardTest {
     @DisplayName("An already tapped Sliver cannot pay the tap cost")
     void tappedSliverCannotActivate() {
         Permanent sliver = addCreatureReady(player1, new HollowheadSliver());
-        sliver.setTapped(true);
+        sliver.tap();
         harness.setHand(player1, List.of(new HollowheadSliver()));
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

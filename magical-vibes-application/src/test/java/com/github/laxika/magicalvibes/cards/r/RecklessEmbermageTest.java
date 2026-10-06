@@ -99,7 +99,7 @@ class RecklessEmbermageTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent embermage = harness.addToBattlefieldAndReturn(player1, new RecklessEmbermage());
         embermage.setSummoningSick(true);
-        embermage.setTapped(true);
+        embermage.tap();
         addRedMana(player1);
 
         harness.activateAbility(player1, 0, null, player2.getId());

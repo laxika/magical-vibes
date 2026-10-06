@@ -71,7 +71,7 @@ class MerfolkCoralsmithTest extends BaseCardTest {
     void activatesWhileTappedAndSummoningSick() {
         Permanent coralsmith = harness.addToBattlefieldAndReturn(player1, new MerfolkCoralsmith());
         coralsmith.setSummoningSick(true);
-        coralsmith.setTapped(true);
+        coralsmith.tap();
         int basePower = gqs.getEffectivePower(gd, coralsmith);
         int baseToughness = gqs.getEffectiveToughness(gd, coralsmith);
         harness.addMana(player1, ManaColor.COLORLESS, 1);

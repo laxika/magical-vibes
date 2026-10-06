@@ -101,7 +101,7 @@ class NamoraTheSeaQueenTest extends BaseCardTest {
     @DisplayName("Power-up can be activated while Namora is tapped and summoning sick")
     void powerUpDoesNotRequireTappingOrHaste() {
         Permanent namora = harness.enterBattlefieldAndReturn(player1, new NamoraTheSeaQueen());
-        namora.setTapped(true);
+        namora.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.activateAbility(player1, 0, null, null);

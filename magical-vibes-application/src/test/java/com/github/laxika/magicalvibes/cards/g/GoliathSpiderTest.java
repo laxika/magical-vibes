@@ -51,7 +51,7 @@ class GoliathSpiderTest extends BaseCardTest {
         Permanent blocker = addCreatureReady(player2, new GoliathSpider());
 
         declareAttackersAndPrepareBlockers(List.of(0));
-        blocker.setTapped(true);
+        blocker.tap();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0))))

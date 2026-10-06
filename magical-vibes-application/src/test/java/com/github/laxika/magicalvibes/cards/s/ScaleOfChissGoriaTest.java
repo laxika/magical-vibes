@@ -167,7 +167,7 @@ class ScaleOfChissGoriaTest extends BaseCardTest {
     @DisplayName("Affinity ignores nonartifacts and counts tapped artifacts")
     void affinityCountsTappedArtifactsButNotLands() {
         Permanent bonesplitter = harness.addToBattlefieldAndReturn(player1, new Bonesplitter());
-        bonesplitter.setTapped(true);
+        bonesplitter.tap();
         for (int i = 0; i < 3; i++) {
             harness.addToBattlefield(player1, new Forest());
         }

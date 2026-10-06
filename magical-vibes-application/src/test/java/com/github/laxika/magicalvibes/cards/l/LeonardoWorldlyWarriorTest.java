@@ -81,7 +81,7 @@ class LeonardoWorldlyWarriorTest extends BaseCardTest {
     void tappedCreaturesReduceOnlyGenericMana() {
         for (int i = 0; i < 8; i++) {
             Permanent creature = harness.addToBattlefieldAndReturn(player1, new AcidicSlime());
-            creature.setTapped(true);
+            creature.tap();
         }
         harness.setHand(player1, List.of(new LeonardoWorldlyWarrior()));
         harness.addMana(player1, ManaColor.COLORLESS, 1);

@@ -128,7 +128,7 @@ class GogoMysteriousMimeTest extends BaseCardTest {
         gogo.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         Permanent target = addCreatureReady(player1, new SolemnSimulacrum());
         target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
-        target.setTapped(true);
+        target.tap();
 
         resolveChoice(target);
 

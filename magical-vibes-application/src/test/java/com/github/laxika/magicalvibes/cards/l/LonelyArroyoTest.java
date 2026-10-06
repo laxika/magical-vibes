@@ -72,7 +72,7 @@ class LonelyArroyoTest extends BaseCardTest {
     @Test
     void tappedLandCannotProduceEitherColor() {
         Permanent land = addReadyLand();
-        land.setTapped(true);
+        land.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)

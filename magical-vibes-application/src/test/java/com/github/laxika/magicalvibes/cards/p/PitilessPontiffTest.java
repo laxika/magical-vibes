@@ -96,7 +96,7 @@ class PitilessPontiffTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent pontiff = harness.addToBattlefieldAndReturn(player1, new PitilessPontiff());
         pontiff.setSummoningSick(true);
-        pontiff.setTapped(true);
+        pontiff.tap();
         harness.addToBattlefield(player1, new PitilessPontiff());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

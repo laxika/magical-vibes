@@ -172,7 +172,7 @@ class GreelMindRakerTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Forest(), new Forest()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         Permanent greel = readyGreel();
-        greel.setTapped(true);
+        greel.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)

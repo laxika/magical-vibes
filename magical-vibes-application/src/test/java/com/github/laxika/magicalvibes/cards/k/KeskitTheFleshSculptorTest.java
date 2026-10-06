@@ -148,7 +148,9 @@ class KeskitTheFleshSculptorTest extends BaseCardTest {
     @ValueSource(booleans = {false, true})
     void cannotActivateWhileSummoningSickOrTapped(boolean tapped) {
         Permanent keskit = addReadyKeskit();
-        keskit.setTapped(tapped);
+        if (tapped) {
+            keskit.tap();
+        }
         keskit.setSummoningSick(!tapped);
         harness.addToBattlefield(player1, new Spellbook());
         harness.addToBattlefield(player1, new Spellbook());

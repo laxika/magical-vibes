@@ -99,7 +99,7 @@ class OliviasDragoonTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         Permanent dragoon = harness.addToBattlefieldAndReturn(player1, new OliviasDragoon());
-        dragoon.setTapped(true);
+        dragoon.tap();
         dragoon.setSummoningSick(true);
         harness.setHand(player1, List.of(new OliviasDragoon(), new OliviasDragoon()));
 

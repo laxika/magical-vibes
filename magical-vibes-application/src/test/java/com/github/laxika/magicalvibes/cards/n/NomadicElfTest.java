@@ -93,7 +93,7 @@ class NomadicElfTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         var elf = harness.addToBattlefieldAndReturn(player1, new NomadicElf());
         elf.setSummoningSick(true);
-        elf.setTapped(true);
+        elf.tap();
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

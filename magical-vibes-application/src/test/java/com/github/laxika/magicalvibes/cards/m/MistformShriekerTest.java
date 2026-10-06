@@ -82,7 +82,7 @@ class MistformShriekerTest extends BaseCardTest {
     void abilityCanBeActivatedWhileTappedAndSummoningSick() {
         Permanent shrieker = harness.addToBattlefieldAndReturn(player1, new MistformShrieker());
         shrieker.setSummoningSick(true);
-        shrieker.setTapped(true);
+        shrieker.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         activateAndChoose(CardSubtype.GOBLIN);

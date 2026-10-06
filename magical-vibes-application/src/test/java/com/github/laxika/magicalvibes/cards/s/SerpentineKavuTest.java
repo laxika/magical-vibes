@@ -104,7 +104,7 @@ class SerpentineKavuTest extends BaseCardTest {
     @DisplayName("A tapped, newly entered Kavu can activate its haste ability")
     void tappedNewlyEnteredKavuCanActivate() {
         Permanent kavu = harness.addToBattlefieldAndReturn(player1, new SerpentineKavu());
-        kavu.setTapped(true);
+        kavu.tap();
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, null);

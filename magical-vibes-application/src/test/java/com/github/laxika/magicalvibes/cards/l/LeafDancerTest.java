@@ -21,7 +21,7 @@ class LeafDancerTest extends BaseCardTest {
     @DisplayName("A tapped Forest still prevents Leaf Dancer from being blocked")
     void cannotBeBlockedWhenDefendersForestIsTapped() {
         Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
-        forest.setTapped(true);
+        forest.tap();
         Permanent blocker = addCreatureReady(player2, new NantukoElder());
         Permanent leafDancer = addCreatureReady(player1, new LeafDancer());
 

@@ -106,7 +106,7 @@ class IcatianInfantryTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick(int abilityIndex) {
         Permanent infantry = harness.addToBattlefieldAndReturn(player1, new IcatianInfantry());
         infantry.setSummoningSick(true);
-        infantry.setTapped(true);
+        infantry.tap();
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, abilityIndex, null, null);

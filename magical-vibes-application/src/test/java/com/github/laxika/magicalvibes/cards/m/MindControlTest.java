@@ -160,7 +160,7 @@ class MindControlTest extends BaseCardTest {
     @DisplayName("Enchanting your own creature does not change its control or tap state")
     void enchantingOwnCreatureKeepsControl() {
         Permanent creature = addCreatureReady(player1, new RuneclawBear());
-        creature.setTapped(true);
+        creature.tap();
         harness.setHand(player1, List.of(new MindControl()));
         harness.addMana(player1, ManaColor.BLUE, 5);
 
@@ -177,7 +177,7 @@ class MindControlTest extends BaseCardTest {
     @DisplayName("Removing the newer Mind Control restores the older Aura's controller")
     void removingNewerControlRestoresOlderControl() {
         Permanent creature = addCreatureReady(player2, new RuneclawBear());
-        creature.setTapped(true);
+        creature.tap();
         harness.setHand(player1, List.of(new MindControl()));
         harness.addMana(player1, ManaColor.BLUE, 5);
         harness.castEnchantment(player1, 0, creature.getId());

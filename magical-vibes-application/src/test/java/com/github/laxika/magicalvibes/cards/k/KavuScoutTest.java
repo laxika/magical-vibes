@@ -69,7 +69,7 @@ class KavuScoutTest extends BaseCardTest {
     void updatesBonusWhenLandsEnterAndLeave() {
         Permanent scout = addCreatureReady(player1, new KavuScout());
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
-        forest.setTapped(true);
+        forest.tap();
 
         assertThat(gqs.getEffectivePower(gd, scout)).isEqualTo(1);
 

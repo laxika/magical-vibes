@@ -134,7 +134,7 @@ class KarametrasFavorTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Karametra's Favor");
         harness.assertNotOnBattlefield(player1, "Karametra's Favor");
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        assertThat(gd.playerLibraries.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
         assertThat(gd.stack).isEmpty();
     }
 

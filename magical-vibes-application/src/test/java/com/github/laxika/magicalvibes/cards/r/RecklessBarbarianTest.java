@@ -26,7 +26,7 @@ class RecklessBarbarianTest extends BaseCardTest {
     @DisplayName("A tapped summoning-sick Barbarian can be sacrificed without using the stack")
     void tappedSummoningSickCreatureCanProduceManaImmediately() {
         var barbarian = harness.addToBattlefieldAndReturn(player1, new RecklessBarbarian());
-        barbarian.setTapped(true);
+        barbarian.tap();
         barbarian.setSummoningSick(true);
 
         harness.activateAbility(player1, 0, null, null);

@@ -127,7 +127,7 @@ class RuneCervinRiderTest extends BaseCardTest {
     @DisplayName("A tapped Rider can activate its ability immediately after entering")
     void tappedRiderCanActivate() {
         Permanent rider = harness.addToBattlefieldAndReturn(player1, new RuneCervinRider());
-        rider.setTapped(true);
+        rider.tap();
         int basePower = gqs.getEffectivePower(gd, rider);
         int baseToughness = gqs.getEffectiveToughness(gd, rider);
 

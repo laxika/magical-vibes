@@ -1,4 +1,4 @@
-﻿package com.github.laxika.magicalvibes.cards.h;
+package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.b.BorealDruid;
 import com.github.laxika.magicalvibes.cards.c.ChillToTheBone;

@@ -209,7 +209,7 @@ class HellsCaretakerTest extends BaseCardTest {
         Card target = new GrizzlyBears();
         harness.setGraveyard(player1, List.of(target));
         advanceToUpkeep(player1);
-        caretaker.setTapped(true);
+        caretaker.tap();
 
         assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
                 player1, 0, 0, List.of(target.getId())))

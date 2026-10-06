@@ -121,7 +121,7 @@ class LivingTwisterTest extends BaseCardTest {
     void damageAbilityDoesNotRequireTappingOrHaste() {
         Permanent twister = harness.addToBattlefieldAndReturn(player1, new LivingTwister());
         twister.setSummoningSick(true);
-        twister.setTapped(true);
+        twister.tap();
         harness.setHand(player1, List.of(new Mountain()));
         harness.addMana(player1, ManaColor.RED, 2);
 
@@ -136,11 +136,11 @@ class LivingTwisterTest extends BaseCardTest {
     @DisplayName("The return ability cannot choose an opponent's tapped land or a tapped nonland")
     void returnAbilityExcludesOpposingLandsAndNonlands() {
         Permanent twister = harness.addToBattlefieldAndReturn(player1, new LivingTwister());
-        twister.setTapped(true);
+        twister.tap();
         Permanent ownForest = harness.addToBattlefieldAndReturn(player1, new Forest());
-        ownForest.setTapped(true);
+        ownForest.tap();
         Permanent opposingForest = harness.addToBattlefieldAndReturn(player2, new Forest());
-        opposingForest.setTapped(true);
+        opposingForest.tap();
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.activateAbility(player1, 0, 1, null, null);
@@ -210,7 +210,7 @@ class LivingTwisterTest extends BaseCardTest {
     void returnAbilityReturnsBorrowedLandToOwner() {
         addLivingTwister();
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
-        forest.setTapped(true);
+        forest.tap();
         gd.stolenCreatures.put(forest.getId(), player2.getId());
         harness.addMana(player1, ManaColor.GREEN, 1);
 

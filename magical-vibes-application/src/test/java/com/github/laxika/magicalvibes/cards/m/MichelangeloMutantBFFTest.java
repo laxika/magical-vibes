@@ -172,7 +172,7 @@ class MichelangeloMutantBFFTest extends BaseCardTest {
     void tappedMutagenCannotActivate() {
         Permanent creature = enterMichelangelo();
         Permanent mutagen = findPermanent(player1, "Mutagen");
-        mutagen.setTapped(true);
+        mutagen.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         assertThatThrownBy(() -> activateMutagen(mutagen, creature))

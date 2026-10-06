@@ -21,7 +21,7 @@ class GroundskeeperTest extends BaseCardTest {
     @DisplayName("Can activate repeatedly while tapped and summoning sick")
     void canActivateRepeatedlyWhileTappedAndSummoningSick() {
         var groundskeeper = harness.addToBattlefieldAndReturn(player1, new Groundskeeper());
-        groundskeeper.setTapped(true);
+        groundskeeper.tap();
         groundskeeper.setSummoningSick(true);
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);

@@ -124,7 +124,7 @@ class KnightOfDawnTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent knight = harness.addToBattlefieldAndReturn(player1, new KnightOfDawn());
         knight.setSummoningSick(true);
-        knight.setTapped(true);
+        knight.tap();
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.activateAbility(player1, 0, null, null);

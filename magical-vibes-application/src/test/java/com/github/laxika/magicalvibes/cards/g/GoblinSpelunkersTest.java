@@ -19,7 +19,7 @@ class GoblinSpelunkersTest extends BaseCardTest {
     @DisplayName("A tapped Mountain still prevents blocking a creature with mountainwalk")
     void cannotBeBlockedWhenDefendersMountainIsTapped() {
         Permanent mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
-        mountain.setTapped(true);
+        mountain.tap();
         Permanent attacker = addCreatureReady(player1, new GoblinSpelunkers());
         Permanent blocker = addCreatureReady(player2, new GoblinSpelunkers());
 

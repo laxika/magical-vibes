@@ -112,7 +112,7 @@ class GoblinRimerunnerTest extends BaseCardTest {
     @DisplayName("Snow-Covered Mountain mana pays for haste while the source is tapped")
     void snowLandPaysForHasteWhileTapped() {
         Permanent rimerunner = harness.addToBattlefieldAndReturn(player1, new GoblinRimerunner());
-        rimerunner.setTapped(true);
+        rimerunner.tap();
         Permanent other = addCreatureReady(player1, new GoblinRimerunner());
         Permanent land = harness.addToBattlefieldAndReturn(player1, new SnowCoveredMountain());
 

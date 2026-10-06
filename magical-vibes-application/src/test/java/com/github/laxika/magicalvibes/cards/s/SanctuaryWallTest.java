@@ -76,7 +76,7 @@ class SanctuaryWallTest extends BaseCardTest {
     void canPutStunCountersOnAnAlreadyTappedTarget() {
         Permanent wall = addCreatureReady(player1, new SanctuaryWall());
         Permanent target = addCreatureReady(player2, new SanctuaryWall());
-        target.setTapped(true);
+        target.tap();
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.activateAbility(player1, 0, 0, null, target.getId());

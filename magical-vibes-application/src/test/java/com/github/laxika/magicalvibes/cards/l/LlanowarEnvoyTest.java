@@ -120,7 +120,7 @@ class LlanowarEnvoyTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent envoy = harness.addToBattlefieldAndReturn(player1, new LlanowarEnvoy());
         envoy.setSummoningSick(true);
-        envoy.setTapped(true);
+        envoy.tap();
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

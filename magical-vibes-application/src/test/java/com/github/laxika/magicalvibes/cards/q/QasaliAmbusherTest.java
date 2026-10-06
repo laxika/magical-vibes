@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.cards.q;
+import java.util.UUID;
 
 import com.github.laxika.magicalvibes.cards.a.AjaniVengeant;
 import com.github.laxika.magicalvibes.cards.d.DruidOfTheAnima;
@@ -80,7 +81,7 @@ class QasaliAmbusherTest extends BaseCardTest {
         attackController(player2, player1);
         harness.setHand(player1, List.of(new QasaliAmbusher()));
 
-        assertThatThrownBy(() -> harness.castWithAlternateCost(player1, 0, null))
+        assertThatThrownBy(() -> harness.castWithAlternateCost(player1, 0, (UUID) null))
                 .isInstanceOf(IllegalStateException.class);
         harness.assertInHand(player1, "Qasali Ambusher");
     }
@@ -92,7 +93,7 @@ class QasaliAmbusherTest extends BaseCardTest {
         attackController(player2, player1);
         harness.setHand(player1, List.of(new QasaliAmbusher()));
 
-        assertThatThrownBy(() -> harness.castWithAlternateCost(player1, 0, null))
+        assertThatThrownBy(() -> harness.castWithAlternateCost(player1, 0, (UUID) null))
                 .isInstanceOf(IllegalStateException.class);
         harness.assertInHand(player1, "Qasali Ambusher");
     }
@@ -104,7 +105,7 @@ class QasaliAmbusherTest extends BaseCardTest {
         attackController(player1, player2);
         harness.setHand(player1, List.of(new QasaliAmbusher()));
 
-        assertThatThrownBy(() -> harness.castWithAlternateCost(player1, 0, null))
+        assertThatThrownBy(() -> harness.castWithAlternateCost(player1, 0, (UUID) null))
                 .isInstanceOf(IllegalStateException.class);
         harness.assertInHand(player1, "Qasali Ambusher");
     }
@@ -118,7 +119,7 @@ class QasaliAmbusherTest extends BaseCardTest {
         attackController(player2, player1).setAttackTarget(planeswalker.getId());
         harness.setHand(player1, List.of(new QasaliAmbusher()));
 
-        assertThatThrownBy(() -> harness.castWithAlternateCost(player1, 0, null))
+        assertThatThrownBy(() -> harness.castWithAlternateCost(player1, 0, (UUID) null))
                 .isInstanceOf(IllegalStateException.class);
         harness.assertInHand(player1, "Qasali Ambusher");
     }
@@ -130,7 +131,7 @@ class QasaliAmbusherTest extends BaseCardTest {
         attackController(player2, player1);
         harness.setHand(player1, List.of(new QasaliAmbusher()));
 
-        harness.castWithAlternateCost(player1, 0, null);
+        harness.castWithAlternateCost(player1, 0, (UUID) null);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Qasali Ambusher");
@@ -155,7 +156,7 @@ class QasaliAmbusherTest extends BaseCardTest {
         attackController(player2, player1);
         harness.setHand(player1, List.of(new QasaliAmbusher()));
 
-        assertThatThrownBy(() -> harness.castWithAlternateCost(player1, 0, null))
+        assertThatThrownBy(() -> harness.castWithAlternateCost(player1, 0, (UUID) null))
                 .isInstanceOf(IllegalStateException.class);
         harness.assertInHand(player1, "Qasali Ambusher");
     }
@@ -170,7 +171,7 @@ class QasaliAmbusherTest extends BaseCardTest {
         harness.setHand(player1, List.of(new QasaliAmbusher()));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castWithAlternateCost(player1, 0, null);
+        harness.castWithAlternateCost(player1, 0, (UUID) null);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Qasali Ambusher");

@@ -159,7 +159,7 @@ class KitsuneDawnbladeTest extends BaseCardTest {
     @DisplayName("An already tapped creature is a legal ETB target")
     void etbCanTargetTappedCreature() {
         Permanent bonesetter = harness.addToBattlefieldAndReturn(player2, new KitsuneBonesetter());
-        bonesetter.setTapped(true);
+        bonesetter.tap();
 
         castKitsuneDawnblade();
         harness.handlePermanentChosen(player1, bonesetter.getId());

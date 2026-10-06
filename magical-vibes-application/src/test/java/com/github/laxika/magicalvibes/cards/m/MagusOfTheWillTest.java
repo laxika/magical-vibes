@@ -104,7 +104,7 @@ class MagusOfTheWillTest extends BaseCardTest {
     @DisplayName("A tapped Magus cannot activate")
     void cannotActivateWhileTapped() {
         Permanent magus = addReadyMagus();
-        magus.setTapped(true);
+        magus.tap();
         harness.addMana(player1, ManaColor.BLACK, 3);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))

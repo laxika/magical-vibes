@@ -22,7 +22,7 @@ class LiberatedDwarfTest extends BaseCardTest {
     @Test
     void tappedDwarfPaysSacrificeAndManaBeforeAbilityResolves() {
         Permanent dwarf = harness.addToBattlefieldAndReturn(player1, new LiberatedDwarf());
-        dwarf.setTapped(true);
+        dwarf.tap();
         Permanent warthog = harness.addToBattlefieldAndReturn(player1, new GiantWarthog());
         harness.addMana(player1, ManaColor.RED, 1);
 

@@ -99,7 +99,7 @@ class GuerrillaGorillaTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent gorilla = harness.addToBattlefieldAndReturn(player1, new GuerrillaGorilla());
         gorilla.setSummoningSick(true);
-        gorilla.setTapped(true);
+        gorilla.tap();
         Permanent target = addArtifact(player2);
 
         harness.activateAbility(player1, 0, null, target.getId());

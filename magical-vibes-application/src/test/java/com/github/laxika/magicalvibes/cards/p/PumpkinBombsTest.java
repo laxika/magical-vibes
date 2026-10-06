@@ -98,7 +98,7 @@ class PumpkinBombsTest extends BaseCardTest {
     @DisplayName("A tapped Pumpkin Bombs cannot activate")
     void cannotActivateWhileTapped() {
         Permanent bombs = addReadyPumpkinBombs();
-        bombs.setTapped(true);
+        bombs.tap();
         harness.setHand(player1, List.of(new PumpkinBombs(), new PumpkinBombs()));
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
@@ -121,7 +121,7 @@ class PumpkinBombsTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        bombs.setTapped(false);
+        bombs.untap();
         harness.setHand(player2, List.of(new PumpkinBombs(), new PumpkinBombs()));
         harness.setLibrary(player2, List.of(new PumpkinBombs(), new PumpkinBombs(), new PumpkinBombs()));
 

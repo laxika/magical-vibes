@@ -247,7 +247,7 @@ class MosswortBridgeTest extends BaseCardTest {
         assertThat(harness.getGameData().getPlayerExiledCards(player1.getId()))
                 .containsExactlyInAnyOrder(first, second);
 
-        findPermanent(player1, "Mosswort Bridge").setTapped(false);
+        findPermanent(player1, "Mosswort Bridge").untap();
         harness.addToBattlefield(player1, new AvatarOfMight());
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.GREEN, 1);

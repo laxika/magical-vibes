@@ -94,7 +94,7 @@ class ScreechingHarpyTest extends BaseCardTest {
     void regenerationCanBeActivatedWhileTappedAndSummoningSick() {
         Permanent harpy = addCreatureReady(player1, new ScreechingHarpy());
         harpy.setSummoningSick(true);
-        harpy.setTapped(true);
+        harpy.tap();
         harness.addMana(player1, ManaColor.BLACK, 2);
 
         harness.activateAbility(player1, 0, null, null);

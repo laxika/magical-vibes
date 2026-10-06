@@ -107,7 +107,7 @@ class PiratesPrizeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.castAndResolveSorcery(player1, 0, 0);
         Permanent treasure = findPermanent(player1, "Treasure");
-        treasure.setTapped(true);
+        treasure.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);

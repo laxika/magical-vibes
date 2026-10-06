@@ -87,7 +87,7 @@ class GrimDraugrTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent draugr = addReadyDraugr();
         draugr.setSummoningSick(true);
-        draugr.setTapped(true);
+        draugr.tap();
         addSnowMana();
 
         harness.activateAbility(player1, 0, 0, null, null);

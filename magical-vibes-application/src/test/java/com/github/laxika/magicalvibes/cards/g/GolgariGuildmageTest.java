@@ -172,7 +172,7 @@ class GolgariGuildmageTest extends BaseCardTest {
     void tappedSummoningSickGuildmageCanActivateRepeatedly() {
         Permanent guildmage = harness.addToBattlefieldAndReturn(player1, new GolgariGuildmage());
         guildmage.setSummoningSick(true);
-        guildmage.setTapped(true);
+        guildmage.tap();
         Permanent target = addCreatureReady(player1, new BorosRecruit());
         addGreenActivationMana();
         addGreenActivationMana();

@@ -137,7 +137,7 @@ class OminousAsylumTest extends BaseCardTest {
     @DisplayName("A tapped asylum cannot activate either ability")
     void tappedLandCannotActivateAbilities() {
         Permanent land = addLandReady();
-        land.setTapped(true);
+        land.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))

@@ -80,7 +80,7 @@ class GoblinRockSledTest extends BaseCardTest {
     @Test
     void untapsIfTappedWithoutAttacking() {
         Permanent sled = addCreatureReady(player1, new GoblinRockSled());
-        sled.setTapped(true);
+        sled.tap();
 
         advanceTurn();
         advanceTurn();

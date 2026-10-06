@@ -150,8 +150,8 @@ class GoblinWarrensTest extends BaseCardTest {
         Permanent warrens = harness.addToBattlefieldAndReturn(player1, new GoblinWarrens());
         Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GoblinHero());
         Permanent otherGoblin = harness.addToBattlefieldAndReturn(player1, new GoblinHero());
-        goblin.setTapped(true);
-        otherGoblin.setTapped(true);
+        goblin.tap();
+        otherGoblin.tap();
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.RED, 1);

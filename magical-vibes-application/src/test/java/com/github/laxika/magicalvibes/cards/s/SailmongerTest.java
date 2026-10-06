@@ -44,7 +44,7 @@ class SailmongerTest extends BaseCardTest {
     void tappedSummoningSickSailmongerCanActivateRepeatedly() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new Sailmonger());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new Sailmonger());
-        source.setTapped(true);
+        source.tap();
         source.setSummoningSick(true);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 

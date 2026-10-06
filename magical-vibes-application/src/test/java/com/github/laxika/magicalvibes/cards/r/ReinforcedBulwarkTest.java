@@ -116,7 +116,7 @@ class ReinforcedBulwarkTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent bulwark = addCreatureReady(player1, new ReinforcedBulwark());
-        bulwark.setTapped(true);
+        bulwark.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)

@@ -279,7 +279,7 @@ class ManorGargoyleTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent gargoyle = harness.addToBattlefieldAndReturn(player1, new ManorGargoyle());
         gargoyle.setSummoningSick(true);
-        gargoyle.setTapped(true);
+        gargoyle.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, 0, null, null);

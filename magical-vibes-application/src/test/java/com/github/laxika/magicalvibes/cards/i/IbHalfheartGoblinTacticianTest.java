@@ -56,8 +56,8 @@ class IbHalfheartGoblinTacticianTest extends BaseCardTest {
         Permanent ib = addCreatureReady(player1, new IbHalfheartGoblinTactician());
         Permanent firstMountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
         Permanent secondMountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
-        firstMountain.setTapped(true);
-        secondMountain.setTapped(true);
+        firstMountain.tap();
+        secondMountain.tap();
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

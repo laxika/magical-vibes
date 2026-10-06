@@ -102,7 +102,7 @@ class ShamanOfTheGreatHuntTest extends BaseCardTest {
     @DisplayName("Hybrid activation accepts mixed green and blue mana while tapped")
     void acceptsMixedHybridManaWhileTapped() {
         Permanent shaman = harness.addToBattlefieldAndReturn(player1, new ShamanOfTheGreatHunt());
-        shaman.setTapped(true);
+        shaman.tap();
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new JeskaiSage(), new JeskaiSage()));
         harness.addMana(player1, ManaColor.RED, 2);

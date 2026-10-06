@@ -78,7 +78,7 @@ class NyxLotusTest extends BaseCardTest {
     @Test
     void tappedPermanentsCountButCardsOutsideBattlefieldDoNot() {
         harness.addToBattlefield(player1, new NyxLotus());
-        harness.addToBattlefieldAndReturn(player1, new LlanowarElves()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new LlanowarElves()).tap();
         harness.setHand(player1, List.of(new ElvishArchdruid()));
         harness.setGraveyard(player1, List.of(new ElvishArchdruid()));
         harness.setExile(player1, List.of(new ElvishArchdruid()));

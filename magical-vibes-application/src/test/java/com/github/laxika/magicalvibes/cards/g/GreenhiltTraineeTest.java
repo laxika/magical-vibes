@@ -154,7 +154,7 @@ class GreenhiltTraineeTest extends BaseCardTest {
     @DisplayName("Cannot activate while already tapped")
     void cannotActivateWhileTapped() {
         setupTraineeWithPower(4);
-        findPermanent(player1, "Greenhilt Trainee").setTapped(true);
+        findPermanent(player1, "Greenhilt Trainee").tap();
         UUID targetId = harness.getPermanentId(player1, "Spined Thopter");
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetId))

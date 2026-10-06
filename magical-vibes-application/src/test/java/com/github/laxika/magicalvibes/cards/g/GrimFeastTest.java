@@ -183,7 +183,7 @@ class GrimFeastTest extends BaseCardTest {
         harness.addToBattlefield(player2, new ZhalfirinKnight());
         int startingLife = gd.playerLifeTotals.get(player1.getId());
 
-        disk.setTapped(false);
+        disk.untap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.activateAbility(player1, 0, null, null);
         resolveAllTriggers();

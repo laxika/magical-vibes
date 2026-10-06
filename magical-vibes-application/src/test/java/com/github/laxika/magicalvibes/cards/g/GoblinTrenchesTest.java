@@ -102,7 +102,7 @@ class GoblinTrenchesTest extends BaseCardTest {
     void activatesOnOpponentsTurnWithTappedLand() {
         harness.addToBattlefield(player1, new GoblinTrenches());
         Permanent land = harness.addToBattlefieldAndReturn(player1, new Mountain());
-        land.setTapped(true);
+        land.tap();
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.END_STEP);
         harness.addMana(player1, ManaColor.COLORLESS, 2);

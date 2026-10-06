@@ -48,7 +48,7 @@ class HydromorphGuardianTest extends BaseCardTest {
     void countersOwnSpellWhileTapped() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new AvenTrooper());
         Permanent guardian = harness.addToBattlefieldAndReturn(player1, new HydromorphGuardian());
-        guardian.setTapped(true);
+        guardian.tap();
         FieryTemper fieryTemper = new FieryTemper();
         harness.setHand(player1, List.of(fieryTemper));
         harness.addMana(player1, ManaColor.RED, 3);

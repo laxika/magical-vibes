@@ -64,7 +64,7 @@ class GroundchuckDirtbagTest extends BaseCardTest {
 
     @Test
     void tappedSourceStillAddsManaWhenItsControllerTapsALand() {
-        harness.addToBattlefieldAndReturn(player1, new GroundchuckDirtbag()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new GroundchuckDirtbag()).tap();
         harness.addToBattlefield(player1, new Forest());
 
         harness.tapPermanent(player1, 1);

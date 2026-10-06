@@ -81,7 +81,7 @@ class KrakenOfTheStraitsTest extends BaseCardTest {
     @DisplayName("Tapped Islands still count")
     void tappedIslandsCount() {
         Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
-        island.setTapped(true);
+        island.tap();
         Permanent blocker = addCreatureReady(player2, new Ornithopter());
         Permanent kraken = addCreatureReady(player1, new KrakenOfTheStraits());
         kraken.setAttacking(true);

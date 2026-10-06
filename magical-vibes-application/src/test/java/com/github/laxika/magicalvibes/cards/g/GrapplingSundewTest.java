@@ -59,7 +59,7 @@ class GrapplingSundewTest extends BaseCardTest {
         Permanent sundew = harness.addToBattlefieldAndReturn(player1, new GrapplingSundew());
         Permanent other = harness.addToBattlefieldAndReturn(player1, new GrapplingSundew());
         Permanent opposing = harness.addToBattlefieldAndReturn(player2, new GrapplingSundew());
-        sundew.setTapped(true);
+        sundew.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.addMana(player1, ManaColor.GREEN, 1);
 

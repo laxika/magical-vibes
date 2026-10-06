@@ -112,7 +112,7 @@ class ReveredElderTest extends BaseCardTest {
     void tappedSummoningSickElderCanActivate() {
         Permanent elder = harness.addToBattlefieldAndReturn(player1, new ReveredElder());
         elder.setSummoningSick(true);
-        elder.setTapped(true);
+        elder.tap();
         addCreatureReady(player2, new KrisMage());
         harness.setHand(player2, List.of(new FreshVolunteers()));
         harness.addMana(player1, COLORLESS, 1);

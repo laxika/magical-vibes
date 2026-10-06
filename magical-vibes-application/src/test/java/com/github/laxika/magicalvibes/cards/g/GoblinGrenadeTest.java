@@ -59,7 +59,7 @@ class GoblinGrenadeTest extends BaseCardTest {
     void canSacrificeTappedSummoningSickGoblin() {
         Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GoblinPiker());
         goblin.setSummoningSick(true);
-        goblin.setTapped(true);
+        goblin.tap();
         harness.setHand(player1, List.of(new GoblinGrenade()));
         harness.addMana(player1, ManaColor.RED, 1);
 

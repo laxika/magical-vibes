@@ -78,7 +78,7 @@ class MetathranZombieTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent zombie = harness.addToBattlefieldAndReturn(player1, new MetathranZombie());
         zombie.setSummoningSick(true);
-        zombie.setTapped(true);
+        zombie.tap();
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, null, null);

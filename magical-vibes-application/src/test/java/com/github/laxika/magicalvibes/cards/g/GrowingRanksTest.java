@@ -99,7 +99,7 @@ class GrowingRanksTest extends BaseCardTest {
         Permanent original = findPermanent(player1, "Centaur");
 
         advanceToUpkeep(player1);
-        original.setTapped(true);
+        original.tap();
         original.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         harness.passBothPriorities();
 

@@ -87,7 +87,7 @@ class QueenOfIceTest extends BaseCardTest {
     @Test
     void adventureLocksAlreadyTappedCreatureOnlyForItsControllersNextUntap() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new MerfolkSecretkeeper());
-        target.setTapped(true);
+        target.tap();
         harness.setHand(player1, List.of(new QueenOfIce()));
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.castAdventure(player1, 0, target.getId());

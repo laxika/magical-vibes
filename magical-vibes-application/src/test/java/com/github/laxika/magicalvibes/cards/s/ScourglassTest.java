@@ -127,7 +127,7 @@ class ScourglassTest extends BaseCardTest {
     @DisplayName("Tapped Scourglass cannot activate and is not sacrificed")
     void cannotActivateWhenTapped() {
         Permanent scourglass = addScourglassReady(player1);
-        scourglass.setTapped(true);
+        scourglass.tap();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.UPKEEP);
         harness.clearPriorityPassed();

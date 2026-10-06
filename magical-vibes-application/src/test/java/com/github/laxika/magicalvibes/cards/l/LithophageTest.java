@@ -121,7 +121,7 @@ class LithophageTest extends BaseCardTest {
         var chosenMountain = mountains.get(1);
 
         advanceToUpkeep(player1);
-        chosenMountain.setTapped(true);
+        chosenMountain.tap();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, chosenMountain.getId());

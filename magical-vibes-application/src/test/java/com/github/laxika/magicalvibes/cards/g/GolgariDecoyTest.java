@@ -97,7 +97,7 @@ class GolgariDecoyTest extends BaseCardTest {
         Permanent decoy = addCreatureReady(player1, new GolgariDecoy());
         decoy.setAttacking(true);
         Permanent tapped = addCreatureReady(player2, new DrudgeBeetle());
-        tapped.setTapped(true);
+        tapped.tap();
         Permanent blocker = addCreatureReady(player2, new DrudgeBeetle());
         prepareDeclareBlockers();
 

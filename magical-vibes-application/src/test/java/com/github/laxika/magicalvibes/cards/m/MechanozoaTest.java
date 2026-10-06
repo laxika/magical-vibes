@@ -100,7 +100,7 @@ class MechanozoaTest extends BaseCardTest {
     @Test
     void alreadyTappedTargetStillReceivesAStunCounter() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        target.setTapped(true);
+        target.tap();
         harness.setHand(player1, List.of(new Mechanozoa()));
         addNormalMana();
         harness.castCreature(player1, 0, target.getId());

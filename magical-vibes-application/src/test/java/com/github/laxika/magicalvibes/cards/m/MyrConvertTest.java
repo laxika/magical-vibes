@@ -77,7 +77,7 @@ class MyrConvertTest extends BaseCardTest {
     @DisplayName("An already tapped Myr cannot activate or pay life again")
     void tappedMyrCannotActivate() {
         Permanent myr = addCreatureReady(player1, new MyrConvert());
-        myr.setTapped(true);
+        myr.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);

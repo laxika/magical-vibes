@@ -46,7 +46,7 @@ class OscorpResearchTeamTest extends BaseCardTest {
     @DisplayName("A tapped summoning-sick team can activate twice before either ability resolves")
     void canActivateTwiceWhileTappedAndSummoningSick() {
         var team = harness.addToBattlefieldAndReturn(player1, new OscorpResearchTeam());
-        team.setTapped(true);
+        team.tap();
         team.setSummoningSick(true);
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new OscorpResearchTeam(), new OscorpResearchTeam(),

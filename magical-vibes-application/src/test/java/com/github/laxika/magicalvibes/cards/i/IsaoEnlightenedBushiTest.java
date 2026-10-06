@@ -122,7 +122,7 @@ class IsaoEnlightenedBushiTest extends BaseCardTest {
     void canRegenerateItselfWhileTappedAndSummoningSick() {
         Permanent isao = harness.addToBattlefieldAndReturn(player1, new IsaoEnlightenedBushi());
         isao.setSummoningSick(true);
-        isao.setTapped(true);
+        isao.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, null, isao.getId());

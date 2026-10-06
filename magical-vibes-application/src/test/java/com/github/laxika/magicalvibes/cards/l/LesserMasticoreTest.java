@@ -92,7 +92,7 @@ class LesserMasticoreTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent masticore = harness.addToBattlefieldAndReturn(player1, new LesserMasticore());
         masticore.setSummoningSick(true);
-        masticore.setTapped(true);
+        masticore.tap();
         Permanent target = harness.addToBattlefieldAndReturn(player2, new LesserMasticore());
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 

@@ -164,7 +164,7 @@ class NumaiOutcastTest extends BaseCardTest {
     @DisplayName("A tapped Numai Outcast can activate regeneration")
     void canRegenerateWhileTapped() {
         Permanent outcast = addCreatureReady(player1, new NumaiOutcast());
-        outcast.setTapped(true);
+        outcast.tap();
         harness.setLife(player1, 20);
         harness.addMana(player1, ManaColor.BLACK, 1);
 

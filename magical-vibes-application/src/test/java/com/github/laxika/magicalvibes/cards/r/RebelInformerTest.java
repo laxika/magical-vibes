@@ -153,7 +153,7 @@ class RebelInformerTest extends BaseCardTest {
     void canTargetItselfWhileTappedAndSummoningSick() {
         Permanent informer = harness.addToBattlefieldAndReturn(player1, new RebelInformer());
         informer.setSummoningSick(true);
-        informer.setTapped(true);
+        informer.tap();
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 

@@ -153,7 +153,7 @@ class LowlandOafTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         oaf.setSummoningSick(false);
-        oaf.setTapped(true);
+        oaf.tap();
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, goblin.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }

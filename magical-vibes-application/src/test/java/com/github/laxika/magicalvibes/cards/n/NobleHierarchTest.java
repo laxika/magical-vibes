@@ -111,7 +111,7 @@ class NobleHierarchTest extends BaseCardTest {
     void exaltedFromMultipleHierarchsStacksEvenWhenOneIsTappedAndSummoningSick() {
         Permanent attacker = addCreatureReady(player1, new NobleHierarch());
         Permanent other = addCreatureReady(player1, new NobleHierarch());
-        other.setTapped(true);
+        other.tap();
         other.setSummoningSick(true);
 
         declareAttackers(player1, List.of(0));

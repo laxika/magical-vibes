@@ -87,7 +87,7 @@ class MoorlandInquisitorTest extends BaseCardTest {
     @DisplayName("A tapped creature can activate using generic and white mana")
     void tappedCreatureCanActivate() {
         Permanent inquisitor = addInquisitorReady(player1);
-        inquisitor.setTapped(true);
+        inquisitor.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.WHITE, 1);
 

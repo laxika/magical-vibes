@@ -116,7 +116,7 @@ class LichLordOfUnxTest extends BaseCardTest {
     @Test
     void drainWorksWhileSummoningSickAndTappedAndIgnoresOpponentsZombies() {
         Permanent lord = harness.addToBattlefieldAndReturn(player1, new LichLordOfUnx());
-        lord.setTapped(true);
+        lord.tap();
         harness.addToBattlefield(player2, new LichLordOfUnx());
         harness.setLibrary(player2, List.of(new LichLordOfUnx(), new LichLordOfUnx()));
         addManaForDrain(player1);

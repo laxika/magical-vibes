@@ -173,7 +173,7 @@ class HornedHelmTest extends BaseCardTest {
     void tappedHelmCanAttachAndGrantBonuses() {
         Permanent helm = addHelmReady(player1);
         Permanent creature = addCreatureReady(player1, new Arachnoid());
-        helm.setTapped(true);
+        helm.tap();
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.activateAbility(player1, 0, 0, null, creature.getId());

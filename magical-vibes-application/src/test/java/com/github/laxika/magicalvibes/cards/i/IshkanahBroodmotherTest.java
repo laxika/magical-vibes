@@ -134,7 +134,7 @@ class IshkanahBroodmotherTest extends BaseCardTest {
     @Test
     void tappedSummoningSickIshkanahCanDraftRepeatedly() {
         Permanent ishkanah = harness.addToBattlefieldAndReturn(player1, new IshkanahBroodmother());
-        ishkanah.setTapped(true);
+        ishkanah.tap();
         ishkanah.setSummoningSick(true);
         harness.setHand(player1, List.of());
         harness.setGraveyard(player1, List.of(new Arachnoform(), new Arachnoform(),

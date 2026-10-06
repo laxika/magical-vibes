@@ -147,7 +147,7 @@ class GoldspanDragonTest extends BaseCardTest {
         resolveAllTriggers();
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        findPermanent(player1, "Treasure").setTapped(true);
+        findPermanent(player1, "Treasure").tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 1, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);

@@ -102,7 +102,7 @@ class GoblinSledderTest extends BaseCardTest {
     void tappedSummoningSickSledderCanBoostItself() {
         Permanent sledder = harness.addToBattlefieldAndReturn(player1, new GoblinSledder());
         sledder.setSummoningSick(true);
-        sledder.setTapped(true);
+        sledder.tap();
         Permanent sacrifice = addCreatureReady(player1, new GoblinSledder());
 
         harness.activateAbility(player1, 0, null, sledder.getId());

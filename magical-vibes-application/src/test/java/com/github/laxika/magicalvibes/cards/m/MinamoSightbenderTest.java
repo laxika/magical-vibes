@@ -187,7 +187,7 @@ class MinamoSightbenderTest extends BaseCardTest {
     @DisplayName("A tapped Sightbender cannot activate again")
     void rejectsActivationWhileTapped() {
         Permanent source = addCreatureReady(player1, new MinamoSightbender());
-        source.setTapped(true);
+        source.tap();
         Permanent target = addCreatureReady(player1, new AkkiRaider());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 

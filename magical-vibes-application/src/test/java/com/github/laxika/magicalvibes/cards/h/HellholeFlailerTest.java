@@ -134,7 +134,7 @@ class HellholeFlailerTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSickToDamageItsController() {
         Permanent flailer = harness.addToBattlefieldAndReturn(player1, new HellholeFlailer());
         flailer.setSummoningSick(true);
-        flailer.setTapped(true);
+        flailer.tap();
         harness.setLife(player1, 20);
         addActivationMana();
 

@@ -85,7 +85,7 @@ class ReplicationTechniqueTest extends BaseCardTest {
     @Test
     void canCopyANoncreaturePermanent() {
         var ring = harness.addToBattlefieldAndReturn(player1, new SolRing());
-        ring.setTapped(true);
+        ring.tap();
         harness.setHand(player1, List.of(new ReplicationTechnique()));
         addMana();
 

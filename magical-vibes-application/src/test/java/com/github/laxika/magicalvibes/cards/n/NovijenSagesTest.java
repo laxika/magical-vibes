@@ -136,7 +136,7 @@ class NovijenSagesTest extends BaseCardTest {
     @DisplayName("A tapped, summoning-sick Sages can pay both counters from itself")
     void tappedSummoningSickSagesCanDraw() {
         Permanent sages = castSages();
-        sages.setTapped(true);
+        sages.tap();
         harness.setLibrary(player1, List.of(new MistralCharger()));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         int handBefore = gd.playerHands.get(player1.getId()).size();

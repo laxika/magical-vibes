@@ -74,7 +74,7 @@ class RooftopNuisanceTest extends BaseCardTest {
     @DisplayName("An already tapped creature skips only its controller's next untap step")
     void alreadyTappedCreatureSkipsOnlyNextUntap() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new SkyCrier());
-        target.setTapped(true);
+        target.tap();
         Card drawn = new SkyCrier();
         harness.setLibrary(player1, List.of(drawn));
         harness.setHand(player1, List.of(new RooftopNuisance()));

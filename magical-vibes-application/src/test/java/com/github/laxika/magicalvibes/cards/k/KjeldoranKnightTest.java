@@ -115,7 +115,7 @@ class KjeldoranKnightTest extends BaseCardTest {
     void bothAbilitiesWorkWhileTappedAndSummoningSick() {
         Permanent knight = harness.addToBattlefieldAndReturn(player1, new KjeldoranKnight());
         knight.setSummoningSick(true);
-        knight.setTapped(true);
+        knight.tap();
         harness.addMana(player1, ManaColor.WHITE, 3);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

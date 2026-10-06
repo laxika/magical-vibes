@@ -96,7 +96,7 @@ class SandScoutTest extends BaseCardTest {
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(findPermanents(player1, "Desert")).isEmpty();
-        assertThat(gd.playerLibraries.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }
 
     @Test
@@ -109,7 +109,7 @@ class SandScoutTest extends BaseCardTest {
         harness.handleCardChosen(player1, -1);
 
         assertThat(findPermanents(player1, "Desert")).isEmpty();
-        assertThat(gd.playerLibraries.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
     }

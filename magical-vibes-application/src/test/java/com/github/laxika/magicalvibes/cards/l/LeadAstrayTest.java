@@ -125,7 +125,7 @@ class LeadAstrayTest extends BaseCardTest {
     void mayTargetAlreadyTappedCreature() {
         Permanent tapped = harness.addToBattlefieldAndReturn(player2, new SuntailHawk());
         Permanent untapped = harness.addToBattlefieldAndReturn(player2, new SuntailHawk());
-        tapped.setTapped(true);
+        tapped.tap();
 
         castLeadAstray(List.of(tapped.getId(), untapped.getId()));
 

@@ -136,7 +136,7 @@ class IncubationSacTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.COLORLESS, 8);
         harness.activateAbility(player1, 0, null, null);
-        sac.setTapped(false);
+        sac.untap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);

@@ -84,7 +84,7 @@ class SentinelOfTheEternalWatchTest extends BaseCardTest {
     void canTargetAnAlreadyTappedCreature() {
         harness.addToBattlefield(player1, new SentinelOfTheEternalWatch());
         Permanent wolf = harness.addToBattlefieldAndReturn(player2, new TimberpackWolf());
-        wolf.setTapped(true);
+        wolf.tap();
 
         advanceToCombat(player2);
 

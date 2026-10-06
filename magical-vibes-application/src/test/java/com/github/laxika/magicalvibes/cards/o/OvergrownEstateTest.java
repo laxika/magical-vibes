@@ -77,7 +77,7 @@ class OvergrownEstateTest extends BaseCardTest {
     void tappedLandIsPaidBeforeLifeGainResolves() {
         harness.addToBattlefield(player1, new OvergrownEstate());
         Permanent land = harness.addToBattlefieldAndReturn(player1, new CavesOfKoilos());
-        land.setTapped(true);
+        land.tap();
         prepareAbilityActivation();
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);

@@ -66,7 +66,7 @@ class SelfReflectionTest extends BaseCardTest {
     @DisplayName("Copy does not inherit tapped status or counters")
     void copyDoesNotInheritPermanentState() {
         var original = harness.addToBattlefieldAndReturn(player1, new SavannahLions());
-        original.setTapped(true);
+        original.tap();
         original.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
         harness.setHand(player1, List.of(new SelfReflection()));
         harness.addMana(player1, ManaColor.BLUE, 6);

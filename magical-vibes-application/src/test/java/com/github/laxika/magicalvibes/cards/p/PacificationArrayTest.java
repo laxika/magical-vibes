@@ -105,7 +105,7 @@ class PacificationArrayTest extends BaseCardTest {
     void canTargetAlreadyTappedCreature() {
         harness.addToBattlefield(player1, new PacificationArray());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new DruidOfTheCowl());
-        target.setTapped(true);
+        target.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -118,7 +118,7 @@ class PacificationArrayTest extends BaseCardTest {
     @Test
     void cannotActivateTappedSource() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new PacificationArray());
-        source.setTapped(true);
+        source.tap();
         Permanent target = harness.addToBattlefieldAndReturn(player2, new DruidOfTheCowl());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 

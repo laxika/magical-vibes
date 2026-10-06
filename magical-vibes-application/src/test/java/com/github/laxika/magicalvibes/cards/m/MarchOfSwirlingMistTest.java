@@ -119,7 +119,7 @@ class MarchOfSwirlingMistTest extends BaseCardTest {
     void eachCreaturePhasesInDuringItsControllersUntapStep() {
         Permanent own = harness.addToBattlefieldAndReturn(player1, new MoonfolkPuzzlemaker());
         Permanent opposing = harness.addToBattlefieldAndReturn(player2, new MoonfolkPuzzlemaker());
-        opposing.setTapped(true);
+        opposing.tap();
         harness.setHand(player1, List.of(new MarchOfSwirlingMist()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);

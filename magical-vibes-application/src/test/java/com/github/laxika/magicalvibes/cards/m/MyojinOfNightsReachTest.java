@@ -100,7 +100,7 @@ class MyojinOfNightsReachTest extends BaseCardTest {
     void tappedSummoningSickMyojinCanActivate() {
         Permanent myojin = addReadyMyojin(player1);
         myojin.setSummoningSick(true);
-        myojin.setTapped(true);
+        myojin.tap();
         harness.setHand(player2, List.of(new DevotedRetainer()));
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

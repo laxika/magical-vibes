@@ -126,7 +126,7 @@ class MoongloveExtractTest extends BaseCardTest {
     @DisplayName("A tapped, newly entered Extract can activate without mana")
     void tappedExtractCanActivateWithoutMana() {
         Permanent extract = addReadyExtract(player1);
-        extract.setTapped(true);
+        extract.tap();
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();

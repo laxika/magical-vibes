@@ -210,7 +210,7 @@ class InfernoOfTheStarMountsTest extends BaseCardTest {
     @DisplayName("An already tapped Inferno can activate its ability")
     void tappedSourceCanActivateAbility() {
         Permanent inferno = addReadyInferno();
-        inferno.setTapped(true);
+        inferno.tap();
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, null);

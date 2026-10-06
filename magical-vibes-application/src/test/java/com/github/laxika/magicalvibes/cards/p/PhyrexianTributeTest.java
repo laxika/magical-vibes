@@ -24,8 +24,8 @@ class PhyrexianTributeTest extends BaseCardTest {
         Permanent secondSacrifice = harness.addToBattlefieldAndReturn(player1, new FeralShadow());
         Permanent survivor = harness.addToBattlefieldAndReturn(player1, new FeralShadow());
         Permanent artifact = harness.addToBattlefieldAndReturn(player2, new CursedTotem());
-        firstSacrifice.setTapped(true);
-        secondSacrifice.setTapped(true);
+        firstSacrifice.tap();
+        secondSacrifice.tap();
 
         harness.setHand(player1, List.of(new PhyrexianTribute()));
         harness.addMana(player1, ManaColor.BLACK, 1);

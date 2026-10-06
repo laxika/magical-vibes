@@ -116,11 +116,11 @@ class GraftedWargearTest extends BaseCardTest {
     @Test
     void becomingIllegallyAttachedTriggersSacrifice() {
         Permanent angel = addCreatureReady(player1, new PristineAngel());
-        angel.setTapped(true);
+        angel.tap();
         Permanent wargear = harness.addToBattlefieldAndReturn(player1, new GraftedWargear());
         wargear.setAttachedTo(angel.getId());
 
-        angel.setTapped(false);
+        angel.untap();
         harness.runStateBasedActions();
 
         assertThat(wargear.getAttachedTo()).isNull();

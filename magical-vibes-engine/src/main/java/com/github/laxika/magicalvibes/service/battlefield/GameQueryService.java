@@ -384,6 +384,7 @@ public class GameQueryService {
             CardSubtype.BOOK,
             CardSubtype.CLUE,
             CardSubtype.FOOD,
+            CardSubtype.GOLD,
             CardSubtype.JUNK,
             CardSubtype.LANDER,
             CardSubtype.MAP,

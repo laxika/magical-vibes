@@ -82,7 +82,7 @@ class NobleQuarryTest extends BaseCardTest {
         Permanent first = addCreatureReady(player2, new NobleQuarry());
         Permanent second = addCreatureReady(player2, new NobleQuarry());
         Permanent tapped = addCreatureReady(player2, new NobleQuarry());
-        tapped.setTapped(true);
+        tapped.tap();
         prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))

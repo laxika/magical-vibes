@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.InteractionAnswer;
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -113,7 +113,7 @@ class NathsEliteTest extends BaseCardTest {
         Permanent elite = addCreatureReady(player1, new NathsElite());
         elite.setAttacking(true);
         Permanent tapped = addCreatureReady(player2, new GrizzlyBears());
-        tapped.setTapped(true);
+        tapped.tap();
         addCreatureReady(player2, new GrizzlyBears());
         prepareDeclareBlockers();
 

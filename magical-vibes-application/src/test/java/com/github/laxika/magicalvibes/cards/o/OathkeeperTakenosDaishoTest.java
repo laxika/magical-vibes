@@ -186,4 +186,8 @@ class OathkeeperTakenosDaishoTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, creature.getId());
         harness.passBothPriorities(); // resolve death trigger (if any)
     }
+
+    private int indexOf(Permanent permanent) {
+        return gd.playerBattlefields.get(player1.getId()).indexOf(permanent);
+    }
 }

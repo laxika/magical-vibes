@@ -130,7 +130,7 @@ class MangaraOfCorondorTest extends BaseCardTest {
     void cannotActivateWhileTapped() {
         Permanent mangara = addCreatureReady(player1, new MangaraOfCorondor());
         Permanent bear = harness.addToBattlefieldAndReturn(player2, new AshcoatBear());
-        mangara.setTapped(true);
+        mangara.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bear.getId()))
                 .isInstanceOf(IllegalStateException.class);

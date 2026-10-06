@@ -80,7 +80,7 @@ class MaraudingBoneslasherTest extends BaseCardTest {
     void canBlockWithTappedZombie() {
         addCreatureReady(player2, new DefiantKhenra());
         var blocker = addCreatureReady(player1, new MaraudingBoneslasher());
-        addCreatureReady(player1, new MaraudingBoneslasher()).setTapped(true);
+        addCreatureReady(player1, new MaraudingBoneslasher()).tap();
 
         declareAttackersAndPrepareBlockers(player2, List.of(0));
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));

@@ -241,7 +241,7 @@ class GrenzoDungeonWardenTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent grenzo = addReadyGrenzo();
         grenzo.setSummoningSick(true);
-        grenzo.setTapped(true);
+        grenzo.tap();
         Card bottomCard = new GrizzlyBears();
         harness.setLibrary(player1, List.of(bottomCard));
         harness.addMana(player1, ManaColor.COLORLESS, 2);

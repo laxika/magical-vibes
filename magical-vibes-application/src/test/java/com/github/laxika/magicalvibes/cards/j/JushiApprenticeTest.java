@@ -170,7 +170,7 @@ class JushiApprenticeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
         assertThat(apprentice.isTapped()).isTrue();
-        apprentice.setTapped(false);
+        apprentice.untap();
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 

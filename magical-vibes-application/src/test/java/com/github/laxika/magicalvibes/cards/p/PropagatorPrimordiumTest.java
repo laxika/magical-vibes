@@ -122,7 +122,7 @@ class PropagatorPrimordiumTest extends BaseCardTest {
         resolveAllTriggers();
         Card target = gd.playerGraveyards.get(player1.getId()).getFirst();
         propagator.setCounterCount(CounterType.FUNGUS, 4);
-        propagator.setTapped(true);
+        propagator.tap();
 
         harness.activateAbility(player1, 0, null, target.getId(), Zone.GRAVEYARD);
 

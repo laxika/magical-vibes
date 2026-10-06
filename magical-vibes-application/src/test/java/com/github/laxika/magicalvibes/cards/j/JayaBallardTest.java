@@ -125,7 +125,7 @@ class JayaBallardTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(spell);
-        assertThat(gd.playerExiledCards.get(player1.getId())).contains(spell);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spell);
     }
 
     @Test
@@ -140,7 +140,7 @@ class JayaBallardTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.getMarkedDamage()).isEqualTo(2);
-        assertThat(gd.playerExiledCards.get(player1.getId())).contains(spell);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spell);
     }
 
     @Test
@@ -160,7 +160,7 @@ class JayaBallardTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).contains(spell);
-        assertThat(gd.playerExiledCards.get(player1.getId())).doesNotContain(spell);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(spell);
     }
 
     @Test
@@ -176,7 +176,7 @@ class JayaBallardTest extends BaseCardTest {
         harness.castFromGraveyard(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerExiledCards.get(player1.getId())).contains(spell);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spell);
         assertThat(gd.playerManaPools.get(player1.getId()).getInstantSorceryOnlyColored(ManaColor.RED)).isEqualTo(2);
     }
 

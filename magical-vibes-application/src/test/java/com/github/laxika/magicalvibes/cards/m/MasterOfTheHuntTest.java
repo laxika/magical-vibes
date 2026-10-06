@@ -142,7 +142,7 @@ class MasterOfTheHuntTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent master = harness.addToBattlefieldAndReturn(player1, new MasterOfTheHunt());
         master.setSummoningSick(true);
-        master.setTapped(true);
+        master.tap();
         addMasterMana(player1);
 
         createWolf();

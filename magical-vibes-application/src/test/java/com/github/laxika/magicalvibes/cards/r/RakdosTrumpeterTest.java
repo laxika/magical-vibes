@@ -73,7 +73,7 @@ class RakdosTrumpeterTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent trumpeter = harness.addToBattlefieldAndReturn(player1, new RakdosTrumpeter());
         trumpeter.setSummoningSick(true);
-        trumpeter.setTapped(true);
+        trumpeter.tap();
         int basePower = gqs.getEffectivePower(gd, trumpeter);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.addMana(player1, ManaColor.RED, 1);

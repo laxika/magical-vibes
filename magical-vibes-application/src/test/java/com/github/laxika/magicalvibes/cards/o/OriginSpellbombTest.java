@@ -201,7 +201,7 @@ class OriginSpellbombTest extends BaseCardTest {
     @Test
     @DisplayName("A tapped spellbomb cannot activate its ability")
     void tappedSpellbombCannotActivate() {
-        harness.addToBattlefieldAndReturn(player1, new OriginSpellbomb()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new OriginSpellbomb()).tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

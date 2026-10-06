@@ -170,7 +170,7 @@ class RuneboundWolfTest extends BaseCardTest {
     @Test
     void cannotActivateWhenTapped() {
         Permanent wolf = addCreatureReady(player1, new RuneboundWolf());
-        wolf.setTapped(true);
+        wolf.tap();
         addAbilityMana(player1);
         enterMainWithPriority(player1);
 

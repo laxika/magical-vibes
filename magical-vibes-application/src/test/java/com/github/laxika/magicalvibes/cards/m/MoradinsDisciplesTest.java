@@ -80,8 +80,8 @@ class MoradinsDisciplesTest extends BaseCardTest {
         resolveAllTriggers();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
 
-        disciples.setTapped(false);
-        defender.setTapped(false);
+        disciples.untap();
+        defender.untap();
         declareAttackers(List.of(0));
         harness.handlePermanentChosen(player1, defender.getId());
         resolveAllTriggers();
@@ -94,7 +94,7 @@ class MoradinsDisciplesTest extends BaseCardTest {
     void attackTriggerCanTargetAnAlreadyTappedCreature() {
         addCreatureReady(player1, new MoradinsDisciples());
         Permanent defender = addCreatureReady(player2, new MoradinsDisciples());
-        defender.setTapped(true);
+        defender.tap();
 
         declareAttackers(List.of(0));
         harness.handlePermanentChosen(player1, defender.getId());

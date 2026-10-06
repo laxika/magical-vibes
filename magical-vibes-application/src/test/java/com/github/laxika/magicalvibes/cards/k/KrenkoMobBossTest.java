@@ -117,7 +117,7 @@ class KrenkoMobBossTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(findPermanents(player1, "Goblin")).hasSize(1);
 
-        krenko.setTapped(false);
+        krenko.untap();
         harness.activateAbility(player1, indexOf(krenko), null, null);
         harness.passBothPriorities();
 

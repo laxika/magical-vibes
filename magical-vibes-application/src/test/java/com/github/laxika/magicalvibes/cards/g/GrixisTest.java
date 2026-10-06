@@ -133,7 +133,7 @@ class GrixisTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Goblin Piker");
         harness.assertNotInGraveyard(player1, "Goblin Piker");
-        assertThat(gd.playerExiledCards.get(player1.getId())).contains(target);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(target);
     }
 
     @Test
@@ -151,7 +151,7 @@ class GrixisTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Goblin Piker");
         harness.assertNotInGraveyard(player1, "Goblin Piker");
-        assertThat(gd.playerExiledCards.get(player1.getId())).contains(target);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(target);
     }
 
     @Test
@@ -168,7 +168,7 @@ class GrixisTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        assertThat(gd.playerExiledCards.get(player2.getId())).contains(target);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(target);
     }
 
     @Test

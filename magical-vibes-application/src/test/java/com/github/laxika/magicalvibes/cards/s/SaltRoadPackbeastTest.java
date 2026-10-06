@@ -66,7 +66,7 @@ class SaltRoadPackbeastTest extends BaseCardTest {
     @Test
     void affinityCountsTappedCreaturesAndLeavesRemainingGenericCost() {
         for (int i = 0; i < 3; i++) {
-            harness.addToBattlefieldAndReturn(player1, new SaltRoadPackbeast()).setTapped(true);
+            harness.addToBattlefieldAndReturn(player1, new SaltRoadPackbeast()).tap();
         }
         harness.setHand(player1, List.of(new SaltRoadPackbeast()));
         harness.addMana(player1, ManaColor.WHITE, 1);

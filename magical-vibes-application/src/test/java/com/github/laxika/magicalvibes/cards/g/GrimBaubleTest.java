@@ -195,7 +195,7 @@ class GrimBaubleTest extends BaseCardTest {
     @Test
     void tappedBaubleCannotActivate() {
         Permanent bauble = harness.addToBattlefieldAndReturn(player1, new GrimBauble());
-        bauble.setTapped(true);
+        bauble.tap();
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 

@@ -157,7 +157,7 @@ class GohamDjinnTest extends BaseCardTest {
     @DisplayName("A tapped summoning-sick Djinn can prepare regeneration without untapping")
     void tappedDjinnCanActivateRegeneration() {
         Permanent goham = addGohamDjinn();
-        goham.setTapped(true);
+        goham.tap();
         goham.setSummoningSick(true);
         harness.addMana(player1, ManaColor.BLACK, 2);
 

@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.cards.p;
+import java.util.UUID;
 
 import com.github.laxika.magicalvibes.cards.c.CaptainSisay;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -85,7 +86,7 @@ class PersistTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Persist()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        assertThatThrownBy(() -> harness.castSorcery(player1, 0, null))
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, (UUID) null))
                 .isInstanceOf(IllegalStateException.class);
     }
 

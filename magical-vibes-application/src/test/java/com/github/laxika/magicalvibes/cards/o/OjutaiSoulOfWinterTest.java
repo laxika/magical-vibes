@@ -115,7 +115,7 @@ class OjutaiSoulOfWinterTest extends BaseCardTest {
     void alreadyTappedPermanentIsLockedForItsControllersNextUntapOnly() {
         addCreatureReady(player1, new OjutaiSoulOfWinter());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new HerosBlade());
-        target.setTapped(true);
+        target.tap();
 
         declareAttackers(List.of(0));
         harness.handlePermanentChosen(player1, target.getId());

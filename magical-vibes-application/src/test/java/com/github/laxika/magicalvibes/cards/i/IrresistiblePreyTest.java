@@ -148,7 +148,7 @@ class IrresistiblePreyTest extends BaseCardTest {
     void allowsNoBlocksWhenOnlyDefenderIsTapped() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent blocker = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        blocker.setTapped(true);
+        blocker.tap();
         harness.setHand(player1, List.of(new IrresistiblePrey()));
         harness.setLibrary(player1, List.of(new Forest()));
         harness.addMana(player1, ManaColor.GREEN, 1);

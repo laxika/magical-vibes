@@ -129,7 +129,7 @@ class HarborBanditTest extends BaseCardTest {
     void canActivateWhileSummoningSickAndTapped() {
         Permanent bandit = harness.addToBattlefieldAndReturn(player1, new HarborBandit());
         bandit.setSummoningSick(true);
-        bandit.setTapped(true);
+        bandit.tap();
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

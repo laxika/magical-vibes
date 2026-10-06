@@ -47,7 +47,7 @@ class IntrepidTenderfootTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent tenderfoot = harness.addToBattlefieldAndReturn(player1, new IntrepidTenderfoot());
         tenderfoot.setSummoningSick(true);
-        tenderfoot.setTapped(true);
+        tenderfoot.tap();
         harness.addMana(player1, ManaColor.GREEN, 3);
 
         harness.activateAbility(player1, 0, null, null);

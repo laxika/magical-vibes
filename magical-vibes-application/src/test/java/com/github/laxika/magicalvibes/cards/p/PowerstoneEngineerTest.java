@@ -76,7 +76,7 @@ class PowerstoneEngineerTest extends BaseCardTest {
     void powerstoneManaPaysForArtifactSpell() {
         createPowerstone();
         Permanent powerstone = findPermanents(player1, "Powerstone").getFirst();
-        powerstone.setTapped(false);
+        powerstone.untap();
         harness.activateAbility(player1, 0, null, null);
         assertThat(powerstone.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).getPowerstoneOnlyColorless()).isEqualTo(1);
@@ -92,7 +92,7 @@ class PowerstoneEngineerTest extends BaseCardTest {
     @Test
     void powerstoneManaCannotPayForNonartifactSpell() {
         createPowerstone();
-        findPermanents(player1, "Powerstone").getFirst().setTapped(false);
+        findPermanents(player1, "Powerstone").getFirst().untap();
         harness.activateAbility(player1, 0, null, null);
         assertThat(gd.playerManaPools.get(player1.getId()).getPowerstoneOnlyColorless()).isEqualTo(1);
         harness.setHand(player1, List.of(new PowerstoneEngineer()));

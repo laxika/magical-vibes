@@ -189,7 +189,7 @@ class HoardSmelterDragonTest extends BaseCardTest {
     void canActivateWithoutTapCost() {
         Permanent dragon = harness.addToBattlefieldAndReturn(player1, new HoardSmelterDragon());
         dragon.setSummoningSick(true);
-        dragon.setTapped(true);
+        dragon.tap();
         Permanent artifact = harness.addToBattlefieldAndReturn(player2, new RodOfRuin());
         harness.addMana(player1, ManaColor.RED, 4);
 

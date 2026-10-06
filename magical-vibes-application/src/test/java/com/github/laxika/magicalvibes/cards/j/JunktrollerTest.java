@@ -70,7 +70,7 @@ class JunktrollerTest extends BaseCardTest {
     @DisplayName("Cannot activate while tapped")
     void cannotActivateWhileTapped() {
         Permanent junktroller = addCreatureReady(player1, new Junktroller());
-        junktroller.setTapped(true);
+        junktroller.tap();
         Card target = new Char();
         harness.setGraveyard(player1, List.of(target));
 

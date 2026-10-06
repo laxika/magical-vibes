@@ -87,7 +87,7 @@ class LightningWolfTest extends BaseCardTest {
     void activationDoesNotRequireUntappedOrReadyCreature() {
         Permanent wolf = harness.addToBattlefieldAndReturn(player1, new LightningWolf());
         wolf.setSummoningSick(true);
-        wolf.setTapped(true);
+        wolf.tap();
         Permanent otherWolf = addCreatureReady(player1, new LightningWolf());
         harness.addMana(player1, ManaColor.RED, 2);
 

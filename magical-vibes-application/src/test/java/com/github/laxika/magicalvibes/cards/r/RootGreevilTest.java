@@ -31,7 +31,7 @@ class RootGreevilTest extends BaseCardTest {
 
     @Test
     void cannotActivateWhileTapped() {
-        addCreatureReady(player1, new RootGreevil()).setTapped(true);
+        addCreatureReady(player1, new RootGreevil()).tap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.GREEN, 1);
 

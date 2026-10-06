@@ -24,7 +24,7 @@ class MireShadeTest extends BaseCardTest {
         Permanent shade = harness.addToBattlefieldAndReturn(player1, new MireShade());
         shade.setSummoningSick(true);
         Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
-        swamp.setTapped(true);
+        swamp.tap();
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, 0, null, null);

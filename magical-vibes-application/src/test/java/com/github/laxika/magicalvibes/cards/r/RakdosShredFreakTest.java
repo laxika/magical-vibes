@@ -34,7 +34,7 @@ class RakdosShredFreakTest extends BaseCardTest {
 
         assertThat(als.canAttack(gd, shredFreak, player1.getId())).isTrue();
 
-        shredFreak.setTapped(true);
+        shredFreak.tap();
 
         assertThat(als.canAttack(gd, shredFreak, player1.getId())).isFalse();
     }

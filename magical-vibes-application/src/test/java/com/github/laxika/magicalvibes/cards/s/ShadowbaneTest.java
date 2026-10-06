@@ -238,7 +238,7 @@ class ShadowbaneTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(archers.getMarkedDamage()).isZero();
 
-        spirit.setTapped(false);
+        spirit.untap();
         harness.activateAbility(player2, 0, null, null);
         harness.passBothPriorities();
 

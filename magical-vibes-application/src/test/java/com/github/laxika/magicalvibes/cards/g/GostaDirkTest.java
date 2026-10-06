@@ -54,7 +54,7 @@ class GostaDirkTest extends BaseCardTest {
     void defendingPlayersTappedGostaAllowsBlocking() {
         harness.addToBattlefield(player2, new Island());
         Permanent gosta = harness.addToBattlefieldAndReturn(player2, new GostaDirk());
-        gosta.setTapped(true);
+        gosta.tap();
         Permanent attacker = addCreatureReady(player1, new DevouringDeep());
         attacker.setAttacking(true);
         Permanent blocker = addCreatureReady(player2, new CatWarriors());

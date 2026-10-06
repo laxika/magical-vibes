@@ -113,7 +113,7 @@ class LordOfTheForsakenTest extends BaseCardTest {
     @Test
     void manaAbilityResolvesImmediatelyAndCanBeRepeatedWhileTapped() {
         Permanent lord = harness.addToBattlefieldAndReturn(player1, new LordOfTheForsaken());
-        lord.setTapped(true);
+        lord.tap();
         harness.setLife(player1, 20);
 
         harness.activateAbility(player1, 0, 1, null, null);

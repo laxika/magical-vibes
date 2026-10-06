@@ -128,7 +128,7 @@ class RealmwrightTest extends BaseCardTest {
         second.addMarkedDamage(null, 1);
         harness.runStateBasedActions();
         assertThat(gqs.effectiveBasicLandTypes(gd, gate)).isEmpty();
-        gate.setTapped(false);
+        gate.untap();
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }

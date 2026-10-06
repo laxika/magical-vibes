@@ -73,7 +73,7 @@ class OnyxGobletTest extends BaseCardTest {
     @DisplayName("A tapped goblet cannot activate")
     void tappedGobletCannotActivate() {
         Permanent goblet = addReadyGoblet(player1);
-        goblet.setTapped(true);
+        goblet.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);

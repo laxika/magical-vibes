@@ -36,7 +36,7 @@ class ScholarOfAthreosTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         var scholar = harness.addToBattlefieldAndReturn(player1, new ScholarOfAthreos());
-        scholar.setTapped(true);
+        scholar.tap();
         scholar.setSummoningSick(true);
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 4);

@@ -75,7 +75,7 @@ class OrphansOfTheWheatTest extends BaseCardTest {
         sickCreature.setSummoningSick(true);
         Permanent unchosenCreature = addReadyCreature(new OrphansOfTheWheat());
         Permanent tappedCreature = addReadyCreature(new OrphansOfTheWheat());
-        tappedCreature.setTapped(true);
+        tappedCreature.tap();
         Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new OrphansOfTheWheat());
 
         declareAttack(orphans);
@@ -112,7 +112,7 @@ class OrphansOfTheWheatTest extends BaseCardTest {
         Permanent orphans = addReadyCreature(new OrphansOfTheWheat());
 
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttack(orphans));
-        orphans.setTapped(false);
+        orphans.untap();
         harness.passBothPriorities();
         harness.handleMultiplePermanentsChosen(player1, List.of(orphans.getId()));
 

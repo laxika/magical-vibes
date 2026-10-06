@@ -144,7 +144,7 @@ class PowerOfPersuasionTest extends BaseCardTest {
     void controlSurvivesCurrentTurnCleanup() {
         setRoll(20);
         Permanent target = addTarget();
-        target.setTapped(true);
+        target.tap();
 
         castPowerOfPersuasion(target);
 

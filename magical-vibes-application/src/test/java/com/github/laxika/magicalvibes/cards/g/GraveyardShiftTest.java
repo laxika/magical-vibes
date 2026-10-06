@@ -147,7 +147,7 @@ class GraveyardShiftTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
-
+    private void castDuringOpponentsTurn(Card target) {
         prepareToCastDuringOpponentsTurn();
         harness.castSorcery(player1, 0, target.getId());
     }

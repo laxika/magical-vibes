@@ -51,7 +51,7 @@ class ScreechingPhoenixTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSickOnOpponentsTurn() {
         Permanent phoenix = harness.addToBattlefieldAndReturn(player1, new ScreechingPhoenix());
         phoenix.setSummoningSick(true);
-        phoenix.setTapped(true);
+        phoenix.tap();
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.UPKEEP);
         harness.clearPriorityPassed();

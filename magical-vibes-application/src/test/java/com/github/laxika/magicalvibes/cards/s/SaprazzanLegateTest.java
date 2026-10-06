@@ -75,8 +75,8 @@ class SaprazzanLegateTest extends BaseCardTest {
     @Test
     @DisplayName("Tapped qualifying lands still allow the free cast")
     void tappedLandsAllowAlternateCost() {
-        harness.addToBattlefieldAndReturn(player1, new Island()).setTapped(true);
-        harness.addToBattlefieldAndReturn(player2, new Mountain()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new Island()).tap();
+        harness.addToBattlefieldAndReturn(player2, new Mountain()).tap();
         harness.setHand(player1, List.of(new SaprazzanLegate()));
 
         harness.castWithAlternateCost(player1, 0, (UUID) null);

@@ -114,7 +114,7 @@ class OverwhelmingDenialTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
         harness.castAndResolveInstant(player2, 0, ownSpell.getId());
-        assertThat(gd.exiledCards.get(player1.getId())).contains(ownSpell);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(ownSpell);
 
         harness.passPriority(player1);
         harness.castCreature(player2, 0);
@@ -141,7 +141,7 @@ class OverwhelmingDenialTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, target.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.exiledCards.get(player2.getId())).contains(target);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(target);
         harness.assertNotInGraveyard(player2, "Dimensional Infiltrator");
         harness.assertInGraveyard(player1, "Overwhelming Denial");
         harness.assertInGraveyard(player1, "Void Shatter");

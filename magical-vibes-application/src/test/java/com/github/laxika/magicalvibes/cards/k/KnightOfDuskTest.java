@@ -223,9 +223,9 @@ class KnightOfDuskTest extends BaseCardTest {
     void tappedKnightCanDestroyTappedBlocker() {
         Permanent knight = addCreatureReady(player1, new KnightOfDusk());
         knight.setAttacking(true);
-        knight.setTapped(true);
+        knight.tap();
         Permanent blocker = addBlocker(player2, 0);
-        blocker.setTapped(true);
+        blocker.tap();
         setupCombatStep();
         harness.addMana(player1, ManaColor.BLACK, 2);
 

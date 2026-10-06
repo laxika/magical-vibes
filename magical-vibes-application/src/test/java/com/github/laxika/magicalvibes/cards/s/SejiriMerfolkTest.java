@@ -65,7 +65,7 @@ class SejiriMerfolkTest extends BaseCardTest {
     void tappedPlainsGrantsKeywords() {
         Permanent merfolk = harness.addToBattlefieldAndReturn(player1, new SejiriMerfolk());
         Permanent plains = harness.addToBattlefieldAndReturn(player1, new Plains());
-        plains.setTapped(true);
+        plains.tap();
 
         assertThat(gqs.hasKeyword(gd, merfolk, Keyword.FIRST_STRIKE)).isTrue();
         assertThat(gqs.hasKeyword(gd, merfolk, Keyword.LIFELINK)).isTrue();

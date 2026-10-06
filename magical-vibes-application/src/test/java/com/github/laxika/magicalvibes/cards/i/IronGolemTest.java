@@ -75,7 +75,7 @@ class IronGolemTest extends BaseCardTest {
     @DisplayName("A tapped Iron Golem is not required to attack")
     void tappedGolemMayStayBack() {
         Permanent golem = addCreatureReady(player1, new IronGolem());
-        golem.setTapped(true);
+        golem.tap();
 
         assertThatCode(() -> declareAttackers(List.of())).doesNotThrowAnyException();
         assertThat(golem.isAttacking()).isFalse();
@@ -85,7 +85,7 @@ class IronGolemTest extends BaseCardTest {
     @DisplayName("A tapped Iron Golem is not required to block")
     void tappedGolemMayDeclineBlock() {
         Permanent golem = addCreatureReady(player2, new IronGolem());
-        golem.setTapped(true);
+        golem.tap();
         Permanent attacker = addCreatureReady(player1, new IronGolem());
         attacker.setAttacking(true);
         attacker.setAttackTarget(player2.getId());

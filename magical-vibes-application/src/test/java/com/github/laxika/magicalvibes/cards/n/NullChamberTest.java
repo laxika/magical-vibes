@@ -244,7 +244,7 @@ class NullChamberTest extends BaseCardTest {
         harness.handleListChoice(player2, "Noble Elephant");
 
         harness.addMana(player1, ManaColor.WHITE, 4);
-        assertThatThrownBy(() -> harness.castInstant(player1, 0, chamber.getId()))
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
     }

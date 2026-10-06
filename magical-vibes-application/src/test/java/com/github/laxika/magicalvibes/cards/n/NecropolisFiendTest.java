@@ -191,7 +191,7 @@ class NecropolisFiendTest extends BaseCardTest {
     void tappedFiendCannotActivate() {
         Permanent fiend = addCreatureReady(player1, new NecropolisFiend());
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
-        fiend.setTapped(true);
+        fiend.tap();
         forceMainPhase();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, target.getId()))

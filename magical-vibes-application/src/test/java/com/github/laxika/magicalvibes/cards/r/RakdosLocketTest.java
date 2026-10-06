@@ -96,7 +96,7 @@ class RakdosLocketTest extends BaseCardTest {
     @ValueSource(ints = {0, 1})
     void tappedLocketCannotActivateEitherAbility(int abilityIndex) {
         Permanent locket = addReadyLocket();
-        locket.setTapped(true);
+        locket.tap();
         harness.addMana(player1, ManaColor.BLACK, 4);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, abilityIndex, null, null))

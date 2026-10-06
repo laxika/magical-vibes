@@ -125,7 +125,7 @@ class OashraCultivatorTest extends BaseCardTest {
     @DisplayName("A tapped Cultivator cannot activate")
     void cannotActivateWhileTapped() {
         addOashraReady(player1);
-        findPermanent(player1, "Oashra Cultivator").setTapped(true);
+        findPermanent(player1, "Oashra Cultivator").tap();
         addMana(player1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

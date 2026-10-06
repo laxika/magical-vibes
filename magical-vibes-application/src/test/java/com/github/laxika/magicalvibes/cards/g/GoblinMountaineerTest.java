@@ -41,7 +41,7 @@ class GoblinMountaineerTest extends BaseCardTest {
     @DisplayName("Goblin Mountaineer cannot be blocked even when the defending Mountain is tapped")
     void cannotBeBlockedWhenDefendingMountainIsTapped() {
         Permanent mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
-        mountain.setTapped(true);
+        mountain.tap();
         Permanent blocker = addCreatureReady(player2, new HillGiant());
         Permanent attacker = addCreatureReady(player1, new GoblinMountaineer());
 

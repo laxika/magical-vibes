@@ -303,6 +303,7 @@ public enum CardSubtype {
     CLUE("Clue"),
     BLOOD("Blood"),
     MAP("Map"),
+    GOLD("Gold"),
     LANDER("Lander"),
     FOOD("Food"),
     POWERSTONE("Powerstone"),

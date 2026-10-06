@@ -73,7 +73,7 @@ class ScrapyardSteelbreakerTest extends BaseCardTest {
     void sacrificesAsCostAndStacksBoostsWhileSummoningSickAndTapped() {
         Permanent steelbreaker = harness.addToBattlefieldAndReturn(player1, new ScrapyardSteelbreaker());
         steelbreaker.setSummoningSick(true);
-        steelbreaker.setTapped(true);
+        steelbreaker.tap();
         Permanent firstArtifact = harness.addToBattlefieldAndReturn(player1, new PatchworkAutomaton());
         Permanent secondArtifact = harness.addToBattlefieldAndReturn(player1, new PatchworkAutomaton());
         harness.addToBattlefield(player2, new PatchworkAutomaton());

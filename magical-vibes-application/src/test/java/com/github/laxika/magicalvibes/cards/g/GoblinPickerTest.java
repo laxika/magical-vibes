@@ -83,7 +83,7 @@ class GoblinPickerTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent picker = addReadyPicker();
-        picker.setTapped(true);
+        picker.tap();
         Forest card = new Forest();
         harness.setHand(player1, List.of(card));
         harness.addMana(player1, ManaColor.RED, 1);

@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.v.VoldarenEpicure;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
-import com.github.laxika.magicalvibes.model.BlockerAssignment;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -125,7 +125,7 @@ class KessigWolfriderTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent wolfrider = addReadyWolfrider(player1);
-        wolfrider.setTapped(true);
+        wolfrider.tap();
         harness.setGraveyard(player1, List.of(new Mountain(), new Mountain(), new Mountain()));
         harness.addMana(player1, ManaColor.RED, 3);
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

@@ -121,7 +121,7 @@ class KrosanWarchiefTest extends BaseCardTest {
     @Test
     void canRegenerateItselfWhileTappedAndSummoningSick() {
         Permanent warchief = harness.addToBattlefieldAndReturn(player1, new KrosanWarchief());
-        warchief.setTapped(true);
+        warchief.tap();
         warchief.setSummoningSick(true);
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);

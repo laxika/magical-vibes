@@ -180,7 +180,7 @@ class RhonassStalwartTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, stalwart)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, stalwart)).isEqualTo(2);
 
-        stalwart.setTapped(false);
+        stalwart.untap();
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);

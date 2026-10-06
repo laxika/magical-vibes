@@ -71,7 +71,7 @@ class RighteousAvengersTest extends BaseCardTest {
     @DisplayName("A tapped Plains still makes Righteous Avengers unblockable")
     void cannotBeBlockedWhenDefenderControlsTappedPlains() {
         harness.addToBattlefield(player2, new Plains());
-        gd.playerBattlefields.get(player2.getId()).getFirst().setTapped(true);
+        gd.playerBattlefields.get(player2.getId()).getFirst().tap();
 
         Permanent blockerPerm = addCreatureReady(player2, new GrizzlyBears());
         Permanent attackerPerm = addCreatureReady(player1, new RighteousAvengers());

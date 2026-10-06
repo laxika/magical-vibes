@@ -76,7 +76,7 @@ class SangrophageTest extends BaseCardTest {
     void payingLifeDoesNotUntapSangrophage() {
         Permanent sangrophage = addSangrophage();
         advanceToUpkeep(player1);
-        sangrophage.setTapped(true);
+        sangrophage.tap();
 
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);

@@ -118,7 +118,7 @@ class MurdocksCrusadeTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new CrawWurm());
         Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new DemonicPact());
         Permanent teammate = harness.addToBattlefieldAndReturn(player1, new CrawWurm());
-        teammate.setTapped(true);
+        teammate.tap();
 
         assertThatThrownBy(() -> cast(new int[]{0, 1},
                 List.of(creature.getId(), enchantment.getId()), List.of(teammate.getId())))

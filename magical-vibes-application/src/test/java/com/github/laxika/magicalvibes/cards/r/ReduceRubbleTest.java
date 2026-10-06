@@ -179,7 +179,7 @@ class ReduceRubbleTest extends BaseCardTest {
 
         harness.castAndResolveFlashback(player1, 0, land.getId());
         assertThat(land.isTapped()).isFalse();
-        land.setTapped(true);
+        land.tap();
 
         harness.performUntapStep(player1);
         harness.performUntapStep(player2);
@@ -207,7 +207,7 @@ class ReduceRubbleTest extends BaseCardTest {
     @DisplayName("Rubble is exiled when countered and does not affect its targets")
     void rubbleIsExiledWhenCountered() {
         Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
-        land.setTapped(true);
+        land.tap();
         ReduceRubble rubble = new ReduceRubble();
         harness.setGraveyard(player1, List.of(rubble));
         harness.addMana(player1, ManaColor.RED, 3);

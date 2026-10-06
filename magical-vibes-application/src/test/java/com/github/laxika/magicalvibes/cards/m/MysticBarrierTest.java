@@ -37,7 +37,7 @@ class MysticBarrierTest extends BaseCardTest {
     @Test
     @DisplayName("The entrance trigger permits responses before the direction is chosen")
     void entranceChoiceWaitsForTriggerResolution() {
-        harness.castFromHand(player1, new MysticBarrier());
+        harness.castFromHand(player1, new MysticBarrier(), "{4}{W}");
         harness.passBothPriorities();
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();

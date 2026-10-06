@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
-import com.github.laxika.magicalvibes.model.BlockerAssignment;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -72,7 +72,7 @@ class SeismicMonstrosaurTest extends BaseCardTest {
     void sacrificesTappedNonMountainBeforeResolution() {
         harness.addToBattlefield(player1, new SeismicMonstrosaur());
         harness.addToBattlefield(player1, new Forest());
-        findPermanent(player1, "Forest").setTapped(true);
+        findPermanent(player1, "Forest").tap();
         harness.setLibrary(player1, List.of(new Mountain()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.RED, 1);

@@ -88,7 +88,7 @@ class OrochiLeafcallerTest extends BaseCardTest {
     @DisplayName("A tapped, summoning-sick Leafcaller can activate its ability")
     void canActivateWhileTappedAndSummoningSick() {
         Permanent leafcaller = harness.addToBattlefieldAndReturn(player1, new OrochiLeafcaller());
-        leafcaller.setTapped(true);
+        leafcaller.tap();
         leafcaller.setSummoningSick(true);
         harness.addMana(player1, ManaColor.GREEN, 1);
 

@@ -69,7 +69,7 @@ class NewMasterOfArmsTest extends BaseCardTest {
         declareAttackersAndPrepareBlockers(List.of(0));
         harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
                 () -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(1, 0))));
-        blocker.setTapped(true);
+        blocker.tap();
 
         resolveCombat();
 
@@ -88,7 +88,7 @@ class NewMasterOfArmsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, blocker.getId());
         harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, harness::passBothPriorities);
         assertThat(blocker.isTapped()).isTrue();
-        blocker.setTapped(false);
+        blocker.untap();
 
         resolveCombat();
 

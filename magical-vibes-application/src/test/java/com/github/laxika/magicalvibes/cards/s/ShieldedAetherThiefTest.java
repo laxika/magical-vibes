@@ -111,7 +111,7 @@ class ShieldedAetherThiefTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent thief = addCreatureReady(player1, new ShieldedAetherThief());
-        thief.setTapped(true);
+        thief.tap();
         gd.playerEnergyCounters.put(player1.getId(), 3);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

@@ -93,7 +93,7 @@ class HavocSowerTest extends BaseCardTest {
     void activatesWhileTappedAndSummoningSick() {
         Permanent sower = harness.addToBattlefieldAndReturn(player1, new HavocSower());
         sower.setSummoningSick(true);
-        sower.setTapped(true);
+        sower.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, null, null);

@@ -100,7 +100,7 @@ class KurosTakenTest extends BaseCardTest {
     void regenerationDoesNotRequireTappingOrHaste() {
         Permanent taken = harness.addToBattlefieldAndReturn(player1, new KurosTaken());
         taken.setSummoningSick(true);
-        taken.setTapped(true);
+        taken.tap();
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

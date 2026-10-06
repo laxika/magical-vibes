@@ -85,7 +85,7 @@ class GroveOfTheBurnwillowsTest extends BaseCardTest {
     @Test
     void tappedGroveCannotActivateEitherManaAbility() {
         Permanent grove = harness.addToBattlefieldAndReturn(player1, new GroveOfTheBurnwillows());
-        grove.setTapped(true);
+        grove.tap();
         int opponentLifeBefore = gd.getLife(player2.getId());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))

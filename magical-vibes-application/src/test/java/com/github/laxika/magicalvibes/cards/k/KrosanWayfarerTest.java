@@ -114,7 +114,7 @@ class KrosanWayfarerTest extends BaseCardTest {
     @Test
     void tappedWayfarerPutsLandFromItsControllersHand() {
         Permanent wayfarer = harness.addToBattlefieldAndReturn(player2, new KrosanWayfarer());
-        wayfarer.setTapped(true);
+        wayfarer.tap();
         NantukoMonastery controllerLand = new NantukoMonastery();
         NantukoMonastery opponentLand = new NantukoMonastery();
         harness.setHand(player2, List.of(controllerLand));

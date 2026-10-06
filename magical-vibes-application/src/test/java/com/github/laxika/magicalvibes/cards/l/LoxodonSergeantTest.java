@@ -79,7 +79,7 @@ class LoxodonSergeantTest extends BaseCardTest {
     @DisplayName("Granting vigilance does not untap a tapped creature")
     void doesNotUntapCreatures() {
         Permanent creature = addCreatureReady(player1, new PouncingLynx());
-        creature.setTapped(true);
+        creature.tap();
 
         castLoxodonSergeant();
 

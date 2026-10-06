@@ -102,7 +102,7 @@ class HeapDollTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent doll = harness.addToBattlefieldAndReturn(player1, new HeapDoll());
         doll.setSummoningSick(true);
-        doll.setTapped(true);
+        doll.tap();
         Card target = new HeapDoll();
         harness.setGraveyard(player2, List.of(target));
 

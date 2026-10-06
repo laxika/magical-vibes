@@ -110,7 +110,7 @@ class ShardVolleyTest extends BaseCardTest {
     @DisplayName("Can sacrifice a tapped land and target yourself")
     void canSacrificeTappedLandAndTargetYourself() {
         Permanent land = harness.addToBattlefieldAndReturn(player1, new MurmuringBosk());
-        land.setTapped(true);
+        land.tap();
         harness.setHand(player1, List.of(new ShardVolley()));
         harness.addMana(player1, ManaColor.RED, 1);
 

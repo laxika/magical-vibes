@@ -62,7 +62,7 @@ class RecklessAmplimancerTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent amplimancer = harness.addToBattlefieldAndReturn(player1, new RecklessAmplimancer());
         amplimancer.setSummoningSick(true);
-        amplimancer.setTapped(true);
+        amplimancer.tap();
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 

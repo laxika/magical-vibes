@@ -188,7 +188,7 @@ class GrabTheReinsTest extends BaseCardTest {
     @Test
     void controlModeDoesNotUntapTheCreature() {
         Permanent target = addCreatureReady(player2, new LumengridWarden());
-        target.setTapped(true);
+        target.tap();
 
         cast(new int[]{0}, List.of(target.getId()), false);
 

@@ -78,7 +78,7 @@ class NezumiGraverobberTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent graverobber = harness.addToBattlefieldAndReturn(player1, new NezumiGraverobber());
         graverobber.setSummoningSick(true);
-        graverobber.setTapped(true);
+        graverobber.tap();
         Card targetCard = new WanderingOnes();
         harness.setGraveyard(player2, List.of(targetCard));
         harness.addMana(player1, ManaColor.BLACK, 2);

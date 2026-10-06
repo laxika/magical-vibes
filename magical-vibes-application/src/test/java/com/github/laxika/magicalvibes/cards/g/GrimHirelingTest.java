@@ -75,7 +75,7 @@ class GrimHirelingTest extends BaseCardTest {
         addCreatureReady(player1, new GrimHireling());
         addCreatureReady(player2, new GrizzlyBears());
         declareAttackersAndPrepareBlockers(player2, List.of(0));
-        gs.declareBlockers(gd, player1, java.util.Map.of());
+        gs.declareBlockers(gd, player1, List.of());
         resolveCombat(player2);
         resolveAllTriggers();
         harness.assertLife(player1, 18);

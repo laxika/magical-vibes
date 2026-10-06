@@ -117,7 +117,7 @@ class SaprazzanBreakerTest extends BaseCardTest {
     @DisplayName("The ability can be activated while tapped and summoning sick")
     void canActivateWhileTappedAndSummoningSick() {
         Permanent breaker = harness.addToBattlefieldAndReturn(player1, new SaprazzanBreaker());
-        breaker.setTapped(true);
+        breaker.tap();
         breaker.setSummoningSick(true);
         Card forest = new Forest();
         harness.setLibrary(player1, List.of(forest));

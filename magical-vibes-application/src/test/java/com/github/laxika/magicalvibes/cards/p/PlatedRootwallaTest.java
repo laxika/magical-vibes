@@ -59,7 +59,7 @@ class PlatedRootwallaTest extends BaseCardTest {
     @DisplayName("Pump can be activated on an opponent's turn while tapped")
     void canActivateOnOpponentsTurnWhileTapped() {
         Permanent rootwalla = addCreatureReady(player1, new PlatedRootwalla());
-        rootwalla.setTapped(true);
+        rootwalla.tap();
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.GREEN, 1);

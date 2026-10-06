@@ -91,7 +91,7 @@ class KytheonsIrregularsTest extends BaseCardTest {
     void abilityWorksWhileSummoningSickAndTapped() {
         Permanent irregulars = harness.addToBattlefieldAndReturn(player1, new KytheonsIrregulars());
         irregulars.setSummoningSick(true);
-        irregulars.setTapped(true);
+        irregulars.tap();
         Permanent creature = addCreatureReady(player2, new YokedOx());
         harness.addMana(player1, ManaColor.WHITE, 2);
 
@@ -123,7 +123,7 @@ class KytheonsIrregularsTest extends BaseCardTest {
     @DisplayName("The ability can target itself even when already tapped")
     void abilityCanTargetAlreadyTappedSelf() {
         Permanent irregulars = addCreatureReady(player1, new KytheonsIrregulars());
-        irregulars.setTapped(true);
+        irregulars.tap();
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.activateAbility(player1, 0, null, irregulars.getId());

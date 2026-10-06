@@ -100,7 +100,7 @@ class PhyrexianDevourerTest extends BaseCardTest {
     @DisplayName("Exile is paid immediately, even while the creature is tapped")
     void paysExileCostBeforeResolutionWhileTapped() {
         Permanent devourer = addCreatureReady(player1, new PhyrexianDevourer());
-        devourer.setTapped(true);
+        devourer.tap();
         AshnodsCylix topCard = new AshnodsCylix();
         harness.setLibrary(player1, List.of(topCard));
 

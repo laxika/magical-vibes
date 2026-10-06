@@ -115,7 +115,7 @@ class IvyDancerTest extends BaseCardTest {
     @DisplayName("A tapped Ivy Dancer cannot activate its ability")
     void cannotActivateWhileTapped() {
         Permanent dancer = addReadyIvyDancer(player1);
-        dancer.setTapped(true);
+        dancer.tap();
         Permanent target = addReadyIvyDancer(player2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))

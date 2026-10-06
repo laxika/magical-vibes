@@ -62,7 +62,7 @@ class LlanowarVanguardTest extends BaseCardTest {
     @DisplayName("A tapped Vanguard cannot pay the tap cost again")
     void tappedVanguardCannotActivate() {
         Permanent vanguard = addCreatureReady(player1, new LlanowarVanguard());
-        vanguard.setTapped(true);
+        vanguard.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);

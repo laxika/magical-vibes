@@ -78,7 +78,7 @@ class MyrEnforcerTest extends BaseCardTest {
     @DisplayName("Tapped artifacts still reduce the casting cost")
     void affinityCountsTappedArtifacts() {
         for (int i = 0; i < 6; i++) {
-            harness.addToBattlefieldAndReturn(player1, new Ornithopter()).setTapped(true);
+            harness.addToBattlefieldAndReturn(player1, new Ornithopter()).tap();
         }
         harness.setHand(player1, List.of(new MyrEnforcer()));
         harness.addMana(player1, ManaColor.COLORLESS, 1);

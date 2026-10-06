@@ -109,7 +109,7 @@ class KuldothaRingleaderTest extends BaseCardTest {
     void tappedRingleaderDoesNotHaveToAttack() {
         Permanent ringleader = harness.addToBattlefieldAndReturn(player1, new KuldothaRingleader());
         ringleader.setSummoningSick(false);
-        ringleader.setTapped(true);
+        ringleader.tap();
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         bears.setSummoningSick(false);
         harness.setLife(player2, 20);

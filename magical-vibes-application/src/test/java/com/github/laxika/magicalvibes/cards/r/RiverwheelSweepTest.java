@@ -52,7 +52,7 @@ class RiverwheelSweepTest extends BaseCardTest {
     @Test
     void alreadyTappedCreatureStillGetsThreeStunCountersWithAnEmptyLibrary() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        target.setTapped(true);
+        target.tap();
         harness.setLibrary(player1, List.of());
         harness.setHand(player1, List.of(new RiverwheelSweep()));
         harness.addMana(player1, ManaColor.COLORLESS, 6);

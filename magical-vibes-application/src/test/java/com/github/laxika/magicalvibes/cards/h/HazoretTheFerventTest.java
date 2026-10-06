@@ -118,7 +118,7 @@ class HazoretTheFerventTest extends BaseCardTest {
     void tappedHazoretCanActivateWithMultipleCards() {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
-        harness.addToBattlefieldAndReturn(player2, new HazoretTheFervent()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player2, new HazoretTheFervent()).tap();
         harness.setHand(player2, List.of(new Island(), new Colossapede(), new Island()));
         harness.addMana(player2, ManaColor.RED, 1);
         harness.addMana(player2, ManaColor.GREEN, 2);

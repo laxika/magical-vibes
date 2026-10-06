@@ -86,12 +86,12 @@ class SavvyHunterTest extends BaseCardTest {
     @DisplayName("A tapped, summoning-sick Hunter can sacrifice tapped nontoken Foods")
     void sacrificesNontokenFoodsWithoutTappingHunter() {
         Permanent hunter = harness.addToBattlefieldAndReturn(player1, new SavvyHunter());
-        hunter.setTapped(true);
+        hunter.tap();
         hunter.setSummoningSick(true);
         Permanent firstFood = harness.addToBattlefieldAndReturn(player1, new Gingerbrute());
         Permanent secondFood = harness.addToBattlefieldAndReturn(player1, new Gingerbrute());
-        firstFood.setTapped(true);
-        secondFood.setTapped(true);
+        firstFood.tap();
+        secondFood.tap();
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new SavvyHunter()));
 

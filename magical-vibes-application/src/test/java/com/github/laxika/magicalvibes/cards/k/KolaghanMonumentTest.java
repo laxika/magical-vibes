@@ -92,7 +92,7 @@ class KolaghanMonumentTest extends BaseCardTest {
     @DisplayName("A tapped Monument can animate without untapping")
     void tappedMonumentCanAnimate() {
         Permanent monument = addReadyMonument();
-        monument.setTapped(true);
+        monument.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.RED, 1);

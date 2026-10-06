@@ -124,7 +124,7 @@ class GuardiansOfOboroTest extends BaseCardTest {
     void attackPermissionDoesNotAllowTappedCreaturesToAttack() {
         Permanent guardians = addCreatureReady(player1, new GuardiansOfOboro());
         guardians.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
-        guardians.setTapped(true);
+        guardians.tap();
 
         assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class)

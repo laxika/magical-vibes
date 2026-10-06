@@ -21,7 +21,7 @@ class RatsOfRathTest extends BaseCardTest {
     @DisplayName("Can destroy itself while tapped and summoning sick")
     void canDestroyItselfWhileTappedAndSummoningSick() {
         Permanent rats = harness.addToBattlefieldAndReturn(player1, new RatsOfRath());
-        rats.setTapped(true);
+        rats.tap();
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, 0, null, rats.getId());

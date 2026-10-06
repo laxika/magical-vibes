@@ -101,7 +101,7 @@ class GroundlingPouncerTest extends BaseCardTest {
     void tappedSummoningSickPouncerCanActivate() {
         Permanent pouncer = harness.addToBattlefieldAndReturn(player1, new GroundlingPouncer());
         pouncer.setSummoningSick(true);
-        pouncer.setTapped(true);
+        pouncer.tap();
         harness.addToBattlefield(player2, new SuntailHawk());
         harness.addMana(player1, ManaColor.GREEN, 1);
 

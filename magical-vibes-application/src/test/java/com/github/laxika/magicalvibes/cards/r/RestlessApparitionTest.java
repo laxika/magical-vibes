@@ -95,7 +95,7 @@ class RestlessApparitionTest extends BaseCardTest {
     void mixedHybridManaPaysForAbilityWhileTappedAndSummoningSick() {
         Permanent apparition = harness.addToBattlefieldAndReturn(player1, new RestlessApparition());
         apparition.setSummoningSick(true);
-        apparition.setTapped(true);
+        apparition.tap();
         int power = apparition.getEffectivePower();
         int toughness = apparition.getEffectiveToughness();
         harness.addMana(player1, ManaColor.WHITE, 1);

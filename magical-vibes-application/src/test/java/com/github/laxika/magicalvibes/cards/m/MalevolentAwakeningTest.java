@@ -108,7 +108,7 @@ class MalevolentAwakeningTest extends BaseCardTest {
     void canSacrificeTappedSummoningSickCreature() {
         harness.addToBattlefield(player1, new MalevolentAwakening());
         var sacrifice = harness.addToBattlefieldAndReturn(player1, new DuskImp());
-        sacrifice.setTapped(true);
+        sacrifice.tap();
         sacrifice.setSummoningSick(true);
         Card target = new Gravedigger();
         harness.setGraveyard(player1, List.of(target));

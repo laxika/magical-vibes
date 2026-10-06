@@ -122,7 +122,7 @@ class PhyrexiasCoreTest extends BaseCardTest {
     void canSacrificeTappedArtifact() {
         harness.addToBattlefield(player1, new PhyrexiasCore());
         Permanent artifact = harness.addToBattlefieldAndReturn(player1, new PristineTalisman());
-        artifact.setTapped(true);
+        artifact.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.setLife(player1, 20);
 
@@ -137,7 +137,7 @@ class PhyrexiasCoreTest extends BaseCardTest {
     @DisplayName("A tapped Core cannot activate either tap ability")
     void tappedCoreCannotActivate() {
         Permanent core = harness.addToBattlefieldAndReturn(player1, new PhyrexiasCore());
-        core.setTapped(true);
+        core.tap();
         harness.addToBattlefield(player1, new DarksteelRelic());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

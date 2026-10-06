@@ -97,7 +97,7 @@ class KitsuneLoreweaverTest extends BaseCardTest {
         harness.addToBattlefield(player1, new KitsuneLoreweaver());
         Permanent loreweaver = findPermanent(player1, "Kitsune Loreweaver");
         loreweaver.setSummoningSick(true);
-        loreweaver.setTapped(true);
+        loreweaver.tap();
         harness.setHand(player1, hand(2));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);

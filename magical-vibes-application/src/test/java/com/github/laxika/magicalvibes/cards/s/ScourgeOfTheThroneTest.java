@@ -105,8 +105,8 @@ class ScourgeOfTheThroneTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new ScourgeOfTheThrone());
         Permanent nonattacker = addCreatureReady(player1, new ScourgeOfTheThrone());
         Permanent opponentCreature = addCreatureReady(player2, new ScourgeOfTheThrone());
-        nonattacker.setTapped(true);
-        opponentCreature.setTapped(true);
+        nonattacker.tap();
+        opponentCreature.tap();
 
         declareAttackers(player1, List.of(0));
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, this::resolveAllTriggers);

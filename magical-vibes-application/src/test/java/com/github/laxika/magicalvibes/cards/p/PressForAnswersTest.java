@@ -63,7 +63,7 @@ class PressForAnswersTest extends BaseCardTest {
     @Test
     void alreadyTappedCreatureIsStillLockedAndInvestigates() {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        bears.setTapped(true);
+        bears.tap();
         harness.setHand(player1, List.of(new PressForAnswers()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);

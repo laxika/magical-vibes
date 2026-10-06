@@ -85,7 +85,7 @@ class RahildaWantedCutthroatTest extends BaseCardTest {
 
         gd.turnNumber++;
         gd.creaturesAttackedCountBySubtypeThisTurn.clear();
-        rahilda.setTapped(false);
+        rahilda.untap();
         resolveCombatAndTrigger();
 
         harness.addMana(player1, ManaColor.WHITE, 2);

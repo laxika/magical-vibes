@@ -84,7 +84,7 @@ class SeizanPerverterOfTruthTest extends BaseCardTest {
     @DisplayName("The upkeep ability waits for resolution and works while Seizan is tapped")
     void tappedSeizanStillTriggersWithoutApplyingEffectsImmediately() {
         var seizan = addCreatureReady(player1, new SeizanPerverterOfTruth());
-        seizan.setTapped(true);
+        seizan.tap();
         harness.setLibrary(player2, drawLibrary());
         harness.setHand(player2, List.of());
         int startingLife = gd.getLife(player2.getId());

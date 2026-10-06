@@ -118,7 +118,7 @@ class MindmelterTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Mindmelter());
         Permanent mindmelter = gd.playerBattlefields.get(player1.getId()).getFirst();
         mindmelter.setSummoningSick(true);
-        mindmelter.setTapped(true);
+        mindmelter.tap();
         Card land = new Wastes();
         harness.setHand(player2, List.of(land));
         harness.addMana(player1, ManaColor.BLUE, 3);

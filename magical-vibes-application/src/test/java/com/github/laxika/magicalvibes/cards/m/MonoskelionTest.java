@@ -86,7 +86,7 @@ class MonoskelionTest extends BaseCardTest {
     void activatesWhileTappedAndSummoningSick() {
         Permanent monoskelion = harness.enterBattlefieldAndReturn(player1, new Monoskelion());
         monoskelion.setSummoningSick(true);
-        monoskelion.setTapped(true);
+        monoskelion.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, player2.getId());

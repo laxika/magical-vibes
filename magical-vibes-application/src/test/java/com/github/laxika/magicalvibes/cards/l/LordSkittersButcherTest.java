@@ -96,7 +96,7 @@ class LordSkittersButcherTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(other);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        assertThat(gd.playerLibraries.get(player1.getId())).hasSize(2).first().isSameAs(topCard);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2).first().isSameAs(topCard);
     }
 
     @Test
@@ -114,7 +114,7 @@ class LordSkittersButcherTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponent);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(land);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        assertThat(gd.playerLibraries.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
     }
 
     @Test

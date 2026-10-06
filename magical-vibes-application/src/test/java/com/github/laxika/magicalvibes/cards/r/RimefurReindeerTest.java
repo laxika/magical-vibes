@@ -73,7 +73,7 @@ class RimefurReindeerTest extends BaseCardTest {
     @DisplayName("An already tapped opponent creature is a legal target")
     void alreadyTappedCreatureIsLegalTarget() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        target.setTapped(true);
+        target.tap();
         harness.addToBattlefield(player1, new RimefurReindeer());
 
         castGloriousAnthem();

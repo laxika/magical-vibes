@@ -87,7 +87,7 @@ class KaleidostoneTest extends BaseCardTest {
     @DisplayName("A tapped Kaleidostone cannot activate its mana ability")
     void cannotActivateWhileTapped() {
         var stone = harness.addToBattlefieldAndReturn(player1, new Kaleidostone());
-        stone.setTapped(true);
+        stone.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 5);
         harness.forceActivePlayer(player1);
 

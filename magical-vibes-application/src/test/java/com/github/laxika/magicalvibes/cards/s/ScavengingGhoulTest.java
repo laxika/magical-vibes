@@ -153,7 +153,7 @@ class ScavengingGhoulTest extends BaseCardTest {
     @Test
     void canPayCounterCostWhileTappedAndSummoningSick() {
         Permanent ghoul = harness.addToBattlefieldAndReturn(player1, new ScavengingGhoul());
-        ghoul.setTapped(true);
+        ghoul.tap();
         ghoul.setSummoningSick(true);
         ghoul.setCounterCount(CounterType.CORPSE, 1);
         harness.forceActivePlayer(player1);

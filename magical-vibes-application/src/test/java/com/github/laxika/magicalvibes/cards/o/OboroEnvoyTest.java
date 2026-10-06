@@ -115,7 +115,7 @@ class OboroEnvoyTest extends BaseCardTest {
     @DisplayName("A tapped Envoy can target itself and the returned land counts in hand")
     void tappedEnvoyCanTargetItself() {
         Permanent envoy = harness.addToBattlefieldAndReturn(player1, new OboroEnvoy());
-        envoy.setTapped(true);
+        envoy.tap();
         Permanent land = harness.addToBattlefieldAndReturn(player1, new OboroPalaceInTheClouds());
         harness.setHand(player1, List.of());
         harness.addMana(player1, ManaColor.COLORLESS, 2);

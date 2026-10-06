@@ -75,7 +75,7 @@ class IronSpiderStarkUpgradeTest extends BaseCardTest {
     @Test
     void canRemoveCountersSplitBetweenSourceAndUncrewedVehicle() {
         Permanent spider = harness.addToBattlefieldAndReturn(player1, new IronSpiderStarkUpgrade());
-        spider.setTapped(true);
+        spider.tap();
         spider.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         Permanent vehicle = harness.addToBattlefieldAndReturn(player1, new CloudspireSkycycle());
         vehicle.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);

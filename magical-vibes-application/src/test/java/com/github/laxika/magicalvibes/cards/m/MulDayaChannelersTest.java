@@ -157,7 +157,7 @@ class MulDayaChannelersTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.handleListChoice(player1, "BLUE");
 
-        gd.playerBattlefields.get(player1.getId()).getFirst().setTapped(false);
+        gd.playerBattlefields.get(player1.getId()).getFirst().untap();
         harness.setLibrary(player1, List.of(new FlameSlash()));
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

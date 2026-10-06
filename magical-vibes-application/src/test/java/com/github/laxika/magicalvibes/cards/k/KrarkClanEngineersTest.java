@@ -148,7 +148,7 @@ class KrarkClanEngineersTest extends BaseCardTest {
     void canActivateWhileSummoningSickAndTapped() {
         Permanent engineers = harness.addToBattlefieldAndReturn(player1, new KrarkClanEngineers());
         engineers.setSummoningSick(true);
-        engineers.setTapped(true);
+        engineers.tap();
         addArtifact(player1);
         addArtifact(player1);
         Permanent target = addArtifact(player2);
@@ -165,8 +165,8 @@ class KrarkClanEngineersTest extends BaseCardTest {
     @Test
     void canSacrificeTappedArtifacts() {
         addReadyEngineers(player1);
-        addArtifact(player1).setTapped(true);
-        addArtifact(player1).setTapped(true);
+        addArtifact(player1).tap();
+        addArtifact(player1).tap();
         Permanent target = addArtifact(player2);
         harness.addMana(player1, ManaColor.RED, 1);
 

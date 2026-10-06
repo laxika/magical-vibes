@@ -76,7 +76,7 @@ class HagiMobTest extends BaseCardTest {
     void tappedCreatureCanBoast() {
         Permanent hagiMob = addCreatureReady(player1, new HagiMob());
         hagiMob.setAttackedThisTurn(true);
-        hagiMob.setTapped(true);
+        hagiMob.tap();
         addBoastMana();
 
         harness.activateAbility(player1, 0, null, player2.getId());

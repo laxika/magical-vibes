@@ -78,7 +78,7 @@ class OrdruunCommandoTest extends BaseCardTest {
     void repeatedActivationsAccumulatePrevention() {
         Permanent commando = addCreatureReady(player1, new OrdruunCommando());
         commando.setSummoningSick(true);
-        commando.setTapped(true);
+        commando.tap();
         addCreatureReady(player2, new ViashinoFangtail());
         addCreatureReady(player2, new ViashinoFangtail());
 

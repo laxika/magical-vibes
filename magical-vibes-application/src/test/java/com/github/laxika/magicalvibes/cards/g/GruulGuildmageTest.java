@@ -102,7 +102,7 @@ class GruulGuildmageTest extends BaseCardTest {
     void paysSacrificeBeforeResolvingDamageToController() {
         addReadyGuildmage(player1);
         Permanent land = harness.addToBattlefieldAndReturn(player1, new GruulGuildgate());
-        land.setTapped(true);
+        land.tap();
         int lifeBefore = gd.getLife(player1.getId());
 
         addRedAbilityMana();
@@ -148,7 +148,7 @@ class GruulGuildmageTest extends BaseCardTest {
     @DisplayName("A tapped, summoning-sick Guildmage can activate its pump repeatedly on itself")
     void pumpCanBeRepeatedWhileTappedAndSummoningSick() {
         Permanent guildmage = addReadyGuildmage(player1);
-        guildmage.setTapped(true);
+        guildmage.tap();
         guildmage.setSummoningSick(true);
         int powerBefore = gqs.getEffectivePower(gd, guildmage);
         int toughnessBefore = gqs.getEffectiveToughness(gd, guildmage);

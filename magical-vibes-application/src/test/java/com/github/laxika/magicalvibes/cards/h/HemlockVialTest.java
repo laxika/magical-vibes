@@ -110,7 +110,7 @@ class HemlockVialTest extends BaseCardTest {
     @DisplayName("A tapped Vial cannot activate its ability")
     void tappedVialCannotActivate() {
         Permanent vial = addReadyVial(player1);
-        vial.setTapped(true);
+        vial.tap();
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

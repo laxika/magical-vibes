@@ -30,7 +30,7 @@ class MorgueToadTest extends BaseCardTest {
     @DisplayName("A tapped, summoning-sick Morgue Toad can be sacrificed for mana")
     void canActivateWhileTappedAndSummoningSick() {
         Permanent toad = harness.addToBattlefieldAndReturn(player1, new MorgueToad());
-        toad.setTapped(true);
+        toad.tap();
         toad.setSummoningSick(true);
 
         harness.activateAbility(player1, 0, null, null);

@@ -237,7 +237,7 @@ class JadeMonolithTest extends BaseCardTest {
         assertThat(creature.getMarkedDamage()).isZero();
         harness.assertLife(player1, 19);
 
-        sorcerer.setTapped(false);
+        sorcerer.untap();
         harness.activateAbility(player1, indexOf(player1, sorcerer), null, creature.getId());
         harness.passBothPriorities();
         assertThat(creature.getMarkedDamage()).isEqualTo(1);

@@ -178,7 +178,7 @@ class MyojinOfLifesWebTest extends BaseCardTest {
     void activatesWithoutTappingAtInstantSpeed() {
         Permanent myojin = addReadyMyojin(player1);
         myojin.setSummoningSick(true);
-        myojin.setTapped(true);
+        myojin.tap();
         harness.setHand(player1, List.of(new HumbleBudoka()));
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

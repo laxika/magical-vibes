@@ -133,7 +133,7 @@ class MoggcatcherTest extends BaseCardTest {
     @DisplayName("A tapped Moggcatcher cannot activate again")
     void tappedSourcePreventsActivation() {
         setUpMoggcatcher();
-        findPermanent(player1, "Moggcatcher").setTapped(true);
+        findPermanent(player1, "Moggcatcher").tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);

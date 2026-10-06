@@ -86,7 +86,7 @@ class MistformDreamerTest extends BaseCardTest {
     void tappedSummoningSickDreamerCanActivate() {
         Permanent dreamer = harness.addToBattlefieldAndReturn(player1, new MistformDreamer());
         dreamer.setSummoningSick(true);
-        dreamer.setTapped(true);
+        dreamer.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         activateAndChoose(CardSubtype.GOBLIN);

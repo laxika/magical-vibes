@@ -71,7 +71,7 @@ class MindlessNullTest extends BaseCardTest {
     void canBlockWithTappedVampire() {
         addCreatureReady(player2, new CliffThreader());
         var blocker = addCreatureReady(player1, new MindlessNull());
-        addCreatureReady(player1, new VampireLacerator()).setTapped(true);
+        addCreatureReady(player1, new VampireLacerator()).tap();
 
         declareAttackersAndPrepareBlockers(player2, List.of(0));
         harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,

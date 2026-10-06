@@ -136,7 +136,7 @@ class MasterTransmuterTest extends BaseCardTest {
         CourtHomunculus borrowed = new CourtHomunculus();
         borrowed.setOwnerId(player2.getId());
         Permanent permanent = harness.addToBattlefieldAndReturn(player1, borrowed);
-        permanent.setTapped(true);
+        permanent.tap();
         harness.setHand(player1, List.of(new CourtHomunculus()));
         harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.BLUE, 1);

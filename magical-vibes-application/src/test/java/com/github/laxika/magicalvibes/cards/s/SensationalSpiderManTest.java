@@ -157,7 +157,7 @@ class SensationalSpiderManTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Forest()));
         addCreatureReady(player1, new SensationalSpiderMan());
         Permanent defender = addCreatureReady(player2, new GrizzlyBears());
-        defender.setTapped(true);
+        defender.tap();
         int handSize = gd.playerHands.get(player1.getId()).size();
 
         declareAttackers(player1, List.of(0));

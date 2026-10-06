@@ -119,7 +119,7 @@ class SewerdregTest extends BaseCardTest {
         harness.setGraveyard(player2, List.of(target));
         harness.addToBattlefield(player1, new Sewerdreg());
         Permanent source = findPermanent(player1, "Sewerdreg");
-        source.setTapped(true);
+        source.tap();
         source.setSummoningSick(true);
 
         harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId()));

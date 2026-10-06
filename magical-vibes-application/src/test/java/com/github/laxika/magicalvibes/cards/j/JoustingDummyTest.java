@@ -66,7 +66,7 @@ class JoustingDummyTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent dummy = harness.addToBattlefieldAndReturn(player1, new JoustingDummy());
         dummy.setSummoningSick(true);
-        dummy.setTapped(true);
+        dummy.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.activateAbility(player1, 0, null, null);

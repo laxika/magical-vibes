@@ -144,7 +144,7 @@ class RamosianSergeantTest extends BaseCardTest {
     @DisplayName("A tapped Ramosian Sergeant cannot activate its ability")
     void cannotActivateWhileTapped() {
         Permanent sergeant = addReadySergeant();
-        sergeant.setTapped(true);
+        sergeant.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)

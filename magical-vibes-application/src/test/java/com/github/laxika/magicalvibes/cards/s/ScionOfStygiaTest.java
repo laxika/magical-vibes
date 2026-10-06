@@ -109,7 +109,7 @@ class ScionOfStygiaTest extends BaseCardTest {
     void alreadyTappedTargetStillSkipsUntap() {
         setRoll(10);
         Permanent target = addTarget();
-        target.setTapped(true);
+        target.tap();
 
         castScion(target);
         harness.performUntapStep(player2);

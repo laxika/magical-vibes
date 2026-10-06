@@ -95,7 +95,7 @@ class IngeniousLeoninTest extends BaseCardTest {
     @DisplayName("A tapped source with summoning sickness can activate the ability")
     void tappedSummoningSickSourceCanActivate() {
         Permanent source = addSource();
-        source.setTapped(true);
+        source.tap();
         source.setSummoningSick(true);
         Permanent cat = addAttackingCreature(player1, new IngeniousLeonin());
         addMana();

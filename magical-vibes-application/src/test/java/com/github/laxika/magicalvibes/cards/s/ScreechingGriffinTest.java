@@ -108,14 +108,14 @@ class ScreechingGriffinTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent griffin = harness.addToBattlefieldAndReturn(player1, new ScreechingGriffin());
         griffin.setSummoningSick(true);
-        griffin.setTapped(true);
+        griffin.tap();
         Permanent blocker = addCreatureReady(player2, new CourierHawk());
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, blocker.getId());
         harness.passBothPriorities();
 
-        griffin.setTapped(false);
+        griffin.untap();
         griffin.setSummoningSick(false);
         declareAttackersAndPrepareBlockers(List.of(0));
 

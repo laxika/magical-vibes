@@ -149,7 +149,7 @@ class MartyrOfAshesTest extends BaseCardTest {
         harness.setHand(player1, List.of(redCard));
         Permanent martyr = harness.addToBattlefieldAndReturn(player1, new MartyrOfAshes());
         martyr.setSummoningSick(true);
-        martyr.setTapped(true);
+        martyr.tap();
         harness.addToBattlefield(player2, new MartyrOfAshes());
         Permanent survivor = harness.addToBattlefieldAndReturn(player2, new RonomHulk());
         harness.setLife(player1, 20);

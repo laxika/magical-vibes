@@ -155,7 +155,7 @@ class MonaLisaEverAdaptableTest extends BaseCardTest {
     @Test
     void tappedMutagenCannotActivate() {
         Permanent mutagen = createMutagen();
-        mutagen.setTapped(true);
+        mutagen.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1,

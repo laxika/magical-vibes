@@ -155,7 +155,7 @@ class GoldmeadowLookoutTest extends BaseCardTest {
 
         Permanent token = findPermanent(player1, "Goldmeadow Harrier");
         token.setSummoningSick(false);
-        lookout.setTapped(false);
+        lookout.untap();
         int tokenIndex = gd.playerBattlefields.get(player1.getId()).indexOf(token);
         harness.addMana(player1, ManaColor.WHITE, 1);
 

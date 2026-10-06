@@ -112,7 +112,7 @@ class NykthosShrineToNyxTest extends BaseCardTest {
     @Test
     void tappedNoncreaturePermanentsCountButCardsOutsideBattlefieldDoNot() {
         harness.addToBattlefield(player1, new NykthosShrineToNyx());
-        harness.addToBattlefieldAndReturn(player1, new BowOfNylea()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new BowOfNylea()).tap();
         harness.setHand(player1, List.of(new VoyagingSatyr()));
         harness.setGraveyard(player1, List.of(new VoyagingSatyr()));
         harness.setExile(player1, List.of(new VoyagingSatyr()));

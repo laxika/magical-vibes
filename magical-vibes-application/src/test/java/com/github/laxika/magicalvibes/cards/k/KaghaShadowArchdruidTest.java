@@ -195,7 +195,7 @@ class KaghaShadowArchdruidTest extends BaseCardTest {
         GrizzlyBears bears = new GrizzlyBears();
         millWithKagha(List.of(bears, new Forest()));
         harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.forceStep(TurnStep.BEGIN_COMBAT);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
 
         assertThatThrownBy(() -> harness.castFromGraveyard(player1, bears.getId()))
                 .isInstanceOf(IllegalStateException.class);

@@ -255,7 +255,7 @@ class KessDissidentMageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(permanent -> permanent.isToken());
+                .anyMatch(permanent -> permanent.getCard().isToken());
         assertThat(gd.findExiledCard(beast.getId())).isNotNull();
         assertThatThrownBy(() -> harness.castFromGraveyardTargeting(player1, 0, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);

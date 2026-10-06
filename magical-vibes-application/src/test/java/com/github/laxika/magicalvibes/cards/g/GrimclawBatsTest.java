@@ -129,7 +129,7 @@ class GrimclawBatsTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent bats = harness.addToBattlefieldAndReturn(player1, new GrimclawBats());
         bats.setSummoningSick(true);
-        bats.setTapped(true);
+        bats.tap();
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.setLife(player1, 20);
 

@@ -79,7 +79,7 @@ class OgreSiegebreakerTest extends BaseCardTest {
     @DisplayName("Can activate repeatedly while tapped and summoning sick")
     void canActivateRepeatedlyWhileTappedAndSummoningSick() {
         Permanent ogre = harness.addToBattlefieldAndReturn(player1, new OgreSiegebreaker());
-        ogre.setTapped(true);
+        ogre.tap();
         ogre.setSummoningSick(true);
         Permanent first = harness.addToBattlefieldAndReturn(player2, new OgreSiegebreaker());
         Permanent second = harness.addToBattlefieldAndReturn(player2, new OgreSiegebreaker());

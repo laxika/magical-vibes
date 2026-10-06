@@ -79,7 +79,7 @@ class KorLineSlingerTest extends BaseCardTest {
     void canTargetAlreadyTappedCreature() {
         Permanent lineSlinger = addCreatureReady(player1, new KorLineSlinger());
         Permanent target = addCreatureReady(player2, new KorLineSlinger());
-        target.setTapped(true);
+        target.tap();
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
@@ -106,7 +106,7 @@ class KorLineSlingerTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent lineSlinger = addCreatureReady(player1, new KorLineSlinger());
-        lineSlinger.setTapped(true);
+        lineSlinger.tap();
         Permanent target = addCreatureReady(player2, new KorLineSlinger());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))

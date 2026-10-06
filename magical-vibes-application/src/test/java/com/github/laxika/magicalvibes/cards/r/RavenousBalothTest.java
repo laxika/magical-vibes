@@ -135,7 +135,7 @@ class RavenousBalothTest extends BaseCardTest {
     @DisplayName("A tapped Baloth can activate during the opponent's turn")
     void tappedBalothCanActivateDuringOpponentsTurn() {
         Permanent baloth = harness.addToBattlefieldAndReturn(player1, new RavenousBaloth());
-        baloth.setTapped(true);
+        baloth.tap();
         harness.setLife(player1, 10);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

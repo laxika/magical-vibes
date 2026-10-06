@@ -76,7 +76,7 @@ class SacellumArchersTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent archers = addReadyArchers(player1);
-        archers.setTapped(true);
+        archers.tap();
         payManaCost(player1);
         Permanent attacker = addAttacker(player2);
 

@@ -45,7 +45,7 @@ class NarnamCobraTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent cobra = addCreatureReady(player1, new NarnamCobra());
         cobra.setSummoningSick(true);
-        cobra.setTapped(true);
+        cobra.tap();
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.activateAbility(player1, 0, null, null);

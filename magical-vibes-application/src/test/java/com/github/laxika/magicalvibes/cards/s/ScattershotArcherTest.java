@@ -68,7 +68,7 @@ class ScattershotArcherTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent archer = addCreatureReady(player1, new ScattershotArcher());
-        archer.setTapped(true);
+        archer.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);

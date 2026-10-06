@@ -102,7 +102,7 @@ class NirkanaCutthroatTest extends BaseCardTest {
     @DisplayName("Level up does not require tapping or haste")
     void canLevelUpWhileTappedAndSummoningSick() {
         Permanent cutthroat = addCreatureReady(player1, new NirkanaCutthroat());
-        cutthroat.setTapped(true);
+        cutthroat.tap();
         cutthroat.setSummoningSick(true);
         prepareForLeveling(player1);
 

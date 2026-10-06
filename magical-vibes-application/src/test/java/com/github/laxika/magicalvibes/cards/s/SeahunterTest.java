@@ -130,7 +130,7 @@ class SeahunterTest extends BaseCardTest {
     @Test
     void tappedSeahunterCannotActivate() {
         Permanent seahunter = addReadySeahunter();
-        seahunter.setTapped(true);
+        seahunter.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);

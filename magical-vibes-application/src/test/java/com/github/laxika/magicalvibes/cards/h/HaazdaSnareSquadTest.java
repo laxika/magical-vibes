@@ -131,7 +131,7 @@ class HaazdaSnareSquadTest extends BaseCardTest {
     void canTargetTappedCreature() {
         addCreatureReady(player1, new HaazdaSnareSquad());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new KraulWarrior());
-        target.setTapped(true);
+        target.tap();
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         declareAttackers(player1, List.of(0));

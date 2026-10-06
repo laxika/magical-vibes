@@ -133,7 +133,7 @@ class GruulCharmTest extends BaseCardTest {
         void reclaimsOwnedNoncreatureWithoutUntappingIt() {
             Permanent land = harness.addToBattlefieldAndReturn(player2, new Mountain());
             gd.stolenCreatures.put(land.getId(), player1.getId());
-            land.setTapped(true);
+            land.tap();
 
             castCharm(1);
 

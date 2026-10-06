@@ -96,7 +96,7 @@ class PizzaFaceGastromancerTest extends BaseCardTest {
     @Test
     void cannotActivateSacrificeAbilityWhileTapped() {
         Permanent pizzaFace = addCreatureReady(player1, new PizzaFaceGastromancer());
-        pizzaFace.setTapped(true);
+        pizzaFace.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 10);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

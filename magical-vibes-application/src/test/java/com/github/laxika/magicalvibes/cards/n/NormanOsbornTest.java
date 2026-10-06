@@ -150,7 +150,7 @@ class NormanOsbornTest extends BaseCardTest {
     @Test
     void transformationPreservesCountersAndTappedState() {
         Permanent norman = addFrontReady(player1);
-        norman.setTapped(true);
+        norman.tap();
         norman.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         prepareMainPhase();
         addTransformationMana();

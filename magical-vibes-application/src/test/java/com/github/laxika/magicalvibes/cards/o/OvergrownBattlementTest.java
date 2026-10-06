@@ -41,7 +41,7 @@ class OvergrownBattlementTest extends BaseCardTest {
     @DisplayName("Tapped and summoning-sick defenders still count toward mana production")
     void countsTappedAndSummoningSickDefenders() {
         var source = addCreatureReady(player1, new OvergrownBattlement());
-        addCreatureReady(player1, new OvergrownBattlement()).setTapped(true);
+        addCreatureReady(player1, new OvergrownBattlement()).tap();
         addCreatureReady(player1, new OvergrownBattlement()).setSummoningSick(true);
 
         harness.activateAbility(player1, 0, null, null);

@@ -75,7 +75,7 @@ class SelflessSpiritTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new SelflessSpirit());
         source.setSummoningSick(true);
-        source.setTapped(true);
+        source.tap();
         Permanent survivor = addReadySelflessSpirit(player1);
 
         harness.activateAbility(player1, 0, null, null);

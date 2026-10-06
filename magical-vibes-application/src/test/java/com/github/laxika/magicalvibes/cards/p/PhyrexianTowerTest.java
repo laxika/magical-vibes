@@ -60,7 +60,7 @@ class PhyrexianTowerTest extends BaseCardTest {
         harness.addToBattlefield(player1, new PhyrexianTower());
         var creature = harness.addToBattlefieldAndReturn(player1, new BlanchwoodTreefolk());
         creature.setSummoningSick(true);
-        creature.setTapped(true);
+        creature.tap();
 
         harness.activateAbility(player1, 0, 1, null, null);
 
@@ -75,7 +75,7 @@ class PhyrexianTowerTest extends BaseCardTest {
     @DisplayName("A tapped Tower cannot sacrifice a creature for mana")
     void tappedTowerCannotPaySacrificeAbilityCost() {
         var tower = harness.addToBattlefieldAndReturn(player1, new PhyrexianTower());
-        tower.setTapped(true);
+        tower.tap();
         harness.addToBattlefield(player1, new BlanchwoodTreefolk());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))

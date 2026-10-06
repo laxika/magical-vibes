@@ -98,7 +98,7 @@ class NirkanaRevenantTest extends BaseCardTest {
     void boostWorksWhileTappedAndSummoningSick() {
         Permanent revenant = harness.addToBattlefieldAndReturn(player1, new NirkanaRevenant());
         revenant.setSummoningSick(true);
-        revenant.setTapped(true);
+        revenant.tap();
         Permanent other = harness.addToBattlefieldAndReturn(player1, new NirkanaRevenant());
         harness.addMana(player1, ManaColor.BLACK, 1);
 

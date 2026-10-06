@@ -63,7 +63,7 @@ class SavaiCrystalTest extends BaseCardTest {
     @Test
     void tappedCrystalCannotProduceMana() {
         var crystal = harness.addToBattlefieldAndReturn(player1, new SavaiCrystal());
-        crystal.setTapped(true);
+        crystal.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);

@@ -94,7 +94,7 @@ class GoblinDiplomatsTest extends BaseCardTest {
     void tappedSummoningSickAndDefenderCreaturesNeedNotAttack() {
         addCreatureReady(player1, new GoblinDiplomats());
         Permanent tappedBoar = addCreatureReady(player1, new BrindleBoar());
-        tappedBoar.setTapped(true);
+        tappedBoar.tap();
         harness.addToBattlefield(player1, new BrindleBoar());
         addCreatureReady(player1, new WallOfSwords());
         harness.activateAbility(player1, 0, null, null);

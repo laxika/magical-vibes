@@ -171,7 +171,7 @@ class KefnetsMonumentTest extends BaseCardTest {
 
         assertThat(target.isTapped()).isFalse();
         harness.passBothPriorities();
-        target.setTapped(true);
+        target.tap();
         harness.performUntapStep(player1);
         harness.performUntapStep(player2);
         assertThat(target.isTapped()).isTrue();
@@ -183,7 +183,7 @@ class KefnetsMonumentTest extends BaseCardTest {
     void repeatedTriggersBeforeUntapDoNotSkipAdditionalUntapSteps() {
         harness.addToBattlefield(player1, new KefnetsMonument());
         Permanent target = addCreatureReady(player2, new SlitherBlade());
-        target.setTapped(true);
+        target.tap();
         harness.setHand(player1, List.of(new SlitherBlade(), new SlitherBlade()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
@@ -204,7 +204,7 @@ class KefnetsMonumentTest extends BaseCardTest {
     void castTriggerStillAppliesWhenCreatureSpellIsCountered() {
         harness.addToBattlefield(player1, new KefnetsMonument());
         Permanent target = addCreatureReady(player2, new SlitherBlade());
-        target.setTapped(true);
+        target.tap();
         SlitherBlade spell = new SlitherBlade();
         harness.setHand(player1, List.of(spell));
         harness.setHand(player2, List.of(new Cancel()));
@@ -236,7 +236,7 @@ class KefnetsMonumentTest extends BaseCardTest {
 
         harness.performUntapStep(player2);
         assertThat(target.isTapped()).isFalse();
-        target.setTapped(true);
+        target.tap();
         harness.performUntapStep(player2);
         assertThat(target.isTapped()).isFalse();
     }

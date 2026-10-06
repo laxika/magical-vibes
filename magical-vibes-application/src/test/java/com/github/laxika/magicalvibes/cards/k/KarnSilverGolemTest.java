@@ -242,7 +242,7 @@ class KarnSilverGolemTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent karn = harness.addToBattlefieldAndReturn(player1, new KarnSilverGolem());
         karn.setSummoningSick(true);
-        karn.setTapped(true);
+        karn.tap();
         Permanent powerstone = harness.addToBattlefieldAndReturn(player1, new WornPowerstone());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

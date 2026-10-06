@@ -86,7 +86,7 @@ class SHIELDSpyKitTest extends BaseCardTest {
         Permanent spyKit = harness.addToBattlefieldAndReturn(player1, new SHIELDSpyKit());
         spyKit.setAttachedTo(attacker.getId());
         Permanent otherCreature = addCreatureReady(player1, new GrizzlyBears());
-        otherCreature.setTapped(true);
+        otherCreature.tap();
         harness.setLibrary(player1, List.of(new Forest()));
 
         declareAttackers(player1, List.of(0));

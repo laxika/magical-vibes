@@ -95,7 +95,7 @@ class LanternLitGraveyardTest extends BaseCardTest {
         Permanent land = addLand();
         harness.activateAbility(player1, 0, 1, null, null);
 
-        land.setTapped(false);
+        land.untap();
         harness.activateAbility(player1, 0, 2, null, null);
 
         assertThat(mana(ManaColor.BLACK)).isEqualTo(1);

@@ -74,7 +74,7 @@ class RockcasterPlatoonTest extends BaseCardTest {
     @DisplayName("Can activate while tapped and summoning sick")
     void activatesWhileTappedAndSummoningSick() {
         Permanent platoon = harness.addToBattlefieldAndReturn(player1, new RockcasterPlatoon());
-        platoon.setTapped(true);
+        platoon.tap();
         platoon.setSummoningSick(true);
         harness.addToBattlefield(player2, new SuntailHawk());
 

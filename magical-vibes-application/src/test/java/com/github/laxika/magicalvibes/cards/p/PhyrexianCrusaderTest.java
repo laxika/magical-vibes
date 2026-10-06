@@ -143,7 +143,7 @@ class PhyrexianCrusaderTest extends BaseCardTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
 
-        harness.passUntil(TurnStep.END_COMBAT);
+        harness.passUntil(TurnStep.END_OF_COMBAT);
 
         harness.assertOnBattlefield(player2, "Phyrexian Crusader");
         assertThat(blocker.getMarkedDamage()).isZero();
@@ -165,7 +165,7 @@ class PhyrexianCrusaderTest extends BaseCardTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
 
-        harness.passUntil(TurnStep.END_COMBAT);
+        harness.passUntil(TurnStep.END_OF_COMBAT);
 
         harness.assertOnBattlefield(player2, "Phyrexian Crusader");
         assertThat(blocker.getMarkedDamage()).isZero();
@@ -187,7 +187,7 @@ class PhyrexianCrusaderTest extends BaseCardTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
 
-        harness.passUntil(TurnStep.END_COMBAT);
+        harness.passUntil(TurnStep.END_OF_COMBAT);
 
         harness.assertNotOnBattlefield(player1, "Phyrexian Crusader");
         harness.assertInGraveyard(player1, "Phyrexian Crusader");
@@ -286,7 +286,7 @@ class PhyrexianCrusaderTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        harness.passUntil(TurnStep.END_COMBAT);
+        harness.passUntil(TurnStep.END_OF_COMBAT);
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
         assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(2);
@@ -311,7 +311,7 @@ class PhyrexianCrusaderTest extends BaseCardTest {
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx)));
-        harness.passUntil(TurnStep.END_COMBAT);
+        harness.passUntil(TurnStep.END_OF_COMBAT);
 
         harness.assertInGraveyard(player1, "Phyrexian Crusader");
 
@@ -335,7 +335,7 @@ class PhyrexianCrusaderTest extends BaseCardTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
 
-        harness.passUntil(TurnStep.END_COMBAT);
+        harness.passUntil(TurnStep.END_OF_COMBAT);
 
         harness.assertOnBattlefield(player1, "Phyrexian Crusader");
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
@@ -371,7 +371,7 @@ class PhyrexianCrusaderTest extends BaseCardTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
 
-        harness.passUntil(TurnStep.END_COMBAT);
+        harness.passUntil(TurnStep.END_OF_COMBAT);
 
         harness.assertOnBattlefield(player1, "Phyrexian Crusader");
         harness.assertOnBattlefield(player2, "Dross Ripper");
@@ -396,7 +396,7 @@ class PhyrexianCrusaderTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        harness.passUntil(TurnStep.END_COMBAT);
+        harness.passUntil(TurnStep.END_OF_COMBAT);
 
         harness.assertLife(player2, 20);
         assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(4);

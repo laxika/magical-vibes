@@ -106,7 +106,7 @@ class RejuvenationChamberTest extends BaseCardTest {
     @DisplayName("Rejuvenation Chamber can gain life in response to its final fading trigger")
     void canActivateBeforeFadingSacrifice() {
         Permanent chamber = harness.addToBattlefieldAndReturn(player1, new RejuvenationChamber());
-        chamber.setTapped(true);
+        chamber.tap();
 
         advanceToUpkeep(player1);
         harness.assertOnBattlefield(player1, "Rejuvenation Chamber");

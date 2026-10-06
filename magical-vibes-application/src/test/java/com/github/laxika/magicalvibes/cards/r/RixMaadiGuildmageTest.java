@@ -144,7 +144,7 @@ class RixMaadiGuildmageTest extends BaseCardTest {
     void lifeGainDoesNotUndoLifeLossEligibility() {
         readyGuildmage();
         Permanent guildmage = gd.playerBattlefields.get(player1.getId()).getFirst();
-        guildmage.setTapped(true);
+        guildmage.tap();
         guildmage.setSummoningSick(true);
         harness.getLifeSupport().applyLifeLoss(gd, player2.getId(), 2, "test life loss");
         harness.getLifeSupport().applyGainLife(gd, player2.getId(), 3);

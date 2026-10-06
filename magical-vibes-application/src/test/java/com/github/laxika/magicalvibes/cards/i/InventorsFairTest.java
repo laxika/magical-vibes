@@ -192,7 +192,7 @@ class InventorsFairTest extends BaseCardTest {
 
         harness.assertNotInHand(player1, "Prophetic Prism");
         harness.assertInGraveyard(player1, "Inventors' Fair");
-        assertThat(gd.playerLibraries.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
@@ -209,7 +209,7 @@ class InventorsFairTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Inventors' Fair");
-        assertThat(gd.playerLibraries.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
     }
@@ -217,7 +217,7 @@ class InventorsFairTest extends BaseCardTest {
     @Test
     void cannotSearchWhileTapped() {
         Permanent fair = addCreatureReady(player1, new InventorsFair());
-        fair.setTapped(true);
+        fair.tap();
         harness.addToBattlefield(player1, new PropheticPrism());
         harness.addToBattlefield(player1, new PropheticPrism());
         harness.addToBattlefield(player1, new PropheticPrism());

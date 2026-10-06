@@ -84,7 +84,7 @@ class KjeldoranOutriderTest extends BaseCardTest {
     @DisplayName("A tapped Outrider can activate its ability without untapping")
     void abilityCanBeActivatedWhileTapped() {
         Permanent outrider = addReadyOutrider();
-        outrider.setTapped(true);
+        outrider.tap();
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);

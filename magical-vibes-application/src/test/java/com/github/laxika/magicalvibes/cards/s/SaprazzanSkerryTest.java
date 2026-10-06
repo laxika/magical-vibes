@@ -97,7 +97,7 @@ class SaprazzanSkerryTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SaprazzanSkerry()));
         harness.playLand(player1, 0);
         Permanent skerry = findPermanent(player1, "Saprazzan Skerry");
-        skerry.setTapped(false);
+        skerry.untap();
 
         harness.activateAbility(player1, 0, null, null);
 

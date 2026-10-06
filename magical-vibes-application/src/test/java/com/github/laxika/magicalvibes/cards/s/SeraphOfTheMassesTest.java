@@ -9,7 +9,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -31,12 +30,11 @@ class SeraphOfTheMassesTest extends BaseCardTest {
     @Test
     @DisplayName("Can be cast using convoke")
     void castsWithConvoke() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent convoker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new SeraphOfTheMasses()));
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
-        UUID convokeCreatureId = harness.getPermanentId(player1, "Grizzly Bears");
         harness.castInstantWithConvoke(player1, 0, List.of(), List.of(convoker.getId()));
 
         assertThat(convoker.isTapped()).isTrue();

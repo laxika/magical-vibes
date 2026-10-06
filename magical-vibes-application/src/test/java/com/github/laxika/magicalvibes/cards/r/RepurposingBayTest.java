@@ -197,7 +197,7 @@ class RepurposingBayTest extends BaseCardTest {
     @Test
     void cannotActivateWhenTapped() {
         var bay = harness.addToBattlefieldAndReturn(player1, new RepurposingBay());
-        bay.setTapped(true);
+        bay.tap();
         harness.addToBattlefield(player1, new Ornithopter());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 

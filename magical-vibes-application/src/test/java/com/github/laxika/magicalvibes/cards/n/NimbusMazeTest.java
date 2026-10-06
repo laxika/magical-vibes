@@ -97,7 +97,7 @@ class NimbusMazeTest extends BaseCardTest {
     @Test
     void tappedIslandStillEnablesWhiteManaImmediately() {
         Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
-        island.setTapped(true);
+        island.tap();
         Permanent maze = harness.addToBattlefieldAndReturn(player1, new NimbusMaze());
 
         harness.activateAbility(player1, 1, 1, null, null);
@@ -110,7 +110,7 @@ class NimbusMazeTest extends BaseCardTest {
     @Test
     void tappedPlainsStillEnablesBlueManaImmediately() {
         Permanent plains = harness.addToBattlefieldAndReturn(player1, new Plains());
-        plains.setTapped(true);
+        plains.tap();
         Permanent maze = harness.addToBattlefieldAndReturn(player1, new NimbusMaze());
 
         harness.activateAbility(player1, 1, 2, null, null);
@@ -147,7 +147,7 @@ class NimbusMazeTest extends BaseCardTest {
         Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
         Permanent maze = harness.addToBattlefieldAndReturn(player1, new NimbusMaze());
         harness.activateAbility(player1, 1, 1, null, null);
-        maze.setTapped(false);
+        maze.untap();
         gd.playerBattlefields.get(player1.getId()).remove(island);
         gd.playerGraveyards.get(player1.getId()).add(island.getCard());
 

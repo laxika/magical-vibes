@@ -75,7 +75,7 @@ class PseudodragonFamiliarTest extends BaseCardTest {
     @DisplayName("Ability can be activated while tapped and summoning sick")
     void activatesWhileTappedAndSummoningSick() {
         Permanent familiar = harness.addToBattlefieldAndReturn(player1, new PseudodragonFamiliar());
-        familiar.setTapped(true);
+        familiar.tap();
         familiar.setSummoningSick(true);
         Permanent target = addCreature(player1);
         addAbilityMana();

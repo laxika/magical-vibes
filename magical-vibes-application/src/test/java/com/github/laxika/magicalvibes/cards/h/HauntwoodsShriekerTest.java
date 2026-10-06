@@ -200,10 +200,10 @@ class HauntwoodsShriekerTest extends BaseCardTest {
     void tappedSummoningSickShriekerCanTurnOwnPermanentFaceUp() {
         Permanent shrieker = harness.addToBattlefieldAndReturn(player1, new HauntwoodsShrieker());
         shrieker.setSummoningSick(true);
-        shrieker.setTapped(true);
+        shrieker.tap();
         Permanent target = harness.addToBattlefieldAndReturn(player1, new HauntwoodsShrieker());
         target.setFaceDown(2, 2, Set.of(CardType.CREATURE));
-        target.setTapped(true);
+        target.tap();
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(shrieker),

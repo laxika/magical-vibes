@@ -2268,7 +2268,7 @@ public class PlayerInputService {
             CardSubtype.CAVE, CardSubtype.GATE, CardSubtype.LOCUS,
             CardSubtype.AURA, CardSubtype.EQUIPMENT, CardSubtype.TREASURE,
             CardSubtype.INCUBATOR, CardSubtype.MUTAGEN,
-            CardSubtype.CLUE, CardSubtype.BLOOD, CardSubtype.MAP,
+            CardSubtype.CLUE, CardSubtype.BLOOD, CardSubtype.MAP, CardSubtype.GOLD,
             CardSubtype.LANDER, CardSubtype.FOOD, CardSubtype.POWERSTONE,
             CardSubtype.TOY, CardSubtype.SHARD, CardSubtype.VEHICLE,
             CardSubtype.SPACECRAFT, CardSubtype.PLANET, CardSubtype.BOOK,

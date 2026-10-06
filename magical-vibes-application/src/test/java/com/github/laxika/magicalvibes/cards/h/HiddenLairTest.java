@@ -94,7 +94,7 @@ class HiddenLairTest extends BaseCardTest {
     @Test
     void tappedBasicLandStillEnablesColoredMana() {
         Permanent lair = addReadyLair();
-        harness.addToBattlefieldAndReturn(player1, new Swamp()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new Swamp()).tap();
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.handleListChoice(player1, "BLUE");

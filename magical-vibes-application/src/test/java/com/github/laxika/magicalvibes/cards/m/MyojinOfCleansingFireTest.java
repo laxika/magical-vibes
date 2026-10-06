@@ -135,7 +135,7 @@ class MyojinOfCleansingFireTest extends BaseCardTest {
     @DisplayName("A tapped Myojin can activate on the opponent's turn")
     void canActivateTappedOnOpponentsTurn() {
         Permanent myojin = addMyojinWithDivinityCounter(player1);
-        myojin.setTapped(true);
+        myojin.tap();
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new LanternKami());
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.END_STEP);

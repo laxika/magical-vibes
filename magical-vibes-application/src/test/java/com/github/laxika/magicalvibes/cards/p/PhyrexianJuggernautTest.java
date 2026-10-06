@@ -126,7 +126,7 @@ class PhyrexianJuggernautTest extends BaseCardTest {
     void tappedJuggernautDoesNotHaveToAttack() {
         Permanent juggernaut = harness.addToBattlefieldAndReturn(player1, new PhyrexianJuggernaut());
         juggernaut.setSummoningSick(false);
-        juggernaut.setTapped(true);
+        juggernaut.tap();
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -151,7 +151,7 @@ class PhyrexianJuggernautTest extends BaseCardTest {
         assertThat(juggernaut.isAttacking()).isTrue();
 
         juggernaut.setAttacking(false);
-        juggernaut.setTapped(false);
+        juggernaut.untap();
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
         harness.beginAttackerDeclarationInput();

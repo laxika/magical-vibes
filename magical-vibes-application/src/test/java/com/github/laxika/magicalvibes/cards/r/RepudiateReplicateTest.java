@@ -157,7 +157,7 @@ class RepudiateReplicateTest extends BaseCardTest {
     void replicateDoesNotCopyCountersOrTappedState() {
         Permanent hybrid = harness.addToBattlefieldAndReturn(player1, new SauroformHybrid());
         hybrid.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 4);
-        hybrid.setTapped(true);
+        hybrid.tap();
         harness.setHand(player1, List.of(new RepudiateReplicate()));
         addReplicateMana();
 

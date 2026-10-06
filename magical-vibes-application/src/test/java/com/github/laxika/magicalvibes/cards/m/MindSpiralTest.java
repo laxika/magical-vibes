@@ -89,7 +89,7 @@ class MindSpiralTest extends BaseCardTest {
     @Test
     void alreadyTappedCreatureStillGetsAnotherStunCounter() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new DaggerfangDuo());
-        creature.setTapped(true);
+        creature.tap();
         creature.setCounterCount(CounterType.STUN, 1);
 
         cast(List.of(player1.getId(), creature.getId()), true);

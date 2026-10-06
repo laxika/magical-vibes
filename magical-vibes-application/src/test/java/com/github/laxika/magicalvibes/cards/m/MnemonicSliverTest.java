@@ -47,7 +47,7 @@ class MnemonicSliverTest extends BaseCardTest {
     void sacrificesItselfAsCostAndDrawsOnResolution() {
         Permanent mnemonicSliver = addCreatureReady(player1, new MnemonicSliver());
         mnemonicSliver.setSummoningSick(true);
-        mnemonicSliver.setTapped(true);
+        mnemonicSliver.tap();
         Permanent otherSliver = addCreatureReady(player1, new WingedSliver());
         Forest drawnCard = new Forest();
         harness.setLibrary(player1, List.of(drawnCard));

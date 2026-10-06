@@ -273,7 +273,7 @@ class GreatSableStagTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Great Sable Stag");
         harness.assertInGraveyard(player1, "Warpath Ghoul");
-        assertThat(player2.getLife()).isEqualTo(20);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
     }
 
     private Permanent addStagReady(Player player) {

@@ -312,7 +312,7 @@ class LodestoneBaubleTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent bauble = addBauble();
-        bauble.setTapped(true);
+        bauble.tap();
         int index = baubleIndex(bauble);
 
         assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(player1, index, 0, List.of()))

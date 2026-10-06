@@ -100,7 +100,7 @@ class LionheartMaverickTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent maverick = harness.addToBattlefieldAndReturn(player1, new LionheartMaverick());
         maverick.setSummoningSick(true);
-        maverick.setTapped(true);
+        maverick.tap();
         addAbilityMana(player1);
 
         harness.activateAbility(player1, 0, null, null);

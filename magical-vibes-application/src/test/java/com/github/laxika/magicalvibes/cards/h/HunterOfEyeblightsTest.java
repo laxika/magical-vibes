@@ -166,7 +166,7 @@ class HunterOfEyeblightsTest extends BaseCardTest {
     @DisplayName("A tapped Hunter cannot activate")
     void tappedHunterCannotActivate() {
         Permanent hunter = addReadyHunter(player1);
-        hunter.setTapped(true);
+        hunter.tap();
         Permanent target = addCreatureWithCounter(player2);
         harness.addMana(player1, ManaColor.BLACK, 3);
 

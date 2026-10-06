@@ -79,7 +79,7 @@ class MalevolentNobleTest extends BaseCardTest {
     void canActivateWhileSummoningSickAndTapped() {
         Permanent noble = harness.addToBattlefieldAndReturn(player1, new MalevolentNoble());
         noble.setSummoningSick(true);
-        noble.setTapped(true);
+        noble.tap();
         harness.addToBattlefield(player1, new GoldenEgg());
         addActivationMana();
 

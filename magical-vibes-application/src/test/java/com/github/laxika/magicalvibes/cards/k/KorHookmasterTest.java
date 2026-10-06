@@ -68,7 +68,7 @@ class KorHookmasterTest extends BaseCardTest {
         @Test
         void alreadyTappedCreatureStillSkipsUntap() {
             Permanent target = harness.addToBattlefieldAndReturn(player2, new KorHookmaster());
-            target.setTapped(true);
+            target.tap();
             castHookmaster(player2, "Kor Hookmaster");
             harness.passBothPriorities();
             harness.passBothPriorities();

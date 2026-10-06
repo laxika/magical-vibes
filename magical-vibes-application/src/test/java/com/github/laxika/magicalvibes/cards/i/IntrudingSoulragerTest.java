@@ -111,7 +111,7 @@ class IntrudingSoulragerTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTappedEvenWithARoom() {
         Permanent soulrager = addCreatureReady(player1, new IntrudingSoulrager());
-        soulrager.setTapped(true);
+        soulrager.tap();
         Permanent room = harness.addToBattlefieldAndReturn(player1, new DazzlingTheaterPropRoom());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

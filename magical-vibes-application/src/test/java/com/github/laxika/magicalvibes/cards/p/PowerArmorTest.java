@@ -139,7 +139,7 @@ class PowerArmorTest extends BaseCardTest {
     @DisplayName("Cannot activate a tapped Power Armor")
     void cannotActivateWhileTapped() {
         setupBattlefield();
-        findPermanent(player1, "Power Armor").setTapped(true);
+        findPermanent(player1, "Power Armor").tap();
         UUID targetId = findPermanent(player1, "Raging Kavu").getId();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetId))

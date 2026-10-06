@@ -109,7 +109,7 @@ class IcatianLieutenantTest extends BaseCardTest {
     @DisplayName("Lieutenant can target itself while tapped and summoning sick")
     void canActivateWhileTappedAndSummoningSick() {
         Permanent lieutenant = harness.addToBattlefieldAndReturn(player1, new IcatianLieutenant());
-        lieutenant.setTapped(true);
+        lieutenant.tap();
         lieutenant.setSummoningSick(true);
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);

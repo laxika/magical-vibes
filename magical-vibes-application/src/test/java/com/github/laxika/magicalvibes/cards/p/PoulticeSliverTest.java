@@ -115,7 +115,7 @@ class PoulticeSliverTest extends BaseCardTest {
     @Test
     void tappedSliverCannotPayTapCost() {
         Permanent source = addCreatureReady(player1, new PoulticeSliver());
-        source.setTapped(true);
+        source.tap();
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -158,7 +158,7 @@ class PoulticeSliverTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(source.getRegenerationShield()).isEqualTo(1);
-        source.setTapped(false);
+        source.untap();
         harness.ensurePriority(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, source.getId()))

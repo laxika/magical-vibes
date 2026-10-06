@@ -96,7 +96,7 @@ class HengeOfRamosTest extends BaseCardTest {
     @DisplayName("Neither ability can be activated while Henge is tapped")
     void tappedHengeCannotActivateEitherAbility(int abilityIndex) {
         Permanent henge = harness.addToBattlefieldAndReturn(player1, new HengeOfRamos());
-        henge.setTapped(true);
+        henge.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, abilityIndex, null, null))

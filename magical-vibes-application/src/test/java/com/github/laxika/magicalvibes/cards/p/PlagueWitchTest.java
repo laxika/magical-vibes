@@ -126,7 +126,7 @@ class PlagueWitchTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         Permanent witch = addCreatureReady(player1, new PlagueWitch());
-        witch.setTapped(true);
+        witch.tap();
         Permanent target = addCreatureReady(player2, new SpinelessThug());
         SpinelessThug discarded = new SpinelessThug();
         harness.setHand(player1, List.of(discarded));

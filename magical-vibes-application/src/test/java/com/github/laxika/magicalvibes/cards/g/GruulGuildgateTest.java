@@ -78,7 +78,7 @@ class GruulGuildgateTest extends BaseCardTest {
     @DisplayName("A tapped Gruul Guildgate cannot activate its mana ability")
     void cannotActivateWhileTapped() {
         Permanent guildgate = addCreatureReady(player1, new GruulGuildgate());
-        guildgate.setTapped(true);
+        guildgate.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);

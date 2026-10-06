@@ -70,7 +70,7 @@ class ManaSkimmerTest extends BaseCardTest {
     void alreadyTappedLandSkipsOnlyOneUntapStep() {
         Permanent skimmer = addCreatureReady(player1, new ManaSkimmer());
         Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
-        land.setTapped(true);
+        land.tap();
         skimmer.setAttacking(true);
 
         resolveCombat();

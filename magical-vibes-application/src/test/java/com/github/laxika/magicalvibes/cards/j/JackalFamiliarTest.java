@@ -151,7 +151,7 @@ class JackalFamiliarTest extends BaseCardTest {
     void tappedCompanionCannotEnableAttack() {
         addCreatureReady(player1, new JackalFamiliar());
         Permanent companion = addCreatureReady(player1, new RuneclawBear());
-        companion.setTapped(true);
+        companion.tap();
 
         assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class);
@@ -164,7 +164,7 @@ class JackalFamiliarTest extends BaseCardTest {
         attacker.setAttacking(true);
         addCreatureReady(player2, new JackalFamiliar());
         Permanent companion = addCreatureReady(player2, new RuneclawBear());
-        companion.setTapped(true);
+        companion.tap();
         prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,

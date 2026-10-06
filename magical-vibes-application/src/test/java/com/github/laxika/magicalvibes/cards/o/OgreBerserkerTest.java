@@ -33,7 +33,7 @@ class OgreBerserkerTest extends BaseCardTest {
         harness.castFromHand(player1, new OgreBerserker(), "{4}{R}");
         harness.passBothPriorities();
         Permanent berserker = findPermanent(player1, "Ogre Berserker");
-        berserker.setTapped(true);
+        berserker.tap();
 
         assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class);

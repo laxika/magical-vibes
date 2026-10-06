@@ -92,7 +92,7 @@ class PteronGhostTest extends BaseCardTest {
     @DisplayName("A regeneration shield protects a noncreature artifact only once")
     void shieldProtectsNoncreatureArtifactOnlyOnce() {
         Permanent ghost = harness.addToBattlefieldAndReturn(player1, new PteronGhost());
-        ghost.setTapped(true);
+        ghost.tap();
         Permanent artifact = harness.addToBattlefieldAndReturn(player1, new AetherVial());
 
         harness.activateAbility(player1, 0, null, artifact.getId());

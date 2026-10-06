@@ -46,7 +46,7 @@ class ImpedeMomentumTest extends BaseCardTest {
     @Test
     void alreadyTappedCreatureStillGetsThreeMoreStunCounters() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new AutomaticLibrarian());
-        target.setTapped(true);
+        target.tap();
         target.setCounterCount(CounterType.STUN, 2);
         cast(target);
 

@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.cards.m;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 import com.github.laxika.magicalvibes.cards.b.BorosMastiff;
 import com.github.laxika.magicalvibes.cards.r.RalZarek;
@@ -76,7 +77,7 @@ class MasterOfCrueltiesTest extends BaseCardTest {
     void attackingPlaneswalkerDoesNotTrigger() {
         Permanent master = addAttackingMaster(player1, player2);
         Permanent ral = harness.addToBattlefieldAndReturn(player2, new RalZarek());
-        ral.setLoyaltyCounters(4);
+        ral.setCounterCount(CounterType.LOYALTY, 4);
         master.setAttackTarget(ral.getId());
 
         prepareDeclareBlockers();
@@ -85,7 +86,7 @@ class MasterOfCrueltiesTest extends BaseCardTest {
         resolveCombat();
 
         harness.assertLife(player2, 20);
-        assertThat(ral.getLoyaltyCounters()).isEqualTo(3);
+        assertThat(ral.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
     }
 
     @Test
@@ -148,7 +149,7 @@ class MasterOfCrueltiesTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_OF_COMBAT);
         harness.clearPriorityPassed();
         harness.withAutoStop(TurnStep.BEGINNING_OF_COMBAT, harness::passBothPriorities);
-        master.setTapped(false);
+        master.untap();
         addCreatureReady(player2, new BorosMastiff());
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));

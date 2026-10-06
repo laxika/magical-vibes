@@ -120,7 +120,7 @@ class MedicineBagTest extends BaseCardTest {
     @DisplayName("A tapped Medicine Bag cannot activate its ability")
     void cannotActivateWhileTapped() {
         Permanent bag = addReadyMedicineBag();
-        bag.setTapped(true);
+        bag.tap();
         Permanent target = addCreature(player2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.setHand(player1, List.of(new Spellbook()));

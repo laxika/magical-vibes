@@ -122,7 +122,7 @@ class MagdaTheHoardmasterTest extends BaseCardTest {
     void tappedTreasuresCanPayTheSacrificeCost() {
         harness.addToBattlefield(player1, new MagdaTheHoardmaster());
         for (int i = 0; i < 3; i++) {
-            harness.addToBattlefieldAndReturn(player1, createTreasureToken()).setTapped(true);
+            harness.addToBattlefieldAndReturn(player1, createTreasureToken()).tap();
         }
 
         harness.activateAbility(player1, 0, null, null);

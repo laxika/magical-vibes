@@ -107,7 +107,7 @@ class LifeFindsAWayTest extends BaseCardTest {
     void doesNotCopyCountersOrTappedState() {
         harness.addToBattlefield(player1, new LifeFindsAWay());
         Permanent original = harness.addToBattlefieldAndReturn(player1, soldierToken());
-        original.setTapped(true);
+        original.tap();
         original.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
 
         harness.enterBattlefieldAndReturn(player1, new AirElemental());

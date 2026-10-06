@@ -104,7 +104,7 @@ class JodahsCodexTest extends BaseCardTest {
     void countsBothTypesOfTappedNonbasicLand() {
         harness.addToBattlefield(player1, new JodahsCodex());
         Permanent beachfront = harness.addToBattlefieldAndReturn(player1, new IdyllicBeachfront());
-        beachfront.setTapped(true);
+        beachfront.tap();
         Card drawnCard = new Forest();
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(drawnCard));
@@ -122,7 +122,7 @@ class JodahsCodexTest extends BaseCardTest {
     @Test
     void cannotActivateTappedCodexEvenWithEnoughMana() {
         Permanent codex = harness.addToBattlefieldAndReturn(player1, new JodahsCodex());
-        codex.setTapped(true);
+        codex.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 5);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

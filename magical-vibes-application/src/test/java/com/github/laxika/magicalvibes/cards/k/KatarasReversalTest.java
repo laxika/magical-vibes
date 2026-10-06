@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.cards.a.AngelsMercy;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HookSwords;
@@ -129,7 +130,7 @@ class KatarasReversalTest extends BaseCardTest {
             permanent.tap();
             permanents.add(permanent);
         }
-        List<KatarasReversal> hand = new ArrayList<>(spells);
+        List<Card> hand = new ArrayList<>(spells);
         hand.add(new KatarasReversal());
         harness.setHand(player1, hand);
         harness.addMana(player1, ManaColor.COLORLESS, 10);
@@ -198,11 +199,11 @@ class KatarasReversalTest extends BaseCardTest {
 
     @Test
     void rejectsFiveSpellTargets() {
-        List<KatarasReversal> hand = new ArrayList<>();
+        List<Card> hand = new ArrayList<>();
         for (int i = 0; i < 6; i++) {
             hand.add(new KatarasReversal());
         }
-        List<UUID> targets = hand.subList(0, 5).stream().map(KatarasReversal::getId).toList();
+        List<UUID> targets = hand.subList(0, 5).stream().map(Card::getId).toList();
         harness.setHand(player1, hand);
         harness.addMana(player1, ManaColor.COLORLESS, 12);
         harness.addMana(player1, ManaColor.BLUE, 12);

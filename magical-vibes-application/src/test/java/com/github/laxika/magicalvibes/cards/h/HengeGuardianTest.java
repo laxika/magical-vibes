@@ -74,7 +74,7 @@ class HengeGuardianTest extends BaseCardTest {
     @DisplayName("A tapped Guardian can activate without untapping")
     void canActivateWhileTapped() {
         Permanent guardian = addCreatureReady(player1, new HengeGuardian());
-        guardian.setTapped(true);
+        guardian.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, null, null);

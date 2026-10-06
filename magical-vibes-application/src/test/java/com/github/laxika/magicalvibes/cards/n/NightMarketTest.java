@@ -67,7 +67,7 @@ class NightMarketTest extends BaseCardTest {
         harness.playLand(player1, 0);
         harness.handleListChoice(player1, color.name());
         Permanent market = findPermanent(player1, "Night Market");
-        market.setTapped(false);
+        market.untap();
 
         harness.activateAbility(player1, 0, 0, null, null);
 

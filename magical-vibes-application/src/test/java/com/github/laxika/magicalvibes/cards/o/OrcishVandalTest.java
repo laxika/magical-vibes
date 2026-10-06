@@ -165,7 +165,7 @@ class OrcishVandalTest extends BaseCardTest {
     @DisplayName("Cannot activate a tapped Orcish Vandal")
     void cannotActivateWhenTapped() {
         Permanent vandal = addCreatureReady(player1, new OrcishVandal());
-        vandal.setTapped(true);
+        vandal.tap();
         harness.addToBattlefield(player1, new Spellbook());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))

@@ -123,7 +123,7 @@ class ParapetThrasherTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
-        thrasher.setTapped(false);
+        thrasher.untap();
         declareAttackers(List.of(0));
         resolveCombat();
         harness.passBothPriorities();

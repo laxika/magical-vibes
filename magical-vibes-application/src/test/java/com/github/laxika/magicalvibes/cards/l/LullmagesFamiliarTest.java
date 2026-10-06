@@ -135,8 +135,8 @@ class LullmagesFamiliarTest extends BaseCardTest {
     void eachFamiliarTriggersBeforeKickedSpellResolvesEvenWhileTapped() {
         Permanent first = addReadyFamiliar(player1);
         Permanent second = addReadyFamiliar(player1);
-        first.setTapped(true);
-        second.setTapped(true);
+        first.tap();
+        second.tap();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, List.of(new GnarlidColony()));

@@ -103,7 +103,7 @@ class InvasionOfKamigawaTest extends BaseCardTest {
     @Test
     void alreadyTappedCreatureStillGetsStunCounterAndSkipsOneUntap() {
         Permanent target = addCreatureReady(player2, new RooftopSaboteurs());
-        target.setTapped(true);
+        target.tap();
 
         castInvasion(target.getId());
         resolveAllTriggers();

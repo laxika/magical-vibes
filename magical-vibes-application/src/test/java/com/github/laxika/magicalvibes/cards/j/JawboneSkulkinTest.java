@@ -73,7 +73,7 @@ class JawboneSkulkinTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent skulkin = harness.addToBattlefieldAndReturn(player1, new JawboneSkulkin());
         skulkin.setSummoningSick(true);
-        skulkin.setTapped(true);
+        skulkin.tap();
         Permanent target = harness.addToBattlefieldAndReturn(player1, new HillGiant());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 

@@ -83,7 +83,7 @@ class PutTargetCardsFromGraveyardOnBottomOfLibraryEffectHandlerTest {
         gd.playerGraveyards.put(playerId, Collections.synchronizedList(new ArrayList<>()));
         gd.playerHands.put(playerId, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(playerId, Collections.synchronizedList(new ArrayList<>()));
-        handler = new PutTargetCardsFromGraveyardOnBottomOfLibraryEffectHandler(support);
+        handler = new PutTargetCardsFromGraveyardOnBottomOfLibraryEffectHandler(support, interactionHandlerRegistry);
     }
 
     @Test

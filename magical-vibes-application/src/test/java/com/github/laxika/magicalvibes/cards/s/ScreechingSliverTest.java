@@ -129,7 +129,7 @@ class ScreechingSliverTest extends BaseCardTest {
     void tappedSliverCannotActivate() {
         addCreatureReady(player1, new ScreechingSliver());
         Permanent sliver = addCreatureReady(player1, new SidewinderSliver());
-        sliver.setTapped(true);
+        sliver.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -152,7 +152,7 @@ class ScreechingSliverTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(topCard);
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
-        sliver.setTapped(false);
+        sliver.untap();
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }

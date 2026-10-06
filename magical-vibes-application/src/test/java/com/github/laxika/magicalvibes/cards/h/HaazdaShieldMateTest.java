@@ -151,7 +151,7 @@ class HaazdaShieldMateTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         harness.setLife(player1, 20);
         Permanent shieldMate = harness.addToBattlefieldAndReturn(player1, new HaazdaShieldMate());
-        shieldMate.setTapped(true);
+        shieldMate.tap();
         shieldMate.setSummoningSick(true);
         Permanent source = addReadyMistralCharger(player2);
         harness.addMana(player1, ManaColor.WHITE, 1);

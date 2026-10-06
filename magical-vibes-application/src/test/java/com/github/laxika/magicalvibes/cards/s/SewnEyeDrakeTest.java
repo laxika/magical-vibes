@@ -52,7 +52,7 @@ class SewnEyeDrakeTest extends BaseCardTest {
     @Test
     void hasteDoesNotAllowAttackingWhileTapped() {
         Permanent drake = harness.addToBattlefieldAndReturn(player1, new SewnEyeDrake());
-        drake.setTapped(true);
+        drake.tap();
 
         assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class)

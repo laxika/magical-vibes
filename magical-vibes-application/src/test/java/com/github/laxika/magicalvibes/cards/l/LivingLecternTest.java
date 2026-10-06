@@ -152,7 +152,7 @@ class LivingLecternTest extends BaseCardTest {
     @Test
     void tappedSummoningSickLecternCanActivateWithoutATarget() {
         Permanent lectern = harness.addToBattlefieldAndReturn(player1, new LivingLectern());
-        lectern.setTapped(true);
+        lectern.tap();
         lectern.setSummoningSick(true);
         harness.setLibrary(player1, List.of(new Forest()));
         harness.addMana(player1, ManaColor.COLORLESS, 1);

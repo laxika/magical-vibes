@@ -102,7 +102,7 @@ class OrbitalPlungeTest extends BaseCardTest {
 
         assertThat(findPermanents(player1, "Forest")).singleElement()
                 .satisfies(land -> assertThat(land.isTapped()).isTrue());
-        assertThat(gd.playerLibraries.get(player1.getId())).doesNotContain(forest);
+        assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(forest);
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
     }
 
@@ -120,7 +120,7 @@ class OrbitalPlungeTest extends BaseCardTest {
 
         assertThat(findPermanents(player1, "Lander")).isEmpty();
         harness.assertNotOnBattlefield(player1, "Forest");
-        assertThat(gd.playerLibraries.get(player1.getId())).containsExactly(forest);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest);
     }
 
 

@@ -98,7 +98,7 @@ class LeashlingTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSickWithEmptyLibrary() {
         Permanent leashling = harness.addToBattlefieldAndReturn(player1, new Leashling());
         leashling.setSummoningSick(true);
-        leashling.setTapped(true);
+        leashling.tap();
         Card chosenCard = new Forest();
         harness.setHand(player1, List.of(chosenCard));
         harness.setLibrary(player1, List.of());

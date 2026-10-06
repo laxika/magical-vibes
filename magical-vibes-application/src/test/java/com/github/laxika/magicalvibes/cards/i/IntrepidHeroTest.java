@@ -138,7 +138,7 @@ class IntrepidHeroTest extends BaseCardTest {
     @DisplayName("Cannot activate while already tapped")
     void cannotActivateWhileAlreadyTapped() {
         Permanent hero = setup();
-        hero.setTapped(true);
+        hero.tap();
         Permanent elemental = harness.addToBattlefieldAndReturn(player2, new AirElemental());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, idxOf(hero), 0, null, elemental.getId()))

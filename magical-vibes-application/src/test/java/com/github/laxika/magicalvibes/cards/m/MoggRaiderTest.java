@@ -115,7 +115,7 @@ class MoggRaiderTest extends BaseCardTest {
     void activatesRepeatedlyWhileTappedAndSummoningSick() {
         setupRaider();
         Permanent raider = gd.playerBattlefields.get(player1.getId()).getFirst();
-        raider.setTapped(true);
+        raider.tap();
         raider.setSummoningSick(true);
         Permanent goblin = harness.addToBattlefieldAndReturn(player1, new MoggRaider());
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new FightingDrake());

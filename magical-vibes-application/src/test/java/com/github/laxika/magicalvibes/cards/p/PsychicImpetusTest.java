@@ -94,7 +94,7 @@ class PsychicImpetusTest extends BaseCardTest {
         addCreatureReady(player2, new GrizzlyBears());
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new Mountain()));
         castPsychicImpetus(creature);
-        creature.setTapped(true);
+        creature.tap();
 
         declareAttackers(player2, List.of(1));
         resolveAllTriggers();

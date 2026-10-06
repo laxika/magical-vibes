@@ -97,7 +97,7 @@ class HibernationSliverTest extends BaseCardTest {
     @DisplayName("Life is paid on activation and a tapped, summoning-sick Sliver can activate")
     void paysLifeBeforeReturningTappedSliver() {
         Permanent sliver = harness.addToBattlefieldAndReturn(player1, new HibernationSliver());
-        sliver.setTapped(true);
+        sliver.tap();
         sliver.setSummoningSick(true);
         harness.setLife(player1, 20);
 

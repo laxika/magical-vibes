@@ -22,7 +22,7 @@ class KorozdaGorgonTest extends BaseCardTest {
     @DisplayName("Can pay with another creature's counter while tapped and summoning sick")
     void paysWithAnotherCreatureCounter() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new KorozdaGorgon());
-        source.setTapped(true);
+        source.tap();
         source.setSummoningSick(true);
         Permanent donor = harness.addToBattlefieldAndReturn(player1, new KorozdaGorgon());
         donor.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);

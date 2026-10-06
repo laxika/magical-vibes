@@ -88,7 +88,7 @@ class MODOKTest extends BaseCardTest {
     void canActivateRepeatedlyDuringOwnEndStep() {
         Permanent modok = harness.addToBattlefieldAndReturn(player1, new MODOK());
         modok.setSummoningSick(true);
-        modok.setTapped(true);
+        modok.tap();
         harness.setLife(player1, 20);
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new MODOK(), new MODOK()));

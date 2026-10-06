@@ -116,7 +116,7 @@ class NectarFaerieTest extends BaseCardTest {
     @DisplayName("Cannot activate while tapped")
     void cannotActivateWhileTapped() {
         Permanent faerie = addCreatureReady(player1, new NectarFaerie());
-        faerie.setTapped(true);
+        faerie.tap();
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, faerie.getId()))

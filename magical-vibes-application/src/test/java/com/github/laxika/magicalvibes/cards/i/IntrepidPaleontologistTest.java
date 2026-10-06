@@ -172,7 +172,7 @@ class IntrepidPaleontologistTest extends BaseCardTest {
     void exileAbilityDoesNotRequireTappingOrHaste() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new IntrepidPaleontologist());
         source.setSummoningSick(true);
-        source.setTapped(true);
+        source.tap();
         Card dinosaur = exileOwnDinosaur();
 
         assertThat(gd.findExiledCard(dinosaur.getId())).isNotNull();

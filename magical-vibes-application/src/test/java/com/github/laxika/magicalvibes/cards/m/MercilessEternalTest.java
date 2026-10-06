@@ -115,7 +115,7 @@ class MercilessEternalTest extends BaseCardTest {
     @Test
     void repeatedActivationsStackWhileTappedAndSummoningSick() {
         Permanent eternal = harness.addToBattlefieldAndReturn(player1, new MercilessEternal());
-        eternal.setTapped(true);
+        eternal.tap();
         eternal.setSummoningSick(true);
         int basePower = gqs.getEffectivePower(gd, eternal);
         int baseToughness = gqs.getEffectiveToughness(gd, eternal);

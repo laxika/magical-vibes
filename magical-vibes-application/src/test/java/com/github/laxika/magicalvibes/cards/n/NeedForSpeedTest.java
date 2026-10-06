@@ -22,7 +22,7 @@ class NeedForSpeedTest extends BaseCardTest {
     void tappedLandIsPaidBeforeTargetGainsHaste() {
         harness.addToBattlefield(player1, new NeedForSpeed());
         Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
-        land.setTapped(true);
+        land.tap();
         Permanent target = harness.addToBattlefieldAndReturn(player1, new AvenFlock());
         Permanent other = harness.addToBattlefieldAndReturn(player1, new AvenFlock());
 

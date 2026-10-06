@@ -80,7 +80,7 @@ class PoisonDartFrogTest extends BaseCardTest {
     void canGainDeathtouchWhileTappedAndSummoningSick() {
         Permanent frog = addCreatureReady(player1, new PoisonDartFrog());
         frog.setSummoningSick(true);
-        frog.setTapped(true);
+        frog.tap();
         Permanent otherFrog = addCreatureReady(player1, new PoisonDartFrog());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 

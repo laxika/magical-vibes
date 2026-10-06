@@ -39,7 +39,7 @@ class RunawayGrowthTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.pendingManaAbilityTriggers).isEmpty();
-        forest.setTapped(false);
+        forest.untap();
         harness.tapPermanent(player1, 0);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(5);
     }
@@ -84,7 +84,7 @@ class RunawayGrowthTest extends BaseCardTest {
         harness.castEnchantment(player1, 0, forest.getId());
         resolveAllTriggers();
         gd.playerManaPools.get(player1.getId()).clear();
-        forest.setTapped(false);
+        forest.untap();
 
         harness.tapPermanent(player1, 0);
 

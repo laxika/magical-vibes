@@ -124,7 +124,7 @@ class MerchantsDockhandTest extends BaseCardTest {
     void tappedAndOpposingArtifactsCannotPayAdditionalTapCost() {
         Permanent dockhand = addReadyDockhand();
         Permanent tappedArtifact = addReadyArtifact();
-        tappedArtifact.setTapped(true);
+        tappedArtifact.tap();
         Permanent opposingArtifact = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
         addActivationMana();
 

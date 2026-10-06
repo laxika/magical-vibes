@@ -82,7 +82,7 @@ class PasswallAdeptTest extends BaseCardTest {
     void canTargetItselfWhileSummoningSickAndTapped() {
         Permanent adept = harness.addToBattlefieldAndReturn(player1, new PasswallAdept());
         adept.setSummoningSick(true);
-        adept.setTapped(true);
+        adept.tap();
         addAbilityMana(player1);
 
         harness.activateAbility(player1, 0, null, adept.getId());

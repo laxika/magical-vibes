@@ -123,7 +123,7 @@ class PillardropWardenTest extends BaseCardTest {
     @DisplayName("Cannot activate while tapped")
     void cannotActivateWhileTapped() {
         Permanent warden = addReadyWarden();
-        warden.setTapped(true);
+        warden.tap();
         Card instant = new HeatedDebate();
         harness.setGraveyard(player1, List.of(instant));
         harness.addMana(player1, ManaColor.COLORLESS, 2);

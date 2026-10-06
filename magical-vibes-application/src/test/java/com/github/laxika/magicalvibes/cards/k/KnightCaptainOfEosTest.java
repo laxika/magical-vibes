@@ -139,10 +139,10 @@ class KnightCaptainOfEosTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         castAndResolve();
         Permanent captain = findPermanent(player1, "Knight-Captain of Eos");
-        captain.setTapped(true);
+        captain.tap();
         captain.setSummoningSick(true);
         Permanent soldier = findPermanent(player1, "Soldier");
-        soldier.setTapped(true);
+        soldier.tap();
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);

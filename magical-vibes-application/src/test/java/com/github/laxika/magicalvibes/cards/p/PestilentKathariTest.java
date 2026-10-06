@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.BlockerAssignment;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -24,7 +24,7 @@ class PestilentKathariTest extends BaseCardTest {
     void activatesWhileTappedAndSummoningSick() {
         Permanent kathari = harness.addToBattlefieldAndReturn(player1, new PestilentKathari());
         kathari.setSummoningSick(true);
-        kathari.setTapped(true);
+        kathari.tap();
         Permanent other = addCreatureReady(player1, new PestilentKathari());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.RED, 1);

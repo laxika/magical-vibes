@@ -89,7 +89,7 @@ class MoonlightHuntTest extends BaseCardTest {
     @DisplayName("Tapped Wolves deal damage without taking damage back; opposing Wolves do not contribute")
     void tappedWolfDealsDamageWithoutFighting() {
         Permanent wolf = harness.addToBattlefieldAndReturn(player1, new YoungWolf());
-        wolf.setTapped(true);
+        wolf.tap();
         harness.addToBattlefield(player2, new YoungWolf());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzledAngler());
         harness.setHand(player1, List.of(new MoonlightHunt()));

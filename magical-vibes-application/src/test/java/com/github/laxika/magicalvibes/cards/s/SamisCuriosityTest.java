@@ -75,7 +75,7 @@ class SamisCuriosityTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent lander = findPermanent(player1, "Lander");
-        lander.setTapped(true);
+        lander.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1,

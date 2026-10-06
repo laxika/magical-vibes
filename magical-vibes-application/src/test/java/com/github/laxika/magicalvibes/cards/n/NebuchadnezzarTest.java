@@ -29,7 +29,7 @@ class NebuchadnezzarTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options());
         harness.handleListChoice(player1, "Nebuchadnezzar");
 
-        permanent.setTapped(false);
+        permanent.untap();
         harness.setHand(player2, List.of(new Nebuchadnezzar()));
         harness.activateAbility(player1, 0, 0, player2.getId());
         harness.passBothPriorities();

@@ -270,7 +270,7 @@ class OracleEnVecTest extends BaseCardTest {
         activateOracle();
         harness.handleMultiplePermanentsChosen(player2, List.of(chosen.getId()));
         advanceTurn();
-        chosen.setTapped(true);
+        chosen.tap();
         beginDeclareAttackersFor(player2);
         assertThat(harness.getCombatAttackService().getAttackableCreatureIndices(gd, player2.getId())).isEmpty();
         declareAttackers(player2, List.of());

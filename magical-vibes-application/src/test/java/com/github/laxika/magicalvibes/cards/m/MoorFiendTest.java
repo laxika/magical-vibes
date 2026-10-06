@@ -22,7 +22,7 @@ class MoorFiendTest extends BaseCardTest {
     void tappedSwampEnablesSwampwalkUntilItLeaves() {
         harness.addToBattlefield(player2, new Swamp());
         Permanent swamp = findPermanent(player2, "Swamp");
-        swamp.setTapped(true);
+        swamp.tap();
         Permanent blocker = addCreatureReady(player2, new BalduvianBears());
         Permanent attacker = addCreatureReady(player1, new MoorFiend());
         attacker.setAttacking(true);

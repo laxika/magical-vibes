@@ -127,7 +127,7 @@ class PrimevalShamblerTest extends BaseCardTest {
     @DisplayName("Can activate while tapped without untapping the source")
     void canActivateWhileTapped() {
         Permanent shambler = addReadyShambler(player1);
-        shambler.setTapped(true);
+        shambler.tap();
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, null, null);

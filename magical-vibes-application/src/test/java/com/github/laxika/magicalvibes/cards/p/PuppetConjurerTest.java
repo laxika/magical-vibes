@@ -127,7 +127,7 @@ class PuppetConjurerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        conjurer.setTapped(false);
+        conjurer.untap();
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
         List<Permanent> tokens = findPermanents(player1, "Homunculus");

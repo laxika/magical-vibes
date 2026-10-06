@@ -104,7 +104,7 @@ class GrinningIgnusTest extends BaseCardTest {
     @Test
     @DisplayName("A tapped Grinning Ignus can activate in the second main phase")
     void canActivateWhileTappedInPostcombatMain() {
-        addCreatureReady(player1, new GrinningIgnus()).setTapped(true);
+        addCreatureReady(player1, new GrinningIgnus()).tap();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();

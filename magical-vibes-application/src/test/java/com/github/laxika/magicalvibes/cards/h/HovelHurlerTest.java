@@ -104,7 +104,7 @@ class HovelHurlerTest extends BaseCardTest {
     @DisplayName("Can pay with white and remove a +1/+1 counter while tapped and summoning sick")
     void acceptsWhiteManaAndOtherCounterTypes() {
         Permanent hurler = harness.addToBattlefieldAndReturn(player1, new HovelHurler());
-        hurler.setTapped(true);
+        hurler.tap();
         hurler.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         Permanent target = harness.addToBattlefieldAndReturn(player1, new HovelHurler());
         int originalPower = gqs.getEffectivePower(gd, target);

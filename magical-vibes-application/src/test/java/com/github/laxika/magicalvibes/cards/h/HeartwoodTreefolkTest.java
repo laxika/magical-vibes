@@ -57,7 +57,7 @@ class HeartwoodTreefolkTest extends BaseCardTest {
     @DisplayName("A tapped Forest still prevents Heartwood Treefolk from being blocked")
     void cannotBeBlockedWhenDefendersForestIsTapped() {
         harness.addToBattlefield(player2, new Forest());
-        findPermanent(player2, "Forest").setTapped(true);
+        findPermanent(player2, "Forest").tap();
 
         Permanent blocker = addCreatureReady(player2, new HeartwoodTreefolk());
         Permanent attacker = addCreatureReady(player1, new HeartwoodTreefolk());

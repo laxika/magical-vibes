@@ -96,7 +96,7 @@ class InkriseInfiltratorTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent infiltrator = harness.addToBattlefieldAndReturn(player1, new InkriseInfiltrator());
         infiltrator.setSummoningSick(true);
-        infiltrator.setTapped(true);
+        infiltrator.tap();
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.BLUE, 3);
 

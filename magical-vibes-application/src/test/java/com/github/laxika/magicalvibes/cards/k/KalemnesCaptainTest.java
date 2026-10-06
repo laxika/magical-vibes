@@ -107,7 +107,7 @@ class KalemnesCaptainTest extends BaseCardTest {
     void monstrosityDoesNotRequireAnUntappedReadyCreature() {
         Permanent captain = harness.addToBattlefieldAndReturn(player1, new KalemnesCaptain());
         captain.setSummoningSick(true);
-        captain.setTapped(true);
+        captain.tap();
         addMonstrosityMana();
 
         harness.activateAbility(player1, 0, null, null);

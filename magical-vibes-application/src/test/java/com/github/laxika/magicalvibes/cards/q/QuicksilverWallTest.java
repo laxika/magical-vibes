@@ -70,7 +70,7 @@ class QuicksilverWallTest extends BaseCardTest {
     @DisplayName("A tapped, summoning-sick Wall can activate its ability")
     void tappedSummoningSickWallCanReturnToHand() {
         Permanent wall = harness.addToBattlefieldAndReturn(player1, new QuicksilverWall());
-        wall.setTapped(true);
+        wall.tap();
         wall.setSummoningSick(true);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 

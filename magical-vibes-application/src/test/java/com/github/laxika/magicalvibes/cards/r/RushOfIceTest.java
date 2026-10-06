@@ -71,7 +71,7 @@ class RushOfIceTest extends BaseCardTest {
     @Test
     void alreadyTappedCreatureSkipsOnlyItsControllersNextUntap() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new CoralhelmGuide());
-        creature.setTapped(true);
+        creature.tap();
         harness.setHand(player1, List.of(new RushOfIce()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 

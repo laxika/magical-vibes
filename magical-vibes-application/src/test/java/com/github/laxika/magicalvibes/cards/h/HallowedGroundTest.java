@@ -159,7 +159,7 @@ class HallowedGroundTest extends BaseCardTest {
         Permanent ground = addHallowedGround(player1);
         Permanent firstLand = addLand(player1, false);
         Permanent secondLand = harness.addToBattlefieldAndReturn(player1, new AdarkarWastes());
-        ground.setTapped(true);
+        ground.tap();
         harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.activateAbility(player1, 0, null, firstLand.getId());

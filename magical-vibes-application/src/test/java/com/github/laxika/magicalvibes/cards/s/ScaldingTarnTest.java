@@ -93,7 +93,7 @@ class ScaldingTarnTest extends BaseCardTest {
 
     @Test
     void tappedTarnCannotBeActivated() {
-        harness.addToBattlefieldAndReturn(player1, new ScaldingTarn()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new ScaldingTarn()).tap();
         int lifeBefore = gd.getLife(player1.getId());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

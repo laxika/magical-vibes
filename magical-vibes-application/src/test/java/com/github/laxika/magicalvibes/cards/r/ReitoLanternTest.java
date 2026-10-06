@@ -114,7 +114,7 @@ class ReitoLanternTest extends BaseCardTest {
     @DisplayName("A tapped Lantern can put a noncreature card into an empty library")
     void tappedLanternTucksArtifactIntoEmptyLibrary() {
         int lanternIdx = addLantern();
-        gd.playerBattlefields.get(player1.getId()).get(lanternIdx).setTapped(true);
+        gd.playerBattlefields.get(player1.getId()).get(lanternIdx).tap();
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         Card target = new ReitoLantern();
         harness.setGraveyard(player2, List.of(target));

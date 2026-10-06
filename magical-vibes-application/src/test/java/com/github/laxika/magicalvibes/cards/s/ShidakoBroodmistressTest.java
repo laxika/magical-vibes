@@ -107,7 +107,7 @@ class ShidakoBroodmistressTest extends BaseCardTest {
     @DisplayName("Can activate while tapped and summoning sick because the cost has no tap symbol")
     void doesNotRequireUntappedOrReadySource() {
         Permanent shidako = addTransformedEggwatcher(player1);
-        shidako.setTapped(true);
+        shidako.tap();
         shidako.setSummoningSick(true);
         Permanent target = addCreatureReady(player1, new SakuraTribeElder());
         Permanent sacrifice = addCreatureReady(player1, new SakuraTribeElder());

@@ -23,7 +23,7 @@ class RakeclawGargantuanTest extends BaseCardTest {
     @Test
     void canTargetItselfWhileTappedAndSummoningSick() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new RakeclawGargantuan());
-        source.setTapped(true);
+        source.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, source.getId());

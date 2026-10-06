@@ -135,7 +135,7 @@ class SacredGuideTest extends BaseCardTest {
     void tappedSummoningSickGuidePaysCostBeforeResolution() {
         var guide = harness.addToBattlefieldAndReturn(player1, new SacredGuide());
         guide.setSummoningSick(true);
-        guide.setTapped(true);
+        guide.tap();
         harness.addMana(player1, ManaColor.WHITE, 2);
         Card redCard = new LightningElemental();
         Card whiteCard = new SacredGuide();

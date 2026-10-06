@@ -144,7 +144,7 @@ class MirrorWallTest extends BaseCardTest {
     @DisplayName("A tapped wall can activate but cannot attack until untapped")
     void tappedWallCanActivateButCannotAttack() {
         Permanent wall = addWallReady();
-        wall.setTapped(true);
+        wall.tap();
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -153,7 +153,7 @@ class MirrorWallTest extends BaseCardTest {
         assertThat(wall.isTapped()).isTrue();
         assertThat(als.canAttack(gd, wall, player1.getId())).isFalse();
 
-        wall.setTapped(false);
+        wall.untap();
         declareAttackersAndPrepareBlockers(List.of(0));
         assertThat(wall.isAttacking()).isTrue();
     }

@@ -63,7 +63,7 @@ class KelsinkoRangerTest extends BaseCardTest {
     @DisplayName("Ability can be activated while tapped and summoning sick")
     void activatesWhileTappedAndSummoningSick() {
         Permanent ranger = harness.addToBattlefieldAndReturn(player1, new KelsinkoRanger());
-        ranger.setTapped(true);
+        ranger.tap();
         ranger.setSummoningSick(true);
         Permanent bears = addCreatureReady(player1, new BalduvianBears());
         harness.addMana(player1, ManaColor.WHITE, 1);

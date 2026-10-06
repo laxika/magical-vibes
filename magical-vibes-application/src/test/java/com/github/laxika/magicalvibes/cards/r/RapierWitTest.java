@@ -90,7 +90,7 @@ class RapierWitTest extends BaseCardTest {
     @DisplayName("An already tapped creature still gets a stun counter and you draw")
     void alreadyTappedCreatureStillGetsStunned() {
         Permanent bear = addCreatureReady(player1, new GrizzlyBears());
-        bear.setTapped(true);
+        bear.tap();
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         harness.setHand(player1, List.of(new RapierWit()));
         harness.addMana(player1, ManaColor.WHITE, 2);

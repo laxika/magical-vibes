@@ -131,7 +131,7 @@ class HeavyBallistaTest extends BaseCardTest {
     @DisplayName("Cannot activate while tapped")
     void cannotActivateWhileTapped() {
         Permanent ballista = addReadyBallista(player1);
-        ballista.setTapped(true);
+        ballista.tap();
         Permanent attacker = addAttacker(player2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, attacker.getId()))

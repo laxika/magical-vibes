@@ -138,7 +138,7 @@ class PeemaAetherSeerTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSickAndTargetItself() {
         Permanent seer = harness.addToBattlefieldAndReturn(player1, new PeemaAetherSeer());
         seer.setSummoningSick(true);
-        seer.setTapped(true);
+        seer.tap();
         gd.playerEnergyCounters.put(player1.getId(), 3);
 
         harness.activateAbility(player1, 0, null, seer.getId());
@@ -154,7 +154,7 @@ class PeemaAetherSeerTest extends BaseCardTest {
         addCreatureReady(player1, new PeemaAetherSeer());
         Permanent attacker = addCreatureReady(player1, new PeemaAetherSeer());
         Permanent target = addCreatureReady(player2, new PeemaAetherSeer());
-        target.setTapped(true);
+        target.tap();
         gd.playerEnergyCounters.put(player1.getId(), 3);
         harness.activateAbility(player1, 0, null, target.getId());
         resolveAllTriggers();

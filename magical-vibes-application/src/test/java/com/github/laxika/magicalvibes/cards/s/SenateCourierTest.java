@@ -73,7 +73,7 @@ class SenateCourierTest extends BaseCardTest {
     void tappedSummoningSickCourierCanActivate() {
         Permanent courier = harness.addToBattlefieldAndReturn(player1, new SenateCourier());
         courier.setSummoningSick(true);
-        courier.setTapped(true);
+        courier.tap();
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.activateAbility(player1, 0, 0, null, null);

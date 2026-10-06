@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.cards.c.CanoptekWraith;
 import com.github.laxika.magicalvibes.cards.c.ChaosWarp;
 import com.github.laxika.magicalvibes.cards.u.UtterEnd;
 import com.github.laxika.magicalvibes.cards.s.Starstorm;
-import com.github.laxika.magicalvibes.model.BlockerAssignment;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;

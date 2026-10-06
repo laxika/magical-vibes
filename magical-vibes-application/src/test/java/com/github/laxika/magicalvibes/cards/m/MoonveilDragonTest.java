@@ -106,7 +106,7 @@ class MoonveilDragonTest extends BaseCardTest {
     @DisplayName("Tapped, summoning-sick Dragon can activate on an opponent's turn")
     void canActivateWhileTappedAndSummoningSickOnOpponentsTurn() {
         Permanent dragon = harness.enterBattlefieldAndReturn(player1, new MoonveilDragon());
-        dragon.setTapped(true);
+        dragon.tap();
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.RED, 1);

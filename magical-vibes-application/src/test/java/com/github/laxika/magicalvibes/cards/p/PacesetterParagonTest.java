@@ -90,7 +90,7 @@ class PacesetterParagonTest extends BaseCardTest {
     void canExhaustWhileTappedAndSummoningSick() {
         Permanent paragon = harness.addToBattlefieldAndReturn(player1, new PacesetterParagon());
         paragon.setSummoningSick(true);
-        paragon.setTapped(true);
+        paragon.tap();
         addExhaustMana();
 
         harness.activateAbility(player1, 0, 0, null, null);

@@ -105,7 +105,7 @@ class JetMedallionTest extends BaseCardTest {
 
     @Test
     void tappedMedallionStillReducesCosts() {
-        harness.addToBattlefieldAndReturn(player1, new JetMedallion()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new JetMedallion()).tap();
         harness.setHand(player1, List.of(new DarklingStalker()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.BLACK, 1);

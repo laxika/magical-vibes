@@ -127,7 +127,7 @@ class HaruspexTest extends BaseCardTest {
     void tappedSourceCannotActivateManaAbility() {
         Permanent haruspex = harness.addToBattlefieldAndReturn(player1, new Haruspex());
         haruspex.setSummoningSick(false);
-        haruspex.setTapped(true);
+        haruspex.tap();
         haruspex.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null))

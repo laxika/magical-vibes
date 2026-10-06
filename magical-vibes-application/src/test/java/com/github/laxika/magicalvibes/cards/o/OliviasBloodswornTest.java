@@ -100,7 +100,7 @@ class OliviasBloodswornTest extends BaseCardTest {
     @DisplayName("A tapped Bloodsworn can activate its ability")
     void canActivateWhileTapped() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new OliviasBloodsworn());
-        source.setTapped(true);
+        source.tap();
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, source.getId());

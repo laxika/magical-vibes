@@ -143,7 +143,7 @@ class SavageGorillaTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent gorilla = addReadyGorilla();
-        gorilla.setTapped(true);
+        gorilla.tap();
         Permanent target = addFourFourKavu(player2);
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);

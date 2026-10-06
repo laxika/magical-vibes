@@ -76,7 +76,7 @@ class MarbleGargoyleTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent gargoyle = harness.addToBattlefieldAndReturn(player1, new MarbleGargoyle());
         gargoyle.setSummoningSick(true);
-        gargoyle.setTapped(true);
+        gargoyle.tap();
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);

@@ -90,7 +90,7 @@ class OjutaiMonumentTest extends BaseCardTest {
     @DisplayName("A tapped Monument can animate without untapping")
     void tappedMonumentCanAnimate() {
         Permanent monument = addReadyMonument();
-        monument.setTapped(true);
+        monument.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);

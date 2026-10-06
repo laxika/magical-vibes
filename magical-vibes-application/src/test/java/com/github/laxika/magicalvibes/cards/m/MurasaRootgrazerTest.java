@@ -154,7 +154,7 @@ class MurasaRootgrazerTest extends BaseCardTest {
     @DisplayName("A tapped Rootgrazer cannot activate either tap ability")
     void cannotActivateWhileTapped() {
         Permanent rootgrazer = addReadyRootgrazer(player1);
-        rootgrazer.setTapped(true);
+        rootgrazer.tap();
         Permanent plains = harness.addToBattlefieldAndReturn(player1, new Plains());
         harness.setHand(player1, List.of(new Forest()));
 

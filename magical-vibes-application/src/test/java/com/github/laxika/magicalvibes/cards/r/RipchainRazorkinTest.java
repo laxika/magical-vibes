@@ -93,7 +93,7 @@ class RipchainRazorkinTest extends BaseCardTest {
     void tappedSummoningSickSourceCanSacrificeTappedLand() {
         harness.addToBattlefield(player1, new RipchainRazorkin());
         harness.addToBattlefield(player1, new Forest());
-        gd.playerBattlefields.get(player1.getId()).getFirst().setTapped(true);
+        gd.playerBattlefields.get(player1.getId()).getFirst().tap();
         gd.playerBattlefields.get(player1.getId()).getFirst().setSummoningSick(true);
         harness.tapPermanent(player1, 1);
         harness.setHand(player1, List.of());

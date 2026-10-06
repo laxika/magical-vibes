@@ -121,7 +121,7 @@ class HermeticStudyTest extends BaseCardTest {
     @Test
     void tappedCreatureCannotPayTapCostAgain() {
         Permanent creature = addEnchantedCreature();
-        creature.setTapped(true);
+        creature.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -152,7 +152,7 @@ class HermeticStudyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
-        creature.setTapped(false);
+        creature.untap();
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("no activated ability");

@@ -87,7 +87,7 @@ class JungleDelverTest extends BaseCardTest {
     @DisplayName("A tapped Jungle Delver can activate and pays all four mana")
     void canActivateWhileTapped() {
         Permanent delver = addReadyDelver(player1);
-        delver.setTapped(true);
+        delver.tap();
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 

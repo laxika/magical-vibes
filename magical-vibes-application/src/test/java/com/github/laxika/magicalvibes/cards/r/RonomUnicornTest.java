@@ -18,7 +18,7 @@ class RonomUnicornTest extends BaseCardTest {
     @DisplayName("Tapped summoning-sick Unicorn pays sacrifice cost before resolution")
     void tappedSummoningSickUnicornPaysSacrificeCostBeforeResolution() {
         Permanent unicorn = harness.addToBattlefieldAndReturn(player1, new RonomUnicorn());
-        unicorn.setTapped(true);
+        unicorn.tap();
         unicorn.setSummoningSick(true);
         Permanent target = harness.addToBattlefieldAndReturn(player2, new CoverOfWinter());
 

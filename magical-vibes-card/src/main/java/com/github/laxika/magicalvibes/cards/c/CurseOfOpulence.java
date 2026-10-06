@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.AttackingPlayerIsOpponent;
 import com.github.laxika.magicalvibes.model.condition.AttacksEnchantedPlayer;
@@ -34,7 +35,7 @@ public class CurseOfOpulence extends Card {
     }
 
     private static CreateTokenEffect goldToken() {
-        return CreateTokenEffect.ofArtifactToken(1, "Gold", List.of(), List.of(new ActivatedAbility(
+        return CreateTokenEffect.ofArtifactToken(1, "Gold", List.of(CardSubtype.GOLD), List.of(new ActivatedAbility(
                 false,
                 null,
                 List.of(new SacrificeSelfCost(), new AwardAnyColorManaEffect()),

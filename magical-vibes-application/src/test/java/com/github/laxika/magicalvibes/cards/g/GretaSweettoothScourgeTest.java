@@ -106,7 +106,7 @@ class GretaSweettoothScourgeTest extends BaseCardTest {
     @Test
     void tappedFoodCanPayForCounterOnGreta() {
         Permanent greta = castGreta();
-        findPermanent(player1, "Food").setTapped(true);
+        findPermanent(player1, "Food").tap();
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.activateAbility(player1, battlefieldIndex(player1, greta), 0, null, greta.getId());

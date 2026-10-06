@@ -87,7 +87,7 @@ class SeraphOfTheScalesTest extends BaseCardTest {
         harness.addToBattlefield(player1, new SeraphOfTheScales());
         Permanent seraph = findPermanent(player1, "Seraph of the Scales");
         seraph.setSummoningSick(true);
-        seraph.setTapped(true);
+        seraph.tap();
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
 

@@ -66,7 +66,7 @@ class ScourgeOfKherRidgesTest extends BaseCardTest {
     void firstAbilityCanBeRepeatedWhileTappedAndSummoningSick() {
         Permanent scourge = harness.addToBattlefieldAndReturn(player1, new ScourgeOfKherRidges());
         scourge.setSummoningSick(true);
-        scourge.setTapped(true);
+        scourge.tap();
         Permanent ownGroundCreature = addCreatureReady(player1, new FomoriNomad());
         Permanent opposingGroundCreature = addCreatureReady(player2, new FomoriNomad());
         harness.addMana(player1, ManaColor.RED, 2);
@@ -99,7 +99,7 @@ class ScourgeOfKherRidgesTest extends BaseCardTest {
     void secondAbilityDamagesAnotherScourge() {
         Permanent scourge = harness.addToBattlefieldAndReturn(player1, new ScourgeOfKherRidges());
         scourge.setSummoningSick(true);
-        scourge.setTapped(true);
+        scourge.tap();
         addCreatureReady(player2, new ScourgeOfKherRidges());
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 5);

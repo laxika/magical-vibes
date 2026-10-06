@@ -89,7 +89,7 @@ class KnightRampagerTest extends BaseCardTest {
     @DisplayName("A tapped Knight Rampager is not required to attack")
     void tappedKnightMayRemainOutOfCombat() {
         Permanent knight = addReadyKnight(player1);
-        knight.setTapped(true);
+        knight.tap();
 
         advanceToBeginningOfCombat(player1);
         harness.passBothPriorities();
@@ -157,14 +157,14 @@ class KnightRampagerTest extends BaseCardTest {
     void attackTargetRequirementExpiresAfterCombat() {
         Permanent knight = addReadyKnight(player1);
         Permanent jace = harness.addToBattlefieldAndReturn(player2, new JaceBeleren());
-        knight.setTapped(true);
+        knight.tap();
         advanceToBeginningOfCombat(player1);
         harness.passBothPriorities();
         declareAttackers(player1, List.of());
         harness.forceStep(TurnStep.END_OF_COMBAT);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
-        knight.setTapped(false);
+        knight.untap();
 
         advanceToBeginningOfCombat(player1);
         assertThat(gd.stack).hasSize(1);

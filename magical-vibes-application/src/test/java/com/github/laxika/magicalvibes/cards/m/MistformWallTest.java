@@ -117,7 +117,7 @@ class MistformWallTest extends BaseCardTest {
     @DisplayName("The type-changing ability can be activated while tapped and summoning sick")
     void canActivateWhileTappedAndSummoningSick() {
         Permanent wall = addCreatureReady(player1, new MistformWall());
-        wall.setTapped(true);
+        wall.tap();
         wall.setSummoningSick(true);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

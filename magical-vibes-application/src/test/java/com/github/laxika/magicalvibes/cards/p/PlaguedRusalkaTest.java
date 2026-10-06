@@ -82,7 +82,7 @@ class PlaguedRusalkaTest extends BaseCardTest {
     @DisplayName("Can activate while tapped and summoning sick")
     void canActivateWhileTappedAndSummoningSick() {
         Permanent rusalka = harness.addToBattlefieldAndReturn(player1, new PlaguedRusalka());
-        rusalka.setTapped(true);
+        rusalka.tap();
         rusalka.setSummoningSick(true);
         Permanent target = addCreatureReady(player2, new Gristleback());
         harness.addMana(player1, ManaColor.BLACK, 1);

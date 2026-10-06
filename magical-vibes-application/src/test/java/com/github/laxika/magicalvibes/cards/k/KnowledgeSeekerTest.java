@@ -115,7 +115,7 @@ class KnowledgeSeekerTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
-        assertThat(gd.playerLibraries.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 
     private void drawAndResolveTrigger(Player player) {

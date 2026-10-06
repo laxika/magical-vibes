@@ -177,7 +177,7 @@ class NiambiEsteemedSpeakerTest extends BaseCardTest {
     @DisplayName("A tapped Niambi cannot activate its draw ability")
     void tappedNiambiCannotActivate() {
         addReadyNiambi();
-        gd.playerBattlefields.get(player1.getId()).getFirst().setTapped(true);
+        gd.playerBattlefields.get(player1.getId()).getFirst().tap();
         harness.setHand(player1, List.of(new NiambiEsteemedSpeaker()));
         addActivationMana();
 

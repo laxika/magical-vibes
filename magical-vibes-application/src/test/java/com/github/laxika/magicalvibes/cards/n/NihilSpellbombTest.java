@@ -212,7 +212,7 @@ class NihilSpellbombTest extends BaseCardTest {
     @Test
     @DisplayName("A tapped spellbomb cannot pay its activation cost")
     void tappedSpellbombCannotActivate() {
-        harness.addToBattlefieldAndReturn(player1, new NihilSpellbomb()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new NihilSpellbomb()).tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);

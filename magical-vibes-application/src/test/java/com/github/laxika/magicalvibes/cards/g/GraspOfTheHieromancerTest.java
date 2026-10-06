@@ -144,7 +144,7 @@ class GraspOfTheHieromancerTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         enchant(attacker);
         Permanent victim = addCreatureReady(player2, new GrizzlyBears());
-        victim.setTapped(true);
+        victim.tap();
 
         declareAttackers(player1, List.of(0));
 

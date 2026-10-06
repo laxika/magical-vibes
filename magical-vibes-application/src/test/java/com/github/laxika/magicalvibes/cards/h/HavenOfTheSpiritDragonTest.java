@@ -205,7 +205,7 @@ class HavenOfTheSpiritDragonTest extends BaseCardTest {
         Permanent haven = addReadyHaven();
         harness.activateAbility(player1, 0, 1, null, null);
         harness.handleListChoice(player1, "GREEN");
-        haven.setTapped(false);
+        haven.untap();
         Card dragon = new StormwingDragon();
         harness.setGraveyard(player1, List.of(dragon));
         harness.addMana(player1, ManaColor.COLORLESS, 1);

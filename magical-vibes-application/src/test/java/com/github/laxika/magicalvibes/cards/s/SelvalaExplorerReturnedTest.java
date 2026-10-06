@@ -183,7 +183,7 @@ class SelvalaExplorerReturnedTest extends BaseCardTest {
     @DisplayName("A tapped Selvala cannot activate Parley again")
     void tappedSelvalaCannotActivateAgain() {
         Permanent selvala = addReadySelvala();
-        selvala.setTapped(true);
+        selvala.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)

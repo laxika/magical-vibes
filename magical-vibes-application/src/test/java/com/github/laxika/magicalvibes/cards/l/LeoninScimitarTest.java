@@ -323,7 +323,7 @@ class LeoninScimitarTest extends BaseCardTest {
     @DisplayName("Tapped equipment can equip and still grants its boost")
     void tappedEquipmentCanEquip() {
         Permanent scimitar = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
-        scimitar.setTapped(true);
+        scimitar.tap();
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

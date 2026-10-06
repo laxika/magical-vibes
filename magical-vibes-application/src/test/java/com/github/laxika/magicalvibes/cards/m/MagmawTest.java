@@ -72,7 +72,7 @@ class MagmawTest extends BaseCardTest {
     @Test
     void canActivateWhileTappedAndSummoningSickAndTargetItsController() {
         var magmaw = harness.addToBattlefieldAndReturn(player1, new Magmaw());
-        magmaw.setTapped(true);
+        magmaw.tap();
         magmaw.setSummoningSick(true);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.setLife(player1, 20);

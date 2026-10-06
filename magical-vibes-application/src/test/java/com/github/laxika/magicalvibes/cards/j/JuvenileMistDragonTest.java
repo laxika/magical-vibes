@@ -44,7 +44,7 @@ class JuvenileMistDragonTest extends BaseCardTest {
         castJuvenileMistDragon(List.of());
 
         assertThat(target.isTapped()).isFalse();
-        target.setTapped(true);
+        target.tap();
         harness.performUntapStep(player2);
         assertThat(target.isTapped()).isFalse();
     }
@@ -73,7 +73,7 @@ class JuvenileMistDragonTest extends BaseCardTest {
     @Test
     void alreadyTappedTargetSkipsOnlyItsNextUntapStep() {
         Permanent target = addCreatureReady(player2, new JuvenileMistDragon());
-        target.setTapped(true);
+        target.tap();
 
         castJuvenileMistDragon(List.of(target.getId()));
 
@@ -110,7 +110,7 @@ class JuvenileMistDragonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.isTapped()).isFalse();
-        target.setTapped(true);
+        target.tap();
         harness.performUntapStep(player1);
         assertThat(target.isTapped()).isFalse();
     }

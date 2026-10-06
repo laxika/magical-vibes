@@ -96,7 +96,7 @@ class MesmerizingBenthidTest extends BaseCardTest {
         Permanent token = illusionTokens(player1).getFirst();
         gd.playerBattlefields.get(player1.getId()).remove(benthid);
         Permanent attacker = addAttackingCreature(player2);
-        attacker.setTapped(true);
+        attacker.tap();
 
         blockWithTokens(attacker, List.of(token));
         assertThat(attacker.getSkipUntapCount()).isZero();
@@ -120,7 +120,7 @@ class MesmerizingBenthidTest extends BaseCardTest {
         resolveAllTriggers();
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
-        attacker.setTapped(true);
+        attacker.tap();
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.HEXPROOF)).isTrue();
 
         blockWithTokens(attacker, illusionTokens(player1));

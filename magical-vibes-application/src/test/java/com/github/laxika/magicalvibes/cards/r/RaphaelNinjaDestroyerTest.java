@@ -118,7 +118,7 @@ class RaphaelNinjaDestroyerTest extends BaseCardTest {
         Permanent raphael = addCreatureReady(player1, new RaphaelNinjaDestroyer());
         raphael.setAttacking(true);
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
-        blocker.setTapped(true);
+        blocker.tap();
         prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of());

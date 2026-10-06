@@ -102,7 +102,7 @@ class HighMarketTest extends BaseCardTest {
         harness.addToBattlefield(player1, new FreshVolunteers());
         var survivor = gd.playerBattlefields.get(player1.getId()).get(1);
         var sacrificed = gd.playerBattlefields.get(player1.getId()).get(2);
-        sacrificed.setTapped(true);
+        sacrificed.tap();
         int lifeBefore = gd.getLife(player1.getId());
 
         harness.activateAbility(player1, 0, 1, null, null);

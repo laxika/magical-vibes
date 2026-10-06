@@ -80,7 +80,7 @@ class PaintedBluffsTest extends BaseCardTest {
     @DisplayName("Neither mana ability can be activated when Painted Bluffs is tapped")
     void tappedLandCannotActivate(int abilityIndex) {
         var bluffs = harness.addToBattlefieldAndReturn(player1, new PaintedBluffs());
-        bluffs.setTapped(true);
+        bluffs.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, abilityIndex, null, null))

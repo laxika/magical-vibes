@@ -100,7 +100,7 @@ class PineBarrensTest extends BaseCardTest {
         harness.setLife(player1, 20);
         Permanent land = harness.enterBattlefieldAndReturn(player1, new PineBarrens());
         assertThat(land.isTapped()).isTrue();
-        land.setTapped(false);
+        land.untap();
 
         harness.activateAbility(player1, 0, 1, null, null);
 

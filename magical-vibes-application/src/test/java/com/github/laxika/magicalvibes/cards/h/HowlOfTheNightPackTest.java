@@ -106,7 +106,7 @@ class HowlOfTheNightPackTest extends BaseCardTest {
     @DisplayName("Counts tapped Forests but not Forest cards outside the battlefield")
     void countsOnlyBattlefieldForestsRegardlessOfTappedState() {
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
-        forest.setTapped(true);
+        forest.tap();
         harness.addToBattlefield(player1, new Island());
         harness.setHand(player1, List.of(new HowlOfTheNightPack(), new Forest()));
         harness.setGraveyard(player1, List.of(new Forest()));

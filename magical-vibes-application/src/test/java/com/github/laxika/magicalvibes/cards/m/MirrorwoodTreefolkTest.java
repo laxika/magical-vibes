@@ -170,7 +170,7 @@ class MirrorwoodTreefolkTest extends BaseCardTest {
     @Test
     void canActivateWhileTappedAndSummoningSick() {
         Permanent treefolk = harness.addToBattlefieldAndReturn(player1, new MirrorwoodTreefolk());
-        treefolk.setTapped(true);
+        treefolk.tap();
         treefolk.setSummoningSick(true);
         int lifeBefore = gd.getLife(player2.getId());
 

@@ -74,8 +74,8 @@ class PlasmaElementalTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .extracting(permanent -> permanent.getCard().getClass())
-                .containsExactly(PlasmaElemental.class);
+                .singleElement()
+                .satisfies(permanent -> assertThat(permanent.getCard()).isInstanceOf(PlasmaElemental.class));
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
     }
 }

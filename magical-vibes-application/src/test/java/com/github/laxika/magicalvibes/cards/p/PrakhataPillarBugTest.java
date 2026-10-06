@@ -68,7 +68,7 @@ class PrakhataPillarBugTest extends BaseCardTest {
     void tappedSummoningSickSourceCanActivateOnlyForItself() {
         Permanent bug = addCreatureReady(player1, new PrakhataPillarBug());
         bug.setSummoningSick(true);
-        bug.setTapped(true);
+        bug.tap();
         Permanent otherBug = addCreatureReady(player1, new PrakhataPillarBug());
         Permanent opposingBug = addCreatureReady(player2, new PrakhataPillarBug());
         harness.addMana(player1, ManaColor.BLACK, 1);

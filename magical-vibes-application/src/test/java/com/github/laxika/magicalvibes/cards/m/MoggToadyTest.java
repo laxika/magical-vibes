@@ -121,7 +121,7 @@ class MoggToadyTest extends BaseCardTest {
     void tappedCreaturesCountTowardAttackRestriction() {
         addCreatureReady(player1, new MoggToady());
         Permanent support = addCreatureReady(player1, new Mossdog());
-        support.setTapped(true);
+        support.tap();
         addCreatureReady(player2, new Mossdog());
 
         declareAttackersAndPrepareBlockers(player1, List.of(0));
@@ -134,7 +134,7 @@ class MoggToadyTest extends BaseCardTest {
     void tappedDefendingCreaturesCountTowardAttackRestriction() {
         addCreatureReady(player1, new MoggToady());
         Permanent defender = addCreatureReady(player2, new Mossdog());
-        defender.setTapped(true);
+        defender.tap();
 
         assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
                 .isInstanceOf(IllegalStateException.class);
@@ -146,7 +146,7 @@ class MoggToadyTest extends BaseCardTest {
         addCreatureReady(player1, new Mossdog());
         Permanent toady = addCreatureReady(player2, new MoggToady());
         Permanent support = addCreatureReady(player2, new Mossdog());
-        support.setTapped(true);
+        support.tap();
 
         declareAttackersAndPrepareBlockers(player1, List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -159,7 +159,7 @@ class MoggToadyTest extends BaseCardTest {
     void nonattackingCreaturesCountTowardBlockRestriction() {
         addCreatureReady(player1, new Mossdog());
         Permanent support = addCreatureReady(player1, new Mossdog());
-        support.setTapped(true);
+        support.tap();
         addCreatureReady(player2, new MoggToady());
         addCreatureReady(player2, new Mossdog());
 

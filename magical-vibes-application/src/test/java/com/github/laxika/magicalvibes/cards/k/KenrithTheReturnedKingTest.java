@@ -220,7 +220,7 @@ class KenrithTheReturnedKingTest extends BaseCardTest {
     void gainsLifeForControllerWithoutTapOrSummoningRestriction() {
         Permanent kenrith = harness.addToBattlefieldAndReturn(player1, new KenrithTheReturnedKing());
         kenrith.setSummoningSick(true);
-        kenrith.setTapped(true);
+        kenrith.tap();
         int lifeBefore = gd.getLife(player1.getId());
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);

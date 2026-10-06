@@ -75,7 +75,7 @@ class NoxiousFieldTest extends BaseCardTest {
     @DisplayName("A tapped enchanted land cannot pay the granted ability's tap cost")
     void tappedLandCannotActivateGrantedAbility() {
         Permanent land = setUpEnchantedLand();
-        land.setTapped(true);
+        land.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);

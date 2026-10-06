@@ -73,7 +73,7 @@ class OracleOfNectarsTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent oracle = addReadyOracle(player1);
-        oracle.setTapped(true);
+        oracle.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null))
                 .isInstanceOf(IllegalStateException.class);

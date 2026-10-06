@@ -72,7 +72,7 @@ class MarduDevoteeTest extends BaseCardTest {
     @DisplayName("The other Mardu colors are available immediately without tapping")
     void manaAbilityAddsOtherColorsWithoutUsingStack(ManaColor color) {
         var permanent = harness.addToBattlefieldAndReturn(player1, new MarduDevotee());
-        permanent.setTapped(true);
+        permanent.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, null);

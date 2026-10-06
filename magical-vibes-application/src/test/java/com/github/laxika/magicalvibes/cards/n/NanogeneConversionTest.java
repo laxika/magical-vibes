@@ -117,7 +117,7 @@ class NanogeneConversionTest extends BaseCardTest {
         target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
         Permanent copy = addCreatureReady(player2, new GrizzlyBears());
         copy.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
-        copy.setTapped(true);
+        copy.tap();
 
         cast(target);
 

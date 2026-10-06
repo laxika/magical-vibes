@@ -309,7 +309,7 @@ class RhysTheEvermoreTest extends BaseCardTest {
     @DisplayName("Rhys cannot pay the tap cost while tapped")
     void rejectsActivationWhileTapped() {
         Permanent rhys = addCreatureReady(player1, new RhysTheEvermore());
-        rhys.setTapped(true);
+        rhys.tap();
         prepareAbility();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, rhys.getId()))

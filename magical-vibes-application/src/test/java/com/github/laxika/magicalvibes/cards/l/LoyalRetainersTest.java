@@ -135,7 +135,7 @@ class LoyalRetainersTest extends BaseCardTest {
     @EnumSource(value = TurnStep.class, names = {"UPKEEP", "DRAW", "BEGINNING_OF_COMBAT"})
     @DisplayName("Can activate before attackers are declared even while tapped and summoning sick")
     void canActivateBeforeAttackersWithTappedNewCreature(TurnStep step) {
-        harness.addToBattlefieldAndReturn(player1, new LoyalRetainers()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new LoyalRetainers()).tap();
         GuanYuSaintedWarrior guanYu = new GuanYuSaintedWarrior();
         harness.setGraveyard(player1, List.of(guanYu));
         harness.forceActivePlayer(player1);

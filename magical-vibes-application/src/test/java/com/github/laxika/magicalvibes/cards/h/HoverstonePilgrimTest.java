@@ -74,7 +74,7 @@ class HoverstonePilgrimTest extends BaseCardTest {
     @Test
     void canActivateWhileTappedAndSummoningSickIntoEmptyLibrary() {
         Permanent pilgrim = harness.addToBattlefieldAndReturn(player1, new HoverstonePilgrim());
-        pilgrim.setTapped(true);
+        pilgrim.tap();
         pilgrim.setSummoningSick(true);
         Card target = new HolyDay();
         harness.setGraveyard(player2, List.of(target));

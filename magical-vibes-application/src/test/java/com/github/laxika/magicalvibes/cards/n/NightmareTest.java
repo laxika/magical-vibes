@@ -151,7 +151,7 @@ class NightmareTest extends BaseCardTest {
     @DisplayName("Nightmare counts tapped Swamps as well as untapped Swamps")
     void countsTappedSwamps() {
         Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
-        swamp.setTapped(true);
+        swamp.tap();
         harness.addToBattlefield(player1, new Swamp());
         Permanent nightmare = addCreatureReady(player1, new Nightmare());
 

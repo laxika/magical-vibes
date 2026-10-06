@@ -96,7 +96,7 @@ class MoriaScavengerTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
         Permanent army = findPermanent(player1, "Orc Army");
-        scavenger.setTapped(false);
+        scavenger.untap();
 
         harness.activateAbility(player1, 0, null, null);
         harness.handleCardChosen(player1, 0);

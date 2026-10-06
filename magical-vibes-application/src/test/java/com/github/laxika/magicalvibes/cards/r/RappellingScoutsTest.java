@@ -122,7 +122,7 @@ class RappellingScoutsTest extends BaseCardTest {
     @DisplayName("The protection ability can be activated while tapped and summoning sick")
     void activatesWhileTappedAndSummoningSick() {
         Permanent scouts = addCreatureReady(player1, new RappellingScouts());
-        scouts.setTapped(true);
+        scouts.tap();
         scouts.setSummoningSick(true);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.WHITE, 1);

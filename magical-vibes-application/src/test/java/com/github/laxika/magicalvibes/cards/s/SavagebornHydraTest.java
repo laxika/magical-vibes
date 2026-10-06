@@ -90,7 +90,7 @@ class SavagebornHydraTest extends BaseCardTest {
         Permanent hydra = harness.addToBattlefieldAndReturn(player1, new SavagebornHydra());
         hydra.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         hydra.setSummoningSick(true);
-        hydra.setTapped(true);
+        hydra.tap();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();

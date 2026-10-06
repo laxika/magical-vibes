@@ -119,7 +119,7 @@ class ShamblingStriderTest extends BaseCardTest {
     void canActivateWhileSummoningSickAndTapped() {
         Permanent strider = harness.addToBattlefieldAndReturn(player1, new ShamblingStrider());
         strider.setSummoningSick(true);
-        strider.setTapped(true);
+        strider.tap();
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);
 

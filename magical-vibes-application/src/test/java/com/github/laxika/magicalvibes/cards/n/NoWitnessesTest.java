@@ -88,7 +88,7 @@ class NoWitnessesTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(drawnCard));
 
         cast();
-        findPermanent(player2, "Clue").setTapped(true);
+        findPermanent(player2, "Clue").tap();
         harness.addMana(player2, ManaColor.COLORLESS, 2);
         harness.activateAbility(player2, 0, 0, null, null);
 

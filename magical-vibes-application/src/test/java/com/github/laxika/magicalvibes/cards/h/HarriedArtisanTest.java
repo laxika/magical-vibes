@@ -106,7 +106,7 @@ class HarriedArtisanTest extends BaseCardTest {
     @Test
     void tappedArtisanCanTransformWithoutUntapping() {
         Permanent artisan = addArtisan();
-        artisan.setTapped(true);
+        artisan.tap();
         prepareMainPhase(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.addMana(player1, ManaColor.COLORLESS, 3);

@@ -98,7 +98,7 @@ class ScarabOfTheUnseenTest extends BaseCardTest {
     void cannotActivateWhileTapped() {
         Permanent scarab = harness.addToBattlefieldAndReturn(player1, new ScarabOfTheUnseen());
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
-        scarab.setTapped(true);
+        scarab.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, forest.getId()))
                 .isInstanceOf(IllegalStateException.class);

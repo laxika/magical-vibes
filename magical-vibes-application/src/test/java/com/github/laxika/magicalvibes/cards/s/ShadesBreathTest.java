@@ -122,7 +122,7 @@ class ShadesBreathTest extends BaseCardTest {
     @DisplayName("The granted ability can be activated repeatedly without tapping")
     void repeatedActivationsStackAndWearOff() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GlorySeeker());
-        creature.setTapped(true);
+        creature.tap();
 
         castShadesBreath();
 

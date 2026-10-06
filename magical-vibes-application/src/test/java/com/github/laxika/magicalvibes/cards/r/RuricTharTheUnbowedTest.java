@@ -94,7 +94,7 @@ class RuricTharTheUnbowedTest extends BaseCardTest {
     @Test
     @DisplayName("A tapped Ruric Thar is not required to attack")
     void tappedRuricTharCanStayBack() {
-        addRuricThar(player1).setTapped(true);
+        addRuricThar(player1).tap();
         declareAttackers(player1, List.of());
 
         harness.assertLife(player2, 20);

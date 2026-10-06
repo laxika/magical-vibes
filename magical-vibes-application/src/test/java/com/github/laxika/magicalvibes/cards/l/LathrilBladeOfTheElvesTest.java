@@ -72,7 +72,7 @@ class LathrilBladeOfTheElvesTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Elf Warrior")).hasSize(10);
         harness.assertLife(player2, 10);
         lathril.setAttacking(false);
-        lathril.setTapped(false);
+        lathril.untap();
         harness.setLife(player2, 20);
 
         harness.activateAbility(player1, 0, 0, null, null);
@@ -113,7 +113,7 @@ class LathrilBladeOfTheElvesTest extends BaseCardTest {
             addCreatureReady(player1, new ElvishWarrior());
         }
         Permanent tappedElf = addCreatureReady(player1, new ElvishWarrior());
-        tappedElf.setTapped(true);
+        tappedElf.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);

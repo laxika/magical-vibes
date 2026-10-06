@@ -148,7 +148,7 @@ class MageRingBullyTest extends BaseCardTest {
     @DisplayName("A tapped Mage-Ring Bully does not have to attack")
     void tappedBullyDoesNotHaveToAttack() {
         Permanent bully = addBully();
-        bully.setTapped(true);
+        bully.tap();
         addCreatureReady(player1, new GrizzlyBears());
         harness.setLife(player2, 20);
 

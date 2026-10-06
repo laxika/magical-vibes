@@ -1,4 +1,6 @@
 package com.github.laxika.magicalvibes.cards.n;
+import java.util.Set;
+import com.github.laxika.magicalvibes.model.CardType;
 
 import com.github.laxika.magicalvibes.cards.f.FlameJavelin;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
@@ -96,7 +98,7 @@ class NoxiousDragonTest extends BaseCardTest {
     void canDestroyFaceDownCreature() {
         harness.addToBattlefield(player1, new NoxiousDragon());
         var faceDownDragon = harness.addToBattlefieldAndReturn(player2, new NoxiousDragon());
-        faceDownDragon.setFaceDown(true);
+        faceDownDragon.setFaceDown(2, 2, Set.of(CardType.CREATURE));
 
         killDragon(harness.getPermanentId(player1, "Noxious Dragon"));
 

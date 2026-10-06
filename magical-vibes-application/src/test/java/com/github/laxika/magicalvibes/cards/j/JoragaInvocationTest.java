@@ -123,7 +123,7 @@ class JoragaInvocationTest extends BaseCardTest {
     void noLegalBlockerAllowsNoBlocks() {
         Permanent attacker = harness.addToBattlefieldAndReturn(player1, new Cobblebrute());
         Permanent blocker = harness.addToBattlefieldAndReturn(player2, new Cobblebrute());
-        blocker.setTapped(true);
+        blocker.tap();
         castInvocation();
         attacker.setAttacking(true);
         prepareDeclareBlockers();

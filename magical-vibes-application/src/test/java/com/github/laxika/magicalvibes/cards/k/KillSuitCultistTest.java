@@ -32,7 +32,7 @@ class KillSuitCultistTest extends BaseCardTest {
     @Test
     void tappedCultistIsNotRequiredToAttack() {
         Permanent cultist = addCreatureReady(player1, new KillSuitCultist());
-        cultist.setTapped(true);
+        cultist.tap();
 
         declareAttackers(List.of());
         assertThat(cultist.isAttacking()).isFalse();

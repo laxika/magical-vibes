@@ -100,7 +100,7 @@ class NiblisOfTheMistTest extends BaseCardTest {
     @DisplayName("An already tapped creature is a legal ETB target")
     void canTargetAlreadyTappedCreature() {
         Permanent wolf = harness.addToBattlefieldAndReturn(player2, new YoungWolf());
-        wolf.setTapped(true);
+        wolf.tap();
 
         castNiblisAndAcceptTarget(wolf.getId());
 

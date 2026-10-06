@@ -119,7 +119,7 @@ class RidgelineRagerTest extends BaseCardTest {
     void tappedRagerBoostsOnlyItself() {
         Permanent otherRager = addCreatureReady(player1, new RidgelineRager());
         Permanent rager = addCreatureReady(player1, new RidgelineRager());
-        rager.setTapped(true);
+        rager.tap();
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 1, null, null);

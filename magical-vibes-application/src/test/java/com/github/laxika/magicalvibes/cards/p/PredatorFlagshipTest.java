@@ -86,7 +86,7 @@ class PredatorFlagshipTest extends BaseCardTest {
     @DisplayName("Flying ability works repeatedly while the Flagship is tapped")
     void grantsFlyingRepeatedlyWhileTapped() {
         Permanent flagship = addFlagship();
-        flagship.setTapped(true);
+        flagship.tap();
         Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new FlintGolem());
         Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new FlintGolem());
         harness.addMana(player1, ManaColor.COLORLESS, 4);
@@ -120,7 +120,7 @@ class PredatorFlagshipTest extends BaseCardTest {
     @DisplayName("Destroy ability cannot be activated while the Flagship is tapped")
     void cannotDestroyWhileTapped() {
         Permanent flagship = addFlagship();
-        flagship.setTapped(true);
+        flagship.tap();
         Permanent target = harness.addToBattlefieldAndReturn(player2, new StrongholdZeppelin());
         harness.addMana(player1, ManaColor.COLORLESS, 5);
 

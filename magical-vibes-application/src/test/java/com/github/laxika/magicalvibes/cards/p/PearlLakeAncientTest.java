@@ -203,10 +203,10 @@ class PearlLakeAncientTest extends BaseCardTest {
         harness.setHand(player1, List.of());
         for (int i = 0; i < 3; i++) {
             Permanent land = harness.addToBattlefieldAndReturn(player1, new Island());
-            land.setTapped(true);
+            land.tap();
         }
         Permanent ancient = harness.addToBattlefieldAndReturn(player1, new PearlLakeAncient());
-        ancient.setTapped(true);
+        ancient.tap();
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 

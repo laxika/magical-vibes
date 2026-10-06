@@ -1,4 +1,4 @@
-﻿package com.github.laxika.magicalvibes.cards.q;
+package com.github.laxika.magicalvibes.cards.q;
 
 import com.github.laxika.magicalvibes.cards.b.BesottedKnight;
 import com.github.laxika.magicalvibes.cards.b.BetrothTheBeast;

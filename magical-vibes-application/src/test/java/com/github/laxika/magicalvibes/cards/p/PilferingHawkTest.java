@@ -91,7 +91,7 @@ class PilferingHawkTest extends BaseCardTest {
     @DisplayName("A tapped Hawk cannot activate")
     void cannotActivateWhileTapped() {
         addReadyHawk();
-        gd.playerBattlefields.get(player1.getId()).getFirst().setTapped(true);
+        gd.playerBattlefields.get(player1.getId()).getFirst().tap();
         addSnowMana();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

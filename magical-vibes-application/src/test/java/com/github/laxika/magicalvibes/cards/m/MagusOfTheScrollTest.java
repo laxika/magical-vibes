@@ -175,7 +175,7 @@ class MagusOfTheScrollTest extends BaseCardTest {
         harness.handleListChoice(player1, "Magus of the Scroll");
 
         harness.setHand(player2, List.of(new FathomSeer()));
-        magus.setTapped(false);
+        magus.untap();
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 

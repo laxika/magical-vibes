@@ -33,7 +33,7 @@ class MountainBanditTest extends BaseCardTest {
         harness.castFromHand(player1, new MountainBandit(), "{R}");
         harness.passBothPriorities();
         Permanent bandit = findPermanent(player1, "Mountain Bandit");
-        bandit.setTapped(true);
+        bandit.tap();
 
         assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class);

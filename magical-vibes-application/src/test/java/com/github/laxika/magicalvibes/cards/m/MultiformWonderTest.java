@@ -176,7 +176,7 @@ class MultiformWonderTest extends BaseCardTest {
     void abilitiesWorkWhileTappedAndSummoningSick() {
         Permanent wonder = addReadyWonder(player1);
         wonder.setSummoningSick(true);
-        wonder.setTapped(true);
+        wonder.tap();
         gd.playerEnergyCounters.put(player1.getId(), 2);
 
         harness.activateAbility(player1, 0, 0, null, null);

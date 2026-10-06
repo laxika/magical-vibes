@@ -107,7 +107,7 @@ class GravecrawlerTest extends BaseCardTest {
     void tappedZombieEnablesGraveyardCast() {
         harness.setGraveyard(player1, List.of(new Gravecrawler()));
         Permanent zombie = harness.addToBattlefieldAndReturn(player1, new Gravecrawler());
-        zombie.setTapped(true);
+        zombie.tap();
         zombie.setSummoningSick(true);
         harness.addMana(player1, ManaColor.BLACK, 1);
 

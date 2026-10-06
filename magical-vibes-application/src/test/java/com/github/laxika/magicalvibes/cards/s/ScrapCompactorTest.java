@@ -114,7 +114,7 @@ class ScrapCompactorTest extends BaseCardTest {
     @DisplayName("A tapped Scrap Compactor cannot activate either ability")
     void cannotActivateWhenTapped(int abilityIndex, int mana) {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new ScrapCompactor());
-        source.setTapped(true);
+        source.tap();
         Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
         harness.addMana(player1, ManaColor.COLORLESS, mana);
 

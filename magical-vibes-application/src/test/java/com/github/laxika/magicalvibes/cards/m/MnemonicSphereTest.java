@@ -51,7 +51,7 @@ class MnemonicSphereTest extends BaseCardTest {
     @DisplayName("A tapped Sphere is sacrificed as a cost before its draw ability resolves")
     void tappedSpherePaysSacrificeBeforeDrawing() {
         var sphere = harness.addToBattlefieldAndReturn(player1, new MnemonicSphere());
-        sphere.setTapped(true);
+        sphere.tap();
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new BambooGroveArcher(), new WalkingSkyscraper()));
         harness.addMana(player1, ManaColor.COLORLESS, 1);

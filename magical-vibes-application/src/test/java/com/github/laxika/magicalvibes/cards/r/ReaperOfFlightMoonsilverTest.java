@@ -185,7 +185,7 @@ class ReaperOfFlightMoonsilverTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSickOnOpponentsTurn() {
         setDelirium();
         Permanent reaper = harness.addToBattlefieldAndReturn(player1, new ReaperOfFlightMoonsilver());
-        reaper.setTapped(true);
+        reaper.tap();
         reaper.setSummoningSick(true);
         addCreatureReady(player1, new ThrabenInspector());
         harness.forceActivePlayer(player2);

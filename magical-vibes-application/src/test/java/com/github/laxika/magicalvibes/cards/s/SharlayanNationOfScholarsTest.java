@@ -87,7 +87,7 @@ class SharlayanNationOfScholarsTest extends BaseCardTest {
     @Test
     void canActivateOnTurnItEntersAfterBeingUntapped() {
         Permanent sharlayan = harness.enterBattlefieldAndReturn(player1, new SharlayanNationOfScholars());
-        sharlayan.setTapped(false);
+        sharlayan.untap();
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.handleListChoice(player1, "BLUE");

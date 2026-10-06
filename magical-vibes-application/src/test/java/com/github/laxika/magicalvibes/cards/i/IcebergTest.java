@@ -127,7 +127,7 @@ class IcebergTest extends BaseCardTest {
     @DisplayName("Tapped Iceberg can convert every ice counter into mana without using the stack")
     void tappedIcebergCanRemoveCountersRepeatedly() {
         Permanent iceberg = addReadyIceberg(player1, 3);
-        iceberg.setTapped(true);
+        iceberg.tap();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
@@ -150,7 +150,7 @@ class IcebergTest extends BaseCardTest {
     @DisplayName("The counter-adding ability works while tapped during an opponent's upkeep")
     void tappedIcebergCanAddCounterDuringOpponentsUpkeep() {
         Permanent iceberg = addReadyIceberg(player1, 0);
-        iceberg.setTapped(true);
+        iceberg.tap();
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.UPKEEP);
         harness.addMana(player1, ManaColor.BLUE, 3);

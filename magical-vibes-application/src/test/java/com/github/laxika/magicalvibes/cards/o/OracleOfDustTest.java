@@ -135,7 +135,7 @@ class OracleOfDustTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSickAndDiscardTheDrawnCard() {
         Permanent oracle = harness.addToBattlefieldAndReturn(player1, new OracleOfDust());
         oracle.setSummoningSick(true);
-        oracle.setTapped(true);
+        oracle.tap();
         EldraziDevastator drawnCard = new EldraziDevastator();
         ScourFromExistence exiledCard = new ScourFromExistence();
         harness.setHand(player1, List.of());

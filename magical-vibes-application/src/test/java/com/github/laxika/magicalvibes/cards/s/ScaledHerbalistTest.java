@@ -127,7 +127,7 @@ class ScaledHerbalistTest extends BaseCardTest {
     @DisplayName("An already tapped Herbalist cannot activate again")
     void tappedHerbalistCannotActivate() {
         Permanent herbalist = addCreatureReady(player1, new ScaledHerbalist());
-        herbalist.setTapped(true);
+        herbalist.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);

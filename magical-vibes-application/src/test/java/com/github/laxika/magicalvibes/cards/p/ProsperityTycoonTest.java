@@ -120,7 +120,7 @@ class ProsperityTycoonTest extends BaseCardTest {
     @DisplayName("A tapped Tycoon can activate its protection ability during combat")
     void tappedTycoonCanActivateDuringCombat() {
         Permanent tycoon = castTycoon();
-        tycoon.setTapped(true);
+        tycoon.tap();
         harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
         harness.clearPriorityPassed();
         harness.addMana(player1, ManaColor.COLORLESS, 2);

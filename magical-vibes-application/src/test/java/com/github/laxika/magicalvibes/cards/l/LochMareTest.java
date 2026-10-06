@@ -91,7 +91,7 @@ class LochMareTest extends BaseCardTest {
     void drawAbilityCanRemoveStunCounter() {
         Permanent lochMare = harness.addToBattlefieldAndReturn(player1, new LochMare());
         lochMare.setSummoningSick(true);
-        lochMare.setTapped(true);
+        lochMare.tap();
         lochMare.setCounterCount(CounterType.STUN, 1);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -138,7 +138,7 @@ class LochMareTest extends BaseCardTest {
     void alreadyTappedTargetReceivesStunCounter() {
         addReadyLochMare(player1);
         Permanent target = harness.addToBattlefieldAndReturn(player2, new LochMare());
-        target.setTapped(true);
+        target.tap();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.COLORLESS, 2);

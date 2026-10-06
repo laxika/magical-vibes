@@ -67,7 +67,7 @@ class SelesnyaEulogistTest extends BaseCardTest {
     @Test
     void canExileFromOwnGraveyardWhileTappedAndSummoningSick() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new SelesnyaEulogist());
-        source.setTapped(true);
+        source.tap();
         source.setSummoningSick(true);
         addCreatureToken(player1);
         Card creature = new SelesnyaEulogist();

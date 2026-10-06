@@ -60,7 +60,7 @@ class HorrorOfTheDimTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent horror = harness.addToBattlefieldAndReturn(player1, new HorrorOfTheDim());
         horror.setSummoningSick(true);
-        horror.setTapped(true);
+        horror.tap();
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, null, null);

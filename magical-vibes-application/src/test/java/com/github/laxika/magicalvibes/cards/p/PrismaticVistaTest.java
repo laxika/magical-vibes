@@ -103,7 +103,7 @@ class PrismaticVistaTest extends BaseCardTest {
     void tappedVistaCannotActivate() {
         harness.setLife(player1, 20);
         harness.addToBattlefield(player1, new PrismaticVista());
-        findPermanent(player1, "Prismatic Vista").setTapped(true);
+        findPermanent(player1, "Prismatic Vista").tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);

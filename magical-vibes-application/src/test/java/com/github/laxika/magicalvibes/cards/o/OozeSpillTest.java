@@ -125,7 +125,7 @@ class OozeSpillTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         Permanent mutagen = findPermanent(player2, "Mutagen");
-        mutagen.setTapped(true);
+        mutagen.tap();
         int index = gd.playerBattlefields.get(player2.getId()).indexOf(mutagen);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
 

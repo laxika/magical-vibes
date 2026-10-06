@@ -134,7 +134,7 @@ class GoblinWarStrikeTest extends BaseCardTest {
     @DisplayName("Counts tapped Goblins but not Goblin cards in other zones")
     void countsTappedGoblinsButNotCardsInOtherZones() {
         Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GoblinPiker());
-        goblin.setTapped(true);
+        goblin.tap();
         harness.setGraveyard(player1, List.of(new RagingGoblin()));
         harness.setExile(player1, List.of(new GoblinPiker()));
         harness.setLibrary(player1, List.of(new RagingGoblin()));

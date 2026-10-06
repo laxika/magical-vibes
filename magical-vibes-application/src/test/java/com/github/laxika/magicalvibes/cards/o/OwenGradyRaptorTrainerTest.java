@@ -170,7 +170,9 @@ class OwenGradyRaptorTrainerTest extends BaseCardTest {
     void cannotActivateWhenUnableToPayTapCost(boolean summoningSick, boolean tapped) {
         Permanent trainer = harness.addToBattlefieldAndReturn(player1, new OwenGradyRaptorTrainer());
         trainer.setSummoningSick(summoningSick);
-        trainer.setTapped(tapped);
+        if (tapped) {
+            trainer.tap();
+        }
         Permanent dinosaur = harness.addToBattlefieldAndReturn(player1, new BlueLoyalRaptor());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

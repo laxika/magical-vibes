@@ -104,7 +104,7 @@ class OrcishMechanicsTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent mechanics = addReadyMechanics(player1);
-        mechanics.setTapped(true);
+        mechanics.tap();
         harness.addToBattlefield(player1, new Ornithopter());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
@@ -128,7 +128,7 @@ class OrcishMechanicsTest extends BaseCardTest {
     void canSacrificeTappedSummoningSickArtifactCreatureAndTargetController() {
         addReadyMechanics(player1);
         Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
-        artifact.setTapped(true);
+        artifact.tap();
         artifact.setSummoningSick(true);
 
         harness.activateAbility(player1, 0, null, player1.getId());

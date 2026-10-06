@@ -105,7 +105,7 @@ class SeismicMageTest extends BaseCardTest {
     @DisplayName("Cannot activate while tapped")
     void cannotActivateWhileTapped() {
         Permanent mage = addCreatureReady(player1, new SeismicMage());
-        mage.setTapped(true);
+        mage.tap();
         harness.addToBattlefield(player2, new Forest());
         prepareActivation();
         UUID targetId = harness.getPermanentId(player2, "Forest");

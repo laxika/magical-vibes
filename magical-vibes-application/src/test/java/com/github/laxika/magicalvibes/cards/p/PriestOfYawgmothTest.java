@@ -110,7 +110,7 @@ class PriestOfYawgmothTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent priest = addCreatureReady(player1, new PriestOfYawgmoth());
-        priest.setTapped(true);
+        priest.tap();
         harness.addToBattlefield(player1, new SoldeviDigger());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
@@ -124,7 +124,7 @@ class PriestOfYawgmothTest extends BaseCardTest {
     void canSacrificeTappedSummoningSickArtifactCreatureWithoutUsingStack() {
         addCreatureReady(player1, new PriestOfYawgmoth());
         Permanent glider = harness.addToBattlefieldAndReturn(player1, new AesthirGlider());
-        glider.setTapped(true);
+        glider.tap();
         glider.setSummoningSick(true);
 
         harness.activateAbility(player1, 0, null, null);

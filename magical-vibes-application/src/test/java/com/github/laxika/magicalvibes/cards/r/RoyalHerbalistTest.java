@@ -84,7 +84,7 @@ class RoyalHerbalistTest extends BaseCardTest {
     @Test
     void canActivateWhileTappedAndSummoningSick() {
         Permanent herbalist = harness.addToBattlefieldAndReturn(player1, new RoyalHerbalist());
-        herbalist.setTapped(true);
+        herbalist.tap();
         herbalist.setSummoningSick(true);
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
         harness.addMana(player1, ManaColor.COLORLESS, 2);

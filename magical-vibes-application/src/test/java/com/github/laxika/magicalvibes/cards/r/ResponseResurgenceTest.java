@@ -164,7 +164,7 @@ class ResponseResurgenceTest extends BaseCardTest {
     @DisplayName("Resurgence affects creatures present at resolution but does not untap them or affect later arrivals")
     void resurgenceSnapshotsCreaturesAndDoesNotUntap() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        creature.setTapped(true);
+        creature.tap();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         prepareResurgence();

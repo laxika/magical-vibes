@@ -64,7 +64,7 @@ class IfhBFfEfreetTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
         Permanent efreet = harness.addToBattlefieldAndReturn(player1, new IfhBFfEfreet());
-        efreet.setTapped(true);
+        efreet.tap();
         efreet.setSummoningSick(true);
         harness.addToBattlefield(player2, new AirElemental());
         Permanent nonFlyer = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());

@@ -138,7 +138,7 @@ class RiaIvorBaneOfBladeholdTest extends BaseCardTest {
         addCreatureReady(player1, new RiaIvorBaneOfBladehold());
         addCreatureReady(player1, new ChromeProwler());
         Permanent opponentCreature = addCreatureReady(player2, new ChromeProwler());
-        opponentCreature.setTapped(true);
+        opponentCreature.tap();
 
         advanceToCombat(player1);
         harness.handlePermanentChosen(player1, opponentCreature.getId());

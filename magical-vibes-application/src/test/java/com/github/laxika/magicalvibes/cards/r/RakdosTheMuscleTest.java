@@ -129,7 +129,7 @@ class RakdosTheMuscleTest extends BaseCardTest {
     @DisplayName("Rakdos can activate while tapped and summoning sick")
     void canActivateWhileTappedAndSummoningSick() {
         Permanent rakdos = harness.addToBattlefieldAndReturn(player1, new RakdosTheMuscle());
-        rakdos.setTapped(true);
+        rakdos.tap();
         rakdos.setSummoningSick(true);
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.setLibrary(player2, List.of());

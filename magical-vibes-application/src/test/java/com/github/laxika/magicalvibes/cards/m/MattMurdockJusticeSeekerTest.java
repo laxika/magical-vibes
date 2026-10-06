@@ -230,7 +230,7 @@ class MattMurdockJusticeSeekerTest extends BaseCardTest {
 
         target.setCounterCount(CounterType.CHARGE, 0);
         Permanent pyromancer = gd.playerBattlefields.get(player2.getId()).getFirst();
-        pyromancer.setTapped(false);
+        pyromancer.untap();
         harness.activateAbility(player2, 0, null, target.getId());
         resolveAllTriggers();
 

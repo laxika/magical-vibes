@@ -104,7 +104,7 @@ class MindGamesTest extends BaseCardTest {
     @DisplayName("Buyback still returns the spell when its target is already tapped")
     void buybackWithAlreadyTappedTarget() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        target.setTapped(true);
+        target.tap();
         harness.setHand(player1, List.of(new MindGames()));
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);

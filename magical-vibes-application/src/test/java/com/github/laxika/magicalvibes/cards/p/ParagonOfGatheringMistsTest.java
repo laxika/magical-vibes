@@ -177,7 +177,7 @@ class ParagonOfGatheringMistsTest extends BaseCardTest {
                 .hasMessageContaining("summoning sickness");
 
         paragon.setSummoningSick(false);
-        paragon.setTapped(true);
+        paragon.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(player1, paragon), 0, wizard.getId()))
                 .isInstanceOf(IllegalStateException.class)

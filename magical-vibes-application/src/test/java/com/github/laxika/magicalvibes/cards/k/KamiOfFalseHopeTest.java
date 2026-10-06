@@ -72,7 +72,7 @@ class KamiOfFalseHopeTest extends BaseCardTest {
     @DisplayName("A tapped, summoning-sick Kami is sacrificed immediately but prevention waits for resolution")
     void sacrificeIsPaidBeforeResolution() {
         Permanent kami = harness.addToBattlefieldAndReturn(player1, new KamiOfFalseHope());
-        kami.setTapped(true);
+        kami.tap();
         kami.setSummoningSick(true);
 
         harness.activateAbility(player1, 0, null, null);

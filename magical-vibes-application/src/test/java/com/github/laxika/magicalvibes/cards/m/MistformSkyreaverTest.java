@@ -73,7 +73,7 @@ class MistformSkyreaverTest extends BaseCardTest {
     @DisplayName("The ability can be activated while tapped and summoning sick")
     void canActivateWhileTappedAndSummoningSick() {
         Permanent skyreaver = addReadySkyreaver();
-        skyreaver.setTapped(true);
+        skyreaver.tap();
         skyreaver.setSummoningSick(true);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

@@ -215,7 +215,7 @@ class IcatianPriestTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent priest = harness.addToBattlefieldAndReturn(player1, new IcatianPriest());
         priest.setSummoningSick(true);
-        priest.setTapped(true);
+        priest.tap();
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

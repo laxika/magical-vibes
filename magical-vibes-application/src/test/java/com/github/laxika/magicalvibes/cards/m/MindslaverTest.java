@@ -223,7 +223,7 @@ class MindslaverTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.addToBattlefield(player1, new Mindslaver());
-        findPermanent(player1, "Mindslaver").setTapped(true);
+        findPermanent(player1, "Mindslaver").tap();
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))

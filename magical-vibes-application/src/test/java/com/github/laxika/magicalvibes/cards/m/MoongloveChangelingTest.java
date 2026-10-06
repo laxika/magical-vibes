@@ -76,7 +76,7 @@ class MoongloveChangelingTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent changeling = harness.addToBattlefieldAndReturn(player1, new MoongloveChangeling());
         changeling.setSummoningSick(true);
-        changeling.setTapped(true);
+        changeling.tap();
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, null, null);

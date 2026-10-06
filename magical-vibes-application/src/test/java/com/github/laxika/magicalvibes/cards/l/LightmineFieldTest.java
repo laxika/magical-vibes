@@ -71,7 +71,7 @@ class LightmineFieldTest extends BaseCardTest {
 
         declareAttackers(player2, List.of(0));
         Permanent enteredAttacking = harness.addToBattlefieldAndReturn(player2, new MakindiGriffin());
-        enteredAttacking.setTapped(true);
+        enteredAttacking.tap();
         enteredAttacking.setAttacking(true);
         harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
 

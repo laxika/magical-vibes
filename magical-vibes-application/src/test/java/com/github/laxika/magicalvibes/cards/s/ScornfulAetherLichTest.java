@@ -56,7 +56,7 @@ class ScornfulAetherLichTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent lich = harness.addToBattlefieldAndReturn(player1, new ScornfulAetherLich());
         lich.setSummoningSick(true);
-        lich.setTapped(true);
+        lich.tap();
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
 

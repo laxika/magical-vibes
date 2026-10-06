@@ -113,7 +113,7 @@ class MindfulBiomancerTest extends BaseCardTest {
     void activationDoesNotRequireTapOrHaste() {
         Permanent biomancer = harness.addToBattlefieldAndReturn(player1, new MindfulBiomancer());
         biomancer.setSummoningSick(true);
-        biomancer.setTapped(true);
+        biomancer.tap();
         harness.addMana(player1, ManaColor.GREEN, 3);
 
         harness.activateAbility(player1, 0, null, null);

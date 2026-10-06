@@ -131,7 +131,7 @@ class QuandrixCampusTest extends BaseCardTest {
     @Test
     void tappedCampusCannotActivateEitherAbility() {
         Permanent campus = addReadyCampus();
-        campus.setTapped(true);
+        campus.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))

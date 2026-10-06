@@ -86,7 +86,7 @@ class LordOfShatterskullPassTest extends BaseCardTest {
     @DisplayName("Level up uses the stack and does not require tapping")
     void levelUpResolvesBeforeCounterIsAdded() {
         Permanent lord = addCreatureReady(player1, new LordOfShatterskullPass());
-        lord.setTapped(true);
+        lord.tap();
         prepareForLeveling(player1);
 
         harness.activateAbility(player1, 0, 0, null, null);

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.cards.w.WebShooters;
 import com.github.laxika.magicalvibes.cards.h.HotDogCart;
 import com.github.laxika.magicalvibes.cards.s.SpiderBot;
 import com.github.laxika.magicalvibes.model.PendingInteraction;

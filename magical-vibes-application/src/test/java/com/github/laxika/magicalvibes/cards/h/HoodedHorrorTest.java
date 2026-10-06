@@ -77,7 +77,7 @@ class HoodedHorrorTest extends BaseCardTest {
         addCreatureReady(player1, new JadeMage());
         Permanent blocker = addCreatureReady(player2, new JadeMage());
         Permanent tappedCreature = harness.addToBattlefieldAndReturn(player2, new JadeMage());
-        tappedCreature.setTapped(true);
+        tappedCreature.tap();
         tappedCreature.setSummoningSick(true);
 
         assertThat(bls.canBlockAttacker(gd, blocker, horror,

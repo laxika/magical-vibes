@@ -126,7 +126,7 @@ class RadjanSpiritTest extends BaseCardTest {
     @DisplayName("Cannot activate while already tapped")
     void cannotActivateWhileTapped() {
         Permanent spirit = addCreatureReady(player1, new RadjanSpirit());
-        spirit.setTapped(true);
+        spirit.tap();
         Permanent elemental = addCreatureReady(player2, new AirElemental());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, elemental.getId()))

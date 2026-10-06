@@ -72,7 +72,7 @@ class LocthwainGargoyleTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent gargoyle = harness.addToBattlefieldAndReturn(player1, new LocthwainGargoyle());
         gargoyle.setSummoningSick(true);
-        gargoyle.setTapped(true);
+        gargoyle.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.activateAbility(player1, 0, null, null);

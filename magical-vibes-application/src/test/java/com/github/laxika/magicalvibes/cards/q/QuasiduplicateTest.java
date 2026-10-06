@@ -132,7 +132,7 @@ class QuasiduplicateTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, originalId);
         var firstToken = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().isToken()).findFirst().orElseThrow();
-        firstToken.setTapped(true);
+        firstToken.tap();
         harness.castAndResolveSorcery(player1, 0, firstToken.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId()))

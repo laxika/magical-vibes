@@ -129,7 +129,7 @@ class NekoTeTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(target.isTapped()).isFalse();
-        target.setTapped(true);
+        target.tap();
         advanceToUpkeep(player2);
         assertThat(target.isTapped()).isFalse();
     }

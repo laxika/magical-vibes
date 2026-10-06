@@ -92,7 +92,7 @@ class PrismaticLensTest extends BaseCardTest {
     @DisplayName("Neither ability can be activated while the Lens is tapped")
     void cannotActivateTappedLens(int abilityIndex) {
         Permanent lens = harness.addToBattlefieldAndReturn(player1, new PrismaticLens());
-        lens.setTapped(true);
+        lens.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, abilityIndex, null, null))

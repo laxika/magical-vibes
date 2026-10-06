@@ -97,7 +97,7 @@ class LedevGuardianTest extends BaseCardTest {
     @Test
     void tappedCreatureCannotConvoke() {
         Permanent hawk = harness.addToBattlefieldAndReturn(player1, new HealersHawk());
-        hawk.setTapped(true);
+        hawk.tap();
         harness.setHand(player1, List.of(new LedevGuardian()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 

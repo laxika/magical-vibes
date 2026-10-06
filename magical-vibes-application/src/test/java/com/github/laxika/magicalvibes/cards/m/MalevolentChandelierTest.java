@@ -75,7 +75,7 @@ class MalevolentChandelierTest extends BaseCardTest {
         harness.setLibrary(player1, List.of());
         Permanent chandelier = harness.addToBattlefieldAndReturn(player1, new MalevolentChandelier());
         chandelier.setSummoningSick(true);
-        chandelier.setTapped(true);
+        chandelier.tap();
 
         activate(chandelier, target);
 

@@ -195,7 +195,7 @@ class IllicitAuctionTest extends BaseCardTest {
     @DisplayName("Gaining control preserves tapped status and gives summoning sickness")
     void controlChangeDoesNotUntapOrGrantHaste() {
         Permanent creature = addCreatureReady(player2, new GrizzlyBears());
-        creature.setTapped(true);
+        creature.tap();
 
         cast(player1, creature);
         harness.handleXValueChosen(player2, 0);

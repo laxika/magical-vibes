@@ -109,7 +109,7 @@ class SanctumOfTranquilLightTest extends BaseCardTest {
     @DisplayName("A newly entered, tapped Sanctum can activate repeatedly and target your creature")
     void canActivateRepeatedlyWithoutTappingSource() {
         Permanent sanctum = harness.addToBattlefieldAndReturn(player1, new SanctumOfTranquilLight());
-        sanctum.setTapped(true);
+        sanctum.tap();
         Permanent target = harness.addToBattlefieldAndReturn(player1, new DrowsingTyrannodon());
         harness.addMana(player1, ManaColor.COLORLESS, 8);
         harness.addMana(player1, ManaColor.WHITE, 2);

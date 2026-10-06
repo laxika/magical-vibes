@@ -132,7 +132,7 @@ class NightwingShadeTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent shade = harness.addToBattlefieldAndReturn(player1, new NightwingShade());
         shade.setSummoningSick(true);
-        shade.setTapped(true);
+        shade.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
 

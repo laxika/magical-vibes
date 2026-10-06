@@ -94,7 +94,7 @@ class NimReplicaTest extends BaseCardTest {
     @DisplayName("A tapped, summoning-sick Nim Replica can activate its ability")
     void canActivateWhileTappedAndSummoningSick() {
         Permanent replica = harness.addToBattlefieldAndReturn(player1, new NimReplica());
-        replica.setTapped(true);
+        replica.tap();
         replica.setSummoningSick(true);
         Permanent target = harness.addToBattlefieldAndReturn(player2, new NimReplica());
         addActivationMana();

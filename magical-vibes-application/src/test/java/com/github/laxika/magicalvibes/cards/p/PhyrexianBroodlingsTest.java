@@ -115,7 +115,7 @@ class PhyrexianBroodlingsTest extends BaseCardTest {
     void abilityCanBeActivatedWhileTappedAndSummoningSick() {
         Permanent broodlings = harness.addToBattlefieldAndReturn(player1, new PhyrexianBroodlings());
         broodlings.setSummoningSick(true);
-        broodlings.setTapped(true);
+        broodlings.tap();
         Permanent sacrifice = addCreatureReady(player1, new YavimayaWurm());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

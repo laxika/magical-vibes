@@ -139,7 +139,7 @@ class MistformSliverTest extends BaseCardTest {
     @DisplayName("The granted ability can be activated while tapped and summoning sick")
     void tappedSummoningSickSliverCanActivateAbility() {
         Permanent sliver = harness.addToBattlefieldAndReturn(player1, new MistformSliver());
-        sliver.setTapped(true);
+        sliver.tap();
         sliver.setSummoningSick(true);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

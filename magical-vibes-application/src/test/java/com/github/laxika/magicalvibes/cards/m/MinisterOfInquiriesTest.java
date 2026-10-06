@@ -130,7 +130,7 @@ class MinisterOfInquiriesTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent minister = addCreatureReady(player1, new MinisterOfInquiries());
-        minister.setTapped(true);
+        minister.tap();
         gd.playerEnergyCounters.put(player1.getId(), 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))

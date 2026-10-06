@@ -104,7 +104,7 @@ class GrowthChamberGuardianTest extends BaseCardTest {
         Permanent otherGuardian = addCreatureReady(player1, new GrowthChamberGuardian());
         addCreatureReady(player2, new GrowthChamberGuardian());
         guardian.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
-        guardian.setTapped(true);
+        guardian.tap();
         harness.setHand(player1, List.of(new StonyStrength()));
         harness.setLibrary(player1, List.of(new GrowthChamberGuardian(), new Forest()));
         harness.addMana(player1, ManaColor.GREEN, 1);

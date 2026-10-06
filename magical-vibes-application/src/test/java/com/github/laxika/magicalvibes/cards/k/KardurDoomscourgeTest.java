@@ -153,7 +153,7 @@ class KardurDoomscourgeTest extends BaseCardTest {
     @DisplayName("Kardur does not force a tapped opposing creature to attack")
     void doesNotRequireTappedCreatureToAttack() {
         castKardur();
-        addCreatureReady(player2, new GrizzlyBears()).setTapped(true);
+        addCreatureReady(player2, new GrizzlyBears()).tap();
 
         declareAttackers(player2, List.of());
 

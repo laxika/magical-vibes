@@ -199,7 +199,7 @@ class MarwynTheNurturerTest extends BaseCardTest {
         assertThat(marwyn.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
 
-        marwyn.setTapped(false);
+        marwyn.untap();
         marwyn.setPowerModifier(-2);
         harness.activateAbility(player1, 0, 0, null, null);
         assertThat(marwyn.isTapped()).isTrue();

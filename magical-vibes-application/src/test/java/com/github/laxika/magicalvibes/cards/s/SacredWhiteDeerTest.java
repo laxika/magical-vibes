@@ -103,7 +103,7 @@ class SacredWhiteDeerTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent deer = addReadyDeer(player1);
-        deer.setTapped(true);
+        deer.tap();
         addReadyPlaneswalker(player1, new JiangYanggu(), 4);
         addMana();
 

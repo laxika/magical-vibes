@@ -89,7 +89,7 @@ class IndathaCrystalTest extends BaseCardTest {
     @DisplayName("A tapped Crystal cannot activate its mana ability")
     void tappedCrystalCannotProduceMana() {
         Permanent crystal = addReadyCrystal();
-        crystal.setTapped(true);
+        crystal.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);

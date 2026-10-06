@@ -109,7 +109,7 @@ class PlaguebearerTest extends BaseCardTest {
     @Test
     @DisplayName("Can activate repeatedly while tapped and target its controller's creature")
     void canActivateRepeatedlyWhileTapped() {
-        harness.addToBattlefieldAndReturn(player1, new Plaguebearer()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new Plaguebearer()).tap();
         UUID ownTarget = harness.addToBattlefieldAndReturn(player1, new MoggAssassin()).getId();
         UUID opposingTarget = harness.addToBattlefieldAndReturn(player2, new MoggAssassin()).getId();
         harness.addMana(player1, ManaColor.BLACK, 14);

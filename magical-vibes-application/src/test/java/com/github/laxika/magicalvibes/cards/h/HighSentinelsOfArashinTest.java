@@ -81,7 +81,7 @@ class HighSentinelsOfArashinTest extends BaseCardTest {
     @DisplayName("Can target itself without counting itself for its static bonus")
     void canTargetItselfWithoutDoubleCounting() {
         Permanent sentinels = harness.addToBattlefieldAndReturn(player1, new HighSentinelsOfArashin());
-        sentinels.setTapped(true);
+        sentinels.tap();
 
         activateAbility(sentinels);
         activateAbility(sentinels);

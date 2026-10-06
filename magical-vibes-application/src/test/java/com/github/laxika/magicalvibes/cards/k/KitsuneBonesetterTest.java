@@ -85,7 +85,7 @@ class KitsuneBonesetterTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         bonesetter.setSummoningSick(false);
-        bonesetter.setTapped(true);
+        bonesetter.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);

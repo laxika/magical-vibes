@@ -86,7 +86,7 @@ class ObscuraInitiateTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent initiate = harness.addToBattlefieldAndReturn(player1, new ObscuraInitiate());
         initiate.setSummoningSick(true);
-        initiate.setTapped(true);
+        initiate.tap();
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.activateAbility(player1, 0, null, null);

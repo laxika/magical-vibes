@@ -76,7 +76,7 @@ class LegionGuildmageTest extends BaseCardTest {
     void tapAbilityCanTargetTappedCreature() {
         Permanent source = addCreatureReady(player1, new LegionGuildmage());
         Permanent target = addCreatureReady(player2, new LegionGuildmage());
-        target.setTapped(true);
+        target.tap();
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.activateAbility(player1, 0, 1, null, target.getId());
@@ -108,7 +108,7 @@ class LegionGuildmageTest extends BaseCardTest {
     @DisplayName("An already tapped Guildmage cannot pay either tap cost")
     void tappedSourceCannotActivate(int abilityIndex) {
         Permanent source = addCreatureReady(player1, new LegionGuildmage());
-        source.setTapped(true);
+        source.tap();
         Permanent target = addCreatureReady(player2, new LegionGuildmage());
         harness.addMana(player1, ManaColor.RED, 6);
         harness.addMana(player1, ManaColor.WHITE, 3);

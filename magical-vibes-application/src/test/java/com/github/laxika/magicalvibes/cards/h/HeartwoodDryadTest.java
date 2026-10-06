@@ -87,7 +87,7 @@ class HeartwoodDryadTest extends BaseCardTest {
     @DisplayName("A tapped Heartwood Dryad cannot block a creature with shadow")
     void tappedDryadCannotBlockShadow() {
         Permanent dryad = addCreatureReady(player2, new HeartwoodDryad());
-        dryad.setTapped(true);
+        dryad.tap();
         attacker(new SoltariFootSoldier());
         prepareDeclareBlockers();
 

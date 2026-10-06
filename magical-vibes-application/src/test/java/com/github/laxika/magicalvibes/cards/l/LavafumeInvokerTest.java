@@ -79,7 +79,7 @@ class LavafumeInvokerTest extends BaseCardTest {
     void activatesWhileTappedAndSummoningSickOnOpponentsTurn() {
         Permanent invoker = harness.addToBattlefieldAndReturn(player1, new LavafumeInvoker());
         invoker.setSummoningSick(true);
-        invoker.setTapped(true);
+        invoker.tap();
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.UPKEEP);
         harness.clearPriorityPassed();

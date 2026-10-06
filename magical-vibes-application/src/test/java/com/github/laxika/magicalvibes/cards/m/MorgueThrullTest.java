@@ -90,7 +90,7 @@ class MorgueThrullTest extends BaseCardTest {
     @DisplayName("A tapped Morgue Thrull controlled by the second player mills only that player's top three cards")
     void tappedThrullMillsItsControllersTopThreeCards() {
         harness.addToBattlefield(player2, new MorgueThrull());
-        findPermanent(player2, "Morgue Thrull").setTapped(true);
+        findPermanent(player2, "Morgue Thrull").tap();
         List<Card> library = List.of(new MorgueThrull(), new MorgueThrull(),
                 new MorgueThrull(), new MorgueThrull());
         harness.setLibrary(player2, library);

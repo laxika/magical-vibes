@@ -176,7 +176,7 @@ class LavamancersSkillTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.getMarkedDamage()).isEqualTo(2);
-        wizard.setTapped(false);
+        wizard.untap();
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }

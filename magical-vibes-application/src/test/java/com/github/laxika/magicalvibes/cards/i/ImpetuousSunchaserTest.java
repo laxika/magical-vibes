@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.n.NyxbornRollicker;
-import com.github.laxika.magicalvibes.model.BlockerAssignment;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -69,7 +69,7 @@ class ImpetuousSunchaserTest extends BaseCardTest {
     @DisplayName("A tapped Sunchaser is not required to attack")
     void tappedSunchaserMayBeOmitted() {
         Permanent sunchaser = addCreatureReady(player1, new ImpetuousSunchaser());
-        sunchaser.setTapped(true);
+        sunchaser.tap();
         addCreatureReady(player1, new NyxbornRollicker());
 
         assertThatCode(() -> declareAttackersAndPrepareBlockers(List.of(1)))

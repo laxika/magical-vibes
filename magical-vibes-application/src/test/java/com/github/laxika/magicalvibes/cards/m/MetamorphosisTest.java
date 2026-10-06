@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.cards.m;
+import java.util.Set;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
@@ -106,9 +107,7 @@ class MetamorphosisTest extends BaseCardTest {
     @DisplayName("Sacrificing a manifested creature adds only one mana")
     void faceDownCreatureHasZeroManaValue() {
         Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        sacrifice.setFaceDown(true);
-        sacrifice.setFaceDownPower(2);
-        sacrifice.setFaceDownToughness(2);
+        sacrifice.setFaceDown(2, 2, Set.of(CardType.CREATURE));
         sacrifice.getFaceDownCardTypes().add(CardType.CREATURE);
         harness.setHand(player1, List.of(new Metamorphosis()));
         harness.addMana(player1, ManaColor.GREEN, 1);

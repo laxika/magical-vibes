@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.BlockerAssignment;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -118,7 +118,7 @@ class KrosanAvengerTest extends BaseCardTest {
         harness.setGraveyard(player1, graveyardWithSevenCards());
         Permanent avenger = harness.addToBattlefieldAndReturn(player1, new KrosanAvenger());
         avenger.setSummoningSick(true);
-        avenger.setTapped(true);
+        avenger.tap();
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 

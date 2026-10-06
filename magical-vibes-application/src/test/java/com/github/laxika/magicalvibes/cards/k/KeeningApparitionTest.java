@@ -101,7 +101,7 @@ class KeeningApparitionTest extends BaseCardTest {
     @DisplayName("A tapped apparition can destroy its controller's enchantment")
     void tappedApparitionCanDestroyOwnEnchantment() {
         Permanent apparition = harness.addToBattlefieldAndReturn(player1, new KeeningApparition());
-        apparition.setTapped(true);
+        apparition.tap();
         Permanent target = addReadyEnchantment(player1);
 
         harness.activateAbility(player1, 0, null, target.getId());

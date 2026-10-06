@@ -125,7 +125,7 @@ class RootwaterCommandoTest extends BaseCardTest {
     @DisplayName("A tapped Island still prevents Rootwater Commando from being blocked")
     void cannotBeBlockedWhenDefendersIslandIsTapped() {
         harness.addToBattlefield(player2, new Island());
-        findPermanent(player2, "Island").setTapped(true);
+        findPermanent(player2, "Island").tap();
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         Permanent attacker = addCreatureReady(player1, new RootwaterCommando());
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);

@@ -108,7 +108,7 @@ class MistformSeaswiftTest extends BaseCardTest {
     @DisplayName("The creature type ability can be activated while tapped")
     void typeAbilityWorksWhileTapped() {
         Permanent seaswift = addReadySeaswift();
-        seaswift.setTapped(true);
+        seaswift.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         activateAndChoose(CardSubtype.GOBLIN);

@@ -72,7 +72,7 @@ class RagingGoblinTest extends BaseCardTest {
         harness.castFromHand(player1, new RagingGoblin(), "{R}");
         harness.passBothPriorities();
         Permanent goblin = findPermanent(player1, "Raging Goblin");
-        goblin.setTapped(true);
+        goblin.tap();
 
         assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class)

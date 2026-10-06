@@ -126,7 +126,7 @@ class GorillaShamanTest extends BaseCardTest {
     @DisplayName("Can activate repeatedly while tapped and summoning sick with distinct X values")
     void canActivateRepeatedlyWhileTappedAndSummoningSick() {
         Permanent shaman = harness.addToBattlefieldAndReturn(player1, new GorillaShaman());
-        shaman.setTapped(true);
+        shaman.tap();
         shaman.setSummoningSick(true);
         Permanent helm = harness.addToBattlefieldAndReturn(player2, new HelmOfObedience());
         Permanent scepter = harness.addToBattlefieldAndReturn(player2, new GusthasScepter());

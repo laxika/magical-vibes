@@ -105,7 +105,7 @@ class GrandmotherSengirTest extends BaseCardTest {
     void cannotActivateWhileTapped() {
         setupSengir();
         Permanent source = findPermanent(player1, "Grandmother Sengir");
-        source.setTapped(true);
+        source.tap();
         Permanent target = addBear();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))

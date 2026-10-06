@@ -88,7 +88,7 @@ class PropheticPrismTest extends BaseCardTest {
     @DisplayName("A tapped Prism cannot pay the tap cost")
     void cannotActivateWhileTapped() {
         Permanent prism = harness.addToBattlefieldAndReturn(player1, new PropheticPrism());
-        prism.setTapped(true);
+        prism.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))

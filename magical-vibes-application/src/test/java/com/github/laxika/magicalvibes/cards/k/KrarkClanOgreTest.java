@@ -77,7 +77,7 @@ class KrarkClanOgreTest extends BaseCardTest {
     void activatesWhileTappedAndSummoningSick() {
         Permanent ogre = harness.addToBattlefieldAndReturn(player1, new KrarkClanOgre());
         ogre.setSummoningSick(true);
-        ogre.setTapped(true);
+        ogre.tap();
         harness.addToBattlefield(player1, new AvariceTotem());
         Permanent target = addCreatureReady(player2, new Arachnoid());
         harness.addMana(player1, ManaColor.RED, 1);

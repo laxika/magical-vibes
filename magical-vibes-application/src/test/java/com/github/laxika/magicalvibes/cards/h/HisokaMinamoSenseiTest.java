@@ -228,7 +228,7 @@ class HisokaMinamoSenseiTest extends BaseCardTest {
     @DisplayName("Can counter its controller's creature spell without tapping")
     void countersOwnCreatureSpellWhileTapped() {
         harness.addToBattlefield(player1, new HisokaMinamoSensei());
-        gd.playerBattlefields.get(player1.getId()).getFirst().setTapped(true);
+        gd.playerBattlefields.get(player1.getId()).getFirst().tap();
         HisokaMinamoSensei spell = new HisokaMinamoSensei();
         harness.setHand(player1, List.of(spell, new HisokaMinamoSensei()));
         harness.addMana(player1, ManaColor.COLORLESS, 4);

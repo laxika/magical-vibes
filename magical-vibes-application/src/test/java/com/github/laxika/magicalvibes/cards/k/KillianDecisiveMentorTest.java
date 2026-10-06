@@ -73,7 +73,7 @@ class KillianDecisiveMentorTest extends BaseCardTest {
     void goadsAnAlreadyTappedCreatureWhenAnAuraEnters() {
         harness.addToBattlefield(player1, new KillianDecisiveMentor());
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
-        target.setTapped(true);
+        target.tap();
         harness.setHand(player1, List.of(new HolyStrength()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 

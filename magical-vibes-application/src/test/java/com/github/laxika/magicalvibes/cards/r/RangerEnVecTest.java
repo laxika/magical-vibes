@@ -97,7 +97,7 @@ class RangerEnVecTest extends BaseCardTest {
     @DisplayName("Regeneration can be activated while tapped and summoning sick")
     void canActivateWhileTappedAndSummoningSick() {
         Permanent ranger = harness.addToBattlefieldAndReturn(player1, new RangerEnVec());
-        ranger.setTapped(true);
+        ranger.tap();
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.activateAbility(player1, 0, null, null);

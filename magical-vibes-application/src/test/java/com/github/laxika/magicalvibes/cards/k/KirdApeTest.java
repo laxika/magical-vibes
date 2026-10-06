@@ -109,7 +109,7 @@ class KirdApeTest extends BaseCardTest {
         Permanent ownApe = harness.addToBattlefieldAndReturn(player1, new KirdApe());
         Permanent opposingApe = harness.addToBattlefieldAndReturn(player2, new KirdApe());
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
-        forest.setTapped(true);
+        forest.tap();
 
         assertThat(gqs.getEffectivePower(gd, ownApe)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, ownApe)).isEqualTo(3);

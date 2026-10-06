@@ -103,7 +103,7 @@ class GraveyardMarshalTest extends BaseCardTest {
         int idx = setUpBoard();
         Permanent marshal = findPermanent(player1, "Graveyard Marshal");
         marshal.setSummoningSick(true);
-        marshal.setTapped(true);
+        marshal.tap();
         harness.setGraveyard(player1, List.of(new WalkingCorpse(), new WalkingCorpse()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);

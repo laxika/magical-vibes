@@ -105,7 +105,7 @@ class GoblinCannonTest extends BaseCardTest {
     @DisplayName("A tapped Cannon can activate and target its controller")
     void tappedCannonCanDamageItsController() {
         Permanent cannon = harness.addToBattlefieldAndReturn(player1, new GoblinCannon());
-        cannon.setTapped(true);
+        cannon.tap();
         harness.setLife(player1, 20);
         harness.addMana(player1, ManaColor.GREEN, 2);
 

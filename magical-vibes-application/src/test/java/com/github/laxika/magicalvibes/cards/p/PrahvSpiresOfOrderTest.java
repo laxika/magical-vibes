@@ -144,7 +144,7 @@ class PrahvSpiresOfOrderTest extends BaseCardTest {
 
         harness.activateAbility(player1, 1, 0, null, ownTarget.getId());
         harness.passBothPriorities();
-        source.setTapped(false);
+        source.untap();
         harness.activateAbility(player1, 1, 0, null, opposingTarget.getId());
         harness.passBothPriorities();
 

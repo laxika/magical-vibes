@@ -108,7 +108,7 @@ class RavenousSquirrelTest extends BaseCardTest {
     @Test
     void canSacrificeItselfAndStillGainLifeAndDraw() {
         Permanent squirrel = harness.addToBattlefieldAndReturn(player1, new RavenousSquirrel());
-        squirrel.setTapped(true);
+        squirrel.tap();
         harness.setLibrary(player1, List.of(new Forest()));
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

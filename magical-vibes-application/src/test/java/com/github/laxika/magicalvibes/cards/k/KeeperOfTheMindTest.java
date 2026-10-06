@@ -80,7 +80,7 @@ class KeeperOfTheMindTest extends BaseCardTest {
     @DisplayName("Cannot activate while tapped")
     void cannotActivateWhileTapped() {
         Permanent keeper = readyKeeper(1, 3);
-        keeper.setTapped(true);
+        keeper.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);

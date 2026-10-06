@@ -112,7 +112,7 @@ class KeepsakeGorgonTest extends BaseCardTest {
     void monstrosityWorksWhileTappedAndSummoningSick() {
         Permanent keepsakeGorgon = harness.addToBattlefieldAndReturn(player1, new KeepsakeGorgon());
         keepsakeGorgon.setSummoningSick(true);
-        keepsakeGorgon.setTapped(true);
+        keepsakeGorgon.tap();
         addMonstrosityMana();
 
         harness.activateAbility(player1, 0, null, null);

@@ -99,7 +99,7 @@ class OvergrownArchTest extends BaseCardTest {
     @Test
     void tappedSummoningSickArchCanBeSacrificedAndLearnCanDoNothing() {
         Permanent arch = harness.addToBattlefieldAndReturn(player1, new OvergrownArch());
-        arch.setTapped(true);
+        arch.tap();
         harness.setHand(player1, List.of());
         gd.playerSideboards.put(player1.getId(), new ArrayList<>());
         prepareActivation();

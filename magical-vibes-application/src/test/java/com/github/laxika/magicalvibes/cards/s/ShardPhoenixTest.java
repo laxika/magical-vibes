@@ -86,7 +86,7 @@ class ShardPhoenixTest extends BaseCardTest {
         @DisplayName("A tapped, summoning-sick Phoenix can be sacrificed during an opponent's upkeep")
         void canSacrificeTappedPhoenixDuringOpponentUpkeep() {
             var phoenix = harness.addToBattlefieldAndReturn(player1, new ShardPhoenix());
-            phoenix.setTapped(true);
+            phoenix.tap();
             phoenix.setSummoningSick(true);
             harness.addToBattlefield(player2, new YouthfulKnight());
             harness.forceActivePlayer(player2);

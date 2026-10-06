@@ -102,7 +102,7 @@ class IcebindPillarTest extends BaseCardTest {
     @Test
     void cannotActivateAlreadyTappedPillar() {
         Permanent pillar = addReadyPillar(player1);
-        pillar.setTapped(true);
+        pillar.tap();
         Permanent target = harness.addToBattlefieldAndReturn(player2, new IcebindPillar());
         addSnowMana();
 
@@ -128,7 +128,7 @@ class IcebindPillarTest extends BaseCardTest {
     void canTargetAnAlreadyTappedArtifactYouControl() {
         addReadyPillar(player1);
         Permanent target = harness.addToBattlefieldAndReturn(player1, new IcebindPillar());
-        target.setTapped(true);
+        target.tap();
         addSnowMana();
 
         harness.activateAbility(player1, 0, null, target.getId());

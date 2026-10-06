@@ -246,7 +246,7 @@ class MasterWarcraftTest extends BaseCardTest {
         enterPrecombatMain(player2);
         Permanent attacker = addAttacker(player2);
         Permanent tappedCreature = addAttacker(player2);
-        tappedCreature.setTapped(true);
+        tappedCreature.tap();
         castMasterWarcraft(player1);
 
         harness.passUntil(player2, TurnStep.DECLARE_ATTACKERS);

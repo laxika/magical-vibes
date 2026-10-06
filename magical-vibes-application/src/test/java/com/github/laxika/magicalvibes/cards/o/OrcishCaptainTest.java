@@ -113,7 +113,7 @@ class OrcishCaptainTest extends BaseCardTest {
     @DisplayName("Can target itself while tapped, and a lost flip kills an unboosted Captain")
     void canTargetItselfWhileTapped() {
         Permanent captain = harness.addToBattlefieldAndReturn(player1, new OrcishCaptain());
-        captain.setTapped(true);
+        captain.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, captain.getId());

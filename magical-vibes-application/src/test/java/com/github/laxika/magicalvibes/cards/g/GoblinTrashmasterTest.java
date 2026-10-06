@@ -113,7 +113,7 @@ class GoblinTrashmasterTest extends BaseCardTest {
     void tappedNewTrashmasterCanDestroyOwnArtifact() {
         Permanent trashmaster = harness.addToBattlefieldAndReturn(player1, new GoblinTrashmaster());
         trashmaster.setSummoningSick(true);
-        trashmaster.setTapped(true);
+        trashmaster.tap();
         Permanent artifact = harness.addToBattlefieldAndReturn(player1, new DragonsHoard());
 
         harness.activateAbility(player1, 0, null, artifact.getId());

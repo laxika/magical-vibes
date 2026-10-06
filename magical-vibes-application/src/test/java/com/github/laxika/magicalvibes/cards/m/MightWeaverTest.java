@@ -149,7 +149,7 @@ class MightWeaverTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent weaver = harness.addToBattlefieldAndReturn(player1, new MightWeaver());
         weaver.setSummoningSick(true);
-        weaver.setTapped(true);
+        weaver.tap();
         Permanent target = addCreatureReady(player1, new KavuAggressor());
         harness.addMana(player1, ManaColor.BLUE, 2);
 

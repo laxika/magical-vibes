@@ -89,7 +89,7 @@ class IntrusivePackbeastTest extends BaseCardTest {
     void canTargetAlreadyTappedCreature() {
         Permanent tapped = harness.addToBattlefieldAndReturn(player2, new VernadiShieldmate());
         Permanent untapped = harness.addToBattlefieldAndReturn(player2, new VernadiShieldmate());
-        tapped.setTapped(true);
+        tapped.tap();
 
         castPackbeast(List.of(tapped.getId(), untapped.getId()));
 

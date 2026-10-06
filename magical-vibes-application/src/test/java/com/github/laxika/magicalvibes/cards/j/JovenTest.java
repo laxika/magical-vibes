@@ -109,7 +109,7 @@ class JovenTest extends BaseCardTest {
     @DisplayName("Cannot activate while already tapped")
     void cannotActivateWhileTapped() {
         Permanent joven = addCreatureReady(player1, new Joven());
-        joven.setTapped(true);
+        joven.tap();
         Permanent target = harness.addToBattlefieldAndReturn(player2, new SerratedArrows());
         harness.addMana(player1, ManaColor.RED, 3);
 

@@ -136,7 +136,7 @@ class OrganGrinderTest extends BaseCardTest {
     @DisplayName("Cannot activate a tapped Organ Grinder or spend its graveyard cost")
     void cannotActivateWhileTapped() {
         Permanent organGrinder = addReadyOrganGrinder(player1);
-        organGrinder.setTapped(true);
+        organGrinder.tap();
         List<Card> graveyard = List.of(new OrganGrinder(), new OrganGrinder(), new OrganGrinder());
         harness.setGraveyard(player1, graveyard);
 

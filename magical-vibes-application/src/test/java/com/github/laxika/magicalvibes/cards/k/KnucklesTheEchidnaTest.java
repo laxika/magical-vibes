@@ -71,7 +71,7 @@ class KnucklesTheEchidnaTest extends BaseCardTest {
 
     private void resolveCombatUnblocked() {
         gs.declareBlockers(gd, player2, List.of());
-        harness.passUntil(player1, TurnStep.END_COMBAT);
+        harness.passUntil(player1, TurnStep.END_OF_COMBAT);
     }
 
     private long treasureCount(Player player) {
@@ -106,7 +106,7 @@ class KnucklesTheEchidnaTest extends BaseCardTest {
 
         declareAttackersAndPrepareBlockers(player2, List.of(0));
         gs.declareBlockers(gd, player1, List.of());
-        harness.passUntil(player2, TurnStep.END_COMBAT);
+        harness.passUntil(player2, TurnStep.END_OF_COMBAT);
 
         assertThat(treasureCount(player1)).isZero();
     }

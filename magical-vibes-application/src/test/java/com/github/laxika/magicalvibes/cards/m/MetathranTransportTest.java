@@ -115,7 +115,7 @@ class MetathranTransportTest extends BaseCardTest {
     @DisplayName("A tapped, newly entered Transport can activate repeatedly without tapping")
     void tappedTransportCanActivateRepeatedly() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new MetathranTransport());
-        source.setTapped(true);
+        source.tap();
         Permanent first = harness.addToBattlefieldAndReturn(player2, new RazorfootGriffin());
         Permanent second = harness.addToBattlefieldAndReturn(player2, new RazorfootGriffin());
         harness.addMana(player1, ManaColor.BLUE, 2);

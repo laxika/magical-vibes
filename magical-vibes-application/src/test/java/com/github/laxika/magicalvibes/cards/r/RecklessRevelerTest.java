@@ -75,7 +75,7 @@ class RecklessRevelerTest extends BaseCardTest {
     @Test
     void canActivateWhileTapped() {
         Permanent reveler = addReadyReveler(player1);
-        reveler.setTapped(true);
+        reveler.tap();
         Permanent target = addReadyArtifact(player2);
         harness.addMana(player1, ManaColor.RED, 1);
 

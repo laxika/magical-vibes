@@ -83,7 +83,7 @@ class MaliciousAdviceTest extends BaseCardTest {
     @Test
     void alreadyTappedOwnTargetStillCausesLifeLoss() {
         Permanent artifact = harness.addToBattlefieldAndReturn(player1, new ManaCylix());
-        artifact.setTapped(true);
+        artifact.tap();
         harness.setLife(player1, 20);
         harness.setHand(player1, List.of(new MaliciousAdvice()));
         harness.addMana(player1, ManaColor.BLUE, 2);

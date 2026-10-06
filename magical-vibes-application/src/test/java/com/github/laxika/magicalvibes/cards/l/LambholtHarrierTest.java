@@ -64,7 +64,7 @@ class LambholtHarrierTest extends BaseCardTest {
     void tappedSummoningSickHarrierCanTargetItself() {
         Permanent harrier = harness.addToBattlefieldAndReturn(player1, new LambholtHarrier());
         harrier.setSummoningSick(true);
-        harrier.setTapped(true);
+        harrier.tap();
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 

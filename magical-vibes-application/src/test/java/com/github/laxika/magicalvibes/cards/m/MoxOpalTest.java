@@ -103,8 +103,8 @@ class MoxOpalTest extends BaseCardTest {
     @DisplayName("Tapped artifacts count and mana resolves without using the stack")
     void tappedArtifactsCountAndManaResolvesImmediately() {
         var opal = harness.addToBattlefieldAndReturn(player1, new MoxOpal());
-        harness.addToBattlefieldAndReturn(player1, new Memnite()).setTapped(true);
-        harness.addToBattlefieldAndReturn(player1, new AccordersShield()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new Memnite()).tap();
+        harness.addToBattlefieldAndReturn(player1, new AccordersShield()).tap();
 
         harness.activateAbility(player1, 0, null, null);
         assertThat(opal.isTapped()).isTrue();

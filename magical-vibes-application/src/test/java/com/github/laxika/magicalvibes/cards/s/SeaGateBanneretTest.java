@@ -56,7 +56,7 @@ class SeaGateBanneretTest extends BaseCardTest {
     void repeatedActivationsStackEvenWhileTappedAndSummoningSick() {
         Permanent banneret = harness.addToBattlefieldAndReturn(player1, new SeaGateBanneret());
         banneret.setSummoningSick(true);
-        banneret.setTapped(true);
+        banneret.tap();
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 8);
 

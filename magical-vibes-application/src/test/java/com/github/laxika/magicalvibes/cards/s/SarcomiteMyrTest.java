@@ -51,7 +51,7 @@ class SarcomiteMyrTest extends BaseCardTest {
     void flyingAbilityWorksWhileTappedAndOnlyAffectsItsSource() {
         Permanent myr = harness.addToBattlefieldAndReturn(player1, new SarcomiteMyr());
         Permanent other = harness.addToBattlefieldAndReturn(player1, new SarcomiteMyr());
-        myr.setTapped(true);
+        myr.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, 0, null, null);
@@ -67,7 +67,7 @@ class SarcomiteMyrTest extends BaseCardTest {
     @Test
     void sacrificeIsPaidImmediatelyButDrawWaitsForResolution() {
         Permanent myr = harness.addToBattlefieldAndReturn(player1, new SarcomiteMyr());
-        myr.setTapped(true);
+        myr.tap();
         SarcomiteMyr drawnCard = new SarcomiteMyr();
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(drawnCard));

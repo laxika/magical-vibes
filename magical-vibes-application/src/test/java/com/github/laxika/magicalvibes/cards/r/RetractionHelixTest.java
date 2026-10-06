@@ -149,7 +149,7 @@ class RetractionHelixTest extends BaseCardTest {
     void tappedCreatureGainsAbilityButMustUntapToUseIt() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new SwordwiseCentaur());
         creature.setSummoningSick(false);
-        creature.setTapped(true);
+        creature.tap();
         Permanent target = harness.addToBattlefieldAndReturn(player2, new SwordwiseCentaur());
         harness.setHand(player1, List.of(new RetractionHelix()));
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -159,7 +159,7 @@ class RetractionHelixTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
 
-        creature.setTapped(false);
+        creature.untap();
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
         harness.assertInHand(player2, "Swordwise Centaur");

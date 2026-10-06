@@ -82,7 +82,7 @@ class MaskedBlackguardTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent blackguard = harness.addToBattlefieldAndReturn(player1, new MaskedBlackguard());
         blackguard.setSummoningSick(true);
-        blackguard.setTapped(true);
+        blackguard.tap();
         harness.addMana(player1, ManaColor.BLACK, 3);
 
         harness.activateAbility(player1, 0, null, null);

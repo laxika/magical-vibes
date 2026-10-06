@@ -81,7 +81,7 @@ class HereComesANewHeroTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
-        creature.setTapped(true);
+        creature.tap();
 
         cast(3, player1.getId(), creature.getId());
 

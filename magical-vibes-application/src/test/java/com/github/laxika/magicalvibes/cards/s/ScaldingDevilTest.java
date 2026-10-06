@@ -80,7 +80,7 @@ class ScaldingDevilTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent devil = harness.addToBattlefieldAndReturn(player1, new ScaldingDevil());
         devil.setSummoningSick(true);
-        devil.setTapped(true);
+        devil.tap();
         harness.setLife(player2, 20);
         harness.addMana(player1, ManaColor.RED, 3);
 

@@ -175,7 +175,7 @@ class KeysToTheHouseTest extends BaseCardTest {
     void cannotActivateEitherAbilityWhileTapped() {
         Permanent keys = harness.addToBattlefieldAndReturn(player1, new KeysToTheHouse());
         Permanent room = harness.addToBattlefieldAndReturn(player1, new DazzlingTheaterPropRoom());
-        keys.setTapped(true);
+        keys.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))

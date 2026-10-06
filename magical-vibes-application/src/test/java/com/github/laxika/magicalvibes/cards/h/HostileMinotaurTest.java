@@ -43,7 +43,7 @@ class HostileMinotaurTest extends BaseCardTest {
     @DisplayName("Haste does not allow a tapped creature to attack")
     void cannotAttackWhileTapped() {
         Permanent minotaur = harness.addToBattlefieldAndReturn(player1, new HostileMinotaur());
-        minotaur.setTapped(true);
+        minotaur.tap();
 
         assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
                 .isInstanceOf(IllegalStateException.class);

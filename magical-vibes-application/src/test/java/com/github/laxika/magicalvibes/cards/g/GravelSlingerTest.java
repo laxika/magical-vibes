@@ -97,7 +97,7 @@ class GravelSlingerTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent slinger = addCreatureReady(player1, new GravelSlinger());
-        slinger.setTapped(true);
+        slinger.tap();
         Permanent attacker = addCombatCreature(player2, true);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
 

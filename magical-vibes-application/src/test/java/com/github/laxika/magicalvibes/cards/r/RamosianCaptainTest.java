@@ -171,7 +171,7 @@ class RamosianCaptainTest extends BaseCardTest {
     @DisplayName("A tapped Captain cannot activate the search ability")
     void cannotActivateWhileTapped() {
         Permanent captain = addReadyCaptain();
-        captain.setTapped(true);
+        captain.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);

@@ -91,7 +91,7 @@ class ReitoSentinelTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(first, second));
         harness.setLibrary(player1, List.of());
         Permanent sentinel = harness.addToBattlefieldAndReturn(player1, new ReitoSentinel());
-        sentinel.setTapped(true);
+        sentinel.tap();
         sentinel.setSummoningSick(true);
         harness.addMana(player1, ManaColor.COLORLESS, 6);
 

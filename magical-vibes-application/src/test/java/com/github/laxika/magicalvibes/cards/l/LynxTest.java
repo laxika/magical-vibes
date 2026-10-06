@@ -41,7 +41,7 @@ class LynxTest extends BaseCardTest {
     @DisplayName("A tapped Forest still makes Lynx unblockable")
     void cannotBeBlockedWhenDefendersForestIsTapped() {
         harness.addToBattlefield(player2, new Forest());
-        findPermanent(player2, "Forest").setTapped(true);
+        findPermanent(player2, "Forest").tap();
         Permanent blockerPerm = addCreatureReady(player2, new BearCub());
         Permanent atkPerm = addCreatureReady(player1, new Lynx());
 

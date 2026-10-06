@@ -194,7 +194,7 @@ class LightningProwessTest extends BaseCardTest {
     void tappedCreatureCannotActivateGrantedAbility() {
         Permanent creature = readyBears();
         enchant(creature);
-        creature.setTapped(true);
+        creature.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)

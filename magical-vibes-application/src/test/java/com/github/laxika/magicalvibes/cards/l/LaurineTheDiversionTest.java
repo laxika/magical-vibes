@@ -124,7 +124,7 @@ class LaurineTheDiversionTest extends BaseCardTest {
     void tappedSummoningSickSourceCanActivate() {
         Permanent laurine = harness.addToBattlefieldAndReturn(player1, new LaurineTheDiversion());
         laurine.setSummoningSick(true);
-        laurine.setTapped(true);
+        laurine.tap();
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 

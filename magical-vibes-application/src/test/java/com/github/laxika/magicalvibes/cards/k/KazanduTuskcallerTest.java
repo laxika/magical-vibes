@@ -107,7 +107,7 @@ class KazanduTuskcallerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
         assertThat(tuskcaller.getCounterCount(CounterType.LEVEL)).isEqualTo(6);
-        tuskcaller.setTapped(false);
+        tuskcaller.untap();
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
         assertThat(countPermanents(player1, "Elephant")).isEqualTo(3);
@@ -120,14 +120,14 @@ class KazanduTuskcallerTest extends BaseCardTest {
         int expectedTokens = 0;
         for (int level : new int[]{5, 7, 5, 2}) {
             tuskcaller.setCounterCount(CounterType.LEVEL, level);
-            tuskcaller.setTapped(false);
+            tuskcaller.untap();
             harness.activateAbility(player1, 0, 1, null, null);
             harness.passBothPriorities();
             expectedTokens += level >= 6 ? 2 : 1;
             assertThat(countPermanents(player1, "Elephant")).isEqualTo(expectedTokens);
         }
         tuskcaller.setCounterCount(CounterType.LEVEL, 1);
-        tuskcaller.setTapped(false);
+        tuskcaller.untap();
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }

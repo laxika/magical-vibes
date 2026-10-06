@@ -142,7 +142,7 @@ class PeterParkersCameraTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         var camera = harness.enterBattlefieldAndReturn(player1, new PeterParkersCamera());
-        camera.setTapped(true);
+        camera.tap();
         addReadyPyromancer(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.activateAbility(player1, 1, null, player2.getId());

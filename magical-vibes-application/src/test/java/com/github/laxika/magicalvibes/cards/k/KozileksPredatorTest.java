@@ -90,7 +90,7 @@ class KozileksPredatorTest extends BaseCardTest {
         castKozileksPredator();
 
         for (Permanent spawn : List.copyOf(findPermanents(player1, "Eldrazi Spawn"))) {
-            spawn.setTapped(true);
+            spawn.tap();
             int spawnIndex = gd.playerBattlefields.get(player1.getId()).indexOf(spawn);
             harness.activateAbility(player1, spawnIndex, null, null);
             assertThat(gd.stack).isEmpty();

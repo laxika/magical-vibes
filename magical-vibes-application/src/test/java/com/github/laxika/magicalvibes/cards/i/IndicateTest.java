@@ -36,7 +36,7 @@ class IndicateTest extends BaseCardTest {
     @Test
     void canTargetItsControllersPermanent() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new Island());
-        target.setTapped(true);
+        target.tap();
         harness.setHand(player1, List.of(new Indicate()));
 
         harness.castAndResolveSorcery(player1, 0, target.getId());

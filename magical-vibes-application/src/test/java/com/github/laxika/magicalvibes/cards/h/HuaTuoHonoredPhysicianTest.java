@@ -144,7 +144,7 @@ class HuaTuoHonoredPhysicianTest extends BaseCardTest {
     @DisplayName("Cannot activate while tapped")
     void cannotActivateWhileTapped() {
         Permanent huaTuo = setupHuaTuoOnMyTurn(TurnStep.PRECOMBAT_MAIN);
-        huaTuo.setTapped(true);
+        huaTuo.tap();
         Card creature = new ForestBear();
         harness.setGraveyard(player1, List.of(creature));
 

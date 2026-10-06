@@ -68,7 +68,7 @@ class MysteriousTomeTest extends BaseCardTest {
     void backFaceTransformsWhenTargetIsAlreadyTapped() {
         Permanent tome = addTransformedTome(player1);
         Permanent target = addTomeReady(player2);
-        target.setTapped(true);
+        target.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, indexOf(player1, tome), null, target.getId());
@@ -120,14 +120,14 @@ class MysteriousTomeTest extends BaseCardTest {
         assertThat(tome.isTransformed()).isTrue();
         assertThat(tome.isTapped()).isTrue();
 
-        tome.setTapped(false);
+        tome.untap();
         harness.activateAbility(player1, indexOf(player1, tome), null, target.getId());
         harness.passBothPriorities();
         assertThat(tome.isTransformed()).isFalse();
         assertThat(tome.isTapped()).isTrue();
         assertThat(target.isTapped()).isTrue();
 
-        tome.setTapped(false);
+        tome.untap();
         harness.activateAbility(player1, indexOf(player1, tome), null, null);
         harness.passBothPriorities();
 

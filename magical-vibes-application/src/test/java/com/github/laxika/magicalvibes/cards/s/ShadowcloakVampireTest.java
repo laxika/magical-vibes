@@ -92,7 +92,7 @@ class ShadowcloakVampireTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent vampire = harness.addToBattlefieldAndReturn(player1, new ShadowcloakVampire());
         vampire.setSummoningSick(true);
-        vampire.setTapped(true);
+        vampire.tap();
         harness.setLife(player1, 3);
 
         harness.activateAbility(player1, 0, null, null);

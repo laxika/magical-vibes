@@ -173,7 +173,7 @@ class OathswornKnightTest extends BaseCardTest {
     void tappedKnightDoesNotHaveToAttack() {
         Permanent knight = addCreatureReady(player1, new OathswornKnight());
         knight.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 4);
-        knight.setTapped(true);
+        knight.tap();
 
         assertDoesNotThrow(() -> declareAttackers(player1, List.of()));
     }

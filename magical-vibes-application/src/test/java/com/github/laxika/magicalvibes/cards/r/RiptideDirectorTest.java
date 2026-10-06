@@ -105,7 +105,7 @@ class RiptideDirectorTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent director = addCreatureReady(player1, new RiptideDirector());
-        director.setTapped(true);
+        director.tap();
         harness.addMana(player1, ManaColor.BLUE, 4);
 
         assertThatThrownBy(() ->

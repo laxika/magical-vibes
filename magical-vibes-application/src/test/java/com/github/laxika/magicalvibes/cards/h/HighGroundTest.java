@@ -339,7 +339,7 @@ class HighGroundTest extends BaseCardTest {
     void tappedCreatureCannotBlockTwoAttackers() {
         harness.addToBattlefield(player2, new HighGround());
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
-        blocker.setTapped(true);
+        blocker.tap();
         addCreatureReady(player1, new GrizzlyBears()).setAttacking(true);
         addCreatureReady(player1, new GrizzlyBears()).setAttacking(true);
 

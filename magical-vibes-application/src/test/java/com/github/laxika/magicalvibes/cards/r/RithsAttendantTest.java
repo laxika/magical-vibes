@@ -56,7 +56,7 @@ class RithsAttendantTest extends BaseCardTest {
     @Test
     @DisplayName("A tapped Rith's Attendant can pay its generic cost with colored mana")
     void canActivateWhileTappedUsingColoredMana() {
-        harness.addToBattlefieldAndReturn(player1, new RithsAttendant()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new RithsAttendant()).tap();
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, null, null);

@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.cards.p;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
@@ -44,7 +45,7 @@ class PensiveProfessorTest extends BaseCardTest {
     @Test
     void multipleCountersInOnePlacementDrawOnlyOneCard() {
         Permanent professor = harness.addToBattlefieldAndReturn(player1, new PensiveProfessor());
-        professor.setPlusOnePlusOneCounters(3);
+        professor.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
         harness.setHand(player1, List.of(new GrowthCurve()));
         harness.setLibrary(player1, List.of(new PensiveProfessor(), new PensiveProfessor(), new PensiveProfessor()));
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -63,7 +64,7 @@ class PensiveProfessorTest extends BaseCardTest {
     void countersOnAnotherCreatureDoNotDrawCards() {
         harness.addToBattlefield(player1, new PensiveProfessor());
         Permanent other = harness.addToBattlefieldAndReturn(player1, new PensiveProfessor());
-        gd.playerBattlefields.get(player1.getId()).forEach(p -> p.setPlusOnePlusOneCounters(3));
+        gd.playerBattlefields.get(player1.getId()).forEach(p -> p.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3));
         harness.setHand(player1, List.of(new GrowthCurve()));
         harness.setLibrary(player1, List.of(new PensiveProfessor(), new PensiveProfessor(), new PensiveProfessor()));
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -78,7 +79,7 @@ class PensiveProfessorTest extends BaseCardTest {
     @Test
     void equalManaSpentDoesNotTriggerIncrement() {
         Permanent professor = harness.addToBattlefieldAndReturn(player1, new PensiveProfessor());
-        professor.setPlusOnePlusOneCounters(3);
+        professor.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
         harness.setHand(player1, List.of(new PensiveProfessor()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 

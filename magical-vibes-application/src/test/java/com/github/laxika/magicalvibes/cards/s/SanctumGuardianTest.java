@@ -311,7 +311,7 @@ class SanctumGuardianTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.assertLife(player2, 20);
 
-        shaman.setTapped(false);
+        shaman.untap();
         harness.activateAbility(player1, indexOf(player1, shaman), null, player2.getId());
         harness.passBothPriorities();
         harness.assertLife(player2, 19);
@@ -368,7 +368,7 @@ class SanctumGuardianTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.assertLife(player2, 19);
 
-        shaman.setTapped(false);
+        shaman.untap();
         harness.activateAbility(player1, indexOf(player1, shaman), null, player1.getId());
         harness.passBothPriorities();
         harness.assertLife(player1, 20);

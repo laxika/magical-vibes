@@ -34,7 +34,7 @@ class RibbonSnakeTest extends BaseCardTest {
     @Test
     void tappedSnakeCanActivateRepeatedlyAfterLosingFlying() {
         Permanent snake = harness.addToBattlefieldAndReturn(player1, new RibbonSnake());
-        snake.setTapped(true);
+        snake.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.activateAbility(player1, 0, null, null);

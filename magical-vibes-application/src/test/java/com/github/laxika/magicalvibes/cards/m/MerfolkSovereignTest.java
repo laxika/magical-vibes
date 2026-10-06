@@ -187,7 +187,7 @@ class MerfolkSovereignTest extends BaseCardTest {
     @DisplayName("A tapped Sovereign cannot activate its tap ability")
     void cannotActivateWhileTapped() {
         Permanent sovereign = addSovereignReady(player1);
-        sovereign.setTapped(true);
+        sovereign.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, sovereign.getId()))
                 .isInstanceOf(IllegalStateException.class);

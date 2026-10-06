@@ -51,7 +51,7 @@ class RuinousGremlinTest extends BaseCardTest {
     @Test
     void sacrificesImmediatelyAndResolvesWhileSummoningSickAndTapped() {
         Permanent gremlin = harness.addToBattlefieldAndReturn(player1, new RuinousGremlin());
-        gremlin.setTapped(true);
+        gremlin.tap();
         harness.addToBattlefield(player2, new PropheticPrism());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.RED, 1);

@@ -153,7 +153,7 @@ class SanctifierOfSoulsTest extends BaseCardTest {
     void repeatedActivationsCreateTokensAndStackBoosts() {
         harness.addToBattlefield(player1, new SanctifierOfSouls());
         Permanent sanctifier = findPermanent(player1, "Sanctifier of Souls");
-        sanctifier.setTapped(true);
+        sanctifier.tap();
         sanctifier.setSummoningSick(true);
         harness.setGraveyard(player1, List.of(new SteadfastCathar(), new SteadfastCathar()));
         harness.forceActivePlayer(player2);

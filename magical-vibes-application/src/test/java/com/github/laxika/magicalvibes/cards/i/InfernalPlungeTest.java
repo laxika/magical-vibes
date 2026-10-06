@@ -81,7 +81,7 @@ class InfernalPlungeTest extends BaseCardTest {
     @DisplayName("A tapped creature can pay the sacrifice cost")
     void canSacrificeTappedCreature() {
         Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new AvacynsPilgrim());
-        sacrifice.setTapped(true);
+        sacrifice.tap();
         harness.setHand(player1, List.of(new InfernalPlunge()));
         harness.addMana(player1, ManaColor.RED, 1);
 

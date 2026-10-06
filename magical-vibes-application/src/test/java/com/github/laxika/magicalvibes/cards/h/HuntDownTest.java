@@ -137,7 +137,7 @@ class HuntDownTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.castAndResolveSorcery(player1, 0, List.of(blocker.getId(), attacker.getId()));
 
-        blocker.setTapped(true);
+        blocker.tap();
         attacker.setAttacking(true);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);

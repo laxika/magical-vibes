@@ -128,7 +128,7 @@ class ObsidianAcolyteTest extends BaseCardTest {
     void canActivateWhileSummoningSickAndTapped() {
         Permanent acolyte = harness.addToBattlefieldAndReturn(player1, new ObsidianAcolyte());
         acolyte.setSummoningSick(true);
-        acolyte.setTapped(true);
+        acolyte.tap();
         Permanent ownGriffin = addCreatureReady(player1, new RazorfootGriffin());
         Permanent opposingGriffin = addCreatureReady(player2, new RazorfootGriffin());
         harness.addMana(player1, ManaColor.WHITE, 2);

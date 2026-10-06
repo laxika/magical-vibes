@@ -129,7 +129,7 @@ class PhoenixDownTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new PhoenixDown());
-        source.setTapped(true);
+        source.tap();
         Permanent zombie = harness.addToBattlefieldAndReturn(player2, new WalkingCorpse());
         addActivationMana();
 

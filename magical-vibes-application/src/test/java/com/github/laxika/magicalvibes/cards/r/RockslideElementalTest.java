@@ -150,7 +150,7 @@ class RockslideElementalTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Goblin Mountaineer");
         harness.assertNotInGraveyard(player2, "Goblin Mountaineer");
-        assertThat(gd.playerExiledCards.get(player2.getId())).contains(goblin.getCard());
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(goblin.getCard());
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(elemental().getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();

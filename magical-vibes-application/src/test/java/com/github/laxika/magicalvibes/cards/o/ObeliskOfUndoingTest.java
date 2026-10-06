@@ -129,7 +129,7 @@ class ObeliskOfUndoingTest extends BaseCardTest {
     @DisplayName("Cannot activate a tapped Obelisk")
     void requiresUntappedSource() {
         Permanent obelisk = harness.addToBattlefieldAndReturn(player1, new ObeliskOfUndoing());
-        obelisk.setTapped(true);
+        obelisk.tap();
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 6);
 

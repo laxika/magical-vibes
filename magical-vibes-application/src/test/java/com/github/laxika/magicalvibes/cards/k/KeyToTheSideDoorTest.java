@@ -130,7 +130,7 @@ class KeyToTheSideDoorTest extends BaseCardTest {
     @Test
     void cannotActivateEitherAbilityWhileTapped() {
         Permanent key = addReadyKey(player1);
-        key.setTapped(true);
+        key.tap();
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.addToBattlefield(player1, new ArvadTheCursed());
         harness.setHand(player1, List.of(new ArvadTheCursed()));

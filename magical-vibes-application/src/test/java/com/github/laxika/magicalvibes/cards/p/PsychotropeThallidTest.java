@@ -152,7 +152,7 @@ class PsychotropeThallidTest extends BaseCardTest {
     void abilitiesDoNotRequireTappingOrHaste() {
         Permanent thallid = harness.addToBattlefieldAndReturn(player1, new PsychotropeThallid());
         thallid.setSummoningSick(true);
-        thallid.setTapped(true);
+        thallid.tap();
         thallid.setCounterCount(CounterType.FUNGUS, 3);
         harness.setHand(player1, List.of());
         PsychotropeThallid drawnCard = new PsychotropeThallid();

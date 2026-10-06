@@ -68,7 +68,7 @@ class ShimmeringEfreetTest extends BaseCardTest {
     void targetReturnsOnItsControllersNextUntap() {
         Permanent efreet = addCreatureReady(player1, new ShimmeringEfreet());
         Permanent walker = addCreatureReady(player2, new PhyrexianWalker());
-        walker.setTapped(true);
+        walker.tap();
 
         advanceTurn();
         advanceTurn();

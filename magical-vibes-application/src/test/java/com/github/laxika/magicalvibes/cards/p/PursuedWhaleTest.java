@@ -124,7 +124,7 @@ class PursuedWhaleTest extends BaseCardTest {
     void creaturesUnableToAttackMayStayBack() {
         castAndResolveWhale();
         Permanent watchdog = addCreatureReady(player2, new AlpineWatchdog());
-        watchdog.setTapped(true);
+        watchdog.tap();
 
         declareAttackers(player2, List.of());
 

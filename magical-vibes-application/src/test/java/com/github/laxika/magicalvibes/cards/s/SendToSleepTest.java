@@ -129,7 +129,7 @@ class SendToSleepTest extends BaseCardTest {
     void twoSorceriesEnableSpellMasteryForAlreadyTappedCreature() {
         harness.setGraveyard(player1, List.of(new WildInstincts(), new WildInstincts()));
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new RunedServitor());
-        creature.setTapped(true);
+        creature.tap();
 
         castSendToSleep(List.of(creature.getId()));
         harness.performUntapStep(player2);

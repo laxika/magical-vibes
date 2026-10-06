@@ -116,7 +116,7 @@ class OpportunisticDragonTest extends BaseCardTest {
     @DisplayName("A stolen permanent can still untap normally")
     void stolenPermanentUntapsNormally() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GoldenEgg());
-        target.setTapped(true);
+        target.tap();
 
         castDragon(target.getId());
         harness.passBothPriorities();

@@ -144,7 +144,7 @@ class PutridImpTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent imp = harness.addToBattlefieldAndReturn(player1, new PutridImp());
         imp.setSummoningSick(true);
-        imp.setTapped(true);
+        imp.tap();
         harness.setHand(player1, List.of(new CabalSurgeon()));
 
         harness.activateAbility(player1, 0, null, null);

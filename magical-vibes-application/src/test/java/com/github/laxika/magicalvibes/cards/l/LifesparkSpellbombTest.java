@@ -142,7 +142,7 @@ class LifesparkSpellbombTest extends BaseCardTest {
     @DisplayName("A tapped Spellbomb can use the draw ability and pay with colored mana")
     void tappedSpellbombCanDrawWithColoredMana() {
         Permanent spellbomb = harness.addToBattlefieldAndReturn(player1, new LifesparkSpellbomb());
-        spellbomb.setTapped(true);
+        spellbomb.tap();
         harness.setLibrary(player1, List.of(new CopperMyr()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 

@@ -110,7 +110,7 @@ class KarlovOfTheGhostCouncilTest extends BaseCardTest {
     void canExileItselfWhileSummoningSickAndTapped() {
         Permanent karlov = harness.addToBattlefieldAndReturn(player1, new KarlovOfTheGhostCouncil());
         karlov.setSummoningSick(true);
-        karlov.setTapped(true);
+        karlov.tap();
         karlov.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 6);
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);

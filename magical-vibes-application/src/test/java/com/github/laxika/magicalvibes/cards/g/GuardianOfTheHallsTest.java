@@ -33,7 +33,7 @@ class GuardianOfTheHallsTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent guardian = harness.addToBattlefieldAndReturn(player1, new GuardianOfTheHalls());
         guardian.setSummoningSick(true);
-        guardian.setTapped(true);
+        guardian.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 5);
         harness.addMana(player1, ManaColor.GREEN, 2);
 

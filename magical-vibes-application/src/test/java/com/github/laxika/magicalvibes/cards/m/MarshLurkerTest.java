@@ -89,9 +89,9 @@ class MarshLurkerTest extends BaseCardTest {
     @DisplayName("A tapped, summoning-sick Lurker can sacrifice a tapped Swamp")
     void tappedAndSummoningSickLurkerCanSacrificeTappedSwamp() {
         Permanent lurker = harness.addToBattlefieldAndReturn(player1, new MarshLurker());
-        lurker.setTapped(true);
+        lurker.tap();
         Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
-        swamp.setTapped(true);
+        swamp.tap();
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();

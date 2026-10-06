@@ -81,7 +81,7 @@ class NihiloorTest extends BaseCardTest {
     @Test
     void tappedCreaturesCannotBeChosen() {
         Permanent tappedCreature = addCreatureReady(player1, new BalefulStrix());
-        tappedCreature.setTapped(true);
+        tappedCreature.tap();
         castNihiloor();
 
         PendingInteraction.MultiPermanentChoice choice =
@@ -144,7 +144,7 @@ class NihiloorTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of(tapper.getId()));
         harness.handlePermanentChosen(player1, opponentCreature.getId());
 
-        tapper.setTapped(false);
+        tapper.untap();
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(opponentCreature);

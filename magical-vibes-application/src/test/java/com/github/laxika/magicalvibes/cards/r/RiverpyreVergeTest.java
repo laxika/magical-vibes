@@ -75,7 +75,7 @@ class RiverpyreVergeTest extends BaseCardTest {
     @Test
     @DisplayName("A tapped Island still enables blue mana")
     void tappedIslandEnablesBlueMana() {
-        harness.addToBattlefieldAndReturn(player1, new Island()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new Island()).tap();
         Permanent verge = harness.addToBattlefieldAndReturn(player1, new RiverpyreVerge());
 
         harness.activateAbility(player1, 1, 1, null, null);
@@ -104,7 +104,7 @@ class RiverpyreVergeTest extends BaseCardTest {
         Permanent verge = harness.addToBattlefieldAndReturn(player1, new RiverpyreVerge());
         Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
         harness.activateAbility(player1, 0, 1, null, null);
-        verge.setTapped(false);
+        verge.untap();
         gd.playerBattlefields.get(player1.getId()).remove(mountain);
         gd.playerGraveyards.get(player1.getId()).add(mountain.getCard());
 

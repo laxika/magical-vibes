@@ -179,7 +179,7 @@ class RocketLauncherTest extends BaseCardTest {
     void canActivateWhileTappedAndTargetItsController() {
         Permanent launcher = harness.addToBattlefieldAndReturn(player1, new RocketLauncher());
         launcher.setSummoningSick(false);
-        launcher.setTapped(true);
+        launcher.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, null, player1.getId());

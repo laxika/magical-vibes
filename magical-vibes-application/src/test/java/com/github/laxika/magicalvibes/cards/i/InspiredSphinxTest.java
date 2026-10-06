@@ -70,7 +70,7 @@ class InspiredSphinxTest extends BaseCardTest {
     @DisplayName("A tapped Inspired Sphinx can activate repeatedly without tapping or untapping")
     void tappedSphinxCanCreateMultipleTokens() {
         Permanent sphinx = harness.addToBattlefieldAndReturn(player1, new InspiredSphinx());
-        sphinx.setTapped(true);
+        sphinx.tap();
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 6);
         int sphinxIndex = gd.playerBattlefields.get(player1.getId()).indexOf(sphinx);

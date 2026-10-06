@@ -109,7 +109,7 @@ class LegionExtruderTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent extruder = harness.addToBattlefieldAndReturn(player1, new LegionExtruder());
-        extruder.setTapped(true);
+        extruder.tap();
         harness.addToBattlefield(player1, new Spellbook());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 

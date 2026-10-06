@@ -160,7 +160,7 @@ class ScarredVinebreederTest extends BaseCardTest {
     void activatesWhileTappedAndSummoningSick() {
         Permanent vinebreeder = setup(List.of(new ScarredVinebreeder()), 3);
         vinebreeder.setSummoningSick(true);
-        vinebreeder.setTapped(true);
+        vinebreeder.tap();
 
         harness.activateAbility(player1, idxOf(vinebreeder), null, null);
         harness.handleGraveyardCardChosen(player1, 0);

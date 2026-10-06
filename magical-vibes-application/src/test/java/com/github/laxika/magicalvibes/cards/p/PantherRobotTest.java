@@ -67,7 +67,7 @@ class PantherRobotTest extends BaseCardTest {
     @DisplayName("Affinity counts tapped artifact creatures")
     void tappedArtifactCreaturesReduceCost() {
         for (int i = 0; i < 6; i++) {
-            harness.addToBattlefieldAndReturn(player1, new PantherRobot()).setTapped(true);
+            harness.addToBattlefieldAndReturn(player1, new PantherRobot()).tap();
         }
         harness.setHand(player1, List.of(new PantherRobot()));
         harness.addMana(player1, ManaColor.COLORLESS, 4);

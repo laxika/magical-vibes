@@ -172,7 +172,7 @@ class MiglozMazeCrusherTest extends BaseCardTest {
     void destroysOwnArtifactWhileTappedAndSummoningSick() {
         Permanent migloz = addReadyMigloz();
         migloz.setSummoningSick(true);
-        migloz.setTapped(true);
+        migloz.tap();
         Permanent artifact = addCreatureReady(player1, new AngelsFeather());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 

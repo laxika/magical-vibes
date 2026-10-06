@@ -157,7 +157,7 @@ class HiddenCourtyardTest extends BaseCardTest {
     @Test
     void cannotActivateDiscoverWhileTapped() {
         Permanent courtyard = addReadyCourtyard();
-        courtyard.setTapped(true);
+        courtyard.tap();
         addDiscoverMana();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))

@@ -187,7 +187,7 @@ class MysticCompassTest extends BaseCardTest {
     @Test
     void cannotActivateTappedCompass() {
         Permanent compass = addReadyCompass(player1);
-        compass.setTapped(true);
+        compass.tap();
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

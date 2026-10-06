@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.cards.j;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 import com.github.laxika.magicalvibes.cards.b.BasilicaSkullbomb;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
@@ -77,11 +78,11 @@ class JawsRelentlessPredatorTest extends BaseCardTest {
     @DisplayName("Creates tokens using the combat damage amount even if Jaws's power changes before resolution")
     void snapshotsCombatDamageAmount() {
         Permanent jaws = addCreatureReady(player1, new JawsRelentlessPredator());
-        jaws.setPlusOnePlusOneCounters(2);
+        jaws.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         jaws.setAttacking(true);
 
         resolveCombat();
-        jaws.setPlusOnePlusOneCounters(0);
+        jaws.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
         resolveAllTriggers();
 
         assertThat(countPermanents(player1, "Blood")).isEqualTo(7);

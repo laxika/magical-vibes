@@ -80,7 +80,7 @@ class RavenousIntruderTest extends BaseCardTest {
     @DisplayName("A tapped newly entered Intruder can activate repeatedly and its boosts accumulate")
     void repeatedActivationsAccumulateWithoutTappingCost() {
         Permanent intruder = harness.addToBattlefieldAndReturn(player1, new RavenousIntruder());
-        intruder.setTapped(true);
+        intruder.tap();
         intruder.setSummoningSick(true);
         harness.addToBattlefield(player1, new Ornithopter());
 

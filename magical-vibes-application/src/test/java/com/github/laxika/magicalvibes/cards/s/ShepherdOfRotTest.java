@@ -107,7 +107,7 @@ class ShepherdOfRotTest extends BaseCardTest {
     @DisplayName("Cannot activate while tapped")
     void cannotActivateWhileTapped() {
         Permanent shepherd = addCreatureReady(player1, new ShepherdOfRot());
-        shepherd.setTapped(true);
+        shepherd.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)

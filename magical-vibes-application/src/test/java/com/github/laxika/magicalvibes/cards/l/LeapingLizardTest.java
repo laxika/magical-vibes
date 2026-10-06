@@ -64,7 +64,7 @@ class LeapingLizardTest extends BaseCardTest {
     void activatesWhileTappedAndSummoningSick() {
         Permanent lizard = harness.addToBattlefieldAndReturn(player1, new LeapingLizard());
         lizard.setSummoningSick(true);
-        lizard.setTapped(true);
+        lizard.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);
 

@@ -152,7 +152,7 @@ class SeerOfTheLastTomorrowTest extends BaseCardTest {
     @DisplayName("Cannot activate while tapped")
     void cannotActivateWhileTapped() {
         Permanent seer = addCreatureReady(player1, new SeerOfTheLastTomorrow());
-        seer.setTapped(true);
+        seer.tap();
         harness.addMana(player1, ManaColor.BLUE, 1);
         Card discard = new SeerOfTheLastTomorrow();
         harness.setHand(player1, List.of(discard));

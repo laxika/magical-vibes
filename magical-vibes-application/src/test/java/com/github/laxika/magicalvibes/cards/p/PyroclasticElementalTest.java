@@ -73,7 +73,7 @@ class PyroclasticElementalTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         harness.setLife(player2, 20);
         Permanent elemental = harness.addToBattlefieldAndReturn(player1, new PyroclasticElemental());
-        elemental.setTapped(true);
+        elemental.tap();
         elemental.setSummoningSick(true);
         harness.addMana(player1, ManaColor.RED, 3);
 

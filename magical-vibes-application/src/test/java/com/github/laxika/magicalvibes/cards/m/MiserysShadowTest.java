@@ -73,7 +73,7 @@ class MiserysShadowTest extends BaseCardTest {
     @DisplayName("Pump activations can be repeated while tapped and summoning sick")
     void pumpActivationsStackWithoutTapping() {
         Permanent shadow = harness.addToBattlefieldAndReturn(player1, new MiserysShadow());
-        shadow.setTapped(true);
+        shadow.tap();
         shadow.setSummoningSick(true);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 

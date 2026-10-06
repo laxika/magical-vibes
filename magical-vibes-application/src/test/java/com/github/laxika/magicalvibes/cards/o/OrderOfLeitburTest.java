@@ -217,7 +217,7 @@ class OrderOfLeitburTest extends BaseCardTest {
     void abilitiesWorkWhileTappedAndSummoningSick() {
         Permanent order = addReadyOrder(player1);
         order.setSummoningSick(true);
-        order.setTapped(true);
+        order.tap();
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.activateAbility(player1, 0, 0, null, null);

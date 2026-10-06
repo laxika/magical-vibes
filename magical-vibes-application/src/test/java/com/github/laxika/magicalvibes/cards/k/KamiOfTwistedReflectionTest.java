@@ -82,7 +82,7 @@ class KamiOfTwistedReflectionTest extends BaseCardTest {
     @DisplayName("Can activate while tapped and summoning sick without paying mana")
     void canActivateWhileTappedAndSummoningSick() {
         Permanent kami = harness.addToBattlefieldAndReturn(player1, new KamiOfTwistedReflection());
-        kami.setTapped(true);
+        kami.tap();
         kami.setSummoningSick(true);
         Permanent target = harness.addToBattlefieldAndReturn(player1, new WanderingOnes());
 

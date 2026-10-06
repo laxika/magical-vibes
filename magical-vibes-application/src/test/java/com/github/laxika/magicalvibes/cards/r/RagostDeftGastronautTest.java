@@ -98,7 +98,7 @@ class RagostDeftGastronautTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        ragost.setTapped(true);
+        ragost.tap();
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.activateAbility(player1, indexOf(player1, fountain), 0, null, null);
@@ -117,7 +117,7 @@ class RagostDeftGastronautTest extends BaseCardTest {
         Permanent ragost = addRagost();
         Permanent fountain = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
         goToMainPhase();
-        ragost.setTapped(true);
+        ragost.tap();
 
         harness.addMana(player2, ManaColor.COLORLESS, 2);
         harness.activateAbility(player2, indexOf(player2, fountain), 0, null, null);
@@ -135,7 +135,7 @@ class RagostDeftGastronautTest extends BaseCardTest {
         Permanent ragost = addRagost();
         Permanent fountain = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
         goToMainPhase();
-        ragost.setTapped(true);
+        ragost.tap();
         advanceToEndStep(player1);
         assertThat(ragost.isTapped()).isTrue();
 
@@ -164,7 +164,7 @@ class RagostDeftGastronautTest extends BaseCardTest {
         harness.activateAbility(player2, indexOf(player2, opposingRagost), 0, null, null);
         harness.passBothPriorities();
         harness.assertLife(player1, 18);
-        ragost.setTapped(true);
+        ragost.tap();
 
         advanceToEndStep(player1);
 

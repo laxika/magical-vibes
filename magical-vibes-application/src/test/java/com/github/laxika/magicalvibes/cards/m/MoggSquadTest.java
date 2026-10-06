@@ -107,7 +107,7 @@ class MoggSquadTest extends BaseCardTest {
     void countsTappedAndSummoningSickCreatures() {
         Permanent squad = addMoggSquad(player1);
         Permanent other = harness.addToBattlefieldAndReturn(player2, new MoggSquad());
-        other.setTapped(true);
+        other.tap();
         other.setSummoningSick(true);
 
         assertThat(gqs.getEffectivePower(gd, squad)).isEqualTo(2);

@@ -91,7 +91,7 @@ class SepulcherGhoulTest extends BaseCardTest {
     @Test
     void tappedSummoningSickGhoulCanActivate() {
         Permanent ghoul = addCreatureReady(player1, new SepulcherGhoul());
-        ghoul.setTapped(true);
+        ghoul.tap();
         ghoul.setSummoningSick(true);
         addCreatureReady(player1, new VampireSpawn());
 

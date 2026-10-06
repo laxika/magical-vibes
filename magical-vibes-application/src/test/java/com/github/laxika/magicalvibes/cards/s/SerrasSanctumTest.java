@@ -47,7 +47,7 @@ class SerrasSanctumTest extends BaseCardTest {
     void countsTappedEnchantmentsOnlyOnBattlefield() {
         harness.addToBattlefield(player1, new SerrasSanctum());
         Permanent enchantment = harness.addToBattlefieldAndReturn(player1, new Abundance());
-        enchantment.setTapped(true);
+        enchantment.tap();
         harness.setHand(player1, java.util.List.of(new GreaterGood()));
         harness.setGraveyard(player1, java.util.List.of(new Abundance()));
 

@@ -91,7 +91,7 @@ class OverwhelmingInstinctTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
 
         gd.playerBattlefields.get(player1.getId()).forEach(permanent -> {
-            permanent.setTapped(false);
+            permanent.untap();
             permanent.setAttacking(false);
         });
         declareAttackers(List.of(1, 2, 3));

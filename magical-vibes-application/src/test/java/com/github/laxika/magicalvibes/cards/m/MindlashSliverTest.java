@@ -157,7 +157,7 @@ class MindlashSliverTest extends BaseCardTest {
         harness.addToBattlefield(player1, new MindlashSliver());
         Permanent mindlash = findPermanent(player1, "Mindlash Sliver");
         mindlash.setSummoningSick(true);
-        mindlash.setTapped(true);
+        mindlash.tap();
         BenalishCavalry opponentCard = new BenalishCavalry();
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of(opponentCard));

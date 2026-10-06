@@ -99,7 +99,7 @@ class SeekerOfSunlightTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(land));
         Permanent seeker = harness.addToBattlefieldAndReturn(player1, new SeekerOfSunlight());
         seeker.setSummoningSick(true);
-        seeker.setTapped(true);
+        seeker.tap();
         addExploreMana();
 
         harness.activateAbility(player1, 0, null, null);

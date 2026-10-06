@@ -111,7 +111,7 @@ class GrimPoppetTest extends BaseCardTest {
     @DisplayName("Counter removal is paid immediately even while tapped and summoning sick")
     void removesCounterBeforeResolutionWithoutTapRestriction() {
         Permanent poppet = addReadyPoppet(player1);
-        poppet.setTapped(true);
+        poppet.tap();
         poppet.setSummoningSick(true);
         Permanent target = harness.addToBattlefieldAndReturn(player1, new SafeholdSentry());
         harness.forceActivePlayer(player1);

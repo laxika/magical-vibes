@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.q;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HigureTheStillWind;
-import com.github.laxika.magicalvibes.model.BlockerAssignment;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -53,7 +53,7 @@ class QuintessentialKatanaTest extends BaseCardTest {
         Permanent katana = harness.addToBattlefieldAndReturn(player1, new QuintessentialKatana());
         katana.setAttachedTo(creature.getId());
         creature.setAttacking(true);
-        creature.setTapped(true);
+        creature.tap();
 
         resolveCombat();
         harness.passBothPriorities();
@@ -104,7 +104,7 @@ class QuintessentialKatanaTest extends BaseCardTest {
         Permanent katana = harness.addToBattlefieldAndReturn(player2, new QuintessentialKatana());
         katana.setAttachedTo(creature.getId());
         creature.setAttacking(true);
-        creature.setTapped(true);
+        creature.tap();
 
         resolveCombat();
         resolveAllTriggers();
@@ -122,7 +122,7 @@ class QuintessentialKatanaTest extends BaseCardTest {
         Permanent katana = harness.addToBattlefieldAndReturn(player1, new QuintessentialKatana());
         katana.setAttachedTo(creature.getId());
         creature.setAttacking(true);
-        creature.setTapped(true);
+        creature.tap();
 
         resolveCombat();
         assertThat(gd.stack).isNotEmpty();
@@ -141,8 +141,8 @@ class QuintessentialKatanaTest extends BaseCardTest {
         Permanent katana = harness.addToBattlefieldAndReturn(player1, new QuintessentialKatana());
         katana.setAttachedTo(creature.getId());
         creature.setAttacking(true);
-        creature.setTapped(true);
-        otherCreature.setTapped(true);
+        creature.tap();
+        otherCreature.tap();
 
         resolveCombat();
         assertThat(gd.stack).isNotEmpty();

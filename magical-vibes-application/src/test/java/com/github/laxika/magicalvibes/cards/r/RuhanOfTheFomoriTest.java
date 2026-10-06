@@ -105,7 +105,7 @@ class RuhanOfTheFomoriTest extends BaseCardTest {
         Permanent ruhan = addReadyRuhan(player1);
         advanceToBeginningOfCombat(player1);
         harness.passBothPriorities();
-        ruhan.setTapped(true);
+        ruhan.tap();
         beginDeclareAttackers(player1);
 
         gs.declareAttackers(gd, player1, List.of());

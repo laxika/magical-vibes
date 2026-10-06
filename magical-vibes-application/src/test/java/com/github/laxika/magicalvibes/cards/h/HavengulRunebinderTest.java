@@ -27,7 +27,7 @@ class HavengulRunebinderTest extends BaseCardTest {
     void cannotActivateWhenTapped() {
         Permanent runebinder = harness.addToBattlefieldAndReturn(player1, new HavengulRunebinder());
         runebinder.setSummoningSick(false);
-        runebinder.setTapped(true);
+        runebinder.tap();
         harness.setGraveyard(player1, List.of(new FalkenrathTorturer()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 

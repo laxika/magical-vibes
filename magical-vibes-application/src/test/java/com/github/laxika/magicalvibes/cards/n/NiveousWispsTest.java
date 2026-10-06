@@ -90,7 +90,7 @@ class NiveousWispsTest extends BaseCardTest {
     @DisplayName("An already-tapped creature you control still becomes white and allows the draw")
     void resolvesOnAlreadyTappedOwnCreature() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new InescapableBrute());
-        target.setTapped(true);
+        target.tap();
         BlightSickle drawnCard = new BlightSickle();
         harness.setLibrary(player1, List.of(drawnCard));
         harness.setHand(player1, List.of(new NiveousWisps()));

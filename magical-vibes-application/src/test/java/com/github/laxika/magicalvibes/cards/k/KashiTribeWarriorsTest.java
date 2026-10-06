@@ -62,7 +62,7 @@ class KashiTribeWarriorsTest extends BaseCardTest {
     void blockingWarriorsLockAttackerAfterDying() {
         Permanent mossKami = addCreatureReady(player1, new MossKami());
         mossKami.setAttacking(true);
-        mossKami.setTapped(true);
+        mossKami.tap();
         Permanent warriors = addCreatureReady(player2, new KashiTribeWarriors());
 
         prepareDeclareBlockers();

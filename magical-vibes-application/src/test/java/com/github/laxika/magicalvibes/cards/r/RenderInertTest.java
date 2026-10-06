@@ -107,7 +107,7 @@ class RenderInertTest extends BaseCardTest {
         harness.setHand(player1, List.of(new RenderInert()));
         addMana();
         harness.castSorcery(player1, 0, target.getId());
-        gd.battlefield.get(player2.getId()).remove(target);
+        gd.playerBattlefields.get(player2.getId()).remove(target);
 
         harness.passBothPriorities();
 

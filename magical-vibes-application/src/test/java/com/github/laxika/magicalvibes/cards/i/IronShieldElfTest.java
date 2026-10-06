@@ -99,7 +99,7 @@ class IronShieldElfTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent elf = harness.addToBattlefieldAndReturn(player1, new IronShieldElf());
         elf.setSummoningSick(true);
-        elf.setTapped(true);
+        elf.tap();
         harness.setHand(player1, List.of(new IronShieldElf()));
 
         harness.activateAbility(player1, 0, null, null);

@@ -129,7 +129,7 @@ class NightscapeFamiliarTest extends BaseCardTest {
     @Test
     void regenerationDoesNotPreventTerminate() {
         Permanent familiar = harness.addToBattlefieldAndReturn(player1, new NightscapeFamiliar());
-        familiar.setTapped(true);
+        familiar.tap();
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.activateAbility(player1, 0, null, null);

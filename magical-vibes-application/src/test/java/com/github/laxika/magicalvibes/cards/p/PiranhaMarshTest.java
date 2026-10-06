@@ -81,7 +81,7 @@ class PiranhaMarshTest extends BaseCardTest {
     void tappedMarshCannotProduceMana() {
         Permanent marsh = harness.addToBattlefieldAndReturn(player1, new PiranhaMarsh());
         marsh.setSummoningSick(false);
-        marsh.setTapped(true);
+        marsh.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
@@ -89,7 +89,7 @@ class PiranhaMarshTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
         assertThat(marsh.isTapped()).isTrue();
 
-        marsh.setTapped(false);
+        marsh.untap();
         harness.activateAbility(player1, 0, 0, null, null);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);

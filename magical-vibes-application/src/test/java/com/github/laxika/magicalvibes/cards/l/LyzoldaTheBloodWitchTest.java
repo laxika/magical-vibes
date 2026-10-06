@@ -124,7 +124,7 @@ class LyzoldaTheBloodWitchTest extends BaseCardTest {
     void sacrificesHerselfForDamageAndDraw() {
         Permanent lyzolda = addCreatureReady(player1, new LyzoldaTheBloodWitch());
         lyzolda.setSummoningSick(true);
-        lyzolda.setTapped(true);
+        lyzolda.tap();
         addCreatureReady(player1, new SimicRagworm());
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new SimicRagworm()));

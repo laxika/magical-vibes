@@ -121,7 +121,7 @@ class GuildThiefTest extends BaseCardTest {
     void abilityDoesNotRequireTappingOrHaste() {
         Permanent thief = harness.addToBattlefieldAndReturn(player1, new GuildThief());
         thief.setSummoningSick(true);
-        thief.setTapped(true);
+        thief.tap();
         addAbilityMana();
 
         harness.activateAbility(player1, 0, 0, null, null);

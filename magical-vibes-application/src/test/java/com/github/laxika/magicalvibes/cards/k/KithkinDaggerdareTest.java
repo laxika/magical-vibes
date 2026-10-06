@@ -117,7 +117,7 @@ class KithkinDaggerdareTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent daggerdare = addDaggerdareReady(player1);
-        daggerdare.setTapped(true);
+        daggerdare.tap();
         Permanent attacker = addAttackingCreature(player1);
         harness.addMana(player1, ManaColor.GREEN, 1);
 

@@ -64,7 +64,7 @@ class ScrapbasketTest extends BaseCardTest {
         Permanent other = harness.addToBattlefieldAndReturn(player1, new Scrapbasket());
         Permanent opponent = harness.addToBattlefieldAndReturn(player2, new Scrapbasket());
         source.setSummoningSick(true);
-        source.setTapped(true);
+        source.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, null);

@@ -115,7 +115,7 @@ class MurderTest extends BaseCardTest {
     @DisplayName("Can destroy a tapped creature")
     void canDestroyTappedCreature() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new WalkingCorpse());
-        creature.setTapped(true);
+        creature.tap();
         harness.setHand(player1, List.of(new Murder()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 

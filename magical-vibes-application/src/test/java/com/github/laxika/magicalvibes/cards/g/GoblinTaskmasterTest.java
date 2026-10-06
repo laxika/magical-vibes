@@ -95,7 +95,7 @@ class GoblinTaskmasterTest extends BaseCardTest {
     @DisplayName("Taskmaster can repeatedly pump itself while tapped and summoning sick")
     void repeatedlyBoostsItselfWhileTappedAndSummoningSick() {
         Permanent taskmaster = harness.addToBattlefieldAndReturn(player1, new GoblinTaskmaster());
-        taskmaster.setTapped(true);
+        taskmaster.tap();
         taskmaster.setSummoningSick(true);
         int originalPower = taskmaster.getEffectivePower();
         int originalToughness = taskmaster.getEffectiveToughness();

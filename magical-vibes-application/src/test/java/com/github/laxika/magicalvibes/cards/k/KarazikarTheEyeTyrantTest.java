@@ -69,7 +69,7 @@ class KarazikarTheEyeTyrantTest extends BaseCardTest {
         harness.addToBattlefield(player1, new KarazikarTheEyeTyrant());
         addCreatureReady(player1, new GrizzlyBears());
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
-        target.setTapped(true);
+        target.tap();
 
         declareAttackers(List.of(1));
         harness.handlePermanentChosen(player1, target.getId());

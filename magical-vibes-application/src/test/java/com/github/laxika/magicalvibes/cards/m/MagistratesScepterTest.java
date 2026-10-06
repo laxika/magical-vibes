@@ -117,7 +117,7 @@ class MagistratesScepterTest extends BaseCardTest {
     @DisplayName("Neither ability can be activated while the Scepter is tapped")
     void tappedScepterCannotActivateEitherAbility() {
         Permanent scepter = addReadyScepter();
-        scepter.setTapped(true);
+        scepter.tap();
         scepter.setCounterCount(CounterType.CHARGE, 3);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 

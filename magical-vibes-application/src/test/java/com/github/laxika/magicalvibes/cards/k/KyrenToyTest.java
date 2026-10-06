@@ -160,7 +160,7 @@ class KyrenToyTest extends BaseCardTest {
     @DisplayName("A tapped Kyren Toy cannot activate either ability")
     void tappedToyCannotActivateEitherAbility() {
         Permanent toy = addReadyToy(player1);
-        toy.setTapped(true);
+        toy.tap();
         toy.setCounterCount(CounterType.CHARGE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

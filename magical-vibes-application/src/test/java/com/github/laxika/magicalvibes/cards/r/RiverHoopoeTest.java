@@ -51,7 +51,7 @@ class RiverHoopoeTest extends BaseCardTest {
     @DisplayName("A tapped, summoning-sick Hoopoe can activate repeatedly")
     void tappedHoopoeCanActivateRepeatedly() {
         Permanent hoopoe = harness.addToBattlefieldAndReturn(player1, new RiverHoopoe());
-        hoopoe.setTapped(true);
+        hoopoe.tap();
         hoopoe.setSummoningSick(true);
         harness.setLife(player1, 20);
         harness.setHand(player1, List.of());

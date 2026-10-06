@@ -135,7 +135,7 @@ class IndrikUmbraTest extends BaseCardTest {
         attachAura(attacker);
         Permanent ableBlocker = addReadyCreature(player2);
         Permanent tappedBlocker = addReadyCreature(player2);
-        tappedBlocker.setTapped(true);
+        tappedBlocker.tap();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();

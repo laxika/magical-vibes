@@ -135,6 +135,6 @@ class RuneOfMortalityTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Rune of Mortality");
         harness.assertInGraveyard(player1, "Rune of Mortality");
         harness.assertNotInHand(player1, "Grizzled Outrider");
-        assertThat(gd.playerLibraries.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }
 }

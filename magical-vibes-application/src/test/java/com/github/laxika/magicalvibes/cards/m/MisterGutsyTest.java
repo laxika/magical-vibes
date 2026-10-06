@@ -168,7 +168,7 @@ class MisterGutsyTest extends BaseCardTest {
     @Test
     void tappedJunkCannotActivate() {
         Permanent junk = createJunk();
-        junk.setTapped(true);
+        junk.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1,
                 gd.playerBattlefields.get(player1.getId()).indexOf(junk), null, null))

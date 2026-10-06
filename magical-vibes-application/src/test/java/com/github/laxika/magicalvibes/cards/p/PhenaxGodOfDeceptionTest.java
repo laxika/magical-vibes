@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.cards.p;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 import com.github.laxika.magicalvibes.cards.w.WalkingCorpse;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -88,7 +89,7 @@ class PhenaxGodOfDeceptionTest extends BaseCardTest {
         int before = gd.playerDecks.get(player2.getId()).size();
 
         harness.activateAbility(player1, 1, null, player2.getId());
-        corpse.setPlusOnePlusOneCounters(3);
+        corpse.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
         harness.passBothPriorities();
 
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(before - 5);

@@ -103,7 +103,7 @@ class PopularEgotistTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent egotist = harness.addToBattlefieldAndReturn(player1, new PopularEgotist());
         egotist.setSummoningSick(true);
-        egotist.setTapped(true);
+        egotist.tap();
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);

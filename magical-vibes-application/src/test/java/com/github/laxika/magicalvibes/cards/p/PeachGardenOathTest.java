@@ -75,7 +75,7 @@ class PeachGardenOathTest extends BaseCardTest {
     @Test
     @DisplayName("Counts tapped creatures but excludes lands and opposing creatures")
     void countsOnlyControlledCreaturesOnMixedBattlefield() {
-        harness.addToBattlefieldAndReturn(player1, new GlorySeeker()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new GlorySeeker()).tap();
         harness.addToBattlefield(player1, new GlorySeeker());
         harness.addToBattlefield(player1, new Forest());
         harness.addToBattlefield(player2, new GlorySeeker());

@@ -236,7 +236,7 @@ class SageOfFablesTest extends BaseCardTest {
     void tappedSummoningSickSageCanActivate() {
         Permanent sage = harness.addToBattlefieldAndReturn(player1, new SageOfFables());
         sage.setSummoningSick(true);
-        sage.setTapped(true);
+        sage.tap();
         sage.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         int handBefore = gd.playerHands.get(player1.getId()).size();

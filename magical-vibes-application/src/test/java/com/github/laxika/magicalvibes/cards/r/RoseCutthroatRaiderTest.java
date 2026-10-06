@@ -76,12 +76,12 @@ class RoseCutthroatRaiderTest extends BaseCardTest {
         activateJunk();
         resolveAllTriggers();
 
-        assertThat(gd.playerExiledCards.get(player1.getId())).contains(top);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(top);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(next);
         assertThat(findPermanents(player1, "Junk")).isEmpty();
         harness.castFromExile(player1, top.getId());
         assertThat(findPermanents(player1, "Mountain")).hasSize(1);
-        assertThat(gd.playerExiledCards.get(player1.getId())).doesNotContain(top);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(top);
     }
 
     @Test
@@ -96,7 +96,7 @@ class RoseCutthroatRaiderTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castFromExile(player1, top.getId()))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(gd.playerExiledCards.get(player1.getId())).contains(top);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(top);
     }
 
     @Test
@@ -127,7 +127,7 @@ class RoseCutthroatRaiderTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castFromExile(player1, top.getId()))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(gd.playerExiledCards.get(player1.getId())).contains(top);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(top);
     }
 
     @Test

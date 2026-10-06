@@ -162,7 +162,7 @@ class KuldothaRebirthTest extends BaseCardTest {
     @DisplayName("A tapped artifact can be sacrificed and other artifacts are retained")
     void canSacrificeTappedArtifactWithoutSacrificingOthers() {
         Permanent artifact = harness.addToBattlefieldAndReturn(player1, new AccordersShield());
-        artifact.setTapped(true);
+        artifact.tap();
         Permanent retained = harness.addToBattlefieldAndReturn(player1, new Memnite());
         harness.setHand(player1, List.of(new KuldothaRebirth()));
         harness.addMana(player1, ManaColor.RED, 1);

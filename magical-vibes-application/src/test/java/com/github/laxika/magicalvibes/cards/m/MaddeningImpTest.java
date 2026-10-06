@@ -142,7 +142,7 @@ class MaddeningImpTest extends BaseCardTest {
     @DisplayName("Destroys tapped nonattackers but leaves the Imp controller's creatures alone")
     void destroysTappedNonattackerOnlyForActivePlayer() {
         Permanent tapped = addCreatureReady(player2, new GrizzlyBears());
-        tapped.setTapped(true);
+        tapped.tap();
         Permanent ownBear = addCreatureReady(player1, new GrizzlyBears());
         primeImp();
         harness.activateAbility(player1, 1, null, null);

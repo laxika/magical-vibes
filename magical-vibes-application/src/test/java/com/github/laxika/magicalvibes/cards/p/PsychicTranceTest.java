@@ -97,7 +97,7 @@ class PsychicTranceTest extends BaseCardTest {
     @DisplayName("A tapped Wizard cannot pay the granted tap cost")
     void tappedWizardCannotActivate() {
         Permanent wizard = addCreatureReady(player1, new NamelessOne());
-        wizard.setTapped(true);
+        wizard.tap();
         castPsychicTrance();
 
         PsychicTrance spell = new PsychicTrance();

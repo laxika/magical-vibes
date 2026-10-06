@@ -142,7 +142,7 @@ class PrimeSpeakerVannifarTest extends BaseCardTest {
         addCreature(player1, new LlanowarElves());
         harness.setLibrary(player1, List.of(new GoldMyr()));
         harness.activateAbility(player1, 0, null, null);
-        gd.playerBattlefields.get(player1.getId()).getFirst().setTapped(false);
+        gd.playerBattlefields.get(player1.getId()).getFirst().untap();
         addCreature(player1, new LlanowarElves());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
@@ -163,7 +163,7 @@ class PrimeSpeakerVannifarTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         addVannifarReady(player1);
-        gd.playerBattlefields.get(player1.getId()).getFirst().setTapped(true);
+        gd.playerBattlefields.get(player1.getId()).getFirst().tap();
         addCreature(player1, new LlanowarElves());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

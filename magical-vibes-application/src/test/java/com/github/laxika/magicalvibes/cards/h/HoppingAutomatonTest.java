@@ -93,7 +93,7 @@ class HoppingAutomatonTest extends BaseCardTest {
     @DisplayName("A tapped, summoning-sick automaton can activate and changes only when the ability resolves")
     void tappedSummoningSickSourceCanActivate() {
         Permanent automaton = harness.addToBattlefieldAndReturn(player1, new HoppingAutomaton());
-        automaton.setTapped(true);
+        automaton.tap();
         automaton.setSummoningSick(true);
 
         harness.activateAbility(player1, 0, null, null);

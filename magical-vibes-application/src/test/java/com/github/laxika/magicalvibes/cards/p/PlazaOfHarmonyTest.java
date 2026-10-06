@@ -113,7 +113,7 @@ class PlazaOfHarmonyTest extends BaseCardTest {
     void tappedGateStillDeterminesAvailableManaTypes() {
         Permanent plaza = addPlazaReady(player1);
         Permanent gate = harness.addToBattlefieldAndReturn(player1, new AzoriusGuildgate());
-        gate.setTapped(true);
+        gate.tap();
         harness.addToBattlefield(player2, new GruulGuildgate());
 
         harness.activateAbility(player1, 0, 1, null, null);

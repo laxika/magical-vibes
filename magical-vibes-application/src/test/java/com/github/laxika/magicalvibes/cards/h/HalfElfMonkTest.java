@@ -87,7 +87,7 @@ class HalfElfMonkTest extends BaseCardTest {
     void canTargetTappedCreature() {
         addCreatureReady(player1, new HalfElfMonk());
         Permanent target = addCreatureReady(player2, new HalfElfMonk());
-        target.setTapped(true);
+        target.tap();
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -102,7 +102,7 @@ class HalfElfMonkTest extends BaseCardTest {
     void cannotActivateWhileTapped() {
         Permanent monk = addCreatureReady(player1, new HalfElfMonk());
         Permanent target = addCreatureReady(player2, new HalfElfMonk());
-        monk.setTapped(true);
+        monk.tap();
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))

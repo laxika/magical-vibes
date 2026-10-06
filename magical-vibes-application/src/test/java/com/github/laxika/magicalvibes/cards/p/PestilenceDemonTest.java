@@ -41,7 +41,7 @@ class PestilenceDemonTest extends BaseCardTest {
         harness.addToBattlefield(player1, new PestilenceDemon());
         harness.addToBattlefield(player2, new PestilenceDemon());
         var demon = findPermanent(player1, "Pestilence Demon");
-        demon.setTapped(true);
+        demon.tap();
         demon.setSummoningSick(true);
         harness.addMana(player1, ManaColor.BLACK, 2);
 

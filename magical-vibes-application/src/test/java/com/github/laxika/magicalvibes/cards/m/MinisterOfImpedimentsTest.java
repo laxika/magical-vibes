@@ -88,7 +88,7 @@ class MinisterOfImpedimentsTest extends BaseCardTest {
     void canTargetTappedCreature() {
         Permanent minister = addCreatureReady(player1, new MinisterOfImpediments());
         Permanent target = addCreatureReady(player2, new AzoriusFirstWing());
-        target.setTapped(true);
+        target.tap();
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
@@ -103,7 +103,7 @@ class MinisterOfImpedimentsTest extends BaseCardTest {
     void cannotActivateWhileTapped() {
         Permanent minister = addCreatureReady(player1, new MinisterOfImpediments());
         Permanent target = addCreatureReady(player2, new AzoriusFirstWing());
-        minister.setTapped(true);
+        minister.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)

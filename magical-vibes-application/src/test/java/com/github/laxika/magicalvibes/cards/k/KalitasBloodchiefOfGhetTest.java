@@ -130,7 +130,7 @@ class KalitasBloodchiefOfGhetTest extends BaseCardTest {
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
         activate(kalitas, target.getId());
         Permanent firstVampire = findPermanent(player1, "Vampire");
-        kalitas.setTapped(false);
+        kalitas.untap();
 
         activate(kalitas, firstVampire.getId());
 

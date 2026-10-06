@@ -101,7 +101,7 @@ class IronHeartChimeraTest extends BaseCardTest {
     @DisplayName("A tapped Chimera with summoning sickness can pay the sacrifice cost")
     void tappedSummoningSickSourceCanActivate() {
         Permanent source = addSource();
-        source.setTapped(true);
+        source.tap();
         source.setSummoningSick(true);
         Permanent target = harness.addToBattlefieldAndReturn(player1, new BrassTalonChimera());
 

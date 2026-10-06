@@ -65,7 +65,7 @@ class KeldonArsonistTest extends BaseCardTest {
     @DisplayName("A tapped summoning-sick Arsonist pays its costs before the land is destroyed")
     void tappedSummoningSickArsonistPaysCostsBeforeResolution() {
         Permanent arsonist = harness.addToBattlefieldAndReturn(player1, new KeldonArsonist());
-        arsonist.setTapped(true);
+        arsonist.tap();
         arsonist.setSummoningSick(true);
         harness.addToBattlefield(player1, new RhysticCave());
         harness.addToBattlefield(player1, new RhysticCave());

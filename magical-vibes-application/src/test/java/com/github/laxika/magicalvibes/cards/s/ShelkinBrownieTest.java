@@ -118,7 +118,7 @@ class ShelkinBrownieTest extends BaseCardTest {
     @DisplayName("Cannot activate while already tapped")
     void cannotActivateWhileTapped() {
         Permanent brownie = addCreatureReady(player1, new ShelkinBrownie());
-        brownie.setTapped(true);
+        brownie.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, brownie.getId()))
                 .isInstanceOf(IllegalStateException.class);

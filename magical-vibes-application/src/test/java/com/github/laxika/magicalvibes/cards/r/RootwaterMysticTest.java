@@ -86,7 +86,7 @@ class RootwaterMysticTest extends BaseCardTest {
     void canActivateWhileSummoningSickAndTapped() {
         Permanent mystic = harness.addToBattlefieldAndReturn(player1, new RootwaterMystic());
         mystic.setSummoningSick(true);
-        mystic.setTapped(true);
+        mystic.tap();
         Card topCard = new RagingGoblin();
         Card secondCard = new RagingGoblin();
         harness.setLibrary(player2, List.of(topCard, secondCard));

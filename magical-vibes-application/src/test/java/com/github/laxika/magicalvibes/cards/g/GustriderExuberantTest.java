@@ -128,7 +128,7 @@ class GustriderExuberantTest extends BaseCardTest {
     @DisplayName("A tapped summoning-sick source can be sacrificed with no eligible creatures")
     void canActivateWithoutEligibleCreatures() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new GustriderExuberant());
-        source.setTapped(true);
+        source.tap();
 
         harness.activateAbility(player1, 0, null, null);
         harness.assertInGraveyard(player1, "Gustrider Exuberant");

@@ -71,7 +71,7 @@ class LavastepRaiderTest extends BaseCardTest {
     @DisplayName("A tapped, summoning-sick Raider can activate its ability")
     void canActivateWhileTappedAndSummoningSick() {
         Permanent raider = addReadyRaider(player1);
-        raider.setTapped(true);
+        raider.tap();
         raider.setSummoningSick(true);
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);

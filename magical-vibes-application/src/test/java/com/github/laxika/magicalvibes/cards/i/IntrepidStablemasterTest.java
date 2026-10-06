@@ -145,7 +145,7 @@ class IntrepidStablemasterTest extends BaseCardTest {
     @ValueSource(ints = {0, 1})
     void tappedStablemasterCannotActivateEitherAbility(int abilityIndex) {
         Permanent stablemaster = addStablemaster();
-        stablemaster.setTapped(true);
+        stablemaster.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, abilityIndex, null, null))
                 .isInstanceOf(IllegalStateException.class);

@@ -41,7 +41,7 @@ class HammerheadSharkTest extends BaseCardTest {
     void canAttackWithTappedDefendingIsland() {
         addCreatureReady(player2, new HammerheadShark());
         harness.addToBattlefield(player1, new Island());
-        findPermanent(player1, "Island").setTapped(true);
+        findPermanent(player1, "Island").tap();
 
         declareAttackers(player2, List.of(0));
 

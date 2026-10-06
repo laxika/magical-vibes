@@ -66,7 +66,7 @@ class OrzhovGuildmageTest extends BaseCardTest {
     void abilitiesWorkWhileTappedAndSummoningSick() {
         var guildmage = harness.addToBattlefieldAndReturn(player1, new OrzhovGuildmage());
         guildmage.setSummoningSick(true);
-        guildmage.setTapped(true);
+        guildmage.tap();
         addAbilityMana(ManaColor.WHITE);
         addAbilityMana(ManaColor.BLACK);
 

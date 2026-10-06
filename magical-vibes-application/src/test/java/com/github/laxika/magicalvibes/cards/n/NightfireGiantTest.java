@@ -125,7 +125,7 @@ class NightfireGiantTest extends BaseCardTest {
     void tappedSummoningSickGiantCanActivateRepeatedly() {
         Permanent giant = harness.addToBattlefieldAndReturn(player1, new NightfireGiant());
         giant.setSummoningSick(true);
-        giant.setTapped(true);
+        giant.tap();
         harness.setLife(player2, 20);
         harness.addMana(player1, ManaColor.BLACK, 8);
         harness.addMana(player1, ManaColor.RED, 2);

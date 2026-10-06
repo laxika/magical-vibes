@@ -46,7 +46,7 @@ class ProphetOfDistortionTest extends BaseCardTest {
     void canActivateRepeatedlyWhileTappedAndSummoningSick() {
         Permanent prophet = harness.addToBattlefieldAndReturn(player1, new ProphetOfDistortion());
         prophet.setSummoningSick(true);
-        prophet.setTapped(true);
+        prophet.tap();
         harness.setHand(player1, List.of());
         ProphetOfDistortion firstCard = new ProphetOfDistortion();
         ProphetOfDistortion secondCard = new ProphetOfDistortion();

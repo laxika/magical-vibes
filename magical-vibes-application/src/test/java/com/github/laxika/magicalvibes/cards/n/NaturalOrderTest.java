@@ -192,7 +192,7 @@ class NaturalOrderTest extends BaseCardTest {
     @DisplayName("A tapped green creature can pay the sacrifice cost")
     void canSacrificeTappedCreature() {
         Permanent greenCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        greenCreature.setTapped(true);
+        greenCreature.tap();
         harness.setHand(player1, List.of(new NaturalOrder()));
         harness.addMana(player1, ManaColor.GREEN, 4);
         harness.setLibrary(player1, List.of(new ElvishRanger()));

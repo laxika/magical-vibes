@@ -119,7 +119,7 @@ class MerfolkMesmeristTest extends BaseCardTest {
     @DisplayName("Cannot activate while tapped")
     void cannotActivateWhileTapped() {
         Permanent mesmerist = addReadyMesmerist(player1);
-        mesmerist.setTapped(true);
+        mesmerist.tap();
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))

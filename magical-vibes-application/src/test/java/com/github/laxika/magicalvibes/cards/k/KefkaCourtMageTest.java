@@ -166,7 +166,7 @@ class KefkaCourtMageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        assertThat(gd.playerLibraries.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
     }
 
     @Test
@@ -254,7 +254,7 @@ class KefkaCourtMageTest extends BaseCardTest {
 
         harness.assertLife(player2, 18);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        assertThat(gd.playerLibraries.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
     }
 
     @Test
@@ -270,7 +270,7 @@ class KefkaCourtMageTest extends BaseCardTest {
 
         harness.assertLife(player1, 18);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        assertThat(gd.playerLibraries.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
     }
 
     private void addKefkaMana() {

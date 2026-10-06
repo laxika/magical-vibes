@@ -105,7 +105,7 @@ class SeasonOfTheWitchTest extends BaseCardTest {
         harness.addToBattlefieldAndReturn(player1, new SeasonOfTheWitch());
         Permanent creature = addCreatureReady(player2, new Squire());
         declareAttackers(player2, List.of());
-        harness.forceStep(TurnStep.MAIN2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.END_STEP);
 
@@ -121,7 +121,7 @@ class SeasonOfTheWitchTest extends BaseCardTest {
         Permanent creature = addCreatureReady(player2, new Squire());
         declareAttackers(player2, List.of());
         creature.tap();
-        harness.forceStep(TurnStep.MAIN2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.END_STEP);
 
@@ -193,7 +193,7 @@ class SeasonOfTheWitchTest extends BaseCardTest {
 
     private void runEndStep(com.github.laxika.magicalvibes.model.Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
-        harness.forceStep(TurnStep.MAIN2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passUntil(activePlayer, TurnStep.END_STEP);
         resolveAllTriggers();

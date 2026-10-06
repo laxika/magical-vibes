@@ -317,7 +317,7 @@ class RuthlessKnaveTest extends BaseCardTest {
     void canSacrificeTappedTreasures() {
         harness.addToBattlefield(player1, new RuthlessKnave());
         for (int i = 0; i < 3; i++) {
-            harness.addToBattlefieldAndReturn(player1, createTreasureToken()).setTapped(true);
+            harness.addToBattlefieldAndReturn(player1, createTreasureToken()).tap();
         }
         harness.setLibrary(player1, List.of(new QueensBaySoldier()));
         harness.setHand(player1, List.of());

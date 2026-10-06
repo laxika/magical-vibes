@@ -79,8 +79,8 @@ class GoblinGoonTest extends BaseCardTest {
     @DisplayName("Cannot attack when controlling fewer creatures, including tapped defenders")
     void cannotAttackWhenDefenderControlsMoreCreatures() {
         addCreatureReady(player1, new GoblinGoon());
-        addCreatureReady(player2, new FugitiveWizard()).setTapped(true);
-        addCreatureReady(player2, new FugitiveWizard()).setTapped(true);
+        addCreatureReady(player2, new FugitiveWizard()).tap();
+        addCreatureReady(player2, new FugitiveWizard()).tap();
 
         assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
                 .isInstanceOf(IllegalStateException.class);
@@ -91,8 +91,8 @@ class GoblinGoonTest extends BaseCardTest {
     void canAttackWithTappedFriendlyCreature() {
         harness.setLife(player2, 20);
         addCreatureReady(player1, new GoblinGoon());
-        addCreatureReady(player1, new FugitiveWizard()).setTapped(true);
-        addCreatureReady(player2, new FugitiveWizard()).setTapped(true);
+        addCreatureReady(player1, new FugitiveWizard()).tap();
+        addCreatureReady(player2, new FugitiveWizard()).tap();
 
         declareAttackers(player1, List.of(0));
 
@@ -103,7 +103,7 @@ class GoblinGoonTest extends BaseCardTest {
     @DisplayName("Cannot block when the attacking player controls more creatures")
     void cannotBlockWhenAttackerControlsMoreCreatures() {
         addCreatureReady(player1, new FugitiveWizard());
-        addCreatureReady(player1, new FugitiveWizard()).setTapped(true);
+        addCreatureReady(player1, new FugitiveWizard()).tap();
         addCreatureReady(player2, new GoblinGoon());
 
         declareAttackersAndPrepareBlockers(player1, List.of(0));
@@ -118,7 +118,7 @@ class GoblinGoonTest extends BaseCardTest {
     void canBlockWithTappedFriendlyCreature() {
         addCreatureReady(player1, new FugitiveWizard());
         Permanent goon = addCreatureReady(player2, new GoblinGoon());
-        addCreatureReady(player2, new FugitiveWizard()).setTapped(true);
+        addCreatureReady(player2, new FugitiveWizard()).tap();
 
         declareAttackersAndPrepareBlockers(player1, List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));

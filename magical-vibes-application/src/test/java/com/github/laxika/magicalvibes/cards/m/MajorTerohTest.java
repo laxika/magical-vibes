@@ -78,7 +78,7 @@ class MajorTerohTest extends BaseCardTest {
     @DisplayName("A tapped, summoning-sick Major Teroh can activate its ability")
     void canActivateWhileTappedAndSummoningSick() {
         Permanent majorTeroh = harness.addToBattlefieldAndReturn(player1, new MajorTeroh());
-        majorTeroh.setTapped(true);
+        majorTeroh.tap();
         majorTeroh.setSummoningSick(true);
         Permanent blackCreature = addCreatureReady(player2, new NantukoShade());
         addAbilityMana();

@@ -122,7 +122,7 @@ class ImpetuousDevilsTest extends BaseCardTest {
     void tappedTargetIsNotRequiredToBlock() {
         addCreatureReady(player1, new ImpetuousDevils());
         Permanent blocker = addCreatureReady(player2, new FieldCreeper());
-        blocker.setTapped(true);
+        blocker.tap();
 
         declareAttackers(player1, List.of(0));
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
@@ -141,7 +141,7 @@ class ImpetuousDevilsTest extends BaseCardTest {
     void blockRequirementDoesNotCarryIntoAnotherCombat() {
         Permanent devils = addCreatureReady(player1, new ImpetuousDevils());
         Permanent blocker = addCreatureReady(player2, new FieldCreeper());
-        blocker.setTapped(true);
+        blocker.tap();
 
         declareAttackers(player1, List.of(0));
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
@@ -153,8 +153,8 @@ class ImpetuousDevilsTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of());
         resolveCombat();
         harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
-        devils.setTapped(false);
-        blocker.setTapped(false);
+        devils.untap();
+        blocker.untap();
 
         declareAttackers(player1, List.of(0));
         harness.handlePermanentChosen(player1, player1.getId());

@@ -79,7 +79,7 @@ class GripOfTheRoilTest extends BaseCardTest {
     @DisplayName("An already tapped creature stays tapped only through its controller's next untap")
     void alreadyTappedCreatureSkipsOnlyItsControllersNextUntap() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        target.setTapped(true);
+        target.tap();
         harness.setLibrary(player1, List.of(new Island()));
         harness.setHand(player1, List.of(new GripOfTheRoil()));
         harness.addMana(player1, ManaColor.BLUE, 3);

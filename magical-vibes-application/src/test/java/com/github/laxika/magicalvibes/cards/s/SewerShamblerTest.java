@@ -183,7 +183,7 @@ class SewerShamblerTest extends BaseCardTest {
 
     @Test
     void swampwalkPreventsBlockingEvenWithTappedSwamp() {
-        harness.addToBattlefieldAndReturn(player2, new Swamp()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player2, new Swamp()).tap();
         Permanent blocker = addCreatureReady(player2, new DrudgeBeetle());
         Permanent attacker = addCreatureReady(player1, new SewerShambler());
         declareAttackersAndPrepareBlockers(List.of(0));

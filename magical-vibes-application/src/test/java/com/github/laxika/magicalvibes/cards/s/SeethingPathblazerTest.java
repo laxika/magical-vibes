@@ -127,9 +127,9 @@ class SeethingPathblazerTest extends BaseCardTest {
     void tappedAndSummoningSickCreaturesAreAllowed() {
         Permanent pathblazer = addCreatureReady(player1, new SeethingPathblazer());
         Permanent elemental = addCreatureReady(player1, new BrighthearthBanneret());
-        pathblazer.setTapped(true);
+        pathblazer.tap();
         pathblazer.setSummoningSick(true);
-        elemental.setTapped(true);
+        elemental.tap();
         elemental.setSummoningSick(true);
 
         harness.activateAbility(player1, 0, null, null);

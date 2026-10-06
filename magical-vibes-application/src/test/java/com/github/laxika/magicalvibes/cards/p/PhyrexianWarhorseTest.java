@@ -113,7 +113,7 @@ class PhyrexianWarhorseTest extends BaseCardTest {
         Permanent warhorse = addCreatureReady(player1, new PhyrexianWarhorse());
         Permanent firstSacrifice = addCreatureReady(player1, new PhyrexianWarhorse());
         addCreatureReady(player1, new PhyrexianWarhorse());
-        warhorse.setTapped(true);
+        warhorse.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, null, null);

@@ -79,7 +79,7 @@ class MaraudingMaulhornTest extends BaseCardTest {
     @Test
     @DisplayName("A tapped Maulhorn is not required to attack")
     void tappedMaulhornMayStayHome() {
-        addReady(new MaraudingMaulhorn(), player1).setTapped(true);
+        addReady(new MaraudingMaulhorn(), player1).tap();
 
         assertThatCode(() -> declareAttackers(player1, List.of())).doesNotThrowAnyException();
     }
@@ -97,7 +97,7 @@ class MaraudingMaulhornTest extends BaseCardTest {
     @DisplayName("A tapped Advocate still exempts Maulhorn from attacking")
     void tappedAdvocateStillHelps() {
         addReady(new MaraudingMaulhorn(), player1);
-        addReady(new AdvocateOfTheBeast(), player1).setTapped(true);
+        addReady(new AdvocateOfTheBeast(), player1).tap();
 
         assertThatCode(() -> declareAttackers(player1, List.of())).doesNotThrowAnyException();
     }

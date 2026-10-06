@@ -215,7 +215,7 @@ class RagManTest extends BaseCardTest {
     @DisplayName("Cannot activate while tapped")
     void cannotActivateWhileTapped() {
         Permanent ragMan = readyRagMan();
-        ragMan.setTapped(true);
+        ragMan.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);

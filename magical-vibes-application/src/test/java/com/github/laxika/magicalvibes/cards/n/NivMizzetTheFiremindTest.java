@@ -94,7 +94,7 @@ class NivMizzetTheFiremindTest extends BaseCardTest {
     @DisplayName("Each controller draw triggers even while Niv-Mizzet is tapped")
     void repeatedDrawsWhileTappedTriggerSeparately() {
         var niv = addCreatureReady(player1, new NivMizzetTheFiremind());
-        niv.setTapped(true);
+        niv.tap();
         harness.setLibrary(player1, List.of(new GhostWarden(), new Gristleback()));
         harness.setLife(player2, 20);
 
@@ -144,7 +144,7 @@ class NivMizzetTheFiremindTest extends BaseCardTest {
     @DisplayName("A tapped Niv-Mizzet cannot activate its draw ability")
     void tappedSourceCannotActivate() {
         var niv = addCreatureReady(player1, new NivMizzetTheFiremind());
-        niv.setTapped(true);
+        niv.tap();
         harness.setLibrary(player1, List.of(new GhostWarden()));
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

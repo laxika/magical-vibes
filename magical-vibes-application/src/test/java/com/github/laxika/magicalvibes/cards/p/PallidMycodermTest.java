@@ -159,7 +159,7 @@ class PallidMycodermTest extends BaseCardTest {
     void tokenAbilityPaysCountersImmediatelyWithoutTapping() {
         Permanent mycoderm = addMycoderm();
         mycoderm.setSummoningSick(true);
-        mycoderm.setTapped(true);
+        mycoderm.tap();
         mycoderm.setCounterCount(CounterType.FUNGUS, 3);
 
         harness.activateAbility(player1, 0, 0, null, null);

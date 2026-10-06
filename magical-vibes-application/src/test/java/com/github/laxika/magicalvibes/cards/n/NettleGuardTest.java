@@ -173,7 +173,7 @@ class NettleGuardTest extends BaseCardTest {
     @Test
     void canSacrificeWhileSummoningSickAndTappedToDestroyYourOwnArtifact() {
         Permanent nettleGuard = harness.addToBattlefieldAndReturn(player1, new NettleGuard());
-        nettleGuard.setTapped(true);
+        nettleGuard.tap();
         Permanent artifact = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

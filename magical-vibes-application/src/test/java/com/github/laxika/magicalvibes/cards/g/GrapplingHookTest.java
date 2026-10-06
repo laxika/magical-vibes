@@ -173,7 +173,7 @@ class GrapplingHookTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new StoneworkPuma());
         addEquipment(player1).setAttachedTo(attacker.getId());
         Permanent blocker = addCreatureReady(player2, new StoneworkPuma());
-        blocker.setTapped(true);
+        blocker.tap();
         addCreatureReady(player2, new StoneworkPuma());
 
         declareAttackers(player1, List.of(0));

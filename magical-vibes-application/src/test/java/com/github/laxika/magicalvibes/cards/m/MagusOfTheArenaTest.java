@@ -66,8 +66,8 @@ class MagusOfTheArenaTest extends BaseCardTest {
         addCreatureReady(player1, new MagusOfTheArena());
         Permanent fighter = addCreatureReady(player1, new MireBoa());
         Permanent opponent = addCreatureReady(player2, new MireBoa());
-        fighter.setTapped(true);
-        opponent.setTapped(true);
+        fighter.tap();
+        opponent.tap();
         harness.addMana(player1, ManaColor.RED, 3);
 
         harness.activateAbility(player1, 0, null, fighter.getId());

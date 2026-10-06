@@ -108,7 +108,7 @@ class LegionLoyalistTest extends BaseCardTest {
         assertThat(loyalist.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
         assertThat(loyalist.hasKeyword(Keyword.TRAMPLE)).isFalse();
         harness.addToBattlefield(player2, createTokenCreature("Soldier Token", 1, 1));
-        loyalist.setTapped(false);
+        loyalist.untap();
         loyalist.setSummoningSick(false);
         declareAttackersAndPrepareBlockers(player1, List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));

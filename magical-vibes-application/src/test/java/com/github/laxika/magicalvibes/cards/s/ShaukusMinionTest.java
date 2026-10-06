@@ -84,7 +84,7 @@ class ShaukusMinionTest extends BaseCardTest {
     @DisplayName("Tap cost prevents activating a tapped Minion")
     void cannotActivateWhileTapped() {
         Permanent minion = addCreatureReady(player1, new ShaukusMinion());
-        minion.setTapped(true);
+        minion.tap();
         Permanent target = addCreatureReady(player2, new ZhalfirinKnight());
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.RED, 1);

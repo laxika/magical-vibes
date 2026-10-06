@@ -48,7 +48,7 @@ class SearchlightGeistTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent geist = harness.addToBattlefieldAndReturn(player1, new SearchlightGeist());
         geist.setSummoningSick(true);
-        geist.setTapped(true);
+        geist.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.addMana(player1, ManaColor.BLACK, 1);
 

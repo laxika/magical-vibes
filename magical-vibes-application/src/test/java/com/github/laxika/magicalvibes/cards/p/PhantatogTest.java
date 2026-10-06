@@ -85,7 +85,7 @@ class PhantatogTest extends BaseCardTest {
     void sacrificeIsPaidBeforeResolution() {
         Permanent phantatog = harness.addToBattlefieldAndReturn(player1, new Phantatog());
         harness.addToBattlefield(player1, new EarnestFellowship());
-        phantatog.setTapped(true);
+        phantatog.tap();
 
         harness.activateAbility(player1, 0, null, null);
 

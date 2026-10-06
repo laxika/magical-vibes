@@ -116,7 +116,7 @@ class MindlessAutomatonTest extends BaseCardTest {
     @DisplayName("Discard and mana are paid before the counter ability resolves")
     void discardAndManaArePaidBeforeResolution() {
         Permanent automaton = addReadyAutomaton(player1, 2);
-        automaton.setTapped(true);
+        automaton.tap();
         automaton.setSummoningSick(true);
         MindlessAutomaton discardedCard = new MindlessAutomaton();
         harness.setHand(player1, List.of(discardedCard));
@@ -140,7 +140,7 @@ class MindlessAutomatonTest extends BaseCardTest {
     @DisplayName("Counter removal is paid immediately even while tapped and summoning sick")
     void removeCountersIsAnImmediateCostWithoutTapRestriction() {
         Permanent automaton = addReadyAutomaton(player1, 3);
-        automaton.setTapped(true);
+        automaton.tap();
         automaton.setSummoningSick(true);
         MindlessAutomaton drawnCard = new MindlessAutomaton();
         harness.setHand(player1, List.of());

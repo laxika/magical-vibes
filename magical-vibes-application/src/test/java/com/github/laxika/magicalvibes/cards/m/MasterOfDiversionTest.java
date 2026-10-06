@@ -82,7 +82,7 @@ class MasterOfDiversionTest extends BaseCardTest {
     void canTargetTappedCreature() {
         addCreatureReady(player1, new MasterOfDiversion());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new MasterOfDiversion());
-        target.setTapped(true);
+        target.tap();
 
         declareAttackers(List.of(0));
 

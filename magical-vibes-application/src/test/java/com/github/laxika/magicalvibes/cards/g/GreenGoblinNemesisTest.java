@@ -132,7 +132,7 @@ class GreenGoblinNemesisTest extends BaseCardTest {
         assertThat(findPermanents(player2, "Treasure")).isEmpty();
 
         Permanent scribe = gd.playerBattlefields.get(player1.getId()).getFirst();
-        scribe.setTapped(false);
+        scribe.untap();
         harness.setHand(player1, List.of(new Mountain()));
         harness.setLibrary(player1, List.of(new Forest()));
         harness.addMana(player1, ManaColor.BLUE, 1);

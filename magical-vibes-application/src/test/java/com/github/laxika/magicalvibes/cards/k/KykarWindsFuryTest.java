@@ -120,8 +120,8 @@ class KykarWindsFuryTest extends BaseCardTest {
     void sacrificesTappedNontokenSpirit() {
         harness.addToBattlefield(player1, new KykarWindsFury());
         harness.addToBattlefield(player1, new SpectralSailor());
-        findPermanent(player1, "Kykar, Wind's Fury").setTapped(true);
-        findPermanent(player1, "Spectral Sailor").setTapped(true);
+        findPermanent(player1, "Kykar, Wind's Fury").tap();
+        findPermanent(player1, "Spectral Sailor").tap();
 
         harness.activateAbility(player1, 0, 0, null, null);
 

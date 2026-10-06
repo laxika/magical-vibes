@@ -64,7 +64,7 @@ class RepeatOffenderTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent repeatOffender = harness.addToBattlefieldAndReturn(player1, new RepeatOffender());
         repeatOffender.setSummoningSick(true);
-        repeatOffender.setTapped(true);
+        repeatOffender.tap();
 
         activate();
 

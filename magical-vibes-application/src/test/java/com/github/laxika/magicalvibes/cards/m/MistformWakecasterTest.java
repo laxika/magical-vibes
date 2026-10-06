@@ -89,7 +89,7 @@ class MistformWakecasterTest extends BaseCardTest {
     @Test
     void selfAbilityWorksWhileTappedAndSummoningSick() {
         Permanent wakecaster = harness.addToBattlefieldAndReturn(player1, new MistformWakecaster());
-        wakecaster.setTapped(true);
+        wakecaster.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, null);

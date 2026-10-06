@@ -121,7 +121,7 @@ class MnemonicWallTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(otherSorcery);
-        assertThat(gd.playerExiledCards.get(player1.getId())).containsExactly(target);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(target);
         assertThat(gd.stack).isEmpty();
     }
 

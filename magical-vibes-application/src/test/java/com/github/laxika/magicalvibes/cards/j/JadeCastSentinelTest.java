@@ -115,7 +115,7 @@ class JadeCastSentinelTest extends BaseCardTest {
     @DisplayName("Cannot activate while tapped")
     void requiresUntappedSource() {
         int sentinelIndex = addSentinel();
-        gd.playerBattlefields.get(player1.getId()).get(sentinelIndex).setTapped(true);
+        gd.playerBattlefields.get(player1.getId()).get(sentinelIndex).tap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         Card target = new JadeCastSentinel();
         harness.setGraveyard(player1, new ArrayList<>(List.of(target)));

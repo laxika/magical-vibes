@@ -84,7 +84,7 @@ class RimeChillTest extends BaseCardTest {
     @Test
     void stunsAlreadyTappedCreatureAndPreventsOneUntap() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        target.setTapped(true);
+        target.tap();
         harness.setHand(player1, List.of(new RimeChill()));
         harness.setLibrary(player1, List.of(new AirElemental()));
         harness.addMana(player1, ManaColor.BLUE, 1);

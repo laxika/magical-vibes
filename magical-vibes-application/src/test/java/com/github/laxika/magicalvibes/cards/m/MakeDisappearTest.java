@@ -188,7 +188,7 @@ class MakeDisappearTest extends BaseCardTest {
     private void castCasualtyWithPaymentAvailable(int paymentMana) {
         CivilServant target = new CivilServant();
         Permanent sacrifice = addCreatureReady(player2, new CivilServant());
-        sacrifice.setTapped(true);
+        sacrifice.tap();
         sacrifice.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
         harness.setHand(player1, List.of(target));
         harness.addMana(player1, ManaColor.GREEN, 1);

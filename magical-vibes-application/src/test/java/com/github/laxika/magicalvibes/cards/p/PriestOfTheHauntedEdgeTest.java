@@ -164,7 +164,7 @@ class PriestOfTheHauntedEdgeTest extends BaseCardTest {
     @Test
     void tappedPriestCannotActivate() {
         Permanent priest = addReadyPriest(player1);
-        priest.setTapped(true);
+        priest.tap();
         Permanent target = harness.addToBattlefieldAndReturn(player2, new PriestOfTheHauntedEdge());
         forceMainPhase(player1);
 

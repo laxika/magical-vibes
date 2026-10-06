@@ -135,7 +135,7 @@ class JoragaAuxiliaryTest extends BaseCardTest {
     @DisplayName("Support needs neither an untapped source nor haste")
     void supportWorksWhileTappedAndSummoningSick() {
         Permanent auxiliary = addReadyAuxiliary();
-        auxiliary.setTapped(true);
+        auxiliary.tap();
         auxiliary.setSummoningSick(true);
         Permanent creature = addCreatureReady(player1, new MakindiAeronaut());
         addMana();

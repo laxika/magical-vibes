@@ -24,7 +24,7 @@ class MishrasHelixTest extends BaseCardTest {
         Permanent ownLand = harness.addToBattlefieldAndReturn(player1, new Forest());
         Permanent opposingLand = harness.addToBattlefieldAndReturn(player2, new Forest());
         Permanent tappedLand = harness.addToBattlefieldAndReturn(player2, new Forest());
-        tappedLand.setTapped(true);
+        tappedLand.tap();
         Permanent unchosenLand = harness.addToBattlefieldAndReturn(player2, new Forest());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
@@ -60,7 +60,7 @@ class MishrasHelixTest extends BaseCardTest {
     @DisplayName("A tapped Helix cannot pay the tap cost")
     void rejectsActivationWhileTapped() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new MishrasHelix());
-        source.setTapped(true);
+        source.tap();
         Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

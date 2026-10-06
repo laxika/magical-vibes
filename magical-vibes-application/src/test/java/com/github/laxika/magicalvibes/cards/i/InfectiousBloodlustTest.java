@@ -172,7 +172,7 @@ class InfectiousBloodlustTest extends BaseCardTest {
     @DisplayName("A tapped enchanted creature is not required to attack")
     void tappedCreatureMayStayOutOfCombat() {
         Permanent creature = addCreatureWithAura(player1);
-        creature.setTapped(true);
+        creature.tap();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();

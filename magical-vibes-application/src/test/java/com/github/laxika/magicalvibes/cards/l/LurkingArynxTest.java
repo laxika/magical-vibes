@@ -95,7 +95,7 @@ class LurkingArynxTest extends BaseCardTest {
         addArynxReady();
         addArynxReady();
         Permanent target = addCreatureReady(player2, new LurkingArynx());
-        target.setTapped(true);
+        target.tap();
         addCreatureReady(player2, new LurkingArynx());
         addAbilityMana();
 

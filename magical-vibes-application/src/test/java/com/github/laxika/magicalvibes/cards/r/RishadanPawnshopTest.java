@@ -128,7 +128,7 @@ class RishadanPawnshopTest extends BaseCardTest {
     void cannotActivateWhileTapped() {
         Permanent pawnshop = harness.addToBattlefieldAndReturn(player1, new RishadanPawnshop());
         Permanent volunteers = harness.addToBattlefieldAndReturn(player1, new FreshVolunteers());
-        pawnshop.setTapped(true);
+        pawnshop.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, volunteers.getId()))

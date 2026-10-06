@@ -115,7 +115,7 @@ class ShellSkulkinTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent skulkin = harness.addToBattlefieldAndReturn(player1, new ShellSkulkin());
         skulkin.setSummoningSick(true);
-        skulkin.setTapped(true);
+        skulkin.tap();
         Permanent target = addReadyBlueCreature(player1);
         harness.addMana(player1, ManaColor.RED, 3);
 

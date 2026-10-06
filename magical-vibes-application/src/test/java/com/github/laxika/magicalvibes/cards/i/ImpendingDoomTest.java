@@ -95,7 +95,7 @@ class ImpendingDoomTest extends BaseCardTest {
     void tappedEnchantedCreatureIsNotRequiredToAttack() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new NyxbornBrute());
         creature.setSummoningSick(false);
-        creature.setTapped(true);
+        creature.tap();
         Permanent doom = harness.addToBattlefieldAndReturn(player1, new ImpendingDoom());
         doom.setAttachedTo(creature.getId());
 

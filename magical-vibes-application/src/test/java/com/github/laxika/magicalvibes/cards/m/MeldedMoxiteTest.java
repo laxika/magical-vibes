@@ -116,7 +116,7 @@ class MeldedMoxiteTest extends BaseCardTest {
     @DisplayName("Sacrificing a tapped Moxite pays the cost before the Robot is created")
     void tappedMoxiteIsSacrificedBeforeAbilityResolves() {
         Permanent moxite = harness.addToBattlefieldAndReturn(player1, new MeldedMoxite());
-        moxite.setTapped(true);
+        moxite.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.activateAbility(player1, 0, null, null);

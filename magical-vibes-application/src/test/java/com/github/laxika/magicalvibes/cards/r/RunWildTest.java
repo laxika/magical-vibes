@@ -104,7 +104,7 @@ class RunWildTest extends BaseCardTest {
     @DisplayName("Regeneration can be activated repeatedly while tapped and each shield saves once")
     void repeatedActivationsSaveFromSeparateLethalDamageEvents() {
         Permanent creature = castRunWildOnOwnCreature();
-        creature.setTapped(true);
+        creature.tap();
         harness.setHand(player1, List.of(new Shock(), new Shock()));
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.addMana(player1, ManaColor.RED, 2);

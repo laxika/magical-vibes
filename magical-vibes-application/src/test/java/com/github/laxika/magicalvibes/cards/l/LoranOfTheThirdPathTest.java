@@ -196,7 +196,7 @@ class LoranOfTheThirdPathTest extends BaseCardTest {
     @DisplayName("A tapped Loran cannot activate its draw ability again")
     void tappedLoranCannotActivate() {
         Permanent loran = addCreatureReady(player1, new LoranOfTheThirdPath());
-        loran.setTapped(true);
+        loran.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)

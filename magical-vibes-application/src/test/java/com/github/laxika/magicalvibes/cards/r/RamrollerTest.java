@@ -98,7 +98,7 @@ class RamrollerTest extends BaseCardTest {
     @DisplayName("A tapped Ramroller is not required to attack")
     void tappedRamrollerNeedNotAttack() {
         Permanent ramroller = addCreatureReady(player1, new Ramroller());
-        ramroller.setTapped(true);
+        ramroller.tap();
 
         assertThatCode(() -> declareAttackers(List.of())).doesNotThrowAnyException();
     }

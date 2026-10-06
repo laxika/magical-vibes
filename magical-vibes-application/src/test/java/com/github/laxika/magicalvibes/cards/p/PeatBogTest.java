@@ -81,7 +81,7 @@ class PeatBogTest extends BaseCardTest {
         harness.setHand(player1, List.of(new PeatBog()));
         harness.playLand(player1, 0);
         Permanent bog = findPermanent(player1, "Peat Bog");
-        bog.setTapped(false);
+        bog.untap();
 
         harness.activateAbility(player1, 0, null, null);
 

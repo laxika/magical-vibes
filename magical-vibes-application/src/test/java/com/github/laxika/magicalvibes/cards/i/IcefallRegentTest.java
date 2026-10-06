@@ -161,7 +161,7 @@ class IcefallRegentTest extends BaseCardTest {
     @Test
     void alreadyTappedCreatureIsStillLocked() {
         Permanent bears = addCreatureReady(player2, new GrizzlyBears());
-        bears.setTapped(true);
+        bears.tap();
 
         castAndResolveRegent(bears);
         harness.performUntapStep(player2);

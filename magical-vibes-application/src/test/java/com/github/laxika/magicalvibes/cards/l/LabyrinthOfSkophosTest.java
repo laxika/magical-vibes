@@ -71,7 +71,7 @@ class LabyrinthOfSkophosTest extends BaseCardTest {
     void removedAttackerRemainsTappedAndDealsNoDamage() {
         Permanent labyrinth = harness.addToBattlefieldAndReturn(player1, new LabyrinthOfSkophos());
         Permanent attacker = addAttacker(player2);
-        attacker.setTapped(true);
+        attacker.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.activateAbility(player1, 0, 1, null, attacker.getId());

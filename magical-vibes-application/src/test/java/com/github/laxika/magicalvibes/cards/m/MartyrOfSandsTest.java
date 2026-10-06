@@ -114,7 +114,7 @@ class MartyrOfSandsTest extends BaseCardTest {
         harness.setHand(player1, List.of(whiteCard, otherWhiteCard));
         Permanent martyr = harness.addToBattlefieldAndReturn(player1, new MartyrOfSands());
         martyr.setSummoningSick(true);
-        martyr.setTapped(true);
+        martyr.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);

@@ -143,7 +143,7 @@ class SeaGateWreckageTest extends BaseCardTest {
     @DisplayName("A tapped Wreckage cannot activate either ability")
     void tappedLandCannotActivate() {
         Permanent wreckage = addWreckage();
-        wreckage.setTapped(true);
+        wreckage.tap();
         harness.setHand(player1, List.of());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 

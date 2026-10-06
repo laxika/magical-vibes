@@ -79,7 +79,7 @@ class LlanowarCavalryTest extends BaseCardTest {
     void tappedSummoningSickCavalryCanActivateWithoutUntapping() {
         Permanent cavalry = harness.addToBattlefieldAndReturn(player1, new LlanowarCavalry());
         cavalry.setSummoningSick(true);
-        cavalry.setTapped(true);
+        cavalry.tap();
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, 0, null, null);

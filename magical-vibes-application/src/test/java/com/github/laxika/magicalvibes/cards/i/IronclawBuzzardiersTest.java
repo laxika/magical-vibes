@@ -115,7 +115,7 @@ class IronclawBuzzardiersTest extends BaseCardTest {
     void flyingAbilityNeedsNeitherTapNorHasteAndOnlyAffectsSource() {
         Permanent buzzardiers = addReadyBuzzardiers(player1);
         buzzardiers.setSummoningSick(true);
-        buzzardiers.setTapped(true);
+        buzzardiers.tap();
         Permanent otherBuzzardiers = addReadyBuzzardiers(player1);
         harness.addMana(player1, ManaColor.RED, 1);
 

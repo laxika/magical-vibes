@@ -102,7 +102,7 @@ class PatrolHoundTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent hound = harness.addToBattlefieldAndReturn(player1, new PatrolHound());
         hound.setSummoningSick(true);
-        hound.setTapped(true);
+        hound.tap();
         harness.setHand(player1, List.of(new Mountain()));
 
         harness.activateAbility(player1, 0, null, null);

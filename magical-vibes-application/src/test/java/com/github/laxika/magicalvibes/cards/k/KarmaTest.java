@@ -101,7 +101,7 @@ class KarmaTest extends BaseCardTest {
         Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
 
         advanceToUpkeep(player1);
-        swamp.setTapped(true);
+        swamp.tap();
         harness.passBothPriorities();
 
         harness.assertLife(player1, 19);

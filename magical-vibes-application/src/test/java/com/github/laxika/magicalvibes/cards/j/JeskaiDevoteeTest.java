@@ -154,7 +154,7 @@ class JeskaiDevoteeTest extends BaseCardTest {
     @Test
     void manaAbilityCanActivateWhileTappedAndEachDevoteeHasItsOwnLimit() {
         Permanent first = harness.addToBattlefieldAndReturn(player1, new JeskaiDevotee());
-        first.setTapped(true);
+        first.tap();
         harness.addToBattlefield(player1, new JeskaiDevotee());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 

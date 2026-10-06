@@ -162,7 +162,7 @@ class QuillspikeTest extends BaseCardTest {
     @Test
     void canActivateWhileTappedAndSummoningSick() {
         Permanent quillspike = addCreatureReady(player1, new Quillspike());
-        quillspike.setTapped(true);
+        quillspike.tap();
         quillspike.setSummoningSick(true);
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         bears.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);

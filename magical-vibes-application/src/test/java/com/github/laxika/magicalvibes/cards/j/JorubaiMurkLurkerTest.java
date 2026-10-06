@@ -99,7 +99,7 @@ class JorubaiMurkLurkerTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSickTargetingSelf() {
         Permanent lurker = harness.addToBattlefieldAndReturn(player1, new JorubaiMurkLurker());
         lurker.setSummoningSick(true);
-        lurker.setTapped(true);
+        lurker.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
 

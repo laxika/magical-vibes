@@ -43,7 +43,7 @@ class RubblebeltRecluseTest extends BaseCardTest {
     void needNotAttackWhenTapped() {
         Permanent recluse = harness.addToBattlefieldAndReturn(player1, new RubblebeltRecluse());
         recluse.setSummoningSick(false);
-        recluse.setTapped(true);
+        recluse.tap();
 
         assertThatCode(() -> declareAttackers(List.of())).doesNotThrowAnyException();
     }

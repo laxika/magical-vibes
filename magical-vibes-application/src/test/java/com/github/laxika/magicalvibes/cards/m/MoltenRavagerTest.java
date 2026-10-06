@@ -75,7 +75,7 @@ class MoltenRavagerTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent ravager = harness.addToBattlefieldAndReturn(player1, new MoltenRavager());
         ravager.setSummoningSick(true);
-        ravager.setTapped(true);
+        ravager.tap();
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, null);

@@ -94,7 +94,7 @@ class ManaGeodeTest extends BaseCardTest {
     @Test
     void tappedArtifactCannotProduceManaAgain() {
         Permanent geode = harness.addToBattlefieldAndReturn(player1, new ManaGeode());
-        geode.setTapped(true);
+        geode.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);

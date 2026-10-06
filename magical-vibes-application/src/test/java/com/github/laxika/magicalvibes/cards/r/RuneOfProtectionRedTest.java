@@ -227,12 +227,12 @@ class RuneOfProtectionRedTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.assertInGraveyard(player1, "Coral Merfolk");
 
-        goblin.setTapped(false);
+        goblin.untap();
         harness.activateAbility(player2, 0, 0, null, player1.getId());
         harness.passBothPriorities();
         harness.assertLife(player1, 20);
 
-        goblin.setTapped(false);
+        goblin.untap();
         harness.activateAbility(player2, 0, 0, null, player1.getId());
         harness.passBothPriorities();
         harness.assertLife(player1, 19);

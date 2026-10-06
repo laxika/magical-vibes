@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.BlockerAssignment;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -58,7 +58,7 @@ class MorkrutBehemothTest extends BaseCardTest {
     @Test
     void sacrificeIsPaidBeforeResolutionAndDoesNotChargeExtraMana() {
         Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new MorkrutBehemoth());
-        sacrifice.setTapped(true);
+        sacrifice.tap();
         harness.setHand(player1, List.of(new MorkrutBehemoth()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);

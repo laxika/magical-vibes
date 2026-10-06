@@ -108,7 +108,7 @@ class RainbowCrowTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent crow = harness.addToBattlefieldAndReturn(player1, new RainbowCrow());
         crow.setSummoningSick(true);
-        crow.setTapped(true);
+        crow.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, 0, null, null);

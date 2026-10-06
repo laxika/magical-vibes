@@ -85,7 +85,7 @@ class KingCrabTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent crab = addCreatureReady(player1, new KingCrab());
-        crab.setTapped(true);
+        crab.tap();
         Permanent wurm = addCreatureReady(player2, new YavimayaWurm());
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);

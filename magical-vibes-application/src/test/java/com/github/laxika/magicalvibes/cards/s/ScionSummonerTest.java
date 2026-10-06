@@ -34,7 +34,7 @@ class ScionSummonerTest extends BaseCardTest {
     void tappedScionCanProduceManaImmediatelyOnTheTurnItEnters() {
         castScionSummoner();
         Permanent scion = findPermanent(player1, "Eldrazi Scion");
-        scion.setTapped(true);
+        scion.tap();
         int scionIndex = gd.playerBattlefields.get(player1.getId()).indexOf(scion);
 
         harness.activateAbility(player1, scionIndex, null, null);

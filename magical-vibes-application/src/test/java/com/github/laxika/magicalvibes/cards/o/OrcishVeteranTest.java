@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.i.IcatianInfantry;
 import com.github.laxika.magicalvibes.cards.i.IcatianPhalanx;
-import com.github.laxika.magicalvibes.model.BlockerAssignment;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -81,7 +81,7 @@ class OrcishVeteranTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent veteran = addVeteran();
         Permanent otherVeteran = addVeteran();
-        veteran.setTapped(true);
+        veteran.tap();
         veteran.setSummoningSick(true);
         harness.addMana(player1, ManaColor.RED, 1);
 

@@ -53,7 +53,7 @@ class IronrootWarlordTest extends BaseCardTest {
     void createsTokensWhileSummoningSickAndTapped() {
         Permanent warlord = harness.addToBattlefieldAndReturn(player1, new IronrootWarlord());
         warlord.setSummoningSick(true);
-        warlord.setTapped(true);
+        warlord.tap();
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 6);

@@ -102,7 +102,7 @@ class HedronArchiveTest extends BaseCardTest {
     @DisplayName("A tapped archive cannot activate either ability")
     void tappedArchiveCannotActivateEitherAbility() {
         Permanent archive = addReadyArchive();
-        archive.setTapped(true);
+        archive.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))

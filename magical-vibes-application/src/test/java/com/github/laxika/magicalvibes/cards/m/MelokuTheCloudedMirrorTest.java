@@ -113,9 +113,9 @@ class MelokuTheCloudedMirrorTest extends BaseCardTest {
     @DisplayName("Can activate a tapped Meloku and return a tapped land")
     void canActivateWhileTappedAndReturnTappedLand() {
         Permanent meloku = harness.addToBattlefieldAndReturn(player1, new MelokuTheCloudedMirror());
-        meloku.setTapped(true);
+        meloku.tap();
         Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
-        island.setTapped(true);
+        island.tap();
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, null, null);

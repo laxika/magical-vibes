@@ -71,7 +71,7 @@ class PhyrexianLensTest extends BaseCardTest {
     @DisplayName("A tapped Lens cannot activate or charge life again")
     void cannotActivateTappedLens() {
         Permanent lens = harness.addToBattlefieldAndReturn(player1, new PhyrexianLens());
-        lens.setTapped(true);
+        lens.tap();
         harness.setLife(player1, 20);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))

@@ -102,7 +102,7 @@ class ManaMatrixTest extends BaseCardTest {
     @Test
     @DisplayName("A tapped Mana Matrix still reduces spell costs")
     void tappedMatrixStillReducesCosts() {
-        harness.addToBattlefieldAndReturn(player1, new ManaMatrix()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new ManaMatrix()).tap();
         harness.setHand(player1, List.of(new StormSeeker()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);

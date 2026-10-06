@@ -81,7 +81,7 @@ class GretchenTitchwillowTest extends BaseCardTest {
     @Test
     void canActivateWhileTappedAndSummoningSick() {
         Permanent gretchen = addReadyGretchen(player1);
-        gretchen.setTapped(true);
+        gretchen.tap();
         gretchen.setSummoningSick(true);
         Card island = new Island();
         harness.setHand(player1, List.of());

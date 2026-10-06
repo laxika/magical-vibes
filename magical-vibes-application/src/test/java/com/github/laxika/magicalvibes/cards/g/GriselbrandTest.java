@@ -83,7 +83,7 @@ class GriselbrandTest extends BaseCardTest {
     @DisplayName("A tapped, summoning-sick Griselbrand can activate its ability")
     void canActivateWhileTappedAndSummoningSick() {
         var griselbrand = harness.addToBattlefieldAndReturn(player1, new Griselbrand());
-        griselbrand.setTapped(true);
+        griselbrand.tap();
         griselbrand.setSummoningSick(true);
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, forests(7));

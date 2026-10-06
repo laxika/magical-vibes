@@ -153,7 +153,7 @@ class HauntingWindTest extends BaseCardTest {
         harness.addToBattlefield(player1, new HauntingWind());
         harness.addToBattlefield(player1, new IcyManipulator());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
-        target.setTapped(true);
+        target.tap();
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
         harness.addMana(player1, ManaColor.COLORLESS, 1);

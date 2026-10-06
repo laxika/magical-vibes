@@ -172,7 +172,7 @@ class RoterothopterTest extends BaseCardTest {
     @DisplayName("A tapped creature can activate on the opponent's turn using colored mana")
     void canActivateWhileTappedOnOpponentsTurn() {
         Permanent thopter = addCreatureReady(player1, new Roterothopter());
-        thopter.setTapped(true);
+        thopter.tap();
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.BLUE, 2);

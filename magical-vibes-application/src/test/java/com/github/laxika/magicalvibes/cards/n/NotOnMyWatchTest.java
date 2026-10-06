@@ -69,7 +69,7 @@ class NotOnMyWatchTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new GravestoneStrider());
         Permanent blocker = addCreatureReady(player2, new GravestoneStrider());
         attacker.setAttacking(true);
-        attacker.setTapped(true);
+        attacker.tap();
         blocker.setBlocking(true);
         blocker.addBlockingTargetId(attacker.getId());
         prepareCasting();

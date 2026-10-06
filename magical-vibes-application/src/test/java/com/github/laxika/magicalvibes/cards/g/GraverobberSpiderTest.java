@@ -118,7 +118,7 @@ class GraverobberSpiderTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new SatyrWayfinder()));
         Permanent spider = harness.addToBattlefieldAndReturn(player1, new GraverobberSpider());
         spider.setSummoningSick(true);
-        spider.setTapped(true);
+        spider.tap();
         harness.addMana(player1, ManaColor.BLACK, 4);
 
         harness.activateAbility(player1, 0, null, null);

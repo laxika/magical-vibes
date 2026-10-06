@@ -56,7 +56,7 @@ class MightstoneTest extends BaseCardTest {
     @DisplayName("Mightstone bonuses stack even when a Mightstone is tapped")
     void bonusesStackWhileTapped() {
         Permanent first = harness.addToBattlefieldAndReturn(player1, new Mightstone());
-        first.setTapped(true);
+        first.tap();
         harness.addToBattlefield(player2, new Mightstone());
         Permanent attacker = addAttackingBears(player1);
 

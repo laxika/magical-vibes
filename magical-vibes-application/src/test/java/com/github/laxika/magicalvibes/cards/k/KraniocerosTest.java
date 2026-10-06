@@ -82,7 +82,7 @@ class KraniocerosTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent kranioceros = harness.addToBattlefieldAndReturn(player1, new Kranioceros());
         kranioceros.setSummoningSick(true);
-        kranioceros.setTapped(true);
+        kranioceros.tap();
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.RED, 1);
 

@@ -168,6 +168,12 @@ class HeartOfKiranTest extends BaseCardTest {
         assertThat(planeswalker.isTapped()).isTrue();
     }
 
+    private Permanent addReadyHeart(Player player) {
+        Permanent heart = harness.addToBattlefieldAndReturn(player, new HeartOfKiran());
+        heart.setSummoningSick(false);
+        return heart;
+    }
+
     private Permanent addPlaneswalker(Player player, int loyalty) {
         Permanent planeswalker = harness.addToBattlefieldAndReturn(player, new AjaniUnyielding());
         planeswalker.setSummoningSick(false);

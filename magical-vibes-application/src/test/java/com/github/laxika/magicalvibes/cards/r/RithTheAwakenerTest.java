@@ -195,7 +195,7 @@ class RithTheAwakenerTest extends BaseCardTest {
         harness.handleListChoice(player1, "GREEN");
         assertThat(saprolingCount()).isEqualTo(1);
 
-        rith.setTapped(false);
+        rith.untap();
         declareAttackers(List.of(0));
         resolveCombat();
         harness.passBothPriorities();

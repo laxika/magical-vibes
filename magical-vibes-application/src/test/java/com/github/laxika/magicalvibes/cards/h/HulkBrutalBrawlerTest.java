@@ -45,7 +45,7 @@ class HulkBrutalBrawlerTest extends BaseCardTest {
     @DisplayName("Tapped Hulk is not required to attack")
     void tappedHulkCanStayOutOfCombat() {
         Permanent hulk = addCreatureReady(player1, new HulkBrutalBrawler());
-        hulk.setTapped(true);
+        hulk.tap();
 
         declareAttackers(List.of());
 

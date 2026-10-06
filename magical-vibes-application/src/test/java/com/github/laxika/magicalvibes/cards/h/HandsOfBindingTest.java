@@ -62,7 +62,7 @@ class HandsOfBindingTest extends BaseCardTest {
     @Test
     void alreadyTappedCreatureSkipsOnlyItsNextUntapStep() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new ArmoredTransport());
-        target.setTapped(true);
+        target.tap();
         harness.setHand(player1, List.of(new HandsOfBinding()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
@@ -134,7 +134,7 @@ class HandsOfBindingTest extends BaseCardTest {
         declareAttackers(List.of(0));
         resolveCombat();
         harness.passBothPriorities();
-        target.setTapped(false);
+        target.untap();
         target.setSkipUntapCount(0);
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, target.getId());

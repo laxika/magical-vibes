@@ -138,7 +138,7 @@ class RhysticStudyTest extends BaseCardTest {
     void opponentCanProduceManaDuringPayment() {
         castOpponentSpellWithoutManaToPay();
         Permanent land = harness.addToBattlefieldAndReturn(player2, new WintermoonMesa());
-        land.setTapped(false);
+        land.untap();
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
         harness.passBothPriorities();

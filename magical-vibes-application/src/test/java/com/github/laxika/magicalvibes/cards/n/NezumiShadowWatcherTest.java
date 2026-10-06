@@ -78,7 +78,7 @@ class NezumiShadowWatcherTest extends BaseCardTest {
     @DisplayName("Can activate while tapped and summoning sick")
     void canActivateWhileTappedAndSummoningSick() {
         var watcher = harness.addToBattlefieldAndReturn(player1, new NezumiShadowWatcher());
-        watcher.setTapped(true);
+        watcher.tap();
         watcher.setSummoningSick(true);
         harness.addToBattlefield(player2, new HigureTheStillWind());
         UUID target = harness.getPermanentId(player2, "Higure, the Still Wind");

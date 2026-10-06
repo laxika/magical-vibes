@@ -95,7 +95,7 @@ class HailstormValkyrieTest extends BaseCardTest {
     void repeatedActivationsWhileTappedAndSummoningSick() {
         Permanent valkyrie = addReadyValkyrie(player1);
         valkyrie.setSummoningSick(true);
-        valkyrie.setTapped(true);
+        valkyrie.tap();
         addSnowMana(4);
 
         harness.activateAbility(player1, 0, null, null);

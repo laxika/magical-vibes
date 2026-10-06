@@ -92,10 +92,10 @@ class RavenousHarpyTest extends BaseCardTest {
     void activationDoesNotRequireTappingOrHaste() {
         Permanent harpy = harness.addToBattlefieldAndReturn(player1, new RavenousHarpy());
         harpy.setSummoningSick(true);
-        harpy.setTapped(true);
+        harpy.tap();
         Permanent fodder = harness.addToBattlefieldAndReturn(player1, new GreenwoodSentinel());
         fodder.setSummoningSick(true);
-        fodder.setTapped(true);
+        fodder.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

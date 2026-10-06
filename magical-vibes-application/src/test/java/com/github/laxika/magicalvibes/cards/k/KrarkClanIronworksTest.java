@@ -56,9 +56,9 @@ class KrarkClanIronworksTest extends BaseCardTest {
         Permanent ironworks = harness.addToBattlefieldAndReturn(player1, new KrarkClanIronworks());
         Permanent firstArtifact = harness.addToBattlefieldAndReturn(player1, new AvariceTotem());
         Permanent secondArtifact = harness.addToBattlefieldAndReturn(player1, new AvariceTotem());
-        ironworks.setTapped(true);
-        firstArtifact.setTapped(true);
-        secondArtifact.setTapped(true);
+        ironworks.tap();
+        firstArtifact.tap();
+        secondArtifact.tap();
 
         harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, firstArtifact.getId());

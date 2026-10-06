@@ -100,7 +100,7 @@ class LeafkinAvengerTest extends BaseCardTest {
     void damageUsesPowerAtResolutionAndDoesNotRequireTapping() {
         Permanent avenger = harness.addToBattlefieldAndReturn(player1, new LeafkinAvenger());
         avenger.setSummoningSick(true);
-        avenger.setTapped(true);
+        avenger.tap();
         harness.setLife(player2, 20);
         harness.addMana(player1, ManaColor.COLORLESS, 7);
         harness.addMana(player1, ManaColor.RED, 1);

@@ -145,7 +145,7 @@ class LateToDinnerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 5);
         harness.castAndResolveSorcery(player1, 0, List.of(creature.getId()));
-        findPermanent(player1, "Food").setTapped(true);
+        findPermanent(player1, "Food").tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);

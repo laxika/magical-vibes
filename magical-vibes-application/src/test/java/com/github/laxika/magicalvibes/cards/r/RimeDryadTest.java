@@ -130,7 +130,7 @@ class RimeDryadTest extends BaseCardTest {
     @DisplayName("A tapped snow Forest still prevents blocking")
     void cantBeBlockedWithTappedSnowForest() {
         Permanent forest = harness.addToBattlefieldAndReturn(player2, new SnowCoveredForest());
-        forest.setTapped(true);
+        forest.tap();
         Permanent blocker = addCreatureReady(player2, new BalduvianBears());
         Permanent dryad = readyAttacker(player1);
 

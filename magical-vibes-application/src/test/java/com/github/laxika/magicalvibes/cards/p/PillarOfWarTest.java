@@ -143,7 +143,7 @@ class PillarOfWarTest extends BaseCardTest {
     void cannotAttackWhileTappedEvenWhenEnchanted() {
         Permanent pillar = addPillarReady();
         attachRadiance(pillar);
-        pillar.setTapped(true);
+        pillar.tap();
 
         assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class)

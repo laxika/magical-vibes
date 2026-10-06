@@ -52,7 +52,7 @@ class LeafGilderTest extends BaseCardTest {
         assertThat(gilder.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
 
-        gilder.setTapped(false);
+        gilder.untap();
         harness.activateAbility(player1, 0, 0, null, null);
 
         assertThat(gilder.isTapped()).isTrue();

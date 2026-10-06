@@ -90,7 +90,7 @@ class PentadPrismTest extends BaseCardTest {
     void tappedPrismCanProduceEachColorRepeatedlyUntilCountersRunOut(ManaColor color) {
         Permanent prism = harness.addToBattlefieldAndReturn(player1, new PentadPrism());
         prism.setCounterCount(CounterType.CHARGE, 2);
-        prism.setTapped(true);
+        prism.tap();
         ManaPool pool = harness.getGameData().playerManaPools.get(player1.getId());
         int before = pool.get(color);
 

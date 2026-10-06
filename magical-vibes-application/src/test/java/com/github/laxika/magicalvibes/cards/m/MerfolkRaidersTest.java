@@ -67,7 +67,7 @@ class MerfolkRaidersTest extends BaseCardTest {
     @DisplayName("Tapped Merfolk Raiders stays tapped when phasing out and untaps when phasing in")
     void phasingOccursBeforeUntapping() {
         Permanent raiders = addCreatureReady(player1, new MerfolkRaiders());
-        raiders.setTapped(true);
+        raiders.tap();
 
         harness.performUntapStep(player1);
 

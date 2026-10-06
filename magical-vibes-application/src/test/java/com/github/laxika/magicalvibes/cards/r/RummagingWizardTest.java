@@ -87,7 +87,7 @@ class RummagingWizardTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(topCard));
         prepareWizard();
         var wizard = gd.playerBattlefields.get(player1.getId()).getFirst();
-        wizard.setTapped(true);
+        wizard.tap();
         wizard.setSummoningSick(true);
         addActivationMana();
 

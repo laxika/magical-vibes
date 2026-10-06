@@ -80,7 +80,7 @@ class ObekaSplitterOfSecondsTest extends BaseCardTest {
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new ObekaSplitterOfSeconds()));
         obeka.setAttacking(true);
-        obeka.setTapped(true);
+        obeka.tap();
 
         resolveCombat();
         harness.passUntil(player1, TurnStep.END_OF_COMBAT);

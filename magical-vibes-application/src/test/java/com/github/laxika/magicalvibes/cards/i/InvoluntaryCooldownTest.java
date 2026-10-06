@@ -79,7 +79,7 @@ class InvoluntaryCooldownTest extends BaseCardTest {
     @Test
     void alreadyTappedOwnCreatureReceivesStunCountersAndMissesTwoUntaps() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        creature.setTapped(true);
+        creature.tap();
         harness.setHand(player1, List.of(new InvoluntaryCooldown()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);

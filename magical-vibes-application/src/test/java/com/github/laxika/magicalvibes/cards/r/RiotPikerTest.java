@@ -93,7 +93,7 @@ class RiotPikerTest extends BaseCardTest {
     @DisplayName("A tapped Riot Piker is not required to attack")
     void tappedPikerDoesNotHaveToAttack() {
         Permanent piker = addCreatureReady(player1, new RiotPiker());
-        piker.setTapped(true);
+        piker.tap();
         addCreatureReady(player1, new KraulWarrior());
         harness.setLife(player2, 20);
 

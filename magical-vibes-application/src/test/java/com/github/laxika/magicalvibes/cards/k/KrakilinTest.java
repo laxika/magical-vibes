@@ -99,7 +99,7 @@ class KrakilinTest extends BaseCardTest {
     @DisplayName("A tapped, summoning-sick Krakilin can activate regeneration")
     void canRegenerateWhileTappedAndSummoningSick() {
         Permanent krakilin = addKrakilinReady(player1, 2);
-        krakilin.setTapped(true);
+        krakilin.tap();
         krakilin.setSummoningSick(true);
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);

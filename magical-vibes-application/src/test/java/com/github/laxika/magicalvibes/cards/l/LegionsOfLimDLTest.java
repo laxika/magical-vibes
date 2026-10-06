@@ -163,7 +163,7 @@ class LegionsOfLimDLTest extends BaseCardTest {
     @DisplayName("A tapped snow Swamp still prevents blocking")
     void cantBeBlockedWithTappedSnowSwamp() {
         Permanent swamp = harness.addToBattlefieldAndReturn(player2, new SnowCoveredSwamp());
-        swamp.setTapped(true);
+        swamp.tap();
         Permanent blocker = addCreatureReady(player2, new BalduvianBears());
         Permanent legions = readyAttacker(player1);
 

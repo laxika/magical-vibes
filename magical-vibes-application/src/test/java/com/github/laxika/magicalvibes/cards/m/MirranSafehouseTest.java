@@ -82,7 +82,7 @@ class MirranSafehouseTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
 
-        safehouse.setTapped(false);
+        safehouse.untap();
         harness.setGraveyard(player2, List.of());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

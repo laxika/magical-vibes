@@ -81,7 +81,7 @@ class MarkovDreadknightTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         Permanent dreadknight = harness.addToBattlefieldAndReturn(player1, new MarkovDreadknight());
-        dreadknight.setTapped(true);
+        dreadknight.tap();
         dreadknight.setSummoningSick(true);
         harness.setHand(player1, List.of(new MarkovDreadknight(), new MarkovDreadknight()));
         harness.addMana(player1, ManaColor.BLACK, 6);

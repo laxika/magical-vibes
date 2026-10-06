@@ -52,8 +52,8 @@ class GushTest extends BaseCardTest {
     void returnsTappedIslandsAsACostBeforeDrawing() {
         Permanent firstIsland = harness.addToBattlefieldAndReturn(player1, new Island());
         Permanent secondIsland = harness.addToBattlefieldAndReturn(player1, new Island());
-        firstIsland.setTapped(true);
-        secondIsland.setTapped(true);
+        firstIsland.tap();
+        secondIsland.tap();
         harness.setHand(player1, List.of(new Gush()));
         harness.setLibrary(player1, List.of(new Forest(), new Forest()));
 

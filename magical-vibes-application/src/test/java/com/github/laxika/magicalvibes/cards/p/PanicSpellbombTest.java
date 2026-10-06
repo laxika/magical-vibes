@@ -193,7 +193,7 @@ class PanicSpellbombTest extends BaseCardTest {
     @DisplayName("Tapped spellbomb cannot pay its activation cost")
     void tappedSpellbombCannotActivate() {
         Permanent spellbomb = harness.addToBattlefieldAndReturn(player1, new PanicSpellbomb());
-        spellbomb.setTapped(true);
+        spellbomb.tap();
         UUID targetId = harness.addToBattlefieldAndReturn(player2, new CopperMyr()).getId();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetId))

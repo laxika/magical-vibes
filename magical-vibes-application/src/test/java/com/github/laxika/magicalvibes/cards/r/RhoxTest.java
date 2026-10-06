@@ -154,7 +154,7 @@ class RhoxTest extends BaseCardTest {
     @DisplayName("Regeneration can be activated while tapped and does not immediately heal damage")
     void tappedRhoxCanCreateShieldWithoutHealingDamage() {
         Permanent rhox = addCreatureReady(player1, new Rhox());
-        rhox.setTapped(true);
+        rhox.tap();
         rhox.setMarkedDamage(2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.GREEN, 1);

@@ -143,7 +143,7 @@ class SeasonedTacticianTest extends BaseCardTest {
     @Test
     void canActivateWhileTappedAndSummoningSick() {
         Permanent tactician = harness.addToBattlefieldAndReturn(player1, new SeasonedTactician());
-        tactician.setTapped(true);
+        tactician.tap();
         tactician.setSummoningSick(true);
         Permanent source = addCreatureReady(player2, new AesthirGlider());
         harness.addMana(player1, ManaColor.COLORLESS, 3);

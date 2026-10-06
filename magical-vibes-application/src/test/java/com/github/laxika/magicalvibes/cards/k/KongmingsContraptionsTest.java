@@ -136,7 +136,7 @@ class KongmingsContraptionsTest extends BaseCardTest {
     void cannotActivateWhileTapped() {
         harness.forceActivePlayer(player1);
         Permanent attacker = addAttackerTargeting(player1, player2);
-        addContraptionsReady(player2).setTapped(true);
+        addContraptionsReady(player2).tap();
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
 
         assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, attacker.getId()))

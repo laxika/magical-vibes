@@ -60,7 +60,7 @@ class MoxJasperTest extends BaseCardTest {
     void addsEachColorImmediatelyAndTaps(ManaColor color) {
         var jasper = harness.addToBattlefieldAndReturn(player1, new MoxJasper());
         var dragon = harness.addToBattlefieldAndReturn(player1, new DragonWhelp());
-        dragon.setTapped(true);
+        dragon.tap();
 
         harness.activateAbility(player1, 0, null, null);
 

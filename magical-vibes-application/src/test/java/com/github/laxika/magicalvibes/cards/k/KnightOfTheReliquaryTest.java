@@ -140,7 +140,7 @@ class KnightOfTheReliquaryTest extends BaseCardTest {
             int initialPower = gqs.getEffectivePower(gd, knight);
             int initialToughness = gqs.getEffectiveToughness(gd, knight);
             Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
-            forest.setTapped(true);
+            forest.tap();
             harness.setLibrary(player1, List.of(new ReliquaryTower()));
 
             harness.activateAbility(player1, 0, null, null);
@@ -189,7 +189,7 @@ class KnightOfTheReliquaryTest extends BaseCardTest {
         @Test
         void cannotActivateWhileTapped() {
             Permanent knight = addKnight(player1);
-            knight.setTapped(true);
+            knight.tap();
             harness.addToBattlefield(player1, new Forest());
 
             assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

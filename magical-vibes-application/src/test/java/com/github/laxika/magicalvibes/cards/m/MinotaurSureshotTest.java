@@ -84,7 +84,7 @@ class MinotaurSureshotTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent sureshot = harness.addToBattlefieldAndReturn(player1, new MinotaurSureshot());
         sureshot.setSummoningSick(true);
-        sureshot.setTapped(true);
+        sureshot.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.RED, 1);
 

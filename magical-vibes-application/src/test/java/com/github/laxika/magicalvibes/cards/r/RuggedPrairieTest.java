@@ -103,7 +103,7 @@ class RuggedPrairieTest extends BaseCardTest {
     @DisplayName("Neither mana ability can be activated while Rugged Prairie is tapped")
     void tappedLandCannotActivate(int abilityIndex) {
         Permanent land = harness.addToBattlefieldAndReturn(player1, new RuggedPrairie());
-        land.setTapped(true);
+        land.tap();
         harness.addMana(player1, ManaColor.RED, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, abilityIndex, null, null))

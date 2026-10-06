@@ -121,7 +121,7 @@ class KelloggDangerousMindTest extends BaseCardTest {
     @DisplayName("A tapped, newly controlled Kellogg can activate without tapping or paying mana")
     void tappedSummoningSickKelloggCanActivate() {
         Permanent kellogg = harness.addToBattlefieldAndReturn(player1, new KelloggDangerousMind());
-        kellogg.setTapped(true);
+        kellogg.tap();
         kellogg.setSummoningSick(true);
         Permanent target = addCreatureReady(player2, new DogmeatEverLoyal());
         addTreasures(5);

@@ -43,7 +43,7 @@ class SelesnyaGuildmageTest extends BaseCardTest {
     void tokenAbilityDoesNotRequireTappingOrHaste() {
         Permanent guildmage = addReadyGuildmage(player1);
         guildmage.setSummoningSick(true);
-        guildmage.setTapped(true);
+        guildmage.tap();
         addMana(ManaColor.COLORLESS, 6);
         addMana(ManaColor.GREEN, 2);
 

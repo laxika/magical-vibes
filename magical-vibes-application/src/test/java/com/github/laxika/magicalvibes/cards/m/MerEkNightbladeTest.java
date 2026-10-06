@@ -129,7 +129,7 @@ class MerEkNightbladeTest extends BaseCardTest {
     @DisplayName("Outlast cannot be activated when already tapped")
     void outlastRequiresUntappedCreature() {
         Permanent nightblade = addNightbladeReady(player1);
-        nightblade.setTapped(true);
+        nightblade.tap();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();

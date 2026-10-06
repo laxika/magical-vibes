@@ -146,7 +146,7 @@ class JovensToolsTest extends BaseCardTest {
         harness.activateAbility(player2, 0, null, tools.getId());
         resolveAllTriggers();
         harness.assertInGraveyard(player1, "Joven's Tools");
-        blocker.setTapped(false);
+        blocker.untap();
         attacker.setAttacking(true);
         prepareDeclareBlockers();
 

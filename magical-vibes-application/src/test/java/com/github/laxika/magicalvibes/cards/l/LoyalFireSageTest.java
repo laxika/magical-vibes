@@ -67,7 +67,7 @@ class LoyalFireSageTest extends BaseCardTest {
     void tappedSummoningSickSageCanActivateRepeatedly() {
         Permanent sage = harness.addToBattlefieldAndReturn(player1, new LoyalFireSage());
         sage.setSummoningSick(true);
-        sage.setTapped(true);
+        sage.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 10);
 
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(sage), 0, null, null);

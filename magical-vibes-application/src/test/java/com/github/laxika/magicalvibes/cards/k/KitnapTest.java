@@ -107,7 +107,7 @@ class KitnapTest extends BaseCardTest {
     @Test
     void alreadyTappedCreatureStillGetsThreeStunCountersThatDelayUntapping() {
         Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        bear.setTapped(true);
+        bear.tap();
 
         cast(bear, false);
 

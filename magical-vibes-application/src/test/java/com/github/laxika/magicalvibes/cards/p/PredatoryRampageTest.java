@@ -127,7 +127,7 @@ class PredatoryRampageTest extends BaseCardTest {
     void tappedCreatureNeedNotBlock() {
         Permanent attacker = addCreatureReady(player1, new WalkingCorpse());
         Permanent tapped = addCreatureReady(player2, new WalkingCorpse());
-        tapped.setTapped(true);
+        tapped.tap();
         castRampage();
 
         beginCombat(attacker);

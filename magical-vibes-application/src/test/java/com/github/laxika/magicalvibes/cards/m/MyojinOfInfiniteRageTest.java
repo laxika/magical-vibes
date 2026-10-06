@@ -98,7 +98,7 @@ class MyojinOfInfiniteRageTest extends BaseCardTest {
     void counterIsRemovedAsActivationCost() {
         Permanent myojin = harness.enterBattlefieldAndReturn(player1, new MyojinOfInfiniteRage());
         myojin.setCounterCount(CounterType.DIVINITY, 1);
-        myojin.setTapped(true);
+        myojin.tap();
         harness.addToBattlefieldAndReturn(player2, new Mountain());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

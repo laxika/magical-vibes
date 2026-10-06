@@ -222,7 +222,7 @@ class GwafaHazidProfiteerTest extends BaseCardTest {
         assertThat(gwafa.isTapped()).isTrue();
         harness.passBothPriorities();
 
-        gwafa.setTapped(false);
+        gwafa.untap();
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 

@@ -155,7 +155,7 @@ class GolemFoundryTest extends BaseCardTest {
     void tappedFoundryCanActivateTwiceBeforeEitherAbilityResolves() {
         Permanent foundry = harness.addToBattlefieldAndReturn(player1, new GolemFoundry());
         foundry.setCounterCount(CounterType.CHARGE, 6);
-        foundry.setTapped(true);
+        foundry.tap();
 
         harness.activateAbility(player1, 0, null, null);
         assertThat(foundry.getCounterCount(CounterType.CHARGE)).isEqualTo(3);

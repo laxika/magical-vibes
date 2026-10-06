@@ -110,7 +110,7 @@ class OakaTravelingMerchantTest extends BaseCardTest {
         assertThat(oaka.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
 
         oaka.setSummoningSick(false);
-        oaka.setTapped(true);
+        oaka.tap();
 
         assertThatThrownBy(() -> activateOaka(oaka)).isInstanceOf(IllegalStateException.class);
         assertThat(oaka.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);

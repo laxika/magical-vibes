@@ -1,4 +1,4 @@
-﻿package com.github.laxika.magicalvibes.cards.r;
+package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.b.BraveTheWilds;
 import com.github.laxika.magicalvibes.cards.c.CandyTrail;

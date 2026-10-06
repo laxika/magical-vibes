@@ -104,7 +104,7 @@ class KravensCatsTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent cats = harness.addToBattlefieldAndReturn(player1, new KravensCats());
         cats.setSummoningSick(true);
-        cats.setTapped(true);
+        cats.tap();
         addManaForAbility(player1);
 
         harness.activateAbility(player1, 0, null, null);

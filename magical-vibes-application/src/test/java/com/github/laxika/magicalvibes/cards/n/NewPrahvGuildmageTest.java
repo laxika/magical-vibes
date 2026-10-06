@@ -187,7 +187,7 @@ class NewPrahvGuildmageTest extends BaseCardTest {
     @DisplayName("Detain does not prevent untapping")
     void detainedCreatureCanUntap() {
         Permanent creature = detain(new DrudgeBeetle());
-        creature.setTapped(true);
+        creature.tap();
 
         harness.performUntapStep(player2);
 

@@ -156,7 +156,7 @@ class NezumiBoneReaderTest extends BaseCardTest {
     @Test
     @DisplayName("A tapped, summoning-sick Bone-Reader can activate in the postcombat main phase")
     void canActivateWhileTappedAndSummoningSick() {
-        harness.addToBattlefieldAndReturn(player1, new NezumiBoneReader()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new NezumiBoneReader()).tap();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.addMana(player1, ManaColor.BLACK, 1);

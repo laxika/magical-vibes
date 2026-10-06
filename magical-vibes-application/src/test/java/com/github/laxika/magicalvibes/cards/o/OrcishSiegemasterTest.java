@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.cards.o;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 import com.github.laxika.magicalvibes.cards.b.BilboUnexpectedAdventurer;
 import com.github.laxika.magicalvibes.cards.g.GreatGoblinFoulHearted;
@@ -58,7 +59,7 @@ class OrcishSiegemasterTest extends BaseCardTest {
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
                 () -> declareAttackers(List.of(0)));
         assertThat(gd.stack).hasSize(1);
-        goblin.setPlusOnePlusOneCounters(2);
+        goblin.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         resolveAllTriggers();
 
         assertThat(siegemaster.getPowerModifier()).isEqualTo(5);
@@ -71,9 +72,9 @@ class OrcishSiegemasterTest extends BaseCardTest {
     @Test
     void ignoresOpposingPowerAndIncludesItsOwnPower() {
         Permanent siegemaster = addCreatureReady(player1, new OrcishSiegemaster());
-        siegemaster.setPlusOnePlusOneCounters(2);
+        siegemaster.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         Permanent opponent = addCreatureReady(player2, new GreatGoblinFoulHearted());
-        opponent.setPlusOnePlusOneCounters(4);
+        opponent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 4);
 
         declareAttackers(List.of(0));
         resolveAllTriggers();

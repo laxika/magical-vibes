@@ -61,7 +61,7 @@ class JenaraAsuraOfWarTest extends BaseCardTest {
     void activatesWhileTappedAndSummoningSick() {
         Permanent jenara = harness.addToBattlefieldAndReturn(player1, new JenaraAsuraOfWar());
         jenara.setSummoningSick(true);
-        jenara.setTapped(true);
+        jenara.tap();
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.activateAbility(player1, 0, null, null);

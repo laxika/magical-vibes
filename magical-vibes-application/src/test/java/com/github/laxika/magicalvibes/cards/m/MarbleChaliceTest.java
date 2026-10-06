@@ -81,7 +81,7 @@ class MarbleChaliceTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        chalice.setTapped(false);
+        chalice.untap();
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 

@@ -198,7 +198,7 @@ class PrisonTermTest extends BaseCardTest {
     @DisplayName("Enchanted creature cannot activate its untap ability")
     void enchantedCreatureCannotActivateNonManaAbility() {
         Permanent druid = addCreatureReady(player1, new DevotedDruid());
-        druid.setTapped(true);
+        druid.tap();
         attachedPrisonTerm(player2, druid);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))

@@ -77,7 +77,7 @@ class HammerheadMaggiaBossTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent hammerhead = harness.addToBattlefieldAndReturn(player1, new HammerheadMaggiaBoss());
         hammerhead.setSummoningSick(true);
-        hammerhead.setTapped(true);
+        hammerhead.tap();
         harness.addToBattlefield(player1, new Spellbook());
 
         harness.activateAbility(player1, 0, null, null);

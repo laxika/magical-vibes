@@ -134,7 +134,7 @@ class LordMagnusTest extends BaseCardTest {
         harness.addToBattlefield(player2, new LordMagnus());
         Permanent attacker = addAttacker(new RighteousAvengers());
         Permanent blocker = addCreatureReady(player2, new DurkwoodBoars());
-        blocker.setTapped(true);
+        blocker.tap();
 
         prepareDeclareBlockers();
 

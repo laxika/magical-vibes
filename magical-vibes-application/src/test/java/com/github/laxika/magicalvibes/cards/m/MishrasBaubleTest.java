@@ -170,7 +170,7 @@ class MishrasBaubleTest extends BaseCardTest {
     @DisplayName("A tapped Bauble cannot pay its tap cost")
     void tappedBaubleCannotActivate() {
         Permanent bauble = addBauble();
-        bauble.setTapped(true);
+        bauble.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);

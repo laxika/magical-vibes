@@ -86,7 +86,7 @@ class PainKamiTest extends BaseCardTest {
     @DisplayName("A tapped, summoning-sick Pain Kami can activate its ability")
     void canActivateWhileTappedAndSummoningSick() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new PainKami());
-        source.setTapped(true);
+        source.tap();
         source.setSummoningSick(true);
         Permanent target = harness.addToBattlefieldAndReturn(player2, new RoninHoundmaster());
         harness.addMana(player1, ManaColor.RED, 1);

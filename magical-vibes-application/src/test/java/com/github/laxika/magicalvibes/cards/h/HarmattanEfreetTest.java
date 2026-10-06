@@ -119,7 +119,7 @@ class HarmattanEfreetTest extends BaseCardTest {
         Permanent efreet = addCreatureReady(player1, new HarmattanEfreet());
         Permanent firstTarget = addCreatureReady(player1, new RagingGoblin());
         Permanent secondTarget = addCreatureReady(player2, new RagingGoblin());
-        efreet.setTapped(true);
+        efreet.tap();
         addAbilityMana(player1);
         addAbilityMana(player1);
 

@@ -89,7 +89,7 @@ class JeeringHomunculusTest extends BaseCardTest {
     void tappedGoadedCreatureNeedNotAttack() {
         Permanent bears = addCreatureReady(player2, new GrizzlyBears());
         resolveGoad(bears);
-        bears.setTapped(true);
+        bears.tap();
 
         declareAttackers(player2, List.of());
 

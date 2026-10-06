@@ -288,9 +288,9 @@ class OvinomancerTest extends BaseCardTest {
     void returnsTappedBasicLandsToTheirOwners() {
         Island borrowedIsland = new Island();
         borrowedIsland.setOwnerId(player2.getId());
-        harness.addToBattlefieldAndReturn(player1, borrowedIsland).setTapped(true);
-        harness.addToBattlefieldAndReturn(player1, new Plains()).setTapped(true);
-        harness.addToBattlefieldAndReturn(player1, new Forest()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, borrowedIsland).tap();
+        harness.addToBattlefieldAndReturn(player1, new Plains()).tap();
+        harness.addToBattlefieldAndReturn(player1, new Forest()).tap();
         castOvinomancer();
 
         harness.handleMayAbilityChosen(player1, true);

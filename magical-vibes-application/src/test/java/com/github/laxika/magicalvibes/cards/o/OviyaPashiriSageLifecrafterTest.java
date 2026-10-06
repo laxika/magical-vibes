@@ -72,7 +72,7 @@ class OviyaPashiriSageLifecrafterTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.activateAbility(player1, indexOf(oviya), 0, null, null);
         harness.passBothPriorities();
-        oviya.setTapped(false);
+        oviya.untap();
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.activateAbility(player1, indexOf(oviya), 1, null, null);
@@ -123,7 +123,7 @@ class OviyaPashiriSageLifecrafterTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, construct)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, construct)).isEqualTo(1);
 
-        oviya.setTapped(false);
+        oviya.untap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.activateAbility(player1, indexOf(oviya), 0, null, null);

@@ -93,7 +93,7 @@ class GraypeltRefugeTest extends BaseCardTest {
     @DisplayName("A tapped refuge cannot activate its mana ability")
     void tappedRefugeCannotProduceMana() {
         Permanent refuge = addReadyRefuge();
-        refuge.setTapped(true);
+        refuge.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);

@@ -127,7 +127,7 @@ class OriginOfCaptainAmericaTest extends BaseCardTest {
     @Test
     void chapterIIIStunsAnAlreadyTappedCreatureAndSagaIsSacrificedAfterResolution() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        target.setTapped(true);
+        target.tap();
         Permanent saga = addSagaWithLore(2);
 
         triggerNextChapter();

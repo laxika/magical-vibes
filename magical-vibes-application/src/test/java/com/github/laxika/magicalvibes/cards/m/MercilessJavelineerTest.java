@@ -108,7 +108,7 @@ class MercilessJavelineerTest extends BaseCardTest {
     @DisplayName("Tapped and summoning-sick Javelineer can target itself")
     void tappedSummoningSickSourceCanTargetItself() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new MercilessJavelineer());
-        source.setTapped(true);
+        source.tap();
         source.setSummoningSick(true);
         harness.setHand(player1, List.of(new EdificeOfAuthority()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);

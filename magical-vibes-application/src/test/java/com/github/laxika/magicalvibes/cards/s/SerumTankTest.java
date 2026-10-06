@@ -89,7 +89,7 @@ class SerumTankTest extends BaseCardTest {
     void cannotActivateWhileTapped() {
         Permanent tank = harness.addToBattlefieldAndReturn(player1, new SerumTank());
         tank.setCounterCount(CounterType.CHARGE, 1);
-        tank.setTapped(true);
+        tank.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))

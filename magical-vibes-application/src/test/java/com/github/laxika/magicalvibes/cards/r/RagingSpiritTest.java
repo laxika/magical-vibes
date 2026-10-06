@@ -82,7 +82,7 @@ class RagingSpiritTest extends BaseCardTest {
     @DisplayName("A tapped creature can activate using colored mana for the generic cost")
     void tappedCreatureCanActivateWithColoredMana() {
         Permanent spirit = harness.addToBattlefieldAndReturn(player1, new RagingSpirit());
-        spirit.setTapped(true);
+        spirit.tap();
         harness.addMana(player1, ManaColor.RED, 2);
 
         harness.activateAbility(player1, 0, null, null);

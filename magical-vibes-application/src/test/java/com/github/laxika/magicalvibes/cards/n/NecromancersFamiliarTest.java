@@ -91,7 +91,7 @@ class NecromancersFamiliarTest extends BaseCardTest {
     @DisplayName("A tapped Familiar can activate its ability")
     void canActivateWhileTapped() {
         Permanent familiar = harness.addToBattlefieldAndReturn(player1, new NecromancersFamiliar());
-        familiar.setTapped(true);
+        familiar.tap();
         harness.setHand(player1, List.of(new NecromancersFamiliar()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 

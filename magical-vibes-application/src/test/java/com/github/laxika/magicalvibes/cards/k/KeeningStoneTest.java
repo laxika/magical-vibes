@@ -64,7 +64,7 @@ class KeeningStoneTest extends BaseCardTest {
     @DisplayName("A tapped Stone cannot activate again")
     void cannotActivateWhileTapped() {
         Permanent stone = harness.addToBattlefieldAndReturn(player1, new KeeningStone());
-        stone.setTapped(true);
+        stone.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 5);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))

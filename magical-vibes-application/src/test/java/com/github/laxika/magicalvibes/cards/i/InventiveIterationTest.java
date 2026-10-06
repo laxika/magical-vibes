@@ -322,7 +322,7 @@ class InventiveIterationTest extends BaseCardTest {
     @Test
     void chapterIIIReturnsANewPermanentWithoutLoreCounters() {
         Permanent original = addSaga(2);
-        original.setTapped(true);
+        original.tap();
 
         advanceToNextChapter();
         harness.passBothPriorities();

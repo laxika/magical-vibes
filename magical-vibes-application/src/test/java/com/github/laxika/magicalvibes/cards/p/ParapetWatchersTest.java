@@ -112,7 +112,7 @@ class ParapetWatchersTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent watchers = harness.addToBattlefieldAndReturn(player1, new ParapetWatchers());
         watchers.setSummoningSick(true);
-        watchers.setTapped(true);
+        watchers.tap();
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, null, null);

@@ -154,7 +154,7 @@ class RunedArchTest extends BaseCardTest {
     @Test
     void rejectsTappedArch() {
         Permanent arch = harness.addToBattlefieldAndReturn(player1, new RunedArch());
-        arch.setTapped(true);
+        arch.tap();
         Permanent target = harness.addToBattlefieldAndReturn(player1, new Aurochs());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

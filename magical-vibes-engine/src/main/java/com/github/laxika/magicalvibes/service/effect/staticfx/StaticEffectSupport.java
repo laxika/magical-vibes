@@ -99,6 +99,7 @@ public class StaticEffectSupport {
             CardSubtype.CLUE,
             CardSubtype.FOOD,
             CardSubtype.FORTIFICATION,
+            CardSubtype.GOLD,
             CardSubtype.JUNK,
             CardSubtype.LANDER,
             CardSubtype.MAP,

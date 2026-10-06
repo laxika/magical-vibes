@@ -162,8 +162,8 @@ class InterplanarBeaconTest extends BaseCardTest {
     void eachBeaconTriggersEvenWhenTapped() {
         var first = harness.addToBattlefieldAndReturn(player1, new InterplanarBeacon());
         var second = harness.addToBattlefieldAndReturn(player1, new InterplanarBeacon());
-        first.setTapped(true);
-        second.setTapped(true);
+        first.tap();
+        second.tap();
         harness.setHand(player1, List.of(new NarsetParterOfVeils()));
         harness.addMana(player1, ManaColor.BLUE, 3);
         harness.setLife(player1, 10);

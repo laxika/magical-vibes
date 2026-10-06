@@ -1,4 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
+import java.util.Set;
+import com.github.laxika.magicalvibes.model.CardType;
 
 import com.github.laxika.magicalvibes.cards.m.MindStone;
 import com.github.laxika.magicalvibes.model.Card;
@@ -172,7 +174,7 @@ class PsychomancerTest extends BaseCardTest {
     @Test
     void faceDownPsychomancerDoesNotTriggerForAnotherArtifact() {
         Permanent psychomancer = harness.addToBattlefieldAndReturn(player1, new Psychomancer());
-        psychomancer.setFaceDown(true);
+        psychomancer.setFaceDown(2, 2, Set.of(CardType.CREATURE));
         Permanent artifact = harness.addToBattlefieldAndReturn(player1, new MindStone());
         harness.setLife(player1, 10);
         harness.setLife(player2, 20);

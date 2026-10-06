@@ -131,7 +131,7 @@ class SetessanGriffinTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent griffin = harness.addToBattlefieldAndReturn(player1, new SetessanGriffin());
         griffin.setSummoningSick(true);
-        griffin.setTapped(true);
+        griffin.tap();
         addActivationMana(player1);
 
         harness.activateAbility(player1, 0, null, null);

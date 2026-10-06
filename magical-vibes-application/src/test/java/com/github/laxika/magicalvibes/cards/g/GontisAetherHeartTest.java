@@ -69,7 +69,7 @@ class GontisAetherHeartTest extends BaseCardTest {
     @Test
     void paysCostsImmediatelyAndOnlyGrantsTheTurnOnResolutionDuringOpponentsTurn() {
         Permanent heart = harness.addToBattlefieldAndReturn(player1, new GontisAetherHeart());
-        heart.setTapped(true);
+        heart.tap();
         gd.playerEnergyCounters.put(player1.getId(), 10);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.END_STEP);

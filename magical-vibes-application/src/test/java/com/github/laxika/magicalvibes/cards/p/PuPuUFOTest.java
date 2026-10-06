@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.cards.p;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GongagaReactorTown;
@@ -144,8 +145,8 @@ class PuPuUFOTest extends BaseCardTest {
     @Test
     void manaAbilityCanBeActivatedWhileSummoningSickAndTappedWithNoTowns() {
         Permanent ufo = harness.addToBattlefieldAndReturn(player1, new PuPuUFO());
-        ufo.setTapped(true);
-        ufo.setPlusOnePlusOneCounters(1);
+        ufo.tap();
+        ufo.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.activateAbility(player1, 0, 1, null, null);

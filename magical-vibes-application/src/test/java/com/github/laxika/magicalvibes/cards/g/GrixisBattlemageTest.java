@@ -100,7 +100,7 @@ class GrixisBattlemageTest extends BaseCardTest {
     @Test
     void cannotActivateEitherAbilityWhileTapped() {
         Permanent source = addCreatureReady(player1, new GrixisBattlemage());
-        source.setTapped(true);
+        source.tap();
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.RED, 1);
 

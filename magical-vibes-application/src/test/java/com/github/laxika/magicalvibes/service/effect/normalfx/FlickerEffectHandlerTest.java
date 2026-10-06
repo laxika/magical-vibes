@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryBatchSupport;
 import com.github.laxika.magicalvibes.service.battlefield.CloneService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -78,6 +79,7 @@ class FlickerEffectHandlerTest {
     @Mock private GraveyardReturnSupport graveyardReturnSupport;
     @Mock private GrantKeywordEffectHandler grantKeywordEffectHandler;
     @Mock private CloneService cloneService;
+    @Mock private BattlefieldEntryBatchSupport battlefieldEntryBatchSupport;
     @InjectMocks
     private ExileSupport exileSupport;
 
@@ -109,7 +111,7 @@ class FlickerEffectHandlerTest {
                 gameLogService, permanentRemovalService, battlefieldEntryService,
                 drawService, amountEvaluationService, graveyardReturnSupport, grantKeywordEffectHandler,
                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.input.PlayerInputService.class),
-                cloneService);
+                cloneService, battlefieldEntryBatchSupport);
     }
 
     private Card createCreatureCard(String name) {

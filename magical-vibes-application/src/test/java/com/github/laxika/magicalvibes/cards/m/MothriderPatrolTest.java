@@ -80,7 +80,7 @@ class MothriderPatrolTest extends BaseCardTest {
     void canTargetAnAlreadyTappedCreature() {
         Permanent patrol = addReadyPatrol(player1);
         Permanent target = addReadyPatrol(player2);
-        target.setTapped(true);
+        target.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
@@ -96,7 +96,7 @@ class MothriderPatrolTest extends BaseCardTest {
     void cannotActivateWhileTapped() {
         Permanent patrol = addReadyPatrol(player1);
         Permanent target = addReadyPatrol(player2);
-        patrol.setTapped(true);
+        patrol.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.addMana(player1, ManaColor.WHITE, 1);
 

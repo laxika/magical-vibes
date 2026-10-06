@@ -223,7 +223,7 @@ class IdolOfEnduranceTest extends BaseCardTest {
         gd.addToExile(player1.getId(), third, idol.getId());
         addActivationMana();
         activateIdol(idol);
-        idol.setTapped(false);
+        idol.untap();
         addActivationMana();
         activateIdol(idol);
 

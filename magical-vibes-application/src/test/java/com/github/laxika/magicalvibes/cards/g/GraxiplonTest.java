@@ -94,7 +94,7 @@ class GraxiplonTest extends BaseCardTest {
     void tappedSharedTypeCreaturesAllowAnUnrelatedSingleBlocker() {
         Permanent graxiplon = addAttackingGraxiplon();
         for (int i = 0; i < 3; i++) {
-            addCreatureReady(player2, new GlorySeeker()).setTapped(true);
+            addCreatureReady(player2, new GlorySeeker()).tap();
         }
         Permanent blocker = addCreatureReady(player2, new ElvishWarrior());
 

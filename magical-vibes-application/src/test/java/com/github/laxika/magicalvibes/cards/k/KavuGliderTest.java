@@ -101,7 +101,7 @@ class KavuGliderTest extends BaseCardTest {
     void abilitiesWorkWhileTappedAndSummoningSick() {
         Permanent glider = harness.addToBattlefieldAndReturn(player1, new KavuGlider());
         glider.setSummoningSick(true);
-        glider.setTapped(true);
+        glider.tap();
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
 

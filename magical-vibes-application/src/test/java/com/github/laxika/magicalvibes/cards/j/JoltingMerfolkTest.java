@@ -121,7 +121,7 @@ class JoltingMerfolkTest extends BaseCardTest {
         harness.castFromHand(player1, new JoltingMerfolk(), "{2}{U}{U}");
         harness.passBothPriorities();
         Permanent merfolk = findPermanent(player1, "Jolting Merfolk");
-        merfolk.setTapped(true);
+        merfolk.tap();
 
         harness.activateAbility(player1, 0, null, merfolk.getId());
 

@@ -80,7 +80,7 @@ class IlluminatorVirtuosoTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         assertThat(virtuoso.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(other.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(gd.playerLibraries.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.stack).hasSize(1);
     }

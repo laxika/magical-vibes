@@ -82,7 +82,7 @@ class LongtuskCubTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent cub = harness.addToBattlefieldAndReturn(player1, new LongtuskCub());
         cub.setSummoningSick(true);
-        cub.setTapped(true);
+        cub.tap();
         gd.playerEnergyCounters.put(player1.getId(), 2);
 
         harness.activateAbility(player1, 0, null, null);

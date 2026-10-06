@@ -115,7 +115,7 @@ class QuantumMisalignmentTest extends BaseCardTest {
     @Test
     void doesNotCopyCountersOrTappedStatus() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        target.setTapped(true);
+        target.tap();
         target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
         harness.setHand(player1, List.of(new QuantumMisalignment()));
         addMana();

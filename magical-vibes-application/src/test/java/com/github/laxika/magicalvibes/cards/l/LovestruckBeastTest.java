@@ -97,7 +97,7 @@ class LovestruckBeastTest extends BaseCardTest {
     void tapped1x1CreatureEnablesAttack() {
         addCreatureReady(player1, new LovestruckBeast());
         Permanent goblin = addCreatureReady(player1, new RagingGoblin());
-        goblin.setTapped(true);
+        goblin.tap();
 
         assertThatCode(() -> declareAttackers(player1, List.of(0)))
                 .doesNotThrowAnyException();

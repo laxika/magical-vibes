@@ -109,7 +109,7 @@ class ResplendentMentorTest extends BaseCardTest {
     void tappedCreatureCannotActivate() {
         harness.addToBattlefield(player1, new ResplendentMentor());
         Permanent cohort = addCreatureReady(player1, new BallynockCohort());
-        cohort.setTapped(true);
+        cohort.tap();
         int cohortIndex = gd.playerBattlefields.get(player1.getId()).indexOf(cohort);
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 

@@ -141,7 +141,7 @@ class PilferingImpTest extends BaseCardTest {
     @Test
     @DisplayName("A tapped Imp cannot activate its ability")
     void cannotActivateWhileTapped() {
-        addReadyPilferingImp(player1).setTapped(true);
+        addReadyPilferingImp(player1).tap();
         readyForSorcerySpeed();
         addMana();
 

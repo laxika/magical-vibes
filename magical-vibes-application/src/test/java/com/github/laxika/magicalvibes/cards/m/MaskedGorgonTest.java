@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.cards.a.AnuridBrushhopper;
 import com.github.laxika.magicalvibes.cards.e.EpicStruggle;
 import com.github.laxika.magicalvibes.cards.h.HaplessResearcher;
@@ -20,7 +21,6 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -185,7 +185,7 @@ class MaskedGorgonTest extends BaseCardTest {
         addCreatureReady(player2, new MaskedGorgon());
         declareAttackersAndPrepareBlockers(List.of(1));
 
-        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, Map.of(0, 1)))
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1))))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -195,7 +195,7 @@ class MaskedGorgonTest extends BaseCardTest {
         addCreatureReady(player1, new MaskedGorgon());
         addCreatureReady(player2, new AnuridBrushhopper());
         declareAttackersAndPrepareBlockers(List.of(0));
-        gs.declareBlockers(gd, player2, Map.of(0, 0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
 
         harness.assertOnBattlefield(player2, "Anurid Brushhopper");

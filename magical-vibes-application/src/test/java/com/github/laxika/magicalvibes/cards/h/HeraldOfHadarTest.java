@@ -105,7 +105,7 @@ class HeraldOfHadarTest extends BaseCardTest {
         setRoll(20);
         Permanent herald = harness.addToBattlefieldAndReturn(player1, new HeraldOfHadar());
         herald.setSummoningSick(true);
-        herald.setTapped(true);
+        herald.tap();
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 10);
 

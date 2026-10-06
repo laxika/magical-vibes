@@ -123,7 +123,7 @@ class ReflectingPoolTest extends BaseCardTest {
     void tappedLandStillContributesItsManaType() {
         Permanent pool = harness.addToBattlefieldAndReturn(player1, new ReflectingPool());
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
-        forest.setTapped(true);
+        forest.tap();
 
         harness.activateAbility(player1, 0, null, null);
 

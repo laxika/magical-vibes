@@ -123,8 +123,8 @@ class RefreshingRainTest extends BaseCardTest {
     void tappedLandsAllowAlternateCost() {
         var forest = harness.addToBattlefieldAndReturn(player1, new Forest());
         var swamp = harness.addToBattlefieldAndReturn(player2, new Swamp());
-        forest.setTapped(true);
-        swamp.setTapped(true);
+        forest.tap();
+        swamp.tap();
         harness.setHand(player1, List.of(new RefreshingRain()));
         int before = gd.playerLifeTotals.get(player1.getId());
 

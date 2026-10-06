@@ -263,7 +263,7 @@ class ShapersOfNatureTest extends BaseCardTest {
     @Test
     void counterAbilityWorksWhileSummoningSickAndTapped() {
         Permanent shapers = harness.addToBattlefieldAndReturn(player1, new ShapersOfNature());
-        shapers.setTapped(true);
+        shapers.tap();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.GREEN, 1);

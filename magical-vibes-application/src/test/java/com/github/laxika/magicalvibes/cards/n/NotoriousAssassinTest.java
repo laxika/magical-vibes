@@ -132,7 +132,7 @@ class NotoriousAssassinTest extends BaseCardTest {
     @DisplayName("Cannot activate while tapped")
     void cannotActivateWhileTapped() {
         Permanent assassin = addReadyAssassin(player1);
-        assassin.setTapped(true);
+        assassin.tap();
         harness.setHand(player1, List.of(new Forest()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);

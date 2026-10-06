@@ -72,7 +72,7 @@ class HoofSkulkinTest extends BaseCardTest {
     void repeatedActivationsStackWithoutTapping() {
         Permanent skulkin = harness.addToBattlefieldAndReturn(player1, new HoofSkulkin());
         skulkin.setSummoningSick(true);
-        skulkin.setTapped(true);
+        skulkin.tap();
         Permanent target = harness.addToBattlefieldAndReturn(player1, new NettleSentinel());
         harness.addMana(player1, ManaColor.COLORLESS, 6);
 

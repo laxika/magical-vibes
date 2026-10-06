@@ -85,7 +85,7 @@ class LilianasStewardTest extends BaseCardTest {
     @DisplayName("A tapped Steward cannot pay the tap cost")
     void cannotActivateWhileTapped() {
         Permanent steward = addReadySteward(player1);
-        steward.setTapped(true);
+        steward.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)

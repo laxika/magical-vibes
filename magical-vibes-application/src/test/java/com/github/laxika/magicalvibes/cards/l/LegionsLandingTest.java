@@ -214,7 +214,7 @@ class LegionsLandingTest extends BaseCardTest {
     @DisplayName("Transformation preserves tap status and does not create another entering token")
     void transformationPreservesTapStatusAndDoesNotRepeatEtb() {
         Permanent landing = addLandingReady(player1);
-        landing.setTapped(true);
+        landing.tap();
         addCreatureReady(player1);
         addCreatureReady(player1);
         addCreatureReady(player1);

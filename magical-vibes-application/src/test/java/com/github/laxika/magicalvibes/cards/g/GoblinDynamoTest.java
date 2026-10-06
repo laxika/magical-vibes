@@ -138,7 +138,7 @@ class GoblinDynamoTest extends BaseCardTest {
     @DisplayName("A tapped Dynamo cannot activate either ability")
     void tappedDynamoCannotActivateEitherAbility() {
         Permanent dynamo = addReadyDynamo(player1);
-        dynamo.setTapped(true);
+        dynamo.tap();
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 

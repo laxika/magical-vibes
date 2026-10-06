@@ -179,7 +179,7 @@ class ResilientWandererTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ResilientWanderer());
         Permanent wanderer = findPermanent(player1, "Resilient Wanderer");
         wanderer.setSummoningSick(true);
-        wanderer.setTapped(true);
+        wanderer.tap();
         harness.setHand(player1, List.of(new DwarvenGrunt()));
 
         harness.activateAbility(player1, 0, null, null);

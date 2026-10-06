@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.cards.k.KavuTitan;
 import com.github.laxika.magicalvibes.cards.m.MetathranZombie;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -162,5 +163,9 @@ class ScorchingLavaTest extends BaseCardTest {
         } else {
             harness.castAndResolveInstant(player1, 0, target.getId());
         }
+    }
+
+    private int indexOf(Player player, Permanent permanent) {
+        return gd.playerBattlefields.get(player.getId()).indexOf(permanent);
     }
 }

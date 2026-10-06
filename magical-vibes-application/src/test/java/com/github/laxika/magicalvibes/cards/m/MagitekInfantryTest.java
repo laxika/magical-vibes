@@ -119,7 +119,7 @@ class MagitekInfantryTest extends BaseCardTest {
     @Test
     void canSearchWhileTappedAndSummoningSick() {
         Permanent infantry = harness.addToBattlefieldAndReturn(player1, new MagitekInfantry());
-        infantry.setTapped(true);
+        infantry.tap();
         infantry.setSummoningSick(true);
         MagitekInfantry reinforcement = new MagitekInfantry();
         harness.setLibrary(player1, List.of(reinforcement));

@@ -75,7 +75,7 @@ class LorthosTheTidemakerTest extends BaseCardTest {
         Permanent lorthos = addCreatureReady(player1, new LorthosTheTidemaker());
         Permanent ownForest = harness.addToBattlefieldAndReturn(player1, new Forest());
         Permanent opposingOx = addCreatureReady(player2, new PillarfieldOx());
-        opposingOx.setTapped(true);
+        opposingOx.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 8);
 
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(lorthos)));
@@ -131,10 +131,10 @@ class LorthosTheTidemakerTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
 
-        target.setTapped(false);
+        target.untap();
         harness.performUntapStep(player2);
         assertThat(target.getSkipUntapCount()).isZero();
-        target.setTapped(true);
+        target.tap();
         harness.performUntapStep(player2);
         assertThat(target.isTapped()).isFalse();
     }

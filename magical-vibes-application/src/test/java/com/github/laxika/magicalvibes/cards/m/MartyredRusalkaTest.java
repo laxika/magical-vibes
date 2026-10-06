@@ -102,7 +102,7 @@ class MartyredRusalkaTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent rusalka = harness.addToBattlefieldAndReturn(player1, new MartyredRusalka());
         rusalka.setSummoningSick(true);
-        rusalka.setTapped(true);
+        rusalka.tap();
         Permanent target = addCreatureReady(player2, new GhostWarden());
         harness.addMana(player1, ManaColor.WHITE, 1);
 

@@ -70,7 +70,7 @@ class IncubatorDroneTest extends BaseCardTest {
     void tappedScionCanProduceManaImmediately() {
         castIncubatorDrone();
         Permanent scion = findPermanents(player1, "Eldrazi Scion").getFirst();
-        scion.setTapped(true);
+        scion.tap();
 
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(scion),
                 0, null, null);

@@ -79,7 +79,7 @@ class KnightOfTheLastBreathTest extends BaseCardTest {
     @DisplayName("Sacrificing a second Knight pays the cost immediately and triggers its afterlife")
     void sacrificingAnotherKnightCreatesFourSpirits() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new KnightOfTheLastBreath());
-        source.setTapped(true);
+        source.tap();
         harness.addToBattlefield(player1, new KnightOfTheLastBreath());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 

@@ -130,9 +130,9 @@ class PygmyHippoTest extends BaseCardTest {
     @DisplayName("Tapped lands are not activated and a two-mana land contributes two mana")
     void tappedLandSkippedAndMultipleManaCounted() {
         Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
-        forest.setTapped(true);
+        forest.tap();
         Permanent karoo = harness.addToBattlefieldAndReturn(player2, new Karoo());
-        karoo.setTapped(false);
+        karoo.untap();
         Permanent attacker = addAttacker();
         attackUnblocked(attacker);
         harness.handleMayAbilityChosen(player1, true);
