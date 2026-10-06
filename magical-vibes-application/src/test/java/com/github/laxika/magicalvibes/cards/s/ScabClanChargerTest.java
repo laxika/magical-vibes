@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ScabClanCharger.class, GrizzlyBears.class})
 class ScabClanChargerTest extends BaseCardTest {
 
     @Test
@@ -68,6 +70,72 @@ class ScabClanChargerTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, bears.getId()))
                 .isInstanceOf(IllegalStateException.class);
         harness.assertInHand(player1, "Scab-Clan Charger");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+    }
+
+    @Test
+    void bloodrushCanBoostAnOpponentsAttacker() {
+        harness.setHand(player1, List.of(new ScabClanCharger()));
+        Permanent attacker = harness.addToBattlefieldAndReturn(player2, new ScabClanCharger());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.ensurePriority(player1);
+
+        harness.activateHandAbility(player1, 0, attacker.getId());
+
+        harness.assertNotInHand(player1, "Scab-Clan Charger");
+        harness.assertInGraveyard(player1, "Scab-Clan Charger");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(4);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(8);
+    }
+
+    @Test
+    void bloodrushDoesNotBoostATargetThatStopsAttackingBeforeResolution() {
+        harness.setHand(player1, List.of(new ScabClanCharger()));
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new ScabClanCharger());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateHandAbility(player1, 0, attacker.getId());
+        attacker.setAttacking(false);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(4);
+        harness.assertInGraveyard(player1, "Scab-Clan Charger");
+    }
+
+    @Test
+    void bloodrushCannotBeActivatedWithoutGreenMana() {
+        harness.setHand(player1, List.of(new ScabClanCharger()));
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new ScabClanCharger());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Scab-Clan Charger");
+        harness.assertNotInGraveyard(player1, "Scab-Clan Charger");
+        assertThat(gd.stack).isEmpty();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
     }
 }
