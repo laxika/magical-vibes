@@ -133,4 +133,43 @@ class SerraInquisitorsTest extends BaseCardTest {
 
         assertThat(inquisitors.getPowerModifier()).isZero();
     }
+
+    @Test
+    @DisplayName("A nonblack blocker before a black blocker does not suppress the boost")
+    void becomesBlockedByMixedColorsBoostsOnce() {
+        Permanent inquisitors = addCreatureReady(player1, new SerraInquisitors());
+        inquisitors.setAttacking(true);
+        addCreatureReady(player2, new BeastWalkers());
+        addCreatureReady(player2, new TimmerianFiends());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0)));
+        resolveAllTriggers();
+
+        assertThat(inquisitors.getPowerModifier()).isEqualTo(2);
+        assertThat(inquisitors.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Blocking a nonblack attacker before a black attacker still gives one boost")
+    void blocksMixedColorsBoostsOnce() {
+        Permanent firstAttacker = addCreatureReady(player1, new BeastWalkers());
+        firstAttacker.setAttacking(true);
+        Permanent secondAttacker = addCreatureReady(player1, new TimmerianFiends());
+        secondAttacker.setAttacking(true);
+        SerraInquisitors card = new SerraInquisitors();
+        card.addEffect(EffectSlot.STATIC, new CanBlockAnyNumberOfCreaturesEffect());
+        Permanent inquisitors = addCreatureReady(player2, card);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(0, 1)));
+        resolveAllTriggers();
+
+        assertThat(inquisitors.getPowerModifier()).isEqualTo(2);
+        assertThat(inquisitors.getToughnessModifier()).isZero();
+    }
 }
