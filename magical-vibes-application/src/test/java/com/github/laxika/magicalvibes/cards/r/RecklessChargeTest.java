@@ -64,6 +64,45 @@ class RecklessChargeTest extends BaseCardTest {
     }
 
     @Test
+    void normalCastThenFlashbackStacksTheBoostOnTheSameCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AvenFisher());
+        harness.setHand(player1, List.of(new RecklessCharge()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+        harness.assertInGraveyard(player1, "Reckless Charge");
+        harness.castAndResolveFlashback(player1, 0, target.getId());
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        harness.assertNotInGraveyard(player1, "Reckless Charge");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getName().equals("Reckless Charge"));
+    }
+
+    @Test
+    void flashbackExilesTheCardWhenItsOnlyTargetLeavesBeforeResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AvenFisher());
+        Permanent otherCreature = harness.addToBattlefieldAndReturn(player1, new AvenFisher());
+        harness.setGraveyard(player1, List.of(new RecklessCharge()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castFlashback(player1, 0, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, otherCreature)).isEqualTo(2);
+        assertThat(otherCreature.hasKeyword(Keyword.HASTE)).isFalse();
+        harness.assertNotInGraveyard(player1, "Reckless Charge");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getName().equals("Reckless Charge"));
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     void cannotTargetNonCreaturePermanent() {
         Permanent plains = harness.addToBattlefieldAndReturn(player1, new Plains());
         harness.setHand(player1, List.of(new RecklessCharge()));
