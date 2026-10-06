@@ -25,15 +25,10 @@ class SallyPrideLionessLeaderTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
-        harness.setHand(player1, List.of(new SallyPrideLionessLeader()));
-        harness.addMana(player1, ManaColor.WHITE, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.castFromHand(player1, new SallyPrideLionessLeader(), "{3}{W}{W}");
+        resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Mutant")).hasSize(2);
     }
@@ -53,4 +48,45 @@ class SallyPrideLionessLeaderTest extends BaseCardTest {
         assertThat(opponentBear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
+    @Test
+    @DisplayName("The enter trigger counts nontoken creatures when it resolves and excludes opposing creatures")
+    void enteringCountsCreaturesAtResolution() {
+        harness.enterBattlefieldAndReturn(player1, new SallyPrideLionessLeader());
+        harness.addToBattlefield(player1, new YoungPyromancer());
+        harness.addToBattlefield(player2, new YoungPyromancer());
+
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Mutant")).hasSize(2);
+        assertThat(findPermanents(player2, "Mutant")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Sally counts herself on entry and her attack puts counters on the resulting token")
+    void attackingCountersTokensToo() {
+        Permanent sally = harness.enterBattlefieldAndReturn(player1, new SallyPrideLionessLeader());
+        resolveAllTriggers();
+        assertThat(findPermanents(player1, "Mutant")).hasSize(1);
+        Permanent mutant = findPermanent(player1, "Mutant");
+        sally.setSummoningSick(false);
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        assertThat(sally.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(mutant.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Another creature attacking does not trigger Sally")
+    void anotherCreatureAttackingDoesNotPutCounters() {
+        Permanent sally = addCreatureReady(player1, new SallyPrideLionessLeader());
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(List.of(1));
+        resolveAllTriggers();
+
+        assertThat(sally.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
 }
