@@ -63,4 +63,41 @@ class SilentChantZuberaTest extends BaseCardTest {
         resolveAllTriggers();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(24);
     }
+
+    @Test
+    @DisplayName("Each simultaneous death counts all dying Zuberas")
+    void simultaneousDeathsCountForEveryTrigger() {
+        Permanent ownZubera = harness.addToBattlefieldAndReturn(player1, new SilentChantZubera());
+        Permanent opposingZubera = harness.addToBattlefieldAndReturn(player2, new SilentChantZubera());
+        Permanent nonZubera = harness.addToBattlefieldAndReturn(player2, new LanternKami());
+
+        ownZubera.setMarkedDamage(2);
+        opposingZubera.setMarkedDamage(2);
+        nonZubera.setMarkedDamage(1);
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(24);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(24);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Counts additional Zubera deaths before a pending trigger resolves")
+    void countsDeathsAtResolution() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new SilentChantZubera());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new SilentChantZubera());
+
+        first.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+
+        second.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(24);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(24);
+    }
 }
