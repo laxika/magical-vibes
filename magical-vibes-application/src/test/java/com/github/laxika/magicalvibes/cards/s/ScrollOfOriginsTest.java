@@ -75,6 +75,40 @@ class ScrollOfOriginsTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(6);
     }
 
+    @Test
+    @DisplayName("Draws when hand size reaches seven after activation")
+    void drawsWhenHandSizeIncreasesBeforeResolution() {
+        harness.addToBattlefield(player1, new ScrollOfOrigins());
+        harness.setHand(player1, hand(6));
+        var drawnCard = new ScrollOfOrigins();
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        gd.playerHands.get(player1.getId()).add(new ScrollOfOrigins());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(8).contains(drawnCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Checks and draws for the ability controller during the opponent's turn")
+    void drawsForAbilityControllerOnOpponentsTurn() {
+        harness.addToBattlefield(player2, new ScrollOfOrigins());
+        harness.setHand(player1, hand(6));
+        harness.setHand(player2, hand(7));
+        var drawnCard = new ScrollOfOrigins();
+        harness.setLibrary(player2, List.of(drawnCard));
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(8).contains(drawnCard);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(6);
+    }
+
     private List<Card> hand(int count) {
         List<Card> cards = new ArrayList<>();
         IntStream.range(0, count).forEach(index -> cards.add(new ScrollOfOrigins()));
