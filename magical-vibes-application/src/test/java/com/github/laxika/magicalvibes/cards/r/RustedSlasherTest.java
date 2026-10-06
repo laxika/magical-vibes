@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,9 +17,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RustedSlasher.class, Spellbook.class, LeoninScimitar.class, GrizzlyBears.class})
 class RustedSlasherTest extends BaseCardTest {
-
-    // ===== Activation: sacrifice an artifact to regenerate =====
 
     @Test
     @DisplayName("Sacrificing another artifact grants Rusted Slasher a regeneration shield")
@@ -142,8 +142,6 @@ class RustedSlasherTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Leonin Scimitar");
     }
 
-    // ===== Regeneration saves from combat damage =====
-
     @Test
     @DisplayName("Regeneration shield saves Rusted Slasher from lethal combat damage")
     void regenerationSavesFromLethalCombatDamage() {
@@ -153,11 +151,9 @@ class RustedSlasherTest extends BaseCardTest {
         slasher.setBlocking(true);
         slasher.addBlockingTarget(0);
 
-        GrizzlyBears bears = new GrizzlyBears();
-        Permanent attacker = new Permanent(bears);
+        Permanent attacker = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player2.getId()).add(attacker);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -180,11 +176,9 @@ class RustedSlasherTest extends BaseCardTest {
         slasher.setBlocking(true);
         slasher.addBlockingTarget(0);
 
-        GrizzlyBears bears = new GrizzlyBears();
-        Permanent attacker = new Permanent(bears);
+        Permanent attacker = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player2.getId()).add(attacker);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -196,37 +190,96 @@ class RustedSlasherTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Rusted Slasher");
     }
 
-    // ===== Can sacrifice itself =====
-
     @Test
     @DisplayName("Rusted Slasher can sacrifice itself since it is an artifact")
     void canSacrificeItself() {
         addReadySlasher(player1);
 
         // Slasher is the only artifact — it is auto-sacrificed as cost
-        // The ability goes on the stack but fizzles since the source left the battlefield
+        // The ability resolves without effect because the source left the battlefield.
         harness.activateAbility(player1, 0, null, null);
 
         // Slasher was sacrificed as cost
         harness.assertNotOnBattlefield(player1, "Rusted Slasher");
         harness.assertInGraveyard(player1, "Rusted Slasher");
 
-        // Ability is on the stack but will fizzle on resolution
+        // The ability exists independently of its sacrificed source.
         assertThat(gd.stack).hasSize(1);
 
         harness.passBothPriorities();
 
-        // Stack resolves, ability fizzles
+        // The ability resolves without returning the sacrificed creature.
         assertThat(gd.stack).isEmpty();
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Summoning sickness does not prevent activation and the shield waits for resolution")
+    void summoningSickSlasherPaysCostBeforeShieldResolves() {
+        Permanent slasher = harness.addToBattlefieldAndReturn(player1, new RustedSlasher());
+        slasher.setSummoningSick(true);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Spellbook());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, artifact.getId());
+
+        harness.assertInGraveyard(player1, "Spellbook");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(slasher.getRegenerationShield()).isZero();
+        assertThat(slasher.isTapped()).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(slasher.getRegenerationShield()).isEqualTo(1);
+        assertThat(slasher.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Only artifacts controlled by the activating player can pay the cost")
+    void sacrificeChoicesExcludeNonArtifactsAndOpponentsArtifacts() {
+        Permanent slasher = addReadySlasher(player1);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Spellbook());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new LeoninScimitar());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        PendingInteraction.PermanentChoice choice =
+                (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
+        assertThat(choice.validPermanentIds()).containsExactlyInAnyOrder(slasher.getId(), artifact.getId());
+    }
+
+    @Test
+    @DisplayName("An activated shield replaces lethal damage, clears damage, and removes the blocker from combat")
+    void activatedShieldRegeneratesInCombat() {
+        Permanent slasher = addReadySlasher(player1);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Spellbook());
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, artifact.getId());
+        harness.passBothPriorities();
+
+        slasher.setBlocking(true);
+        slasher.addBlockingTarget(0);
+        Permanent attacker = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Rusted Slasher");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(slasher.getRegenerationShield()).isZero();
+        assertThat(slasher.isTapped()).isTrue();
+        assertThat(slasher.getMarkedDamage()).isZero();
+        assertThat(slasher.isBlocking()).isFalse();
+        assertThat(slasher.getBlockingTargets()).isEmpty();
+    }
 
     private Permanent addReadySlasher(Player player) {
-        RustedSlasher card = new RustedSlasher();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new RustedSlasher());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
