@@ -64,4 +64,40 @@ class SkyhunterProwlerTest extends BaseCardTest {
 
         assertThat(prowler.isTapped()).isFalse();
     }
+
+    @Test
+    @DisplayName("Skyhunter Prowler can block a creature without flying")
+    void canBlockCreatureWithoutFlying() {
+        addCreatureReady(player1, new GrizzlyBears());
+        Permanent prowler = addCreatureReady(player2, new SkyhunterProwler());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(prowler.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Vigilance does not allow a tapped Skyhunter Prowler to attack")
+    void tappedProwlerCannotAttack() {
+        Permanent prowler = addCreatureReady(player1, new SkyhunterProwler());
+        prowler.tap();
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(prowler.isAttacking()).isFalse();
+        assertThat(prowler.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Vigilance does not allow a summoning-sick Skyhunter Prowler to attack")
+    void summoningSickProwlerCannotAttack() {
+        Permanent prowler = harness.addToBattlefieldAndReturn(player1, new SkyhunterProwler());
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(prowler.isAttacking()).isFalse();
+    }
 }
