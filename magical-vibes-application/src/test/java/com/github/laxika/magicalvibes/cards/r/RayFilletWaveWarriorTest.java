@@ -24,7 +24,7 @@ class RayFilletWaveWarriorTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(rayFillet.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
@@ -64,8 +64,10 @@ class RayFilletWaveWarriorTest extends BaseCardTest {
     void evolveDoesNotTriggerForEqualCreature() {
         Permanent rayFillet = harness.addToBattlefieldAndReturn(player1, new RayFilletWaveWarrior());
 
-        harness.setHand(player1, List.of(new RayFilletWaveWarrior()));
-        harness.addMana(player1, ManaColor.BLUE, 3);
+        rayFillet.setPowerModifier(2);
+
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
@@ -73,6 +75,80 @@ class RayFilletWaveWarriorTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    void rayFilletTriggersForItsOwnCombatDamage() {
+        Permanent rayFillet = addCreatureReady(player1, new RayFilletWaveWarrior());
+        rayFillet.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        rayFillet.setAttacking(true);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    void drawsOnceForEachCounteredCreatureRatherThanEachDamagePoint() {
+        harness.addToBattlefield(player1, new RayFilletWaveWarrior());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        addAttackerWithCounter(CounterType.CHARGE);
+        addAttackerWithCounter(CounterType.PLUS_ONE_PLUS_ONE);
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        harness.assertLife(player2, 15);
+    }
+
+    @Test
+    void removingCounterAfterDamageDoesNotStopDraw() {
+        harness.addToBattlefield(player1, new RayFilletWaveWarrior());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        Permanent attacker = addAttackerWithCounter(CounterType.CHARGE);
+
+        resolveCombat();
+        attacker.setCounterCount(CounterType.CHARGE, 0);
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void opposingCounteredCreatureDoesNotTriggerDraw() {
+        harness.addToBattlefield(player1, new RayFilletWaveWarrior());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        attacker.setCounterCount(CounterType.CHARGE, 1);
+        attacker.setAttacking(true);
+
+        resolveCombat(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    void evolveRechecksStatsWhenTriggerResolves() {
+        Permanent rayFillet = harness.addToBattlefieldAndReturn(player1, new RayFilletWaveWarrior());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+        rayFillet.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        resolveAllTriggers();
+
+        assertThat(rayFillet.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
     private Permanent addAttackerWithCounter(CounterType counterType) {
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         if (counterType != null) {
