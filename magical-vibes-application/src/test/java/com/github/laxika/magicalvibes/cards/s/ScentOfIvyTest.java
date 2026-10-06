@@ -28,8 +28,7 @@ class ScentOfIvyTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ScentOfIvy(), greenCard, new FlameJet()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castInstant(player1, 0, silverback.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, silverback.getId());
 
         PendingInteraction.RevealAnyNumberOfCardsFromHandChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.RevealAnyNumberOfCardsFromHandChoice.class);
@@ -65,8 +64,7 @@ class ScentOfIvyTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ScentOfIvy(), greenCard, new FlameJet()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castInstant(player1, 0, silverback.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, silverback.getId());
 
         PendingInteraction.RevealAnyNumberOfCardsFromHandChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.RevealAnyNumberOfCardsFromHandChoice.class);
@@ -89,8 +87,7 @@ class ScentOfIvyTest extends BaseCardTest {
                 List.of(new ScentOfIvy(), firstGreenCard, secondGreenCard, new FlameJet()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castInstant(player1, 0, silverback.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, silverback.getId());
 
         PendingInteraction.RevealAnyNumberOfCardsFromHandChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.RevealAnyNumberOfCardsFromHandChoice.class);
@@ -112,8 +109,7 @@ class ScentOfIvyTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ScentOfIvy(), greenCard));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castInstant(player1, 0, silverback.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, silverback.getId());
         harness.handleMultipleCardsChosen(player1, List.of(greenCard.getId()));
 
         assertThat(gqs.getEffectivePower(gd, silverback)).isEqualTo(7);
@@ -134,5 +130,53 @@ class ScentOfIvyTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Only selected green cards count, and revealed cards remain in hand")
+    void onlySelectedGreenCardsCount() {
+        Permanent silverback = harness.addToBattlefieldAndReturn(player1, new AncientSilverback());
+        AncientSilverback selected = new AncientSilverback();
+        AncientSilverback unselected = new AncientSilverback();
+        harness.setHand(player1, List.of(new ScentOfIvy(), selected, unselected));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveInstant(player1, 0, silverback.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(selected.getId()));
+
+        assertThat(gqs.getEffectivePower(gd, silverback)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, silverback)).isEqualTo(6);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(selected, unselected);
+        harness.assertInGraveyard(player1, "Scent of Ivy");
+    }
+
+    @Test
+    @DisplayName("Cannot reveal nongreen cards, opposing cards, or the same card twice")
+    void rejectsInvalidReveals() {
+        Permanent silverback = harness.addToBattlefieldAndReturn(player2, new AncientSilverback());
+        AncientSilverback greenCard = new AncientSilverback();
+        AncientSilverback opposingCard = new AncientSilverback();
+        FlameJet redCard = new FlameJet();
+        BraidwoodCup colorlessCard = new BraidwoodCup();
+        harness.setHand(player1, List.of(new ScentOfIvy(), greenCard, redCard, colorlessCard));
+        harness.setHand(player2, List.of(opposingCard));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveInstant(player1, 0, silverback.getId());
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(redCard.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(colorlessCard.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(opposingCard.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1,
+                List.of(greenCard.getId(), greenCard.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.handleMultipleCardsChosen(player1, List.of(greenCard.getId()));
+
+        assertThat(gqs.getEffectivePower(gd, silverback)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, silverback)).isEqualTo(6);
     }
 }
