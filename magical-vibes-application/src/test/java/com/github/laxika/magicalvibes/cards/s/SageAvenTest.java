@@ -115,4 +115,63 @@ class SageAvenTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("(flying)");
     }
+
+    @Test
+    @DisplayName("Reordering preserves the rest of the library and the opponent's library")
+    void reorderPreservesUninspectedCardsAndOpponentsLibrary() {
+        List<Card> library = List.of(new GlorySeeker(), new GlorySeeker(), new GlorySeeker(),
+                new GlorySeeker(), new GlorySeeker(), new GlorySeeker());
+        List<Card> opponentsLibrary = List.of(new GlorySeeker(), new GlorySeeker());
+        harness.setLibrary(player1, library);
+        harness.setLibrary(player2, opponentsLibrary);
+        harness.castFromHand(player1, new SageAven(), "{3}{U}");
+
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards())
+                .containsExactlyElementsOf(library.subList(0, 4));
+        assertThatThrownBy(() -> gs.handleInteractionAnswer(gd, player2,
+                new InteractionAnswer.CardOrder(List.of(3, 2, 1, 0))))
+                .isInstanceOf(IllegalStateException.class);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(3, 2, 1, 0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(
+                library.get(3), library.get(2), library.get(1), library.get(0), library.get(4), library.get(5));
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactlyElementsOf(opponentsLibrary);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A one-card library is returned unchanged without drawing it")
+    void singleCardLibraryRemainsUnchanged() {
+        Card onlyCard = new GlorySeeker();
+        harness.setLibrary(player1, List.of(onlyCard));
+        harness.castFromHand(player1, new SageAven(), "{3}{U}");
+        int handSize = gd.playerHands.get(player1.getId()).size();
+
+        resolveAllTriggers();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(onlyCard);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSize);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The ETB trigger still reorders the library after Sage Aven leaves")
+    void triggerResolvesAfterSourceLeavesBattlefield() {
+        SageAven sageAven = new SageAven();
+        List<Card> library = List.of(new GlorySeeker(), new GlorySeeker());
+        harness.setLibrary(player1, library);
+        harness.castFromHand(player1, sageAven, "{3}{U}");
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player1.getId()).removeIf(permanent -> permanent.getCard() == sageAven);
+        harness.setGraveyard(player1, List.of(sageAven));
+
+        resolveAllTriggers();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(1, 0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(library.get(1), library.get(0));
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
 }
