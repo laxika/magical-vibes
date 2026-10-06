@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.b.Bloodbriar;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.MoorFiend;
+import com.github.laxika.magicalvibes.cards.s.SongOfTheDryads;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -17,7 +18,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Reclamation.class, MoorFiend.class, BalduvianBears.class, Forest.class, Island.class})
+@CardUsed({Reclamation.class, MoorFiend.class, BalduvianBears.class, Forest.class, Island.class,
+        Bloodbriar.class, SongOfTheDryads.class})
 class ReclamationTest extends BaseCardTest {
 
     @Test
@@ -96,6 +98,49 @@ class ReclamationTest extends BaseCardTest {
 
         assertThat(countPermanents(player1, "Island")).isZero();
         harness.assertInGraveyard(player1, "Island");
+    }
+
+    @Test
+    @DisplayName("A tapped land can pay the black creature's attack cost")
+    void tappedLandCanPayAttackCost() {
+        harness.addToBattlefield(player2, new Reclamation());
+        addCreatureReady(player1, new MoorFiend());
+        var forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        forest.setTapped(true);
+
+        declareAttackers(player1, List.of(0));
+
+        harness.assertNotOnBattlefield(player1, "Forest");
+        harness.assertInGraveyard(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("Reclamation taxes only black attackers even when its controller attacks")
+    void mixedAttackersControlledByReclamationController() {
+        addCreatureReady(player1, new MoorFiend());
+        addCreatureReady(player1, new BalduvianBears());
+        harness.addToBattlefield(player1, new Reclamation());
+        harness.addToBattlefield(player1, new Forest());
+
+        declareAttackers(player1, List.of(0, 1));
+
+        harness.assertNotOnBattlefield(player1, "Forest");
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertLife(player2, 15);
+    }
+
+    @Test
+    @CardUsed(SongOfTheDryads.class)
+    @DisplayName("Reclamation turned into a Forest does not charge an attack cost")
+    void reclamationWithoutPrintedAbilitiesDoesNotRestrictAttacks() {
+        var reclamation = harness.addToBattlefieldAndReturn(player2, new Reclamation());
+        var song = harness.addToBattlefieldAndReturn(player2, new SongOfTheDryads());
+        song.setAttachedTo(reclamation.getId());
+        addCreatureReady(player1, new MoorFiend());
+
+        declareAttackers(player1, List.of(0));
+
+        harness.assertLife(player2, 17);
     }
 
     @Test
