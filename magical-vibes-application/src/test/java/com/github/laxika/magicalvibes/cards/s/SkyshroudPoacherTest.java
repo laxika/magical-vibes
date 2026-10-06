@@ -83,4 +83,86 @@ class SkyshroudPoacherTest extends BaseCardTest {
         assertThat(findPermanent(player1, "Skyshroud Poacher").isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
+
+    @Test
+    @DisplayName("A player may fail to find even when an Elf is available")
+    void mayFailToFindAvailableElf() {
+        setUpPoacher();
+        Card elf = new SkyshroudSentinel();
+        harness.setLibrary(player1, List.of(elf));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(elf);
+        harness.assertNotOnBattlefield(player1, "Skyshroud Sentinel");
+    }
+
+    @Test
+    @DisplayName("Searching an empty library completes without a choice")
+    void emptyLibraryCompletesSearch() {
+        setUpPoacher();
+        harness.setLibrary(player1, List.of());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanent(player1, "Skyshroud Poacher").isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A summoning sick Poacher cannot pay the tap cost")
+    void summoningSicknessPreventsActivation() {
+        harness.addToBattlefield(player1, new SkyshroudPoacher());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(findPermanent(player1, "Skyshroud Poacher").isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An activated search resolves after Poacher leaves the battlefield")
+    void searchResolvesWithoutSource() {
+        setUpPoacher();
+        Card elf = new SkyshroudSentinel();
+        harness.setLibrary(player1, List.of(elf, new Mossdog()));
+        harness.setLibrary(player2, List.of(new Mossdog()));
+
+        harness.activateAbility(player1, 0, null, null);
+        gd.playerBattlefields.get(player1.getId()).remove(findPermanent(player1, "Skyshroud Poacher"));
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertOnBattlefield(player1, "Skyshroud Sentinel");
+        harness.assertNotOnBattlefield(player2, "Skyshroud Sentinel");
+        assertThat(findPermanent(player1, "Skyshroud Sentinel").isTapped()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(elf).hasSize(1);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A tapped Poacher cannot activate again")
+    void tappedPoacherCannotActivateAgain() {
+        setUpPoacher();
+        harness.setLibrary(player1, List.of(new Mossdog()));
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
+    }
 }
