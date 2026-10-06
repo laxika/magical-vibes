@@ -25,10 +25,9 @@ class SilhanaLedgewalkerTest extends BaseCardTest {
     @DisplayName("Silhana Ledgewalker can't be blocked by a creature without flying")
     void cannotBeBlockedByNonFlyingCreature() {
         Permanent attacker = addCreatureReady(player1, new SilhanaLedgewalker());
-        attacker.setAttacking(true);
         Permanent blocker = addCreatureReady(player2, new SilhanaStarfletcher());
 
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(
@@ -42,10 +41,9 @@ class SilhanaLedgewalkerTest extends BaseCardTest {
     @DisplayName("Silhana Ledgewalker can be blocked by a creature with flying")
     void canBeBlockedByFlyingCreature() {
         Permanent attacker = addCreatureReady(player1, new SilhanaLedgewalker());
-        attacker.setAttacking(true);
         Permanent blocker = addCreatureReady(player2, new TorchDrake());
 
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
                 gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
@@ -59,7 +57,6 @@ class SilhanaLedgewalkerTest extends BaseCardTest {
         Permanent ledgewalker = addCreatureReady(player1, new SilhanaLedgewalker());
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new DouseInGloom()));
         harness.addMana(player2, ManaColor.BLACK, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 2);
@@ -75,10 +72,55 @@ class SilhanaLedgewalkerTest extends BaseCardTest {
         addCreatureReady(player2, new PlaguedRusalka());
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
         harness.addMana(player2, ManaColor.BLACK, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, ledgewalker.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Hexproof allows the controller's spell to target Silhana Ledgewalker")
+    void canBeTargetedByControllerSpell() {
+        Permanent ledgewalker = addCreatureReady(player1, new SilhanaLedgewalker());
+        harness.setHand(player1, List.of(new DouseInGloom()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.setLife(player1, 20);
+
+        harness.castInstant(player1, 0, ledgewalker.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Silhana Ledgewalker");
+        harness.assertNotOnBattlefield(player1, "Silhana Ledgewalker");
+        harness.assertLife(player1, 22);
+    }
+
+    @Test
+    @DisplayName("Hexproof allows the controller's ability to target Silhana Ledgewalker")
+    void canBeTargetedByControllerAbility() {
+        Permanent rusalka = addCreatureReady(player1, new PlaguedRusalka());
+        Permanent ledgewalker = addCreatureReady(player1, new SilhanaLedgewalker());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, ledgewalker.getId());
+        harness.handlePermanentChosen(player1, rusalka.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Plagued Rusalka");
+        harness.assertInGraveyard(player1, "Silhana Ledgewalker");
+        harness.assertNotOnBattlefield(player1, "Silhana Ledgewalker");
+    }
+
+    @Test
+    @DisplayName("Silhana Ledgewalker can block a creature without flying")
+    void canBlockNonFlyingCreature() {
+        addCreatureReady(player1, new PlaguedRusalka());
+        Permanent blocker = addCreatureReady(player2, new SilhanaLedgewalker());
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+        assertThat(blocker.getBlockingTargets()).containsExactly(0);
     }
 }
