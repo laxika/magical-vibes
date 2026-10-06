@@ -36,11 +36,93 @@ class ShangChiAndTheTenRingsTest extends BaseCardTest {
         harness.assertLife(player1, 25);
     }
 
+    @Test
+    @DisplayName("Each card in a multi-card draw puts one counter on Shang-Chi")
+    void multiCardDrawAddsOneCounterPerCard() {
+        Permanent shangChi = harness.addToBattlefieldAndReturn(player1, new ShangChiAndTheTenRings());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCards(gd, player1.getId(), 3));
+        resolveAllTriggers();
+
+        assertThat(shangChi.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("An opponent's draw does not put a counter on Shang-Chi")
+    void opponentDrawDoesNotAddCounter() {
+        Permanent shangChi = harness.addToBattlefieldAndReturn(player1, new ShangChiAndTheTenRings());
+        harness.setLibrary(player2, List.of(new Forest()));
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player2.getId()));
+        resolveAllTriggers();
+
+        assertThat(shangChi.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Adding an eleventh counter does not trigger the payoff again")
+    void eleventhCounterDoesNotTriggerPayoff() {
+        Permanent shangChi = harness.addToBattlefieldAndReturn(player1, new ShangChiAndTheTenRings());
+        shangChi.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 10);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(),
+                new Forest(), new Forest(), new Forest()));
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+        resolveAllTriggers();
+
+        assertThat(shangChi.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(11);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("The tenth-counter payoff resolves even if the counters are removed in response")
+    void payoffResolvesAfterCountersAreRemoved() {
+        Permanent shangChi = prepareTenthCounterTrigger();
+        shangChi.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(6);
+        harness.assertLife(player1, 25);
+        assertThat(shangChi.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("The tenth-counter payoff resolves even if Shang-Chi leaves the battlefield")
+    void payoffResolvesAfterShangChiLeavesBattlefield() {
+        Permanent shangChi = prepareTenthCounterTrigger();
+        gd.playerBattlefields.get(player1.getId()).remove(shangChi);
+        gd.playerGraveyards.get(player1.getId()).add(shangChi.getCard());
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(6);
+        harness.assertLife(player1, 25);
+    }
+
+    private Permanent prepareTenthCounterTrigger() {
+        Permanent shangChi = harness.addToBattlefieldAndReturn(player1, new ShangChiAndTheTenRings());
+        shangChi.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 9);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(),
+                new Forest(), new Forest(), new Forest()));
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+        harness.passBothPriorities();
+        assertThat(shangChi.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(10);
+        assertThat(gd.stack).hasSize(1);
+        return shangChi;
+    }
     private void advanceToDraw(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         gd.turnNumber = 2;
         harness.forceStep(TurnStep.UPKEEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.DRAW);
     }
 }
