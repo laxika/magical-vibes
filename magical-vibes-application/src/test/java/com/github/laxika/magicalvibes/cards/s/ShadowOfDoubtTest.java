@@ -36,13 +36,11 @@ class ShadowOfDoubtTest extends BaseCardTest {
 
         Card searchable = new WateryGrave();
         harness.setLibrary(player2, List.of(searchable));
-        harness.setHand(player2, List.of(new Farseek()));
-        harness.addMana(player2, ManaColor.GREEN, 2);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.castSorcery(player2, 0, 0);
+        harness.castFromHand(player2, new Farseek(), "{1}{G}");
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
@@ -61,13 +59,11 @@ class ShadowOfDoubtTest extends BaseCardTest {
         harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
-        harness.setHand(player1, List.of(new Farseek()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new Farseek(), "{1}{G}");
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
@@ -82,5 +78,56 @@ class ShadowOfDoubtTest extends BaseCardTest {
         GameTestEngineContext.get().getBean(TurnCleanupService.class).resetEndOfTurnModifiers(gd);
 
         assertThat(gd.playersCantSearchLibrariesThisTurn).isFalse();
+    }
+
+    @Test
+    @DisplayName("Stops a search spell already on the stack")
+    void preventsSearchWhenCastInResponse() {
+        Card searchable = new WateryGrave();
+        Card drawn = new WateryGrave();
+        harness.setLibrary(player1, List.of(searchable));
+        harness.setLibrary(player2, List.of(drawn));
+        harness.castFromHand(player1, new Farseek(), "{1}{G}");
+
+        harness.setHand(player2, List.of(new ShadowOfDoubt()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(drawn);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(searchable);
+        harness.assertNotOnBattlefield(player1, "Watery Grave");
+        harness.assertInGraveyard(player1, "Farseek");
+        harness.assertInGraveyard(player2, "Shadow of Doubt");
+    }
+
+    @Test
+    @DisplayName("A resolved restriction allows searching again after cleanup")
+    void allowsSearchAfterCleanup() {
+        Card drawn = new WateryGrave();
+        Card searchable = new WateryGrave();
+        harness.setLibrary(player1, List.of(drawn, searchable));
+        harness.setHand(player1, List.of(new ShadowOfDoubt()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castInstant(player1, 0);
+        harness.passBothPriorities();
+
+        GameTestEngineContext.get().getBean(TurnCleanupService.class).resetEndOfTurnModifiers(gd);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player1, new Farseek(), "{1}{G}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNotNull();
+        harness.handleCardChosen(player1, 0);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertOnBattlefield(player1, "Watery Grave");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Farseek");
     }
 }
