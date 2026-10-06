@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
-@CardUsed({Scrapheap.class, AuraFlux.class, ThranLens.class, GiantCockroach.class})
+@CardUsed({Scrapheap.class, AuraFlux.class, ThranLens.class, GiantCockroach.class, EnchantedEvening.class})
 class ScrapheapTest extends BaseCardTest {
 
     @Test
@@ -55,7 +55,6 @@ class ScrapheapTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(EnchantedEvening.class)
     void recognizesPermanentsThatAreMadeEnchantments() {
         harness.addToBattlefield(player1, new Scrapheap());
         harness.addToBattlefield(player1, new EnchantedEvening());
@@ -63,6 +62,61 @@ class ScrapheapTest extends BaseCardTest {
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
         removeToGraveyard(creature);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, lifeBefore + 1);
+    }
+
+    @Test
+    void gainsLifeWhenScrapheapItselfGoesToYourGraveyard() {
+        Permanent scrapheap = harness.addToBattlefieldAndReturn(player1, new Scrapheap());
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        removeToGraveyard(scrapheap);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Scrapheap");
+        harness.assertLife(player1, lifeBefore + 1);
+    }
+
+    @Test
+    void gainsLifeForYourArtifactControlledByAnOpponent() {
+        harness.addToBattlefield(player1, new Scrapheap());
+        ThranLens lens = new ThranLens();
+        lens.setOwnerId(player1.getId());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, lens);
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        removeToGraveyard(artifact);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Thran Lens");
+        harness.assertLife(player1, lifeBefore + 1);
+    }
+
+    @Test
+    void ignoresAnOpponentsArtifactThatYouControl() {
+        harness.addToBattlefield(player1, new Scrapheap());
+        ThranLens lens = new ThranLens();
+        lens.setOwnerId(player2.getId());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, lens);
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        removeToGraveyard(artifact);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Thran Lens");
+        harness.assertLife(player1, lifeBefore);
+    }
+
+    @Test
+    void gainsOnlyOneLifeForAnArtifactThatIsAlsoAnEnchantment() {
+        harness.addToBattlefield(player1, new Scrapheap());
+        harness.addToBattlefield(player1, new EnchantedEvening());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new ThranLens());
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        removeToGraveyard(artifact);
         resolveAllTriggers();
 
         harness.assertLife(player1, lifeBefore + 1);
