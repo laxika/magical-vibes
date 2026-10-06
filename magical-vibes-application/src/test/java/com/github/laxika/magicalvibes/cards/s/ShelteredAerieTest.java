@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.n.Naturalize;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ShelteredAerie.class, Forest.class, GrizzlyBears.class})
+@CardUsed({ShelteredAerie.class, Forest.class, GrizzlyBears.class, Naturalize.class})
 class ShelteredAerieTest extends BaseCardTest {
 
     @Test
@@ -59,5 +60,45 @@ class ShelteredAerieTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, bears.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a land");
+    }
+
+    @Test
+    @DisplayName("The opponent receives the mana when their land is enchanted")
+    void opponentControlsGrantedManaAbility() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.setHand(player1, List.of(new ShelteredAerie()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castEnchantment(player1, 0, forest.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player2, 0, null, null);
+        harness.handleListChoice(player2, "BLUE");
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLUE)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(forest.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Destroying the Aura removes the granted ability and preserves the original mana ability")
+    void destroyingAuraRemovesGrantedAbilityButKeepsOriginalManaAbility() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new ShelteredAerie());
+        aura.setAttachedTo(forest.getId());
+        harness.setHand(player1, List.of(new Naturalize()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castAndResolveInstant(player1, 0, aura.getId());
+        harness.assertInGraveyard(player1, "Sheltered Aerie");
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Permanent has no activated ability");
+
+        harness.tapPermanent(player1, 0);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(forest.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
     }
 }
