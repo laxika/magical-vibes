@@ -2,12 +2,14 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.c.CopperMyr;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.h.HeartPiercerBow;
+import com.github.laxika.magicalvibes.cards.o.Octoprophet;
+import com.github.laxika.magicalvibes.cards.v.VialOfDragonfire;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,18 +18,12 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RenownedWeaponsmith.class, CopperMyr.class, LlanowarElves.class,
+        HeartPiercerBow.class, VialOfDragonfire.class, Octoprophet.class})
 class RenownedWeaponsmithTest extends BaseCardTest {
 
     private void setUpWeaponsmith() {
-        harness.addToBattlefield(player1, new RenownedWeaponsmith());
-        findPermanent(player1, "Renowned Weaponsmith").setSummoningSick(false);
-    }
-
-    private Card namedCard(String name) {
-        Card card = new Card() {};
-        card.setName(name);
-        card.setType(CardType.ARTIFACT);
-        return card;
+        harness.addToBattlefieldAndReturn(player1, new RenownedWeaponsmith()).setSummoningSick(false);
     }
 
     @Test
@@ -38,6 +34,8 @@ class RenownedWeaponsmithTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         assertThat(gd.playerManaPools.get(player1.getId()).getArtifactOnlyColorless()).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanent(player1, "Renowned Weaponsmith").isTapped()).isTrue();
     }
 
     @Test
@@ -73,11 +71,8 @@ class RenownedWeaponsmithTest extends BaseCardTest {
     void searchOffersOnlyNamedCards() {
         setUpWeaponsmith();
         harness.addMana(player1, ManaColor.BLUE, 1);
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(
-                namedCard("Heart-Piercer Bow"),
-                namedCard("Vial of Dragonfire"),
-                namedCard("Other Artifact")));
+        harness.setLibrary(player1, List.of(
+                new HeartPiercerBow(), new VialOfDragonfire(), new CopperMyr()));
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
@@ -95,15 +90,79 @@ class RenownedWeaponsmithTest extends BaseCardTest {
     void chosenCardGoesToHand() {
         setUpWeaponsmith();
         harness.addMana(player1, ManaColor.BLUE, 1);
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(namedCard("Vial of Dragonfire"));
+        harness.setLibrary(player1, List.of(new VialOfDragonfire()));
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .extracting(Card::getName)
                 .contains("Vial of Dragonfire");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void restrictedManaCannotPayGenericCostsOfNonartifactSpells() {
+        setUpWeaponsmith();
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new Octoprophet()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void restrictedManaPaysForArtifactActivation() {
+        setUpWeaponsmith();
+        harness.addToBattlefield(player1, new VialOfDragonfire());
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 1, null,
+                harness.getPermanentId(player1, "Renowned Weaponsmith"));
+        assertThat(gd.playerManaPools.get(player1.getId()).getArtifactOnlyColorless()).isZero();
+        harness.assertInGraveyard(player1, "Vial of Dragonfire");
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Renowned Weaponsmith");
+    }
+
+    @Test
+    void searchMayFailToFindEvenWithMatchingCards() {
+        setUpWeaponsmith();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new HeartPiercerBow(), new VialOfDragonfire()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, 0, 1, null, null);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    void searchWithNoMatchingCardsCompletesWithoutChoice() {
+        setUpWeaponsmith();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Octoprophet()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void summoningSicknessPreventsBothTapAbilities() {
+        harness.addToBattlefield(player1, new RenownedWeaponsmith());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
     }
 }
