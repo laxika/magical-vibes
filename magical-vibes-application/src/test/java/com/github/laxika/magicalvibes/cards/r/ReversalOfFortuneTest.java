@@ -122,13 +122,70 @@ class ReversalOfFortuneTest extends BaseCardTest {
                 .hasMessageContaining("Target must be an opponent");
     }
 
+    @Test
+    @DisplayName("An empty opponent hand finishes without offering a copy")
+    void emptyHandFinishesWithoutChoice() {
+        castReversal();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Reversal of Fortune");
+    }
+
+    @Test
+    @DisplayName("The opponent's entire hand is revealed even when no spell can be copied")
+    void revealsHandWithoutEligibleSpell() {
+        harness.clearMessages();
+        castReversal(new GoblinBrawler());
+
+        assertThat(harness.getConn1().getSentMessages())
+                .anyMatch(message -> message.contains("REVEAL_HAND") && message.contains("Goblin Brawler"));
+        assertThat(harness.getConn2().getSentMessages())
+                .anyMatch(message -> message.contains("REVEAL_HAND") && message.contains("Goblin Brawler"));
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Only one eligible card may be copied")
+    void cannotCopyMultipleCards() {
+        ManaGeyser sorcery = new ManaGeyser();
+        MagmaJet instant = new MagmaJet();
+        castReversal(sorcery, instant);
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(
+                player1, List.of(sorcery.getId(), instant.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Choose at most one card");
+
+        harness.handleMultipleCardsChosen(player1, List.of());
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(sorcery, instant);
+    }
+
+    @Test
+    @DisplayName("A cast copy ceases to exist after resolving and leaves the original in hand")
+    void resolvedCopyDoesNotEnterGraveyard() {
+        ManaGeyser original = new ManaGeyser();
+        castReversal(original);
+        harness.handleMultipleCardsChosen(player1, List.of(original.getId()));
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotInGraveyard(player1, "Mana Geyser");
+        harness.assertNotInGraveyard(player2, "Mana Geyser");
+        assertThat(gd.exiledCards).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(original);
+    }
+
     private void castReversal(Card... opponentHand) {
         harness.setHand(player1, List.of(new ReversalOfFortune()));
         harness.setHand(player2, List.of(opponentHand));
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.addMana(player1, ManaColor.RED, 2);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
     }
 }
