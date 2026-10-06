@@ -59,4 +59,40 @@ class SkyhunterCubTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, cub)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, cub, Keyword.FLYING)).isFalse();
     }
+
+    @Test
+    void multipleEquipmentGiveOnlyOneBonusAndKeepItUntilTheLastIsDetached() {
+        Permanent cub = addCreatureReady(player1, new SkyhunterCub());
+        Permanent firstEquipment = harness.addToBattlefieldAndReturn(player1, new LightningGreaves());
+        Permanent secondEquipment = harness.addToBattlefieldAndReturn(player1, new LightningGreaves());
+        firstEquipment.setAttachedTo(cub.getId());
+        secondEquipment.setAttachedTo(cub.getId());
+
+        assertThat(gqs.getEffectivePower(gd, cub)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, cub)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, cub, Keyword.FLYING)).isTrue();
+
+        firstEquipment.setAttachedTo(null);
+
+        assertThat(gqs.getEffectivePower(gd, cub)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, cub)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, cub, Keyword.FLYING)).isTrue();
+
+        secondEquipment.setAttachedTo(null);
+
+        assertThat(gqs.getEffectivePower(gd, cub)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, cub)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, cub, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    void equipmentControlledByOpponentStillEnhancesCub() {
+        Permanent cub = addCreatureReady(player1, new SkyhunterCub());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player2, new LightningGreaves());
+        equipment.setAttachedTo(cub.getId());
+
+        assertThat(gqs.getEffectivePower(gd, cub)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, cub)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, cub, Keyword.FLYING)).isTrue();
+    }
 }
