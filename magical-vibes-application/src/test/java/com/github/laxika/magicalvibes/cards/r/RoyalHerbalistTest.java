@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -40,7 +42,7 @@ class RoyalHerbalistTest extends BaseCardTest {
     @DisplayName("Cannot activate with empty library")
     void cannotActivateWithEmptyLibrary() {
         harness.addToBattlefield(player1, new RoyalHerbalist());
-        gd.playerDecks.get(player1.getId()).clear();
+        harness.setLibrary(player1, List.of());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
@@ -77,5 +79,46 @@ class RoyalHerbalistTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
+    }
+
+    @Test
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent herbalist = harness.addToBattlefieldAndReturn(player1, new RoyalHerbalist());
+        herbalist.setTapped(true);
+        herbalist.setSummoningSick(true);
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
+        assertThat(herbalist.isTapped()).isTrue();
+    }
+
+    @Test
+    void canActivateRepeatedlyAndExileTheLastLibraryCard() {
+        harness.addToBattlefield(player1, new RoyalHerbalist());
+        Card first = new RoyalHerbalist();
+        Card second = new RoyalHerbalist();
+        harness.setLibrary(player1, List.of(first, second));
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        int opponentLifeBefore = gd.playerLifeTotals.get(player2.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.exiledCards).extracting(e -> e.card().getId())
+                .contains(first.getId(), second.getId());
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 2);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(opponentLifeBefore);
+        assertThat(gd.stack).isEmpty();
     }
 }
