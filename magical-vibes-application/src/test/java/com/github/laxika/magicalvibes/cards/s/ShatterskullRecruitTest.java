@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,14 +12,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ShatterskullRecruit.class, GrizzlyBears.class})
+@CardUsed({ShatterskullRecruit.class})
 class ShatterskullRecruitTest extends BaseCardTest {
 
     @Test
     @DisplayName("Menace prevents Shatterskull Recruit from being blocked by one creature")
     void cannotBeBlockedByOneCreature() {
         addCreatureReady(player1, new ShatterskullRecruit());
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new ShatterskullRecruit());
 
         declareAttackersAndPrepareBlockers(List.of(0));
 
@@ -34,16 +33,51 @@ class ShatterskullRecruitTest extends BaseCardTest {
     @DisplayName("Menace allows Shatterskull Recruit to be blocked by two creatures")
     void canBeBlockedByTwoCreatures() {
         addCreatureReady(player1, new ShatterskullRecruit());
-        Permanent firstBlocker = addCreatureReady(player2, new GrizzlyBears());
-        Permanent secondBlocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent firstBlocker = addCreatureReady(player2, new ShatterskullRecruit());
+        Permanent secondBlocker = addCreatureReady(player2, new ShatterskullRecruit());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
                 new BlockerAssignment(1, 0)));
 
         assertThat(firstBlocker.isBlocking()).isTrue();
         assertThat(secondBlocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Menace allows Shatterskull Recruit to be blocked by more than two creatures")
+    void canBeBlockedByThreeCreatures() {
+        addCreatureReady(player1, new ShatterskullRecruit());
+        Permanent firstBlocker = addCreatureReady(player2, new ShatterskullRecruit());
+        Permanent secondBlocker = addCreatureReady(player2, new ShatterskullRecruit());
+        Permanent thirdBlocker = addCreatureReady(player2, new ShatterskullRecruit());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0),
+                new BlockerAssignment(2, 0)));
+
+        assertThat(firstBlocker.isBlocking()).isTrue();
+        assertThat(secondBlocker.isBlocking()).isTrue();
+        assertThat(thirdBlocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Menace does not require the defending player to block")
+    void canRemainUnblocked() {
+        addCreatureReady(player1, new ShatterskullRecruit());
+        Permanent firstBlocker = addCreatureReady(player2, new ShatterskullRecruit());
+        Permanent secondBlocker = addCreatureReady(player2, new ShatterskullRecruit());
+        int startingLife = gd.playerLifeTotals.get(player2.getId());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat();
+
+        assertThat(firstBlocker.isBlocking()).isFalse();
+        assertThat(secondBlocker.isBlocking()).isFalse();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(startingLife - 4);
     }
 }
