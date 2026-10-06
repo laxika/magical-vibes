@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -87,11 +86,59 @@ class RathiAssassinTest extends BaseCardTest {
                 .extracting(Card::getName)
                 .containsExactly("Rathi Intimidator");
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         harness.assertOnBattlefield(player1, "Rathi Intimidator");
         harness.assertNotOnBattlefield(player1, "Skyshroud Ridgeback");
         harness.assertNotOnBattlefield(player1, "Rathi Fiend");
+    }
+
+    @Test
+    @DisplayName("Destruction fails if the target untaps before resolution")
+    void doesNotDestroyTargetThatUntaps() {
+        addRathiAssassin();
+        Permanent ridgeback = addCreatureReady(player2, new SkyshroudRidgeback());
+        ridgeback.tap();
+        addBlackManaCost();
+
+        harness.activateAbility(player1, 0, null, ridgeback.getId());
+        ridgeback.untap();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(ridgeback);
+    }
+
+    @Test
+    @DisplayName("A restricted Mercenary search may fail to find an eligible card")
+    void mayDeclineToFindMercenary() {
+        addRathiAssassin();
+        RathiIntimidator intimidator = new RathiIntimidator();
+        harness.setLibrary(player1, List.of(intimidator));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        harness.assertNotOnBattlefield(player1, "Rathi Intimidator");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(intimidator);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A Mercenary search with no eligible cards completes without a choice")
+    void searchWithoutEligibleCardsCompletes() {
+        addRathiAssassin();
+        harness.setLibrary(player1, List.of(new RathiFiend(), new SkyshroudRidgeback()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Rathi Fiend");
+        harness.assertNotOnBattlefield(player1, "Skyshroud Ridgeback");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     private Permanent addRathiAssassin() {
