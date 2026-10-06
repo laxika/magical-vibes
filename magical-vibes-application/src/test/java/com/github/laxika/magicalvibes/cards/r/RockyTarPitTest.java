@@ -107,6 +107,53 @@ class RockyTarPitTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
+    @Test
+    @DisplayName("Sacrifice is paid before the search ability resolves")
+    void sacrificesAsActivationCost() {
+        activateSearch();
+
+        harness.assertNotOnBattlefield(player1, "Rocky Tar Pit");
+        harness.assertInGraveyard(player1, "Rocky Tar Pit");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(5);
+    }
+
+    @Test
+    @DisplayName("Choosing Mountain puts only that card onto the controller's battlefield")
+    void canChooseMountain() {
+        activateSearch();
+        harness.passBothPriorities();
+
+        harness.handleCardChosen(player1, 1);
+
+        harness.assertOnBattlefield(player1, "Mountain");
+        harness.assertNotOnBattlefield(player1, "Swamp");
+        harness.assertNotOnBattlefield(player2, "Mountain");
+        assertThat(findPermanent(player1, "Mountain").isTapped()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .extracting(c -> c.getName())
+                .containsExactlyInAnyOrder("Swamp", "Forest", "Island", "Crystal Vein");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Search with an empty library still sacrifices the source and finishes")
+    void searchWithEmptyLibrary() {
+        harness.addToBattlefield(player1, new RockyTarPit());
+        harness.setLibrary(player1, List.of());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Rocky Tar Pit");
+        harness.assertInGraveyard(player1, "Rocky Tar Pit");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     private void activateSearch() {
         harness.addToBattlefield(player1, new RockyTarPit());
         setupLibrary();
