@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.v.ViridianShaman;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -15,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ShikoParagonOfTheWay.class, AirElemental.class, CounselOfTheSoratami.class, Forest.class, GrizzlyBears.class})
+@CardUsed({ShikoParagonOfTheWay.class, AirElemental.class, CounselOfTheSoratami.class, Forest.class, GrizzlyBears.class, ViridianShaman.class})
 class ShikoParagonOfTheWayTest extends BaseCardTest {
 
     @Test
@@ -27,10 +27,7 @@ class ShikoParagonOfTheWayTest extends BaseCardTest {
         CounselOfTheSoratami opponentCard = new CounselOfTheSoratami();
         harness.setGraveyard(player1, List.of(valid, land, expensive));
         harness.setGraveyard(player2, List.of(opponentCard));
-        harness.setHand(player1, List.of(new ShikoParagonOfTheWay()));
-        addShikoMana();
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new ShikoParagonOfTheWay(), "{2}{U}{R}{W}");
         harness.passBothPriorities();
 
         PendingInteraction.MultiGraveyardChoice choice =
@@ -44,10 +41,7 @@ class ShikoParagonOfTheWayTest extends BaseCardTest {
     void exilesAndCastsCopy() {
         GrizzlyBears target = new GrizzlyBears();
         harness.setGraveyard(player1, List.of(target));
-        harness.setHand(player1, List.of(new ShikoParagonOfTheWay()));
-        addShikoMana();
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new ShikoParagonOfTheWay(), "{2}{U}{R}{W}");
         harness.passBothPriorities();
         harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
         harness.passBothPriorities();
@@ -61,10 +55,58 @@ class ShikoParagonOfTheWayTest extends BaseCardTest {
                 .anyMatch(card -> card.getId().equals(target.getId()));
     }
 
-    private void addShikoMana() {
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+    @Test
+    @DisplayName("Declining the copy still exiles the original card")
+    void decliningCopyStillExilesOriginal() {
+        GrizzlyBears target = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(target));
+        harness.castFromHand(player1, new ShikoParagonOfTheWay(), "{2}{U}{R}{W}");
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(target);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A copied sorcery resolves without mana and the original stays exiled")
+    void copiedSorceryDrawsCards() {
+        CounselOfTheSoratami target = new CounselOfTheSoratami();
+        Forest first = new Forest();
+        Forest second = new Forest();
+        harness.setLibrary(player1, List.of(first, second));
+        harness.setGraveyard(player1, List.of(target));
+        harness.castFromHand(player1, new ShikoParagonOfTheWay(), "{2}{U}{R}{W}");
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(first, second);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(target);
+        harness.assertNotInGraveyard(player1, "Counsel of the Soratami");
+    }
+
+    @Test
+    @DisplayName("A creature copy can be cast when its ETB ability has no legal target")
+    void creatureWithTargetedEtbCanBeCastWithoutEtbTargets() {
+        ViridianShaman target = new ViridianShaman();
+        harness.setGraveyard(player1, List.of(target));
+        harness.castFromHand(player1, new ShikoParagonOfTheWay(), "{2}{U}{R}{W}");
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getName().equals("Viridian Shaman")
+                        && permanent.getCard().isToken());
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(target);
     }
 }
