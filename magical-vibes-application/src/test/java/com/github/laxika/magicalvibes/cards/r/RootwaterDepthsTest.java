@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.v.VedalkenPlotter;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -13,13 +14,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(RootwaterDepths.class)
+@CardUsed({RootwaterDepths.class, VedalkenPlotter.class})
 class RootwaterDepthsTest extends BaseCardTest {
 
     @Test
     @DisplayName("Tapping for colorless adds {C} and the land untaps normally")
     void tapForColorlessDoesNotSkipUntap() {
-        Permanent depths = addReadyDepths(player1);
+        Permanent depths = addCreatureReady(player1, new RootwaterDepths());
 
         harness.activateAbility(player1, 0, 0, null, null);
 
@@ -33,7 +34,7 @@ class RootwaterDepthsTest extends BaseCardTest {
     @Test
     @DisplayName("Tapping for blue adds {U} and the land skips its next untap")
     void tapForBlueSkipsUntap() {
-        Permanent depths = addReadyDepths(player1);
+        Permanent depths = addCreatureReady(player1, new RootwaterDepths());
 
         harness.activateAbility(player1, 0, 1, null, null);
 
@@ -46,7 +47,7 @@ class RootwaterDepthsTest extends BaseCardTest {
     @Test
     @DisplayName("Tapping for black adds {B} and the land skips its next untap")
     void tapForBlackSkipsUntap() {
-        Permanent depths = addReadyDepths(player1);
+        Permanent depths = addCreatureReady(player1, new RootwaterDepths());
 
         harness.activateAbility(player1, 0, 2, null, null);
 
@@ -59,7 +60,7 @@ class RootwaterDepthsTest extends BaseCardTest {
     @Test
     @DisplayName("The land stays tapped through the next untap step, then untaps the turn after")
     void staysTappedForOneUntapStep() {
-        Permanent depths = addReadyDepths(player1);
+        Permanent depths = addCreatureReady(player1, new RootwaterDepths());
         harness.forceActivePlayer(player1);
 
         harness.activateAbility(player1, 0, 1, null, null);
@@ -84,9 +85,43 @@ class RootwaterDepthsTest extends BaseCardTest {
         harness.passUntil(nextActivePlayer, TurnStep.UPKEEP);
     }
 
-    private Permanent addReadyDepths(Player player) {
-        Permanent perm = harness.addToBattlefieldAndReturn(player, new RootwaterDepths());
-        perm.setSummoningSick(false);
-        return perm;
+    @Test
+    @DisplayName("Colorless mana leaves the land free to untap normally")
+    void colorlessManaAllowsNextUntap() {
+        Permanent depths = addCreatureReady(player1, new RootwaterDepths());
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        harness.performUntapStep(player1);
+        assertThat(depths.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Black mana prevents untapping for exactly one untap step")
+    void blackManaPreventsExactlyOneUntap() {
+        Permanent depths = addCreatureReady(player1, new RootwaterDepths());
+        harness.activateAbility(player1, 0, 2, null, null);
+
+        harness.performUntapStep(player1);
+        assertThat(depths.isTapped()).isTrue();
+        harness.performUntapStep(player1);
+        assertThat(depths.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A colored mana activation does not prevent untapping during a new controller's untap step")
+    void controlChangeDoesNotTransferUntapRestriction() {
+        Permanent depths = addCreatureReady(player1, new RootwaterDepths());
+        Permanent otherLand = harness.addToBattlefieldAndReturn(player2, new RootwaterDepths());
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        harness.setHand(player1, List.of(new VedalkenPlotter()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castCreature(player1, 0, List.of(depths.getId(), otherLand.getId()));
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(depths);
+        assertThat(depths.isTapped()).isTrue();
+        harness.performUntapStep(player2);
+        assertThat(depths.isTapped()).isFalse();
     }
 }
