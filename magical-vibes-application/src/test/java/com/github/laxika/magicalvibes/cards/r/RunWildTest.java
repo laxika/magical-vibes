@@ -100,6 +100,49 @@ class RunWildTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    @DisplayName("Regeneration can be activated repeatedly while tapped and each shield saves once")
+    void repeatedActivationsSaveFromSeparateLethalDamageEvents() {
+        Permanent creature = castRunWildOnOwnCreature();
+        creature.setTapped(true);
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(creature.getRegenerationShield()).isEqualTo(2);
+
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
+        assertThat(creature.getRegenerationShield()).isEqualTo(1);
+        assertThat(creature.getMarkedDamage()).isZero();
+
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
+        assertThat(creature.getRegenerationShield()).isZero();
+        assertThat(creature.getMarkedDamage()).isZero();
+        assertThat(creature.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Granting regeneration does not create a shield without activation")
+    void grantingAbilityDoesNotAutomaticallyRegenerate() {
+        Permanent creature = castRunWildOnOwnCreature();
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(creature);
+        harness.assertInGraveyard(player1, "Glory Seeker");
+    }
+
     private Permanent castRunWildOnOwnCreature() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GlorySeeker());
         harness.setHand(player1, List.of(new RunWild()));
