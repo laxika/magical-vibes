@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -19,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({ScrapyardRecombiner.class, BronzeSable.class, Assassinate.class, GrizzlyBears.class,
         MindStone.class, MyriadConstruct.class})
@@ -56,9 +56,10 @@ class ScrapyardRecombinerTest extends BaseCardTest {
     @Test
     void sacrificesAnArtifactAndSearchesForAConstruct() {
         Permanent recombiner = addCreatureReady(player1, new ScrapyardRecombiner());
+        recombiner.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         harness.addToBattlefield(player1, new MindStone());
         Permanent mindStone = findPermanent(player1, "Mind Stone");
-        setLibrary(new MyriadConstruct(), new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new MyriadConstruct(), new GrizzlyBears()));
 
         harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, mindStone.getId());
@@ -69,13 +70,90 @@ class ScrapyardRecombinerTest extends BaseCardTest {
         assertThat(search.params().cards()).extracting(Card::getName)
                 .containsExactly("Myriad Construct");
 
-        harness.getGameService().handleInteractionAnswer(gd, player1,
-                new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         harness.assertInGraveyard(player1, "Mind Stone");
         assertThat(gd.playerHands.get(player1.getId()))
                 .anyMatch(card -> card.getName().equals("Myriad Construct"));
         assertThat(recombiner.isTapped()).isTrue();
+    }
+
+    @Test
+    void modularCanBeDeclinedAfterChoosingItsTarget() {
+        Permanent recombiner = addCreatureReady(player1, new ScrapyardRecombiner());
+        recombiner.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        recombiner.tap();
+        Permanent target = addCreatureReady(player1, new BronzeSable());
+
+        destroyRecombiner(recombiner);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertInGraveyard(player1, "Scrapyard Recombiner");
+    }
+
+    @Test
+    void modularTransfersAllCountersToAnOpponentsArtifactCreature() {
+        Permanent recombiner = addCreatureReady(player1, new ScrapyardRecombiner());
+        recombiner.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 5);
+        recombiner.tap();
+        Permanent target = addCreatureReady(player2, new BronzeSable());
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        destroyRecombiner(recombiner);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);
+    }
+
+    @Test
+    void restrictedConstructSearchMayFailToFind() {
+        Permanent recombiner = addCreatureReady(player1, new ScrapyardRecombiner());
+        recombiner.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.addToBattlefield(player1, new MindStone());
+        Permanent mindStone = findPermanent(player1, "Mind Stone");
+        harness.setLibrary(player1, List.of(new ScrapyardRecombiner()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, mindStone.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        harness.assertInGraveyard(player1, "Mind Stone");
+        harness.assertNotInHand(player1, "Scrapyard Recombiner");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(recombiner.isTapped()).isTrue();
+    }
+
+    @Test
+    void cannotActivateWhileSummoningSick() {
+        Permanent recombiner = addCreatureReady(player1, new ScrapyardRecombiner());
+        recombiner.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        recombiner.setSummoningSick(true);
+        harness.addToBattlefield(player1, new MindStone());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Mind Stone");
+        assertThat(recombiner.isTapped()).isFalse();
+    }
+
+    @Test
+    void cannotActivateWhileTapped() {
+        Permanent recombiner = addCreatureReady(player1, new ScrapyardRecombiner());
+        recombiner.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        recombiner.tap();
+        harness.addToBattlefield(player1, new MindStone());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Mind Stone");
     }
 
     private void destroyRecombiner(Permanent recombiner) {
@@ -85,12 +163,8 @@ class ScrapyardRecombinerTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLACK, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 3);
 
-        gs.playCard(gd, player2, 0, 0, recombiner.getId(), null);
+        harness.castSorcery(player2, 0, recombiner.getId());
         harness.passBothPriorities();
     }
 
-    private void setLibrary(Card... cards) {
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(cards));
-    }
 }
