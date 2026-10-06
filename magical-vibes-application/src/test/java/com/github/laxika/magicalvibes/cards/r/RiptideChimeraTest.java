@@ -2,32 +2,25 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RiptideChimera.class, GloriousAnthem.class, GrizzlyBears.class})
 class RiptideChimeraTest extends BaseCardTest {
-
-    private Permanent addPermanent(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
-    }
 
     @Test
     @DisplayName("Upkeep choice includes only enchantments the controller controls")
     void choiceIncludesOnlyControlledEnchantments() {
-        Permanent chimera = addPermanent(player1, new RiptideChimera());
-        Permanent anthem = addPermanent(player1, new GloriousAnthem());
-        Permanent creature = addPermanent(player1, new GrizzlyBears());
-        Permanent opponentAnthem = addPermanent(player2, new GloriousAnthem());
+        Permanent chimera = harness.addToBattlefieldAndReturn(player1, new RiptideChimera());
+        Permanent anthem = harness.addToBattlefieldAndReturn(player1, new GloriousAnthem());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opponentAnthem = harness.addToBattlefieldAndReturn(player2, new GloriousAnthem());
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -41,8 +34,8 @@ class RiptideChimeraTest extends BaseCardTest {
     @Test
     @DisplayName("Chosen enchantment is returned to its owner's hand")
     void chosenEnchantmentIsReturnedToHand() {
-        addPermanent(player1, new RiptideChimera());
-        Permanent anthem = addPermanent(player1, new GloriousAnthem());
+        harness.addToBattlefieldAndReturn(player1, new RiptideChimera());
+        Permanent anthem = harness.addToBattlefieldAndReturn(player1, new GloriousAnthem());
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -58,8 +51,8 @@ class RiptideChimeraTest extends BaseCardTest {
     @DisplayName("Can return itself when it is the only enchantment controlled")
     void canReturnItself() {
         RiptideChimera chimeraCard = new RiptideChimera();
-        Permanent chimera = addPermanent(player1, chimeraCard);
-        addPermanent(player1, new GrizzlyBears());
+        Permanent chimera = harness.addToBattlefieldAndReturn(player1, chimeraCard);
+        harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -71,5 +64,71 @@ class RiptideChimeraTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getId().equals(chimera.getId()));
         assertThat(gd.playerHands.get(player1.getId())).contains(chimeraCard);
+    }
+
+    @Test
+    @DisplayName("Does not trigger during the opponent's upkeep")
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        harness.addToBattlefield(player1, new RiptideChimera());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Riptide Chimera");
+    }
+
+    @Test
+    @DisplayName("Returns an enchantment to its owner rather than its controller")
+    void returnsOpponentOwnedEnchantmentToOwner() {
+        harness.addToBattlefield(player1, new RiptideChimera());
+        GloriousAnthem anthemCard = new GloriousAnthem();
+        anthemCard.setOwnerId(player2.getId());
+        Permanent anthem = harness.addToBattlefieldAndReturn(player1, anthemCard);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, anthem.getId());
+
+        harness.assertNotOnBattlefield(player1, "Glorious Anthem");
+        assertThat(gd.playerHands.get(player2.getId())).contains(anthemCard);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(anthemCard);
+        harness.assertOnBattlefield(player1, "Riptide Chimera");
+    }
+
+    @Test
+    @DisplayName("The trigger still returns an enchantment after its source leaves play")
+    void triggerResolvesAfterSourceLeavesBattlefield() {
+        Permanent chimera = harness.addToBattlefieldAndReturn(player1, new RiptideChimera());
+        Permanent anthem = harness.addToBattlefieldAndReturn(player1, new GloriousAnthem());
+
+        advanceToUpkeep(player1);
+        gd.playerBattlefields.get(player1.getId()).remove(chimera);
+        gd.playerHands.get(player1.getId()).add(chimera.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactly(anthem.getId());
+        harness.handlePermanentChosen(player1, anthem.getId());
+
+        harness.assertNotOnBattlefield(player1, "Glorious Anthem");
+        harness.assertInHand(player1, "Glorious Anthem");
+    }
+
+    @Test
+    @DisplayName("The trigger does nothing when no enchantments remain at resolution")
+    void noEnchantmentRemainingAtResolution() {
+        Permanent chimera = harness.addToBattlefieldAndReturn(player1, new RiptideChimera());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+
+        advanceToUpkeep(player1);
+        gd.playerBattlefields.get(player1.getId()).remove(chimera);
+        gd.playerHands.get(player1.getId()).add(chimera.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 }
