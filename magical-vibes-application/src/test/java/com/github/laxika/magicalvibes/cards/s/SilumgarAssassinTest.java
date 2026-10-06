@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.b.BreakOpen;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -82,6 +83,85 @@ class SilumgarAssassinTest extends BaseCardTest {
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(assassin);
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @CardUsed(BreakOpen.class)
+    void turningFaceUpWithASpellDoesNotGiveAMegamorphCounterButStillTriggersDestruction() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        Permanent assassin = castFaceDown();
+        harness.setHand(player2, List.of(new BreakOpen()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player2, 0, assassin.getId());
+
+        assertThat(assassin.isFaceDown()).isFalse();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Hill Giant");
+        assertThat(assassin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void destructionDoesNotResolveIfTargetPowerBecomesGreaterThanThree() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        Permanent assassin = castFaceDown();
+        turnFaceUp(assassin);
+        harness.handlePermanentChosen(player1, target.getId());
+        target.setPowerModifier(1);
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Hill Giant");
+        harness.assertNotInGraveyard(player2, "Hill Giant");
+        assertThat(assassin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void creatureWithLowerPowerCanBlockIt() {
+        Permanent assassin = addCreatureReady(player1, new SilumgarAssassin());
+        assassin.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        blocker.setPowerModifier(-1);
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(assassin))));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    void blockingRestrictionUsesAssassinsCurrentPower() {
+        Permanent assassin = addCreatureReady(player1, new SilumgarAssassin());
+        assassin.setPowerModifier(1);
+        assassin.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new HillGiant());
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(assassin))));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    void faceDownAssassinDoesNotHaveItsBlockingRestriction() {
+        Permanent assassin = castFaceDown();
+        assassin.setSummoningSick(false);
+        assassin.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new HillGiant());
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(assassin))));
 
         assertThat(blocker.isBlocking()).isTrue();
     }
