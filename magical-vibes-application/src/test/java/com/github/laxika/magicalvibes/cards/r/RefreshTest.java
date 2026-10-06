@@ -33,6 +33,37 @@ class RefreshTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The shield prevents one lethal damage event without tapping the creature on resolution")
+    void shieldPreventsOneLethalDamageEvent() {
+        var target = harness.addToBattlefieldAndReturn(player1, new DiligentFarmhand());
+        harness.setHand(player1, List.of(new Refresh()));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(target.isTapped()).isFalse();
+        harness.assertInHand(player1, "Forest");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+
+        target.setMarkedDamage(1);
+        harness.runStateBasedActions();
+
+        harness.assertOnBattlefield(player1, "Diligent Farmhand");
+        assertThat(target.isTapped()).isTrue();
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(target.getRegenerationShield()).isZero();
+
+        target.setMarkedDamage(1);
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Diligent Farmhand");
+        harness.assertInGraveyard(player1, "Diligent Farmhand");
+    }
+
+    @Test
     @DisplayName("Can regenerate a creature an opponent controls")
     void canTargetOpponentCreature() {
         harness.addToBattlefield(player2, new DiligentFarmhand());
