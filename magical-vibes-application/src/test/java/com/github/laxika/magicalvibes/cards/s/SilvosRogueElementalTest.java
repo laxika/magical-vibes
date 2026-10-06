@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
+import com.github.laxika.magicalvibes.cards.t.ToweringBaloth;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +17,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SilvosRogueElemental.class, ElvishWarrior.class})
+@CardUsed({SilvosRogueElemental.class, ElvishWarrior.class, ToweringBaloth.class})
 class SilvosRogueElementalTest extends BaseCardTest {
 
     @Test
@@ -57,22 +58,23 @@ class SilvosRogueElementalTest extends BaseCardTest {
     @DisplayName("A regeneration shield saves Silvos from lethal combat damage")
     void regenerationShieldSavesFromLethalCombatDamage() {
         Permanent silvos = addCreatureReady(player1, new SilvosRogueElemental());
-        silvos.setRegenerationShield(1);
-        silvos.setBlocking(true);
-        silvos.addBlockingTarget(0);
+        addCreatureReady(player2, new ToweringBaloth());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
 
-        ElvishWarrior attackerCard = new ElvishWarrior();
-        attackerCard.setPower(6);
-        attackerCard.setToughness(6);
-        Permanent attacker = harness.addToBattlefieldAndReturn(player2, attackerCard);
-        attacker.setSummoningSick(false);
-        attacker.setAttacking(true);
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
 
         resolveCombat(player2);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(silvos);
         assertThat(silvos.isTapped()).isTrue();
         assertThat(silvos.getRegenerationShield()).isZero();
+        assertThat(silvos.getMarkedDamage()).isZero();
+        assertThat(silvos.isBlocking()).isFalse();
+        assertThat(silvos.getBlockingTargets()).isEmpty();
+        harness.assertInGraveyard(player2, "Towering Baloth");
     }
 
     @Test
@@ -82,8 +84,7 @@ class SilvosRogueElementalTest extends BaseCardTest {
         addCreatureReady(player1, new SilvosRogueElemental());
         Permanent blocker = addCreatureReady(player2, new ElvishWarrior());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
 
@@ -97,5 +98,38 @@ class SilvosRogueElementalTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
         harness.assertInGraveyard(player2, "Elvish Warrior");
+    }
+
+    @Test
+    @DisplayName("Tapped summoning-sick Silvos can activate regeneration repeatedly")
+    void tappedSummoningSickSilvosCanActivateRepeatedly() {
+        Permanent silvos = harness.addToBattlefieldAndReturn(player1, new SilvosRogueElemental());
+        silvos.setSummoningSick(true);
+        silvos.setTapped(true);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(silvos.getRegenerationShield()).isEqualTo(2);
+        assertThat(silvos.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
+    @DisplayName("Creating a regeneration shield does not remove damage or tap Silvos")
+    void grantingShieldDoesNotImmediatelyRegenerate() {
+        Permanent silvos = addCreatureReady(player1, new SilvosRogueElemental());
+        silvos.setMarkedDamage(2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(silvos.getRegenerationShield()).isEqualTo(1);
+        assertThat(silvos.getMarkedDamage()).isEqualTo(2);
+        assertThat(silvos.isTapped()).isFalse();
     }
 }
