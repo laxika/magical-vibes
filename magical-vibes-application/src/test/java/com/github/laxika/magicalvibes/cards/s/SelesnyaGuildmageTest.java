@@ -16,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(SelesnyaGuildmage.class)
+@CardUsed({SelesnyaGuildmage.class})
 class SelesnyaGuildmageTest extends BaseCardTest {
 
     @Test
@@ -29,15 +29,59 @@ class SelesnyaGuildmageTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().isToken())
-                .toList();
+        List<Permanent> tokens = findPermanents(player1, "Saproling");
         assertThat(tokens).hasSize(1);
         assertThat(tokens.getFirst().getCard().getType()).isEqualTo(CardType.CREATURE);
         assertThat(tokens.getFirst().getCard().getColors()).containsExactly(CardColor.GREEN);
         assertThat(tokens.getFirst().getCard().getSubtypes()).containsExactly(CardSubtype.SAPROLING);
         assertThat(tokens.getFirst().getEffectivePower()).isEqualTo(1);
         assertThat(tokens.getFirst().getEffectiveToughness()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A summoning-sick tapped Guildmage can repeatedly create tokens")
+    void tokenAbilityDoesNotRequireTappingOrHaste() {
+        Permanent guildmage = addReadyGuildmage(player1);
+        guildmage.setSummoningSick(true);
+        guildmage.setTapped(true);
+        addMana(ManaColor.COLORLESS, 6);
+        addMana(ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Saproling")).hasSize(2);
+        assertThat(findPermanents(player2, "Saproling")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Boost includes tokens created in response and repeated boosts accumulate")
+    void boostUsesCreaturesPresentOnResolutionAndStacks() {
+        Permanent guildmage = addReadyGuildmage(player1);
+        addMana(ManaColor.COLORLESS, 9);
+        addMana(ManaColor.GREEN, 1);
+        addMana(ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        Permanent token = findPermanent(player1, "Saproling");
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, guildmage)).isEqualTo(2);
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(2);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, guildmage)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, guildmage)).isEqualTo(4);
     }
 
     @Test
