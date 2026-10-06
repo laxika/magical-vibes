@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({RitualOfRestoration.class, MyrMoonvessel.class, DroolingOgre.class})
@@ -53,5 +54,53 @@ class RitualOfRestorationTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot cast without the required artifact target")
+    void cannotCastWithoutTarget() {
+        harness.setGraveyard(player1, List.of(new MyrMoonvessel()));
+        harness.setHand(player1, List.of(new RitualOfRestoration()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, (java.util.UUID) null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Does not return another artifact when the target leaves the graveyard")
+    void doesNotRetargetWhenTargetLeavesGraveyard() {
+        Card target = new MyrMoonvessel();
+        Card other = new MyrMoonvessel();
+        harness.setGraveyard(player1, List.of(target, other));
+        harness.setHand(player1, List.of(new RitualOfRestoration()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castSorcery(player1, 0, target.getId());
+
+        harness.setGraveyard(player1, List.of(other));
+        harness.setExile(player1, List.of(target));
+        harness.passBothPriorities();
+
+        harness.assertNotInHand(player1, other.getName());
+        harness.assertInGraveyard(player1, other.getName());
+        harness.assertInGraveyard(player1, "Ritual of Restoration");
+    }
+
+    @Test
+    @DisplayName("Returns only the chosen artifact from among multiple artifacts")
+    void returnsOnlyChosenArtifact() {
+        Card chosen = new MyrMoonvessel();
+        Card other = new MyrMoonvessel();
+        harness.setGraveyard(player1, List.of(other, chosen));
+        harness.setHand(player1, List.of(new RitualOfRestoration()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castAndResolveSorcery(player1, 0, chosen.getId());
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .containsExactly(chosen);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .contains(other).doesNotContain(chosen);
+        harness.assertInGraveyard(player1, "Ritual of Restoration");
     }
 }
