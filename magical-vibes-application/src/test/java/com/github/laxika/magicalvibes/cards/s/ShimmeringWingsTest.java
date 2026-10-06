@@ -252,9 +252,7 @@ class ShimmeringWingsTest extends BaseCardTest {
 
         addCreatureReady(player1, new GrizzlyBears());
 
-        declareAttackers(player1, List.of(0));
-
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -278,6 +276,45 @@ class ShimmeringWingsTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, mountain.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Returning Shimmering Wings requires blue mana")
+    void returnAbilityRequiresBlueMana() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent wings = harness.addToBattlefieldAndReturn(player1, new ShimmeringWings());
+        wings.setAttachedTo(creature.getId());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Shimmering Wings");
+        harness.assertNotInHand(player1, "Shimmering Wings");
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Multiple return activations return the Aura only once")
+    void multipleActivationsReturnAuraOnlyOnce() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent wings = harness.addToBattlefieldAndReturn(player1, new ShimmeringWings());
+        wings.setAttachedTo(creature.getId());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.activateAbility(player1, 1, null, null);
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId()))
+                .filteredOn(card -> card instanceof ShimmeringWings).hasSize(1);
+        harness.assertNotOnBattlefield(player1, "Shimmering Wings");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isFalse();
     }
 }
 
