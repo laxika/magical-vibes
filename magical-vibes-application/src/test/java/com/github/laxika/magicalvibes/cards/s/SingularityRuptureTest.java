@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SingularityRupture.class, GrizzlyBears.class})
+@CardUsed({SingularityRupture.class, GrizzlyBears.class, Island.class})
 class SingularityRuptureTest extends BaseCardTest {
 
     @Test
@@ -28,8 +29,7 @@ class SingularityRuptureTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SingularityRupture()));
         addMana();
 
-        harness.castSorcery(player1, 0, List.of(player1.getId(), player2.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(player1.getId(), player2.getId()));
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
@@ -47,8 +47,7 @@ class SingularityRuptureTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SingularityRupture()));
         addMana();
 
-        harness.castSorcery(player1, 0, List.of());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of());
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
@@ -66,6 +65,55 @@ class SingularityRuptureTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(creature.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a player");
+    }
+
+    @Test
+    @DisplayName("Mills only the selected player and leaves noncreature permanents intact")
+    void millsOnlySelectedPlayerAndPreservesLands() {
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player2, new Island());
+        harness.setLibrary(player1, libraryCards(8));
+        harness.setLibrary(player2, libraryCards(10));
+        harness.setHand(player1, List.of(new SingularityRupture()));
+        addMana();
+
+        harness.castAndResolveSorcery(player1, 0, List.of(player2.getId()));
+
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(8);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(5);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(5);
+        harness.assertOnBattlefield(player1, "Island");
+        harness.assertOnBattlefield(player2, "Island");
+    }
+
+    @Test
+    @DisplayName("Can target only its controller")
+    void millsOnlyControllerWhenSelected() {
+        harness.setLibrary(player1, libraryCards(8));
+        harness.setLibrary(player2, libraryCards(10));
+        harness.setHand(player1, List.of(new SingularityRupture()));
+        addMana();
+
+        harness.castAndResolveSorcery(player1, 0, List.of(player1.getId()));
+
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(4);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(10);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(5);
+    }
+
+    @Test
+    @DisplayName("Empty and one-card libraries mill nothing")
+    void millsNothingFromTinyLibraries() {
+        harness.setLibrary(player1, libraryCards(0));
+        harness.setLibrary(player2, libraryCards(1));
+        harness.setHand(player1, List.of(new SingularityRupture()));
+        addMana();
+
+        harness.castAndResolveSorcery(player1, 0, List.of(player1.getId(), player2.getId()));
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
     }
 
     private void addMana() {
