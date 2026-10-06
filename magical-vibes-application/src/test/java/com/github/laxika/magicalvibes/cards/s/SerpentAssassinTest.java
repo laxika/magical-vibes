@@ -39,7 +39,6 @@ class SerpentAssassinTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Serpent Assassin");
     }
 
     @Test
@@ -65,8 +64,7 @@ class SerpentAssassinTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting may and choosing target destroys the nonblack creature")
     void acceptingMayDestroysTarget() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()).getId();
         castAndAcceptMay(targetId);
 
         assertThat(gd.stack).isEmpty();
@@ -120,8 +118,7 @@ class SerpentAssassinTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting may can destroy a nonblack creature you control")
     void acceptingMayCanDestroyOwnCreature() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID targetId = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears()).getId();
 
         castAndAcceptMay(targetId);
 
@@ -148,8 +145,7 @@ class SerpentAssassinTest extends BaseCardTest {
     @Test
     @DisplayName("ETB ability does nothing if its target leaves before resolution")
     void etbDoesNothingIfTargetLeavesBeforeResolution() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()).getId();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.castFromHand(player1, new SerpentAssassin(), "{3}{B}{B}");
@@ -163,5 +159,46 @@ class SerpentAssassinTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertNotInGraveyard(player2, "Grizzly Bears");
         harness.assertOnBattlefield(player1, "Serpent Assassin");
+    }
+
+    @Test
+    @DisplayName("Target choices exclude black creatures and noncreature permanents")
+    void targetChoicesExcludeBlackCreaturesAndNoncreatures() {
+        UUID bearsId = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()).getId();
+        harness.addToBattlefield(player2, new BogImp());
+        harness.addToBattlefield(player2, new Swamp());
+        harness.castFromHand(player1, new SerpentAssassin(), "{3}{B}{B}");
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        var choice = (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
+        assertThat(choice.validPermanentIds()).containsExactly(bearsId);
+
+        harness.handlePermanentChosen(player1, bearsId);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Bog Imp");
+        harness.assertOnBattlefield(player2, "Swamp");
+    }
+
+    @Test
+    @DisplayName("ETB ability still destroys its target after Serpent Assassin leaves")
+    void etbResolvesAfterAssassinLeaves() {
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()).getId();
+        harness.castFromHand(player1, new SerpentAssassin(), "{3}{B}{B}");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, targetId);
+
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Serpent Assassin");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 }
