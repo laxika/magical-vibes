@@ -55,4 +55,96 @@ class SageOfTheBeyondTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Sage of the Beyond");
     }
+
+    @Test
+    void reducesAnotherSagesForetellCost() {
+        harness.addToBattlefield(player1, new SageOfTheBeyond());
+        SageOfTheBeyond sage = new SageOfTheBeyond();
+        harness.setHand(player1, List.of(sage));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.foretell(player1, 0);
+        gd.turnNumber++;
+
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castFromExile(player1, sage.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+    }
+
+    @Test
+    void multipleSagesStackTheirReductionsButDoNotReduceColoredMana() {
+        harness.addToBattlefield(player1, new SageOfTheBeyond());
+        harness.addToBattlefield(player1, new SageOfTheBeyond());
+        SageOfTheBeyond sage = new SageOfTheBeyond();
+        harness.setHand(player1, List.of(sage));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.foretell(player1, 0);
+        gd.turnNumber++;
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        assertThatThrownBy(() -> harness.castFromExile(player1, sage.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castFromExile(player1, sage.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+    }
+
+    @Test
+    void doesNotReduceAnOpponentsForetoldSpell() {
+        harness.addToBattlefield(player2, new SageOfTheBeyond());
+        SageOfTheBeyond sage = new SageOfTheBeyond();
+        harness.setHand(player1, List.of(sage));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.foretell(player1, 0);
+        gd.turnNumber++;
+
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        assertThatThrownBy(() -> harness.castFromExile(player1, sage.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castFromExile(player1, sage.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Sage of the Beyond");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+    }
+
+    @Test
+    void cannotCastOnTheTurnItWasForetold() {
+        SageOfTheBeyond sage = new SageOfTheBeyond();
+        harness.setHand(player1, List.of(sage));
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.foretell(player1, 0);
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, sage.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.findExiledCard(sage.getId())).isNotNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void spellCostReductionDoesNotReduceTheForetellSpecialAction() {
+        harness.addToBattlefield(player1, new SageOfTheBeyond());
+        SageOfTheBeyond sage = new SageOfTheBeyond();
+        harness.setHand(player1, List.of(sage));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.foretell(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInHand(player1, "Sage of the Beyond");
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.foretell(player1, 0);
+
+        assertThat(gd.findExiledCard(sage.getId())).isNotNull();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+    }
 }
