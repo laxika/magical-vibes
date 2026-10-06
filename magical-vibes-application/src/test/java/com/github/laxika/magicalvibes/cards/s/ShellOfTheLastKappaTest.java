@@ -166,4 +166,83 @@ class ShellOfTheLastKappaTest extends BaseCardTest {
         assertThat(gd.exiledCards)
                 .anyMatch(e -> e.card().getId().equals(spell.getId()));
     }
+
+    @Test
+    @DisplayName("Sacrificing with no exiled cards still pays the cost and offers no spell")
+    void sacrificeWithNoExiledCards() {
+        harness.addToBattlefield(player1, new ShellOfTheLastKappa());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.assertNotOnBattlefield(player1, "Shell of the Last Kappa");
+        harness.assertInGraveyard(player1, "Shell of the Last Kappa");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The sacrifice ability casts a sorcery on the opponent's turn")
+    void castsSorceryOnOpponentsTurn() {
+        LavaSpike spell = new LavaSpike();
+        Permanent shell = harness.addToBattlefieldAndReturn(player1, new ShellOfTheLastKappa());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(spell));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castSorcery(player2, 0, player1.getId());
+        harness.ensurePriority(player1);
+        harness.activateAbility(player1, 0, 0, null, spell.getId());
+        harness.passBothPriorities();
+        shell.untap();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.ensurePriority(player1);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 17);
+        harness.assertInGraveyard(player2, "Lava Spike");
+        assertThat(gd.exiledCards).noneMatch(e -> e.card().getId().equals(spell.getId()));
+    }
+
+    @Test
+    @DisplayName("With two exiled cards, accepting one offer casts only one spell")
+    void castsOnlyOneOfMultipleExiledCards() {
+        GlacialRay first = new GlacialRay();
+        Permanent shell = spellPlayerOneAndExileIt(first);
+        shell.untap();
+        GlacialRay second = new GlacialRay();
+        harness.setHand(player2, List.of(second));
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.ensurePriority(player2);
+        harness.castInstant(player2, 0, player1.getId());
+        harness.ensurePriority(player1);
+        harness.activateAbility(player1, 0, 0, null, second.getId());
+        harness.passBothPriorities();
+        assertThat(gd.getCardsExiledByPermanent(shell.getId())).hasSize(2);
+
+        shell.untap();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.ensurePriority(player1);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 18);
+        assertThat(gd.getCardsExiledByPermanent(shell.getId())).hasSize(1);
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player2, "Glacial Ray");
+    }
 }
