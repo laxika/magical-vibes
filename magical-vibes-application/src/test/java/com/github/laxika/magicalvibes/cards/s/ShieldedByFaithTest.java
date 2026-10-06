@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.d.DoomBlade;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.t.TrollAscetic;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -19,7 +20,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ShieldedByFaith.class, GrizzlyBears.class, DoomBlade.class, FountainOfYouth.class})
+@CardUsed({ShieldedByFaith.class, GrizzlyBears.class, DoomBlade.class, FountainOfYouth.class,
+        TrollAscetic.class})
 class ShieldedByFaithTest extends BaseCardTest {
 
     @Test
@@ -75,6 +77,28 @@ class ShieldedByFaithTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Attachment does not target an opponent's entering creature with hexproof")
+    void attachesToOpponentsEnteringCreatureWithHexproof() {
+        Permanent original = addReadyCreature(player1);
+        Permanent shield = addAttachedShield(original);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new TrollAscetic()));
+        harness.addMana(player2, ManaColor.GREEN, 3);
+        harness.castCreature(player2, 0);
+        resolveCreatureAndTrigger();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        Permanent entering = findPermanent(player2, "Troll Ascetic");
+        assertThat(shield.getAttachedTo()).isEqualTo(entering.getId());
+        assertThat(gqs.hasKeyword(gd, entering, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, original, Keyword.INDESTRUCTIBLE)).isFalse();
+    }
+
+    @Test
     @DisplayName("Shielded by Faith cannot enchant a noncreature permanent")
     void cannotEnchantNonCreature() {
         Permanent artifact = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
@@ -88,6 +112,19 @@ class ShieldedByFaithTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A noncreature entering does not trigger the attachment ability")
+    void nonCreatureEntryDoesNotTriggerAttachment() {
+        Permanent original = addReadyCreature(player1);
+        Permanent shield = addAttachedShield(original);
+
+        harness.enterBattlefieldAndReturn(player2, new FountainOfYouth());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(shield.getAttachedTo()).isEqualTo(original.getId());
+    }
+
+    @Test
     @DisplayName("Enchanted creature survives destruction")
     void enchantedCreatureSurvivesDestruction() {
         Permanent creature = addReadyCreature(player1);
@@ -97,8 +134,7 @@ class ShieldedByFaithTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLACK, 2);
         harness.forceActivePlayer(player2);
 
-        harness.castInstant(player2, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, creature.getId());
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
@@ -126,16 +162,14 @@ class ShieldedByFaithTest extends BaseCardTest {
     }
 
     private Permanent addReadyCreature(Player player) {
-        Permanent creature = new Permanent(new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player, new GrizzlyBears());
         creature.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(creature);
         return creature;
     }
 
     private Permanent addAttachedShield(Permanent host) {
-        Permanent shield = new Permanent(new ShieldedByFaith());
+        Permanent shield = harness.addToBattlefieldAndReturn(player1, new ShieldedByFaith());
         shield.setAttachedTo(host.getId());
-        gd.playerBattlefields.get(player1.getId()).add(shield);
         return shield;
     }
 
