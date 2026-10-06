@@ -1,8 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.r.RealityRipple;
 import com.github.laxika.magicalvibes.cards.w.WildJhovall;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SandSquid.class, WildJhovall.class, Forest.class})
+@CardUsed({SandSquid.class, WildJhovall.class, Forest.class, Island.class, RealityRipple.class})
 class SandSquidTest extends BaseCardTest {
 
     @Test
@@ -111,15 +114,112 @@ class SandSquidTest extends BaseCardTest {
         assertThat(sandSquid.isTapped()).isTrue();
     }
 
+    @Test
+    void alreadyTappedCreatureIsStillLocked() {
+        addCreatureReady(player1, new SandSquid());
+        Permanent target = addCreatureReady(player2, new WildJhovall());
+        target.tap();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        advanceToNextTurn(player1);
+
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    void abilityStillTapsTargetWhenSourceLeavesBeforeResolution() {
+        Permanent source = addCreatureReady(player1, new SandSquid());
+        Permanent target = addCreatureReady(player2, new WildJhovall());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+        advanceToNextTurn(player1);
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    void untappingAndRetappingSourceBeforeResolutionDoesNotCreateLock() {
+        Permanent source = addCreatureReady(player1, new SandSquid());
+        Permanent target = addCreatureReady(player2, new WildJhovall());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        source.untap();
+        source.tap();
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+        advanceToNextTurn(player1);
+        assertThat(source.isTapped()).isTrue();
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    void targetingItselfPreventsItsOwnUntap() {
+        Permanent source = addCreatureReady(player1, new SandSquid());
+
+        harness.activateAbility(player1, 0, null, source.getId());
+        harness.passBothPriorities();
+        advanceToNextTurn(player2);
+
+        assertThat(source.isTapped()).isTrue();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void islandwalkPreventsBlockingWhenDefenderControlsIsland() {
+        Permanent attacker = addCreatureReady(player1, new SandSquid());
+        Permanent blocker = addCreatureReady(player2, new WildJhovall());
+        harness.addToBattlefield(player2, new Island());
+
+        assertThat(harness.getBlockLegalityService().canBlockAttacker(gd, blocker, attacker,
+                gd.playerBattlefields.get(player2.getId()))).isFalse();
+    }
+
+    @Test
+    void islandOnAttackersSideDoesNotPreventBlocking() {
+        Permanent attacker = addCreatureReady(player1, new SandSquid());
+        Permanent blocker = addCreatureReady(player2, new WildJhovall());
+        harness.addToBattlefield(player1, new Island());
+
+        assertThat(harness.getBlockLegalityService().canBlockAttacker(gd, blocker, attacker,
+                gd.playerBattlefields.get(player2.getId()))).isTrue();
+    }
+
+    @Test
+    void phasingOutSourcePermanentlyEndsUntapLock() {
+        Permanent source = addCreatureReady(player1, new SandSquid());
+        Permanent target = addCreatureReady(player2, new WildJhovall());
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        advanceToNextTurn(player1);
+        assertThat(target.isTapped()).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.setHand(player2, List.of(new RealityRipple()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.castInstant(player2, 0, source.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(source);
+
+        advanceToNextTurnWithMayChoice(player2, false);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(source);
+        assertThat(source.isTapped()).isTrue();
+        advanceToNextTurn(player1);
+
+        assertThat(target.isTapped()).isFalse();
+    }
+
     private void advanceToNextTurn(Player currentActivePlayer) {
         harness.forceActivePlayer(currentActivePlayer);
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        Player newActivePlayer = currentActivePlayer == player1 ? player2 : player1;
+        harness.passUntil(newActivePlayer, TurnStep.UPKEEP);
     }
 
     private void advanceToNextTurnWithMayChoice(Player currentActivePlayer, boolean acceptUntap) {
@@ -127,10 +227,8 @@ class SandSquidTest extends BaseCardTest {
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-
         Player newActivePlayer = currentActivePlayer == player1 ? player2 : player1;
+        harness.passUntil(newActivePlayer, TurnStep.UNTAP);
         harness.handleMayAbilityChosen(newActivePlayer, acceptUntap);
     }
 }
