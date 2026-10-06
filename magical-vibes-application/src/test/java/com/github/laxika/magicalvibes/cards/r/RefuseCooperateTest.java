@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +19,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RefuseCooperate.class, CounselOfTheSoratami.class, GrizzlyBears.class, Boomerang.class})
 class RefuseCooperateTest extends BaseCardTest {
 
     @Test
@@ -33,8 +35,7 @@ class RefuseCooperateTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, counsel.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, counsel.getId());
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
         harness.assertInGraveyard(player2, "Refuse");
@@ -53,8 +54,7 @@ class RefuseCooperateTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, bears.getId());
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
     }
@@ -72,8 +72,7 @@ class RefuseCooperateTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 0);
         harness.passPriority(player1);
-        harness.castFlashback(player2, 0, counsel.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player2, 0, counsel.getId());
 
         GameData game = harness.getGameData();
         assertThat(game.stack).hasSize(2);
@@ -126,8 +125,7 @@ class RefuseCooperateTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, bearsPermId);
         harness.passPriority(player1);
-        harness.castFlashback(player2, 0, boomerang.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player2, 0, boomerang.getId());
 
         assertThat(gd.stack).anySatisfy(se ->
                 assertThat(se.getDescription()).isEqualTo("Copy of Boomerang"));
@@ -150,11 +148,81 @@ class RefuseCooperateTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, bearsPermId);
         harness.passPriority(player1);
-        harness.castFlashback(player2, 0, boomerang.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player2, 0, boomerang.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player2.getId());
+    }
+
+    @Test
+    @DisplayName("Refuse uses Cooperate's mana value when targeting a copy of the aftermath half")
+    void refuseUsesCopiedAftermathHalfManaValue() {
+        CounselOfTheSoratami counsel = new CounselOfTheSoratami();
+        harness.setHand(player1, List.of(counsel));
+        harness.setGraveyard(player1, List.of(new RefuseCooperate()));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+        harness.setGraveyard(player2, List.of(new RefuseCooperate()));
+        harness.setHand(player2, List.of(new RefuseCooperate()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+        harness.addMana(player2, ManaColor.RED, 4);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.castFlashback(player2, 0, counsel.getId());
+        UUID cooperateId = gd.stack.getLast().getTargetableId();
+        harness.castAndResolveFlashback(player1, 0, cooperateId);
+        harness.handleMayAbilityChosen(player1, false);
+        UUID copyId = gd.stack.getLast().getTargetableId();
+        harness.castAndResolveInstant(player2, 0, copyId);
+
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Declining new targets keeps the original target for the copy")
+    void cooperateCopyResolvesWithOriginalTargetWhenRetargetDeclined() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
+        Boomerang boomerang = new Boomerang();
+        harness.setHand(player1, List.of(boomerang));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.setGraveyard(player2, List.of(new RefuseCooperate()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        harness.castInstant(player1, 0, bearsId);
+        harness.castAndResolveFlashback(player2, 0, boomerang.getId());
+        harness.handleMayAbilityChosen(player2, false);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getId()).isEqualTo(boomerang.getId());
+    }
+
+    @Test
+    @DisplayName("Cooperate can change the copy's target without changing the original spell")
+    void cooperateRetargetsOnlyTheCopy() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        UUID originalTarget = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID newTarget = harness.getPermanentId(player2, "Grizzly Bears");
+        Boomerang boomerang = new Boomerang();
+        harness.setHand(player1, List.of(boomerang));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.setGraveyard(player2, List.of(new RefuseCooperate()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        harness.castInstant(player1, 0, originalTarget);
+        harness.castAndResolveFlashback(player2, 0, boomerang.getId());
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handlePermanentChosen(player2, newTarget);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.passBothPriorities();
+        harness.assertInHand(player1, "Grizzly Bears");
     }
 }
