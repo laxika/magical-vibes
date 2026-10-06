@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RhonassMonument.class, GrizzlyBears.class, HillGiant.class, Spellbook.class})
 class RhonassMonumentTest extends BaseCardTest {
 
     // ===== Cost reduction =====
@@ -124,7 +126,7 @@ class RhonassMonumentTest extends BaseCardTest {
     void nonCreatureSpellDoesNotTrigger() {
         harness.addToBattlefield(player1, new RhonassMonument());
         Permanent existing = addCreatureReady(player1, new GrizzlyBears()); // a legal target exists
-        // Spellbook is a {2} artifact — not a creature spell
+        // Spellbook is a {0} artifact — not a creature spell
         harness.setHand(player1, List.of(new Spellbook()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
@@ -133,5 +135,91 @@ class RhonassMonumentTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
         assertThat(existing.getPowerModifier()).isZero();
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ARTIFACT_SPELL);
+    }
+
+    @Test
+    void reductionDoesNotPayForGreenMana() {
+        harness.addToBattlefield(player1, new RhonassMonument());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void opponentCreatureGetsNeitherDiscountNorTrigger() {
+        harness.addToBattlefield(player1, new RhonassMonument());
+        Permanent existing = addCreatureReady(player1, new GrizzlyBears());
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player2, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.castCreature(player2, 0);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        assertThat(gd.stack).noneMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(existing.getPowerModifier()).isZero();
+        assertThat(existing.getGrantedKeywords()).doesNotContain(Keyword.TRAMPLE);
+    }
+
+    @Test
+    void nonGreenCreatureStillTriggersBoost() {
+        harness.addToBattlefield(player1, new RhonassMonument());
+        Permanent existing = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new HillGiant()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castCreature(player1, 0);
+        harness.handlePermanentChosen(player1, existing.getId());
+        harness.passBothPriorities();
+
+        assertThat(existing.getEffectivePower()).isEqualTo(4);
+        assertThat(existing.getEffectiveToughness()).isEqualTo(4);
+        assertThat(existing.getGrantedKeywords()).contains(Keyword.TRAMPLE);
+        harness.assertNotOnBattlefield(player1, "Hill Giant");
+    }
+
+    @Test
+    void triggerResolvesAfterMonumentLeavesBattlefield() {
+        Permanent monument = harness.addToBattlefieldAndReturn(player1, new RhonassMonument());
+        Permanent existing = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castCreature(player1, 0);
+        harness.handlePermanentChosen(player1, existing.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(monument);
+        harness.passBothPriorities();
+
+        assertThat(existing.getEffectivePower()).isEqualTo(4);
+        assertThat(existing.getEffectiveToughness()).isEqualTo(4);
+        assertThat(existing.getGrantedKeywords()).contains(Keyword.TRAMPLE);
+    }
+
+    @Test
+    void missingTargetDoesNotBoostResolvingCreatureSpell() {
+        harness.addToBattlefield(player1, new RhonassMonument());
+        Permanent existing = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castCreature(player1, 0);
+        harness.handlePermanentChosen(player1, existing.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(existing);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        Permanent resolved = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
+                .findFirst().orElseThrow();
+        assertThat(resolved.getEffectivePower()).isEqualTo(2);
+        assertThat(resolved.getEffectiveToughness()).isEqualTo(2);
+        assertThat(resolved.getGrantedKeywords()).doesNotContain(Keyword.TRAMPLE);
     }
 }
