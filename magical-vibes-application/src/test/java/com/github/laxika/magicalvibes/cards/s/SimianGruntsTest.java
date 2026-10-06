@@ -18,12 +18,38 @@ class SimianGruntsTest extends BaseCardTest {
     void flashAllowsCastingDuringOpponentsTurn() {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passPriority(player2);
 
         harness.castFromHand(player1, new SimianGrunts(), "{2}{G}");
 
         assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Echo creates no enters-the-battlefield trigger")
+    void echoCreatesNoEntryTrigger() {
+        harness.enterBattlefieldAndReturn(player1, new SimianGrunts());
+
+        harness.assertOnBattlefield(player1, "Simian Grunts");
+        assertThat(gd.stack).isEmpty();
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInGraveyard(player1, "Simian Grunts");
+    }
+
+    @Test
+    @DisplayName("Flash allows Simian Grunts to be cast during combat")
+    void flashAllowsCastingDuringCombat() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        harness.castFromHand(player1, new SimianGrunts(), "{2}{G}");
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Simian Grunts");
     }
 
     @Test
