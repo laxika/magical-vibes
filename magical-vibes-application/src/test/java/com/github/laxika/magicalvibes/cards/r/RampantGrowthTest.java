@@ -106,6 +106,33 @@ class RampantGrowthTest extends BaseCardTest {
         assertThat(gameLogContains("Library is shuffled.")).isTrue();
     }
 
+    @Test
+    @DisplayName("Rampant Growth searches only its controller's library and puts exactly one land under their control")
+    void searchesOnlyControllersLibrary() {
+        Card forest = new Forest();
+        Card plains = new Plains();
+        Card opposingIsland = new Island();
+        harness.setLibrary(player1, List.of(forest, plains));
+        harness.setLibrary(player2, List.of(opposingIsland));
+        int controllerBattlefieldBefore = gd.playerBattlefields.get(player1.getId()).size();
+        int opponentBattlefieldBefore = gd.playerBattlefields.get(player2.getId()).size();
+        setupAndCast();
+
+        harness.passBothPriorities();
+
+        PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search.params().cards()).containsExactly(forest, plains);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(controllerBattlefieldBefore + 1)
+                .anyMatch(p -> p.getCard().getId().equals(forest.getId()) && p.isTapped());
+        assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(opponentBattlefieldBefore);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(plains);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opposingIsland);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Rampant Growth");
+    }
+
     private void setupAndCast() {
         harness.castFromHand(player1, new RampantGrowth(), "{1}{G}");
     }
