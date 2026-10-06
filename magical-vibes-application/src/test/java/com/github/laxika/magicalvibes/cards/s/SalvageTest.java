@@ -46,8 +46,7 @@ class SalvageTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Salvage()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castSorcery(player1, 0, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0, target.getId());
 
         GameData gd = harness.getGameData();
         assertThat(gd.playerGraveyards.get(player1.getId())).noneMatch(c -> c.getId().equals(target.getId()));
@@ -64,12 +63,45 @@ class SalvageTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Salvage()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castSorcery(player1, 0, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0, target.getId());
 
         assertThat(gd.playerDecks.get(player1.getId()))
                 .extracting(Card::getId)
                 .containsExactly(target.getId(), existingTop.getId());
+    }
+
+    @Test
+    @DisplayName("Can put a noncreature card on top of an empty library")
+    void returnsNoncreatureCardToEmptyLibrary() {
+        Card target = new Salvage();
+        Card spell = new Salvage();
+        harness.setGraveyard(player1, List.of(target));
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveSorcery(player1, 0, 0, target.getId());
+
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .extracting(Card::getId)
+                .containsExactly(target.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(Card::getId)
+                .containsExactly(spell.getId());
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot cast without a graveyard target")
+    void cannotCastWithoutTarget() {
+        harness.setGraveyard(player1, List.of());
+        harness.setHand(player1, List.of(new Salvage()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
