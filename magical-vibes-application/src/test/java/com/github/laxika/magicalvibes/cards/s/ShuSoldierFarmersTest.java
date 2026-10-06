@@ -34,4 +34,35 @@ class ShuSoldierFarmersTest extends BaseCardTest {
     private void castShuSoldierFarmers() {
         harness.castFromHand(player1, new ShuSoldierFarmers(), "{4}{W}");
     }
+
+    @Test
+    @DisplayName("Life is gained only when the enter trigger resolves")
+    void lifeGainWaitsForTriggerResolution() {
+        castShuSoldierFarmers();
+        harness.assertLife(player1, 20);
+        harness.assertNotOnBattlefield(player1, "Shu Soldier-Farmers");
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Shu Soldier-Farmers");
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 24);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("The second player's creature grants life to the second player")
+    void secondPlayerGainsLife() {
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, new ShuSoldierFarmers(), "{4}{W}");
+
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 24);
+    }
 }
