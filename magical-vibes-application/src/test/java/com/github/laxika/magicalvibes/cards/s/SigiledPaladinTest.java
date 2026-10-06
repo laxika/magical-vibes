@@ -3,7 +3,9 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,6 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SigiledPaladin.class, GrizzlyBears.class})
 class SigiledPaladinTest extends BaseCardTest {
 
     @Test
@@ -67,5 +70,50 @@ class SigiledPaladinTest extends BaseCardTest {
         assertThat(gd.stack).noneMatch(e -> e.getCard().getName().equals("Sigiled Paladin"));
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Each Paladin grants its own exalted bonus to a lone attacker")
+    void multipleExaltedAbilitiesStack() {
+        Permanent attacker = addCreatureReady(player1, new SigiledPaladin());
+        Permanent supporter = addCreatureReady(player1, new SigiledPaladin());
+        supporter.setTapped(true);
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, supporter)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, supporter)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Exalted does not boost an opponent's lone attacker")
+    void opposingAttackerIsNotBoosted() {
+        addCreatureReady(player1, new SigiledPaladin());
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(player2, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("First strike kills an equal attacker before it damages the blocking Paladin")
+    void firstStrikeWorksWhileBlocking() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new SigiledPaladin());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(attacker.getCard());
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(blocker);
+        assertThat(blocker.getMarkedDamage()).isZero();
     }
 }
