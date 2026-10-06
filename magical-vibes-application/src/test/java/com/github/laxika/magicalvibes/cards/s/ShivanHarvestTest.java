@@ -102,6 +102,62 @@ class ShivanHarvestTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Cannot pay the red mana requirement with colorless mana")
+    void requiresRedMana() {
+        harness.addToBattlefield(player1, new ShivanHarvest());
+        harness.addToBattlefield(player1, new RagingKavu());
+        harness.addToBattlefield(player2, new ShivanOasis());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        UUID targetId = harness.getPermanentId(player2, "Shivan Oasis");
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, targetId))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Raging Kavu");
+        harness.assertOnBattlefield(player2, "Shivan Oasis");
+    }
+
+    @Test
+    @DisplayName("An opponent's creature cannot pay the sacrifice cost")
+    void cannotSacrificeOpponentsCreature() {
+        harness.addToBattlefield(player1, new ShivanHarvest());
+        harness.addToBattlefield(player2, new RagingKavu());
+        harness.addToBattlefield(player2, new ShivanOasis());
+        addMana();
+        UUID targetId = harness.getPermanentId(player2, "Shivan Oasis");
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, targetId))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player2, "Raging Kavu");
+        harness.assertOnBattlefield(player2, "Shivan Oasis");
+    }
+
+    @Test
+    @DisplayName("The same enchantment can activate again in the same turn")
+    void canActivateRepeatedly() {
+        harness.addToBattlefield(player1, new ShivanHarvest());
+        harness.addToBattlefield(player1, new RagingKavu());
+        harness.addToBattlefield(player2, new ShivanOasis());
+        UUID firstTargetId = harness.getPermanentId(player2, "Shivan Oasis");
+        addMana();
+
+        harness.activateAbility(player1, 0, 0, null, firstTargetId);
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player2, "Shivan Oasis");
+
+        harness.addToBattlefield(player1, new RagingKavu());
+        harness.addToBattlefield(player2, new ShivanOasis());
+        UUID secondTargetId = harness.getPermanentId(player2, "Shivan Oasis");
+        addMana();
+
+        harness.activateAbility(player1, 0, 0, null, secondTargetId);
+        harness.assertNotOnBattlefield(player1, "Raging Kavu");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Shivan Oasis");
+        harness.assertOnBattlefield(player1, "Shivan Harvest");
+    }
+
     private void addMana() {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.RED, 1);
