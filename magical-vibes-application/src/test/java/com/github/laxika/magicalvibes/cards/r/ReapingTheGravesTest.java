@@ -95,6 +95,58 @@ class ReapingTheGravesTest extends BaseCardTest {
                 .containsExactlyInAnyOrder(originalTarget.getId(), newTarget.getId());
     }
 
+    @Test
+    void keepingCopyTargetReturnsCreatureOnlyOnce() {
+        Card creature = new GoblinBrigand();
+        harness.setGraveyard(player1, List.of(creature));
+        gd.recordSpellCast(player2.getId(), new GoblinBrigand());
+        castReapingTheGraves(creature.getId());
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getId)
+                .containsExactly(creature.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId())).extracting(Card::getName)
+                .containsExactly("Reaping the Graves");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void stormRetargetingExcludesNoncreaturesAndOpponentsGraveyard() {
+        Card creature = new GoblinBrigand();
+        Card instant = new LongTermPlans();
+        Card opposingCreature = new GoblinBrigand();
+        harness.setGraveyard(player1, List.of(creature, instant));
+        harness.setGraveyard(player2, List.of(opposingCreature));
+        gd.recordSpellCast(player1.getId(), new GoblinBrigand());
+        castReapingTheGraves(creature.getId());
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).containsExactly(creature.getId());
+    }
+
+    @Test
+    void spellsCastAfterReapingDoNotIncreaseStormCount() {
+        Card creature = new GoblinBrigand();
+        harness.setGraveyard(player1, List.of(creature));
+        castReapingTheGraves(creature.getId());
+        gd.recordSpellCast(player2.getId(), new GoblinBrigand());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack.stream().filter(StackEntry::isCopy)).isEmpty();
+        harness.passBothPriorities();
+        harness.assertInHand(player1, "Goblin Brigand");
+    }
+
     private void castReapingTheGraves(java.util.UUID targetId) {
         harness.setHand(player1, List.of(new ReapingTheGraves()));
         harness.addMana(player1, ManaColor.BLACK, 1);
