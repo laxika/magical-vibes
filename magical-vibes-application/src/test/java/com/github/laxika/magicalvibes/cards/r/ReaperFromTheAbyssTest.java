@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.testutil.TestCards;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.cards.b.BrimstoneVolley;
+import com.github.laxika.magicalvibes.cards.w.WalkingCorpse;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -16,9 +18,9 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ReaperFromTheAbyss.class, GrizzlyBears.class, Shock.class,
+        WalkingCorpse.class, BrimstoneVolley.class})
 class ReaperFromTheAbyssTest extends BaseCardTest {
-
-    // ===== Morbid trigger at end step =====
 
     @Test
     @DisplayName("Destroys target non-Demon creature at end step when morbid is met")
@@ -162,9 +164,7 @@ class ReaperFromTheAbyssTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
 
         // Create another target for Reaper (since Bears will be dead)
-        Permanent elk = new Permanent(new GrizzlyBears());
-        TestCards.mutableCard(elk).setName("Runeclaw Bear");
-        gd.playerBattlefields.get(player2.getId()).add(elk);
+        Permanent remainingBear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -186,11 +186,81 @@ class ReaperFromTheAbyssTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         // Choose the remaining creature as target
-        harness.handlePermanentChosen(player1, elk.getId());
+        harness.handlePermanentChosen(player1, remainingBear.getId());
         harness.passBothPriorities();
 
-        // The elk should be destroyed
+        // The remaining Bear should be destroyed
         assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getId().equals(elk.getId()));
+                .noneMatch(p -> p.getId().equals(remainingBear.getId()));
+    }
+
+    @Test
+    @DisplayName("A creature dying after the end step begins does not create a morbid trigger")
+    void deathDuringEndStepDoesNotTrigger() {
+        harness.addToBattlefield(player1, new ReaperFromTheAbyss());
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new WalkingCorpse());
+        harness.addToBattlefield(player2, new WalkingCorpse());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_STEP);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.setHand(player1, List.of(new BrimstoneVolley()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castInstant(player1, 0, victim.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Walking Corpse");
+        harness.assertOnBattlefield(player2, "Walking Corpse");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Multiple deaths produce only one trigger per Reaper at the end step")
+    void multipleDeathsProduceOneTrigger() {
+        harness.addToBattlefield(player1, new ReaperFromTheAbyss());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new WalkingCorpse());
+        harness.addToBattlefield(player2, new WalkingCorpse());
+        gd.creatureDeathCountThisTurn.merge(player2.getId(), 3, Integer::sum);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_STEP);
+        harness.handlePermanentChosen(player1, target.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The morbid ability still resolves after its source dies")
+    void abilityResolvesAfterSourceDies() {
+        Permanent reaper = harness.addToBattlefieldAndReturn(player1, new ReaperFromTheAbyss());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new WalkingCorpse());
+        gd.creatureDeathCountThisTurn.merge(player2.getId(), 1, Integer::sum);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_STEP);
+        harness.handlePermanentChosen(player1, target.getId());
+
+        harness.setHand(player1, List.of(new BrimstoneVolley(), new BrimstoneVolley()));
+        harness.addMana(player1, ManaColor.RED, 6);
+        harness.castInstant(player1, 0, reaper.getId());
+        harness.passBothPriorities();
+        harness.castInstant(player1, 0, reaper.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Reaper from the Abyss");
+        harness.assertOnBattlefield(player2, "Walking Corpse");
+
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player2, "Walking Corpse");
+        harness.assertInGraveyard(player2, "Walking Corpse");
     }
 }
