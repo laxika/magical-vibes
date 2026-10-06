@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.ArrayList;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -101,6 +103,59 @@ class SerrasLiturgyTest extends BaseCardTest {
                 player1, 0, 0, List.of(creature.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Targets must be artifacts and/or enchantments");
+    }
+
+    @Test
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        Permanent liturgy = addLiturgy(2);
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(liturgy.getCounterCount(CounterType.VERSE)).isEqualTo(2);
+    }
+
+    @Test
+    void mayChooseNoTargetsWithVerseCounters() {
+        addLiturgy(2);
+        harness.addToBattlefield(player2, new Fluctuator());
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of());
+
+        harness.assertInGraveyard(player1, "Serra's Liturgy");
+        harness.assertOnBattlefield(player2, "Fluctuator");
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Fluctuator");
+    }
+
+    @Test
+    void mayTargetItselfAndStillDestroyOtherLegalTarget() {
+        Permanent liturgy = addLiturgy(2);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Fluctuator());
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0,
+                List.of(liturgy.getId(), artifact.getId()));
+
+        harness.assertInGraveyard(player1, "Serra's Liturgy");
+        harness.assertOnBattlefield(player1, "Fluctuator");
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Fluctuator");
+    }
+
+    @Test
+    void mayDestroyMoreThanOneHundredTargetsWithEnoughVerseCounters() {
+        addLiturgy(101);
+        List<UUID> targets = new ArrayList<>();
+        for (int i = 0; i < 101; i++) {
+            targets.add(harness.addToBattlefieldAndReturn(player2, new Fluctuator()).getId());
+        }
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, targets);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Serra's Liturgy");
+        harness.assertNotOnBattlefield(player2, "Fluctuator");
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(101);
     }
 
     private Permanent addLiturgy(int verseCounters) {
