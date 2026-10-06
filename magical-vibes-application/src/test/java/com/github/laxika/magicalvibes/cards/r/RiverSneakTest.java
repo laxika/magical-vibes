@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DeeprootWaters;
 import com.github.laxika.magicalvibes.cards.k.KumenasSpeaker;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,33 +16,21 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RiverSneak.class, KumenasSpeaker.class, RaptorHatchling.class, DeeprootWaters.class})
 class RiverSneakTest extends BaseCardTest {
-
-    // ===== Can't be blocked =====
 
     @Test
     @DisplayName("River Sneak cannot be blocked")
     void cannotBeBlocked() {
-        Permanent blockerPerm = new Permanent(new GrizzlyBears());
-        blockerPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blockerPerm);
-
-        Permanent atkPerm = new Permanent(new RiverSneak());
-        atkPerm.setSummoningSick(false);
+        addCreatureReady(player2, new RaptorHatchling());
+        Permanent atkPerm = addCreatureReady(player1, new RiverSneak());
         atkPerm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(atkPerm);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can't be blocked");
     }
-
-    // ===== Merfolk trigger =====
 
     @Test
     @DisplayName("Gets +1/+1 until end of turn when another Merfolk enters")
@@ -69,9 +58,9 @@ class RiverSneakTest extends BaseCardTest {
 
         Permanent riverSneak = gd.playerBattlefields.get(player1.getId()).getFirst();
 
-        // Cast Grizzly Bears (Bear, not Merfolk)
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
+        // Cast Raptor Hatchling (Dinosaur, not Merfolk)
+        harness.setHand(player1, List.of(new RaptorHatchling()));
+        harness.addMana(player1, ManaColor.RED, 2);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities(); // resolve creature spell
@@ -126,6 +115,76 @@ class RiverSneakTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve River Sneak's triggered ability
 
+        assertThat(gqs.getEffectivePower(gd, riverSneak)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, riverSneak)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Does not boost itself when it enters")
+    void doesNotTriggerOnOwnEntry() {
+        harness.setHand(player1, List.of(new RiverSneak()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        Permanent riverSneak = findPermanent(player1, "River Sneak");
+        assertThat(gqs.getEffectivePower(gd, riverSneak)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, riverSneak)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Another River Sneak boosts only the River Sneak already on the battlefield")
+    void anotherRiverSneakBoostsExistingOne() {
+        harness.addToBattlefield(player1, new RiverSneak());
+        Permanent existing = findPermanent(player1, "River Sneak");
+        harness.setHand(player1, List.of(new RiverSneak()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        Permanent entering = findPermanents(player1, "River Sneak").get(1);
+        assertThat(gqs.getEffectivePower(gd, existing)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, existing)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, entering)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, entering)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The Merfolk entry boost expires at end of turn")
+    void boostExpiresAtEndOfTurn() {
+        harness.addToBattlefield(player1, new RiverSneak());
+        Permanent riverSneak = findPermanent(player1, "River Sneak");
+        harness.setHand(player1, List.of(new KumenasSpeaker()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        resolveAllTriggers();
+        assertThat(gqs.getEffectivePower(gd, riverSneak)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, riverSneak)).isEqualTo(2);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, riverSneak)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, riverSneak)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Merfolk tokens and nontoken Merfolk each trigger the boost")
+    void merfolkTokenAlsoTriggersBoost() {
+        harness.addToBattlefield(player1, new RiverSneak());
+        harness.addToBattlefield(player1, new DeeprootWaters());
+        Permanent riverSneak = findPermanent(player1, "River Sneak");
+        harness.setHand(player1, List.of(new KumenasSpeaker()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().isToken());
         assertThat(gqs.getEffectivePower(gd, riverSneak)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, riverSneak)).isEqualTo(3);
     }
