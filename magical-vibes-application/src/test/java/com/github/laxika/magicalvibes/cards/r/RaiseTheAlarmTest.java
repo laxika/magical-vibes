@@ -24,8 +24,7 @@ class RaiseTheAlarmTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         List<Permanent> tokens = findPermanents(player1, "Soldier");
         assertThat(tokens).hasSize(2);
@@ -44,13 +43,35 @@ class RaiseTheAlarmTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(findPermanents(player1, "Soldier")).hasSize(2).allSatisfy(token -> {
             assertThat(token.getCard().getType()).isEqualTo(CardType.CREATURE);
             assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.SOLDIER);
             assertThat(token.getCard().isToken()).isTrue();
         });
+    }
+
+    @Test
+    @DisplayName("The nonactive player creates untapped Soldiers only when Raise the Alarm resolves")
+    void nonactivePlayerCreatesTokensOnResolution() {
+        harness.forceActivePlayer(player1);
+        harness.setHand(player2, List.of(new RaiseTheAlarm()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player2, 0);
+
+        assertThat(findPermanents(player1, "Soldier")).isEmpty();
+        assertThat(findPermanents(player2, "Soldier")).isEmpty();
+
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Soldier")).isEmpty();
+        assertThat(findPermanents(player2, "Soldier")).hasSize(2).allSatisfy(token -> {
+            assertThat(token.isTapped()).isFalse();
+            assertThat(token.isAttacking()).isFalse();
+        });
+        harness.assertInGraveyard(player2, "Raise the Alarm");
     }
 }
