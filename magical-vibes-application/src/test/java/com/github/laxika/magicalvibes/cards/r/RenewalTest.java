@@ -15,7 +15,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -24,12 +23,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class RenewalTest extends BaseCardTest {
 
     private void castRenewalSacrificingLand() {
-        harness.addToBattlefield(player1, new Forest());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
         harness.setHand(player1, List.of(new Renewal()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
-        UUID landId = gd.playerBattlefields.get(player1.getId()).getFirst().getId();
-        harness.castSorceryWithSacrifice(player1, 0, landId);
+        harness.castSorceryWithSacrifice(player1, 0, land.getId());
     }
 
     @Test
@@ -49,8 +47,7 @@ class RenewalTest extends BaseCardTest {
     @Test
     @DisplayName("Casting cannot sacrifice a nonland permanent")
     void cannotSacrificeNonland() {
-        Permanent creature = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(creature);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new Renewal()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
@@ -128,5 +125,44 @@ class RenewalTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 1);
         assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Searching a library without basic lands still draws at the next upkeep")
+    void noBasicLandStillDrawsAtNextUpkeep() {
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+
+        castRenewalSacrificingLand();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+        harness.assertInGraveyard(player1, "Renewal");
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Casting cannot sacrifice an opponent's land")
+    void cannotSacrificeOpponentsLand() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.setHand(player1, List.of(new Renewal()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        assertThatThrownBy(() -> harness.castSorceryWithSacrifice(player1, 0, land.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player2, "Forest");
+        harness.assertInHand(player1, "Renewal");
+        assertThat(gd.stack).isEmpty();
     }
 }
