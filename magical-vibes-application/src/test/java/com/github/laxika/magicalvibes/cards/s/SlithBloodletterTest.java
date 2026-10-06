@@ -93,4 +93,72 @@ class SlithBloodletterTest extends BaseCardTest {
         assertThat(findPermanent(player1, "Slith Bloodletter").isTapped()).isTrue();
         assertThat(findPermanent(player1, "Slith Bloodletter").getRegenerationShield()).isEqualTo(0);
     }
+
+    @Test
+    @DisplayName("A larger combat hit adds only one counter, after the trigger resolves")
+    void largerCombatHitAddsOnlyOneCounter() {
+        Permanent bloodletter = addCreatureReady(player1, new SlithBloodletter());
+        bloodletter.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        bloodletter.setAttacking(true);
+
+        resolveCombat(player1);
+
+        harness.assertLife(player2, 17);
+        assertThat(bloodletter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+
+        harness.passBothPriorities();
+
+        assertThat(bloodletter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Can activate regeneration while tapped and summoning sick")
+    void regeneratesWhileTappedAndSummoningSick() {
+        Permanent bloodletter = harness.addToBattlefieldAndReturn(player1, new SlithBloodletter());
+        bloodletter.tap();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(bloodletter.getRegenerationShield()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(bloodletter.getRegenerationShield()).isEqualTo(1);
+        assertThat(bloodletter.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Activated regeneration saves only its source from lethal damage")
+    void activatedRegenerationSavesOnlyItsSource() {
+        Permanent bloodletter = addCreatureReady(player1, new SlithBloodletter());
+        Permanent otherBloodletter = addCreatureReady(player1, new SlithBloodletter());
+        harness.addToBattlefield(player2, new GraniteShard());
+        harness.addToBattlefield(player2, new GraniteShard());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 6);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(bloodletter.isTapped()).isFalse();
+        assertThat(otherBloodletter.getRegenerationShield()).isZero();
+
+        harness.activateAbility(player2, 0, null, bloodletter.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Slith Bloodletter");
+        assertThat(bloodletter.isTapped()).isTrue();
+        assertThat(bloodletter.getMarkedDamage()).isZero();
+        assertThat(bloodletter.getRegenerationShield()).isZero();
+        assertThat(bloodletter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+
+        harness.activateAbility(player2, 1, null, otherBloodletter.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(bloodletter).doesNotContain(otherBloodletter);
+        harness.assertInGraveyard(player1, "Slith Bloodletter");
+    }
 }
