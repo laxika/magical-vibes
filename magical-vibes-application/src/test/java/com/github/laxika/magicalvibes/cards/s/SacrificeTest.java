@@ -19,6 +19,28 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class SacrificeTest extends BaseCardTest {
 
     @Test
+    @DisplayName("The creature is sacrificed during casting, but mana is added only on resolution")
+    void paysSacrificeCostBeforeProducingMana() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Sacrifice()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castInstantWithSacrifice(player1, 0, null, creature.getId());
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Sacrifice");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Sacrifice");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(2);
+    }
+
+    @Test
     @DisplayName("Sacrifices a creature and adds black mana equal to its mana value")
     void sacrificesCreatureAndAddsManaEqualToManaValue() {
         Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
