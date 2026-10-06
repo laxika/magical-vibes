@@ -49,4 +49,43 @@ class RakdosSignetTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
     }
+
+    @Test
+    @DisplayName("Colored mana can pay the generic activation cost on a newly entered Signet")
+    void canPayWithColoredManaImmediatelyAfterEntering() {
+        Permanent signet = harness.addToBattlefieldAndReturn(player1, new RakdosSignet());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(signet.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLACK)).isZero();
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.RED)).isZero();
+    }
+
+    @Test
+    @DisplayName("A failed unpaid activation leaves the Signet untapped and produces no mana")
+    void failedPaymentLeavesSignetAvailableForLaterActivation() {
+        Permanent signet = harness.addToBattlefieldAndReturn(player1, new RakdosSignet());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(signet.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(signet.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+    }
 }
