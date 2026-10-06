@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.b.BraveTheSands;
+import com.github.laxika.magicalvibes.cards.o.Ovinize;
 import com.github.laxika.magicalvibes.cards.r.RendFlesh;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SamuraiOfThePaleCurtain.class, SakuraTribeElder.class, RendFlesh.class, BraveTheSands.class})
+@CardUsed({SamuraiOfThePaleCurtain.class, SakuraTribeElder.class, RendFlesh.class, BraveTheSands.class, Ovinize.class})
 class SamuraiOfThePaleCurtainTest extends BaseCardTest {
 
     @Test
@@ -112,6 +113,71 @@ class SamuraiOfThePaleCurtainTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, samurai)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, samurai)).isEqualTo(3);
+    }
+
+    @Test
+    void abilityLossDisablesExileReplacement() {
+        Permanent samurai = addCreatureReady(player1, new SamuraiOfThePaleCurtain());
+        Permanent elder = addCreatureReady(player2, new SakuraTribeElder());
+        harness.setHand(player1, List.of(new Ovinize(), new RendFlesh()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveInstant(player1, 0, samurai.getId());
+        harness.castAndResolveInstant(player1, 0, elder.getId());
+
+        harness.assertInGraveyard(player2, "Sakura-Tribe Elder");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void abilityLossDisablesBushidoWhenBlocking() {
+        Permanent samurai = addCreatureReady(player1, new SamuraiOfThePaleCurtain());
+        Permanent attacker = addCreatureReady(player2, new SakuraTribeElder());
+        harness.setHand(player1, List.of(new Ovinize()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player1, 0, samurai.getId());
+        attacker.setAttacking(true);
+
+        prepareDeclareBlockers(player2);
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(gd.stack).noneMatch(entry -> samurai.getId().equals(entry.getSourcePermanentId()));
+    }
+
+    @Test
+    void abilityLossDisablesBushidoWhenBecomingBlocked() {
+        Permanent samurai = addCreatureReady(player1, new SamuraiOfThePaleCurtain());
+        addCreatureReady(player2, new SakuraTribeElder());
+        harness.setHand(player1, List.of(new Ovinize()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player1, 0, samurai.getId());
+        samurai.setAttacking(true);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(gd.stack).noneMatch(entry -> samurai.getId().equals(entry.getSourcePermanentId()));
+    }
+
+    @Test
+    void simultaneousLethalDamageExilesEveryDyingPermanent() {
+        Permanent samurai = addCreatureReady(player1, new SamuraiOfThePaleCurtain());
+        Permanent ownElder = addCreatureReady(player1, new SakuraTribeElder());
+        Permanent opposingElder = addCreatureReady(player2, new SakuraTribeElder());
+        samurai.setMarkedDamage(2);
+        ownElder.setMarkedDamage(1);
+        opposingElder.setMarkedDamage(1);
+
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Samurai of the Pale Curtain");
+        harness.assertNotOnBattlefield(player1, "Sakura-Tribe Elder");
+        harness.assertNotOnBattlefield(player2, "Sakura-Tribe Elder");
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(2);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).hasSize(1);
     }
 
     private void destroyWithRendFlesh(
