@@ -2,14 +2,19 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ScrapyardMongrel.class, LeoninScimitar.class, Island.class, Ornithopter.class})
 class ScrapyardMongrelTest extends BaseCardTest {
 
     @Test
@@ -70,6 +75,58 @@ class ScrapyardMongrelTest extends BaseCardTest {
 
         Permanent mongrel = findMongrel();
         assertThat(gqs.getEffectivePower(gd, mongrel)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, mongrel, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Gains the bonus immediately when an artifact creature enters")
+    void gainsBonusWhenArtifactCreatureEnters() {
+        harness.addToBattlefield(player1, new ScrapyardMongrel());
+
+        Permanent mongrel = findMongrel();
+        assertThat(gqs.getEffectivePower(gd, mongrel)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, mongrel, Keyword.TRAMPLE)).isFalse();
+
+        harness.addToBattlefield(player1, new Ornithopter());
+
+        assertThat(gqs.getEffectivePower(gd, mongrel)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, mongrel)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, mongrel, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Multiple artifacts grant only one bonus and losing one preserves it")
+    void multipleArtifactsDoNotMultiplyBonus() {
+        harness.addToBattlefield(player1, new ScrapyardMongrel());
+        harness.addToBattlefield(player1, new Ornithopter());
+        harness.addToBattlefield(player1, new Ornithopter());
+
+        Permanent mongrel = findMongrel();
+        assertThat(gqs.getEffectivePower(gd, mongrel)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, mongrel)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, mongrel, Keyword.TRAMPLE)).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).remove(findPermanent(player1, "Ornithopter"));
+
+        assertThat(gqs.getEffectivePower(gd, mongrel)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, mongrel, Keyword.TRAMPLE)).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).remove(findPermanent(player1, "Ornithopter"));
+
+        assertThat(gqs.getEffectivePower(gd, mongrel)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, mongrel, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Artifact cards in hand and graveyard do not grant the bonus")
+    void artifactsOutsideBattlefieldDoNotCount() {
+        harness.addToBattlefield(player1, new ScrapyardMongrel());
+        harness.setHand(player1, List.of(new Ornithopter()));
+        harness.setGraveyard(player1, List.of(new Ornithopter()));
+
+        Permanent mongrel = findMongrel();
+        assertThat(gqs.getEffectivePower(gd, mongrel)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, mongrel)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, mongrel, Keyword.TRAMPLE)).isFalse();
     }
 
