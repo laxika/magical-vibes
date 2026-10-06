@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.StarnheimCourser;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RuneforgeChampion.class, RuneOfSustenance.class, GrizzlyBears.class})
+@CardUsed({RuneforgeChampion.class, RuneOfSustenance.class, GrizzlyBears.class, StarnheimCourser.class})
 class RuneforgeChampionTest extends BaseCardTest {
 
     @Test
@@ -40,8 +41,7 @@ class RuneforgeChampionTest extends BaseCardTest {
     @DisplayName("The enter-the-battlefield ability searches the library for a Rune")
     void searchesLibraryForRune() {
         Card rune = new RuneOfSustenance();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(new GrizzlyBears(), rune));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), rune));
         castChampion();
 
         resolveEnterTheBattlefieldTrigger(true);
@@ -90,6 +90,80 @@ class RuneforgeChampionTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void canChooseAlternativeCostEvenWhenPrintedCostIsAffordable() {
+        Permanent champion = harness.addToBattlefieldAndReturn(player1, new RuneforgeChampion());
+        harness.setHand(player1, List.of(new RuneOfSustenance()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castWithAlternateCost(player1, 0, champion.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(1);
+    }
+
+    @Test
+    void costReductionAppliesToRuneAlternativeCost() {
+        Permanent champion = harness.addToBattlefieldAndReturn(player1, new RuneforgeChampion());
+        harness.addToBattlefield(player1, new StarnheimCourser());
+        harness.setHand(player1, List.of(new RuneOfSustenance()));
+
+        harness.castEnchantment(player1, 0, champion.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+    }
+
+    @Test
+    void opponentChampionDoesNotProvideAlternativeCost() {
+        harness.addToBattlefield(player2, new RuneforgeChampion());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new StarnheimCourser());
+        harness.setHand(player1, List.of(new RuneOfSustenance()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInHand(player1, "Rune of Sustenance");
+    }
+
+    @Test
+    void combinedSearchReturnsOnlyOneRune() {
+        RuneOfSustenance libraryRune = new RuneOfSustenance();
+        RuneOfSustenance graveyardRune = new RuneOfSustenance();
+        harness.setLibrary(player1, List.of(libraryRune));
+        harness.setGraveyard(player1, List.of(graveyardRune));
+        castChampion();
+        resolveEnterTheBattlefieldTrigger(true);
+
+        PendingInteraction.SearchLibraryAndOrGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
+        assertThat(choice.pool()).containsExactlyInAnyOrder(libraryRune, graveyardRune);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(
+                player1, List.of(libraryRune.getId(), graveyardRune.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.handleMultipleCardsChosen(player1, List.of(graveyardRune.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(graveyardRune);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryRune);
+        harness.assertNotInGraveyard(player1, "Rune of Sustenance");
+    }
+
+    @Test
+    void searchWithNoRunesCompletesWithoutPuttingACardInHand() {
+        harness.setLibrary(player1, List.of(new StarnheimCourser()));
+        harness.setGraveyard(player1, List.of(new RuneforgeChampion()));
+        castChampion();
+
+        resolveEnterTheBattlefieldTrigger(true);
+
+        assertThat(gd.interaction.activeInteraction(
+                PendingInteraction.SearchLibraryAndOrGraveyardChoice.class)).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Runeforge Champion");
     }
 
     private void castChampion() {
