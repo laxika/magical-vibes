@@ -61,4 +61,39 @@ class ShipwreckPatrolTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castCreature(player1, 0, land.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    void stunCounterPreventsOneUntapStep() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ShipwreckPatrol());
+        harness.setHand(player1, List.of(new ShipwreckPatrol()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0, target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.performUntapStep(player2);
+        assertThat(target.isTapped()).isTrue();
+        assertThat(target.getCounterCount(CounterType.STUN)).isZero();
+
+        harness.performUntapStep(player2);
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    void canEnterWithoutAnOpposingCreature() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new ShipwreckPatrol());
+        harness.setHand(player1, List.of(new ShipwreckPatrol()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+        assertThat(ownCreature.isTapped()).isFalse();
+        assertThat(ownCreature.getCounterCount(CounterType.STUN)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
 }
