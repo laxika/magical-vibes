@@ -77,6 +77,46 @@ class RamosianLieutenantTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
+    @Test
+    @DisplayName("A matching Rebel may be left in the library and the library is still shuffled")
+    void mayFailToFindMatchingRebel() {
+        addReadyLieutenant();
+        RamosianCaptain captain = new RamosianCaptain();
+        harness.setLibrary(player1, List.of(captain));
+
+        activateLieutenant();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(captain);
+        assertThat(countPermanents(player1, "Ramosian Captain")).isZero();
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
+    }
+
+    @Test
+    @DisplayName("The search uses only the controller's library and puts one Rebel onto the battlefield untapped")
+    void searchesOnlyControllersLibraryAndPutsOneRebelOntoBattlefield() {
+        addReadyLieutenant();
+        RamosianCaptain captain = new RamosianCaptain();
+        RamosianLieutenant remainingRebel = new RamosianLieutenant();
+        RamosianCaptain opponentsCaptain = new RamosianCaptain();
+        harness.setLibrary(player1, List.of(captain, remainingRebel));
+        harness.setLibrary(player2, List.of(opponentsCaptain));
+
+        activateLieutenant();
+        harness.handleCardChosen(player1, 0);
+
+        Permanent recruited = findPermanent(player1, "Ramosian Captain");
+        assertThat(recruited.getCard()).isSameAs(captain);
+        assertThat(recruited.isTapped()).isFalse();
+        assertThat(recruited.isSummoningSick()).isTrue();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remainingRebel);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentsCaptain);
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
+    }
+
     private Permanent addReadyLieutenant() {
         Permanent lieutenant = addCreatureReady(player1, new RamosianLieutenant());
         harness.addMana(player1, ManaColor.COLORLESS, 4);
