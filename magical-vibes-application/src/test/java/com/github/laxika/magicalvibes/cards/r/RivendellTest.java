@@ -63,4 +63,102 @@ class RivendellTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.Scry.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards()).hasSize(2);
     }
+
+    @Test
+    void nonlegendaryCreatureDoesNotAllowUntappedEntry() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Rivendell()));
+
+        harness.playLand(player1, 0);
+
+        assertThat(findPermanent(player1, "Rivendell").isTapped()).isTrue();
+    }
+
+    @Test
+    void opponentsLegendaryCreatureDoesNotAllowUntappedEntry() {
+        harness.addToBattlefield(player2, new KefnetTheMindful());
+        harness.setHand(player1, List.of(new Rivendell()));
+
+        harness.playLand(player1, 0);
+
+        assertThat(findPermanent(player1, "Rivendell").isTapped()).isTrue();
+    }
+
+    @Test
+    void opponentsLegendaryCreatureDoesNotAllowScryActivation() {
+        harness.addToBattlefield(player1, new Rivendell());
+        harness.addToBattlefield(player2, new KefnetTheMindful());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(findPermanent(player1, "Rivendell").isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void producesBlueManaWithoutLegendaryCreature() {
+        harness.addToBattlefield(player1, new Rivendell());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(findPermanent(player1, "Rivendell").isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void scryResolvesAfterLegendaryCreatureLeavesBattlefield() {
+        harness.addToBattlefield(player1, new Rivendell());
+        harness.addToBattlefield(player1, new KefnetTheMindful());
+        GrizzlyBears first = new GrizzlyBears();
+        GrizzlyBears second = new GrizzlyBears();
+        GrizzlyBears third = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(first, second, third));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(findPermanent(player1, "Rivendell").isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        gd.playerBattlefields.get(player1.getId()).remove(findPermanent(player1, "Kefnet the Mindful"));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
+                .containsExactly(first, second);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(third);
+    }
+
+    @Test
+    void scryRequiresBothManaAndTapCosts() {
+        harness.addToBattlefield(player1, new Rivendell());
+        harness.addToBattlefield(player1, new KefnetTheMindful());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        findPermanent(player1, "Rivendell").tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void scriesAvailableCardWhenLibraryContainsOnlyOneCard() {
+        harness.addToBattlefield(player1, new Rivendell());
+        harness.addToBattlefield(player1, new KefnetTheMindful());
+        GrizzlyBears onlyCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(onlyCard));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
+                .containsExactly(onlyCard);
+    }
 }
