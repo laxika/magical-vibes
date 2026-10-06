@@ -76,6 +76,53 @@ class RiverDeltaTest extends BaseCardTest {
         assertThat(riverDelta.isTapped()).isFalse();
     }
 
+    @Test
+    @DisplayName("The depletion counter remains until the upkeep trigger resolves")
+    void removesCounterOnlyWhenUpkeepTriggerResolves() {
+        Permanent riverDelta = addRiverDelta();
+        riverDelta.tap();
+        riverDelta.setCounterCount(CounterType.DEPLETION, 1);
+
+        advanceToUpkeep(player1);
+
+        assertThat(riverDelta.isTapped()).isTrue();
+        assertThat(riverDelta.getCounterCount(CounterType.DEPLETION)).isEqualTo(1);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(riverDelta.getCounterCount(CounterType.DEPLETION)).isZero();
+        assertThat(riverDelta.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An opponent's upkeep does not remove a depletion counter")
+    void opponentUpkeepDoesNotRemoveCounter() {
+        Permanent riverDelta = addRiverDelta();
+        riverDelta.tap();
+        riverDelta.setCounterCount(CounterType.DEPLETION, 1);
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(riverDelta.getCounterCount(CounterType.DEPLETION)).isEqualTo(1);
+        assertThat(riverDelta.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An untapped River Delta can produce mana with a depletion counter already on it")
+    void canAddManaAndAnotherCounterWithExistingCounter() {
+        Permanent riverDelta = addRiverDelta();
+        riverDelta.setCounterCount(CounterType.DEPLETION, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(mana(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(riverDelta.getCounterCount(CounterType.DEPLETION)).isEqualTo(2);
+        assertThat(riverDelta.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addRiverDelta() {
         Permanent riverDelta = harness.addToBattlefieldAndReturn(player1, new RiverDelta());
         riverDelta.setSummoningSick(false);
