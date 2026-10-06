@@ -60,6 +60,48 @@ class ShorelineRangerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Islandcycling can decline to find an available Island")
+    void islandcyclingCanDeclineAvailableIsland() {
+        Card island = new Island();
+        harness.setHand(player1, List.of(new ShorelineRanger()));
+        harness.setLibrary(player1, List.of(island));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(island);
+        harness.assertInGraveyard(player1, "Shoreline Ranger");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Islandcycling accepts colored mana and discards before resolving")
+    void islandcyclingAcceptsColoredManaAndDiscardsAsCost() {
+        Card island = new Island();
+        harness.setHand(player1, List.of(new ShorelineRanger()));
+        harness.setLibrary(player1, List.of(island));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertInGraveyard(player1, "Shoreline Ranger");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(island);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(island);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Islandcycling requires two generic mana")
     void islandcyclingRequiresTwoGenericMana() {
         ShorelineRanger ranger = new ShorelineRanger();
