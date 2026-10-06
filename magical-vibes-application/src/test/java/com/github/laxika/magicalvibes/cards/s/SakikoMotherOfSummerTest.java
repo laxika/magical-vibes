@@ -14,6 +14,60 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({SakikoMotherOfSummer.class, GnarledMass.class})
 class SakikoMotherOfSummerTest extends BaseCardTest {
+    @Test
+    @DisplayName("Sakiko's own combat damage triggers mana through the stack")
+    void sakikoOwnCombatDamageUsesStack() {
+        Permanent sakiko = addCreatureReady(player1, new SakikoMotherOfSummer());
+        sakiko.setAttacking(true);
+
+        resolveCombat();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(3);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
+    @DisplayName("A pending trigger still adds mana after Sakiko leaves the battlefield")
+    void triggerResolvesAfterSakikoLeaves() {
+        Permanent sakiko = addCreatureReady(player1, new SakikoMotherOfSummer());
+        Permanent creature = addCreatureReady(player1, new GnarledMass());
+        creature.setAttacking(true);
+
+        resolveCombat();
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(sakiko);
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Only Sakiko's generated green mana survives a step transition")
+    void ordinaryGreenManaStillDrains() {
+        addCreatureReady(player1, new SakikoMotherOfSummer());
+        Permanent creature = addCreatureReady(player1, new GnarledMass());
+        creature.setAttacking(true);
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        ManaPool pool = gd.playerManaPools.get(player1.getId());
+        pool.add(ManaColor.GREEN, 2);
+        assertThat(pool.get(ManaColor.GREEN)).isEqualTo(5);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        gs.advanceStep(gd);
+
+        assertThat(pool.get(ManaColor.GREEN)).isEqualTo(3);
+    }
 
     @Test
     @DisplayName("Adds green mana equal to combat damage dealt by a creature you control")
