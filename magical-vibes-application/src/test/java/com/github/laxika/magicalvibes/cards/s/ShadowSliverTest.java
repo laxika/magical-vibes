@@ -91,4 +91,41 @@ class ShadowSliverTest extends BaseCardTest {
 
         assertThat(blocker.isBlocking()).isTrue();
     }
+    @Test
+    @DisplayName("Slivers lose shadow when the only Shadow Sliver leaves the battlefield")
+    void sliversLoseShadowWhenSourceLeaves() {
+        Permanent source = addCreatureReady(player1, new ShadowSliver());
+        Permanent ownSliver = addCreatureReady(player1, new SidewinderSliver());
+        Permanent opponentSliver = addCreatureReady(player2, new SidewinderSliver());
+
+        assertThat(gqs.hasKeyword(gd, ownSliver, Keyword.SHADOW)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opponentSliver, Keyword.SHADOW)).isTrue();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToHand(gd, source));
+
+        assertThat(gqs.hasKeyword(gd, ownSliver, Keyword.SHADOW)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponentSliver, Keyword.SHADOW)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Another Shadow Sliver keeps granting shadow after one leaves")
+    void shadowPersistsUntilLastSourceLeaves() {
+        Permanent firstSource = addCreatureReady(player1, new ShadowSliver());
+        Permanent secondSource = addCreatureReady(player2, new ShadowSliver());
+        Permanent otherSliver = addCreatureReady(player1, new SidewinderSliver());
+
+        assertThat(gqs.hasKeyword(gd, otherSliver, Keyword.SHADOW)).isTrue();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToHand(gd, firstSource));
+
+        assertThat(gqs.hasKeyword(gd, secondSource, Keyword.SHADOW)).isTrue();
+        assertThat(gqs.hasKeyword(gd, otherSliver, Keyword.SHADOW)).isTrue();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToHand(gd, secondSource));
+
+        assertThat(gqs.hasKeyword(gd, otherSliver, Keyword.SHADOW)).isFalse();
+    }
 }
