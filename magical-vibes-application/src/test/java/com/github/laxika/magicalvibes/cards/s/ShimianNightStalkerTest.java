@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.b.BlueWard;
+import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.c.CatWarriors;
 import com.github.laxika.magicalvibes.cards.c.CrawGiant;
 import com.github.laxika.magicalvibes.cards.p.PsionicEntity;
@@ -18,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ShimianNightStalker.class, CrawGiant.class, CatWarriors.class, PsionicEntity.class})
+@CardUsed({ShimianNightStalker.class, CrawGiant.class, CatWarriors.class, PsionicEntity.class, BlueWard.class, Boomerang.class})
 class ShimianNightStalkerTest extends BaseCardTest {
 
     @Test
@@ -120,6 +122,91 @@ class ShimianNightStalkerTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Protection from blue prevents redirected noncombat damage from a blue attacker")
+    void protectionAppliesToRedirectedNoncombatDamage() {
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Permanent stalker = addCreatureReady(player1, new ShimianNightStalker());
+        Permanent ward = harness.addToBattlefieldAndReturn(player1, new BlueWard());
+        ward.setAttachedTo(stalker.getId());
+        Permanent attacker = addAttacker(player2, new PsionicEntity());
+
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, indexOf(player1, stalker), null, attacker.getId());
+        harness.passBothPriorities();
+
+        harness.activateAbility(player2, indexOf(player2, attacker), null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        assertThat(stalker.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(stalker);
+    }
+
+    @Test
+    @DisplayName("Redirection continues after the chosen creature stops attacking")
+    void redirectionPersistsAfterAttackerLeavesCombat() {
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Permanent stalker = addCreatureReady(player1, new ShimianNightStalker());
+        Permanent attacker = addAttacker(player2, new PsionicEntity());
+
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, indexOf(player1, stalker), null, attacker.getId());
+        harness.passBothPriorities();
+        attacker.setAttacking(false);
+        attacker.setAttackTarget(null);
+
+        harness.activateAbility(player2, indexOf(player2, attacker), null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        assertThat(stalker.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Damage stays with the player when the Stalker leaves after its ability resolves")
+    void cannotRedirectToStalkerThatLeftBattlefield() {
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Permanent stalker = addCreatureReady(player1, new ShimianNightStalker());
+        Permanent attacker = addAttacker(player2, new PsionicEntity());
+
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, indexOf(player1, stalker), null, attacker.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Boomerang()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player1, 0, stalker.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(stalker);
+
+        harness.activateAbility(player2, indexOf(player2, attacker), null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        assertThat(stalker.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("No redirection occurs when the Stalker leaves in response to its ability")
+    void stalkerLeavesBeforeAbilityResolves() {
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Permanent stalker = addCreatureReady(player1, new ShimianNightStalker());
+        Permanent attacker = addAttacker(player2, new PsionicEntity());
+
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, indexOf(player1, stalker), null, attacker.getId());
+
+        harness.setHand(player1, List.of(new Boomerang()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player1, 0, stalker.getId());
+        resolveAllTriggers();
+
+        harness.activateAbility(player2, indexOf(player2, attacker), null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        assertThat(stalker.getMarkedDamage()).isZero();
+    }
     private Permanent addAttacker(Player player, Card card) {
         Permanent attacker = addCreatureReady(player, card);
         attacker.setAttacking(true);
