@@ -55,10 +55,76 @@ class RepelCalamityTest extends BaseCardTest {
                 .hasMessageContaining("creature");
     }
 
-    private void cast(Permanent target) {
+    @Test
+    void destroysCreatureWithOnlyPowerAtThreshold() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        target.setToughnessModifier(-1);
+
+        cast(target);
+
+        harness.assertInGraveyard(player2, "Air Elemental");
+    }
+
+    @Test
+    void canDestroyOwnCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AirElemental());
+
+        cast(target);
+
+        harness.assertInGraveyard(player1, "Air Elemental");
+    }
+
+    @Test
+    void usesModifiedStatsWhenChoosingTarget() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        target.setPowerModifier(2);
+
+        cast(target);
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void doesNotDestroyTargetWhenBothStatsFallBelowFour() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
         setUpSpell();
         harness.castInstant(player1, 0, target.getId());
+        target.setPowerModifier(-1);
+        target.setToughnessModifier(-1);
+
         harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Air Elemental");
+        harness.assertNotInGraveyard(player2, "Air Elemental");
+        harness.assertInGraveyard(player1, "Repel Calamity");
+    }
+
+    @Test
+    void stillDestroysTargetWhenOnlyToughnessRemainsFour() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        setUpSpell();
+        harness.castInstant(player1, 0, target.getId());
+        target.setPowerModifier(-1);
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Air Elemental");
+    }
+
+    @Test
+    void allowsRegeneration() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        target.setRegenerationShield(1);
+
+        cast(target);
+
+        harness.assertOnBattlefield(player2, "Air Elemental");
+        harness.assertNotInGraveyard(player2, "Air Elemental");
+    }
+
+    private void cast(Permanent target) {
+        setUpSpell();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 
     private void setUpSpell() {
