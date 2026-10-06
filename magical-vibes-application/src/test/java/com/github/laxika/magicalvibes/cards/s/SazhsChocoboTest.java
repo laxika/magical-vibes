@@ -36,4 +36,32 @@ class SazhsChocoboTest extends BaseCardTest {
 
         assertThat(chocobo.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
+    @Test
+    void eachChocoboGetsCountersForEveryLandEnteringWithoutBeingPlayed() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new SazhsChocobo());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new SazhsChocobo());
+        Permanent opposing = harness.addToBattlefieldAndReturn(player2, new SazhsChocobo());
+
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+
+        resolveAllTriggers();
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(opposing.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void nonlandEnteringDoesNotTriggerLandfall() {
+        Permanent chocobo = harness.addToBattlefieldAndReturn(player1, new SazhsChocobo());
+
+        harness.enterBattlefieldAndReturn(player1, new SazhsChocobo());
+        resolveAllTriggers();
+
+        assertThat(chocobo.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
 }
