@@ -21,8 +21,7 @@ class RootingKavuTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting the death trigger exiles Rooting Kavu and shuffles creature cards into the library")
     void acceptingDeathTriggerExilesAndShufflesCreatureCards() {
-        harness.addToBattlefield(player1, new RootingKavu());
-        Card rootingKavu = gd.playerBattlefields.get(player1.getId()).getFirst().getCard();
+        Card rootingKavu = harness.addToBattlefieldAndReturn(player1, new RootingKavu()).getCard();
         Card bears = new KavuAggressor();
         Card hillGiant = new KavuRunner();
         Card shock = new Opt();
@@ -46,8 +45,7 @@ class RootingKavuTest extends BaseCardTest {
     @Test
     @DisplayName("Declining the death trigger leaves Rooting Kavu and the graveyard cards in the graveyard")
     void decliningDeathTriggerDoesNothing() {
-        harness.addToBattlefield(player1, new RootingKavu());
-        Card rootingKavu = gd.playerBattlefields.get(player1.getId()).getFirst().getCard();
+        Card rootingKavu = harness.addToBattlefieldAndReturn(player1, new RootingKavu()).getCard();
         Card bears = new KavuAggressor();
         Card shock = new Opt();
         harness.setGraveyard(player1, List.of(bears, shock));
@@ -90,8 +88,7 @@ class RootingKavuTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting after Rooting Kavu left the graveyard does not shuffle creature cards")
     void acceptingAfterSourceLeftGraveyardDoesNotShuffle() {
-        harness.addToBattlefield(player1, new RootingKavu());
-        Card rootingKavu = gd.playerBattlefields.get(player1.getId()).getFirst().getCard();
+        Card rootingKavu = harness.addToBattlefieldAndReturn(player1, new RootingKavu()).getCard();
         Card creature = new KavuAggressor();
         Card nonCreature = new Opt();
         harness.setGraveyard(player1, List.of(creature, nonCreature));
@@ -99,8 +96,7 @@ class RootingKavuTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Rout()));
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         harness.setHand(player1, List.of(new Cremate()));
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -114,6 +110,21 @@ class RootingKavuTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .extracting(Card::getId)
                 .contains(creature.getId(), nonCreature.getId());
+    }
+
+    @Test
+    @DisplayName("Rooting Kavu can be exiled when no other creature cards are in the graveyard")
+    void acceptingWithNoOtherCreatureCardsStillExilesSource() {
+        Card rootingKavu = harness.addToBattlefieldAndReturn(player1, new RootingKavu()).getCard();
+        Card nonCreature = new Opt();
+        harness.setGraveyard(player1, List.of(nonCreature));
+
+        destroyRootingKavu();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(rootingKavu);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(nonCreature).doesNotContain(rootingKavu);
+        assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(rootingKavu, nonCreature);
     }
 
     private void destroyRootingKavu() {
