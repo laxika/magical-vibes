@@ -87,4 +87,38 @@ class SealOfDoomTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Seal of Doom");
     }
 
+    @Test
+    void canDestroyOwnNonblackCreature() {
+        harness.addToBattlefield(player1, new SealOfDoom());
+        Permanent target = addCreatureReady(player1, new MoggToady());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Mogg Toady");
+        harness.assertInGraveyard(player1, "Mogg Toady");
+        harness.assertInGraveyard(player1, "Seal of Doom");
+    }
+
+    @Test
+    void abilityFizzlesAfterAnotherSealDestroysItsTarget() {
+        harness.addToBattlefield(player1, new SealOfDoom());
+        harness.addToBattlefield(player1, new SealOfDoom());
+        Permanent target = addCreatureReady(player2, new MoggToady());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Mogg Toady");
+        harness.assertInGraveyard(player2, "Mogg Toady");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gameLogContains("fizzles")).isTrue();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card instanceof SealOfDoom).hasSize(2);
+    }
 }
