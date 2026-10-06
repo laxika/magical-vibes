@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.a.AvianChangeling;
 import com.github.laxika.magicalvibes.cards.g.GoldmeadowStalwart;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,10 +16,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Shapesharer.class, GoldmeadowStalwart.class, SecludedGlen.class})
+@CardUsed({Shapesharer.class, GoldmeadowStalwart.class, SecludedGlen.class, AvianChangeling.class})
 class ShapesharerTest extends BaseCardTest {
-
-    // ===== Activation =====
 
     @Test
     @DisplayName("Activating ability puts it on the stack with both targets")
@@ -33,8 +32,6 @@ class ShapesharerTest extends BaseCardTest {
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         assertThat(gd.stack.getFirst().getTargetIds()).containsExactly(shapesharer.getId(), target.getId());
     }
-
-    // ===== Copy resolution =====
 
     @Test
     @DisplayName("Resolving makes the target Shapeshifter a copy of the target creature")
@@ -51,8 +48,6 @@ class ShapesharerTest extends BaseCardTest {
         assertThat(shapesharer.getCard().getToughness()).isEqualTo(2);
     }
 
-    // ===== Until-your-next-turn duration =====
-
     @Test
     @DisplayName("Copy survives the controller's own end-of-turn cleanup")
     void copySurvivesOwnEndOfTurn() {
@@ -64,11 +59,7 @@ class ShapesharerTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(shapesharer.getCard().getName()).isEqualTo("Goldmeadow Stalwart");
 
-        // End player1's own turn -> player2's turn. Copy must NOT revert yet.
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.CLEANUP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(shapesharer.getCard().getName()).isEqualTo("Goldmeadow Stalwart");
     }
@@ -84,16 +75,11 @@ class ShapesharerTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(shapesharer.getCard().getName()).isEqualTo("Goldmeadow Stalwart");
 
-        // End player2's turn -> player1's next turn, which reverts the copy.
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.CLEANUP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
 
         assertThat(shapesharer.getCard().getName()).isEqualTo("Shapesharer");
     }
-
-    // ===== Fizzle =====
 
     @Test
     @DisplayName("Ability fizzles if the creature target leaves before resolution")
@@ -109,8 +95,6 @@ class ShapesharerTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(shapesharer.getCard().getName()).isEqualTo("Shapesharer");
     }
-
-    // ===== Illegal target =====
 
     @Test
     @DisplayName("First target must be a Shapeshifter")
@@ -136,5 +120,84 @@ class ShapesharerTest extends BaseCardTest {
                 harness.activateAbilityWithMultiTargets(player1, 0, 0,
                         List.of(shapesharer.getId(), noncreature.getId())))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The same creature may be chosen for both target occurrences")
+    void mayCopyItself() {
+        Permanent shapesharer = addCreatureReady(player1, new Shapesharer());
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0,
+                List.of(shapesharer.getId(), shapesharer.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(shapesharer.getCard().getName()).isEqualTo("Shapesharer");
+    }
+
+    @Test
+    @DisplayName("An older copy remains after a newer copy expires first")
+    void earlierCopyResumesWhenNewerCopyExpires() {
+        addCreatureReady(player1, new Shapesharer());
+        Permanent recipient = addCreatureReady(player1, new Shapesharer());
+        Permanent avian = addCreatureReady(player1, new AvianChangeling());
+        Permanent stalwart = addCreatureReady(player1, new GoldmeadowStalwart());
+        addCreatureReady(player2, new Shapesharer());
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0,
+                List.of(recipient.getId(), avian.getId()));
+        harness.passBothPriorities();
+        harness.activateAbilityWithMultiTargets(player2, 0, 0,
+                List.of(recipient.getId(), stalwart.getId()));
+        harness.passBothPriorities();
+        assertThat(recipient.getCard().getName()).isEqualTo("Goldmeadow Stalwart");
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
+        assertThat(recipient.getCard().getName()).isEqualTo("Avian Changeling");
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
+        assertThat(recipient.getCard().getName()).isEqualTo("Shapesharer");
+    }
+
+    @Test
+    @DisplayName("Copying an opponent's Shapeshifter expires on the ability controller's turn")
+    void opponentCopyUsesAbilityControllersTurn() {
+        addCreatureReady(player1, new Shapesharer());
+        Permanent recipient = addCreatureReady(player2, new Shapesharer());
+        Permanent creature = addCreatureReady(player2, new GoldmeadowStalwart());
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0,
+                List.of(recipient.getId(), creature.getId()));
+        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
+        assertThat(recipient.getCard().getName()).isEqualTo("Goldmeadow Stalwart");
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
+        assertThat(recipient.getCard().getName()).isEqualTo("Shapesharer");
+    }
+
+    @Test
+    @DisplayName("A pending activation does nothing if its first target loses Shapeshifter")
+    void doesNothingWhenFirstTargetLosesShapeshifter() {
+        addCreatureReady(player1, new Shapesharer());
+        Permanent recipient = addCreatureReady(player1, new Shapesharer());
+        Permanent avian = addCreatureReady(player1, new AvianChangeling());
+        Permanent stalwart = addCreatureReady(player1, new GoldmeadowStalwart());
+        harness.addMana(player1, ManaColor.BLUE, 6);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0,
+                List.of(recipient.getId(), avian.getId()));
+        harness.activateAbilityWithMultiTargets(player1, 0, 0,
+                List.of(recipient.getId(), stalwart.getId()));
+        harness.passBothPriorities();
+        assertThat(recipient.getCard().getName()).isEqualTo("Goldmeadow Stalwart");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(recipient.getCard().getName()).isEqualTo("Goldmeadow Stalwart");
     }
 }
