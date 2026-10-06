@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -40,7 +42,6 @@ class ShaperGuildmageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isFalse();
@@ -71,7 +72,6 @@ class ShaperGuildmageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
@@ -115,5 +115,78 @@ class ShaperGuildmageTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, island.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {0, 1})
+    @DisplayName("Either ability can target the Guildmage itself")
+    void canTargetItself(int abilityIndex) {
+        Permanent source = addCreatureReady(player1, new ShaperGuildmage());
+        harness.addMana(player1, abilityIndex == 0 ? ManaColor.WHITE : ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, abilityIndex, null, source.getId());
+        assertThat(source.isTapped()).isTrue();
+        assertThat(gqs.hasKeyword(gd, source, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(1);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, source, Keyword.FIRST_STRIKE)).isEqualTo(abilityIndex == 0);
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(abilityIndex == 1 ? 2 : 1);
+        assertThat(gqs.getEffectiveToughness(gd, source)).isEqualTo(1);
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {0, 1})
+    @DisplayName("Summoning sickness prevents paying either ability's tap cost")
+    void cannotActivateWithSummoningSickness(int abilityIndex) {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new ShaperGuildmage());
+        Permanent target = addCreatureReady(player2, new ShaperGuildmage());
+        harness.addMana(player1, abilityIndex == 0 ? ManaColor.WHITE : ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, abilityIndex, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(source.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The boost ability cannot be paid with non-black mana")
+    void boostRequiresBlackMana() {
+        addCreatureReady(player1, new ShaperGuildmage());
+        Permanent target = addCreatureReady(player2, new ShaperGuildmage());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("The boost ability cannot target a noncreature permanent")
+    void boostCannotTargetNonCreaturePermanent() {
+        addCreatureReady(player1, new ShaperGuildmage());
+        Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, island.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Boosts from two Guildmages accumulate on the same creature")
+    void boostsAccumulate() {
+        addCreatureReady(player1, new ShaperGuildmage());
+        addCreatureReady(player1, new ShaperGuildmage());
+        Permanent target = addCreatureReady(player2, new ShaperGuildmage());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, 1, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
     }
 }
