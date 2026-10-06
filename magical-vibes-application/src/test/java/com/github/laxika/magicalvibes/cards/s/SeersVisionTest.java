@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.d.DreamThrush;
 import com.github.laxika.magicalvibes.cards.o.Opt;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -25,7 +26,7 @@ class SeersVisionTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Opt()));
         harness.clearMessages();
 
-        harness.passPriority(player1);
+        harness.publishState();
 
         assertThat(harness.getConn1().getSentMessages())
                 .anyMatch(message -> message.contains("\"opponentHand\"")
@@ -99,5 +100,64 @@ class SeersVisionTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
         harness.assertOnBattlefield(player1, "Seer's Vision");
+    }
+
+    @Test
+    @DisplayName("The controller can target their own hand and choose a card to discard")
+    void canTargetOwnHand() {
+        harness.addToBattlefield(player1, new SeersVision());
+        harness.setHand(player1, List.of(new DreamThrush(), new Opt()));
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player1, "Seer's Vision");
+        harness.assertInGraveyard(player1, "Dream Thrush");
+        harness.assertInHand(player1, "Opt");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The ability cannot be activated during combat even on its controller's turn")
+    void cannotActivateDuringCombat() {
+        harness.addToBattlefield(player1, new SeersVision());
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Seer's Vision");
+        harness.assertNotInGraveyard(player1, "Seer's Vision");
+    }
+
+    @Test
+    @DisplayName("The ability cannot be activated while another spell is on the stack")
+    void cannotActivateWithNonemptyStack() {
+        harness.addToBattlefield(player1, new SeersVision());
+        harness.setHand(player1, List.of(new Opt()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castInstant(player1, 0);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Seer's Vision");
+        harness.assertNotInGraveyard(player1, "Seer's Vision");
+    }
+
+    @Test
+    @DisplayName("Opponents' hands stop being revealed as soon as the enchantment is sacrificed")
+    void sacrificeEndsContinuousRevealBeforeResolution() {
+        harness.addToBattlefield(player1, new SeersVision());
+        harness.setHand(player2, List.of(new DreamThrush()));
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.clearMessages();
+
+        harness.publishState();
+
+        assertThat(harness.getConn1().getSentMessages())
+                .anyMatch(message -> message.contains("\"opponentHand\":[]"));
+        assertThat(harness.getConn1().getSentMessages())
+                .noneMatch(message -> message.contains("Dream Thrush"));
+        harness.assertInHand(player2, "Dream Thrush");
     }
 }
