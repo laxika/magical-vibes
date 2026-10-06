@@ -60,4 +60,80 @@ class RelicOfLegendsTest extends BaseCardTest {
         assertThat(relic.isTapped()).isFalse();
         assertThat(nonLegendaryCreature.isTapped()).isFalse();
     }
+
+    @Test
+    @DisplayName("Can tap a legendary creature with summoning sickness")
+    void tapsSummoningSickLegendaryCreature() {
+        harness.addToBattlefield(player1, new RelicOfLegends());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new DanithaCapashenParagon());
+        creature.setSummoningSick(true);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can use the second ability after tapping Relic for mana")
+    void usesSecondAbilityWhileRelicIsTapped() {
+        Permanent relic = harness.addToBattlefieldAndReturn(player1, new RelicOfLegends());
+        Permanent creature = addCreatureReady(player1, new DanithaCapashenParagon());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "WHITE");
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "WHITE");
+
+        assertThat(relic.isTapped()).isTrue();
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot tap an already tapped legendary creature for mana")
+    void cannotTapTappedLegendaryCreature() {
+        harness.addToBattlefield(player1, new RelicOfLegends());
+        Permanent creature = addCreatureReady(player1, new DanithaCapashenParagon());
+        creature.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("No untapped matching creature to tap");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot tap an opponent's legendary creature for mana")
+    void cannotTapOpponentsLegendaryCreature() {
+        harness.addToBattlefield(player1, new RelicOfLegends());
+        Permanent creature = addCreatureReady(player2, new DanithaCapashenParagon());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("No untapped matching creature to tap");
+
+        assertThat(creature.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate the first ability twice without untapping Relic")
+    void cannotTapRelicTwice() {
+        harness.addToBattlefield(player1, new RelicOfLegends());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "BLACK");
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
 }
