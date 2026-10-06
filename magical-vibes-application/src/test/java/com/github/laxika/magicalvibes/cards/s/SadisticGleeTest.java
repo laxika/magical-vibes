@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -18,15 +19,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SadisticGlee.class, GrizzlyBears.class, LightningBolt.class, Forest.class})
+@CardUsed({SadisticGlee.class, GrizzlyBears.class, LightningBolt.class, Forest.class, Disenchant.class})
 class SadisticGleeTest extends BaseCardTest {
 
-    private Permanent enchantGlee(Permanent creature) {
+    private void enchantGlee(Permanent creature) {
         harness.setHand(player1, List.of(new SadisticGlee()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.castEnchantment(player1, 0, creature.getId());
         harness.passBothPriorities();
-        return creature;
     }
 
     @Test
@@ -139,8 +139,7 @@ class SadisticGleeTest extends BaseCardTest {
         harness.clearPriorityPassed();
         enchantGlee(host);
 
-        declareAttackers(List.of(1, 2));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(1, 2));
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(
                         gd.playerBattlefields.get(player2.getId()).indexOf(firstBlocker),
@@ -172,5 +171,46 @@ class SadisticGleeTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Sadistic Glee");
+    }
+
+    @Test
+    @DisplayName("Sadistic Glee puts counters on an opponent's enchanted creature")
+    void opponentHostGetsCounter() {
+        Permanent host = addCreatureReady(player2, new GrizzlyBears());
+        Permanent victim = addCreatureReady(player1, new GrizzlyBears());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        enchantGlee(host);
+
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, victim.getId());
+        resolveAllTriggers();
+
+        assertThat(host.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Removing Sadistic Glee in response does not stop its death trigger")
+    void triggerResolvesAfterAuraDestroyed() {
+        Permanent host = addCreatureReady(player1, new GrizzlyBears());
+        Permanent victim = addCreatureReady(player2, new GrizzlyBears());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        enchantGlee(host);
+        Permanent aura = findPermanent(player1, "Sadistic Glee");
+
+        harness.setHand(player1, List.of(new LightningBolt(), new Disenchant()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player1, 0, victim.getId());
+        assertThat(host.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.castAndResolveInstant(player1, 0, aura.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Sadistic Glee");
+        assertThat(host.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 }
