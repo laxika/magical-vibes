@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.c.Cancel;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.m.Mortivore;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ScourTheDesert.class, GrizzlyBears.class, HillGiant.class, Cancel.class})
+@CardUsed({ScourTheDesert.class, GrizzlyBears.class, HillGiant.class, Cancel.class, Mortivore.class})
 class ScourTheDesertTest extends BaseCardTest {
 
     private void giveMana() {
@@ -34,8 +35,7 @@ class ScourTheDesertTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ScourTheDesert()));
         giveMana();
 
-        harness.castSorcery(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, bears.getId());
 
         harness.assertNotInGraveyard(player1, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -61,8 +61,7 @@ class ScourTheDesertTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ScourTheDesert()));
         giveMana();
 
-        harness.castSorcery(player1, 0, giant.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, giant.getId());
 
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getId().equals(giant.getId()));
@@ -93,5 +92,58 @@ class ScourTheDesertTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, cancel.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Counts variable toughness in exile using creature cards in both graveyards")
+    void usesVariableToughnessAfterExile() {
+        Card mortivore = new Mortivore();
+        harness.setGraveyard(player1, List.of(mortivore, new GrizzlyBears()));
+        harness.setGraveyard(player2, List.of(new HillGiant()));
+        harness.setHand(player1, List.of(new ScourTheDesert()));
+        giveMana();
+
+        harness.castAndResolveSorcery(player1, 0, mortivore.getId());
+
+        harness.assertNotInGraveyard(player1, "Mortivore");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getId().equals(mortivore.getId()));
+        assertThat(findPermanents(player1, "Bird")).hasSize(2);
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Exiles a creature whose toughness becomes zero in exile without creating Birds")
+    void zeroToughnessInExileCreatesNoBirds() {
+        Card mortivore = new Mortivore();
+        harness.setGraveyard(player1, List.of(mortivore));
+        harness.setHand(player1, List.of(new ScourTheDesert()));
+        giveMana();
+
+        harness.castAndResolveSorcery(player1, 0, mortivore.getId());
+
+        harness.assertNotInGraveyard(player1, "Mortivore");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getId().equals(mortivore.getId()));
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Creates no Birds if the target leaves the graveyard before resolution")
+    void targetLeavingGraveyardPreventsTokenCreation() {
+        Card bears = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(bears));
+        harness.setHand(player1, List.of(new ScourTheDesert()));
+        giveMana();
+
+        harness.castSorcery(player1, 0, bears.getId());
+        harness.setGraveyard(player1, List.of());
+        harness.setHand(player1, List.of(bears));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Scour the Desert");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
     }
 }
