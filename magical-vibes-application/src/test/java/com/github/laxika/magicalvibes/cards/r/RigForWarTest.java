@@ -28,8 +28,7 @@ class RigForWarTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 2);
 
         UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castInstant(player1, 0, bearId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bearId);
 
         Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
         assertThat(bear.getPowerModifier()).isEqualTo(3);
@@ -46,8 +45,7 @@ class RigForWarTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 2);
 
         UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castInstant(player1, 0, bearId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bearId);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -72,5 +70,48 @@ class RigForWarTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, targetId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Can target an opponent's creature without affecting other creatures")
+    void canTargetOpponentsCreature() {
+        Permanent ownBear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opposingBear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new RigForWar()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player1, 0, opposingBear.getId());
+
+        assertThat(opposingBear.getPowerModifier()).isEqualTo(3);
+        assertThat(opposingBear.getToughnessModifier()).isZero();
+        assertThat(opposingBear.hasKeyword(Keyword.REACH)).isTrue();
+        assertThat(opposingBear.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(ownBear.getPowerModifier()).isZero();
+        assertThat(ownBear.hasKeyword(Keyword.REACH)).isFalse();
+        assertThat(ownBear.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Two copies add their power boosts and both expire at end of turn")
+    void multipleCopiesStackAndExpire() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new RigForWar(), new RigForWar()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castAndResolveInstant(player1, 0, bear.getId());
+        harness.castAndResolveInstant(player1, 0, bear.getId());
+
+        assertThat(bear.getPowerModifier()).isEqualTo(6);
+        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(bear.hasKeyword(Keyword.REACH)).isTrue();
+        assertThat(bear.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(bear.getPowerModifier()).isZero();
+        assertThat(bear.hasKeyword(Keyword.REACH)).isFalse();
+        assertThat(bear.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
     }
 }
