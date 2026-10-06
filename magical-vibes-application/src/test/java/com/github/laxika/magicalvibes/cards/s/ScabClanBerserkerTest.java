@@ -1,12 +1,14 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ScabClanBerserker.class, HolyDay.class, SuntailHawk.class, Unsummon.class})
 class ScabClanBerserkerTest extends BaseCardTest {
 
     /** Puts a Berserker under player1 and hands the turn to the opponent, ready to cast. */
@@ -114,5 +117,57 @@ class ScabClanBerserkerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(controllerLifeBefore);
+    }
+    @Test
+    @DisplayName("Already renowned creatures do not gain another counter from combat damage")
+    void renownedCombatDamageDoesNotRepeatRenown() {
+        Permanent berserker = addCreatureReady(player1, new ScabClanBerserker());
+        berserker.setRenowned(true);
+        berserker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        declareAttackers(player1, List.of(0));
+        resolveAllTriggers();
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(berserker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(berserker.isRenowned()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A +1/+1 counter alone does not make the creature renowned")
+    void countersWithoutRenownDoNotEnableDamageTrigger() {
+        Permanent berserker = setUpOpponentTurn(false);
+        berserker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.setHand(player2, List.of(new HolyDay()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        int opponentLifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        harness.castInstant(player2, 0);
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+
+        harness.assertLife(player2, opponentLifeBefore);
+    }
+
+    @Test
+    @DisplayName("Removing the renowned creature in response does not stop its damage trigger")
+    void damageTriggerUsesLastKnownRenownAfterBounce() {
+        Permanent berserker = setUpOpponentTurn(true);
+        harness.setHand(player2, List.of(new HolyDay()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        int opponentLifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        harness.castInstant(player2, 0);
+        harness.castInstant(player1, 0, berserker.getId());
+        assertThat(gd.stack).hasSize(3);
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Scab-Clan Berserker");
+        harness.assertInHand(player1, "Scab-Clan Berserker");
+        resolveAllTriggers();
+
+        harness.assertLife(player2, opponentLifeBefore - 2);
     }
 }
