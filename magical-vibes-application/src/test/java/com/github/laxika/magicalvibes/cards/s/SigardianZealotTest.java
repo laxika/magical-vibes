@@ -40,6 +40,9 @@ class SigardianZealotTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(5);
         assertThat(gqs.getEffectivePower(gd, elves)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, elves)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, zealot)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, zealot)).isEqualTo(6);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.VIGILANCE)).isTrue();
         assertThat(gqs.hasKeyword(gd, elves, Keyword.VIGILANCE)).isTrue();
         assertThat(gqs.hasKeyword(gd, zealot, Keyword.VIGILANCE)).isTrue();
@@ -81,11 +84,53 @@ class SigardianZealotTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, bears, Keyword.VIGILANCE)).isFalse();
     }
 
+    @Test
+    @DisplayName("Can choose an opponent's creature")
+    void boostsOpponentsCreature() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent zealot = harness.addToBattlefieldAndReturn(player1, new SigardianZealot());
+
+        advanceToCombat(player1);
+        harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, zealot)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, zealot, Keyword.VIGILANCE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Can choose no creatures")
+    void canChooseNoCreatures() {
+        Permanent zealot = harness.addToBattlefieldAndReturn(player1, new SigardianZealot());
+
+        advanceToCombat(player1);
+        harness.handleMultiplePermanentsChosen(player1, List.of());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
+        assertThat(gqs.getEffectivePower(gd, zealot)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, zealot)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, zealot, Keyword.VIGILANCE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Does not trigger during an opponent's combat")
+    void doesNotTriggerOnOpponentsTurn() {
+        Permanent zealot = harness.addToBattlefieldAndReturn(player1, new SigardianZealot());
+
+        advanceToCombat(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
+        assertThat(gqs.getEffectivePower(gd, zealot)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, zealot, Keyword.VIGILANCE)).isFalse();
+    }
+
     private void advanceToCombat(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.BEGINNING_OF_COMBAT);
         harness.passBothPriorities();
     }
 }
