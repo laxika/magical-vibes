@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.a.AscendedLawmage;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.Card;
@@ -8,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +19,7 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ScabClanGiant.class, GrizzlyBears.class, HillGiant.class, AscendedLawmage.class})
 class ScabClanGiantTest extends BaseCardTest {
 
     @Test
@@ -82,6 +85,49 @@ class ScabClanGiantTest extends BaseCardTest {
         assertThat(foughtSlots).hasSize(2);
     }
 
+    @Test
+    @DisplayName("Hexproof prevents an opponent's creature from being fought")
+    void cannotFightHexproofCreature() {
+        Permanent lawmage = harness.addToBattlefieldAndReturn(player2, new AscendedLawmage());
+
+        castGiantAndResolveEtb();
+
+        harness.assertOnBattlefield(player2, "Ascended Lawmage");
+        assertThat(lawmage.getMarkedDamage()).isZero();
+        assertThat(giant().getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("A creature entering after the trigger is stacked cannot replace its departed target")
+    void doesNotChooseReplacementAfterTargetLeaves() {
+        Permanent original = addCreature(player2, new GrizzlyBears());
+        castGiantAndResolveSpell();
+        gd.playerBattlefields.get(player2.getId()).remove(original);
+        gd.playerHands.get(player2.getId()).add(original.getCard());
+        Permanent newcomer = addCreature(player2, new HillGiant());
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Hill Giant");
+        assertThat(newcomer.getMarkedDamage()).isZero();
+        assertThat(giant().getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("No fight happens if the Giant leaves before its trigger resolves")
+    void noFightWhenSourceLeaves() {
+        Permanent bears = addCreature(player2, new GrizzlyBears());
+        castGiantAndResolveSpell();
+        Permanent source = giant();
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        gd.playerHands.get(player1.getId()).add(source.getCard());
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(bears.getMarkedDamage()).isZero();
+    }
+
     private void resetGame() {
         gd.playerBattlefields.get(player1.getId()).clear();
         gd.playerBattlefields.get(player2.getId()).clear();
@@ -94,13 +140,17 @@ class ScabClanGiantTest extends BaseCardTest {
     }
 
     private Permanent addCreature(Player player, Card card) {
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, card);
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
     private void castGiantAndResolveEtb() {
+        castGiantAndResolveSpell();
+        harness.passBothPriorities();
+    }
+
+    private void castGiantAndResolveSpell() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, List.of(new ScabClanGiant()));
@@ -110,6 +160,5 @@ class ScabClanGiantTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities(); // resolve creature spell → ETB trigger
-        harness.passBothPriorities(); // resolve ETB trigger → fight
     }
 }
