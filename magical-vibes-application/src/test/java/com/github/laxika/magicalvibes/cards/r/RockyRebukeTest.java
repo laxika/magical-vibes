@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.p.PyromancersSwath;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -16,7 +17,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RockyRebuke.class, GrizzlyBears.class, LlanowarElves.class, AirElemental.class})
+@CardUsed({RockyRebuke.class, GrizzlyBears.class, LlanowarElves.class, AirElemental.class, PyromancersSwath.class})
 class RockyRebukeTest extends BaseCardTest {
 
     @Test
@@ -94,14 +95,74 @@ class RockyRebukeTest extends BaseCardTest {
         assertThat(target.getMarkedDamage()).isZero();
     }
 
+    @Test
+    @DisplayName("Instant damage bonuses do not increase damage dealt by the creature")
+    void creatureDamageDoesNotReceiveInstantDamageBonus() {
+        harness.addToBattlefield(player1, new PyromancersSwath());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+
+        castRockyRebuke("Grizzly Bears", "Air Elemental");
+
+        harness.assertOnBattlefield(player2, "Air Elemental");
+        assertThat(victim.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Uses the creature's power at resolution")
+    void usesPowerAtResolution() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setHand(player1, List.of(new RockyRebuke()));
+        addMana();
+        harness.castInstant(player1, 0, List.of(source.getId(), victim.getId()));
+
+        source.setPowerModifier(1);
+        harness.passBothPriorities();
+
+        assertThat(victim.getMarkedDamage()).isEqualTo(3);
+        assertThat(source.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Deals no damage if the source becomes controlled by the opponent")
+    void dealsNoDamageIfSourceChangesController() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setHand(player1, List.of(new RockyRebuke()));
+        addMana();
+        harness.castInstant(player1, 0, List.of(source.getId(), victim.getId()));
+
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        gd.playerBattlefields.get(player2.getId()).add(source);
+        harness.passBothPriorities();
+
+        assertThat(victim.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Does not damage the source if the victim leaves before resolution")
+    void dealsNoDamageIfVictimLeaves() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setHand(player1, List.of(new RockyRebuke()));
+        addMana();
+        harness.castInstant(player1, 0, List.of(source.getId(), victim.getId()));
+
+        gd.playerBattlefields.get(player2.getId()).remove(victim);
+        harness.passBothPriorities();
+
+        assertThat(source.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player1, "Rocky Rebuke");
+    }
+
     private void castRockyRebuke(String sourceName, String targetName) {
         harness.setHand(player1, List.of(new RockyRebuke()));
         addMana();
 
         UUID sourceId = harness.getPermanentId(player1, sourceName);
         UUID targetId = harness.getPermanentId(player2, targetName);
-        harness.castInstant(player1, 0, List.of(sourceId, targetId));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, List.of(sourceId, targetId));
     }
 
     private void addMana() {
