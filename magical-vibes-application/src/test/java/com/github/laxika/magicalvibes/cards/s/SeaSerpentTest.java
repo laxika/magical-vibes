@@ -48,8 +48,7 @@ class SeaSerpentTest extends BaseCardTest {
         harness.setHand(player1, List.of(new StoneRain()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        harness.castSorcery(player1, 0, island.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, island.getId());
 
         harness.assertOnBattlefield(player1, "Sea Serpent");
         assertThat(gd.stack).anyMatch(entry -> entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY);
@@ -100,5 +99,68 @@ class SeaSerpentTest extends BaseCardTest {
         assertThatThrownBy(() -> declareAttackers(
                 List.of(gd.playerBattlefields.get(player1.getId()).indexOf(serpent))))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("An opponent's Island does not prevent the sacrifice trigger")
+    void opponentsIslandDoesNotPreventSacrifice() {
+        harness.addToBattlefield(player2, new Island());
+        harness.castFromHand(player1, new SeaSerpent(), "{5}{U}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Sea Serpent");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Sea Serpent");
+        harness.assertInGraveyard(player1, "Sea Serpent");
+    }
+
+    @Test
+    @DisplayName("Gaining an Island after the trigger fires does not stop the sacrifice")
+    void gainingIslandAfterTriggerDoesNotPreventSacrifice() {
+        harness.castFromHand(player1, new SeaSerpent(), "{5}{U}");
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.addToBattlefield(player1, new Island());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Island");
+        harness.assertNotOnBattlefield(player1, "Sea Serpent");
+        harness.assertInGraveyard(player1, "Sea Serpent");
+    }
+
+    @Test
+    @DisplayName("Losing one Island does not trigger sacrifice while another remains")
+    void survivesLosingOneOfTwoIslands() {
+        var island = harness.addToBattlefieldAndReturn(player1, new Island());
+        harness.addToBattlefield(player1, new Island());
+        addCreatureReady(player1, new SeaSerpent());
+        harness.setHand(player1, List.of(new StoneRain()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castAndResolveSorcery(player1, 0, island.getId());
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Sea Serpent");
+    }
+
+    @Test
+    @DisplayName("Can attack when the defender controls a land changed into an Island")
+    void canAttackWhenDefenderControlsTransformedIsland() {
+        harness.addToBattlefield(player1, new Island());
+        var forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.setHand(player1, List.of(new PhantasmalTerrain()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castEnchantment(player1, 0, forest.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "ISLAND");
+        var serpent = addCreatureReady(player1, new SeaSerpent());
+        harness.setLife(player2, 20);
+
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(serpent)));
+
+        harness.assertLife(player2, 15);
     }
 }
