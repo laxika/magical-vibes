@@ -59,6 +59,21 @@ class SearingFleshTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Lethal planeswalker damage does not spill over to its controller")
+    void lethalPlaneswalkerDamageDoesNotDamageController() {
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new ElspethKnightErrant());
+        giveSearingFlesh();
+
+        harness.castAndResolveSorcery(player1, 0, planeswalker.getId());
+
+        harness.assertNotOnBattlefield(player2, "Elspeth, Knight-Errant");
+        harness.assertInGraveyard(player2, "Elspeth, Knight-Errant");
+        harness.assertLife(player2, 20);
+        harness.assertLife(player1, 20);
+        harness.assertInGraveyard(player1, "Searing Flesh");
+    }
+
+    @Test
     @DisplayName("Cannot target yourself or a creature")
     void rejectsIllegalTargets() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new ElvishWarrior());
