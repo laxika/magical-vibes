@@ -91,4 +91,68 @@ class SamiteSanctuaryTest extends BaseCardTest {
 
         assertThat(target.getDamagePreventionShield()).isZero();
     }
+
+    @Test
+    @DisplayName("Repeated activations stack and only prevent the next damage")
+    void repeatedActivationsStackAndAreConsumed() {
+        harness.addToBattlefield(player1, new SamiteSanctuary());
+        Permanent target = addCreatureReady(player1, new AvatarOfMight());
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.addMana(player2, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player2, 0, null, target.getId());
+        harness.activateAbility(player2, 0, null, target.getId());
+
+        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotalAllMana()).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(5);
+
+        resolveAllTriggers();
+        assertThat(target.getDamagePreventionShield()).isEqualTo(2);
+
+        harness.setHand(player2, List.of(new RhysticLightning(), new RhysticLightning()));
+        harness.addMana(player2, ManaColor.RED, 3);
+        harness.castAndResolveInstant(player2, 0, target.getId());
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+        assertThat(target.getDamagePreventionShield()).isZero();
+
+        harness.addMana(player2, ManaColor.RED, 3);
+        harness.castAndResolveInstant(player2, 0, target.getId());
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(target.getMarkedDamage()).isEqualTo(6);
+        harness.assertOnBattlefield(player1, "Avatar of Might");
+    }
+
+    @Test
+    @DisplayName("The activating player must pay the full cost from their own mana")
+    void cannotUseControllersManaToActivate() {
+        harness.addToBattlefield(player1, new SamiteSanctuary());
+        Permanent target = addCreatureReady(player2, new AvatarOfMight());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(target.getDamagePreventionShield()).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotalAllMana()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Cannot target a player")
+    void cannotTargetPlayer() {
+        harness.addToBattlefield(player1, new SamiteSanctuary());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+    }
 }
