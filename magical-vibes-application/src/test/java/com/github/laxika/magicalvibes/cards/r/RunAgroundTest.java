@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
+import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.s.SentinelTotem;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -12,6 +14,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -21,6 +24,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RunAground.class, GrizzlyBears.class, Ornithopter.class, Pacifism.class, Forest.class, SentinelTotem.class})
 class RunAgroundTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -41,7 +45,7 @@ class RunAgroundTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Run Aground");
+        assertThat(entry.getCard()).isInstanceOf(RunAground.class);
         assertThat(entry.getTargetId()).isEqualTo(targetId);
     }
 
@@ -50,14 +54,10 @@ class RunAgroundTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target an enchantment")
     void cannotTargetEnchantment() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.addToBattlefield(player2, new Pacifism());
-        UUID pacifismId = harness.getPermanentId(player2, "Pacifism");
-
-        // Attach Pacifism to Grizzly Bears
-        Permanent pacifism = gqs.findPermanentById(harness.getGameData(), pacifismId);
-        pacifism.setAttachedTo(bearsId);
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent pacifism = harness.addToBattlefieldAndReturn(player2, new Pacifism());
+        UUID pacifismId = pacifism.getId();
+        pacifism.setAttachedTo(bears.getId());
 
         harness.setHand(player1, List.of(new RunAground()));
         harness.addMana(player1, ManaColor.BLUE, 4);
@@ -69,7 +69,7 @@ class RunAgroundTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a land")
     void cannotTargetLand() {
-        harness.addToBattlefield(player1, new com.github.laxika.magicalvibes.cards.f.Forest());
+        harness.addToBattlefield(player1, new Forest());
         UUID landId = harness.getPermanentId(player1, "Forest");
 
         harness.setHand(player2, List.of(new RunAground()));
@@ -94,8 +94,7 @@ class RunAgroundTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLUE, 4);
         harness.passPriority(player1);
 
-        harness.castInstant(player2, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, targetId);
 
         GameData gd = harness.getGameData();
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
@@ -119,8 +118,7 @@ class RunAgroundTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLUE, 4);
         harness.passPriority(player1);
 
-        harness.castInstant(player2, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, targetId);
 
         GameData gd = harness.getGameData();
         harness.assertNotOnBattlefield(player1, "Ornithopter");
@@ -142,8 +140,7 @@ class RunAgroundTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLUE, 4);
         harness.passPriority(player1);
 
-        harness.castInstant(player2, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, targetId);
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
@@ -175,5 +172,57 @@ class RunAgroundTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore);
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         harness.assertInGraveyard(player2, "Run Aground");
+    }
+
+    @Test
+    @DisplayName("A noncreature artifact is put on top without disturbing the rest of the library")
+    void putsNoncreatureArtifactOnTop() {
+        SentinelTotem totem = new SentinelTotem();
+        Permanent target = harness.addToBattlefieldAndReturn(player1, totem);
+        List<Card> previousLibrary = List.copyOf(gd.playerDecks.get(player1.getId()));
+        harness.setHand(player2, List.of(new RunAground()));
+        harness.addMana(player2, ManaColor.BLUE, 4);
+
+        harness.castAndResolveInstant(player2, 0, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Sentinel Totem");
+        harness.assertNotInGraveyard(player1, "Sentinel Totem");
+        List<Card> library = gd.playerDecks.get(player1.getId());
+        assertThat(library.getFirst()).isSameAs(totem);
+        assertThat(library.subList(1, library.size())).containsExactlyElementsOf(previousLibrary);
+    }
+
+    @Test
+    @DisplayName("A stolen creature returns to its owner's library rather than its controller's")
+    void returnsStolenCreatureToOwnersLibrary() {
+        GrizzlyBears bears = new GrizzlyBears();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, bears);
+        gd.stolenCreatures.put(target.getId(), player1.getId());
+        List<Card> controllerLibrary = List.copyOf(gd.playerDecks.get(player2.getId()));
+        harness.setHand(player1, List.of(new RunAground()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(bears);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactlyElementsOf(controllerLibrary);
+    }
+
+    @Test
+    @DisplayName("An attached Aura goes to the graveyard when its creature is put on top")
+    void attachedAuraGoesToGraveyard() {
+        GrizzlyBears bears = new GrizzlyBears();
+        Permanent target = harness.addToBattlefieldAndReturn(player1, bears);
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new Pacifism());
+        aura.setAttachedTo(target.getId());
+        harness.setHand(player1, List.of(new RunAground()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(bears);
+        harness.assertNotOnBattlefield(player2, "Pacifism");
+        harness.assertInGraveyard(player2, "Pacifism");
     }
 }
