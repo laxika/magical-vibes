@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,6 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ResoluteSurvivors.class})
 class ResoluteSurvivorsTest extends BaseCardTest {
 
     @Test
@@ -72,7 +74,69 @@ class ResoluteSurvivorsTest extends BaseCardTest {
         assertThat(survivors.getSkipUntapCount()).isZero();
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Each Survivors triggers when another creature you control is exerted")
+    void exertingAnotherSurvivorsTriggersBothCopies() {
+        addReadySurvivors(player1);
+        Permanent attacker = addReadySurvivors(player1);
+        int combatDamage = gqs.getEffectivePower(gd, attacker);
+        int opponentLifeBefore = gd.getLife(player2.getId());
+        int controllerLifeBefore = gd.getLife(player1.getId());
+
+        declareAttackers(List.of(1));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+        resolveCombat();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(opponentLifeBefore - combatDamage - 2);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(controllerLifeBefore + 2);
+    }
+
+    @Test
+    @DisplayName("Exert is chosen during attacker declaration before priority is passed")
+    void exertChoiceIsPartOfDeclaringAttackers() {
+        addReadySurvivors(player1);
+
+        declareAttackers(List.of(0));
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+    }
+
+    @Test
+    @DisplayName("Exert prevents exactly the exerting player's next untap")
+    void exertPreventsOnlyNextUntap() {
+        Permanent survivors = addReadySurvivors(player1);
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        harness.performUntapStep(player2);
+        assertThat(survivors.isTapped()).isTrue();
+        harness.performUntapStep(player1);
+        assertThat(survivors.isTapped()).isTrue();
+        harness.performUntapStep(player1);
+        assertThat(survivors.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Exert does not prevent untapping during a new controller's untap step")
+    void exertRestrictionRemainsTiedToExertingPlayer() {
+        Permanent survivors = addReadySurvivors(player1);
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        gd.playerBattlefields.get(player1.getId()).remove(survivors);
+        gd.playerBattlefields.get(player2.getId()).add(survivors);
+        harness.performUntapStep(player2);
+
+        assertThat(survivors.isTapped()).isFalse();
+    }
 
     private Permanent addReadySurvivors(Player player) {
         return addCreatureReady(player, new ResoluteSurvivors());
