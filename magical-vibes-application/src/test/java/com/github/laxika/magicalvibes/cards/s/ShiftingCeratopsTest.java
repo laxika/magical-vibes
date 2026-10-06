@@ -1,16 +1,14 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.c.Cancel;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
+import com.github.laxika.magicalvibes.model.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,6 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ShiftingCeratops.class, Cancel.class, Unsummon.class, Shock.class, AirElemental.class})
 class ShiftingCeratopsTest extends BaseCardTest {
 
     @Test
@@ -46,10 +45,10 @@ class ShiftingCeratopsTest extends BaseCardTest {
     @DisplayName("Blue spells cannot target Shifting Ceratops")
     void cannotBeTargetedByBlueSpell() {
         Permanent ceratops = addCeratops(player2);
-        harness.setHand(player1, List.of(createBlueInstant()));
+        harness.setHand(player1, List.of(new Unsummon()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, ceratops.getId(), null))
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, ceratops.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -87,19 +86,73 @@ class ShiftingCeratopsTest extends BaseCardTest {
     }
 
     private Permanent addCeratops(com.github.laxika.magicalvibes.model.Player player) {
-        Permanent permanent = new Permanent(new ShiftingCeratops());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new ShiftingCeratops());
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 
-    private static Card createBlueInstant() {
-        Card card = new Card();
-        card.setName("Blue Bolt");
-        card.setType(CardType.INSTANT);
-        card.setManaCost("{U}");
-        card.setColor(CardColor.BLUE);
-        card.addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(1));
-        return card;
+    @Test
+    @DisplayName("Protection from blue does not prevent red spell damage")
+    void redSpellCanTargetAndDamage() {
+        Permanent ceratops = addCeratops(player2);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, ceratops.getId());
+        harness.passBothPriorities();
+
+        assertThat(ceratops.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player2, "Shifting Ceratops");
+    }
+
+    @Test
+    @DisplayName("A single activation grants only the chosen keyword to its source")
+    void grantsOnlyChosenKeywordToSource() {
+        Permanent ceratops = addCeratops(player1);
+        Permanent other = addCeratops(player1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "HASTE");
+
+        assertThat(gqs.hasKeyword(gd, ceratops, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ceratops, Keyword.REACH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ceratops, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Blue creatures cannot block Shifting Ceratops")
+    void blueCreatureCannotBlock() {
+        addCeratops(player1);
+        harness.addToBattlefield(player2, new AirElemental());
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection");
+    }
+
+    @Test
+    @DisplayName("Reach allows blocking a blue flyer and protection prevents its lethal damage")
+    void reachBlocksBlueFlyerAndPreventsDamage() {
+        Permanent flyer = harness.addToBattlefieldAndReturn(player1, new AirElemental());
+        flyer.setSummoningSick(false);
+        Permanent ceratops = addCeratops(player2);
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.activateAbility(player2, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleListChoice(player2, "REACH");
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))));
+        harness.resolveCombatDamage();
+
+        harness.assertOnBattlefield(player2, "Shifting Ceratops");
+        assertThat(ceratops.getMarkedDamage()).isZero();
+        assertThat(flyer.getMarkedDamage()).isEqualTo(5);
     }
 }
