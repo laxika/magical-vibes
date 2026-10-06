@@ -93,6 +93,47 @@ class ShacklesTest extends BaseCardTest {
         harness.assertNotInHand(player2, "Shackles");
     }
 
+    @Test
+    @DisplayName("Shackles does not tap an untapped creature")
+    void enchantingUntappedCreatureDoesNotTapIt() {
+        Permanent creature = enchantOpponentCreature();
+
+        assertThat(creature.isTapped()).isFalse();
+
+        advanceToUpkeep(player2);
+
+        assertThat(creature.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The untap restriction persists across multiple turns")
+    void untapRestrictionPersistsAcrossTurns() {
+        Permanent creature = enchantOpponentCreature();
+        creature.tap();
+
+        advanceToUpkeep(player2);
+        assertThat(creature.isTapped()).isTrue();
+        advanceToUpkeep(player1);
+        advanceToUpkeep(player2);
+
+        assertThat(creature.isTapped()).isTrue();
+        harness.assertOnBattlefield(player1, "Shackles");
+    }
+
+    @Test
+    @DisplayName("Only the enchanted creature is prevented from untapping")
+    void otherCreaturesUntapNormally() {
+        Permanent enchanted = enchantOpponentCreature();
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new BenalishLancer());
+        enchanted.tap();
+        other.tap();
+
+        advanceToUpkeep(player2);
+
+        assertThat(enchanted.isTapped()).isTrue();
+        assertThat(other.isTapped()).isFalse();
+    }
+
     private Permanent enchantOpponentCreature() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new BenalishLancer());
 
