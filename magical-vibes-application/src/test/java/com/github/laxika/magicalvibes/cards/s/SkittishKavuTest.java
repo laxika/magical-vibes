@@ -77,4 +77,34 @@ class SkittishKavuTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, kavu)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, kavu)).isEqualTo(2);
     }
+
+    @Test
+    @DisplayName("Gets +1/+1 with an empty opposing battlefield")
+    void getsBoostWithEmptyOpposingBattlefield() {
+        Permanent kavu = harness.addToBattlefieldAndReturn(player1, new SkittishKavu());
+
+        assertThat(gqs.getEffectivePower(gd, kavu)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, kavu)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Loses the bonus when a matching creature arrives and regains it only after the last leaves")
+    void updatesBoostAsMatchingOpponentCreaturesEnterAndLeave() {
+        Permanent kavu = harness.addToBattlefieldAndReturn(player1, new SkittishKavu());
+        assertThat(gqs.getEffectivePower(gd, kavu)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, kavu)).isEqualTo(2);
+
+        Permanent whiteCreature = harness.addToBattlefieldAndReturn(player2, new ArdentSoldier());
+        assertThat(gqs.getEffectivePower(gd, kavu)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, kavu)).isEqualTo(1);
+
+        Permanent blueCreature = harness.addToBattlefieldAndReturn(player2, new VodalianMerchant());
+        gd.playerBattlefields.get(player2.getId()).remove(whiteCreature);
+        assertThat(gqs.getEffectivePower(gd, kavu)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, kavu)).isEqualTo(1);
+
+        gd.playerBattlefields.get(player2.getId()).remove(blueCreature);
+        assertThat(gqs.getEffectivePower(gd, kavu)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, kavu)).isEqualTo(2);
+    }
 }
