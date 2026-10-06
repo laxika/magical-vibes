@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.t.TransguildCourier;
+import com.github.laxika.magicalvibes.cards.t.Tatterkite;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -10,11 +10,9 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SimicInitiate.class, TransguildCourier.class})
+@CardUsed({SimicInitiate.class, TransguildCourier.class, Tatterkite.class})
 class SimicInitiateTest extends BaseCardTest {
 
     @Test
@@ -30,9 +28,7 @@ class SimicInitiateTest extends BaseCardTest {
     void graftMovesCounterOntoEnteringCreature() {
         Permanent initiate = castInitiate();
 
-        harness.setHand(player1, List.of(new TransguildCourier()));
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new TransguildCourier(), "{4}");
         harness.passBothPriorities();
         Permanent courier = findPermanent(player1, "Transguild Courier");
 
@@ -51,9 +47,7 @@ class SimicInitiateTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new TransguildCourier()));
-        harness.addMana(player2, ManaColor.COLORLESS, 4);
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, new TransguildCourier(), "{4}");
         harness.passBothPriorities();
         Permanent courier = findPermanent(player2, "Transguild Courier");
 
@@ -69,9 +63,7 @@ class SimicInitiateTest extends BaseCardTest {
     void graftMayBeDeclined() {
         Permanent initiate = castInitiate();
 
-        harness.setHand(player1, List.of(new TransguildCourier()));
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new TransguildCourier(), "{4}");
         harness.passBothPriorities();
         Permanent courier = findPermanent(player1, "Transguild Courier");
 
@@ -83,10 +75,52 @@ class SimicInitiateTest extends BaseCardTest {
         assertThat(courier.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
+    @Test
+    @DisplayName("Graft does not trigger for its own entry")
+    void graftDoesNotTriggerForItsOwnEntry() {
+        castInitiate();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.pendingMayAbilities).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Graft moves only one counter when the source has several")
+    void graftMovesOnlyOneCounter() {
+        Permanent initiate = castInitiate();
+        initiate.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+
+        harness.castFromHand(player1, new TransguildCourier(), "{4}");
+        harness.passBothPriorities();
+        Permanent courier = findPermanent(player1, "Transguild Courier");
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(initiate.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(courier.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(initiate);
+    }
+
+    @Test
+    @DisplayName("Graft retains its counter when the entering creature cannot receive counters")
+    void graftCannotMoveCounterOntoTatterkite() {
+        Permanent initiate = castInitiate();
+
+        harness.castFromHand(player1, new Tatterkite(), "{3}");
+        harness.passBothPriorities();
+        Permanent tatterkite = findPermanent(player1, "Tatterkite");
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(initiate);
+        assertThat(initiate.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(tatterkite.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
     private Permanent castInitiate() {
-        harness.setHand(player1, List.of(new SimicInitiate()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SimicInitiate(), "{G}");
         harness.passBothPriorities();
         return findPermanent(player1, "Simic Initiate");
     }
