@@ -28,8 +28,7 @@ class ShadowSummoningTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castSorcery(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         List<Permanent> spirits = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken()
@@ -45,5 +44,32 @@ class ShadowSummoningTest extends BaseCardTest {
             assertThat(spirit.getCard().getToughness()).isEqualTo(1);
             assertThat(spirit.getCard().getKeywords()).contains(Keyword.FLYING);
         });
+    }
+
+    @Test
+    @DisplayName("Tokens belong to the caster and untap normally on their untap step")
+    void tokensBelongToCasterAndUntapNormally() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new ShadowSummoning()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.BLACK, 1);
+
+        harness.castAndResolveSorcery(player2, 0, 0);
+
+        List<Permanent> spirits = List.copyOf(gd.playerBattlefields.get(player2.getId()));
+        assertThat(spirits).hasSize(2).allSatisfy(spirit -> {
+            assertThat(spirit.getCard().isToken()).isTrue();
+            assertThat(spirit.isTapped()).isTrue();
+            assertThat(spirit.isAttacking()).isFalse();
+        });
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+
+        harness.performUntapStep(player1);
+        assertThat(spirits).allSatisfy(spirit -> assertThat(spirit.isTapped()).isTrue());
+
+        harness.performUntapStep(player2);
+        assertThat(spirits).allSatisfy(spirit -> assertThat(spirit.isTapped()).isFalse());
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactlyElementsOf(spirits);
     }
 }
