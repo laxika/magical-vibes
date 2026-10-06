@@ -41,7 +41,6 @@ class SerpentineKavuTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.END_STEP);
         assertThat(gqs.hasKeyword(gd, kavu, Keyword.HASTE)).isTrue();
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, kavu, Keyword.HASTE)).isFalse();
@@ -99,5 +98,35 @@ class SerpentineKavuTest extends BaseCardTest {
         declareAttackers(List.of(0));
 
         assertThat(kavu.isAttacking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A tapped, newly entered Kavu can activate its haste ability")
+    void tappedNewlyEnteredKavuCanActivate() {
+        Permanent kavu = harness.addToBattlefieldAndReturn(player1, new SerpentineKavu());
+        kavu.setTapped(true);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(gqs.hasKeyword(gd, kavu, Keyword.HASTE)).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, kavu, Keyword.HASTE)).isTrue();
+        assertThat(kavu.isTapped()).isTrue();
+        assertThat(als.canAttack(gd, kavu, player1.getId())).isFalse();
+    }
+
+    @Test
+    @DisplayName("A newly entered Kavu cannot attack until its haste ability resolves")
+    void hasteRequiresResolutionBeforeAttacking() {
+        Permanent kavu = harness.addToBattlefieldAndReturn(player1, new SerpentineKavu());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThat(als.canAttack(gd, kavu, player1.getId())).isFalse();
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(als.canAttack(gd, kavu, player1.getId())).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(als.canAttack(gd, kavu, player1.getId())).isTrue();
     }
 }
