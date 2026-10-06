@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.c.CruelEdict;
+import com.github.laxika.magicalvibes.cards.m.MahamotiDjinn;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +17,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SengirVampire.class, SuntailHawk.class, Shock.class, CruelEdict.class, SoulsFire.class})
+@CardUsed({SengirVampire.class, SuntailHawk.class, Shock.class, CruelEdict.class, SoulsFire.class,
+        AirElemental.class, MahamotiDjinn.class})
 class SengirVampireTest extends BaseCardTest {
 
     @Test
@@ -173,6 +176,83 @@ class SengirVampireTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.assertInGraveyard(player2, "Suntail Hawk");
+        assertThat(sengir.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Triggers for a damaged creature controlled by the Vampire's controller")
+    void triggersWhenFriendlyCreatureDies() {
+        Permanent sengir = addCreatureReady(player1, new SengirVampire());
+        Permanent target = addCreatureReady(player1, new SuntailHawk());
+        harness.setHand(player1, List.of(new SoulsFire()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castInstant(player1, 0, List.of(sengir.getId(), target.getId()));
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Suntail Hawk");
+        assertThat(sengir.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Triggers when the Vampire and the creature it damaged die simultaneously")
+    void triggersWhenBothCreaturesDieSimultaneously() {
+        Permanent sengir = addCreatureReady(player1, new SengirVampire());
+        addCreatureReady(player2, new AirElemental());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertInGraveyard(player1, "Sengir Vampire");
+        harness.assertInGraveyard(player2, "Air Elemental");
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(sengir.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Dealing damage to a player does not trigger the counter ability")
+    void doesNotTriggerWhenDamagingPlayer() {
+        Permanent sengir = addCreatureReady(player1, new SengirVampire());
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new SoulsFire()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveInstant(player1, 0, List.of(sengir.getId(), player2.getId()));
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 16);
+        assertThat(sengir.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Does not trigger if the Vampire leaves before the damaged creature dies")
+    void doesNotTriggerAfterVampireHasLeftBattlefield() {
+        Permanent sengir = addCreatureReady(player1, new SengirVampire());
+        Permanent target = addCreatureReady(player2, new MahamotiDjinn());
+        harness.setHand(player1, List.of(new SoulsFire(), new SoulsFire(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castAndResolveInstant(player1, 0, List.of(sengir.getId(), target.getId()));
+        resolveAllTriggers();
+        harness.assertOnBattlefield(player2, "Mahamoti Djinn");
+        assertThat(sengir.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+
+        harness.castAndResolveInstant(player1, 0, List.of(sengir.getId(), sengir.getId()));
+        resolveAllTriggers();
+        harness.assertInGraveyard(player1, "Sengir Vampire");
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertInGraveyard(player2, "Mahamoti Djinn");
+        assertThat(gd.stack).isEmpty();
         assertThat(sengir.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 }
