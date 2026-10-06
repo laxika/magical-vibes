@@ -124,4 +124,41 @@ class ShimmerTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(island);
     }
+
+    @Test
+    @DisplayName("A phased-out land returns even after Shimmer leaves")
+    void phasedOutLandReturnsAfterShimmerLeaves() {
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        Permanent shimmer = shimmerWithType(CardSubtype.ISLAND);
+
+        harness.performUntapStep(player1);
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(island);
+        gd.playerBattlefields.get(player1.getId()).remove(shimmer);
+
+        harness.performUntapStep(player2);
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(island);
+        harness.performUntapStep(player1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(island);
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).doesNotContain(island);
+
+        harness.performUntapStep(player1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(island);
+    }
+
+    @Test
+    @DisplayName("A tapped land phases out before untapping and untaps when it phases in")
+    void tappedLandUntapsOnlyAfterPhasingIn() {
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        island.tap();
+        shimmerWithType(CardSubtype.ISLAND);
+
+        harness.performUntapStep(player1);
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(island);
+        assertThat(island.isTapped()).isTrue();
+
+        harness.performUntapStep(player1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(island);
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).doesNotContain(island);
+        assertThat(island.isTapped()).isFalse();
+    }
 }
