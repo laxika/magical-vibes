@@ -75,4 +75,60 @@ class SkitteringHorrorTest extends BaseCardTest {
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
         harness.assertOnBattlefield(player1, "Skittering Horror");
     }
+
+    @Test
+    @DisplayName("Skittering Horror does not trigger from its own casting")
+    void castingHorrorDoesNotSacrificeItself() {
+        harness.setHand(player1, List.of(new SkitteringHorror()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Skittering Horror");
+        harness.assertNotInGraveyard(player1, "Skittering Horror");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Casting another Horror sacrifices the existing Horror before the new one resolves")
+    void castingAnotherHorrorSacrificesOnlyExistingHorror() {
+        SkitteringHorror existing = new SkitteringHorror();
+        SkitteringHorror incoming = new SkitteringHorror();
+        harness.addToBattlefield(player1, existing);
+        harness.setHand(player1, List.of(incoming));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castCreature(player1, 0);
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Skittering Horror");
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(existing).doesNotContain(incoming);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getId()).isEqualTo(incoming.getId());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(incoming.getId()));
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A creature entering without being cast does not trigger Skittering Horror")
+    void enteringCreatureWithoutCastingDoesNotSacrifice() {
+        harness.addToBattlefield(player1, new SkitteringHorror());
+
+        harness.enterBattlefieldAndReturn(player1, new MetathranSoldier());
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Skittering Horror");
+        harness.assertOnBattlefield(player1, "Metathran Soldier");
+        harness.assertNotInGraveyard(player1, "Skittering Horror");
+    }
 }
