@@ -2,11 +2,13 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.p.ProwessOfTheFair;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +18,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SafewrightCavalry.class, GrizzlyBears.class, LlanowarElves.class, ProwessOfTheFair.class})
 class SafewrightCavalryTest extends BaseCardTest {
 
     @Test
@@ -101,18 +104,107 @@ class SafewrightCavalryTest extends BaseCardTest {
         assertThat(elf.getEffectiveToughness()).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("Ability can target a noncreature Elf permanent you control")
+    void canTargetNoncreatureElf() {
+        addSafewrightReady();
+        Permanent elf = harness.addToBattlefieldAndReturn(player1, new ProwessOfTheFair());
+
+        harness.activateAbility(player1, 0, null, elf.getId());
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Prowess of the Fair");
+    }
+
+    @Test
+    @DisplayName("Ability can target itself while tapped and summoning sick")
+    void canBoostItselfWhileTappedAndSummoningSick() {
+        Permanent cavalry = harness.addToBattlefieldAndReturn(player1, new SafewrightCavalry());
+        cavalry.setSummoningSick(true);
+        cavalry.setTapped(true);
+        harness.addMana(player1, ManaColor.WHITE, 5);
+
+        harness.activateAbility(player1, 0, null, cavalry.getId());
+        harness.passBothPriorities();
+
+        assertThat(cavalry.getEffectivePower()).isEqualTo(6);
+        assertThat(cavalry.getEffectiveToughness()).isEqualTo(6);
+        assertThat(cavalry.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Repeated activations stack their boosts")
+    void repeatedActivationsStack() {
+        addSafewrightReady();
+        harness.addMana(player1, ManaColor.GREEN, 5);
+        UUID targetId = harness.getPermanentId(player1, "Safewright Cavalry");
+
+        harness.activateAbility(player1, 0, null, targetId);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, targetId);
+        harness.passBothPriorities();
+
+        Permanent cavalry = findPermanent(player1, "Safewright Cavalry");
+        assertThat(cavalry.getEffectivePower()).isEqualTo(8);
+        assertThat(cavalry.getEffectiveToughness()).isEqualTo(8);
+    }
+
+    @Test
+    @DisplayName("Ability does not boost an Elf whose controller changes before resolution")
+    void targetMustStillBeControlledAtResolution() {
+        addSafewrightReady();
+        Permanent elf = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
+        harness.activateAbility(player1, 0, null, elf.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(elf);
+        gd.playerBattlefields.get(player2.getId()).add(elf);
+        harness.passBothPriorities();
+
+        assertThat(elf.getEffectivePower()).isEqualTo(1);
+        assertThat(elf.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Ability requires five mana")
+    void cannotActivateWithOnlyFourMana() {
+        Permanent cavalry = harness.addToBattlefieldAndReturn(player1, new SafewrightCavalry());
+        cavalry.setSummoningSick(false);
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, cavalry.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Ability still resolves after Safewright Cavalry leaves the battlefield")
+    void abilityResolvesWithoutItsSource() {
+        addSafewrightReady();
+        Permanent source = findPermanent(player1, "Safewright Cavalry");
+        Permanent elf = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
+        harness.activateAbility(player1, 0, null, elf.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        gd.playerGraveyards.get(player1.getId()).add(source.getCard());
+        harness.passBothPriorities();
+
+        assertThat(elf.getEffectivePower()).isEqualTo(3);
+        assertThat(elf.getEffectiveToughness()).isEqualTo(3);
+    }
+
     private Permanent addAttacker() {
-        Permanent attacker = new Permanent(new SafewrightCavalry());
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new SafewrightCavalry());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
         return attacker;
     }
 
     private Permanent addBlocker() {
-        Permanent blocker = new Permanent(new GrizzlyBears());
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
         return blocker;
     }
 
@@ -125,8 +217,8 @@ class SafewrightCavalryTest extends BaseCardTest {
     }
 
     private void addSafewrightReady() {
-        harness.addToBattlefield(player1, new SafewrightCavalry());
-        findPermanent(player1, "Safewright Cavalry").setSummoningSick(false);
+        Permanent cavalry = harness.addToBattlefieldAndReturn(player1, new SafewrightCavalry());
+        cavalry.setSummoningSick(false);
         harness.addMana(player1, ManaColor.GREEN, 5);
     }
 }
