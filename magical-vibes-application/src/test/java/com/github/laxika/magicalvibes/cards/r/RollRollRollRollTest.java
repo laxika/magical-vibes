@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.List;
 
@@ -29,7 +31,7 @@ class RollRollRollRollTest extends BaseCardTest {
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice.validIds()).contains(creature.getId())
-                .doesNotContain(findPermanentByName(player2, "Grizzly Bears").getId());
+                .doesNotContain(findPermanent(player2, "Grizzly Bears").getId());
 
         harness.handlePermanentChosen(player1, creature.getId());
         harness.passBothPriorities();
@@ -78,6 +80,89 @@ class RollRollRollRollTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
     }
 
+    @ParameterizedTest
+    @ValueSource(ints = {2, 3})
+    @DisplayName("Later chapters flicker a land, and the final chapter sacrifices the Saga")
+    void laterChaptersReturnLand(int initialLore) {
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new RollRollRollRoll());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        land.tap();
+        saga.setCounterCount(CounterType.LORE, initialLore);
+
+        triggerChapter();
+        harness.handlePermanentChosen(player1, land.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Forest");
+        if (initialLore == 3) {
+            harness.assertNotOnBattlefield(player1, "Roll-Roll-Roll-Roll");
+            harness.assertInGraveyard(player1, "Roll-Roll-Roll-Roll");
+        } else {
+            harness.assertOnBattlefield(player1, "Roll-Roll-Roll-Roll");
+        }
+
+        advanceToEndStep();
+
+        Permanent returned = findPermanent(player1, "Forest");
+        assertThat(returned.getId()).isNotEqualTo(land.getId());
+        assertThat(returned.isTapped()).isFalse();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A creature owned by the opponent returns under its owner's control")
+    void stolenCreatureReturnsToOwner() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        gd.stolenCreatures.put(creature.getId(), player2.getId());
+        castSaga();
+        harness.handlePermanentChosen(player1, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(card -> card.getName().equals("Grizzly Bears"));
+
+        advanceToEndStep();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A chosen creature that changes controllers is not exiled")
+    void targetMustStillBeControlledAtResolution() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        castSaga();
+        harness.handlePermanentChosen(player1, creature.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(creature);
+        gd.playerBattlefields.get(player2.getId()).add(creature);
+        gd.stolenCreatures.put(creature.getId(), player1.getId());
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("With no legal targets, the final chapter resolves and the Saga is sacrificed")
+    void finalChapterWithoutLegalTargets() {
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new RollRollRollRoll());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        saga.setCounterCount(CounterType.LORE, 3);
+
+        triggerChapter();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Roll-Roll-Roll-Roll");
+        harness.assertNotOnBattlefield(player1, "Roll-Roll-Roll-Roll");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
     private void castSaga() {
         harness.setHand(player1, List.of(new RollRollRollRoll()));
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -101,10 +186,4 @@ class RollRollRollRollTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    private Permanent findPermanentByName(com.github.laxika.magicalvibes.model.Player player, String name) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(permanent -> permanent.getCard().getName().equals(name))
-                .findFirst()
-                .orElseThrow();
-    }
 }
