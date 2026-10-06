@@ -5,10 +5,9 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SatyrWayfinder.class, Forest.class, GrizzlyBears.class, HillGiant.class})
 class SatyrWayfinderTest extends BaseCardTest {
 
     @Test
@@ -75,18 +75,67 @@ class SatyrWayfinderTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(4);
     }
 
+    @Test
+    @DisplayName("A short library reveals all remaining cards and still allows taking a land")
+    void shortLibraryAllowsTakingLand() {
+        Card forest = new Forest();
+        Card bears = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(bears, forest));
+
+        resolveWayfinder();
+        chooseCard(0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(forest);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(bears);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An empty library resolves without a choice or a card movement")
+    void emptyLibraryResolvesWithoutChoice() {
+        harness.setLibrary(player1, List.of());
+
+        resolveWayfinder();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        harness.assertOnBattlefield(player1, "Satyr Wayfinder");
+    }
+
+    @Test
+    @DisplayName("Only one land is kept and cards below the top four stay in order")
+    void keepsOnlyOneLandAndLeavesRemainingLibraryInOrder() {
+        Card firstLand = new Forest();
+        Card secondLand = new Forest();
+        Card bears = new GrizzlyBears();
+        Card giant = new HillGiant();
+        Card fifth = new Forest();
+        Card sixth = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(firstLand, bears, secondLand, giant, fifth, sixth));
+
+        resolveWayfinder();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
+                .params().cards()).containsExactly(firstLand, secondLand);
+        chooseCard(1);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(secondLand);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .containsExactlyInAnyOrder(firstLand, bears, giant);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(fifth, sixth);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     private void resolveWayfinder() {
-        harness.setHand(player1, List.of(new SatyrWayfinder()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SatyrWayfinder(), "{1}{G}");
         harness.passBothPriorities(); // resolve creature spell → enters trigger on stack
         harness.passBothPriorities(); // resolve the trigger
     }
 
     private void chooseCard(int index) {
-        harness.getGameService().handleInteractionAnswer(
-                harness.getGameData(), player1, new InteractionAnswer.LibraryCardChosen(index));
+        harness.handleCardChosen(player1, index);
     }
 
     private List<String> searchCards(GameData data) {
@@ -95,8 +144,6 @@ class SatyrWayfinderTest extends BaseCardTest {
     }
 
     private void setupTopFour(Card... cards) {
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(cards));
+        harness.setLibrary(player1, List.of(cards));
     }
 }
