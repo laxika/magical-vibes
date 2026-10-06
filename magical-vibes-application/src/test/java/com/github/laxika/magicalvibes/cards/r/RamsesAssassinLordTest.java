@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.b.BirdsOfParadise;
+import com.github.laxika.magicalvibes.cards.m.MassacreGirl;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -17,7 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(RamsesAssassinLord.class)
+@CardUsed({RamsesAssassinLord.class, MassacreGirl.class, BirdsOfParadise.class})
 class RamsesAssassinLordTest extends BaseCardTest {
 
     @Test
@@ -60,6 +62,7 @@ class RamsesAssassinLordTest extends BaseCardTest {
     @DisplayName("The loss trigger carries the losing player as event context")
     void lossTriggerCarriesLosingPlayerContext() {
         Permanent ramses = addCreatureReady(player1, new RamsesAssassinLord());
+        declareAttackersAndPrepareBlockers(List.of(0));
         harness.setLife(player2, 0);
         harness.runStateBasedActions();
 
@@ -70,6 +73,80 @@ class RamsesAssassinLordTest extends BaseCardTest {
                 .orElseThrow();
 
         assertThat(trigger.getTargetId()).isEqualTo(player2.getId());
+    }
+
+    @Test
+    void doesNotTriggerWithoutQualifyingAttack() {
+        Permanent ramses = addCreatureReady(player1, new RamsesAssassinLord());
+        harness.setLife(player2, 0);
+
+        harness.runStateBasedActions();
+
+        assertThat(gd.stack).noneMatch(entry -> ramses.getId().equals(entry.getSourcePermanentId()));
+    }
+
+    @Test
+    void anthemDoesNotBoostOpposingAssassinsOrOtherCreatureTypes() {
+        addCreatureReady(player1, new RamsesAssassinLord());
+        Permanent ownAssassin = addCreatureReady(player1, new MassacreGirl());
+        Permanent opposingAssassin = addCreatureReady(player2, new MassacreGirl());
+        Permanent bird = addCreatureReady(player1, new BirdsOfParadise());
+
+        assertThat(gqs.getEffectivePower(gd, ownAssassin)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, ownAssassin)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, opposingAssassin)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, opposingAssassin)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bird)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, bird)).isEqualTo(1);
+    }
+
+    @Test
+    void qualifyingAttackStillCountsAfterAssassinDies() {
+        Permanent ramses = addCreatureReady(player1, new RamsesAssassinLord());
+        Permanent assassin = addCreatureReady(player1, new MassacreGirl());
+        declareAttackersAndPrepareBlockers(List.of(1));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().destroyPermanentToGraveyard(gd, assassin));
+
+        resolveLossTrigger(ramses);
+
+        assertThat(gd.winnerPlayerId).isEqualTo(player1.getId());
+    }
+
+    @Test
+    void qualifyingAttackStillCountsAfterAssassinChangesController() {
+        Permanent ramses = addCreatureReady(player1, new RamsesAssassinLord());
+        Permanent assassin = addCreatureReady(player1, new MassacreGirl());
+        declareAttackersAndPrepareBlockers(List.of(1));
+        gd.playerBattlefields.get(player1.getId()).remove(assassin);
+        gd.playerBattlefields.get(player2.getId()).add(assassin);
+
+        resolveLossTrigger(ramses);
+
+        assertThat(gd.winnerPlayerId).isEqualTo(player1.getId());
+    }
+
+    @Test
+    void qualifyingAttackStillCountsAfterCreatureStopsBeingAssassin() {
+        Permanent ramses = addCreatureReady(player1, new RamsesAssassinLord());
+        Permanent assassin = addCreatureReady(player1, new MassacreGirl());
+        declareAttackersAndPrepareBlockers(List.of(1));
+        assassin.setTransientCreatureTypeOverride(CardSubtype.BEAR);
+
+        resolveLossTrigger(ramses);
+
+        assertThat(gd.winnerPlayerId).isEqualTo(player1.getId());
+    }
+
+    @Test
+    void becomingAssassinAfterAttackDoesNotQualify() {
+        Permanent ramses = addCreatureReady(player1, new RamsesAssassinLord());
+        Permanent bird = addCreatureReady(player1, new BirdsOfParadise());
+        declareAttackersAndPrepareBlockers(List.of(1));
+        bird.setTransientCreatureTypeOverride(CardSubtype.ASSASSIN);
+
+        resolveLossTrigger(ramses);
+
+        assertThat(gd.gameResult).isNull();
     }
 
     private void resolveLossTrigger(Permanent source) {
