@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -12,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SatyaAetherfluxGenius.class, GrizzlyBears.class})
+@CardUsed({SatyaAetherfluxGenius.class, GrizzlyBears.class, Ornithopter.class})
 class SatyaAetherfluxGeniusTest extends BaseCardTest {
 
     @Test
@@ -99,5 +100,78 @@ class SatyaAetherfluxGeniusTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passUntil(TurnStep.END_STEP);
         resolveAllTriggers();
+    }
+
+    @Test
+    void delayedSacrificeTriggersAtOpponentsEndStepIfOwnEndStepWasSkipped() {
+        addCreatureReady(player1, new SatyaAetherfluxGenius());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            harness.handlePermanentChosen(player1, bears.getId());
+            resolveAllTriggers();
+        });
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+        assertThat(findPermanents(player1, "Grizzly Bears"))
+                .containsExactly(bears);
+    }
+
+    @Test
+    void insufficientEnergySacrificesCopyWithoutSpendingRemainingEnergy() {
+        addCreatureReady(player1, new SatyaAetherfluxGenius());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            harness.handlePermanentChosen(player1, bears.getId());
+            resolveAllTriggers();
+        });
+        gd.playerEnergyCounters.put(player1.getId(), 1);
+
+        advanceToEndStep();
+
+        assertThat(findPermanents(player1, "Grizzly Bears")).containsExactly(bears);
+        assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(1);
+    }
+
+    @Test
+    void illegalOnlyTargetPreventsBothCopyAndEnergy() {
+        addCreatureReady(player1, new SatyaAetherfluxGenius());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            harness.handlePermanentChosen(player1, bears.getId());
+            gd.playerBattlefields.get(player1.getId()).remove(bears);
+            gd.playerGraveyards.get(player1.getId()).add(bears.getCard());
+            resolveAllTriggers();
+        });
+
+        assertThat(findPermanents(player1, "Grizzly Bears")).isEmpty();
+        assertThat(gd.playerEnergyCounters.getOrDefault(player1.getId(), 0)).isZero();
+    }
+
+    @Test
+    void canDeclineZeroEnergyPaymentToSacrificeZeroManaValueCopy() {
+        addCreatureReady(player1, new SatyaAetherfluxGenius());
+        Permanent ornithopter = addCreatureReady(player1, new Ornithopter());
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            harness.handlePermanentChosen(player1, ornithopter.getId());
+            resolveAllTriggers();
+        });
+
+        advanceToEndStep();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+        assertThat(findPermanents(player1, "Ornithopter")).containsExactly(ornithopter);
+        assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(2);
     }
 }
