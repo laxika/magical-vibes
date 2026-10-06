@@ -46,8 +46,7 @@ class SeamRipTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.GREEN, 2);
         UUID seamRipId = harness.getPermanentId(player1, "Seam Rip");
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, seamRipId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, seamRipId);
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
@@ -79,6 +78,40 @@ class SeamRipTest extends BaseCardTest {
 
         assertThatThrownBy(() -> castAndResolve(bears.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Removing Seam Rip before its trigger resolves leaves the target on the battlefield")
+    void sourceLeavingBeforeTriggerResolvesDoesNotExileTarget() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new SeamRip()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new Naturalize()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.castAndResolveInstant(player2, 0, harness.getPermanentId(player1, "Seam Rip"));
+        harness.assertNotOnBattlefield(player1, "Seam Rip");
+        harness.passBothPriorities();
+
+        assertThat(harness.getPermanentId(player2, "Grizzly Bears")).isEqualTo(bears.getId());
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Seam Rip can exile an opposing enchantment")
+    void exilesEligibleNoncreaturePermanent() {
+        Permanent opposingSeamRip = harness.addToBattlefieldAndReturn(player2, new SeamRip());
+
+        castAndResolve(opposingSeamRip.getId());
+
+        harness.assertNotOnBattlefield(player2, "Seam Rip");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(card -> card.getId().equals(opposingSeamRip.getCard().getId()));
+        harness.assertOnBattlefield(player1, "Seam Rip");
     }
 
     private void castAndResolve(UUID targetId) {
