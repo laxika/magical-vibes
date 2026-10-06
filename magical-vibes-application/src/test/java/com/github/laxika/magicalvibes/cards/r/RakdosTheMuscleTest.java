@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -89,11 +90,118 @@ class RakdosTheMuscleTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Sacrificing Rakdos itself does not trigger its another-creature ability")
+    void sacrificingRakdosItselfDoesNotTrigger() {
+        Permanent rakdos = addRakdosReady();
+        harness.setLibrary(player2, List.of(new Forest(), new Forest()));
+
+        sacrifice(rakdos);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Exile play permission expires when your next end step begins")
+    void playPermissionExpiresAtBeginningOfNextEndStep() {
+        addRakdosReady();
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Forest exiled = new Forest();
+        harness.setLibrary(player2, List.of(exiled));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        sacrifice(creature);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        assertThat(gd.exilePlayPermissions).containsEntry(exiled.getId(), player1.getId());
+
+        harness.passUntil(player1, TurnStep.END_STEP);
+
+        assertThat(gd.exilePlayPermissions).doesNotContainKey(exiled.getId());
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(exiled);
+    }
+
+    @Test
+    @DisplayName("Rakdos can activate while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent rakdos = harness.addToBattlefieldAndReturn(player1, new RakdosTheMuscle());
+        rakdos.setTapped(true);
+        rakdos.setSummoningSick(true);
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setLibrary(player2, List.of());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, rakdos, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(rakdos.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Rakdos cannot sacrifice itself to pay its activated ability cost")
+    void cannotPayActivatedCostWithRakdosItself() {
+        addRakdosReady();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Rakdos, the Muscle");
+    }
+
+    @Test
+    @DisplayName("Exiled lands can be played but still obey the land-per-turn limit")
+    void exiledLandsRespectLandPlayLimit() {
+        addRakdosReady();
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Forest first = new Forest();
+        Forest second = new Forest();
+        harness.setLibrary(player2, List.of(first, second));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        sacrifice(creature);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.castFromExile(player1, first.getId());
+
+        harness.assertOnBattlefield(player1, "Forest");
+        assertThat(gd.findExiledCard(first.getId())).isNull();
+        assertThatThrownBy(() -> harness.castFromExile(player1, second.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(second);
+    }
+
+    @Test
+    @DisplayName("A second activation is rejected even when another sacrifice is available")
+    void activationLimitAppliesWithAnotherCreatureAvailable() {
+        addRakdosReady();
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setLibrary(player2, List.of());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1,
+                gd.playerBattlefields.get(player1.getId()).get(1).getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(countPermanents(player1, "Grizzly Bears")).isEqualTo(1);
+    }
+
     private Permanent addRakdosReady() {
-        Permanent rakdos = new Permanent(new RakdosTheMuscle());
-        rakdos.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(rakdos);
-        return rakdos;
+        return addCreatureReady(player1, new RakdosTheMuscle());
     }
 
     private void sacrifice(Permanent permanent) {
