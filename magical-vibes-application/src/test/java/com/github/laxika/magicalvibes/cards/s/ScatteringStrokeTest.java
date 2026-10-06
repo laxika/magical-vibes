@@ -2,10 +2,12 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.d.DeeptreadMerrow;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.w.WingsOfVelisVel;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.action.AddManaAtNextMainPhase;
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -15,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ScatteringStroke.class, Forest.class, DeeptreadMerrow.class})
+@CardUsed({ScatteringStroke.class, Forest.class, DeeptreadMerrow.class, WingsOfVelisVel.class})
 class ScatteringStrokeTest extends BaseCardTest {
 
     // Player1 casts Deeptread Merrow (mana value 2); Player2 counters it with Scattering Stroke.
@@ -40,8 +42,6 @@ class ScatteringStrokeTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new DeeptreadMerrow(), new Forest(), new Forest()));
     }
 
-    // ===== Won clash → counter + delayed mana equal to the countered spell's mana value =====
-
     @Test
     @DisplayName("Winning the clash counters the spell and lets the caster add {C} equal to its mana value next main phase")
     void wonClashSchedulesManaEqualToCounteredSpellManaValue() {
@@ -50,8 +50,8 @@ class ScatteringStrokeTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, merrow.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, merrow.getId());
+        keepClashCardsOnTop();
 
         // Spell was countered.
         harness.assertNotOnBattlefield(player1, "Deeptread Merrow");
@@ -83,8 +83,8 @@ class ScatteringStrokeTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, merrow.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, merrow.getId());
+        keepClashCardsOnTop();
 
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         harness.passBothPriorities();
@@ -93,8 +93,6 @@ class ScatteringStrokeTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isZero();
     }
-
-    // ===== Lost clash → counter but no delayed mana reward =====
 
     @Test
     @DisplayName("Losing the clash counters the spell but schedules no mana")
@@ -107,8 +105,8 @@ class ScatteringStrokeTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, merrow.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, merrow.getId());
+        keepClashCardsOnTop();
 
         harness.assertInGraveyard(player1, "Deeptread Merrow");
         assertThat(gd.getDelayedActions(AddManaAtNextMainPhase.class)).isEmpty();
@@ -125,8 +123,8 @@ class ScatteringStrokeTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, merrow.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, merrow.getId());
+        keepClashCardsOnTop();
 
         harness.assertInGraveyard(player1, "Deeptread Merrow");
         assertThat(gd.getDelayedActions(AddManaAtNextMainPhase.class)).isEmpty();
@@ -135,17 +133,22 @@ class ScatteringStrokeTest extends BaseCardTest {
     @Test
     @DisplayName("Winning the clash also rewards the caster at a postcombat next main phase")
     void wonClashSchedulesManaAtPostcombatNextMainPhase() {
-        DeeptreadMerrow merrow = prepareCounterTarget();
-        stackClashWinForCaster();
-
-        harness.castCreature(player1, 0);
-        harness.passPriority(player1);
-        harness.castInstant(player2, 0, merrow.getId());
-
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        var creature = harness.addToBattlefieldAndReturn(player1, new DeeptreadMerrow());
+        WingsOfVelisVel wings = new WingsOfVelisVel();
+        harness.setHand(player1, List.of(wings));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.setHand(player2, List.of(new ScatteringStroke()));
+        harness.addMana(player2, ManaColor.BLUE, 4);
+        stackClashWinForCaster();
+
+        harness.passPriority(player2);
+        harness.castInstant(player1, 0, creature.getId());
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, wings.getId());
+        keepClashCardsOnTop();
+        harness.assertInGraveyard(player1, "Wings of Velis Vel");
 
         assertThat(gd.getDelayedActions(AddManaAtNextMainPhase.class)).hasSize(1);
         harness.passUntil(player2, TurnStep.POSTCOMBAT_MAIN);
@@ -156,5 +159,50 @@ class ScatteringStrokeTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, true);
 
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+    }
+
+    private void keepClashCardsOnTop() {
+        gs.handleInteractionAnswer(gd, player2,
+                new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+    }
+
+    @Test
+    @DisplayName("The target spell is countered before clash placement choices")
+    void countersBeforeClashPlacement() {
+        DeeptreadMerrow merrow = prepareCounterTarget();
+        stackClashWinForCaster();
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, merrow.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.Scry.class);
+        harness.assertInGraveyard(player1, "Deeptread Merrow");
+        assertThat(gd.stack).noneMatch(entry -> entry.getTargetableId().equals(merrow.getId()));
+    }
+
+    @Test
+    @DisplayName("Clash placement can put both revealed cards on the bottom")
+    void bothPlayersCanBottomTheirRevealedCards() {
+        DeeptreadMerrow merrow = prepareCounterTarget();
+        Forest opponentTop = new Forest();
+        DeeptreadMerrow casterTop = new DeeptreadMerrow();
+        Forest opponentNext = new Forest();
+        Forest casterNext = new Forest();
+        harness.setLibrary(player1, List.of(opponentTop, opponentNext));
+        harness.setLibrary(player2, List.of(casterTop, casterNext));
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, merrow.getId());
+        gs.handleInteractionAnswer(gd, player2,
+                new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(opponentNext, opponentTop);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(casterNext, casterTop);
+        harness.assertInGraveyard(player1, "Deeptread Merrow");
+        assertThat(gd.getDelayedActions(AddManaAtNextMainPhase.class)).hasSize(1);
     }
 }
