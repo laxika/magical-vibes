@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.a.AbattoirGhoul;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.StitchersApprentice;
+import com.github.laxika.magicalvibes.cards.s.SkaabRuinator;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,17 +16,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RooftopStorm.class, AbattoirGhoul.class, StitchersApprentice.class, SkaabRuinator.class})
 class RooftopStormTest extends BaseCardTest {
 
-    // ===== Casting and resolving =====
 
     @Test
     @DisplayName("Casting puts it on the stack as an enchantment spell")
     void castingPutsOnStack() {
-        harness.setHand(player1, List.of(new RooftopStorm()));
-        harness.addMana(player1, ManaColor.BLUE, 6);
-
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new RooftopStorm(), "{5}{U}");
 
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
@@ -35,17 +34,13 @@ class RooftopStormTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving puts Rooftop Storm onto the battlefield")
     void resolvesOntoBattlefield() {
-        harness.setHand(player1, List.of(new RooftopStorm()));
-        harness.addMana(player1, ManaColor.BLUE, 6);
-
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new RooftopStorm(), "{5}{U}");
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Rooftop Storm");
     }
 
-    // ===== Alternative zero cost for Zombie creature spells =====
 
     @Test
     @DisplayName("Zombie creature can be cast for free with Rooftop Storm on battlefield")
@@ -78,8 +73,8 @@ class RooftopStormTest extends BaseCardTest {
     @DisplayName("Non-Zombie creature is not affected by Rooftop Storm")
     void nonZombieCreatureNotAffected() {
         harness.addToBattlefield(player1, new RooftopStorm());
-        // Grizzly Bears costs {1}{G} — not a Zombie, should not be free
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        // Stitcher's Apprentice costs {1}{U} and is not a Zombie.
+        harness.setHand(player1, List.of(new StitchersApprentice()));
         // No mana — should not be castable
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
@@ -123,5 +118,63 @@ class RooftopStormTest extends BaseCardTest {
         // Now Zombie creature should not be free
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void multipleZombiesCanBeCastForFree() {
+        harness.addToBattlefield(player1, new RooftopStorm());
+        harness.setHand(player1, List.of(new AbattoirGhoul(), new AbattoirGhoul()));
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(p -> p.getCard() instanceof AbattoirGhoul).hasSize(2);
+    }
+
+    @Test
+    void mandatoryAdditionalExileCostStillRequired() {
+        harness.addToBattlefield(player1, new RooftopStorm());
+        harness.setHand(player1, List.of(new SkaabRuinator()));
+        harness.setGraveyard(player1, List.of(new AbattoirGhoul(), new AbattoirGhoul()));
+        assertThatThrownBy(() -> harness.castCreatureWithMultipleGraveyardExile(player1, 0, List.of(0, 1)))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        harness.assertInHand(player1, "Skaab Ruinator");
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    void handCastPaysExileCostButNoMana() {
+        harness.addToBattlefield(player1, new RooftopStorm());
+        harness.setHand(player1, List.of(new SkaabRuinator()));
+        harness.setGraveyard(player1, List.of(new AbattoirGhoul(), new AbattoirGhoul(), new AbattoirGhoul()));
+        harness.castCreatureWithMultipleGraveyardExile(player1, 0, List.of(0, 1, 2));
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(3);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Skaab Ruinator");
+    }
+
+    @Test
+    void zeroCostAppliesToPermittedGraveyardCast() {
+        harness.addToBattlefield(player1, new RooftopStorm());
+        harness.setGraveyard(player1, List.of(new SkaabRuinator(),
+                new AbattoirGhoul(), new AbattoirGhoul(), new AbattoirGhoul()));
+        harness.castFromGraveyard(player1, 0, List.of(0, 1, 2));
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(3);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Skaab Ruinator");
+    }
+
+    @Test
+    void zeroCostDoesNotGrantGraveyardPermission() {
+        harness.addToBattlefield(player1, new RooftopStorm());
+        harness.setGraveyard(player1, List.of(new AbattoirGhoul()));
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Abattoir Ghoul");
     }
 }
