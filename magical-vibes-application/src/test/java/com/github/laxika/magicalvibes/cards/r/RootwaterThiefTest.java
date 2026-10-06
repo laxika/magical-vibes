@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({RootwaterThief.class, MoggToady.class})
 class RootwaterThiefTest extends BaseCardTest {
@@ -99,5 +100,72 @@ class RootwaterThiefTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(libraryCard);
+    }
+
+    @Test
+    @DisplayName("Paying requires choosing exactly one card from a nonempty library")
+    void cannotFailToFindAfterPaying() {
+        Permanent thief = addCreatureReady(player1, new RootwaterThief());
+        thief.setAttacking(true);
+        Card firstCard = new MoggToady();
+        Card chosenCard = new RootwaterThief();
+        harness.setLibrary(player2, List.of(firstCard, chosenCard));
+
+        resolveCombat();
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, -1))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(firstCard);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).extracting("id")
+                .contains(chosenCard.getId()).doesNotContain(firstCard.getId());
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Payment searches the damaged player's library when player two attacks")
+    void playerTwoSearchesPlayerOnesLibrary() {
+        Permanent thief = addCreatureReady(player2, new RootwaterThief());
+        thief.setAttacking(true);
+        Card chosenCard = new MoggToady();
+        Card ownLibraryCard = new RootwaterThief();
+        harness.setLibrary(player1, List.of(chosenCard));
+        harness.setLibrary(player2, List.of(ownLibraryCard));
+
+        resolveCombat(player2);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(ownLibraryCard);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).extracting("id").contains(chosenCard.getId());
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Paying with an empty opposing library completes without a card choice")
+    void canPayWithEmptyLibrary() {
+        Permanent thief = addCreatureReady(player1, new RootwaterThief());
+        thief.setAttacking(true);
+        harness.setLibrary(player2, List.of());
+
+        resolveCombat();
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
     }
 }
