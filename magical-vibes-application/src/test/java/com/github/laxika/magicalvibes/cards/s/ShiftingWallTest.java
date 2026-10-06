@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.e.Evacuation;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -11,8 +12,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(ShiftingWall.class)
+@CardUsed({ShiftingWall.class, Evacuation.class})
 class ShiftingWallTest extends BaseCardTest {
 
     @Test
@@ -40,5 +42,43 @@ class ShiftingWallTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Shifting Wall");
         harness.assertInGraveyard(player1, "Shifting Wall");
+    }
+
+    @Test
+    @DisplayName("Defender prevents attacking even after summoning sickness wears off")
+    void cannotAttackWithDefender() {
+        harness.setHand(player1, List.of(new ShiftingWall()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castArtifact(player1, 0, 3);
+        harness.passBothPriorities();
+        findPermanent(player1, "Shifting Wall").setSummoningSick(false);
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(findPermanent(player1, "Shifting Wall").isAttacking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Returning to hand and recasting uses the new X without retaining counters")
+    void recastingUsesNewX() {
+        harness.setHand(player1, List.of(new ShiftingWall(), new Evacuation()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castArtifact(player1, 0, 3);
+        harness.passBothPriorities();
+        assertThat(findPermanent(player1, "Shifting Wall")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player1, 0);
+        harness.assertNotOnBattlefield(player1, "Shifting Wall");
+        harness.assertInHand(player1, "Shifting Wall");
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castArtifact(player1, 0, 1);
+        harness.passBothPriorities();
+        Permanent wall = findPermanent(player1, "Shifting Wall");
+        assertThat(wall.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(wall.getEffectiveToughness()).isEqualTo(1);
     }
 }
