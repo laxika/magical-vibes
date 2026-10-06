@@ -70,11 +70,98 @@ class SeaGodsScornTest extends BaseCardTest {
                 .hasMessageContaining("creatures or enchantments");
     }
 
+    @Test
+    @DisplayName("Can return exactly two enchantments")
+    void returnsTwoEnchantments() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new AngelicChorus());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new AngelicChorus());
+
+        cast(List.of(first.getId(), second.getId()));
+
+        harness.assertNotOnBattlefield(player1, "Angelic Chorus");
+        harness.assertNotOnBattlefield(player2, "Angelic Chorus");
+        harness.assertInHand(player1, "Angelic Chorus");
+        harness.assertInHand(player2, "Angelic Chorus");
+    }
+
+    @Test
+    @DisplayName("Cannot choose more than three targets")
+    void cannotChooseFourTargets() {
+        List<java.util.UUID> targets = java.util.stream.IntStream.range(0, 4)
+                .mapToObj(i -> harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()).getId())
+                .toList();
+        harness.setHand(player1, List.of(new SeaGodsScorn()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, targets))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot choose the same permanent twice")
+    void cannotChooseDuplicateTargets() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SeaGodsScorn()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(target.getId(), target.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Returns remaining legal targets when one target leaves before resolution")
+    void resolvesWithOneTargetMissing() {
+        Permanent removed = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent remaining = harness.addToBattlefieldAndReturn(player2, new AngelicChorus());
+        harness.setHand(player1, List.of(new SeaGodsScorn()));
+        addMana();
+        harness.castSorcery(player1, 0, List.of(removed.getId(), remaining.getId()));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, removed));
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotInHand(player2, "Grizzly Bears");
+        harness.assertInHand(player2, "Angelic Chorus");
+        harness.assertNotOnBattlefield(player2, "Angelic Chorus");
+        harness.assertInGraveyard(player1, "Sea God's Scorn");
+    }
+
+    @Test
+    @DisplayName("Does not resolve when every chosen target has left the battlefield")
+    void allTargetsMissing() {
+        Permanent removed = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SeaGodsScorn()));
+        addMana();
+        harness.castSorcery(player1, 0, List.of(removed.getId()));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, removed));
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotInHand(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Sea God's Scorn");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Returns a permanent to its owner rather than its current controller")
+    void returnsToOwnerHand() {
+        GrizzlyBears creature = new GrizzlyBears();
+        creature.setOwnerId(player1.getId());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, creature);
+
+        cast(List.of(target.getId()));
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertNotInHand(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+    }
+
     private void cast(List<java.util.UUID> targetIds) {
         harness.setHand(player1, List.of(new SeaGodsScorn()));
         addMana();
-        harness.castSorcery(player1, 0, targetIds);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetIds);
     }
 
     private void addMana() {
