@@ -82,4 +82,59 @@ class SakuraTribeElderTest extends BaseCardTest {
     private void setupLibrary() {
         harness.setLibrary(player1, List.of(new Plains(), new Forest(), new Island(), new HumbleBudoka()));
     }
+
+    @Test
+    @DisplayName("The controller can fail to find even when a basic land is available")
+    void canDeclineFindingAvailableLand() {
+        harness.addToBattlefield(player1, new SakuraTribeElder());
+        Forest forest = new Forest();
+        harness.setLibrary(player1, List.of(forest));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Sakura-Tribe Elder");
+    }
+
+    @Test
+    @DisplayName("An empty library does not prevent paying the sacrifice cost")
+    void emptyLibraryStillSacrificesElder() {
+        harness.addToBattlefield(player1, new SakuraTribeElder());
+        harness.setLibrary(player1, List.of());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Sakura-Tribe Elder");
+    }
+
+    @Test
+    @DisplayName("A tapped Elder can activate and searches only its controller's library")
+    void tappedElderSearchesControllersLibrary() {
+        harness.addToBattlefieldAndReturn(player1, new SakuraTribeElder()).tap();
+        Forest forest = new Forest();
+        Island island = new Island();
+        harness.setLibrary(player1, List.of(forest));
+        harness.setLibrary(player2, List.of(island));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(island);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .singleElement().satisfies(permanent -> {
+                    assertThat(permanent.getCard()).isSameAs(forest);
+                    assertThat(permanent.isTapped()).isTrue();
+                });
+        harness.assertInGraveyard(player1, "Sakura-Tribe Elder");
+    }
 }
