@@ -1,8 +1,9 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.Gingerbrute;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -18,7 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RestlessVinestalk.class, GrizzlyBears.class})
+@CardUsed({RestlessVinestalk.class, Gingerbrute.class})
 class RestlessVinestalkTest extends BaseCardTest {
 
     @Test
@@ -102,6 +103,84 @@ class RestlessVinestalkTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
+    @Test
+    @DisplayName("Restless Vinestalk can produce green mana without using the stack")
+    void producesGreenMana() {
+        Permanent vinestalk = addReadyVinestalk(player1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(vinestalk.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The attack trigger may decline an available creature target")
+    void canDeclineAvailableTarget() {
+        Permanent vinestalk = addReadyVinestalk(player1);
+        Permanent creature = addReadyCreature(player1);
+        animateVinestalk(player1);
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, vinestalk)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, vinestalk)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("The attack trigger can affect an opposing creature and preserves its counters until cleanup")
+    void opposingTargetKeepsCountersAndBaseChangeExpires() {
+        addReadyVinestalk(player1);
+        Permanent creature = addReadyCreature(player2);
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        animateVinestalk(player1);
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(5);
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The attack trigger can target another animated Restless Vinestalk")
+    void canTargetAnotherVinestalk() {
+        Permanent attacker = addReadyVinestalk(player1);
+        Permanent target = addReadyVinestalk(player2);
+        animateVinestalk(player1);
+        animateVinestalk(player2);
+
+        declareAttackers(List.of(0));
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validIds()).contains(target.getId()).doesNotContain(attacker.getId());
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
+        assertThat(gqs.isLand(gd, target)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(5);
+    }
+
     private void animateVinestalk(Player player) {
         harness.addMana(player, ManaColor.COLORLESS, 3);
         harness.addMana(player, ManaColor.GREEN, 1);
@@ -111,16 +190,10 @@ class RestlessVinestalkTest extends BaseCardTest {
     }
 
     private Permanent addReadyVinestalk(Player player) {
-        Permanent permanent = new Permanent(new RestlessVinestalk());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        return addCreatureReady(player, new RestlessVinestalk());
     }
 
     private Permanent addReadyCreature(Player player) {
-        Permanent permanent = new Permanent(new GrizzlyBears());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        return addCreatureReady(player, new Gingerbrute());
     }
 }
