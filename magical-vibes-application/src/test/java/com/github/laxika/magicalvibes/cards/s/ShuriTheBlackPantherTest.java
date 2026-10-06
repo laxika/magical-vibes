@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
-import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -67,6 +66,108 @@ class ShuriTheBlackPantherTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, shuri)).isEqualTo(3);
     }
 
+    @Test
+    void opposingArtifactsDoNotSatisfyEitherThreshold() {
+        Permanent shuri = addCreatureReady(player1, new ShuriTheBlackPanther());
+        addArtifacts(player1, 2);
+        addArtifacts(player2, 6);
+        setDeck(new GrizzlyBears());
+
+        attackWith(shuri);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gqs.getEffectivePower(gd, shuri)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, shuri)).isEqualTo(3);
+    }
+
+    @Test
+    void artifactsAddedAfterAttackCountAtResolution() {
+        Permanent shuri = addCreatureReady(player1, new ShuriTheBlackPanther());
+        addArtifacts(player1, 2);
+        setDeck(new GrizzlyBears());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(player1, List.of(0));
+            assertThat(gd.stack).hasSize(1);
+            addArtifacts(player1, 4);
+            harness.passBothPriorities();
+        });
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gqs.getEffectivePower(gd, shuri)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, shuri)).isEqualTo(5);
+    }
+
+    @Test
+    void losingSixthArtifactBeforeResolutionStillDrawsButDoesNotBoost() {
+        Permanent shuri = addCreatureReady(player1, new ShuriTheBlackPanther());
+        addArtifacts(player1, 6);
+        setDeck(new GrizzlyBears());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(player1, List.of(0));
+            assertThat(gd.stack).hasSize(1);
+            gd.playerBattlefields.get(player1.getId()).removeLast();
+            harness.passBothPriorities();
+        });
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gqs.getEffectivePower(gd, shuri)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, shuri)).isEqualTo(3);
+    }
+
+    @Test
+    void losingThirdArtifactBeforeResolutionPreventsDraw() {
+        addCreatureReady(player1, new ShuriTheBlackPanther());
+        addArtifacts(player1, 3);
+        setDeck(new GrizzlyBears());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(player1, List.of(0));
+            assertThat(gd.stack).hasSize(1);
+            gd.playerBattlefields.get(player1.getId()).removeLast();
+            harness.passBothPriorities();
+        });
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void abilityResolvesAfterShuriLeavesBattlefield() {
+        Permanent shuri = addCreatureReady(player1, new ShuriTheBlackPanther());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        addArtifacts(player1, 6);
+        setDeck(new GrizzlyBears());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(player1, List.of(0));
+            assertThat(gd.stack).hasSize(1);
+            gd.playerBattlefields.get(player1.getId()).remove(shuri);
+            harness.passBothPriorities();
+        });
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
+    }
+
+    @Test
+    void creaturesEnteringAfterResolutionDoNotReceiveBoost() {
+        Permanent shuri = addCreatureReady(player1, new ShuriTheBlackPanther());
+        addArtifacts(player1, 6);
+        setDeck(new GrizzlyBears());
+
+        attackWith(shuri);
+        Permanent lateBears = addCreatureReady(player1, new GrizzlyBears());
+
+        assertThat(gqs.getEffectivePower(gd, shuri)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, shuri)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, lateBears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, lateBears)).isEqualTo(2);
+    }
+
     private void addArtifacts(com.github.laxika.magicalvibes.model.Player player, int count) {
         for (int i = 0; i < count; i++) {
             harness.addToBattlefield(player, i % 2 == 0 ? new Spellbook() : new LeoninScimitar());
@@ -79,8 +180,7 @@ class ShuriTheBlackPantherTest extends BaseCardTest {
     }
 
     private void setDeck(Card card) {
-        gd.playerHands.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(card);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(card));
     }
 }
