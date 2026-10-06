@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.d.Divination;
-import com.github.laxika.magicalvibes.cards.h.HollowhengeBeast;
+import com.github.laxika.magicalvibes.cards.f.FuryCharm;
+import com.github.laxika.magicalvibes.cards.k.KavuPredator;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ShroudedLore.class, HollowhengeBeast.class, Divination.class})
+@CardUsed({ShroudedLore.class, KavuPredator.class, FuryCharm.class})
 class ShroudedLoreTest extends BaseCardTest {
 
     private void castShroudedLore(ShroudedLore spell, int extraBlackMana) {
@@ -26,8 +26,7 @@ class ShroudedLoreTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(spell));
         harness.addMana(player1, ManaColor.BLACK, 1 + extraBlackMana);
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
     }
 
     private PendingInteraction.GraveyardChoice activeGraveyardChoice() {
@@ -37,8 +36,8 @@ class ShroudedLoreTest extends BaseCardTest {
     @Test
     @DisplayName("Opponent chooses from the caster's graveyard; declining the {B} returns that card")
     void declineReturnsTheChosenCard() {
-        Card chosenCard = new HollowhengeBeast();
-        Card otherCard = new Divination();
+        Card chosenCard = new KavuPredator();
+        Card otherCard = new FuryCharm();
         ShroudedLore spell = new ShroudedLore();
         harness.setGraveyard(player1, List.of(chosenCard, otherCard));
 
@@ -59,8 +58,8 @@ class ShroudedLoreTest extends BaseCardTest {
     @Test
     @DisplayName("Paying {B} repeats the process and excludes already-chosen cards")
     void payingRepeatsAndExcludesChosenCards() {
-        Card firstCard = new HollowhengeBeast();
-        Card secondCard = new Divination();
+        Card firstCard = new KavuPredator();
+        Card secondCard = new FuryCharm();
         ShroudedLore spell = new ShroudedLore();
         harness.setGraveyard(player1, List.of(firstCard, secondCard));
 
@@ -83,8 +82,8 @@ class ShroudedLoreTest extends BaseCardTest {
     @Test
     @DisplayName("No payment is offered when the caster can't afford {B}")
     void noPaymentPromptWithoutMana() {
-        Card chosenCard = new HollowhengeBeast();
-        Card otherCard = new Divination();
+        Card chosenCard = new KavuPredator();
+        Card otherCard = new FuryCharm();
         ShroudedLore spell = new ShroudedLore();
         harness.setGraveyard(player1, List.of(chosenCard, otherCard));
 
@@ -99,7 +98,7 @@ class ShroudedLoreTest extends BaseCardTest {
     @Test
     @DisplayName("Paying with no unchosen cards skips the choice and offers payment again")
     void payingWithNoUnchosenCardsOffersPaymentAgain() {
-        Card onlyCard = new HollowhengeBeast();
+        Card onlyCard = new KavuPredator();
         ShroudedLore spell = new ShroudedLore();
         harness.setGraveyard(player1, List.of(onlyCard));
 
@@ -123,12 +122,18 @@ class ShroudedLoreTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("An empty graveyard resolves without opening a choice")
-    void emptyGraveyardDoesNothing() {
+    @DisplayName("An empty graveyard skips the card choice but still offers payment")
+    void emptyGraveyardStillOffersPayment() {
         ShroudedLore spell = new ShroudedLore();
         harness.setGraveyard(player1, List.of());
 
         castShroudedLore(spell, 1);
+
+        PendingInteraction.ColorChoice payment =
+                gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(payment).isNotNull();
+        assertThat(payment.playerId()).isEqualTo(player1.getId());
+        harness.handleListChoice(player1, ChoiceContext.ForgottenLorePaymentChoice.DECLINE);
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
@@ -138,7 +143,7 @@ class ShroudedLoreTest extends BaseCardTest {
     @Test
     @DisplayName("Shrouded Lore can't target its own controller")
     void cannotTargetSelf() {
-        harness.setGraveyard(player1, List.of(new HollowhengeBeast()));
+        harness.setGraveyard(player1, List.of(new KavuPredator()));
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.forceActivePlayer(player1);
         harness.setHand(player1, List.of(new ShroudedLore()));
@@ -146,5 +151,49 @@ class ShroudedLoreTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Spending the last black mana returns the newly chosen card without another prompt")
+    void paymentExhaustionReturnsLastChoice() {
+        Card firstCard = new KavuPredator();
+        Card secondCard = new KavuPredator();
+        ShroudedLore spell = new ShroudedLore();
+        harness.setGraveyard(player1, List.of(firstCard, secondCard));
+
+        castShroudedLore(spell, 1);
+        harness.handleGraveyardCardChosen(player2, 0);
+        harness.handleListChoice(player1, ChoiceContext.ForgottenLorePaymentChoice.payOption("{B}"));
+
+        assertThat(activeGraveyardChoice().cardPool()).containsExactly(secondCard);
+        harness.handleGraveyardCardChosen(player2, 0);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(secondCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(firstCard, spell);
+    }
+
+    @Test
+    @DisplayName("A separate Shrouded Lore can choose a card chosen by an earlier copy")
+    void separateCastsHaveIndependentChoiceHistory() {
+        Card firstCard = new KavuPredator();
+        Card secondCard = new FuryCharm();
+        ShroudedLore firstSpell = new ShroudedLore();
+        harness.setGraveyard(player1, List.of(firstCard, secondCard));
+
+        castShroudedLore(firstSpell, 1);
+        harness.handleGraveyardCardChosen(player2, 0);
+        harness.handleListChoice(player1, ChoiceContext.ForgottenLorePaymentChoice.payOption("{B}"));
+        harness.handleGraveyardCardChosen(player2, 0);
+
+        ShroudedLore secondSpell = new ShroudedLore();
+        castShroudedLore(secondSpell, 0);
+
+        assertThat(activeGraveyardChoice().cardPool()).containsExactly(firstCard, firstSpell);
+        harness.handleGraveyardCardChosen(player2, 0);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(firstSpell, secondSpell);
     }
 }
