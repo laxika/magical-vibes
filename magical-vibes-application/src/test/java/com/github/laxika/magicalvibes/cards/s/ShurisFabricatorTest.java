@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Spellbook;
+import com.github.laxika.magicalvibes.cards.d.DoublingSeason;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -20,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ShurisFabricator.class, Spellbook.class, GrizzlyBears.class})
+@CardUsed({ShurisFabricator.class, Spellbook.class, GrizzlyBears.class, DoublingSeason.class})
 class ShurisFabricatorTest extends BaseCardTest {
 
     @Test
@@ -30,8 +30,7 @@ class ShurisFabricatorTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.castArtifact(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         List<Permanent> vibranium = findPermanents(player1, "Vibranium");
         assertThat(vibranium).hasSize(2);
@@ -48,8 +47,7 @@ class ShurisFabricatorTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ShurisFabricator()));
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.castArtifact(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent vibranium = findPermanents(player1, "Vibranium").getFirst();
         vibranium.untap();
@@ -95,5 +93,128 @@ class ShurisFabricatorTest extends BaseCardTest {
                 player1, 0, 0, null, creature.getId(), Zone.GRAVEYARD))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("artifact");
+    }
+
+    @Test
+    void finalityCounterIsDoubledByReplacementEffect() {
+        harness.addToBattlefield(player1, new ShurisFabricator());
+        harness.addToBattlefield(player1, new DoublingSeason());
+        Card artifact = new ShurisFabricator();
+        harness.setGraveyard(player1, List.of(artifact));
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, 0, null, artifact.getId(), Zone.GRAVEYARD);
+        resolveAllTriggers();
+
+        Permanent returned = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().getId().equals(artifact.getId())).findFirst().orElseThrow();
+        assertThat(returned.getCounterCount(CounterType.FINALITY)).isEqualTo(2);
+        assertThat(findPermanents(player1, "Vibranium")).hasSize(4);
+    }
+
+    @Test
+    void finalityExilesReturnedArtifactWhenSacrificed() {
+        harness.addToBattlefield(player1, new ShurisFabricator());
+        Card artifact = new Spellbook();
+        harness.setGraveyard(player1, List.of(artifact));
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.activateAbility(player1, 0, 0, null, artifact.getId(), Zone.GRAVEYARD);
+        resolveAllTriggers();
+
+        Permanent returned = findPermanent(player1, "Spellbook");
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .sacrificePermanentToGraveyard(gd, returned));
+
+        harness.assertNotOnBattlefield(player1, "Spellbook");
+        harness.assertNotInGraveyard(player1, "Spellbook");
+        assertThat(gd.findExiledCard(artifact.getId())).isNotNull();
+    }
+
+    @Test
+    void cannotActivateOutsideMainPhase() {
+        harness.addToBattlefield(player1, new ShurisFabricator());
+        Card artifact = new Spellbook();
+        harness.setGraveyard(player1, List.of(artifact));
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, 0, 0, null, artifact.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotTargetOpponentsArtifact() {
+        harness.addToBattlefield(player1, new ShurisFabricator());
+        Card artifact = new Spellbook();
+        harness.setGraveyard(player2, List.of(artifact));
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, 0, 0, null, artifact.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void doesNotReturnTargetThatLeftGraveyard() {
+        Permanent fabricator = harness.addToBattlefieldAndReturn(player1, new ShurisFabricator());
+        Card artifact = new Spellbook();
+        harness.setGraveyard(player1, List.of(artifact));
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.activateAbility(player1, 0, 0, null, artifact.getId(), Zone.GRAVEYARD);
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(artifact));
+
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Spellbook");
+        assertThat(fabricator.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    void vibraniumManaCannotCastNonartifactCreature() {
+        harness.setHand(player1, List.of(new ShurisFabricator()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castArtifact(player1, 0);
+        resolveAllTriggers();
+        Permanent vibranium = findPermanents(player1, "Vibranium").getFirst();
+        vibranium.untap();
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(vibranium), 0, null, null);
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void vibraniumManaCanPayForArtifactReturnAbility() {
+        harness.setHand(player1, List.of(new ShurisFabricator()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castArtifact(player1, 0);
+        resolveAllTriggers();
+        for (Permanent vibranium : findPermanents(player1, "Vibranium")) {
+            vibranium.untap();
+            harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(vibranium), 0, null, null);
+        }
+        Card artifact = new Spellbook();
+        harness.setGraveyard(player1, List.of(artifact));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, 0, null, artifact.getId(), Zone.GRAVEYARD);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Spellbook");
+        assertThat(gd.playerManaPools.get(player1.getId()).getPowerstoneOnlyColorless()).isZero();
     }
 }
