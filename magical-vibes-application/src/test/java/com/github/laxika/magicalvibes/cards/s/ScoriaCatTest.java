@@ -80,6 +80,41 @@ class ScoriaCatTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, cat)).isEqualTo(3);
     }
 
+    @Test
+    @DisplayName("All controlled lands must be tapped for the boost")
+    void requiresAllControlledLandsToBeTapped() {
+        Permanent cat = addCat();
+        Permanent firstLand = harness.addToBattlefieldAndReturn(player1, new RhysticCave());
+        Permanent secondLand = harness.addToBattlefieldAndReturn(player1, new RhysticCave());
+        firstLand.tap();
+
+        assertThat(gqs.getEffectivePower(gd, cat)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, cat)).isEqualTo(3);
+
+        secondLand.tap();
+        assertThat(gqs.getEffectivePower(gd, cat)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, cat)).isEqualTo(6);
+
+        firstLand.untap();
+        assertThat(gqs.getEffectivePower(gd, cat)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, cat)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("A cat controlled by the second player checks that player's lands")
+    void checksSecondPlayersLands() {
+        Permanent cat = harness.addToBattlefieldAndReturn(player2, new ScoriaCat());
+        harness.addToBattlefield(player1, new RhysticCave());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new RhysticCave());
+
+        assertThat(gqs.getEffectivePower(gd, cat)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, cat)).isEqualTo(3);
+
+        land.tap();
+        assertThat(gqs.getEffectivePower(gd, cat)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, cat)).isEqualTo(6);
+    }
+
     private Permanent addCat() {
         return harness.addToBattlefieldAndReturn(player1, new ScoriaCat());
     }
