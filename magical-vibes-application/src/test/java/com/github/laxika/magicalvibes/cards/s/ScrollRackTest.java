@@ -1,8 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.a.ArmoredPegasus;
+import com.github.laxika.magicalvibes.cards.k.KithkinBrinefarer;
 import com.github.laxika.magicalvibes.cards.l.LowlandGiant;
+import com.github.laxika.magicalvibes.cards.r.RanarTheEverWatchful;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
@@ -14,8 +17,10 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ScrollRack.class, ArmoredPegasus.class, LowlandGiant.class})
+@CardUsed({ScrollRack.class, ArmoredPegasus.class, LowlandGiant.class,
+        RanarTheEverWatchful.class, KithkinBrinefarer.class})
 class ScrollRackTest extends BaseCardTest {
 
     /** Activates {1}, {T} and lets the ability resolve, leaving the hand-card pick active. */
@@ -122,5 +127,105 @@ class ScrollRackTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactlyElementsOf(library);
+    }
+
+    @Test
+    void emptyLibraryReturnsAllExiledCardsWithoutDrawingOrLosing() {
+        harness.addToBattlefield(player1, new ScrollRack());
+        Card pegasus = new ArmoredPegasus();
+        Card giant = new LowlandGiant();
+        harness.setHand(player1, List.of(pegasus, giant));
+        harness.setLibrary(player1, List.of());
+        int drawsBefore = gd.cardsDrawnThisTurn.getOrDefault(player1.getId(), 0);
+
+        activateScrollRack();
+        harness.handleMultipleCardsChosen(player1, List.of(pegasus.getId(), giant.getId()));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(1, 0)));
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(giant, pegasus);
+        assertThat(gd.cardsDrawnThisTurn.getOrDefault(player1.getId(), 0)).isEqualTo(drawsBefore);
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void exilingMultipleHandCardsTriggersRanarOnce() {
+        harness.addToBattlefield(player1, new ScrollRack());
+        harness.addToBattlefield(player1, new RanarTheEverWatchful());
+        Card pegasus = new ArmoredPegasus();
+        Card giant = new LowlandGiant();
+        harness.setHand(player1, List.of(pegasus, giant));
+        List<Card> library = List.of(new ArmoredPegasus(), new LowlandGiant());
+        harness.setLibrary(player1, library);
+
+        activateScrollRack();
+        harness.handleMultipleCardsChosen(player1, List.of(pegasus.getId(), giant.getId()));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0, 1)));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyElementsOf(library);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(pegasus, giant);
+        assertThat(findPermanents(player1, "Spirit")).hasSize(1);
+    }
+
+    @Test
+    void choosingNothingDoesNotTriggerRanar() {
+        harness.addToBattlefield(player1, new ScrollRack());
+        harness.addToBattlefield(player1, new RanarTheEverWatchful());
+        Card pegasus = new ArmoredPegasus();
+        harness.setHand(player1, List.of(pegasus));
+        List<Card> library = List.of(new LowlandGiant());
+        harness.setLibrary(player1, library);
+
+        activateScrollRack();
+        harness.handleMultipleCardsChosen(player1, List.of());
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Spirit")).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(pegasus);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyElementsOf(library);
+    }
+
+    @Test
+    void puttingKithkinIntoHandTriggersBrinefarerWithoutDrawing() {
+        harness.addToBattlefield(player1, new ScrollRack());
+        harness.addToBattlefield(player1, new KithkinBrinefarer());
+        Card pegasus = new ArmoredPegasus();
+        Card kithkin = new KithkinBrinefarer();
+        harness.setHand(player1, List.of(pegasus));
+        harness.setLibrary(player1, List.of(kithkin));
+        int drawsBefore = gd.cardsDrawnThisTurn.getOrDefault(player1.getId(), 0);
+
+        activateScrollRack();
+        harness.handleMultipleCardsChosen(player1, List.of(pegasus.getId()));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2).contains(kithkin)
+                .allMatch(card -> card instanceof KithkinBrinefarer)
+                .anyMatch(card -> !card.getId().equals(kithkin.getId()));
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(pegasus);
+        assertThat(gd.cardsDrawnThisTurn.getOrDefault(player1.getId(), 0)).isEqualTo(drawsBefore);
+    }
+
+    @Test
+    void cannotActivateWithoutPayingOneMana() {
+        harness.addToBattlefield(player1, new ScrollRack());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(findPermanent(player1, "Scroll Rack").isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotActivateWhileTapped() {
+        harness.addToBattlefield(player1, new ScrollRack());
+        findPermanent(player1, "Scroll Rack").tap();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
     }
 }
