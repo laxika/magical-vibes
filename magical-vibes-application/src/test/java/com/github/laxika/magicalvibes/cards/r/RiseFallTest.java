@@ -113,4 +113,168 @@ class RiseFallTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(creature);
     }
+
+    @Test
+    void riseStillReturnsTheBattlefieldCreatureWhenTheGraveyardTargetLeaves() {
+        Card graveyardCreature = new AzoriusFirstWing();
+        harness.setGraveyard(player1, List.of(graveyardCreature));
+        Permanent battlefieldCreature = harness.addToBattlefieldAndReturn(player2, new AzoriusFirstWing());
+        harness.setHand(player1, List.of(new RiseFall()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castModalSorcery(player1, 0, 0,
+                List.of(graveyardCreature.getId(), battlefieldCreature.getId()));
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(graveyardCreature));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(battlefieldCreature.getCard());
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(graveyardCreature);
+        assertThat(gd.findExiledCard(graveyardCreature.getId())).isNotNull();
+    }
+
+    @Test
+    void riseStillReturnsTheGraveyardCreatureWhenTheBattlefieldTargetLeaves() {
+        Card graveyardCreature = new AzoriusFirstWing();
+        harness.setGraveyard(player1, List.of(graveyardCreature));
+        Permanent battlefieldCreature = harness.addToBattlefieldAndReturn(player2, new AzoriusFirstWing());
+        harness.setHand(player1, List.of(new RiseFall()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castModalSorcery(player1, 0, 0,
+                List.of(graveyardCreature.getId(), battlefieldCreature.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(battlefieldCreature);
+        harness.setGraveyard(player2, List.of(battlefieldCreature.getCard()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(graveyardCreature);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(battlefieldCreature.getCard());
+    }
+
+    @Test
+    void riseRequiresBothTargetsWhenCast() {
+        Permanent battlefieldCreature = harness.addToBattlefieldAndReturn(player2, new AzoriusFirstWing());
+        harness.setHand(player1, List.of(new RiseFall()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.castModalSorcery(
+                player1, 0, 0, List.of(battlefieldCreature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void riseDoesNotReturnEitherCardWhenBothTargetsLeaveTheirZones() {
+        Card graveyardCreature = new AzoriusFirstWing();
+        harness.setGraveyard(player1, List.of(graveyardCreature));
+        Permanent battlefieldCreature = harness.addToBattlefieldAndReturn(player2, new AzoriusFirstWing());
+        RiseFall spell = new RiseFall();
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castModalSorcery(player1, 0, 0,
+                List.of(graveyardCreature.getId(), battlefieldCreature.getId()));
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(graveyardCreature));
+        gd.playerBattlefields.get(player2.getId()).remove(battlefieldCreature);
+        harness.setGraveyard(player2, List.of(battlefieldCreature.getCard()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(spell);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(battlefieldCreature.getCard());
+        assertThat(gd.findExiledCard(graveyardCreature.getId())).isNotNull();
+    }
+
+    @Test
+    void riseCannotBePaidForWithFallsColors() {
+        Card graveyardCreature = new AzoriusFirstWing();
+        harness.setGraveyard(player1, List.of(graveyardCreature));
+        Permanent battlefieldCreature = harness.addToBattlefieldAndReturn(player2, new AzoriusFirstWing());
+        harness.setHand(player1, List.of(new RiseFall()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castModalSorcery(player1, 0, 0,
+                List.of(graveyardCreature.getId(), battlefieldCreature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void fallCannotBePaidForWithRisesColors() {
+        harness.setHand(player1, List.of(new RiseFall()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.castModalSorcery(player1, 0, 1, List.of(player2.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void fallDoesNothingToAnEmptyHand() {
+        harness.setHand(player2, List.of());
+        harness.setHand(player1, List.of(new RiseFall()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castModalSorcery(player1, 0, 1, List.of(player2.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void fallKeepsBothRevealedLands() {
+        Card firstLand = new BreedingPool();
+        Card secondLand = new BreedingPool();
+        harness.setHand(player2, List.of(firstLand, secondLand));
+        harness.setHand(player1, List.of(new RiseFall()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castModalSorcery(player1, 0, 1, List.of(player2.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(firstLand, secondLand);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void fallCanTargetItsController() {
+        Card creature = new AzoriusFirstWing();
+        Card land = new BreedingPool();
+        RiseFall spell = new RiseFall();
+        harness.setHand(player1, List.of(spell, creature, land));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castModalSorcery(player1, 0, 1, List.of(player1.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(land);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyInAnyOrder(creature, spell);
+    }
+
+    @Test
+    void fallDiscardsExactlyTwoDistinctCardsFromALargerNonlandHand() {
+        List<Card> cards = List.of(new AzoriusFirstWing(), new AzoriusFirstWing(), new AzoriusFirstWing());
+        harness.setHand(player2, cards);
+        harness.setHand(player1, List.of(new RiseFall()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castModalSorcery(player1, 0, 1, List.of(player2.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2).doesNotHaveDuplicates();
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .doesNotContainAnyElementsOf(gd.playerHands.get(player2.getId()));
+        assertThat(cards).containsAll(gd.playerGraveyards.get(player2.getId()));
+    }
 }
