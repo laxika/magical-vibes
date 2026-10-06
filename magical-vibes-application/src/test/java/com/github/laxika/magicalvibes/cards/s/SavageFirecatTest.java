@@ -63,4 +63,36 @@ class SavageFirecatTest extends BaseCardTest {
 
         assertThat(firecat.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(7);
     }
+
+    @Test
+    void losingLastCounterPutsFirecatIntoGraveyard() {
+        Permanent firecat = harness.enterBattlefieldAndReturn(player1, new SavageFirecat());
+        firecat.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.addToBattlefield(player1, new Forest());
+
+        harness.tapPermanent(player1, 1);
+
+        assertThat(firecat.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Savage Firecat");
+
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Savage Firecat");
+        harness.assertInGraveyard(player1, "Savage Firecat");
+    }
+
+    @Test
+    void oneLandTapRemovesOneCounterFromEachControlledFirecat() {
+        Permanent first = harness.enterBattlefieldAndReturn(player1, new SavageFirecat());
+        Permanent second = harness.enterBattlefieldAndReturn(player1, new SavageFirecat());
+        Permanent opposing = harness.enterBattlefieldAndReturn(player2, new SavageFirecat());
+        harness.addToBattlefield(player1, new Forest());
+
+        harness.tapPermanent(player1, 2);
+        resolveAllTriggers();
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);
+        assertThat(opposing.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(7);
+    }
 }
