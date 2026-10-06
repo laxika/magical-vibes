@@ -80,6 +80,58 @@ class RummagingWizardTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    @DisplayName("Can activate while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Card topCard = new RummagingWizard();
+        harness.setLibrary(player1, List.of(topCard));
+        prepareWizard();
+        var wizard = gd.playerBattlefields.get(player1.getId()).getFirst();
+        wizard.setTapped(true);
+        wizard.setSummoningSick(true);
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(topCard);
+        assertThat(wizard.isTapped()).isTrue();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Repeated activations surveil the current top card without disturbing the opponent's library")
+    void repeatedActivationsSurveilSuccessiveTopCards() {
+        Card firstCard = new RummagingWizard();
+        Card secondCard = new RummagingWizard();
+        Card opponentCard = new RummagingWizard();
+        harness.setLibrary(player1, List.of(firstCard, secondCard));
+        harness.setLibrary(player2, List.of(opponentCard));
+        prepareWizard();
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(secondCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(firstCard);
+
+        addActivationMana();
+        harness.ensurePriority(player1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(secondCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(firstCard);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     private void prepareWizard() {
         addCreatureReady(player1, new RummagingWizard());
         harness.forceActivePlayer(player1);
