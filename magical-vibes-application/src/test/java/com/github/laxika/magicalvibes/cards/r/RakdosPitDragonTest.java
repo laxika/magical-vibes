@@ -28,8 +28,7 @@ class RakdosPitDragonTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, dragon, Keyword.FLYING)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.hasKeyword(gd, dragon, Keyword.FLYING)).isFalse();
     }
@@ -61,8 +60,7 @@ class RakdosPitDragonTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, dragon)).isEqualTo(basePower + 1);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.getEffectivePower(gd, dragon)).isEqualTo(basePower);
     }
@@ -99,5 +97,74 @@ class RakdosPitDragonTest extends BaseCardTest {
         harness.setHand(player1, List.of());
 
         assertThat(gqs.hasKeyword(gd, dragon, Keyword.DOUBLE_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Repeated pump activations stack and affect only their source")
+    void repeatedPumpsAffectOnlyTheirSource() {
+        Permanent dragon = addCreatureReady(player1, new RakdosPitDragon());
+        Permanent otherDragon = addCreatureReady(player1, new RakdosPitDragon());
+        int basePower = gqs.getEffectivePower(gd, dragon);
+        int otherPower = gqs.getEffectivePower(gd, otherDragon);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, dragon)).isEqualTo(basePower + 2);
+        assertThat(gqs.getEffectivePower(gd, otherDragon)).isEqualTo(otherPower);
+    }
+
+    @Test
+    @DisplayName("A summoning-sick dragon can activate both abilities without tapping")
+    void summoningSickDragonCanActivateBothAbilities() {
+        Permanent dragon = harness.addToBattlefieldAndReturn(player1, new RakdosPitDragon());
+        Permanent otherDragon = addCreatureReady(player1, new RakdosPitDragon());
+        int basePower = gqs.getEffectivePower(gd, dragon);
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, dragon, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, otherDragon, Keyword.FLYING)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, dragon)).isEqualTo(basePower + 1);
+        assertThat(dragon.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Hellbent uses each dragon's controller's hand independently")
+    void hellbentUsesEachControllersHand() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new Ragamuffyn()));
+        Permanent dragon = addCreatureReady(player1, new RakdosPitDragon());
+        Permanent opposingDragon = addCreatureReady(player2, new RakdosPitDragon());
+
+        assertThat(gqs.hasKeyword(gd, dragon, Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opposingDragon, Keyword.DOUBLE_STRIKE)).isFalse();
+
+        harness.setHand(player1, List.of(new Ragamuffyn()));
+        harness.setHand(player2, List.of());
+
+        assertThat(gqs.hasKeyword(gd, dragon, Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opposingDragon, Keyword.DOUBLE_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("An unblocked hellbent dragon deals damage in both combat damage steps")
+    void hellbentDragonDealsDoubleCombatDamage() {
+        harness.setHand(player1, List.of());
+        Permanent dragon = addCreatureReady(player1, new RakdosPitDragon());
+        int power = gqs.getEffectivePower(gd, dragon);
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+
+        harness.assertLife(player2, lifeBefore - 2 * power);
     }
 }
