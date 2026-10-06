@@ -95,4 +95,50 @@ class SaprolingClusterTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("The opponent pays their own costs before the token is created")
+    void opponentPaysCostsBeforeResolution() {
+        harness.addToBattlefield(player1, new SaprolingCluster());
+        harness.setHand(player1, List.of(new SaprolingCluster()));
+        harness.setHand(player2, List.of(new SaprolingBurst()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player2, 0, null, null);
+        harness.handleCardChosen(player2, 0);
+
+        harness.assertInGraveyard(player2, "Saproling Burst");
+        harness.assertInHand(player1, "Saproling Cluster");
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        harness.assertNotOnBattlefield(player1, "Saproling");
+        harness.assertNotOnBattlefield(player2, "Saproling");
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Saproling");
+        harness.assertNotOnBattlefield(player1, "Saproling");
+    }
+
+    @Test
+    @DisplayName("The ability may be activated repeatedly without tapping the enchantment")
+    void repeatedActivations() {
+        harness.addToBattlefield(player1, new SaprolingCluster());
+        harness.setHand(player1, List.of(new SaprolingBurst(), new SaprolingCluster()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Saproling")).hasSize(2);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Saproling Burst");
+        harness.assertInGraveyard(player1, "Saproling Cluster");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
 }
