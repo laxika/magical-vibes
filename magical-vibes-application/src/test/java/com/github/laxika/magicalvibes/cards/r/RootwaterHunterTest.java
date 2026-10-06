@@ -88,4 +88,51 @@ class RootwaterHunterTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("summoning sick");
     }
+
+    @Test
+    @DisplayName("Can deal damage to its controller")
+    void canTargetController() {
+        harness.setLife(player1, 20);
+        addCreatureReady(player1, new RootwaterHunter());
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+    }
+
+    @Test
+    @DisplayName("Ability resolves after its source dies")
+    void abilityResolvesAfterSourceDies() {
+        harness.setLife(player2, 20);
+        Permanent hunter = addCreatureReady(player1, new RootwaterHunter());
+        addCreatureReady(player2, new RootwaterHunter());
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.activateAbility(player2, 0, null, hunter.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Rootwater Hunter");
+        harness.assertLife(player2, 20);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Ability does not resolve when its target is sacrificed")
+    void targetLeavesBeforeResolution() {
+        Permanent hunter = addCreatureReady(player1, new RootwaterHunter());
+        harness.addToBattlefield(player2, new BloodPet());
+        UUID targetId = harness.getPermanentId(player2, "Blood Pet");
+
+        harness.activateAbility(player1, 0, null, targetId);
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Blood Pet");
+        harness.assertOnBattlefield(player1, "Rootwater Hunter");
+        assertThat(hunter.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
 }
