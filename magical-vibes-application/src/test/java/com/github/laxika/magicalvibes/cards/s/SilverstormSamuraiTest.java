@@ -17,6 +17,44 @@ import static org.assertj.core.api.Assertions.assertThat;
 class SilverstormSamuraiTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Flash allows Silverstorm Samurai to enter during combat and block immediately")
+    void flashedSamuraiCanBlockImmediately() {
+        Permanent attacker = addCreatureReady(player1, new BileUrchin());
+        attacker.setAttacking(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+
+        harness.castFromHand(player2, new SilverstormSamurai(), "{4}{W}{W}");
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Silverstorm Samurai");
+        Permanent samurai = findPermanent(player2, "Silverstorm Samurai");
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveAllTriggers();
+
+        assertThat(samurai.getPowerModifier()).isEqualTo(1);
+        assertThat(samurai.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Flash allows Silverstorm Samurai to resolve before an opponent's pending spell")
+    void canRespondToOpponentsSpell() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player1, new BileUrchin(), "{B}");
+
+        harness.castFromHand(player2, new SilverstormSamurai(), "{4}{W}{W}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Silverstorm Samurai");
+        harness.assertNotOnBattlefield(player1, "Bile Urchin");
+
+        resolveAllTriggers();
+        harness.assertOnBattlefield(player1, "Bile Urchin");
+    }
+
+    @Test
     @DisplayName("When Silverstorm Samurai becomes blocked, it gets +1/+1 until end of turn")
     void becomesBlockedGetsBushidoBonus() {
         Permanent samurai = addCreatureReady(player1, new SilverstormSamurai());
