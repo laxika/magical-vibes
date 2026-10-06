@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.GameStatus;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -83,6 +85,94 @@ class RobTheArchivesTest extends BaseCardTest {
                 .hasMessageContaining("power 1");
     }
 
+    @Test
+    void exiledSpellRequiresItsNormalManaCost() {
+        Card spell = new RobTheArchives();
+        harness.setLibrary(player1, List.of(spell, new Forest(), new Forest(), new Forest()));
+        harness.setHand(player1, List.of(new RobTheArchives()));
+        addMana();
+        harness.castSorcery(player1, 0, (UUID) null);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, spell.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spell);
+
+        addMana();
+        harness.castFromExile(player1, spell.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(spell).hasSize(3);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(spell);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void exiledLandsStillUseTheNormalLandLimit() {
+        Card first = new Forest();
+        Card second = new Forest();
+        harness.setLibrary(player1, List.of(first, second));
+        harness.setHand(player1, List.of(new RobTheArchives()));
+        addMana();
+        harness.castSorcery(player1, 0, (UUID) null);
+        harness.passBothPriorities();
+
+        harness.castFromExile(player1, first.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anySatisfy(permanent -> assertThat(permanent.getCard().getId()).isEqualTo(first.getId()));
+        assertThatThrownBy(() -> harness.castFromExile(player1, second.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(second);
+    }
+
+    @Test
+    void permissionExpiresAfterTheCurrentTurn() {
+        Card land = new Forest();
+        harness.setLibrary(player1, List.of(land, new Forest(), new Forest(), new Forest()));
+        harness.setHand(player1, List.of(new RobTheArchives()));
+        addMana();
+        harness.castSorcery(player1, 0, (UUID) null);
+        harness.passBothPriorities();
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        assertThat(gd.exilePlayPermissions).containsKey(land.getId());
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        assertThat(gd.exilePlayPermissions).doesNotContainKey(land.getId());
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
+        assertThatThrownBy(() -> harness.castFromExile(player1, land.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(land);
+    }
+
+    @Test
+    void oneCardLibraryExilesOnlyTheAvailableCard() {
+        Card onlyCard = new Forest();
+        harness.setLibrary(player1, List.of(onlyCard));
+        harness.setHand(player1, List.of(new RobTheArchives()));
+        addMana();
+        harness.castSorcery(player1, 0, (UUID) null);
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(onlyCard);
+        assertThat(gd.exilePlayPermissions).containsEntry(onlyCard.getId(), player1.getId());
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    void emptyLibraryDoesNotCauseADrawLoss() {
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new RobTheArchives()));
+        addMana();
+        harness.castSorcery(player1, 0, (UUID) null);
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anySatisfy(card -> assertThat(card).isInstanceOf(RobTheArchives.class));
+    }
     private void addMana() {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
