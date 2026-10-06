@@ -55,6 +55,41 @@ class SkyshroudEliteTest extends BaseCardTest {
         assertStats(1, 1);
     }
 
+    @Test
+    void gainsBonusImmediatelyWhenOpponentNonbasicLandEnters() {
+        harness.addToBattlefield(player1, new SkyshroudElite());
+        assertStats(1, 1);
+
+        harness.addToBattlefield(player2, new CityOfTraitors());
+
+        assertStats(2, 3);
+    }
+
+    @Test
+    void multipleNonbasicLandsDoNotMultiplyBonusAndOneRemainingKeepsItActive() {
+        harness.addToBattlefield(player1, new SkyshroudElite());
+        harness.addToBattlefield(player2, new CityOfTraitors());
+        harness.addToBattlefield(player2, new CityOfTraitors());
+
+        assertStats(2, 3);
+
+        gd.playerBattlefields.get(player2.getId()).remove(findPermanent(player2, "City of Traitors"));
+
+        assertStats(2, 3);
+    }
+
+    @Test
+    void bonusOnlyAppliesToTheEliteWhoseOpponentControlsTheLand() {
+        harness.addToBattlefield(player1, new SkyshroudElite());
+        harness.addToBattlefield(player2, new SkyshroudElite());
+        harness.addToBattlefield(player2, new CityOfTraitors());
+
+        assertStats(2, 3);
+        Permanent opposingElite = findPermanent(player2, "Skyshroud Elite");
+        assertThat(gqs.getEffectivePower(gd, opposingElite)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, opposingElite)).isEqualTo(1);
+    }
+
     private void assertStats(int power, int toughness) {
         Permanent elite = findPermanent(player1, "Skyshroud Elite");
         assertThat(gqs.getEffectivePower(gd, elite)).isEqualTo(power);
