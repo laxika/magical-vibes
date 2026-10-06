@@ -115,6 +115,37 @@ class SlaughterhouseBouncerTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    @DisplayName("The death trigger can target a creature its controller controls")
+    void deathTriggerCanTargetOwnCreature() {
+        harness.setHand(player1, List.of());
+        harness.addToBattlefield(player1, new SlaughterhouseBouncer());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new RakdosPitDragon());
+
+        destroyBouncer();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Rakdos Pit Dragon");
+        harness.assertInGraveyard(player1, "Rakdos Pit Dragon");
+    }
+
+    @Test
+    @DisplayName("Emptying the hand after death does not create a missed trigger")
+    void emptyingHandAfterDeathDoesNotTrigger() {
+        harness.setHand(player1, List.of(new WreckingBall()));
+        harness.addToBattlefield(player1, new SlaughterhouseBouncer());
+        Permanent target = addLargeTarget();
+
+        destroyBouncer();
+        harness.setHand(player1, List.of());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(target.getPowerModifier()).isZero();
+        assertThat(target.getToughnessModifier()).isZero();
+    }
+
     private Permanent addLargeTarget() {
         return harness.addToBattlefieldAndReturn(player2, new StalkingVengeance());
     }
@@ -129,7 +160,6 @@ class SlaughterhouseBouncerTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 2);
 
         UUID bouncerId = harness.getPermanentId(player1, "Slaughterhouse Bouncer");
-        harness.castInstant(player2, 0, bouncerId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, bouncerId);
     }
 }
