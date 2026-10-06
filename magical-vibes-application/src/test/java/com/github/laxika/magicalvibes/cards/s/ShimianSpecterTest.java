@@ -71,26 +71,80 @@ class ShimianSpecterTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("No prompt when the revealed hand holds only lands")
+    @DisplayName("No nonland choice when the revealed hand holds only lands")
     void noPromptWhenHandIsAllLands() {
         addAttackingSpecter(player1);
         harness.setHand(player2, List.of(new DryadArbor()));
 
         resolveCombatAndTrigger();
 
-        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNull();
         harness.assertInHand(player2, "Dryad Arbor");
     }
 
     @Test
-    @DisplayName("No prompt when the damaged player's hand is empty")
+    @DisplayName("No nonland choice when the damaged player's hand is empty")
     void noPromptWhenHandEmpty() {
         addAttackingSpecter(player1);
         harness.setHand(player2, List.of());
 
         resolveCombatAndTrigger();
 
-        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("The whole hand is revealed before the controller chooses a nonland card")
+    void revealsWholeHandBeforeChoice() {
+        addAttackingSpecter(player1);
+        harness.setHand(player2, List.of(new AugurOfSkulls(), new DryadArbor()));
+
+        resolveCombatAndTrigger();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNotNull();
+        assertThat(gd.gameLog).anyMatch(entry -> entry.plainText().contains("reveals their hand")
+                && entry.plainText().contains("Augur of Skulls")
+                && entry.plainText().contains("Dryad Arbor"));
+    }
+
+    @Test
+    @DisplayName("A hand containing only lands is still revealed")
+    void revealsAllLandHand() {
+        addAttackingSpecter(player1);
+        harness.setHand(player2, List.of(new DryadArbor()));
+
+        resolveCombatAndTrigger();
+
+        assertThat(gd.gameLog).anyMatch(entry -> entry.plainText().contains("reveals their hand")
+                && entry.plainText().contains("Dryad Arbor"));
+    }
+
+    @Test
+    @DisplayName("Choosing a name still allows the controller to choose which hidden-zone copies to find")
+    void offersSearchChoiceInsteadOfForcingAllHiddenCopiesIntoExile() {
+        addAttackingSpecter(player1);
+        harness.setHand(player2, List.of(new AugurOfSkulls(), new AugurOfSkulls()));
+        harness.setGraveyard(player2, List.of(new AugurOfSkulls()));
+        harness.setLibrary(player2, List.of(new AugurOfSkulls(), new StreetWraith()));
+
+        resolveCombatAndTrigger();
+        harness.handleListChoice(player1, "Augur of Skulls");
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The controller can inspect the library even when there is no nonland card to choose")
+    void offersLibrarySearchWithAllLandHand() {
+        addAttackingSpecter(player1);
+        harness.setHand(player2, List.of(new DryadArbor()));
+        harness.setLibrary(player2, List.of(new AugurOfSkulls(), new StreetWraith()));
+
+        resolveCombatAndTrigger();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.assertInHand(player2, "Dryad Arbor");
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(2);
     }
 
     @Test
