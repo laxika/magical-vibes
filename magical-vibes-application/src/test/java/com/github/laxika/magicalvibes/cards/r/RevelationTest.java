@@ -50,4 +50,57 @@ class RevelationTest extends BaseCardTest {
         assertThat(player2Messages).noneMatch(message ->
                 message.contains("\"opponentHand\"") && message.contains("Azure Drake"));
     }
+
+    @Test
+    @DisplayName("Revelation reveals hands only after the spell resolves")
+    void revealsHandsAfterResolution() {
+        harness.setHand(player2, List.of(new BarbaryApes()));
+        harness.castFromHand(player1, new Revelation(), "{G}");
+        harness.clearMessages();
+        harness.publishState();
+
+        assertThat(harness.getConn1().getSentMessages())
+                .anyMatch(message -> message.contains("\"opponentHand\":[]"));
+
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Revelation");
+        harness.setHand(player1, List.of(new AzureDrake()));
+        harness.clearMessages();
+        harness.publishState();
+
+        assertThat(harness.getConn1().getSentMessages()).anyMatch(message ->
+                message.contains("\"opponentHand\"") && message.contains("Barbary Apes"));
+        assertThat(harness.getConn2().getSentMessages()).anyMatch(message ->
+                message.contains("\"opponentHand\"") && message.contains("Azure Drake"));
+    }
+
+    @Test
+    @DisplayName("An opponent's Revelation reveals cards entering a previously empty hand")
+    void opponentControlledRevelationRevealsCurrentHand() {
+        harness.addToBattlefield(player2, new Revelation());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new BarbaryApes()));
+        harness.publishState();
+
+        assertThat(harness.getConn2().getSentMessages())
+                .anyMatch(message -> message.contains("\"opponentHand\":[]"));
+
+        harness.setHand(player1, List.of(new AzureDrake()));
+        harness.clearMessages();
+        harness.publishState();
+
+        assertThat(harness.getConn2().getSentMessages()).anyMatch(message ->
+                message.contains("\"opponentHand\"") && message.contains("Azure Drake"));
+        assertThat(harness.getConn1().getSentMessages()).anyMatch(message ->
+                message.contains("\"opponentHand\"") && message.contains("Barbary Apes"));
+
+        harness.setHand(player1, List.of());
+        harness.clearMessages();
+        harness.publishState();
+
+        assertThat(harness.getConn2().getSentMessages())
+                .anyMatch(message -> message.contains("\"opponentHand\":[]"));
+        assertThat(harness.getConn2().getSentMessages())
+                .noneMatch(message -> message.contains("Azure Drake"));
+    }
 }
