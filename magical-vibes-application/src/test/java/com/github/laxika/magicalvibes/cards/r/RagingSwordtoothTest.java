@@ -1,20 +1,17 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.b.BishopsSoldier;
+import com.github.laxika.magicalvibes.cards.j.JungleDelver;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RagingSwordtooth.class, BishopsSoldier.class, JungleDelver.class})
 class RagingSwordtoothTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Casting puts it on the stack as a creature spell")
@@ -29,40 +26,31 @@ class RagingSwordtoothTest extends BaseCardTest {
     @Test
     @DisplayName("ETB deals 1 damage to opponent's 1/1 creature, killing it")
     void etbKillsOpponentOneOne() {
-        GrizzlyBears smallCreature = new GrizzlyBears();
-        smallCreature.setPower(1);
-        smallCreature.setToughness(1);
-        harness.addToBattlefield(player2, smallCreature);
+        harness.addToBattlefield(player2, new JungleDelver());
 
         castSwordtooth();
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve ETB trigger
+        resolveAllTriggers();
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Jungle Delver");
+        harness.assertInGraveyard(player2, "Jungle Delver");
     }
 
     @Test
     @DisplayName("ETB deals 1 damage to controller's own 1/1 creature, killing it")
     void etbKillsControllerOneOne() {
-        GrizzlyBears ownCreature = new GrizzlyBears();
-        ownCreature.setPower(1);
-        ownCreature.setToughness(1);
-        harness.addToBattlefield(player1, ownCreature);
+        harness.addToBattlefield(player1, new JungleDelver());
 
         castSwordtooth();
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve ETB trigger
+        resolveAllTriggers();
 
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Jungle Delver");
     }
 
     @Test
     @DisplayName("ETB does NOT deal damage to itself")
     void etbDoesNotDamageItself() {
         castSwordtooth();
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve ETB trigger
+        resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Raging Swordtooth");
         // Swordtooth is 5/5 — even if it took 1 damage it would survive,
@@ -73,16 +61,15 @@ class RagingSwordtoothTest extends BaseCardTest {
     @Test
     @DisplayName("ETB damages creatures on both sides but not itself")
     void etbDamagesBothSidesExceptSelf() {
-        harness.addToBattlefield(player1, new GrizzlyBears()); // 2/2 own
-        harness.addToBattlefield(player2, new GrizzlyBears()); // 2/2 opponent
+        harness.addToBattlefield(player1, new BishopsSoldier()); // 2/2 own
+        harness.addToBattlefield(player2, new BishopsSoldier()); // 2/2 opponent
 
         castSwordtooth();
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve ETB trigger
+        resolveAllTriggers();
 
-        // Both Grizzly Bears survive (2/2 take 1 damage) but have 1 damage
-        assertThat(findPermanent(player1, "Grizzly Bears").getMarkedDamage()).isEqualTo(1);
-        assertThat(findPermanent(player2, "Grizzly Bears").getMarkedDamage()).isEqualTo(1);
+        // Both soldiers survive (2/2 take 1 damage) but have 1 damage
+        assertThat(findPermanent(player1, "Bishop's Soldier").getMarkedDamage()).isEqualTo(1);
+        assertThat(findPermanent(player2, "Bishop's Soldier").getMarkedDamage()).isEqualTo(1);
         // Swordtooth itself has no damage
         assertThat(findPermanent(player1, "Raging Swordtooth").getMarkedDamage()).isZero();
     }
@@ -94,21 +81,51 @@ class RagingSwordtoothTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         castSwordtooth();
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve ETB trigger
+        resolveAllTriggers();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("ETB damages another Raging Swordtooth but excludes only its own source")
+    void etbDamagesAnotherSwordtooth() {
+        var other = harness.addToBattlefieldAndReturn(player2, new RagingSwordtooth());
+
+        castSwordtooth();
+        resolveAllTriggers();
+
+        assertThat(other.getMarkedDamage()).isEqualTo(1);
+        assertThat(findPermanent(player1, "Raging Swordtooth").getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("ETB damages creatures that enter before the trigger resolves")
+    void etbUsesCreaturesPresentAtResolution() {
+        castSwordtooth();
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+        harness.addToBattlefield(player2, new JungleDelver());
+
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Jungle Delver");
+        harness.assertInGraveyard(player2, "Jungle Delver");
+    }
+
+    @Test
+    @DisplayName("Entering without being cast still triggers damage")
+    void enteringWithoutCastingDealsDamage() {
+        harness.addToBattlefield(player2, new JungleDelver());
+
+        var source = harness.enterBattlefieldAndReturn(player1, new RagingSwordtooth());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Jungle Delver");
+        assertThat(source.getMarkedDamage()).isZero();
+    }
 
     private void castSwordtooth() {
-        harness.setHand(player1, List.of(new RagingSwordtooth()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new RagingSwordtooth(), "{3}{R}{G}");
     }
 }
