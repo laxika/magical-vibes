@@ -1,9 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -16,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RovingKeep.class, GrizzlyBears.class})
+@CardUsed({RovingKeep.class})
 class RovingKeepTest extends BaseCardTest {
 
     @Test
@@ -34,7 +32,6 @@ class RovingKeepTest extends BaseCardTest {
     @DisplayName("Ability grants +2/+0, trample, and permission to attack")
     void abilityBoostsAndAllowsAttack() {
         Permanent keep = addKeepReady();
-        harness.addToBattlefield(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 7);
 
         harness.activateAbility(player1, 0, null, null);
@@ -83,10 +80,75 @@ class RovingKeepTest extends BaseCardTest {
                 .hasMessageContaining("Not enough mana");
     }
 
+    @Test
+    @DisplayName("Repeated activations stack the power boost without tapping the Keep")
+    void repeatedActivationsStack() {
+        Permanent keep = addKeepReady();
+        harness.addMana(player1, ManaColor.COLORLESS, 14);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(keep.getPowerModifier()).isEqualTo(4);
+        assertThat(keep.getToughnessModifier()).isZero();
+        assertThat(keep.isTapped()).isFalse();
+        assertThat(gqs.hasKeyword(gd, keep, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, keep, Keyword.DEFENDER)).isTrue();
+
+        beginAttackers();
+        gs.declareAttackers(gd, player1, List.of(0));
+        assertThat(keep.isAttacking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Ability can be activated while summoning sick but does not grant haste")
+    void abilityDoesNotBypassSummoningSickness() {
+        Permanent keep = harness.addToBattlefieldAndReturn(player1, new RovingKeep());
+        keep.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(keep.getPowerModifier()).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, keep, Keyword.TRAMPLE)).isTrue();
+        beginAttackers();
+        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
+
+    @Test
+    @DisplayName("Ability affects only its source and takes effect on resolution")
+    void abilityAffectsOnlySourceOnResolution() {
+        Permanent keep = addKeepReady();
+        Permanent otherKeep = addKeepReady();
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(keep.getPowerModifier()).isZero();
+        assertThat(gqs.hasKeyword(gd, keep, Keyword.TRAMPLE)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(keep.getPowerModifier()).isEqualTo(2);
+        assertThat(otherKeep.getPowerModifier()).isZero();
+        assertThat(gqs.hasKeyword(gd, otherKeep, Keyword.TRAMPLE)).isFalse();
+        beginAttackers();
+        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(1)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+        gs.declareAttackers(gd, player1, List.of(0));
+        assertThat(keep.isAttacking()).isTrue();
+        assertThat(otherKeep.isAttacking()).isFalse();
+    }
+
     private Permanent addKeepReady() {
-        Permanent keep = new Permanent(new RovingKeep());
+        Permanent keep = harness.addToBattlefieldAndReturn(player1, new RovingKeep());
         keep.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(keep);
         return keep;
     }
 
@@ -94,6 +156,6 @@ class RovingKeepTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(player1.getId()));
+        harness.beginAttackerDeclarationInput();
     }
 }
