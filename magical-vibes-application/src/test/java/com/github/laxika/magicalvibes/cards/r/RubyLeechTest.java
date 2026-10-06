@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.g.GoblinSpy;
 import com.github.laxika.magicalvibes.cards.n.NomadicElf;
+import com.github.laxika.magicalvibes.cards.s.ShivanZombie;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -12,10 +13,11 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RubyLeech.class, GoblinSpy.class, NomadicElf.class})
+@CardUsed({RubyLeech.class, GoblinSpy.class, NomadicElf.class, ShivanZombie.class})
 class RubyLeechTest extends BaseCardTest {
 
     @Nested
+    @CardUsed({RubyLeech.class, GoblinSpy.class})
     @DisplayName("Red spells you cast cost more")
     class OwnRedSpellsTaxed {
 
@@ -52,6 +54,7 @@ class RubyLeechTest extends BaseCardTest {
     }
 
     @Nested
+    @CardUsed({RubyLeech.class, GoblinSpy.class, NomadicElf.class})
     @DisplayName("Only the controller's red spells are taxed")
     class OpponentAndNonRedNotTaxed {
 
@@ -78,6 +81,70 @@ class RubyLeechTest extends BaseCardTest {
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(0);
         }
+    }
+
+    @Test
+    @DisplayName("Two Ruby Leeches each add one red mana to the casting cost")
+    void multipleLeechesStackTheirTaxes() {
+        harness.addToBattlefield(player1, new RubyLeech());
+        harness.addToBattlefield(player1, new RubyLeech());
+
+        harness.castFromHand(player1, new GoblinSpy(), "{R}{R}{R}");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Paying only one tax is insufficient when two Ruby Leeches are controlled")
+    void multipleLeechesRequireBothTaxes() {
+        harness.addToBattlefield(player1, new RubyLeech());
+        harness.addToBattlefield(player1, new RubyLeech());
+
+        assertThatThrownBy(() -> harness.castFromHand(player1, new GoblinSpy(), "{R}{R}"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("A multicolored red spell also requires the extra red mana")
+    void multicoloredRedSpellRequiresTax() {
+        harness.addToBattlefield(player1, new RubyLeech());
+
+        assertThatThrownBy(() -> harness.castFromHand(player1, new ShivanZombie(), "{B}{R}"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("A multicolored red spell pays the extra red mana")
+    void multicoloredRedSpellPaysTax() {
+        harness.addToBattlefield(player1, new RubyLeech());
+
+        harness.castFromHand(player1, new ShivanZombie(), "{B}{R}{R}");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Ruby Leech does not tax itself before entering the battlefield")
+    void castingFirstLeechDoesNotTaxItself() {
+        harness.castFromHand(player1, new RubyLeech(), "{1}{R}");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("A Ruby Leech on the battlefield taxes another Ruby Leech spell")
+    void castingAnotherLeechPaysTax() {
+        harness.addToBattlefield(player1, new RubyLeech());
+
+        harness.castFromHand(player1, new RubyLeech(), "{1}{R}{R}");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
     @Test
