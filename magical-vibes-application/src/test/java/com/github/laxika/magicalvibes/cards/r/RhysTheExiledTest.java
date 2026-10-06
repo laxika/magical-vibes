@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
+import com.github.laxika.magicalvibes.cards.p.PricklyBoggart;
+import com.github.laxika.magicalvibes.cards.p.ProwessOfTheFair;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,9 +16,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RhysTheExiled.class, ElvishWarrior.class, PricklyBoggart.class, ProwessOfTheFair.class})
 class RhysTheExiledTest extends BaseCardTest {
-
-    // ===== Attack trigger: gain 1 life per Elf you control =====
 
     @Test
     @DisplayName("Attacking gains 1 life when Rhys is the only Elf")
@@ -36,8 +35,8 @@ class RhysTheExiledTest extends BaseCardTest {
     @DisplayName("Attacking gains 1 life for each Elf controlled, including non-attackers")
     void gainsLifePerElf() {
         addCreatureReady(player1, new RhysTheExiled());
-        addCreatureReady(player1, createElf("Elf A"));
-        addCreatureReady(player1, createElf("Elf B"));
+        addCreatureReady(player1, new ElvishWarrior());
+        addCreatureReady(player1, new ElvishWarrior());
         int startLife = gd.playerLifeTotals.get(player1.getId());
 
         // Only Rhys attacks; the other Elves stay back but still count.
@@ -51,7 +50,7 @@ class RhysTheExiledTest extends BaseCardTest {
     @DisplayName("Non-Elf creatures do not add life")
     void nonElvesDoNotCount() {
         addCreatureReady(player1, new RhysTheExiled());
-        addCreatureReady(player1, createNonElf("Goblin"));
+        addCreatureReady(player1, new PricklyBoggart());
         int startLife = gd.playerLifeTotals.get(player1.getId());
 
         declareAttackers(player1, List.of(0));
@@ -60,21 +59,19 @@ class RhysTheExiledTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(startLife + 1);
     }
 
-    // ===== Activated ability: {B}, Sacrifice an Elf: Regenerate =====
-
     @Test
     @DisplayName("Activating the ability sacrifices an Elf and grants a regeneration shield")
     void activatingGrantsRegenerationShield() {
         Permanent rhys = addCreatureReady(player1, new RhysTheExiled());
-        addToBattlefieldViaHarness(player1, createElf("Fodder Elf"));
+        harness.addToBattlefield(player1, new ElvishWarrior());
         harness.addMana(player1, ManaColor.BLACK, 1);
-        UUID elfId = harness.getPermanentId(player1, "Fodder Elf");
+        UUID elfId = harness.getPermanentId(player1, "Elvish Warrior");
 
         harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, elfId);
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player1, "Fodder Elf");
+        harness.assertInGraveyard(player1, "Elvish Warrior");
         assertThat(rhys.getRegenerationShield()).isEqualTo(1);
     }
 
@@ -82,38 +79,96 @@ class RhysTheExiledTest extends BaseCardTest {
     @DisplayName("Cannot activate the regeneration ability without {B}")
     void cannotActivateWithoutMana() {
         addCreatureReady(player1, new RhysTheExiled());
-        addToBattlefieldViaHarness(player1, createElf("Fodder Elf"));
+        harness.addToBattlefield(player1, new ElvishWarrior());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
     }
 
-    // ===== Helper methods =====
+    @Test
+    @DisplayName("The number of Elves is counted when the attack trigger resolves")
+    void countsElvesAtResolution() {
+        addCreatureReady(player1, new RhysTheExiled());
+        Permanent elf = harness.addToBattlefieldAndReturn(player1, new ElvishWarrior());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        int startLife = gd.playerLifeTotals.get(player1.getId());
 
-    private Card createElf(String name) {
-        Card card = new Card() {};
-        card.setName(name);
-        card.setSubtypes(List.of(CardSubtype.ELF, CardSubtype.WARRIOR));
-        card.setType(CardType.CREATURE);
-        card.setPower(1);
-        card.setToughness(1);
-        return card;
+        declareAttackers(List.of(0));
+        assertThat(gd.stack).hasSize(1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, elf.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Elvish Warrior");
+        harness.assertLife(player1, startLife + 1);
     }
 
-    private Card createNonElf(String name) {
-        Card card = new Card() {};
-        card.setName(name);
-        card.setSubtypes(List.of(CardSubtype.GOBLIN));
-        card.setType(CardType.CREATURE);
-        card.setPower(2);
-        card.setToughness(2);
-        return card;
+    @Test
+    @DisplayName("Another Elf attacking does not trigger Rhys")
+    void anotherElfAttackingDoesNotTriggerRhys() {
+        addCreatureReady(player1, new RhysTheExiled());
+        addCreatureReady(player1, new ElvishWarrior());
+        int startLife = gd.playerLifeTotals.get(player1.getId());
+
+        declareAttackers(List.of(1));
+        resolveAllTriggers();
+
+        harness.assertLife(player1, startLife);
     }
 
-    private void addToBattlefieldViaHarness(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
+    @Test
+    @DisplayName("Opponent's Elves do not contribute to the attack trigger")
+    void opposingElvesDoNotCount() {
+        addCreatureReady(player1, new RhysTheExiled());
+        harness.addToBattlefield(player2, new ElvishWarrior());
+        int startLife = gd.playerLifeTotals.get(player1.getId());
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        harness.assertLife(player1, startLife + 1);
+    }
+
+    @Test
+    @DisplayName("Noncreature Elf permanents contribute to the attack trigger")
+    void noncreatureElvesCount() {
+        addCreatureReady(player1, new RhysTheExiled());
+        harness.addToBattlefield(player1, new ProwessOfTheFair());
+        int startLife = gd.playerLifeTotals.get(player1.getId());
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        harness.assertLife(player1, startLife + 2);
+    }
+
+    @Test
+    @DisplayName("A noncreature Elf can pay the regeneration cost")
+    void canSacrificeNoncreatureElf() {
+        Permanent rhys = addCreatureReady(player1, new RhysTheExiled());
+        Permanent prowess = harness.addToBattlefieldAndReturn(player1, new ProwessOfTheFair());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, prowess.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Prowess of the Fair");
+        assertThat(rhys.getRegenerationShield()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Rhys can sacrifice itself but regeneration cannot return it")
+    void canSacrificeRhysItself() {
+        Permanent rhys = addCreatureReady(player1, new RhysTheExiled());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, rhys.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Rhys the Exiled");
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
     }
 }
