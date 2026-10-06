@@ -60,6 +60,53 @@ class ScourAllPossibilitiesTest extends BaseCardTest {
         harness.assertNotInGraveyard(player1, "Scour All Possibilities");
     }
 
+    @Test
+    void drawsTheFirstCardInTheChosenTopOrder() {
+        Card first = new ScourAllPossibilities();
+        Card second = new ScourAllPossibilities();
+        Card third = new ScourAllPossibilities();
+        harness.setLibrary(player1, List.of(first, second, third));
+
+        castFromHand();
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(1, 0), List.of()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(second);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(first, third);
+        harness.assertInGraveyard(player1, "Scour All Possibilities");
+    }
+
+    @Test
+    void canKeepOneCardAndBottomTheOtherBeforeDrawing() {
+        Card first = new ScourAllPossibilities();
+        Card second = new ScourAllPossibilities();
+        Card third = new ScourAllPossibilities();
+        harness.setLibrary(player1, List.of(first, second, third));
+
+        castFromHand();
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(1), List.of(0)));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(second);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(third, first);
+    }
+
+    @Test
+    void drawsTheOnlyLibraryCardEvenWhenItIsPutOnTheBottom() {
+        Card onlyCard = new ScourAllPossibilities();
+        harness.setLibrary(player1, List.of(onlyCard));
+
+        castFromHand();
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards()).containsExactly(onlyCard);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(onlyCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Scour All Possibilities");
+    }
+
     private void castFromHand() {
         harness.setHand(player1, List.of(new ScourAllPossibilities()));
         harness.addMana(player1, ManaColor.BLUE, 1);
