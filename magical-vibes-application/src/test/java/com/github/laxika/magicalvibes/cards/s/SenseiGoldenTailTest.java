@@ -61,7 +61,7 @@ class SenseiGoldenTailTest extends BaseCardTest {
 
         declareAttackersAndPrepareBlockers(List.of(indexOf(target)));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, indexOf(target))));
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(target.getCounterCount(CounterType.TRAINING)).isEqualTo(2);
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
@@ -143,6 +143,75 @@ class SenseiGoldenTailTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("sorcery speed");
         assertThat(sensei.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Training Sensei adds a separately resolving Bushido trigger when blocked")
+    void trainedSenseiTriggersEachBushidoSeparatelyWhenBlocked() {
+        Permanent sensei = addCreatureReady(player1, new SenseiGoldenTail());
+        addCreatureReady(player2, new HanaKami());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.activateAbility(player1, indexOf(sensei), null, sensei.getId());
+        harness.passBothPriorities();
+        sensei.untap();
+
+        declareAttackersAndPrepareBlockers(List.of(indexOf(sensei)));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, indexOf(sensei))));
+
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.getEffectivePower(gd, sensei)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, sensei)).isEqualTo(2);
+        resolveAllTriggers();
+        assertThat(gqs.getEffectivePower(gd, sensei)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, sensei)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Training Sensei adds a separately resolving Bushido trigger when blocking")
+    void trainedSenseiTriggersEachBushidoSeparatelyWhenBlocking() {
+        Permanent sensei = addCreatureReady(player1, new SenseiGoldenTail());
+        addCreatureReady(player2, new HanaKami());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.activateAbility(player1, indexOf(sensei), null, sensei.getId());
+        harness.passBothPriorities();
+        sensei.untap();
+
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(indexOf(sensei), 0)));
+
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.getEffectivePower(gd, sensei)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, sensei)).isEqualTo(2);
+        resolveAllTriggers();
+        assertThat(gqs.getEffectivePower(gd, sensei)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, sensei)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("An opponent's training survives removal of its counter and Sensei")
+    void opponentTrainingPersistsWithoutCounterOrSource() {
+        Permanent sensei = addCreatureReady(player1, new SenseiGoldenTail());
+        Permanent attacker = addCreatureReady(player1, new HanaKami());
+        Permanent target = addCreatureReady(player2, new IsamaruHoundOfKonda());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.activateAbility(player1, indexOf(sensei), null, target.getId());
+        harness.passBothPriorities();
+        assertThat(target.getCounterCount(CounterType.TRAINING)).isEqualTo(1);
+
+        target.setCounterCount(CounterType.TRAINING, 0);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, sensei));
+
+        assertThat(gqs.hasEffectiveSubtype(gd, target, CardSubtype.SAMURAI)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, target, CardSubtype.DOG)).isTrue();
+        declareAttackersAndPrepareBlockers(List.of(indexOf(attacker)));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, indexOf(attacker))));
+        resolveAllTriggers();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
     }
 
     private int indexOf(Permanent permanent) {
