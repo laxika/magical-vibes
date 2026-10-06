@@ -28,8 +28,6 @@ class RelicBindTest extends BaseCardTest {
     // "Enchant artifact an opponent controls. Whenever enchanted artifact becomes tapped, choose
     //  one — this Aura deals 1 damage to target player or planeswalker; or target player gains 1 life."
 
-    // ===== Casting and targeting =====
-
     @Test
     @DisplayName("Can cast Relic Bind targeting an artifact an opponent controls")
     void canTargetOpponentArtifact() {
@@ -89,8 +87,6 @@ class RelicBindTest extends BaseCardTest {
                 .anyMatch(p -> p.getCard() instanceof RelicBind
                         && artifact.getId().equals(p.getAttachedTo()));
     }
-
-    // ===== Tap trigger: modal ability =====
 
     @Test
     @DisplayName("Damage mode deals 1 damage to the chosen player when the enchanted artifact taps")
@@ -198,7 +194,66 @@ class RelicBindTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Life mode offers only players and excludes an opponent with hexproof")
+    void lifeModeOffersOnlyLegalPlayers() {
+        Permanent artifact = attachAuraToOpponentArtifact();
+        Permanent jace = harness.addToBattlefieldAndReturn(player2, new JaceBeleren());
+        harness.addToBattlefield(player2, new ShalaiVoiceOfPlenty());
+
+        artifact.tap();
+        harness.inMutationScope(
+                () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, artifact));
+        harness.passPriority(player1);
+        harness.handleListChoice(player1, ChoiceContext.RelicBindModeChoice.LIFE);
+
+        PendingInteraction.PermanentChoice targetChoice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(targetChoice).isNotNull();
+        assertThat(targetChoice.validIds()).containsExactly(player1.getId());
+        assertThat(targetChoice.validIds()).doesNotContain(jace.getId(), artifact.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player1, 21);
+    }
+
+    @Test
+    @DisplayName("Damage mode cannot target a creature")
+    void damageModeDoesNotOfferCreatures() {
+        Permanent artifact = attachAuraToOpponentArtifact();
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        artifact.tap();
+        harness.inMutationScope(
+                () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, artifact));
+        harness.passPriority(player1);
+        harness.handleListChoice(player1, ChoiceContext.RelicBindModeChoice.DAMAGE);
+
+        PendingInteraction.PermanentChoice targetChoice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(targetChoice).isNotNull();
+        assertThat(targetChoice.validIds()).contains(player1.getId(), player2.getId())
+                .doesNotContain(creature.getId(), artifact.getId());
+    }
+
+    @Test
+    @DisplayName("A player gaining hexproof in response makes the damage target illegal")
+    void damageTargetGainingHexproofDoesNotTakeDamage() {
+        Permanent artifact = attachAuraToOpponentArtifact();
+
+        artifact.tap();
+        harness.inMutationScope(
+                () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, artifact));
+        harness.passPriority(player1);
+        harness.handleListChoice(player1, ChoiceContext.RelicBindModeChoice.DAMAGE);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.addToBattlefield(player2, new ShalaiVoiceOfPlenty());
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
+    }
 
     private Permanent attachAuraToOpponentArtifact() {
         Permanent artifact = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
@@ -214,7 +269,6 @@ class RelicBindTest extends BaseCardTest {
         harness.passPriority(player1);
         harness.handleListChoice(player1, mode);          // choose mode -> target prompt
         harness.handlePermanentChosen(player1, targetId); // choose target -> chosen mode's effect onto stack
-        // resolve the chosen mode's effect
-        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+        harness.passBothPriorities();
     }
 }
