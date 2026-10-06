@@ -75,4 +75,40 @@ class RighteousChargeTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, creatureEnteringLater)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, creatureEnteringLater)).isEqualTo(2);
     }
+
+    @Test
+    @DisplayName("Boosts creatures that enter after casting but before resolution")
+    void boostsCreaturesEnteringBeforeResolution() {
+        harness.castFromHand(player1, new RighteousCharge(), "{1}{W}{W}");
+
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Multiple Charges stack and all boosts expire at cleanup")
+    void multipleChargesStackUntilCleanup() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        harness.castFromHand(player1, new RighteousCharge(), "{1}{W}{W}");
+        harness.passBothPriorities();
+        harness.castFromHand(player1, new RighteousCharge(), "{1}{W}{W}");
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(6);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+    }
 }
