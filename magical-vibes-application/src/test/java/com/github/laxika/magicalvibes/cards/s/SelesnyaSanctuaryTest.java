@@ -85,4 +85,60 @@ class SelesnyaSanctuaryTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
         assertThat(sanctuary.isTapped()).isTrue();
     }
+
+    @Test
+    @DisplayName("The return trigger still resolves after Sanctuary leaves the battlefield")
+    void returnsLandAfterSourceLeaves() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.setHand(player1, List.of(new SelesnyaSanctuary()));
+        harness.playLand(player1, 0);
+        Permanent sanctuary = findPermanent(player1, "Selesnya Sanctuary");
+
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToHand(gd, sanctuary));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validPermanentIds())
+                .containsExactly(forest.getId());
+        harness.handlePermanentChosen(player1, forest.getId());
+
+        harness.assertInHand(player1, "Forest");
+        harness.assertInHand(player1, "Selesnya Sanctuary");
+        harness.assertNotOnBattlefield(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("The return trigger does nothing if its controller has no lands on resolution")
+    void noLandsOnResolution() {
+        harness.addToBattlefield(player2, new Forest());
+        harness.setHand(player1, List.of(new SelesnyaSanctuary()));
+        harness.playLand(player1, 0);
+        Permanent sanctuary = findPermanent(player1, "Selesnya Sanctuary");
+
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToHand(gd, sanctuary));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInHand(player1, "Selesnya Sanctuary");
+        harness.assertOnBattlefield(player2, "Forest");
+        harness.assertNotInHand(player2, "Forest");
+    }
+
+    @Test
+    @DisplayName("A controlled land owned by the opponent returns to the opponent's hand")
+    void returnsLandToOwnerRatherThanController() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        gd.stolenCreatures.put(forest.getId(), player2.getId());
+        harness.setHand(player1, List.of(new SelesnyaSanctuary()));
+        harness.playLand(player1, 0);
+        harness.passBothPriorities();
+
+        harness.handlePermanentChosen(player1, forest.getId());
+
+        harness.assertInHand(player2, "Forest");
+        harness.assertNotInHand(player1, "Forest");
+        harness.assertNotOnBattlefield(player1, "Forest");
+        harness.assertOnBattlefield(player1, "Selesnya Sanctuary");
+    }
 }
