@@ -39,7 +39,6 @@ class SerendibSorcererTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(target.getEffectivePower()).isEqualTo(1);
@@ -92,5 +91,45 @@ class SerendibSorcererTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, sorcerer.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be another creature");
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Sorcerer cannot pay the tap cost")
+    void cannotActivateWhileSummoningSick() {
+        harness.addToBattlefield(player1, new SerendibSorcerer());
+        Permanent target = addCreatureReady(player2, new SerendibSorcerer());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped Sorcerer cannot pay the tap cost again")
+    void cannotActivateWhileTapped() {
+        Permanent sorcerer = addCreatureReady(player1, new SerendibSorcerer());
+        Permanent target = addCreatureReady(player2, new SerendibSorcerer());
+        sorcerer.setTapped(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The ability resolves and persists after the Sorcerer leaves the battlefield")
+    void resolvesAfterSourceLeavesBattlefield() {
+        Permanent sorcerer = addCreatureReady(player1, new SerendibSorcerer());
+        Permanent target = addCreatureReady(player2, new SerendibSorcerer());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, sorcerer));
+        harness.passBothPriorities();
+
+        assertThat(target.getEffectivePower()).isZero();
+        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 }
