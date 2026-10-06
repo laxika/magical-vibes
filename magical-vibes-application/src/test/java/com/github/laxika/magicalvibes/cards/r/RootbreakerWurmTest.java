@@ -11,6 +11,8 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.Map;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
 @CardUsed({RootbreakerWurm.class, GiantSpider.class})
 class RootbreakerWurmTest extends BaseCardTest {
 
@@ -32,5 +34,51 @@ class RootbreakerWurmTest extends BaseCardTest {
         harness.assertLife(player2, 18);
         harness.assertOnBattlefield(player1, "Rootbreaker Wurm");
         harness.assertNotOnBattlefield(player2, "Giant Spider");
+    }
+
+    @Test
+    @DisplayName("Trample allows assigning all combat damage to the blocker")
+    void canAssignAllDamageToBlocker() {
+        harness.setLife(player2, 20);
+        addCreatureReady(player1, new RootbreakerWurm());
+        Permanent blocker = addCreatureReady(player2, new GiantSpider());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(blocker.getId(), 6));
+
+        harness.assertLife(player2, 20);
+        harness.assertOnBattlefield(player1, "Rootbreaker Wurm");
+        harness.assertInGraveyard(player2, "Giant Spider");
+    }
+
+    @Test
+    @DisplayName("Trample requires lethal damage to the blocker before assigning player damage")
+    void rejectsPlayerDamageBeforeLethalBlockerDamage() {
+        harness.setLife(player2, 20);
+        addCreatureReady(player1, new RootbreakerWurm());
+        Permanent blocker = addCreatureReady(player2, new GiantSpider());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        assertThatThrownBy(() -> harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                blocker.getId(), 3,
+                player2.getId(), 3)))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertLife(player2, 20);
+        harness.assertOnBattlefield(player2, "Giant Spider");
+
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                blocker.getId(), 4,
+                player2.getId(), 2));
+
+        harness.assertLife(player2, 18);
+        harness.assertOnBattlefield(player1, "Rootbreaker Wurm");
+        harness.assertInGraveyard(player2, "Giant Spider");
     }
 }
