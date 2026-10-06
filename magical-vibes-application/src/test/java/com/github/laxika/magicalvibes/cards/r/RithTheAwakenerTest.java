@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({RithTheAwakener.class, Forest.class, NomadicElf.class, DryadArbor.class})
@@ -120,7 +122,7 @@ class RithTheAwakenerTest extends BaseCardTest {
     @DisplayName("Does not trigger when Rith deals combat damage only to a creature")
     void noTriggerWhenBlocked() {
         addAttackingRith();
-        Permanent blocker = addCreatureReady(player2, new NomadicElf());
+        Permanent blocker = addCreatureReady(player2, new RithTheAwakener());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
@@ -128,5 +130,79 @@ class RithTheAwakenerTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(saprolingCount()).isZero();
+    }
+
+    @Test
+    @DisplayName("Three colorless mana cannot pay the green component of the cost")
+    void cannotPayWithoutGreenMana() {
+        addAttackingRith();
+
+        resolveCombat();
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(saprolingCount()).isZero();
+    }
+
+    @Test
+    @DisplayName("Choosing red counts multicolored Rith once")
+    void countsMulticoloredPermanentForRed() {
+        addAttackingRith();
+        addCreatureReady(player2, new NomadicElf());
+
+        resolveCombat();
+        harness.passBothPriorities();
+
+        addPaymentMana();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleListChoice(player1, "RED");
+
+        assertThat(saprolingCount()).isEqualTo(1);
+        assertThat(countPermanents(player2, "Saproling")).isZero();
+    }
+
+    @Test
+    @DisplayName("Counts permanents at resolution even if Rith has left the battlefield")
+    void countsCurrentPermanentsAfterSourceLeaves() {
+        Permanent rith = addAttackingRith();
+
+        resolveCombat();
+        gd.playerBattlefields.get(player1.getId()).remove(rith);
+        harness.setGraveyard(player1, List.of(rith.getCard()));
+        addCreatureReady(player2, new NomadicElf());
+        addCreatureReady(player2, new NomadicElf());
+        harness.passBothPriorities();
+
+        addPaymentMana();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(saprolingCount()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A later trigger counts existing Saprolings without counting its newly created tokens")
+    void countsExistingTokensOnLaterTrigger() {
+        Permanent rith = addAttackingRith();
+
+        resolveCombat();
+        harness.passBothPriorities();
+        addPaymentMana();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleListChoice(player1, "GREEN");
+        assertThat(saprolingCount()).isEqualTo(1);
+
+        rith.setTapped(false);
+        declareAttackers(List.of(0));
+        resolveCombat();
+        harness.passBothPriorities();
+        addPaymentMana();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(saprolingCount()).isEqualTo(3);
     }
 }
