@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({RuneOfProtectionLands.class, Brushland.class, GrizzlyBears.class, NaturalAffinity.class, OneWithTheStars.class})
 class RuneOfProtectionLandsTest extends BaseCardTest {
@@ -140,10 +141,8 @@ class RuneOfProtectionLandsTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, land.getId());
 
-        harness.setHand(player1, List.of(new NaturalAffinity()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castAndResolveInstant(player1, 0);
+        harness.castFromHand(player1, new NaturalAffinity(), "{2}{G}");
+        harness.passBothPriorities();
 
         harness.setHand(player1, List.of(new OneWithTheStars()));
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -199,4 +198,97 @@ class RuneOfProtectionLandsTest extends BaseCardTest {
         harness.assertInHand(player1, "Grizzly Bears");
     }
 
+    @Test
+    @DisplayName("Later damage from the same land is not prevented after the shield is consumed")
+    void subsequentDamageFromChosenLandIsNotPrevented() {
+        harness.setLife(player1, 20);
+        addCreatureReady(player1, new RuneOfProtectionLands());
+        Permanent land = addCreatureReady(player1, new Brushland());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, land.getId());
+
+        harness.activateAbility(player1, 1, 1, null, null);
+        harness.assertLife(player1, 20);
+
+        land.setTapped(false);
+        harness.activateAbility(player1, 1, 1, null, null);
+
+        harness.assertLife(player1, 19);
+        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Damage to another player does not consume the controller's shield")
+    void damageToOtherPlayerDoesNotConsumeShield() {
+        harness.setLife(player2, 20);
+        addCreatureReady(player1, new RuneOfProtectionLands());
+        Permanent land = addCreatureReady(player2, new Brushland());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, land.getId());
+
+        harness.activateAbility(player2, 0, 1, null, null);
+
+        harness.assertLife(player2, 19);
+        assertThat(gd.playerSourceNextDamageShields).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Cycling requires two mana and discards nothing if the cost cannot be paid")
+    void cyclingRequiresTwoMana() {
+        harness.setHand(player1, List.of(new RuneOfProtectionLands()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("mana");
+
+        harness.assertInHand(player1, "Rune of Protection: Lands");
+        harness.assertNotInGraveyard(player1, "Rune of Protection: Lands");
+        harness.assertNotInHand(player1, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Colorless mana cannot pay the prevention ability's white mana cost")
+    void preventionRequiresWhiteMana() {
+        addCreatureReady(player1, new RuneOfProtectionLands());
+        addCreatureReady(player2, new Brushland());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("mana");
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Prevents all combat damage from the chosen animated land")
+    void preventsCombatDamageFromAnimatedLand() {
+        harness.setLife(player1, 20);
+        addCreatureReady(player1, new RuneOfProtectionLands());
+        Permanent land = addCreatureReady(player2, new Brushland());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, land.getId());
+
+        harness.castFromHand(player1, new NaturalAffinity(), "{2}{G}");
+        harness.passBothPriorities();
+
+        land.setAttacking(true);
+        resolveCombat(player2);
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+    }
 }
