@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -14,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SeasonedWarrenguard.class, GrizzlyBears.class})
+@CardUsed({SeasonedWarrenguard.class})
 class SeasonedWarrenguardTest extends BaseCardTest {
 
     @Test
@@ -33,7 +32,6 @@ class SeasonedWarrenguardTest extends BaseCardTest {
     void doesNotGetBoostWhenOpponentControlsTheToken() {
         Permanent warrenguard = addCreatureReady(player1, new SeasonedWarrenguard());
         harness.addToBattlefield(player2, createToken());
-        addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
@@ -42,16 +40,46 @@ class SeasonedWarrenguardTest extends BaseCardTest {
     }
 
     @Test
-    void doesNotGetBoostIfTokenIsLostBeforeTriggerResolves() {
+    void stillGetsBoostIfTokenIsLostBeforeTriggerResolves() {
         Permanent warrenguard = addCreatureReady(player1, new SeasonedWarrenguard());
         Permanent token = harness.addToBattlefieldAndReturn(player1, createToken());
-        addCreatureReady(player2, new GrizzlyBears());
-
-        declareAttackers(player1, List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(player1, List.of(0)));
+        assertThat(gd.stack).hasSize(1);
         gd.playerBattlefields.get(player1.getId()).remove(token);
         resolveAllTriggers();
 
+        assertThat(warrenguard.getEffectivePower()).isEqualTo(3);
+        assertThat(warrenguard.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    void tokenCreatedAfterAttackDoesNotCauseAbilityToTrigger() {
+        Permanent warrenguard = addCreatureReady(player1, new SeasonedWarrenguard());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(player1, List.of(0)));
+        assertThat(gd.stack).isEmpty();
+        harness.addToBattlefield(player1, createToken());
+        resolveAllTriggers();
+
         assertThat(warrenguard.getEffectivePower()).isEqualTo(1);
+    }
+
+    @Test
+    void noncreatureTokenAlsoEnablesBoost() {
+        Permanent warrenguard = addCreatureReady(player1, new SeasonedWarrenguard());
+        Card treasure = new Card();
+        treasure.setName("Treasure");
+        treasure.setType(CardType.ARTIFACT);
+        treasure.setToken(true);
+        harness.addToBattlefield(player1, treasure);
+
+        declareAttackers(player1, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(warrenguard.getEffectivePower()).isEqualTo(3);
+        assertThat(warrenguard.getEffectiveToughness()).isEqualTo(2);
     }
 
     @Test
