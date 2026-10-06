@@ -2,8 +2,10 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
+import com.github.laxika.magicalvibes.cards.g.GreaterGood;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,10 +17,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import com.github.laxika.magicalvibes.cards.a.AlphaKavu;
-import com.github.laxika.magicalvibes.cards.a.ArcticMerfolk;
 
-@CardUsed({Slay.class, GrizzlyBears.class, AirElemental.class, GloriousAnthem.class, AlphaKavu.class, ArcticMerfolk.class})
+@CardUsed({Slay.class, GrizzlyBears.class, AirElemental.class, GloriousAnthem.class, GreaterGood.class})
 class SlayTest extends BaseCardTest {
 
     @Test
@@ -58,17 +58,17 @@ class SlayTest extends BaseCardTest {
     @Test
     @DisplayName("Slay can target a green creature you control")
     void canTargetOwnGreenCreature() {
-        Permanent kavu = harness.addToBattlefieldAndReturn(player1, new AlphaKavu());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new Slay()));
-        harness.setLibrary(player1, List.of(new ArcticMerfolk()));
+        harness.setLibrary(player1, List.of(new AirElemental()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castAndResolveInstant(player1, 0, kavu.getId());
+        harness.castAndResolveInstant(player1, 0, bears.getId());
 
-        harness.assertNotOnBattlefield(player1, "Alpha Kavu");
-        harness.assertInGraveyard(player1, "Alpha Kavu");
-        harness.assertInHand(player1, "Arctic Merfolk");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Air Elemental");
     }
 
     @Test
@@ -121,17 +121,66 @@ class SlayTest extends BaseCardTest {
     @Test
     @DisplayName("Slay does not draw when its only target leaves before resolution")
     void fizzlesWithoutDrawingIfTargetLeavesBeforeResolution() {
-        Permanent kavu = harness.addToBattlefieldAndReturn(player2, new AlphaKavu());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new Slay()));
-        harness.setLibrary(player1, List.of(new ArcticMerfolk()));
+        harness.setLibrary(player1, List.of(new AirElemental()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castInstant(player1, 0, kavu.getId());
+        harness.castInstant(player1, 0, bears.getId());
         gd.playerBattlefields.get(player2.getId()).clear();
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Slay");
+    }
+
+    @Test
+    @DisplayName("Slay cannot target a green noncreature permanent")
+    void cannotTargetGreenNonCreaturePermanent() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new GreaterGood());
+        harness.setHand(player1, List.of(new Slay()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, enchantment.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("green creature");
+    }
+
+    @Test
+    @DisplayName("Slay draws even when an indestructible green creature survives")
+    void drawsWhenIndestructibleTargetSurvives() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        bears.getPersistentGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        harness.setHand(player1, List.of(new Slay()));
+        harness.setLibrary(player1, List.of(new AirElemental()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+        harness.assertInHand(player1, "Air Elemental");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Slay");
+    }
+
+    @Test
+    @DisplayName("Slay does not draw if its target gains shroud before resolution")
+    void doesNotDrawWhenTargetGainsShroud() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Slay()));
+        harness.setLibrary(player1, List.of(new AirElemental()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castInstant(player1, 0, bears.getId());
+        bears.getPersistentGrantedKeywords().add(Keyword.SHROUD);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
         harness.assertInGraveyard(player1, "Slay");
     }
 }
