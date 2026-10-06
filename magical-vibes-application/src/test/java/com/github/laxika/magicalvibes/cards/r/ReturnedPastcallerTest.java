@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ReturnedPastcaller.class, VoicelessSpirit.class, Shock.class, Divination.class, GrizzlyBears.class})
 class ReturnedPastcallerTest extends BaseCardTest {
 
     @Test
@@ -60,6 +62,68 @@ class ReturnedPastcallerTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
         harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("ETB returns an instant while leaving other eligible cards in the graveyard")
+    void returnsInstantFromGraveyardToHand() {
+        Shock shock = new Shock();
+        ReturnedPastcaller spirit = new ReturnedPastcaller();
+        harness.setGraveyard(player1, List.of(shock, spirit));
+
+        castReturnedPastcaller();
+
+        harness.handleMultipleCardsChosen(player1, List.of(shock.getId()));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Shock");
+        harness.assertNotInGraveyard(player1, "Shock");
+        harness.assertInGraveyard(player1, "Returned Pastcaller");
+    }
+
+    @Test
+    @DisplayName("ETB cannot return a Spirit from an opponent's graveyard")
+    void cannotReturnOpponentsSpirit() {
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of(new ReturnedPastcaller()));
+
+        castReturnedPastcaller();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player2, "Returned Pastcaller");
+        harness.assertNotInHand(player1, "Returned Pastcaller");
+    }
+
+    @Test
+    @DisplayName("ETB can return another Returned Pastcaller as a Spirit")
+    void returnsAnotherPastcaller() {
+        ReturnedPastcaller spirit = new ReturnedPastcaller();
+        harness.setGraveyard(player1, List.of(spirit));
+
+        castReturnedPastcaller();
+        harness.handleMultipleCardsChosen(player1, List.of(spirit.getId()));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Returned Pastcaller");
+        harness.assertNotInGraveyard(player1, "Returned Pastcaller");
+    }
+
+    @Test
+    @DisplayName("ETB does not choose a replacement when its target leaves the graveyard")
+    void doesNotRetargetWhenTargetLeavesGraveyard() {
+        Shock shock = new Shock();
+        ReturnedPastcaller spirit = new ReturnedPastcaller();
+        harness.setGraveyard(player1, List.of(shock, spirit));
+
+        castReturnedPastcaller();
+        harness.handleMultipleCardsChosen(player1, List.of(shock.getId()));
+        harness.setGraveyard(player1, List.of(spirit));
+        harness.passBothPriorities();
+
+        harness.assertNotInHand(player1, "Shock");
+        harness.assertNotInHand(player1, "Returned Pastcaller");
+        harness.assertInGraveyard(player1, "Returned Pastcaller");
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     private void castReturnedPastcaller() {
