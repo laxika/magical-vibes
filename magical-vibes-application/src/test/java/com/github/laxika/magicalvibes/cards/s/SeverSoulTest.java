@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.b.BogImp;
-import com.github.laxika.magicalvibes.cards.b.BogWitch;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.cards.r.RampagingFerocidon;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,10 +13,9 @@ import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SeverSoul.class, BogImp.class, Forest.class, GrizzlyBears.class, SaprazzanRaider.class, BogWitch.class, Swamp.class})
+@CardUsed({SeverSoul.class, BogImp.class, Forest.class, GrizzlyBears.class, Swamp.class, RampagingFerocidon.class})
 class SeverSoulTest extends BaseCardTest {
 
     private void giveSpell() {
@@ -33,10 +32,9 @@ class SeverSoulTest extends BaseCardTest {
         giveSpell();
         harness.castAndResolveSorcery(player1, 0, bears.getId());
 
-        GameData gd = harness.getGameData();
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Grizzly Bears");
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
+        harness.assertLife(player1, 22);
     }
 
     @Test
@@ -86,7 +84,7 @@ class SeverSoulTest extends BaseCardTest {
         giveSpell();
         harness.castAndResolveSorcery(player1, 0, bears.getId());
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(15);
+        harness.assertLife(player1, 15);
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
 
@@ -101,19 +99,45 @@ class SeverSoulTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).clear();
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        harness.assertLife(player1, 20);
         harness.assertInGraveyard(player1, "Sever Soul");
     }
 
     @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNonCreaturePermanent() {
-        addCreatureReady(player1, new SaprazzanRaider());
+        harness.addToBattlefield(player1, new GrizzlyBears());
         Permanent swamp = harness.addToBattlefieldAndReturn(player2, new Swamp());
 
         giveSpell();
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, swamp.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("nonblack creature");
+    }
+
+    @Test
+    @DisplayName("Destroys the target before gaining life")
+    void destroysLifeGainPreventingCreatureBeforeGainingLife() {
+        Permanent ferocidon = harness.addToBattlefieldAndReturn(player2, new RampagingFerocidon());
+
+        giveSpell();
+        harness.castAndResolveSorcery(player1, 0, ferocidon.getId());
+
+        harness.assertInGraveyard(player2, "Rampaging Ferocidon");
+        harness.assertNotOnBattlefield(player2, "Rampaging Ferocidon");
+        harness.assertLife(player1, 23);
+    }
+
+    @Test
+    @DisplayName("Gains life even when an indestructible target survives")
+    void gainsLifeWhenTargetIsIndestructible() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        bears.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+
+        giveSpell();
+        harness.castAndResolveSorcery(player1, 0, bears.getId());
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertLife(player1, 22);
     }
 }
