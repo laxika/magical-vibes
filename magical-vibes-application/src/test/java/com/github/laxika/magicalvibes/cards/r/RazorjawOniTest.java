@@ -47,6 +47,59 @@ class RazorjawOniTest extends BaseCardTest {
                 .anyMatch(log -> log.contains("declares 1 blocker"));
     }
 
+    @Test
+    @DisplayName("Razorjaw Oni cannot block because it is black")
+    void razorjawOniCannotBlock() {
+        addCreatureReady(player1, new SakuraTribeScout()).setAttacking(true);
+        addRazorjawOni(player2);
+
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Black creatures can't block");
+    }
+
+    @Test
+    @DisplayName("The Oni also prevents its controller's other black creatures from blocking")
+    void controllersBlackCreaturesCannotBlock() {
+        addCreatureReady(player1, new SakuraTribeScout()).setAttacking(true);
+        addRazorjawOni(player2);
+        addCreatureReady(player2, new RavingOniSlave());
+
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(1, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Black creatures can't block");
+    }
+
+    @Test
+    @DisplayName("Black creatures can block after Razorjaw Oni leaves the battlefield")
+    void restrictionEndsWhenOniLeavesBattlefield() {
+        Permanent oni = addRazorjawOni(player1);
+        addCreatureReady(player1, new SakuraTribeScout()).setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new RavingOniSlave());
+        gd.playerBattlefields.get(player1.getId()).remove(oni);
+        gd.playerGraveyards.get(player1.getId()).add(oni.getCard());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Razorjaw Oni can attack and be blocked by a nonblack creature")
+    void oniCanAttackAndBeBlockedByNonblackCreature() {
+        addCreatureReady(player1, new RazorjawOni());
+        Permanent blocker = addCreatureReady(player2, new SakuraTribeScout());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
     private Permanent addRazorjawOni(Player controller) {
         return harness.addToBattlefieldAndReturn(controller, new RazorjawOni());
     }
