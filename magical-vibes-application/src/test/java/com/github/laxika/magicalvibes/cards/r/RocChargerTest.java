@@ -1,13 +1,12 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.a.AerialGuide;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.h.HealersHawk;
+import com.github.laxika.magicalvibes.cards.v.VernadiShieldmate;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RocCharger.class, VernadiShieldmate.class, HealersHawk.class})
 class RocChargerTest extends BaseCardTest {
 
     @Test
@@ -24,8 +24,8 @@ class RocChargerTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
-        addReadyCreature(player1, new RocCharger());
-        Permanent otherAttacker = addReadyCreature(player1, new GrizzlyBears());
+        addCreatureReady(player1, new RocCharger());
+        Permanent otherAttacker = addCreatureReady(player1, new VernadiShieldmate());
 
         declareAttackers(player1, List.of(0, 1));
 
@@ -41,8 +41,8 @@ class RocChargerTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
-        addReadyCreature(player1, new RocCharger());
-        Permanent otherAttacker = addReadyCreature(player1, new GrizzlyBears());
+        addCreatureReady(player1, new RocCharger());
+        Permanent otherAttacker = addCreatureReady(player1, new VernadiShieldmate());
 
         declareAttackers(player1, List.of(0, 1));
 
@@ -64,9 +64,9 @@ class RocChargerTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
-        addReadyCreature(player1, new RocCharger());
-        addReadyCreature(player1, new GrizzlyBears());
-        Permanent flyingAttacker = addReadyCreature(player1, new AerialGuide());
+        addCreatureReady(player1, new RocCharger());
+        addCreatureReady(player1, new VernadiShieldmate());
+        Permanent flyingAttacker = addCreatureReady(player1, new HealersHawk());
 
         declareAttackers(player1, List.of(0, 1, 2));
 
@@ -80,9 +80,9 @@ class RocChargerTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
-        addReadyCreature(player1, new RocCharger());
-        addReadyCreature(player1, new GrizzlyBears());
-        Permanent nonAttacker = addReadyCreature(player1, new GrizzlyBears());
+        addCreatureReady(player1, new RocCharger());
+        addCreatureReady(player1, new VernadiShieldmate());
+        Permanent nonAttacker = addCreatureReady(player1, new VernadiShieldmate());
 
         declareAttackers(player1, List.of(0, 1));
 
@@ -90,10 +90,29 @@ class RocChargerTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    @Test
+    @DisplayName("Attacking alone with flying leaves no legal target")
+    void attackingAloneHasNoLegalTarget() {
+        addCreatureReady(player1, new RocCharger());
+
+        declareAttackers(player1, List.of(0));
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The attack trigger still grants flying after Roc Charger leaves")
+    void triggerResolvesAfterSourceLeavesBattlefield() {
+        Permanent charger = addCreatureReady(player1, new RocCharger());
+        Permanent otherAttacker = addCreatureReady(player1, new VernadiShieldmate());
+
+        declareAttackers(player1, List.of(0, 1));
+        harness.handlePermanentChosen(player1, otherAttacker.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(charger);
+        gd.playerGraveyards.get(player1.getId()).add(charger.getCard());
+        harness.passBothPriorities();
+
+        assertThat(otherAttacker.getGrantedKeywords()).contains(Keyword.FLYING);
     }
 }
