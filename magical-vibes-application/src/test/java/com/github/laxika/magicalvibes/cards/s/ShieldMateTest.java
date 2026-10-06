@@ -88,4 +88,42 @@ class ShieldMateTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(shieldMate.getCard());
         assertThat(target.getToughnessModifier()).isZero();
     }
+
+    @Test
+    @DisplayName("Can target itself, but the sacrificed creature receives no boost")
+    void canTargetItself() {
+        Permanent shieldMate = harness.addToBattlefieldAndReturn(player1, new ShieldMate());
+
+        harness.activateAbility(player1, 0, null, shieldMate.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(shieldMate);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(shieldMate.getCard());
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(shieldMate.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Can sacrifice a tapped Shield Mate to boost another creature you control")
+    void canActivateWhileTappedAndBoostOwnCreature() {
+        Permanent shieldMate = addCreatureReady(player1, new ShieldMate());
+        shieldMate.tap();
+        Permanent target = addCreatureReady(player1, new ShieldMate());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(shieldMate);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(shieldMate.getCard());
+        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(target.getPowerModifier()).isZero();
+        assertThat(target.getToughnessModifier()).isEqualTo(4);
+        assertThat(gd.stack).isEmpty();
+    }
 }
