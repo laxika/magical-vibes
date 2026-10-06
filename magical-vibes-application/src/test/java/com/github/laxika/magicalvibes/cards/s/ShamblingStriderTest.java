@@ -108,10 +108,49 @@ class ShamblingStriderTest extends BaseCardTest {
         assertThat(strider.getToughnessModifier()).isEqualTo(-1);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(strider.getPowerModifier()).isEqualTo(0);
         assertThat(strider.getToughnessModifier()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Can activate while summoning sick and tapped")
+    void canActivateWhileSummoningSickAndTapped() {
+        Permanent strider = harness.addToBattlefieldAndReturn(player1, new ShamblingStrider());
+        strider.setSummoningSick(true);
+        strider.setTapped(true);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(strider.getPowerModifier()).isZero();
+        assertThat(strider.getToughnessModifier()).isZero();
+        harness.passBothPriorities();
+
+        assertThat(strider.getPowerModifier()).isEqualTo(1);
+        assertThat(strider.getToughnessModifier()).isEqualTo(-1);
+        assertThat(strider.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Five resolved activations put the creature into its owner's graveyard")
+    void repeatedActivationsCanReduceToughnessToZero() {
+        ShamblingStrider card = new ShamblingStrider();
+        Permanent strider = addCreatureReady(player1, card);
+        harness.addMana(player1, ManaColor.RED, 5);
+        harness.addMana(player1, ManaColor.GREEN, 5);
+
+        for (int i = 0; i < 4; i++) {
+            harness.activateAbility(player1, 0, null, null);
+            harness.passBothPriorities();
+        }
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(strider);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(strider);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
     }
 }
