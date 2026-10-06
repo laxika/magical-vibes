@@ -12,8 +12,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(SilumgarMonument.class)
+@CardUsed({SilumgarMonument.class})
 class SilumgarMonumentTest extends BaseCardTest {
 
     @Test
@@ -72,10 +73,93 @@ class SilumgarMonumentTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, monument, Keyword.FLYING)).isFalse();
     }
 
+    @Test
+    @DisplayName("Silumgar Monument can add black mana")
+    void tappingAddsBlackMana() {
+        Permanent monument = addReadyMonument();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "BLACK");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(monument.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped Silumgar Monument can animate without untapping")
+    void tappedMonumentCanAnimate() {
+        Permanent monument = addReadyMonument();
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "BLACK");
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.isCreature(gd, monument)).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, monument)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, monument)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, monument, Keyword.FLYING)).isTrue();
+        assertThat(monument.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An animated Silumgar Monument retains its mana ability")
+    void animatedMonumentCanProduceMana() {
+        Permanent monument = addReadyMonument();
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "BLUE");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gqs.isCreature(gd, monument)).isTrue();
+        assertThat(monument.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+    @Test
+    @DisplayName("A newly controlled noncreature Monument can produce mana")
+    void newNoncreatureMonumentCanProduceMana() {
+        Permanent monument = harness.addToBattlefieldAndReturn(player1, new SilumgarMonument());
+        monument.setSummoningSick(true);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "BLACK");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(monument.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A newly controlled Monument can animate but cannot then tap for mana")
+    void newlyAnimatedMonumentIsSummoningSick() {
+        Permanent monument = harness.addToBattlefieldAndReturn(player1, new SilumgarMonument());
+        monument.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, monument)).isTrue();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(monument.isTapped()).isFalse();
+    }
     private Permanent addReadyMonument() {
-        Permanent monument = new Permanent(new SilumgarMonument());
+        Permanent monument = harness.addToBattlefieldAndReturn(player1, new SilumgarMonument());
         monument.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(monument);
         return monument;
     }
 }
