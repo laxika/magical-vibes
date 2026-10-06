@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.PilgrimsEye;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +18,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ReclaimingVines.class, FountainOfYouth.class, AngelicChorus.class, Forest.class, GrizzlyBears.class})
+@CardUsed({ReclaimingVines.class, FountainOfYouth.class, AngelicChorus.class, Forest.class, GrizzlyBears.class, PilgrimsEye.class})
 class ReclaimingVinesTest extends BaseCardTest {
 
     @Test
@@ -50,14 +51,33 @@ class ReclaimingVinesTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Reclaiming Vines destroys an artifact even when it is also a creature")
+    void destroysArtifactCreature() {
+        destroyTarget(new PilgrimsEye(), "Pilgrim's Eye");
+    }
+
+    @Test
+    @DisplayName("Reclaiming Vines can destroy a land you control")
+    void destroysOwnLand() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.setHand(player1, List.of(new ReclaimingVines()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castAndResolveSorcery(player1, 0, land.getId());
+
+        harness.assertNotOnBattlefield(player1, "Forest");
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertInGraveyard(player1, "Reclaiming Vines");
+    }
+
     private void destroyTarget(Card targetCard, String cardName) {
         harness.addToBattlefield(player2, targetCard);
         harness.setHand(player1, List.of(new ReclaimingVines()));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
         UUID targetId = harness.getPermanentId(player2, cardName);
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetId);
 
         harness.assertInGraveyard(player2, cardName);
     }
