@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
@@ -9,22 +9,66 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ScreechingSilcaw.class, Spellbook.class, GrizzlyBears.class, SerraAngel.class,
+        SuntailHawk.class, SamiteHealer.class, Scalpelexis.class})
 class ScreechingSilcawTest extends BaseCardTest {
 
-    private Permanent addReadyCreature(Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(perm);
-        return perm;
+    @Test
+    @DisplayName("Losing metalcraft before resolution prevents milling")
+    void losingMetalcraftBeforeResolutionPreventsMill() {
+        setupMetalcraft();
+        Permanent silcaw = addCreatureReady(player1, new ScreechingSilcaw());
+        silcaw.setAttacking(true);
+        harness.setLibrary(player2, List.of(new GrizzlyBears(), new SerraAngel(),
+                new SuntailHawk(), new SamiteHealer()));
+
+        resolveCombat();
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).removeFirst();
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(4);
     }
 
-    private void setDeck(List<Card> cards) {
-        gd.playerDecks.put(player2.getId(), new ArrayList<>(cards));
+    @Test
+    @DisplayName("Gaining metalcraft after damage cannot create a trigger")
+    void gainingMetalcraftAfterDamageDoesNotTrigger() {
+        harness.addToBattlefield(player1, new Spellbook());
+        harness.addToBattlefield(player1, new Spellbook());
+        Permanent silcaw = addCreatureReady(player1, new ScreechingSilcaw());
+        silcaw.setAttacking(true);
+        harness.setLibrary(player2, List.of(new GrizzlyBears(), new SerraAngel(),
+                new SuntailHawk(), new SamiteHealer()));
+
+        resolveCombat();
+        assertThat(gd.stack).isEmpty();
+        harness.addToBattlefield(player1, new Spellbook());
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(4);
+    }
+
+    @Test
+    @DisplayName("Opponent's artifacts do not satisfy metalcraft")
+    void opponentsArtifactsDoNotCount() {
+        harness.addToBattlefield(player1, new Spellbook());
+        harness.addToBattlefield(player1, new Spellbook());
+        harness.addToBattlefield(player2, new Spellbook());
+        Permanent silcaw = addCreatureReady(player1, new ScreechingSilcaw());
+        silcaw.setAttacking(true);
+        harness.setLibrary(player2, List.of(new GrizzlyBears(), new SerraAngel(),
+                new SuntailHawk(), new SamiteHealer()));
+
+        resolveCombat();
+        assertThat(gd.stack).isEmpty();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(4);
     }
 
     private void setupMetalcraft() {
@@ -33,16 +77,14 @@ class ScreechingSilcawTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Spellbook());
     }
 
-    // ===== Combat damage with metalcraft met =====
-
     @Test
     @DisplayName("Dealing combat damage mills 4 cards when metalcraft is met")
     void millsFourCardsWithMetalcraft() {
         setupMetalcraft();
-        Permanent silcaw = addReadyCreature(new ScreechingSilcaw());
+        Permanent silcaw = addCreatureReady(player1, new ScreechingSilcaw());
         silcaw.setAttacking(true);
 
-        setDeck(List.of(
+        harness.setLibrary(player2, List.of(
                 new GrizzlyBears(),
                 new GrizzlyBears(),
                 new SerraAngel(),
@@ -51,6 +93,7 @@ class ScreechingSilcawTest extends BaseCardTest {
         ));
 
         resolveCombat();
+        resolveAllTriggers();
 
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(4);
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
@@ -61,10 +104,10 @@ class ScreechingSilcawTest extends BaseCardTest {
     @DisplayName("Milled cards go to graveyard in order from top of library")
     void milledCardsGoToGraveyard() {
         setupMetalcraft();
-        Permanent silcaw = addReadyCreature(new ScreechingSilcaw());
+        Permanent silcaw = addCreatureReady(player1, new ScreechingSilcaw());
         silcaw.setAttacking(true);
 
-        setDeck(List.of(
+        harness.setLibrary(player2, List.of(
                 new GrizzlyBears(),
                 new SerraAngel(),
                 new SuntailHawk(),
@@ -73,6 +116,7 @@ class ScreechingSilcawTest extends BaseCardTest {
         ));
 
         resolveCombat();
+        resolveAllTriggers();
 
         List<Card> graveyard = gd.playerGraveyards.get(player2.getId());
         assertThat(graveyard).extracting(Card::getName)
@@ -83,10 +127,10 @@ class ScreechingSilcawTest extends BaseCardTest {
     @DisplayName("Game log records metalcraft mill trigger")
     void gameLogRecordsMillTrigger() {
         setupMetalcraft();
-        Permanent silcaw = addReadyCreature(new ScreechingSilcaw());
+        Permanent silcaw = addCreatureReady(player1, new ScreechingSilcaw());
         silcaw.setAttacking(true);
 
-        setDeck(List.of(
+        harness.setLibrary(player2, List.of(
                 new GrizzlyBears(),
                 new SerraAngel(),
                 new SuntailHawk(),
@@ -94,9 +138,10 @@ class ScreechingSilcawTest extends BaseCardTest {
         ));
 
         resolveCombat();
+        resolveAllTriggers();
 
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("metalcraft ability triggers"));
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("mills 4 card"));
+        assertThat(gameLogContains("metalcraft ability triggers")).isTrue();
+        assertThat(gameLogContains("mills 4 card")).isTrue();
     }
 
     @Test
@@ -104,10 +149,10 @@ class ScreechingSilcawTest extends BaseCardTest {
     void defenderTakesCombatDamage() {
         setupMetalcraft();
         harness.setLife(player2, 20);
-        Permanent silcaw = addReadyCreature(new ScreechingSilcaw());
+        Permanent silcaw = addCreatureReady(player1, new ScreechingSilcaw());
         silcaw.setAttacking(true);
 
-        setDeck(List.of(
+        harness.setLibrary(player2, List.of(
                 new GrizzlyBears(),
                 new SerraAngel(),
                 new SuntailHawk(),
@@ -115,19 +160,18 @@ class ScreechingSilcawTest extends BaseCardTest {
         ));
 
         resolveCombat();
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
     }
 
-    // ===== Combat damage without metalcraft =====
-
     @Test
     @DisplayName("No mill when metalcraft is not met (0 artifacts)")
     void noMillWithoutMetalcraft() {
-        Permanent silcaw = addReadyCreature(new ScreechingSilcaw());
+        Permanent silcaw = addCreatureReady(player1, new ScreechingSilcaw());
         silcaw.setAttacking(true);
 
-        setDeck(List.of(
+        harness.setLibrary(player2, List.of(
                 new GrizzlyBears(),
                 new SerraAngel(),
                 new SuntailHawk(),
@@ -135,6 +179,7 @@ class ScreechingSilcawTest extends BaseCardTest {
         ));
 
         resolveCombat();
+        resolveAllTriggers();
 
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(4);
@@ -146,10 +191,10 @@ class ScreechingSilcawTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Spellbook());
         harness.addToBattlefield(player1, new Spellbook());
 
-        Permanent silcaw = addReadyCreature(new ScreechingSilcaw());
+        Permanent silcaw = addCreatureReady(player1, new ScreechingSilcaw());
         silcaw.setAttacking(true);
 
-        setDeck(List.of(
+        harness.setLibrary(player2, List.of(
                 new GrizzlyBears(),
                 new SerraAngel(),
                 new SuntailHawk(),
@@ -157,6 +202,7 @@ class ScreechingSilcawTest extends BaseCardTest {
         ));
 
         resolveCombat();
+        resolveAllTriggers();
 
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(4);
@@ -166,10 +212,10 @@ class ScreechingSilcawTest extends BaseCardTest {
     @DisplayName("Defender still takes combat damage even without metalcraft")
     void defenderTakesDamageWithoutMetalcraft() {
         harness.setLife(player2, 20);
-        Permanent silcaw = addReadyCreature(new ScreechingSilcaw());
+        Permanent silcaw = addCreatureReady(player1, new ScreechingSilcaw());
         silcaw.setAttacking(true);
 
-        setDeck(List.of(
+        harness.setLibrary(player2, List.of(
                 new GrizzlyBears(),
                 new SerraAngel(),
                 new SuntailHawk(),
@@ -177,26 +223,23 @@ class ScreechingSilcawTest extends BaseCardTest {
         ));
 
         resolveCombat();
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
     }
 
-    // ===== Edge cases =====
-
     @Test
     @DisplayName("No trigger when Silcaw is blocked")
     void noTriggerWhenBlocked() {
         setupMetalcraft();
-        Permanent silcaw = addReadyCreature(new ScreechingSilcaw());
+        Permanent silcaw = addCreatureReady(player1, new ScreechingSilcaw());
         silcaw.setAttacking(true);
-        Permanent blocker = new Permanent(new SerraAngel());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        Permanent blocker = addCreatureReady(player2, new SerraAngel());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(3); // Silcaw is at index 3 (after 3 Spellbooks)
 
-        setDeck(List.of(
+        harness.setLibrary(player2, List.of(
                 new GrizzlyBears(),
                 new SerraAngel(),
                 new SuntailHawk(),
@@ -204,6 +247,7 @@ class ScreechingSilcawTest extends BaseCardTest {
         ));
 
         resolveCombat();
+        resolveAllTriggers();
 
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(4);
@@ -213,15 +257,16 @@ class ScreechingSilcawTest extends BaseCardTest {
     @DisplayName("Handles library with fewer than 4 cards")
     void partialLibraryMill() {
         setupMetalcraft();
-        Permanent silcaw = addReadyCreature(new ScreechingSilcaw());
+        Permanent silcaw = addCreatureReady(player1, new ScreechingSilcaw());
         silcaw.setAttacking(true);
 
-        setDeck(List.of(
+        harness.setLibrary(player2, List.of(
                 new GrizzlyBears(),
                 new SerraAngel()
         ));
 
         resolveCombat();
+        resolveAllTriggers();
 
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
@@ -231,12 +276,13 @@ class ScreechingSilcawTest extends BaseCardTest {
     @DisplayName("Handles empty library gracefully")
     void emptyLibrary() {
         setupMetalcraft();
-        Permanent silcaw = addReadyCreature(new ScreechingSilcaw());
+        Permanent silcaw = addCreatureReady(player1, new ScreechingSilcaw());
         silcaw.setAttacking(true);
 
-        setDeck(List.of());
+        harness.setLibrary(player2, List.of());
 
         resolveCombat();
+        resolveAllTriggers();
 
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
     }
@@ -248,10 +294,10 @@ class ScreechingSilcawTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Spellbook());
         harness.addToBattlefield(player1, new Spellbook());
 
-        Permanent silcaw = addReadyCreature(new ScreechingSilcaw());
+        Permanent silcaw = addCreatureReady(player1, new ScreechingSilcaw());
         silcaw.setAttacking(true);
 
-        setDeck(List.of(
+        harness.setLibrary(player2, List.of(
                 new GrizzlyBears(),
                 new SerraAngel(),
                 new SuntailHawk(),
@@ -259,6 +305,7 @@ class ScreechingSilcawTest extends BaseCardTest {
         ));
 
         resolveCombat();
+        resolveAllTriggers();
 
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(4);
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
