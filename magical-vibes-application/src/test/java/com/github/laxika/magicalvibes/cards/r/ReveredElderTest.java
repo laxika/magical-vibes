@@ -36,14 +36,13 @@ class ReveredElderTest extends BaseCardTest {
     @DisplayName("The next 1 damage to Revered Elder is prevented")
     void preventsNextDamage() {
         Permanent elder = addReadyElder();
-        Permanent attacker = addCreatureReady(player2, new FreshVolunteers());
+        addCreatureReady(player2, new FreshVolunteers());
         harness.addMana(player1, COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        attacker.setAttacking(true);
-        prepareDeclareBlockers(player2);
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -84,6 +83,51 @@ class ReveredElderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(elder.getDamagePreventionShield()).isZero();
+    }
+
+    @Test
+    @DisplayName("Repeated activations prevent two damage without preventing Elder's own damage")
+    void repeatedActivationsPreventTwoDamage() {
+        Permanent elder = addReadyElder();
+        Permanent attacker = addCreatureReady(player2, new FreshVolunteers());
+        harness.addMana(player1, COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        assertThat(elder.getMarkedDamage()).isZero();
+        assertThat(elder.getDamagePreventionShield()).isZero();
+        assertThat(attacker.getMarkedDamage()).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Elder can prevent damage")
+    void tappedSummoningSickElderCanActivate() {
+        Permanent elder = harness.addToBattlefieldAndReturn(player1, new ReveredElder());
+        elder.setSummoningSick(true);
+        elder.setTapped(true);
+        addCreatureReady(player2, new KrisMage());
+        harness.setHand(player2, List.of(new FreshVolunteers()));
+        harness.addMana(player1, COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.addMana(player2, RED, 1);
+        harness.activateAbility(player2, 0, 0, null, elder.getId());
+        harness.handleCardChosen(player2, 0);
+        harness.passBothPriorities();
+
+        assertThat(elder.getMarkedDamage()).isZero();
+        assertThat(elder.getDamagePreventionShield()).isZero();
+        assertThat(elder.isTapped()).isTrue();
     }
 
     private Permanent addReadyElder() {
