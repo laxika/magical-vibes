@@ -29,8 +29,7 @@ class SeizeTheSoulTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SeizeTheSoul()));
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castInstant(player1, 0, firstTarget.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, firstTarget.getId());
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(permanent -> permanent.getId().equals(firstTarget.getId()));
@@ -80,8 +79,7 @@ class SeizeTheSoulTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SeizeTheSoul()));
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castInstant(player1, 0, firstTarget.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, firstTarget.getId());
         harness.handlePermanentChosen(player1, hauntedCreature.getId());
         harness.passBothPriorities();
 
@@ -95,6 +93,79 @@ class SeizeTheSoulTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, legalTarget.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
+    }
+
+    @Test
+    void hauntedCreatureDeathWithoutLegalTargetDoesNotCreateSpirit() {
+        Permanent firstTarget = harness.addToBattlefieldAndReturn(player2, new WildCantor());
+        Permanent hauntedCreature = harness.addToBattlefieldAndReturn(player2, new WildCantor());
+        harness.setHand(player1, List.of(new SeizeTheSoul()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castAndResolveInstant(player1, 0, firstTarget.getId());
+        harness.handlePermanentChosen(player1, hauntedCreature.getId());
+        harness.passBothPriorities();
+
+        destroyWithMortify(hauntedCreature);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Spirit")).isEqualTo(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void hauntedCreatureDeathWithTargetRemovedBeforeResolutionDoesNotCreateSpirit() {
+        Permanent firstTarget = harness.addToBattlefieldAndReturn(player2, new WildCantor());
+        Permanent hauntedCreature = harness.addToBattlefieldAndReturn(player2, new WildCantor());
+        Permanent secondTarget = harness.addToBattlefieldAndReturn(player2, new WildCantor());
+        harness.setHand(player1, List.of(new SeizeTheSoul()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castAndResolveInstant(player1, 0, firstTarget.getId());
+        harness.handlePermanentChosen(player1, hauntedCreature.getId());
+        harness.passBothPriorities();
+
+        destroyWithMortify(hauntedCreature);
+        harness.handlePermanentChosen(player1, secondTarget.getId());
+        destroyWithMortify(secondTarget);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Spirit")).isEqualTo(1);
+    }
+
+    @Test
+    void spellWithTargetRemovedBeforeResolutionDoesNotCreateSpiritOrHaunt() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new WildCantor());
+        harness.addToBattlefield(player2, new WildCantor());
+        harness.setHand(player1, List.of(new SeizeTheSoul()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castInstant(player1, 0, target.getId());
+
+        destroyWithMortify(target);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Spirit")).isZero();
+        harness.assertInGraveyard(player1, "Seize the Soul");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void canHauntTheWhiteSpiritCreatedByTheSpell() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new WildCantor());
+        harness.setHand(player1, List.of(new SeizeTheSoul()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Spirit"));
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getName().equals("Seize the Soul"));
+        harness.assertNotInGraveyard(player1, "Seize the Soul");
     }
 
     private void destroyWithMortify(Permanent target) {
