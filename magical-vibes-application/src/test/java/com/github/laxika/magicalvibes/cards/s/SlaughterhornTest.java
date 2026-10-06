@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Slaughterhorn.class, GrizzlyBears.class})
 class SlaughterhornTest extends BaseCardTest {
 
     @Test
@@ -48,7 +50,6 @@ class SlaughterhornTest extends BaseCardTest {
         harness.activateHandAbility(player1, 0, bears.getId());
         harness.passBothPriorities();
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
@@ -69,5 +70,71 @@ class SlaughterhornTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         harness.assertInHand(player1, "Slaughterhorn");
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Bloodrush can boost an opponent's attacker and pays costs before resolution")
+    void bloodrushBoostsOpponentsAttacker() {
+        harness.setHand(player1, List.of(new Slaughterhorn()));
+        Permanent attacker = harness.addToBattlefieldAndReturn(player2, new Slaughterhorn());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateHandAbility(player1, 0, attacker.getId());
+
+        harness.assertNotInHand(player1, "Slaughterhorn");
+        harness.assertInGraveyard(player1, "Slaughterhorn");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Bloodrush does not boost a target that stops attacking before resolution")
+    void bloodrushRechecksAttackingTarget() {
+        harness.setHand(player1, List.of(new Slaughterhorn()));
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new Slaughterhorn());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateHandAbility(player1, 0, attacker.getId());
+        attacker.setAttacking(false);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
+        harness.assertInGraveyard(player1, "Slaughterhorn");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Bloodrush requires green mana and leaves the source in hand if it cannot be paid")
+    void bloodrushRequiresGreenMana() {
+        harness.setHand(player1, List.of(new Slaughterhorn()));
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new Slaughterhorn());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Slaughterhorn");
+        harness.assertNotInGraveyard(player1, "Slaughterhorn");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
     }
 }
