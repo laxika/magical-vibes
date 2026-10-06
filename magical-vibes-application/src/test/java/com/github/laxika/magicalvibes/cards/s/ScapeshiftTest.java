@@ -1,17 +1,20 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
+import com.github.laxika.magicalvibes.cards.a.AshayaSoulOfTheWild;
+import com.github.laxika.magicalvibes.cards.c.CosisTrickster;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GreenwoodSentinel;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.t.TheGitrogMonster;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +22,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Scapeshift.class, Forest.class, Island.class, Mountain.class, Plains.class,
+        GreenwoodSentinel.class, CosisTrickster.class, TheGitrogMonster.class, AshayaSoulOfTheWild.class})
 class ScapeshiftTest extends BaseCardTest {
 
     @Test
@@ -68,9 +73,9 @@ class ScapeshiftTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of(lands.get(0).getId(), lands.get(1).getId()));
 
         // Pick two land cards from the library
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         // One original land plus two fetched lands
         assertThat(landsOnBattlefield()).hasSize(3);
@@ -91,7 +96,7 @@ class ScapeshiftTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of(lands.get(0).getId()));
 
         // Exactly one pick allowed — after one pick the search ends
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
         assertThat(gd.interaction.activeInteraction()).isNull();
         long tapped = landsOnBattlefield().stream().filter(Permanent::isTapped).count();
         assertThat(tapped).isGreaterThanOrEqualTo(1);
@@ -123,7 +128,7 @@ class ScapeshiftTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of(lands.get(0).getId(), lands.get(1).getId()));
 
         // Decline the search
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+        harness.handleCardChosen(player1, -1);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         // Lands were sacrificed, none fetched
@@ -142,7 +147,180 @@ class ScapeshiftTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Only the controller's lands can be chosen for sacrifice")
+    void excludesOpposingLandsAndNonlands() {
+        List<Permanent> lands = setupLands(2);
+        harness.addToBattlefield(player1, new GreenwoodSentinel());
+        harness.addToBattlefield(player2, new Forest());
+        setupLibraryWithLands();
+        castScapeshift();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).validIds())
+                .containsExactlyInAnyOrderElementsOf(lands.stream().map(Permanent::getId).toList());
+    }
+
+    @Test
+    @DisplayName("May stop after finding fewer lands than were sacrificed")
+    void mayFindFewerLands() {
+        List<Permanent> lands = setupLands(3);
+        setupLibraryWithLands();
+        castScapeshift();
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, lands.stream().map(Permanent::getId).toList());
+
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(landsOnBattlefield()).hasSize(1).allMatch(Permanent::isTapped);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .containsAll(lands.stream().map(Permanent::getCard).toList());
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Finding the only land completes a search with a larger allowance")
+    void fewerAvailableLandsThanSacrificed() {
+        List<Permanent> lands = setupLands(3);
+        harness.setLibrary(player1, List.of(new Island(), new GreenwoodSentinel()));
+        castScapeshift();
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, lands.stream().map(Permanent::getId).toList());
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(landsOnBattlefield()).hasSize(1).allMatch(Permanent::isTapped);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1)
+                .allMatch(card -> card instanceof GreenwoodSentinel);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Sacrificing zero lands still shuffles the library")
+    void sacrificingZeroStillShuffles() {
+        setupLands(2);
+        setupLibraryWithLands();
+        Permanent trickster = harness.addToBattlefieldAndReturn(player2, new CosisTrickster());
+        castScapeshift();
+        harness.passBothPriorities();
+
+        harness.handleMultiplePermanentsChosen(player1, List.of());
+
+        assertShuffleTrigger(trickster);
+        assertThat(landsOnBattlefield()).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Controlling no lands still shuffles the library")
+    void controllingNoLandsStillShuffles() {
+        setupLibraryWithLands();
+        Permanent trickster = harness.addToBattlefieldAndReturn(player2, new CosisTrickster());
+        castScapeshift();
+
+        harness.passBothPriorities();
+
+        assertShuffleTrigger(trickster);
+    }
+
+    @Test
+    @DisplayName("Searching an empty library still causes a shuffle")
+    void emptyLibraryStillShuffles() {
+        List<Permanent> lands = setupLands(1);
+        harness.setLibrary(player1, List.of());
+        Permanent trickster = harness.addToBattlefieldAndReturn(player2, new CosisTrickster());
+        castScapeshift();
+        harness.passBothPriorities();
+
+        harness.handleMultiplePermanentsChosen(player1, List.of(lands.getFirst().getId()));
+
+        assertShuffleTrigger(trickster);
+        assertThat(landsOnBattlefield()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Finding no cards still shuffles once")
+    void failingToFindStillShuffles() {
+        List<Permanent> lands = setupLands(2);
+        setupLibraryWithLands();
+        Permanent trickster = harness.addToBattlefieldAndReturn(player2, new CosisTrickster());
+        castScapeshift();
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, lands.stream().map(Permanent::getId).toList());
+
+        harness.handleCardChosen(player1, -1);
+
+        assertShuffleTrigger(trickster);
+    }
+
+    @Test
+    @DisplayName("Sacrificed lands reach the graveyard simultaneously and trigger Gitrog once")
+    void multipleSacrificedLandsTriggerGitrogOnce() {
+        List<Permanent> lands = setupLands(3);
+        harness.addToBattlefield(player1, new TheGitrogMonster());
+        setupLibraryWithLands();
+        castScapeshift();
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, lands.stream().map(Permanent::getId).toList());
+
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .containsAll(lands.stream().map(Permanent::getCard).toList());
+    }
+
+    @Test
+    @DisplayName("Fetched lands enter as a group and the completed search shuffles once")
+    void fetchedLandsEnterTogetherAndShuffle() {
+        List<Permanent> lands = setupLands(2);
+        setupLibraryWithLands();
+        Permanent trickster = harness.addToBattlefieldAndReturn(player2, new CosisTrickster());
+        castScapeshift();
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, lands.stream().map(Permanent::getId).toList());
+
+        harness.handleCardChosen(player1, 0);
+        assertThat(landsOnBattlefield()).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(landsOnBattlefield()).hasSize(2).allMatch(Permanent::isTapped);
+        assertShuffleTrigger(trickster);
+    }
+
+    @Test
+    @DisplayName("Creatures made into lands by Ashaya can be sacrificed")
+    void maySacrificeCreaturesThatAreCurrentlyLands() {
+        List<Permanent> lands = setupLands(1);
+        Permanent ashaya = harness.addToBattlefieldAndReturn(player1, new AshayaSoulOfTheWild());
+        Permanent sentinel = harness.addToBattlefieldAndReturn(player1, new GreenwoodSentinel());
+        setupLibraryWithLands();
+        castScapeshift();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).validIds())
+                .containsExactlyInAnyOrder(lands.getFirst().getId(), ashaya.getId(), sentinel.getId());
+
+        harness.handleMultiplePermanentsChosen(player1, List.of(sentinel.getId()));
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertNotOnBattlefield(player1, "Greenwood Sentinel");
+        harness.assertInGraveyard(player1, "Greenwood Sentinel");
+        assertThat(landsOnBattlefield()).hasSize(2);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    private void assertShuffleTrigger(Permanent trickster) {
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        assertThat(trickster.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
 
     private List<Permanent> setupLands(int count) {
         return java.util.stream.IntStream.range(0, count)
@@ -151,9 +329,7 @@ class ScapeshiftTest extends BaseCardTest {
     }
 
     private void setupLibraryWithLands() {
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new Island(), new Mountain(), new Plains(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Island(), new Mountain(), new Plains(), new GreenwoodSentinel()));
     }
 
     private void castScapeshift() {
