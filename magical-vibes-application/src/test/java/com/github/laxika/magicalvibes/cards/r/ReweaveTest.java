@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.b.Bitterblossom;
+import com.github.laxika.magicalvibes.cards.d.DivinersWand;
+import com.github.laxika.magicalvibes.cards.h.HithlainRope;
 import com.github.laxika.magicalvibes.cards.h.HondenOfSeeingWinds;
 import com.github.laxika.magicalvibes.cards.i.IsamaruHoundOfKonda;
 import com.github.laxika.magicalvibes.cards.j.JadeIdol;
@@ -17,8 +20,43 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({Reweave.class, ReachThroughMists.class, IsamaruHoundOfKonda.class,
-        SenseisDiviningTop.class, Forest.class, HondenOfSeeingWinds.class, JadeIdol.class})
+        SenseisDiviningTop.class, Forest.class, HondenOfSeeingWinds.class, JadeIdol.class,
+        Bitterblossom.class, DivinersWand.class, HithlainRope.class})
 class ReweaveTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Kindred permanents can match a different permanent type through Kindred")
+    void sharesKindredTypeAcrossPermanentTypes() {
+        harness.addToBattlefield(player2, new Bitterblossom());
+        harness.setHand(player1, List.of(new Reweave()));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+        harness.setLibrary(player2, List.of(new DivinersWand(), new HondenOfSeeingWinds()));
+
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Bitterblossom"));
+
+        harness.assertInGraveyard(player2, "Bitterblossom");
+        harness.assertOnBattlefield(player2, "Diviner's Wand");
+        harness.assertNotOnBattlefield(player2, "Honden of Seeing Winds");
+        assertThat(gd.playerDecks.get(player2.getId()))
+                .extracting(c -> c.getName()).containsExactly("Honden of Seeing Winds");
+    }
+
+    @Test
+    @DisplayName("A permanent that cannot be sacrificed prevents the replacement")
+    void cannotSacrificeTargetDoesNotRevealOrReplace() {
+        harness.addToBattlefield(player2, new HithlainRope());
+        harness.setHand(player1, List.of(new Reweave()));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+        harness.setLibrary(player2, List.of(new SenseisDiviningTop(), new Forest()));
+
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Hithlain Rope"));
+
+        harness.assertOnBattlefield(player2, "Hithlain Rope");
+        harness.assertNotOnBattlefield(player2, "Sensei's Divining Top");
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId()))
+                .extracting(c -> c.getName()).containsExactly("Sensei's Divining Top", "Forest");
+    }
 
     @Test
     @DisplayName("Sacrificed creature is replaced by the first creature card revealed")
@@ -30,8 +68,7 @@ class ReweaveTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new SenseisDiviningTop(), new IsamaruHoundOfKonda()));
 
         UUID targetId = harness.getPermanentId(player1, "Isamaru, Hound of Konda");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.assertInGraveyard(player1, "Isamaru, Hound of Konda");
         harness.assertOnBattlefield(player1, "Isamaru, Hound of Konda");
@@ -50,8 +87,7 @@ class ReweaveTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new IsamaruHoundOfKonda(), new SenseisDiviningTop()));
 
         UUID targetId = harness.getPermanentId(player1, "Sensei's Divining Top");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.assertInGraveyard(player1, "Sensei's Divining Top");
         harness.assertOnBattlefield(player1, "Sensei's Divining Top");
@@ -69,8 +105,7 @@ class ReweaveTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new IsamaruHoundOfKonda(), new Forest()));
 
         UUID targetId = harness.getPermanentId(player1, "Sensei's Divining Top");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.assertInGraveyard(player1, "Sensei's Divining Top");
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
@@ -87,8 +122,7 @@ class ReweaveTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new IsamaruHoundOfKonda(), new Forest()));
 
         UUID targetId = harness.getPermanentId(player2, "Forest");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.assertInGraveyard(player2, "Forest");
         harness.assertOnBattlefield(player2, "Forest");
@@ -105,8 +139,7 @@ class ReweaveTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new HondenOfSeeingWinds()));
 
         UUID targetId = harness.getPermanentId(player1, "Honden of Seeing Winds");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.assertInGraveyard(player1, "Honden of Seeing Winds");
         harness.assertOnBattlefield(player1, "Honden of Seeing Winds");
@@ -121,8 +154,7 @@ class ReweaveTest extends BaseCardTest {
         harness.setLibrary(player1, List.of());
 
         UUID targetId = harness.getPermanentId(player1, "Sensei's Divining Top");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.assertInGraveyard(player1, "Sensei's Divining Top");
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
@@ -138,8 +170,7 @@ class ReweaveTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new IsamaruHoundOfKonda(), new SenseisDiviningTop()));
 
         UUID targetId = harness.getPermanentId(player1, "Jade Idol");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Jade Idol");
