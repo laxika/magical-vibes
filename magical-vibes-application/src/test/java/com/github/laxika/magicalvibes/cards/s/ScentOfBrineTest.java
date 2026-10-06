@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.b.BrineSeer;
 import com.github.laxika.magicalvibes.cards.f.FlameJet;
 import com.github.laxika.magicalvibes.cards.h.HulkingOgre;
+import com.github.laxika.magicalvibes.cards.t.ThranDynamo;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ScentOfBrine.class, BrineSeer.class, FlameJet.class, HulkingOgre.class})
+@CardUsed({ScentOfBrine.class, BrineSeer.class, FlameJet.class, HulkingOgre.class, ThranDynamo.class})
 class ScentOfBrineTest extends BaseCardTest {
 
     @Test
@@ -31,14 +32,10 @@ class ScentOfBrineTest extends BaseCardTest {
 
         HulkingOgre spell = new HulkingOgre();
         harness.forceActivePlayer(player2);
-        harness.setHand(player2, List.of(spell));
-        harness.addMana(player2, ManaColor.RED, 1);
-        harness.addMana(player2, ManaColor.COLORLESS, 2);
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, spell, "{2}{R}");
         harness.passPriority(player2);
 
-        harness.castInstant(player1, 0, spell.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, spell.getId());
 
         PendingInteraction.RevealAnyNumberOfCardsFromHandChoice choice =
                 (PendingInteraction.RevealAnyNumberOfCardsFromHandChoice)
@@ -63,14 +60,11 @@ class ScentOfBrineTest extends BaseCardTest {
 
         HulkingOgre spell = new HulkingOgre();
         harness.forceActivePlayer(player2);
-        harness.setHand(player2, List.of(spell));
-        harness.addMana(player2, ManaColor.RED, 1);
-        harness.addMana(player2, ManaColor.COLORLESS, 3);
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, spell, "{2}{R}");
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.passPriority(player2);
 
-        harness.castInstant(player1, 0, spell.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, spell.getId());
         harness.handleMultipleCardsChosen(player1, List.of(blueCard.getId()));
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -91,14 +85,10 @@ class ScentOfBrineTest extends BaseCardTest {
 
         HulkingOgre spell = new HulkingOgre();
         harness.forceActivePlayer(player2);
-        harness.setHand(player2, List.of(spell));
-        harness.addMana(player2, ManaColor.RED, 1);
-        harness.addMana(player2, ManaColor.COLORLESS, 2);
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, spell, "{2}{R}");
         harness.passPriority(player2);
 
-        harness.castInstant(player1, 0, spell.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, spell.getId());
         harness.handleMultipleCardsChosen(player1, List.of());
 
         harness.handleMayAbilityChosen(player2, true);
@@ -119,14 +109,10 @@ class ScentOfBrineTest extends BaseCardTest {
 
         HulkingOgre spell = new HulkingOgre();
         harness.forceActivePlayer(player2);
-        harness.setHand(player2, List.of(spell));
-        harness.addMana(player2, ManaColor.RED, 1);
-        harness.addMana(player2, ManaColor.COLORLESS, 2);
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, spell, "{2}{R}");
         harness.passPriority(player2);
 
-        harness.castInstant(player1, 0, spell.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, spell.getId());
         harness.handleMultipleCardsChosen(player1,
                 List.of(firstBlueCard.getId(), secondBlueCard.getId()));
 
@@ -145,14 +131,11 @@ class ScentOfBrineTest extends BaseCardTest {
 
         HulkingOgre spell = new HulkingOgre();
         harness.forceActivePlayer(player2);
-        harness.setHand(player2, List.of(spell));
-        harness.addMana(player2, ManaColor.RED, 1);
-        harness.addMana(player2, ManaColor.COLORLESS, 3);
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, spell, "{2}{R}");
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.passPriority(player2);
 
-        harness.castInstant(player1, 0, spell.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, spell.getId());
         harness.handleMultipleCardsChosen(player1, List.of(blueCard.getId()));
 
         assertThat(gd.interaction.activeInteraction())
@@ -174,14 +157,10 @@ class ScentOfBrineTest extends BaseCardTest {
 
         HulkingOgre spell = new HulkingOgre();
         harness.forceActivePlayer(player2);
-        harness.setHand(player2, List.of(spell));
-        harness.addMana(player2, ManaColor.RED, 1);
-        harness.addMana(player2, ManaColor.COLORLESS, 2);
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, spell, "{2}{R}");
         harness.passPriority(player2);
 
-        harness.castInstant(player1, 0, spell.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, spell.getId());
 
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -201,5 +180,56 @@ class ScentOfBrineTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, permanent.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Charges only for the selected subset of blue cards")
+    void chargesOnlyForSelectedSubset() {
+        BrineSeer revealed = new BrineSeer();
+        BrineSeer unrevealed = new BrineSeer();
+        harness.setHand(player1, List.of(new ScentOfBrine(), revealed, unrevealed));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        HulkingOgre spell = new HulkingOgre();
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, spell, "{2}{R}");
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.passPriority(player2);
+
+        harness.castAndResolveInstant(player1, 0, spell.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(revealed.getId()));
+        harness.handleMayAbilityChosen(player2, true);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Hulking Ogre");
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(revealed, unrevealed);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotalAllMana()).isZero();
+    }
+
+    @Test
+    @DisplayName("Offers payment when an untapped mana source can produce the required mana")
+    void allowsProducingManaDuringPayment() {
+        BrineSeer blueCard = new BrineSeer();
+        harness.setHand(player1, List.of(new ScentOfBrine(), blueCard));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addToBattlefield(player2, new ThranDynamo());
+
+        HulkingOgre spell = new HulkingOgre();
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, spell, "{2}{R}");
+        harness.passPriority(player2);
+
+        harness.castAndResolveInstant(player1, 0, spell.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(blueCard.getId()));
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.tapPermanent(player2, 0);
+        harness.handleMayAbilityChosen(player2, true);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Hulking Ogre");
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotalAllMana()).isEqualTo(2);
     }
 }
