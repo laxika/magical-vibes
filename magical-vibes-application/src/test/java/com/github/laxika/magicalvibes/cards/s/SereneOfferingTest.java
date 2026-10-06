@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.t.TrainedArmodon;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -21,11 +22,10 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({CircleOfProtectionRed.class, LightOfDay.class, RainOfGore.class, SereneOffering.class, TrainedArmodon.class})
 class SereneOfferingTest extends BaseCardTest {
 
-    private void castSereneOffering(UUID targetId) {
+    private void prepareSereneOffering() {
         harness.setHand(player1, List.of(new SereneOffering()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castInstant(player1, 0, targetId);
     }
 
     @Test
@@ -35,8 +35,8 @@ class SereneOfferingTest extends BaseCardTest {
         harness.addToBattlefield(player2, new LightOfDay()); // {3}{W} -> mana value 4
         UUID targetId = harness.getPermanentId(player2, "Light of Day");
 
-        castSereneOffering(targetId);
-        harness.passBothPriorities();
+        prepareSereneOffering();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         GameData gd = harness.getGameData();
         harness.assertNotOnBattlefield(player2, "Light of Day");
@@ -51,8 +51,8 @@ class SereneOfferingTest extends BaseCardTest {
         harness.addToBattlefield(player2, new CircleOfProtectionRed()); // {1}{W} -> mana value 2
         UUID targetId = harness.getPermanentId(player2, "Circle of Protection: Red");
 
-        castSereneOffering(targetId);
-        harness.passBothPriorities();
+        prepareSereneOffering();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         assertThat(harness.getGameData().playerLifeTotals.get(player1.getId())).isEqualTo(12);
     }
@@ -65,8 +65,8 @@ class SereneOfferingTest extends BaseCardTest {
         harness.addToBattlefield(player2, new RainOfGore()); // {B}{R} -> mana value 2
         UUID targetId = harness.getPermanentId(player2, "Rain of Gore");
 
-        castSereneOffering(targetId);
-        harness.passBothPriorities();
+        prepareSereneOffering();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.assertNotOnBattlefield(player2, "Rain of Gore");
         assertThat(harness.getGameData().playerLifeTotals.get(player1.getId())).isEqualTo(12);
@@ -95,7 +95,8 @@ class SereneOfferingTest extends BaseCardTest {
         harness.addToBattlefield(player2, new LightOfDay());
         UUID targetId = harness.getPermanentId(player2, "Light of Day");
 
-        castSereneOffering(targetId);
+        prepareSereneOffering();
+        harness.castInstant(player1, 0, targetId);
         harness.getGameData().playerBattlefields.get(player2.getId()).clear();
         harness.passBothPriorities();
 
@@ -103,5 +104,37 @@ class SereneOfferingTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         harness.assertInGraveyard(player1, "Serene Offering");
+    }
+
+    @Test
+    @DisplayName("Can destroy its controller's enchantment and gain life")
+    void destroysOwnEnchantment() {
+        harness.setLife(player1, 10);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new LightOfDay());
+
+        prepareSereneOffering();
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Light of Day");
+        harness.assertInGraveyard(player1, "Light of Day");
+        harness.assertLife(player1, 14);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Still gains life when regeneration prevents destruction")
+    void gainsLifeWhenTargetRegenerates() {
+        harness.setLife(player1, 10);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new LightOfDay());
+        target.setRegenerationShield(1);
+
+        prepareSereneOffering();
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertOnBattlefield(player2, "Light of Day");
+        harness.assertNotInGraveyard(player2, "Light of Day");
+        assertThat(target.getRegenerationShield()).isZero();
+        harness.assertLife(player1, 14);
+        harness.assertLife(player2, 20);
     }
 }
