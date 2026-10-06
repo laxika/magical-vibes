@@ -79,4 +79,58 @@ class SaltRoadAmbushersTest extends BaseCardTest {
         assertThat(faceDownForest.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(ambushers.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
+
+    @Test
+    void doesNotGetMegamorphCounterWhenTurnedFaceUpByASpell() {
+        Permanent ambushers = harness.addToBattlefieldAndReturn(player1, new SaltRoadAmbushers());
+        ambushers.setFaceDownAsCloaked();
+        harness.setHand(player1, List.of(new ExposeTheCulprit()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castModalInstantWithModes(player1, 0, 1, 2, new int[]{0}, List.of(ambushers.getId()));
+        harness.passBothPriorities();
+
+        assertThat(ambushers.isFaceDown()).isFalse();
+        assertThat(ambushers.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void doesNotTriggerForAnOpponentsCreature() {
+        Permanent ambushers = addCreatureReady(player1, new SaltRoadAmbushers());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new DogWalker());
+        opponentCreature.setFaceDownAsDisguised();
+        harness.setHand(player1, List.of(new ExposeTheCulprit()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castModalInstantWithModes(player1, 0, 1, 2, new int[]{0}, List.of(opponentCreature.getId()));
+        harness.passBothPriorities();
+        while (!gd.stack.isEmpty()) {
+            harness.passBothPriorities();
+        }
+
+        assertThat(opponentCreature.isFaceDown()).isFalse();
+        assertThat(opponentCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(ambushers.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void eachAmbushersAddsCountersToAnotherCreature() {
+        Permanent first = addCreatureReady(player1, new SaltRoadAmbushers());
+        Permanent second = addCreatureReady(player1, new SaltRoadAmbushers());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new DogWalker());
+        creature.setFaceDownAsDisguised();
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(creature));
+        while (!gd.stack.isEmpty()) {
+            harness.passBothPriorities();
+        }
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
 }
