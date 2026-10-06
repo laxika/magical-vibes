@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -10,6 +11,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -117,6 +120,75 @@ class SamiteBlessingTest extends BaseCardTest {
         assertThat(gd.sourceNextDamageToAnyTargetShields).isEmpty();
     }
 
+    @Test
+    @DisplayName("Only the next damage event from the chosen source is prevented")
+    void laterDamageFromChosenSourceIsNotPrevented() {
+        Permanent enchanted = addCreatureReady(player1, new GrizzlyBears());
+        attachBlessing(enchanted);
+        Permanent source = addCreatureReady(player2, new ProdigalPyromancer());
+
+        harness.activateAbility(player1, indexOf(player1, enchanted), null, enchanted.getId());
+        assertThat(enchanted.isTapped()).isTrue();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, source.getId());
+
+        harness.activateAbility(player2, indexOf(player2, source), null, enchanted.getId());
+        harness.passBothPriorities();
+        assertThat(enchanted.getMarkedDamage()).isZero();
+
+        source.untap();
+        harness.activateAbility(player2, indexOf(player2, source), null, enchanted.getId());
+        harness.passBothPriorities();
+        assertThat(enchanted.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A summoning-sick enchanted creature cannot pay the tap cost")
+    void summoningSicknessPreventsActivation() {
+        Permanent enchanted = addCreatureReady(player1, new GrizzlyBears());
+        enchanted.setSummoningSick(true);
+        attachBlessing(enchanted);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(player1, enchanted), null, enchanted.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(enchanted.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The enchanted creature's controller activates and chooses the source")
+    void opposingEnchantedCreatureControllerChoosesSource() {
+        Permanent enchanted = addCreatureReady(player2, new GrizzlyBears());
+        attachBlessing(enchanted);
+        Permanent protectedCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent source = addCreatureReady(player1, new ProdigalPyromancer());
+
+        harness.activateAbility(player2, indexOf(player2, enchanted), null, protectedCreature.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player2, source.getId());
+
+        harness.activateAbility(player1, indexOf(player1, source), null, protectedCreature.getId());
+        harness.passBothPriorities();
+        assertThat(protectedCreature.getMarkedDamage()).isZero();
+        assertThat(enchanted.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Resolving the Aura grants its ability to the targeted creature")
+    void castingBlessingGrantsAbility() {
+        Permanent enchanted = addCreatureReady(player1, new GrizzlyBears());
+        Permanent source = addCreatureReady(player2, new ProdigalPyromancer());
+        harness.setHand(player1, List.of(new SamiteBlessing()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castEnchantment(player1, 0, enchanted.getId());
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, indexOf(player1, enchanted), null, enchanted.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, source.getId());
+        harness.activateAbility(player2, indexOf(player2, source), null, enchanted.getId());
+        harness.passBothPriorities();
+        assertThat(enchanted.getMarkedDamage()).isZero();
+    }
     private void attachBlessing(Permanent enchanted) {
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new SamiteBlessing());
         aura.setAttachedTo(enchanted.getId());
