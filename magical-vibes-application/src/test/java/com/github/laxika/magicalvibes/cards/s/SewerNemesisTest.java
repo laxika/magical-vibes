@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.t.Terminate;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SewerNemesis.class, GrizzlyBears.class, SuntailHawk.class})
+@CardUsed({SewerNemesis.class, GrizzlyBears.class, SuntailHawk.class, Terminate.class})
 class SewerNemesisTest extends BaseCardTest {
 
     @Test
@@ -74,6 +75,71 @@ class SewerNemesisTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
     }
 
+    @Test
+    @DisplayName("The controller can choose themselves and mills when casting a spell")
+    void controllerCanChooseThemselves() {
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.setGraveyard(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        Permanent sewer = castSewerNemesis();
+        harness.handlePermanentChosen(player1, player1.getId());
+
+        assertThat(gqs.getEffectivePower(gd, sewer)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, sewer)).isEqualTo(1);
+        harness.setLibrary(player1, List.of(new SuntailHawk()));
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        assertThat(gqs.getEffectivePower(gd, sewer)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, sewer)).isEqualTo(2);
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Choosing a player with an empty graveyard puts Sewer Nemesis into its owner's graveyard")
+    void emptyChosenGraveyardCausesZeroToughnessDeath() {
+        harness.setGraveyard(player2, List.of());
+        castSewerNemesis();
+
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof SewerNemesis);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A mill trigger resolves after Sewer Nemesis is destroyed")
+    void millTriggerSurvivesSourceDestruction() {
+        harness.setGraveyard(player2, List.of(new GrizzlyBears()));
+        Permanent sewer = castSewerNemesis();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.setLibrary(player2, List.of(new SuntailHawk()));
+        harness.setHand(player2, List.of(new Terminate()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, sewer.getId());
+
+        assertThat(gd.stack).hasSize(2);
+        harness.setHand(player1, List.of(new Terminate()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, sewer.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+        assertThat(gd.stack).hasSize(1);
+    }
     private List<com.github.laxika.magicalvibes.model.Card> libraryOfSize(int size) {
         var cards = new ArrayList<com.github.laxika.magicalvibes.model.Card>();
         for (int i = 0; i < size; i++) {
