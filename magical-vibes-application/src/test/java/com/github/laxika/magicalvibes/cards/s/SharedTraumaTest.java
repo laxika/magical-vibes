@@ -54,4 +54,49 @@ class SharedTraumaTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(2);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
+
+    @Test
+    @DisplayName("A player may decline payment even with mana available")
+    void controllerDeclinesAndOpponentPays() {
+        harness.setHand(player1, List.of(new SharedTrauma()));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        harness.setLibrary(player2, List.of(new Forest(), new Forest()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.addMana(player2, ManaColor.GREEN, 1);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.handleXValueChosen(player1, 0);
+
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(2);
+
+        harness.handleXValueChosen(player2, 1);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Each player mills only the cards remaining in their library")
+    void paymentTotalExceedsOneLibrarySize() {
+        harness.setHand(player1, List.of(new SharedTrauma()));
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setLibrary(player2, List.of(new Forest(), new Forest(), new Forest()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.handleXValueChosen(player1, 2);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
 }
