@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.b.BlasphemousAct;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -14,10 +16,11 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SauronLordOfTheRings.class, GrizzlyBears.class, Forest.class, Shock.class})
+@CardUsed({SauronLordOfTheRings.class, GrizzlyBears.class, Forest.class, Shock.class, BlasphemousAct.class})
 class SauronLordOfTheRingsTest extends BaseCardTest {
 
     @Test
@@ -86,6 +89,151 @@ class SauronLordOfTheRingsTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(creature);
         assertThat(gd.ringLevels).doesNotContainKey(player1.getId());
+    }
+
+    @Test
+    void canReturnTheCreatureJustMilledBeforeSauronResolves() {
+        Card creature = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(creature, new Forest(), new Forest(), new Forest(), new Forest()));
+        harness.setGraveyard(player1, List.of());
+        harness.setHand(player1, List.of(new SauronLordOfTheRings()));
+        addSauronMana();
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Sauron, Lord of the Rings")).isZero();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        PendingInteraction.GraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIndices()).containsExactly(0);
+        harness.handleGraveyardCardChosen(player1, 0);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(creature.getId()));
+        resolveAllTriggers();
+        assertThat(countPermanents(player1, "Sauron, Lord of the Rings")).isEqualTo(1);
+    }
+
+    @Test
+    void repeatedCastingAddsCountersToTheExistingArmyWithNoCreatureToReturn() {
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
+        harness.setGraveyard(player1, List.of());
+        harness.setHand(player1, List.of(new SauronLordOfTheRings(), new SauronLordOfTheRings()));
+        addSauronMana();
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent army = findPermanent(player1, "Orc Army");
+        assertThat(army.getCounterCount(com.github.laxika.magicalvibes.model.CounterType.PLUS_ONE_PLUS_ONE))
+                .isEqualTo(5);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.passBothPriorities();
+        addSauronMana();
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Orc Army")).isEqualTo(1);
+        assertThat(army.getCounterCount(com.github.laxika.magicalvibes.model.CounterType.PLUS_ONE_PLUS_ONE))
+                .isEqualTo(10);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void enteringWithoutCastingDoesNotAmassMillOrReanimate() {
+        Card creature = new GrizzlyBears();
+        Card libraryCard = new Forest();
+        harness.setLibrary(player1, List.of(libraryCard));
+        harness.setGraveyard(player1, List.of(creature));
+
+        harness.enterBattlefieldAndReturn(player1, new SauronLordOfTheRings());
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Orc Army")).isZero();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(creature);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void commanderReturningToTheCommandZoneStillTemptsTheRing() {
+        harness.addToBattlefield(player1, new SauronLordOfTheRings());
+        Card commanderCard = new GrizzlyBears();
+        gd.makeCommander(player2.getId(), commanderCard);
+        Permanent commander = harness.addToBattlefieldAndReturn(player2, commanderCard);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        preparePlayerOneMainPhase();
+
+        harness.castInstant(player1, 0, commander.getId());
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.CommanderReturnChoice.class);
+        harness.handleMayAbilityChosen(player2, true);
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).doesNotContain(commanderCard);
+        assertThat(gd.ringLevels).containsEntry(player1.getId(), 1);
+    }
+
+    @Test
+    void ownCommanderDeathDoesNotTemptTheRing() {
+        harness.addToBattlefield(player1, new SauronLordOfTheRings());
+        Card commanderCard = new GrizzlyBears();
+        gd.makeCommander(player1.getId(), commanderCard);
+        Permanent commander = harness.addToBattlefieldAndReturn(player1, commanderCard);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        preparePlayerOneMainPhase();
+
+        harness.castInstant(player1, 0, commander.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(commander);
+        assertThat(gd.ringLevels).doesNotContainKey(player1.getId());
+    }
+
+    @Test
+    void simultaneousDeathWithAnOpposingCommanderStillTemptsTheRing() {
+        harness.addToBattlefield(player1, new SauronLordOfTheRings());
+        Card commanderCard = new SauronLordOfTheRings();
+        gd.makeCommander(player2.getId(), commanderCard);
+        harness.addToBattlefield(player2, commanderCard);
+        harness.setHand(player1, List.of(new BlasphemousAct()));
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.CommanderReturnChoice.class);
+        harness.handleMayAbilityChosen(player2, true);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.ringLevels).containsEntry(player1.getId(), 1);
+    }
+
+    @Test
+    void tramplesOverABlocker() {
+        harness.setLife(player2, 20);
+        addCreatureReady(player1, new SauronLordOfTheRings());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                blocker.getId(), 2, player2.getId(), 7));
+
+        harness.assertLife(player2, 13);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Sauron, Lord of the Rings");
     }
 
     private void addSauronMana() {
