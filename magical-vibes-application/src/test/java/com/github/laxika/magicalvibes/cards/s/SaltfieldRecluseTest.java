@@ -29,7 +29,6 @@ class SaltfieldRecluseTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, kavu)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, kavu)).isEqualTo(2);
@@ -82,5 +81,36 @@ class SaltfieldRecluseTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, land.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(recluse.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Can target itself and reduce its power below zero without changing toughness")
+    void canTargetItself() {
+        Permanent recluse = addCreatureReady(player1, new SaltfieldRecluse());
+
+        harness.activateAbility(player1, 0, null, recluse.getId());
+        harness.passBothPriorities();
+
+        assertThat(recluse.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, recluse)).isEqualTo(-1);
+        assertThat(gqs.getEffectiveToughness(gd, recluse)).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Saltfield Recluse");
+    }
+
+    @Test
+    @DisplayName("Two activations cumulatively reduce the same creature's power")
+    void multipleActivationsAreCumulative() {
+        addCreatureReady(player1, new SaltfieldRecluse());
+        addCreatureReady(player1, new SaltfieldRecluse());
+        Permanent kavu = addCreatureReady(player2, new KavuPredator());
+
+        harness.activateAbility(player1, 0, null, kavu.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, null, kavu.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, kavu)).isEqualTo(-2);
+        assertThat(gqs.getEffectiveToughness(gd, kavu)).isEqualTo(2);
+        harness.assertOnBattlefield(player2, "Kavu Predator");
     }
 }
