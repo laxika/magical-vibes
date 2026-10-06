@@ -86,4 +86,20 @@ class RiverBearTest extends BaseCardTest {
 
         assertThat(blockerPerm.isBlocking()).isTrue();
     }
+    @Test
+    @DisplayName("River Bear cannot be blocked when the defending player's Island is tapped")
+    void cannotBeBlockedWhenDefendersIslandIsTapped() {
+        Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
+        island.setTapped(true);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new RiverBear());
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        declareAttackersAndPrepareBlockers(List.of(attackerIndex));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(blockerIndex, attackerIndex))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+    }
 }
