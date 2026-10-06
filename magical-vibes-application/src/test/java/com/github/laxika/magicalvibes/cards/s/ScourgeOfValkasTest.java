@@ -2,6 +2,9 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.FurnaceWhelp;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.k.KokushoTheEveningStar;
+import com.github.laxika.magicalvibes.cards.w.WhiteKnight;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ScourgeOfValkas.class, FurnaceWhelp.class, GrizzlyBears.class})
+@CardUsed({ScourgeOfValkas.class, FurnaceWhelp.class, GrizzlyBears.class, KokushoTheEveningStar.class, WhiteKnight.class})
 class ScourgeOfValkasTest extends BaseCardTest {
 
     @Test
@@ -96,10 +99,69 @@ class ScourgeOfValkasTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, scourge)).isEqualTo(4);
     }
 
+    @Test
+    void enteringBlackDragonDamageIsPreventedByProtectionFromBlack() {
+        harness.addToBattlefield(player1, new ScourgeOfValkas());
+        Permanent knight = harness.addToBattlefieldAndReturn(player2, new WhiteKnight());
+        harness.setHand(player1, List.of(new KokushoTheEveningStar()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.handlePermanentChosen(player1, knight.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "White Knight");
+        assertThat(knight.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void departedEnteringDragonStillDealsDamageUsingCurrentDragonCount() {
+        harness.setLife(player2, 20);
+        harness.addToBattlefield(player1, new ScourgeOfValkas());
+        castFurnaceWhelp(player1);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        Permanent whelp = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard() instanceof FurnaceWhelp).findFirst().orElseThrow();
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, whelp);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    void opposingDragonsDoNotCountForDamage() {
+        harness.setLife(player2, 20);
+        harness.addToBattlefield(player2, new FurnaceWhelp());
+        castScourge(player1);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    void repeatedFirebreathingExpiresAtEndOfTurn() {
+        Permanent scourge = harness.addToBattlefieldAndReturn(player1, new ScourgeOfValkas());
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, scourge)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, scourge)).isEqualTo(4);
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.getEffectivePower(gd, scourge)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, scourge)).isEqualTo(4);
+    }
+
     private void castScourge(com.github.laxika.magicalvibes.model.Player player) {
         harness.setHand(player, List.of(new ScourgeOfValkas()));
         harness.addMana(player, ManaColor.RED, 5);
-        harness.getGameService().playCard(harness.getGameData(), player, 0, 0, player2.getId(), null);
+        harness.castCreature(player, 0, player2.getId());
     }
 
     private void castFurnaceWhelp(com.github.laxika.magicalvibes.model.Player player) {
