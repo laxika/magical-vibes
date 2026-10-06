@@ -76,4 +76,69 @@ class SamLoyalAttendantTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
     }
+
+    @Test
+    void targetPlayerCanDeclinePartnerSearch() {
+        harness.setLibrary(player2, List.of(new FrodoAdventurousHobbit()));
+        harness.setHand(player2, List.of());
+        harness.enterBattlefieldAndReturn(player1, new SamLoyalAttendant());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId()))
+                .singleElement().isInstanceOf(FrodoAdventurousHobbit.class);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void partnerSearchCanTargetControllerWithNoMatchingCard() {
+        harness.setLibrary(player1, List.of(new SamLoyalAttendant()));
+        harness.setHand(player1, List.of());
+        harness.enterBattlefieldAndReturn(player1, new SamLoyalAttendant());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .singleElement().isInstanceOf(SamLoyalAttendant.class);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void doesNotCreateFoodDuringOpponentsCombat() {
+        harness.addToBattlefield(player1, new SamLoyalAttendant());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.BEGINNING_OF_COMBAT);
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Food")).isZero();
+        assertThat(countPermanents(player2, "Food")).isZero();
+    }
+
+    @Test
+    void generatedFoodCostsOneManaAndStillSacrificesToGainThreeLife() {
+        harness.addToBattlefield(player1, new SamLoyalAttendant());
+        harness.setLife(player1, 10);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.BEGINNING_OF_COMBAT);
+        resolveAllTriggers();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 1, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(countPermanents(player1, "Food")).isZero();
+        harness.assertLife(player1, 10);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 13);
+    }
 }
