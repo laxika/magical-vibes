@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
+import com.github.laxika.magicalvibes.cards.c.ConeOfFlame;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -16,7 +18,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RedirectLightning.class, Boomerang.class, GrizzlyBears.class, CounselOfTheSoratami.class})
+@CardUsed({RedirectLightning.class, Boomerang.class, GrizzlyBears.class, CounselOfTheSoratami.class,
+        ProdigalPyromancer.class, ConeOfFlame.class})
 class RedirectLightningTest extends BaseCardTest {
 
     @Test
@@ -80,12 +83,102 @@ class RedirectLightningTest extends BaseCardTest {
                 .hasMessageContaining("single target");
     }
 
+    @Test
+    void cannotTargetSpellWithMultipleTargets() {
+        UUID creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears()).getId();
+        ConeOfFlame cone = new ConeOfFlame();
+        harness.setHand(player1, List.of(cone));
+        harness.addMana(player1, ManaColor.RED, 5);
+        harness.castSorcery(player1, 0, List.of(creature, player1.getId(), player2.getId()));
+        harness.passPriority(player1);
+        harness.setHand(player2, List.of(new RedirectLightning()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castInstantWithLifeOrManaAdditionalCost(
+                player2, 0, cone.getId(), true))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("single target");
+
+        harness.assertLife(player2, 20);
+        harness.assertInHand(player2, "Redirect Lightning");
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    void redirectsActivatedAbilityToItsController() {
+        addCreatureReady(player1, new ProdigalPyromancer());
+        harness.activateAbility(player1, 0, null, player2.getId());
+        UUID abilityId = gd.stack.getFirst().getTargetableId();
+        harness.passPriority(player1);
+        harness.setHand(player2, List.of(new RedirectLightning()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstantWithLifeOrManaAdditionalCost(player2, 0, abilityId, true);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player2, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 15);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void leavesOriginalTargetUnchangedWhenThereIsNoOtherLegalTarget() {
+        UUID target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears()).getId();
+        Boomerang boomerang = castBoomerang(target);
+        harness.setHand(player2, List.of(new RedirectLightning()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstantWithLifeOrManaAdditionalCost(player2, 0, boomerang.getId(), true);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertLife(player2, 15);
+    }
+
+    @Test
+    void cannotPayLifeWithLessThanFiveLife() {
+        Boomerang boomerang = castBoomerang(addTargetCreatures());
+        harness.setHand(player2, List.of(new RedirectLightning()));
+        harness.setLife(player2, 4);
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castInstantWithLifeOrManaAdditionalCost(
+                player2, 0, boomerang.getId(), true))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough life");
+
+        harness.assertLife(player2, 4);
+        harness.assertInHand(player2, "Redirect Lightning");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotalAllMana()).isEqualTo(1);
+    }
+
+    @Test
+    void manaOptionRequiresTwoManaInAdditionToTheRedManaCost() {
+        Boomerang boomerang = castBoomerang(addTargetCreatures());
+        harness.setHand(player2, List.of(new RedirectLightning()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castInstantWithLifeOrManaAdditionalCost(
+                player2, 0, boomerang.getId(), false))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertLife(player2, 20);
+        harness.assertInHand(player2, "Redirect Lightning");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotalAllMana()).isEqualTo(2);
+    }
+
     private UUID addTargetCreatures() {
-        GrizzlyBears bears1 = new GrizzlyBears();
-        GrizzlyBears bears2 = new GrizzlyBears();
-        harness.addToBattlefield(player1, bears1);
-        harness.addToBattlefield(player2, bears2);
-        return harness.getPermanentId(player1, "Grizzly Bears");
+        UUID target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears()).getId();
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        return target;
     }
 
     private Boomerang castBoomerang(UUID targetId) {
