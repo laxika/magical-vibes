@@ -76,4 +76,55 @@ class RazeTheEffigyTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castModalInstant(player1, 0, 1, List.of(creature.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    void canDestroyAnArtifactYouControl() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
+        harness.setHand(player1, List.of(new RazeTheEffigy()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castModalInstant(player1, 0, 0, List.of(artifact.getId()));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Ornithopter");
+        harness.assertInGraveyard(player1, "Ornithopter");
+    }
+
+    @Test
+    void canBoostAnOpponentsAttackingCreature() {
+        Permanent attacker = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        attacker.setAttacking(true);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new RazeTheEffigy()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castModalInstant(player1, 0, 1, List.of(attacker.getId()));
+        harness.passBothPriorities();
+
+        assertThat(attacker.getEffectivePower()).isEqualTo(4);
+        assertThat(attacker.getEffectiveToughness()).isEqualTo(4);
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void boostDoesNotResolveIfTargetStopsAttacking() {
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        attacker.setAttacking(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new RazeTheEffigy()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castModalInstant(player1, 0, 1, List.of(attacker.getId()));
+        attacker.setAttacking(false);
+        harness.passBothPriorities();
+
+        assertThat(attacker.getEffectivePower()).isEqualTo(2);
+        assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
+        harness.assertInGraveyard(player1, "Raze the Effigy");
+        assertThat(gd.stack).isEmpty();
+    }
 }
