@@ -35,7 +35,7 @@ class ShallowGraveTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Iron Tusk Elephant");
 
         Permanent returned = findPermanent(player1, "Feral Shadow");
-        assertThat(returned.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(returned.hasKeyword(Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -62,7 +62,7 @@ class ShallowGraveTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Iron Tusk Elephant");
@@ -99,8 +99,7 @@ class ShallowGraveTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Incinerate()));
         harness.addMana(player2, ManaColor.RED, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
-        harness.castInstant(player2, 0, returned.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, returned.getId());
 
         harness.assertNotOnBattlefield(player1, "Iron Tusk Elephant");
         harness.assertInGraveyard(player1, "Iron Tusk Elephant");
@@ -119,5 +118,72 @@ class ShallowGraveTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         harness.assertInGraveyard(player1, "Shallow Grave");
+    }
+
+    @Test
+    @DisplayName("Casting during the end step waits until the following end step to exile")
+    void castDuringEndStepWaitsUntilFollowingEndStep() {
+        harness.passUntil(TurnStep.END_STEP);
+        harness.setGraveyard(player1, List.of(new IronTuskElephant()));
+        harness.castFromHand(player1, new ShallowGrave(), "{1}{B}");
+        harness.passBothPriorities();
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.assertOnBattlefield(player1, "Iron Tusk Elephant");
+        harness.passUntilWithNoAttackers(player2, TurnStep.END_STEP);
+        harness.assertOnBattlefield(player1, "Iron Tusk Elephant");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Iron Tusk Elephant");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(c -> c.getName().equals("Iron Tusk Elephant"));
+    }
+
+    @Test
+    @DisplayName("Haste expires at cleanup even when the delayed exile is still pending")
+    void hasteExpiresBeforeFollowingTurn() {
+        harness.passUntil(TurnStep.END_STEP);
+        harness.setGraveyard(player1, List.of(new IronTuskElephant()));
+        harness.castFromHand(player1, new ShallowGrave(), "{1}{B}");
+        harness.passBothPriorities();
+        assertThat(findPermanent(player1, "Iron Tusk Elephant").hasKeyword(Keyword.HASTE)).isTrue();
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        harness.assertOnBattlefield(player1, "Iron Tusk Elephant");
+        assertThat(findPermanent(player1, "Iron Tusk Elephant").hasKeyword(Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Does not return a creature from the opponent's graveyard")
+    void ignoresOpponentsGraveyard() {
+        harness.setGraveyard(player1, List.of(new Incinerate()));
+        harness.setGraveyard(player2, List.of(new IronTuskElephant()));
+        harness.castFromHand(player1, new ShallowGrave(), "{1}{B}");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Iron Tusk Elephant");
+        harness.assertNotOnBattlefield(player2, "Iron Tusk Elephant");
+        harness.assertInGraveyard(player2, "Iron Tusk Elephant");
+    }
+
+    @Test
+    @DisplayName("Selects the top creature at resolution after another creature dies in response")
+    void selectsTopCreatureAtResolution() {
+        harness.setGraveyard(player1, List.of(new IronTuskElephant()));
+        Permanent shadow = harness.addToBattlefieldAndReturn(player1, new FeralShadow());
+        harness.castFromHand(player1, new ShallowGrave(), "{1}{B}");
+
+        harness.setHand(player2, List.of(new Incinerate()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0, shadow.getId());
+        harness.assertInGraveyard(player1, "Feral Shadow");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Feral Shadow");
+        harness.assertInGraveyard(player1, "Iron Tusk Elephant");
+        harness.assertNotOnBattlefield(player1, "Iron Tusk Elephant");
+        assertThat(findPermanent(player1, "Feral Shadow").hasKeyword(Keyword.HASTE)).isTrue();
     }
 }
