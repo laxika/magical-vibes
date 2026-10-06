@@ -13,6 +13,58 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({SilumgarSpellEater.class, Shock.class})
 class SilumgarSpellEaterTest extends BaseCardTest {
+    @Test
+    void payingMegamorphCostAddsCounterEvenWithoutASpellToTarget() {
+        Permanent spellEater = castFaceDown();
+
+        turnFaceUp(spellEater);
+
+        assertThat(spellEater.isFaceDown()).isFalse();
+        assertThat(spellEater.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void megamorphCounterIsPresentBeforeCounterTriggerResolves() {
+        Permanent spellEater = castFaceDown();
+        Shock shock = castShock(1);
+
+        turnFaceUp(spellEater);
+
+        assertThat(spellEater.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .contains(shock.getId());
+    }
+
+    @Test
+    void turningFaceUpCountersTargetSpellWhenItsControllerDeclinesPayment() {
+        Permanent spellEater = castFaceDown();
+        Shock shock = castShock(4);
+
+        turnFaceUp(spellEater);
+
+        harness.handlePermanentChosen(player1, shock.getId());
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player2, false);
+
+        harness.assertInGraveyard(player2, "Shock");
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void castingFaceUpDoesNotAddMegamorphCounterOrTriggerCounterAbility() {
+        harness.castFromHand(player1, new SilumgarSpellEater(), "{2}{U}");
+        harness.passBothPriorities();
+
+        Permanent spellEater = findPermanent(player1, "Silumgar Spell-Eater");
+        assertThat(spellEater.isFaceDown()).isFalse();
+        assertThat(spellEater.getPlusOnePlusOneCounters()).isZero();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
 
     @Test
     void turningFaceUpCountersTargetSpellWhenItsControllerCannotPay() {
