@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.cards.g.GoblinRaider;
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.w.WornPowerstone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ShivsEmbrace.class, GoblinRaider.class, WornPowerstone.class})
+@CardUsed({ShivsEmbrace.class, GoblinRaider.class, WornPowerstone.class, Disenchant.class})
 class ShivsEmbraceTest extends BaseCardTest {
 
     @Test
@@ -73,8 +74,8 @@ class ShivsEmbraceTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Enchanted creature can activate firebreathing for +1/+0")
-    void grantedAbilityBoostsPower() {
+    @DisplayName("The Aura's activated ability gives the enchanted creature +1/+0")
+    void auraAbilityBoostsPower() {
         Permanent creature = addCreatureReady(player1, new GoblinRaider());
         addAttachedEmbrace(creature);
 
@@ -159,7 +160,7 @@ class ShivsEmbraceTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Creature loses boost, flying, and firebreathing when Shiv's Embrace is removed")
+    @DisplayName("Removing Shiv's Embrace removes its static boost and flying")
     void effectsStopWhenRemoved() {
         Permanent creature = addCreatureReady(player1, new GoblinRaider());
         Permanent aura = addAttachedEmbrace(creature);
@@ -177,7 +178,7 @@ class ShivsEmbraceTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isFalse();
 
-        // Creature should no longer have an activated ability
+        // The Aura never grants its activated ability to the creature.
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("no activated ability");
@@ -255,6 +256,67 @@ class ShivsEmbraceTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("no activated ability");
+    }
+
+    @Test
+    @DisplayName("A queued pump resolves after Disenchant destroys the Aura")
+    void queuedPumpResolvesAfterAuraIsDestroyed() {
+        Permanent creature = addCreatureReady(player1, new GoblinRaider());
+        Permanent aura = addAttachedEmbrace(creature);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setHand(player2, List.of(new Disenchant()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.castInstant(player2, 0, aura.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Shiv's Embrace");
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A resolved pump persists after the Aura is destroyed")
+    void resolvedPumpPersistsAfterAuraIsDestroyed() {
+        Permanent creature = addCreatureReady(player1, new GoblinRaider());
+        Permanent aura = addAttachedEmbrace(creature);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new Disenchant()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player2, 0, aura.getId());
+
+        harness.assertInGraveyard(player1, "Shiv's Embrace");
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A tapped Aura can pump a tapped creature")
+    void tappedAuraCanPumpTappedCreature() {
+        Permanent creature = addCreatureReady(player1, new GoblinRaider());
+        Permanent aura = addAttachedEmbrace(creature);
+        creature.setTapped(true);
+        aura.setTapped(true);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(aura.isTapped()).isTrue();
     }
 
     private Permanent addAttachedEmbrace(Permanent creature) {
