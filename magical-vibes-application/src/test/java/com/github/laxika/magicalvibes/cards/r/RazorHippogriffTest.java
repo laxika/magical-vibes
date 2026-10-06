@@ -1,16 +1,17 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
-import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.cards.c.CarapaceForger;
+import com.github.laxika.magicalvibes.cards.c.ChimericMass;
 import com.github.laxika.magicalvibes.cards.g.GoldMyr;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Memnite;
+import com.github.laxika.magicalvibes.cards.o.OriginSpellbomb;
 import com.github.laxika.magicalvibes.cards.p.PalladiumMyr;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,221 +20,263 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RazorHippogriff.class, GoldMyr.class, PalladiumMyr.class, Memnite.class,
+        CarapaceForger.class, ChimericMass.class, OriginSpellbomb.class})
 class RazorHippogriffTest extends BaseCardTest {
 
-    /**
-     * Casts Razor Hippogriff and resolves it onto the battlefield.
-     * The mandatory ETB triggered ability is placed on the stack.
-     */
+    /** Resolves the creature spell, leaving its enter trigger ready for target selection. */
     private void castAndResolve() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new RazorHippogriff()));
-        harness.addMana(player1, ManaColor.WHITE, 5);
-
-        harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell → ETB on stack
+        harness.castFromHand(player1, new RazorHippogriff(), "{3}{W}{W}");
+        harness.passBothPriorities();
     }
 
-    // ===== Casting =====
+    /** Chooses the graveyard target before either player can respond to the trigger. */
+    private void chooseTarget(Card card) {
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        harness.handleMultipleCardsChosen(player1, List.of(card.getId()));
+    }
 
     @Test
     @DisplayName("Casting Razor Hippogriff puts it on the stack")
     void castingPutsOnStack() {
-        harness.setHand(player1, List.of(new RazorHippogriff()));
-        harness.addMana(player1, ManaColor.WHITE, 5);
-
-        harness.castCreature(player1, 0);
+        RazorHippogriff hippogriff = new RazorHippogriff();
+        harness.castFromHand(player1, hippogriff, "{3}{W}{W}");
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Razor Hippogriff");
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(hippogriff);
     }
-
-    // ===== ETB: return artifact and gain life =====
 
     @Test
     @DisplayName("ETB returns artifact from graveyard to hand and gains life equal to mana value")
     void returnsArtifactAndGainsLife() {
-        // GoldMyr is a 2-mana artifact creature
-        harness.setGraveyard(player1, List.of(new GoldMyr()));
+        GoldMyr artifact = new GoldMyr();
+        harness.setGraveyard(player1, List.of(artifact));
         castAndResolve();
+        chooseTarget(artifact);
+        harness.assertInGraveyard(player1, "Gold Myr");
+        harness.assertNotInHand(player1, "Gold Myr");
+        harness.assertLife(player1, 20);
 
-        // Resolve ETB → graveyard choice prompt
         harness.passBothPriorities();
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
 
-        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
-        harness.handleGraveyardCardChosen(player1, 0);
-
-        // GoldMyr moved from graveyard to hand
         harness.assertInHand(player1, "Gold Myr");
         harness.assertNotInGraveyard(player1, "Gold Myr");
-
-        // Gained 2 life (Gold Myr's mana value)
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 2);
+        harness.assertLife(player1, 22);
     }
 
     @Test
     @DisplayName("ETB gains life based on returned card's mana value")
     void gainsLifeEqualToManaValue() {
-        // PalladiumMyr is a 3-mana artifact creature
-        harness.setGraveyard(player1, List.of(new PalladiumMyr()));
+        PalladiumMyr artifact = new PalladiumMyr();
+        harness.setGraveyard(player1, List.of(artifact));
         castAndResolve();
-
+        chooseTarget(artifact);
         harness.passBothPriorities();
 
-        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
-        harness.handleGraveyardCardChosen(player1, 0);
-
-        // Gained 3 life (Palladium Myr's mana value)
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 3);
+        harness.assertLife(player1, 23);
     }
 
     @Test
     @DisplayName("Choosing specific artifact when multiple are in graveyard")
     void choosesSpecificArtifactFromGraveyard() {
-        harness.setGraveyard(player1, List.of(new GoldMyr(), new PalladiumMyr()));
+        PalladiumMyr artifact = new PalladiumMyr();
+        harness.setGraveyard(player1, List.of(new GoldMyr(), artifact));
         castAndResolve();
-
+        chooseTarget(artifact);
         harness.passBothPriorities();
 
-        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
-        // Choose PalladiumMyr (index 1)
-        harness.handleGraveyardCardChosen(player1, 1);
-
-        // PalladiumMyr returned to hand, GoldMyr stays in graveyard
         harness.assertInHand(player1, "Palladium Myr");
         harness.assertInGraveyard(player1, "Gold Myr");
         harness.assertNotInGraveyard(player1, "Palladium Myr");
-
-        // Gained 3 life (Palladium Myr's mana value)
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 3);
+        harness.assertLife(player1, 23);
     }
 
     @Test
     @DisplayName("Returning a zero mana value artifact does not gain life")
     void zeroManaValueArtifactGainsNoLife() {
-        // Memnite is a 0-mana artifact creature (mana value 0)
-        harness.setGraveyard(player1, List.of(new Memnite()));
+        Memnite artifact = new Memnite();
+        harness.setGraveyard(player1, List.of(artifact));
         castAndResolve();
-
+        chooseTarget(artifact);
         harness.passBothPriorities();
 
-        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
-        harness.handleGraveyardCardChosen(player1, 0);
-
-        // Memnite returned to hand
         harness.assertInHand(player1, "Memnite");
-
-        // No life gained (mana value is 0, per CR 119.8 gaining 0 life is not a life gain event)
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
+        harness.assertLife(player1, 20);
     }
 
-    // ===== No artifacts in graveyard =====
-
     @Test
-    @DisplayName("ETB resolves with no effect if graveyard is empty")
+    @DisplayName("No trigger remains on the stack without a legal graveyard target")
     void noEffectWithEmptyGraveyard() {
         castAndResolve();
 
-        harness.passBothPriorities();
-
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(s -> s.contains("no artifact cards in graveyard"));
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertOnBattlefield(player1, "Razor Hippogriff");
+        harness.assertLife(player1, 20);
     }
 
     @Test
-    @DisplayName("ETB resolves with no effect if graveyard has only non-artifact cards")
+    @DisplayName("Non-artifact cards cannot supply the required graveyard target")
     void noEffectWithOnlyNonArtifactsInGraveyard() {
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.setGraveyard(player1, List.of(new CarapaceForger()));
         castAndResolve();
 
-        harness.passBothPriorities();
-
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(s -> s.contains("no artifact cards in graveyard"));
-        // GrizzlyBears stays in graveyard
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Carapace Forger");
+        harness.assertLife(player1, 20);
     }
-
-    // ===== Only artifact cards are valid choices =====
 
     @Test
     @DisplayName("Cannot choose non-artifact card from graveyard")
     void cannotChooseNonArtifactFromGraveyard() {
-        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new GoldMyr()));
+        CarapaceForger nonArtifact = new CarapaceForger();
+        GoldMyr artifact = new GoldMyr();
+        harness.setGraveyard(player1, List.of(nonArtifact, artifact));
         castAndResolve();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
 
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(nonArtifact.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        chooseTarget(artifact);
         harness.passBothPriorities();
-
-        // Index 0 is GrizzlyBears (non-artifact creature) — not a valid choice
-        assertThatThrownBy(() -> harness.handleGraveyardCardChosen(player1, 0))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Invalid card index");
+        harness.assertInGraveyard(player1, "Carapace Forger");
+        harness.assertInHand(player1, "Gold Myr");
     }
-
-    // ===== Declining =====
 
     @Test
-    @DisplayName("Player can decline graveyard choice and no life is gained")
-    void decliningDoesNotGainLife() {
-        harness.setGraveyard(player1, List.of(new GoldMyr()));
+    @DisplayName("The mandatory artifact target cannot be declined")
+    void cannotDeclineArtifactTarget() {
+        GoldMyr artifact = new GoldMyr();
+        harness.setGraveyard(player1, List.of(artifact));
         castAndResolve();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
 
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        chooseTarget(artifact);
         harness.passBothPriorities();
-
-        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
-        harness.handleGraveyardCardChosen(player1, -1);
-
-        // GoldMyr stays in graveyard, not in hand
-        harness.assertInGraveyard(player1, "Gold Myr");
-        harness.assertNotInHand(player1, "Gold Myr");
-
-        // No life gained
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
+        harness.assertInHand(player1, "Gold Myr");
+        harness.assertLife(player1, 22);
     }
-
-    // ===== Razor Hippogriff stays on battlefield =====
 
     @Test
     @DisplayName("Razor Hippogriff remains on battlefield after ETB resolves")
     void remainsOnBattlefieldAfterEtb() {
-        harness.setGraveyard(player1, List.of(new GoldMyr()));
+        GoldMyr artifact = new GoldMyr();
+        harness.setGraveyard(player1, List.of(artifact));
         castAndResolve();
-
+        chooseTarget(artifact);
         harness.passBothPriorities();
-        harness.handleGraveyardCardChosen(player1, 0);
 
         harness.assertOnBattlefield(player1, "Razor Hippogriff");
     }
 
-    // ===== Stack is empty after full resolution =====
-
     @Test
     @DisplayName("Stack is empty after full resolution")
     void stackIsEmptyAfterFullResolution() {
-        harness.setGraveyard(player1, List.of(new GoldMyr()));
+        GoldMyr artifact = new GoldMyr();
+        harness.setGraveyard(player1, List.of(artifact));
         castAndResolve();
-
+        chooseTarget(artifact);
         harness.passBothPriorities();
-        harness.handleGraveyardCardChosen(player1, 0);
 
         assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
-
-    // ===== Opponent cannot make choice =====
 
     @Test
     @DisplayName("Opponent cannot make graveyard choice for controller")
     void opponentCannotChoose() {
-        harness.setGraveyard(player1, List.of(new GoldMyr()));
+        GoldMyr artifact = new GoldMyr();
+        harness.setGraveyard(player1, List.of(artifact));
         castAndResolve();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
 
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player2, List.of(artifact.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        chooseTarget(artifact);
+        harness.passBothPriorities();
+        harness.assertInHand(player1, "Gold Myr");
+    }
+
+    @Test
+    void returnsNoncreatureArtifact() {
+        OriginSpellbomb artifact = new OriginSpellbomb();
+        harness.setGraveyard(player1, List.of(artifact));
+        castAndResolve();
+        chooseTarget(artifact);
         harness.passBothPriorities();
 
-        assertThatThrownBy(() -> harness.handleGraveyardCardChosen(player2, 0))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Not your turn to choose");
+        harness.assertInHand(player1, "Origin Spellbomb");
+        harness.assertNotInGraveyard(player1, "Origin Spellbomb");
+        harness.assertLife(player1, 21);
+    }
+
+    @Test
+    void xInGraveyardManaCostCountsAsZero() {
+        ChimericMass artifact = new ChimericMass();
+        harness.setGraveyard(player1, List.of(artifact));
+        castAndResolve();
+        chooseTarget(artifact);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Chimeric Mass");
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    void illegalTargetDoesNotReturnAnotherArtifactOrGainLife() {
+        GoldMyr target = new GoldMyr();
+        PalladiumMyr other = new PalladiumMyr();
+        harness.setGraveyard(player1, List.of(target, other));
+        castAndResolve();
+        chooseTarget(target);
+
+        harness.setGraveyard(player1, List.of(other));
+        harness.setExile(player1, List.of(target));
+        harness.passBothPriorities();
+
+        harness.assertNotInHand(player1, "Gold Myr");
+        harness.assertNotInHand(player1, "Palladium Myr");
+        harness.assertInGraveyard(player1, "Palladium Myr");
+        harness.assertLife(player1, 20);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void opponentsArtifactCannotBeTargeted() {
+        GoldMyr own = new GoldMyr();
+        PalladiumMyr opponents = new PalladiumMyr();
+        harness.setGraveyard(player1, List.of(own));
+        harness.setGraveyard(player2, List.of(opponents));
+        castAndResolve();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(opponents.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        chooseTarget(own);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Palladium Myr");
+        harness.assertInHand(player1, "Gold Myr");
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void artifactArrivingAfterEntryCannotSupplyMissingTarget() {
+        castAndResolve();
+        harness.setGraveyard(player1, List.of(new GoldMyr()));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Gold Myr");
+        harness.assertNotInHand(player1, "Gold Myr");
+        harness.assertLife(player1, 20);
     }
 }
