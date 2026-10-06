@@ -13,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ShieldOfTheAges.class, Incinerate.class, BalduvianBears.class})
+@CardUsed({ShieldOfTheAges.class, Incinerate.class, BalduvianBears.class, Shatter.class})
 class ShieldOfTheAgesTest extends BaseCardTest {
 
     @Test
@@ -104,9 +104,7 @@ class ShieldOfTheAgesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.UPKEEP);
 
         harness.setHand(player2, List.of(new Incinerate()));
         harness.addMana(player2, ManaColor.RED, 1);
@@ -114,5 +112,61 @@ class ShieldOfTheAgesTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, player1.getId());
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
+    }
+
+    @Test
+    @DisplayName("A shield is consumed by the first damage event")
+    void shieldIsConsumedOnlyOnce() {
+        harness.setLife(player1, 20);
+        harness.addToBattlefield(player1, new ShieldOfTheAges());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new Incinerate(), new Incinerate()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        harness.assertLife(player1, 18);
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        harness.assertLife(player1, 15);
+    }
+
+    @Test
+    @DisplayName("Removing the artifact does not remove a resolved shield")
+    void shieldSurvivesArtifactDestruction() {
+        harness.setLife(player1, 20);
+        var shield = harness.addToBattlefieldAndReturn(player1, new ShieldOfTheAges());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new Shatter(), new Incinerate()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.castAndResolveInstant(player2, 0, shield.getId());
+        harness.assertInGraveyard(player1, "Shield of the Ages");
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("Damage to a controlled creature does not use the player's shield")
+    void creatureDamageDoesNotConsumeShield() {
+        harness.setLife(player1, 20);
+        harness.addToBattlefield(player1, new ShieldOfTheAges());
+        var bears = harness.addToBattlefieldAndReturn(player1, new BalduvianBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new Incinerate(), new Incinerate()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.castAndResolveInstant(player2, 0, bears.getId());
+        harness.assertInGraveyard(player1, "Balduvian Bears");
+        harness.assertLife(player1, 20);
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        harness.assertLife(player1, 18);
     }
 }
