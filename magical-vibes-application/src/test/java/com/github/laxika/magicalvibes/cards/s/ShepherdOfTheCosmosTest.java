@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.a.AvatarOfMight;
+import com.github.laxika.magicalvibes.cards.b.BindTheMonster;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
@@ -10,6 +11,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +20,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ShepherdOfTheCosmos.class, AvatarOfMight.class, BindTheMonster.class,
+        Forest.class, GrizzlyBears.class, HolyDay.class})
 class ShepherdOfTheCosmosTest extends BaseCardTest {
 
     @Test
@@ -106,14 +110,76 @@ class ShepherdOfTheCosmosTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Shepherd of the Cosmos");
     }
 
-    private void castShepherd() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new ShepherdOfTheCosmos()));
+    @Test
+    @DisplayName("Returning an Aura allows choosing a legal creature to enchant")
+    void returnsAuraAttachedToChosenCreature() {
+        BindTheMonster aura = new BindTheMonster();
+        harness.setGraveyard(player1, List.of(aura));
+
+        castShepherd();
+        harness.handleMultipleCardsChosen(player1, List.of(aura.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNotNull();
+        var shepherdId = harness.getPermanentId(player1, "Shepherd of the Cosmos");
+        harness.handlePermanentChosen(player1, shepherdId);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Bind the Monster");
+        harness.assertNotInGraveyard(player1, "Bind the Monster");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(p -> p.getCard().getId().equals(aura.getId()))
+                .singleElement().satisfies(p -> assertThat(p.getAttachedTo()).isEqualTo(shepherdId));
+        harness.assertLife(player1, 17);
+    }
+
+    @Test
+    @DisplayName("ETB cannot decline its target when a legal permanent is available")
+    void requiresAvailableTarget() {
+        harness.setGraveyard(player1, List.of(new Forest()));
+
+        castShepherd();
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("ETB does not return a target that leaves the graveyard before resolution")
+    void doesNotReturnMissingTarget() {
+        Forest forest = new Forest();
+        harness.setGraveyard(player1, List.of(forest));
+
+        castShepherd();
+        harness.handleMultipleCardsChosen(player1, List.of(forest.getId()));
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Forest");
+        harness.assertOnBattlefield(player1, "Shepherd of the Cosmos");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A foretold Shepherd cannot be cast on the turn it was foretold")
+    void cannotCastOnForetellTurn() {
+        ShepherdOfTheCosmos shepherd = new ShepherdOfTheCosmos();
+        harness.setHand(player1, List.of(shepherd));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.foretell(player1, 0);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.addMana(player1, ManaColor.WHITE, 2);
 
-        harness.castCreature(player1, 0);
+        assertThatThrownBy(() -> harness.castFromExile(player1, shepherd.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.findExiledCard(shepherd.getId())).isNotNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    private void castShepherd() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player1, new ShepherdOfTheCosmos(), "{4}{W}{W}");
         harness.passBothPriorities();
     }
 }
