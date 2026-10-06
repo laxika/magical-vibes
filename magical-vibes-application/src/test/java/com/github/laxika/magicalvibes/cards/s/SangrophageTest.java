@@ -70,4 +70,32 @@ class SangrophageTest extends BaseCardTest {
     private Permanent addSangrophage() {
         return harness.addToBattlefieldAndReturn(player1, new Sangrophage());
     }
+
+    @Test
+    @DisplayName("Paying life does not untap an already tapped Sangrophage")
+    void payingLifeDoesNotUntapSangrophage() {
+        Permanent sangrophage = addSangrophage();
+        advanceToUpkeep(player1);
+        sangrophage.setTapped(true);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(sangrophage.isTapped()).isTrue();
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("The controller pays life for Sangrophage on their own upkeep")
+    void secondPlayerPaysForTheirSangrophage() {
+        Permanent sangrophage = harness.addToBattlefieldAndReturn(player2, new Sangrophage());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(sangrophage.isTapped()).isFalse();
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 20);
+    }
 }
