@@ -24,9 +24,7 @@ class RighteousAvengersTest extends BaseCardTest {
 
         Permanent blockerPerm = addCreatureReady(player2, new GrizzlyBears());
         Permanent attackerPerm = addCreatureReady(player1, new RighteousAvengers());
-        attackerPerm.setAttacking(true);
-
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(attackerPerm);
@@ -42,9 +40,7 @@ class RighteousAvengersTest extends BaseCardTest {
     void canBeBlockedWhenDefenderControlsNoPlains() {
         Permanent blockerPerm = addCreatureReady(player2, new GrizzlyBears());
         Permanent attackerPerm = addCreatureReady(player1, new RighteousAvengers());
-        attackerPerm.setAttacking(true);
-
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(attackerPerm);
@@ -61,9 +57,7 @@ class RighteousAvengersTest extends BaseCardTest {
 
         Permanent blockerPerm = addCreatureReady(player2, new GrizzlyBears());
         Permanent attackerPerm = addCreatureReady(player1, new RighteousAvengers());
-        attackerPerm.setAttacking(true);
-
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(1));
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(attackerPerm);
@@ -71,5 +65,24 @@ class RighteousAvengersTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx)));
 
         assertThat(blockerPerm.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A tapped Plains still makes Righteous Avengers unblockable")
+    void cannotBeBlockedWhenDefenderControlsTappedPlains() {
+        harness.addToBattlefield(player2, new Plains());
+        gd.playerBattlefields.get(player2.getId()).getFirst().setTapped(true);
+
+        Permanent blockerPerm = addCreatureReady(player2, new GrizzlyBears());
+        Permanent attackerPerm = addCreatureReady(player1, new RighteousAvengers());
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
+        int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(attackerPerm);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(blockerIdx, attackerIdx))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
     }
 }
