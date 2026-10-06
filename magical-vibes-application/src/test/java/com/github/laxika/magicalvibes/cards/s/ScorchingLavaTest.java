@@ -12,7 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ScorchingLava.class, KavuTitan.class, MetathranZombie.class})
+@CardUsed({ScorchingLava.class, KavuTitan.class, MetathranZombie.class, ShamanEnKor.class})
 class ScorchingLavaTest extends BaseCardTest {
 
     @Test
@@ -24,7 +24,7 @@ class ScorchingLavaTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        harness.assertLife(player2, 18);
     }
 
     @Test
@@ -51,8 +51,7 @@ class ScorchingLavaTest extends BaseCardTest {
 
     @Test
     void kickedDamagePreventsRegeneration() {
-        Permanent skeletons = new Permanent(new MetathranZombie());
-        gd.playerBattlefields.get(player2.getId()).add(skeletons);
+        Permanent skeletons = harness.addToBattlefieldAndReturn(player2, new MetathranZombie());
         skeletons.setRegenerationShield(1);
         castOnPermanent(true, skeletons);
 
@@ -64,8 +63,7 @@ class ScorchingLavaTest extends BaseCardTest {
 
     @Test
     void kickedDamagePreventsRegenerationEvenWhenDamageIsPrevented() {
-        Permanent zombie = new Permanent(new MetathranZombie());
-        gd.playerBattlefields.get(player2.getId()).add(zombie);
+        Permanent zombie = harness.addToBattlefieldAndReturn(player2, new MetathranZombie());
         zombie.setRegenerationShield(1);
         zombie.setDamagePreventionShield(2);
         castOnPermanent(true, zombie);
@@ -80,6 +78,73 @@ class ScorchingLavaTest extends BaseCardTest {
         harness.assertNotInGraveyard(player2, "Metathran Zombie");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(card -> card.getName().equals("Metathran Zombie"));
+    }
+
+    @Test
+    void kickedSpellStillDealsTwoDamageToPlayer() {
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new ScorchingLava()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castKickedInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    void unkickedDamageAllowsRegeneration() {
+        Permanent zombie = harness.addToBattlefieldAndReturn(player2, new MetathranZombie());
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.activateAbility(player2, indexOf(player2, zombie), null, null);
+        harness.passBothPriorities();
+
+        castOnPermanent(false, zombie);
+
+        harness.assertOnBattlefield(player2, "Metathran Zombie");
+        assertThat(zombie.isTapped()).isTrue();
+        assertThat(zombie.getMarkedDamage()).isZero();
+        harness.assertNotInGraveyard(player2, "Metathran Zombie");
+    }
+
+    @Test
+    void redirectedKickedDamageDoesNotExileUntargetedCreature() {
+        Permanent shaman = harness.addToBattlefieldAndReturn(player2, new ShamanEnKor());
+        Permanent titan = harness.addToBattlefieldAndReturn(player2, new KavuTitan());
+        for (int i = 0; i < 2; i++) {
+            harness.activateAbility(player2, indexOf(player2, shaman), null, titan.getId());
+            harness.passBothPriorities();
+        }
+
+        castOnPermanent(true, shaman);
+
+        harness.assertOnBattlefield(player2, "Shaman en-Kor");
+        assertThat(shaman.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player2, "Kavu Titan");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .noneMatch(card -> card.getName().equals("Kavu Titan"));
+    }
+
+    @Test
+    void redirectedKickedDamageAllowsUntargetedCreatureToRegenerate() {
+        Permanent shaman = harness.addToBattlefieldAndReturn(player2, new ShamanEnKor());
+        Permanent zombie = harness.addToBattlefieldAndReturn(player2, new MetathranZombie());
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.activateAbility(player2, indexOf(player2, zombie), null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player2, indexOf(player2, shaman), null, zombie.getId());
+        harness.passBothPriorities();
+
+        castOnPermanent(true, shaman);
+
+        harness.assertOnBattlefield(player2, "Metathran Zombie");
+        assertThat(zombie.isTapped()).isTrue();
+        assertThat(zombie.getMarkedDamage()).isZero();
+        assertThat(shaman.getMarkedDamage()).isEqualTo(1);
+        harness.assertNotInGraveyard(player2, "Metathran Zombie");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .noneMatch(card -> card.getName().equals("Metathran Zombie"));
     }
 
     private void castOnCreature(boolean kicked) {
