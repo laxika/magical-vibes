@@ -75,4 +75,39 @@ class RiversFavorTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
+
+    @Test
+    @DisplayName("River's Favor can enchant an opponent's creature and boosts only its host")
+    void enchantsOpponentsCreatureOnly() {
+        Permanent ownBears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opposingBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new RiversFavor()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castEnchantment(player1, 0, opposingBears.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "River's Favor").getAttachedTo()).isEqualTo(opposingBears.getId());
+        assertThat(gqs.getEffectivePower(gd, opposingBears)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, opposingBears)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, ownBears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownBears)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("River's Favor goes to its owner's graveyard when its host leaves")
+    void auraGoesToGraveyardWhenHostLeaves() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new RiversFavor()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        gd.playerBattlefields.get(player2.getId()).remove(bears);
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "River's Favor");
+        harness.assertInGraveyard(player1, "River's Favor");
+        harness.assertNotInGraveyard(player2, "River's Favor");
+    }
 }
