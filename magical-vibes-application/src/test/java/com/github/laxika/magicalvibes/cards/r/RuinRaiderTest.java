@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,16 +13,15 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RuinRaider.class, RaptorHatchling.class, Forest.class, EntrancingMelody.class})
 class RuinRaiderTest extends BaseCardTest {
-
-    // ===== Raid trigger: reveal top card, draw, lose life =====
 
     @Test
     @DisplayName("When raid met, reveals top card, puts it into hand, and loses life equal to mana value")
     void raidMetRevealsAndDrawsAndLosesLife() {
         harness.addToBattlefield(player1, new RuinRaider());
         harness.setHand(player1, List.of());
-        Card topCard = new GrizzlyBears(); // MV 2
+        Card topCard = new RaptorHatchling(); // MV 2
         gd.playerDecks.get(player1.getId()).addFirst(topCard);
         harness.setLife(player1, 20);
 
@@ -60,7 +60,7 @@ class RuinRaiderTest extends BaseCardTest {
     void raidMetCardRemovedFromLibrary() {
         harness.addToBattlefield(player1, new RuinRaider());
         harness.setHand(player1, List.of());
-        Card topCard = new GrizzlyBears();
+        Card topCard = new RaptorHatchling();
         gd.playerDecks.get(player1.getId()).addFirst(topCard);
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
 
@@ -79,7 +79,7 @@ class RuinRaiderTest extends BaseCardTest {
     void raidNotMetNoTrigger() {
         harness.addToBattlefield(player1, new RuinRaider());
         harness.setHand(player1, List.of());
-        gd.playerDecks.get(player1.getId()).addFirst(new GrizzlyBears());
+        gd.playerDecks.get(player1.getId()).addFirst(new RaptorHatchling());
         int handBefore = gd.playerHands.get(player1.getId()).size();
         harness.setLife(player1, 20);
 
@@ -95,7 +95,7 @@ class RuinRaiderTest extends BaseCardTest {
     void doesNotTriggerOnOpponentEndStep() {
         harness.addToBattlefield(player1, new RuinRaider());
         harness.setHand(player1, List.of());
-        gd.playerDecks.get(player1.getId()).addFirst(new GrizzlyBears());
+        gd.playerDecks.get(player1.getId()).addFirst(new RaptorHatchling());
         int handBefore = gd.playerHands.get(player1.getId()).size();
         harness.setLife(player1, 20);
 
@@ -103,7 +103,7 @@ class RuinRaiderTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
 
-        gs.advanceStep(gd);
+        harness.passUntil(player2, TurnStep.END_STEP);
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
         assertThat(gd.stack).isEmpty();
@@ -116,7 +116,7 @@ class RuinRaiderTest extends BaseCardTest {
     void doesNothingWhenLibraryEmpty() {
         harness.addToBattlefield(player1, new RuinRaider());
         harness.setHand(player1, List.of());
-        gd.playerDecks.get(player1.getId()).clear();
+        harness.setLibrary(player1, List.of());
         harness.setLife(player1, 20);
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
@@ -129,7 +129,102 @@ class RuinRaiderTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Raid counts an earlier attack by another creature before Ruin Raider entered")
+    void triggersAfterAnotherCreatureAttackedBeforeEntering() {
+        addCreatureReady(player1, new RaptorHatchling());
+        declareAttackersAndPrepareBlockers(List.of(0));
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
+        harness.addToBattlefield(player1, new RuinRaider());
+        harness.setHand(player1, List.of());
+        Card topCard = new RaptorHatchling();
+        harness.setLibrary(player1, List.of(topCard));
+        harness.setLife(player1, 20);
+
+        advanceToEndStep();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(topCard);
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("A queued raid ability still resolves after Ruin Raider leaves the battlefield")
+    void triggerResolvesAfterSourceLeaves() {
+        harness.addToBattlefield(player1, new RuinRaider());
+        harness.setHand(player1, List.of());
+        Card topCard = new RaptorHatchling();
+        harness.setLibrary(player1, List.of(topCard));
+        harness.setLife(player1, 20);
+        markAttackedThisTurn();
+        advanceToEndStep();
+        assertThat(gd.stack).hasSize(1);
+
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(topCard);
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("Each Ruin Raider reveals the current top card when its own ability resolves")
+    void multipleRaidersRevealSuccessiveCards() {
+        harness.addToBattlefield(player1, new RuinRaider());
+        harness.addToBattlefield(player1, new RuinRaider());
+        harness.setHand(player1, List.of());
+        Card firstCard = new RaptorHatchling();
+        Card secondCard = new RuinRaider();
+        harness.setLibrary(player1, List.of(firstCard, secondCard));
+        harness.setLife(player1, 20);
+        markAttackedThisTurn();
+        advanceToEndStep();
+        assertThat(gd.stack).hasSize(2);
+
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstCard);
+        harness.assertLife(player1, 18);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstCard, secondCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        harness.assertLife(player1, 15);
+    }
+
+    @Test
+    @DisplayName("X contributes zero to the revealed card's mana value")
+    void revealingXSpellUsesManaValueOutsideStack() {
+        harness.addToBattlefield(player1, new RuinRaider());
+        harness.setHand(player1, List.of());
+        Card topCard = new EntrancingMelody();
+        harness.setLibrary(player1, List.of(topCard));
+        harness.setLife(player1, 20);
+        markAttackedThisTurn();
+
+        advanceToEndStep();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(topCard);
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("An opponent's attack does not satisfy the controller's raid condition")
+    void opponentsAttackDoesNotEnableRaid() {
+        harness.addToBattlefield(player1, new RuinRaider());
+        harness.setHand(player1, List.of());
+        Card topCard = new RaptorHatchling();
+        harness.setLibrary(player1, List.of(topCard));
+        harness.setLife(player1, 20);
+        gd.playersDeclaredAttackersThisTurn.add(player2.getId());
+
+        advanceToEndStep();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+        harness.assertLife(player1, 20);
+    }
 
     private void markAttackedThisTurn() {
         gd.playersDeclaredAttackersThisTurn.add(player1.getId());
@@ -138,7 +233,6 @@ class RuinRaiderTest extends BaseCardTest {
     private void advanceToEndStep() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advances to END_STEP
+        harness.passUntil(player1, TurnStep.END_STEP);
     }
 }
