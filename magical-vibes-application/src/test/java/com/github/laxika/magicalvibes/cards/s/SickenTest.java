@@ -71,4 +71,56 @@ class SickenTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
+
+    @Test
+    @DisplayName("Sicken can enchant your creature and leaves other creatures unaffected")
+    void enchantsOwnCreatureOnly() {
+        Permanent enchanted = harness.addToBattlefieldAndReturn(player1, new GorillaWarrior());
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new GorillaWarrior());
+        harness.setHand(player1, List.of(new Sicken()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castEnchantment(player1, 0, enchanted.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, enchanted)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, enchanted)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Cycling discards as a cost and draws only when the ability resolves")
+    void cyclingDiscardsBeforeDrawing() {
+        harness.setHand(player1, List.of(new Sicken()));
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertInGraveyard(player1, "Sicken");
+        harness.assertNotInHand(player1, "Sicken");
+        harness.assertNotInHand(player1, "Forest");
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Forest");
+        harness.assertNotOnBattlefield(player1, "Sicken");
+    }
+
+    @Test
+    @DisplayName("Cycling cannot be activated with only one mana")
+    void cyclingRequiresTwoMana() {
+        harness.setHand(player1, List.of(new Sicken()));
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Sicken");
+        harness.assertNotInGraveyard(player1, "Sicken");
+        harness.assertNotInHand(player1, "Forest");
+        assertThat(gd.stack).isEmpty();
+    }
 }
