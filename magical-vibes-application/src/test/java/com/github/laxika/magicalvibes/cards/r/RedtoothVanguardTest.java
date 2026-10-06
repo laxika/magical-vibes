@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HopefulVigil;
 import com.github.laxika.magicalvibes.cards.u.UnderworldCoinsmith;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RedtoothVanguard.class, UnderworldCoinsmith.class, GrizzlyBears.class})
+@CardUsed({RedtoothVanguard.class, UnderworldCoinsmith.class, GrizzlyBears.class, HopefulVigil.class})
 class RedtoothVanguardTest extends BaseCardTest {
 
     @Test
@@ -70,6 +71,75 @@ class RedtoothVanguardTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
+    @Test
+    @DisplayName("Vanguard on the battlefield does not trigger when an enchantment enters")
+    void battlefieldVanguardDoesNotTrigger() {
+        harness.addToBattlefield(player1, new RedtoothVanguard());
+        harness.enterBattlefieldAndReturn(player1, new HopefulVigil());
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Each graveyard copy requires its own payment")
+    void multipleCopiesRequireSeparatePayments() {
+        RedtoothVanguard first = new RedtoothVanguard();
+        RedtoothVanguard second = new RedtoothVanguard();
+        harness.setGraveyard(player1, List.of(first, second));
+        harness.enterBattlefieldAndReturn(player1, new HopefulVigil());
+        resolveAllTriggers();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsAnyOf(first, second);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId()).stream()
+                .filter(card -> card == first || card == second)).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("An old trigger cannot return Vanguard after it leaves and re-enters the graveyard")
+    void oldTriggerDoesNotReturnNewGraveyardObject() {
+        RedtoothVanguard vanguard = putVanguardInGraveyard();
+        gd.markGraveyardEntry(vanguard);
+        harness.enterBattlefieldAndReturn(player1, new HopefulVigil());
+
+        harness.setGraveyard(player1, List.of());
+        harness.setHand(player1, List.of(vanguard));
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of(vanguard));
+        gd.markGraveyardEntry(vanguard);
+        resolveAllTriggers();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(vanguard);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(vanguard);
+    }
+
+    @Test
+    @DisplayName("Vanguard stays in the graveyard when the payment cannot be made")
+    void insufficientManaDoesNotReturnVanguard() {
+        RedtoothVanguard vanguard = putVanguardInGraveyard();
+        harness.enterBattlefieldAndReturn(player1, new HopefulVigil());
+        resolveAllTriggers();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(vanguard);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(vanguard);
+    }
+
     private RedtoothVanguard putVanguardInGraveyard() {
         RedtoothVanguard vanguard = new RedtoothVanguard();
         harness.setGraveyard(player1, List.of(vanguard));
@@ -83,8 +153,7 @@ class RedtoothVanguardTest extends BaseCardTest {
         harness.addMana(controller, ManaColor.BLACK, 1);
 
         harness.castCreature(controller, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
     private void prepareMain(Player active) {
