@@ -76,4 +76,88 @@ class SaguPummelerTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0, bears.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Renew cannot be activated during your upkeep")
+    void renewRequiresMainPhase() {
+        Permanent target = addCreatureReady(player1, new SaguPummeler());
+        readyRenew();
+        harness.forceStep(TurnStep.UPKEEP);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Sagu Pummeler");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Renew cannot be activated while another renew ability is on the stack")
+    void renewRequiresEmptyStack() {
+        Permanent target = addCreatureReady(player1, new SaguPummeler());
+        readyRenew();
+        harness.setGraveyard(player1, List.of(new SaguPummeler(), new SaguPummeler()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.activateGraveyardAbility(player1, 0, target.getId());
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Sagu Pummeler");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(target.getCounterCount(CounterType.REACH)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Renew needs all five mana and does not exile its source when payment fails")
+    void renewRequiresFullManaCost() {
+        Permanent target = addCreatureReady(player1, new SaguPummeler());
+        harness.setGraveyard(player1, List.of(new SaguPummeler()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Sagu Pummeler");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Renew requires green mana rather than five colorless mana")
+    void renewRequiresGreenMana() {
+        Permanent target = addCreatureReady(player1, new SaguPummeler());
+        harness.setGraveyard(player1, List.of(new SaguPummeler()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Sagu Pummeler");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Renew does not put counters on a creature that left the battlefield")
+    void renewDoesNotAffectDepartedTarget() {
+        Permanent target = addCreatureReady(player1, new SaguPummeler());
+        readyRenew();
+        var sourceId = gd.playerGraveyards.get(player1.getId()).getFirst().getId();
+        harness.activateGraveyardAbility(player1, 0, target.getId());
+        assertThat(gd.exiledCards).anySatisfy(entry -> {
+            assertThat(entry.card().getId()).isEqualTo(sourceId);
+            assertThat(entry.ownerId()).isEqualTo(player1.getId());
+        });
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+        harness.setGraveyard(player1, List.of(target.getCard()));
+
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(target.getCounterCount(CounterType.REACH)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
 }
