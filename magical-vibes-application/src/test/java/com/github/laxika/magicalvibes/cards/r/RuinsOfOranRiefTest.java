@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -45,7 +44,7 @@ class RuinsOfOranRiefTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent target = findPermanent(player1, creature);
+        Permanent target = findPermanent(player1, "Memnite");
         harness.activateAbility(player1, 0, 1, null, target.getId());
         harness.passBothPriorities();
 
@@ -62,7 +61,7 @@ class RuinsOfOranRiefTest extends BaseCardTest {
         harness.castCreature(player2, 0);
         harness.passBothPriorities();
 
-        Permanent target = findPermanent(player2, creature);
+        Permanent target = findPermanent(player2, "Memnite");
         harness.activateAbility(player1, 0, 1, null, target.getId());
         harness.passBothPriorities();
 
@@ -73,7 +72,7 @@ class RuinsOfOranRiefTest extends BaseCardTest {
     @DisplayName("Cannot target a colored creature")
     void cannotTargetColoredCreature() {
         harness.addToBattlefield(player1, new RuinsOfOranRief());
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = harness.enterBattlefieldAndReturn(player2, new GrizzlyBears());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -91,10 +90,42 @@ class RuinsOfOranRiefTest extends BaseCardTest {
                 .hasMessageContaining("entered this turn");
     }
 
-    private Permanent findPermanent(Player player, Card card) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(permanent -> permanent.getOriginalCard().getId().equals(card.getId()))
-                .findFirst()
-                .orElseThrow();
+    @Test
+    @DisplayName("Cannot target a colorless noncreature that entered this turn")
+    void cannotTargetNoncreature() {
+        harness.addToBattlefield(player1, new RuinsOfOranRief());
+        Permanent target = harness.enterBattlefieldAndReturn(player2, new RuinsOfOranRief());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("colorless creature");
+    }
+
+    @Test
+    @DisplayName("Counter ability resolves after the land leaves the battlefield")
+    void counterAbilityResolvesWithoutSource() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new RuinsOfOranRief());
+        Permanent target = harness.enterBattlefieldAndReturn(player1, new Memnite());
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        assertThat(land.isTapped()).isTrue();
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        gd.playerBattlefields.get(player1.getId()).remove(land);
+        gd.playerGraveyards.get(player1.getId()).add(land.getOriginalCard());
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A creature entering without being cast is eligible")
+    void canTargetCreatureEnteringWithoutBeingCast() {
+        harness.addToBattlefield(player1, new RuinsOfOranRief());
+        Permanent target = harness.enterBattlefieldAndReturn(player1, new Memnite());
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 }
