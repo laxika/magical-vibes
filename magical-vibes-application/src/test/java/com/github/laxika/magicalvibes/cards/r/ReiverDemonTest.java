@@ -16,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ReiverDemon.class, FangrenHunter.class, AlphaMyr.class, NimLasher.class, GreatFurnace.class, BeaconOfUnrest.class})
+@CardUsed({ReiverDemon.class, FangrenHunter.class, AlphaMyr.class, NimLasher.class, GreatFurnace.class, BeaconOfUnrest.class, Regress.class})
 class ReiverDemonTest extends BaseCardTest {
 
     @Test
@@ -61,11 +61,43 @@ class ReiverDemonTest extends BaseCardTest {
         harness.setHand(player1, List.of(new BeaconOfUnrest()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0, target.getId());
 
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Reiver Demon");
         harness.assertOnBattlefield(player2, "Fangren Hunter");
+    }
+
+    @Test
+    @DisplayName("The destruction trigger resolves even after Reiver Demon leaves the battlefield")
+    void triggerResolvesAfterSourceLeavesBattlefield() {
+        harness.addToBattlefield(player2, new FangrenHunter());
+        harness.castFromHand(player1, new ReiverDemon(), "{4}{B}{B}{B}{B}");
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.setHand(player1, List.of(new Regress()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Reiver Demon"));
+        harness.assertInHand(player1, "Reiver Demon");
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Fangren Hunter");
+        harness.assertNotOnBattlefield(player1, "Reiver Demon");
+    }
+
+    @Test
+    @DisplayName("The destruction trigger checks creatures present when it resolves")
+    void destroysCreaturesEnteringAfterTriggerIsCreated() {
+        harness.castFromHand(player1, new ReiverDemon(), "{4}{B}{B}{B}{B}");
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+        harness.enterBattlefieldAndReturn(player2, new FangrenHunter());
+
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Fangren Hunter");
+        harness.assertOnBattlefield(player1, "Reiver Demon");
     }
 }
