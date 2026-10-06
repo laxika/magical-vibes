@@ -86,6 +86,57 @@ class SkullCollectorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Skull Collector does not trigger during the opponent's upkeep")
+    void doesNotTriggerOnOpponentUpkeep() {
+        harness.addToBattlefield(player1, new SkullCollector());
+        harness.addToBattlefield(player1, new HandOfCruelty());
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertOnBattlefield(player1, "Skull Collector");
+        harness.assertOnBattlefield(player1, "Hand of Cruelty");
+    }
+
+    @Test
+    @DisplayName("A regeneration shield does not prevent the upkeep return")
+    void regenerationDoesNotPreventReturnToHand() {
+        Permanent collector = harness.addToBattlefieldAndReturn(player1, new SkullCollector());
+
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(collector.getRegenerationShield()).isEqualTo(1);
+
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, collector.getId());
+
+        harness.assertNotOnBattlefield(player1, "Skull Collector");
+        harness.assertInHand(player1, "Skull Collector");
+    }
+
+    @Test
+    @DisplayName("Each Collector's trigger resolves even after a Collector leaves the battlefield")
+    void multipleCollectorsReturnTwoCreatures() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new SkullCollector());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new SkullCollector());
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, second.getId());
+        resolveAllTriggers();
+        harness.handlePermanentChosen(player1, first.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("The regeneration shield saves Skull Collector from lethal combat damage")
     void regenerationShieldSavesFromLethalCombatDamage() {
         Permanent collector = addCreatureReady(player1, new SkullCollector());
