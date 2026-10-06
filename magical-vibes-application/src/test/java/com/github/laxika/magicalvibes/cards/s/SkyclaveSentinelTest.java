@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SkyclaveSentinel.class, GrizzlyBears.class})
+@CardUsed({SkyclaveSentinel.class})
 class SkyclaveSentinelTest extends BaseCardTest {
 
     @Test
@@ -27,7 +26,7 @@ class SkyclaveSentinelTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent sentinel = findSentinel(player1);
+        Permanent sentinel = findPermanent(player1, "Skyclave Sentinel");
         assertThat(sentinel.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
@@ -40,7 +39,7 @@ class SkyclaveSentinelTest extends BaseCardTest {
         harness.castKickedCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent sentinel = findSentinel(player1);
+        Permanent sentinel = findPermanent(player1, "Skyclave Sentinel");
         assertThat(sentinel.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
@@ -48,7 +47,7 @@ class SkyclaveSentinelTest extends BaseCardTest {
     @DisplayName("Only the counter-bearing sentinel can attack despite defender")
     void onlyCounterBearingSentinelCanAttackDespiteDefender() {
         Permanent sentinel = addCreatureReady(player1, new SkyclaveSentinel());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new SkyclaveSentinel());
 
         assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
@@ -62,10 +61,46 @@ class SkyclaveSentinelTest extends BaseCardTest {
         assertThat(sentinel.isAttacking()).isTrue();
     }
 
-    private Permanent findSentinel(com.github.laxika.magicalvibes.model.Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(permanent -> permanent.getCard().getName().equals("Skyclave Sentinel"))
-                .findFirst()
-                .orElseThrow();
+    @Test
+    @DisplayName("Losing the last +1/+1 counter restores the defender restriction")
+    void cannotAttackAfterLosingLastCounter() {
+        Permanent sentinel = addCreatureReady(player1, new SkyclaveSentinel());
+        sentinel.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        sentinel.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+        assertThat(sentinel.isAttacking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Counters on another Sentinel do not allow this Sentinel to attack")
+    void counterPermissionIsSpecificToItsSource() {
+        Permanent sentinel = addCreatureReady(player1, new SkyclaveSentinel());
+        Permanent other = addCreatureReady(player1, new SkyclaveSentinel());
+        other.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+        assertThat(sentinel.isAttacking()).isFalse();
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(List.of(1)));
+        assertThat(other.isAttacking()).isTrue();
+        assertThat(sentinel.isAttacking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A counter of another type does not bypass defender")
+    void otherCounterTypeDoesNotAllowAttacking() {
+        Permanent sentinel = addCreatureReady(player1, new SkyclaveSentinel());
+        sentinel.setCounterCount(CounterType.CHARGE, 1);
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+        assertThat(sentinel.isAttacking()).isFalse();
     }
 }
