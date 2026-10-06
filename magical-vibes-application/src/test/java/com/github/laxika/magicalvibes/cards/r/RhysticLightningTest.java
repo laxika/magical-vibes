@@ -67,6 +67,51 @@ class RhysticLightningTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Lesser Gargadon");
     }
 
+    @Test
+    @DisplayName("Insufficient mana does not reduce damage or consume the available mana")
+    void insufficientManaLeavesFullDamage() {
+        int lifeBefore = gd.getLife(player2.getId());
+        castAtPlayer();
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 4);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The caster can pay to reduce damage to their own creature")
+    void casterPaysForOwnCreature() {
+        Permanent target = addCreatureReady(player1, new LesserGargadon());
+        castAtTarget(target);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Lesser Gargadon");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("A target that leaves before resolution causes no payment choice")
+    void removedTargetDoesNotOfferPayment() {
+        Permanent target = addCreatureReady(player2, new LesserGargadon());
+        harness.setHand(player1, java.util.List.of(new RhysticLightning()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castInstant(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player1, "Rhystic Lightning");
+    }
+
     private void castAtPlayer() {
         harness.setHand(player1, java.util.List.of(new RhysticLightning()));
         harness.addMana(player1, ManaColor.RED, 3);
