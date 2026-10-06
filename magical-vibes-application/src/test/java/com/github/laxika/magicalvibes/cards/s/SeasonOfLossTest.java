@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DruidOfTheSpade;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -13,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SeasonOfLoss.class, GrizzlyBears.class, Plains.class})
+@CardUsed({SeasonOfLoss.class, DruidOfTheSpade.class, Plains.class})
 class SeasonOfLossTest extends BaseCardTest {
 
     @Test
@@ -28,8 +28,8 @@ class SeasonOfLossTest extends BaseCardTest {
     @Test
     @DisplayName("Each player sacrifices a creature")
     void eachPlayerSacrificesCreature() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new DruidOfTheSpade());
+        harness.addToBattlefield(player2, new DruidOfTheSpade());
 
         cast(modeIndex(1, 0, 0));
 
@@ -42,10 +42,10 @@ class SeasonOfLossTest extends BaseCardTest {
     @Test
     @DisplayName("The sacrifice mode can be chosen twice")
     void sacrificeModeCanBeChosenTwice() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new DruidOfTheSpade());
+        harness.addToBattlefield(player1, new DruidOfTheSpade());
+        harness.addToBattlefield(player2, new DruidOfTheSpade());
+        harness.addToBattlefield(player2, new DruidOfTheSpade());
 
         cast(modeIndex(2, 0, 0));
 
@@ -66,8 +66,8 @@ class SeasonOfLossTest extends BaseCardTest {
     @Test
     @DisplayName("Draws for each creature that died under your control")
     void drawsForCreaturesThatDiedUnderYourControl() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new DruidOfTheSpade());
+        harness.addToBattlefield(player2, new DruidOfTheSpade());
         harness.setLibrary(player1, List.of(new Plains(), new Plains()));
 
         cast(modeIndex(1, 1, 0));
@@ -79,7 +79,7 @@ class SeasonOfLossTest extends BaseCardTest {
     @Test
     @DisplayName("Each opponent loses life for creature cards in your graveyard")
     void eachOpponentLosesLifeForCreatureCardsInGraveyard() {
-        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new Plains()));
+        harness.setGraveyard(player1, List.of(new DruidOfTheSpade(), new Plains()));
 
         cast(modeIndex(0, 0, 1));
 
@@ -90,13 +90,115 @@ class SeasonOfLossTest extends BaseCardTest {
     @Test
     @DisplayName("The sacrifice mode resolves before the life-loss mode")
     void sacrificeResolvesBeforeLifeLoss() {
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setGraveyard(player1, List.of(new DruidOfTheSpade()));
+        harness.addToBattlefield(player1, new DruidOfTheSpade());
+        harness.addToBattlefield(player2, new DruidOfTheSpade());
 
         cast(modeIndex(1, 0, 1));
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Repeated draw modes each count the creatures sacrificed earlier in the spell")
+    void repeatedDrawModesCountEarlierSacrifice() {
+        harness.addToBattlefield(player1, new DruidOfTheSpade());
+        harness.addToBattlefield(player2, new DruidOfTheSpade());
+        harness.setLibrary(player1, List.of(new Plains(), new Plains(), new Plains()));
+
+        cast(modeIndex(1, 2, 0));
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Draw and life-loss modes use different counts")
+    void drawAndLifeLossUseDifferentCounts() {
+        harness.setGraveyard(player1, List.of(new DruidOfTheSpade(), new DruidOfTheSpade()));
+        harness.setGraveyard(player2, List.of(new DruidOfTheSpade()));
+        harness.setLibrary(player1, List.of(new Plains()));
+
+        cast(modeIndex(0, 1, 1));
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Five sacrifice modes continue after a player runs out of creatures")
+    void fiveSacrificeModesContinueAfterCreaturesRunOut() {
+        harness.addToBattlefield(player1, new DruidOfTheSpade());
+        harness.addToBattlefield(player1, new Plains());
+        harness.addToBattlefield(player2, new Plains());
+
+        cast(modeIndex(5, 0, 0));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Druid of the Spade");
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Life-loss mode does nothing when your graveyard has no creature cards")
+    void lifeLossWithNoCreatureCards() {
+        harness.setGraveyard(player1, List.of(new Plains()));
+        harness.setGraveyard(player2, List.of(new DruidOfTheSpade()));
+
+        cast(modeIndex(0, 0, 1));
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Players choose in turn order before creatures are sacrificed simultaneously")
+    void choicesPrecedeSimultaneousSacrifice() {
+        var first = harness.addToBattlefieldAndReturn(player1, new DruidOfTheSpade());
+        harness.addToBattlefield(player1, new DruidOfTheSpade());
+        var second = harness.addToBattlefieldAndReturn(player2, new DruidOfTheSpade());
+        harness.addToBattlefield(player2, new DruidOfTheSpade());
+        harness.setLibrary(player1, List.of(new Plains(), new Plains(), new Plains()));
+
+        cast(modeIndex(1, 2, 0));
+
+        var firstChoice = gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(firstChoice).isNotNull();
+        assertThat(firstChoice.playerId()).isEqualTo(player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(first.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(2);
+        var secondChoice = gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(secondChoice).isNotNull();
+        assertThat(secondChoice.playerId()).isEqualTo(player2.getId());
+        harness.handleMultiplePermanentsChosen(player2, List.of(second.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Druid of the Spade");
+        harness.assertInGraveyard(player2, "Druid of the Spade");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Repeated draws count deaths from earlier spells this turn")
+    void repeatedDrawsCountDeathsFromEarlierSpells() {
+        harness.addToBattlefield(player1, new DruidOfTheSpade());
+        harness.addToBattlefield(player2, new DruidOfTheSpade());
+        harness.setLibrary(player1, List.of(new Plains(), new Plains(), new Plains()));
+
+        cast(modeIndex(1, 0, 0));
+        cast(modeIndex(0, 2, 0));
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }
 
     private void cast(int modeIndex) {
