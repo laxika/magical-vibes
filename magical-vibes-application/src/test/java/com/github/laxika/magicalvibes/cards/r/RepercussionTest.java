@@ -14,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Repercussion.class, GrizzlyBears.class, HillGiant.class, Shock.class})
+@CardUsed({Repercussion.class, GrizzlyBears.class, HillGiant.class, Shock.class, RayOfCommand.class})
 class RepercussionTest extends BaseCardTest {
 
     @Test
@@ -26,8 +26,7 @@ class RepercussionTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.setLife(player2, 20);
 
-        harness.castInstant(player1, 0, harness.getPermanentId(player2, "Hill Giant"));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Hill Giant"));
 
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
@@ -45,8 +44,7 @@ class RepercussionTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.setLife(player2, 20);
 
-        harness.castInstant(player1, 0, harness.getPermanentId(player2, "Grizzly Bears"));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Grizzly Bears"));
 
         assertThat(gd.stack).hasSize(1);
         harness.assertInGraveyard(player2, "Grizzly Bears");
@@ -74,6 +72,65 @@ class RepercussionTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.assertLife(player1, 17);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Damages the creature's current controller after control changes in response")
+    void usesCurrentControllerAtResolution() {
+        harness.addToBattlefield(player1, new Repercussion());
+        harness.addToBattlefield(player2, new HillGiant());
+        var creatureId = harness.getPermanentId(player2, "Hill Giant");
+        harness.setHand(player1, List.of(new Shock(), new RayOfCommand()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.castAndResolveInstant(player1, 0, creatureId);
+        assertThat(gd.stack).hasSize(1);
+        harness.castAndResolveInstant(player1, 0, creatureId);
+        harness.assertOnBattlefield(player1, "Hill Giant");
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Uses the creature's last controller if it dies after changing control")
+    void usesLastControllerAfterControlChangeAndDeath() {
+        harness.addToBattlefield(player1, new Repercussion());
+        harness.addToBattlefield(player2, new HillGiant());
+        var creatureId = harness.getPermanentId(player2, "Hill Giant");
+        harness.setHand(player1, List.of(new Shock(), new RayOfCommand(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.castAndResolveInstant(player1, 0, creatureId);
+        harness.castAndResolveInstant(player1, 0, creatureId);
+        harness.assertOnBattlefield(player1, "Hill Giant");
+        harness.castAndResolveInstant(player1, 0, creatureId);
+        harness.assertInGraveyard(player2, "Hill Giant");
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 16);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Does not trigger when damage is dealt directly to a player")
+    void ignoresDamageToPlayers() {
+        harness.addToBattlefield(player1, new Repercussion());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setLife(player2, 20);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        assertThat(gd.stack).isEmpty();
         harness.assertLife(player2, 18);
     }
 }
