@@ -29,6 +29,43 @@ class SandstoneWarriorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The boost uses the stack and affects only the activating warrior")
+    void boostWaitsForResolutionAndOnlyAffectsItsSource() {
+        Permanent otherWarrior = addCreatureReady(player1, new SandstoneWarrior());
+        Permanent warrior = addCreatureReady(player1, new SandstoneWarrior());
+        Permanent opposingWarrior = addCreatureReady(player2, new SandstoneWarrior());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 1, null, null);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(warrior.getPowerModifier()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(warrior.getPowerModifier()).isEqualTo(1);
+        assertThat(warrior.getToughnessModifier()).isZero();
+        assertThat(otherWarrior.getPowerModifier()).isZero();
+        assertThat(opposingWarrior.getPowerModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick warrior can activate its mana-only ability")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent warrior = harness.addToBattlefieldAndReturn(player1, new SandstoneWarrior());
+        warrior.setSummoningSick(true);
+        warrior.setTapped(true);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(warrior.getPowerModifier()).isEqualTo(1);
+        assertThat(warrior.getToughnessModifier()).isZero();
+        assertThat(warrior.isTapped()).isTrue();
+    }
+
+    @Test
     @DisplayName("Can activate ability multiple times if mana allows")
     void canActivateMultipleTimes() {
         Permanent warrior = addCreatureReady(player1, new SandstoneWarrior());
