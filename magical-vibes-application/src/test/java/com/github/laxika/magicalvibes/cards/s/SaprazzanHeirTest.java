@@ -89,6 +89,41 @@ class SaprazzanHeirTest extends BaseCardTest {
         return addCreatureReady(player1, new SaprazzanHeir());
     }
 
+    @Test
+    @DisplayName("Blocking with Saprazzan Heir does not create a draw trigger")
+    void blockingDoesNotTrigger() {
+        addCreatureReady(player1, new FreshVolunteers()).setAttacking(true);
+        addCreatureReady(player2, new SaprazzanHeir());
+
+        declareBlock();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The draw trigger resolves even after Saprazzan Heir dies")
+    void triggerSurvivesSourceDeath() {
+        Permanent heir = addHeir();
+        heir.setAttacking(true);
+        addCreatureReady(player2, new FreshVolunteers());
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+        int defenderHandSizeBefore = gd.playerHands.get(player2.getId()).size();
+
+        declareBlock();
+        heir.setMarkedDamage(1);
+        harness.runStateBasedActions();
+        harness.assertInGraveyard(player1, "Saprazzan Heir");
+        harness.assertNotOnBattlefield(player1, "Saprazzan Heir");
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore + 3);
+        assertThat(gd.playerHands.get(player2.getId()).size()).isEqualTo(defenderHandSizeBefore);
+    }
+
     private void declareBlock() {
         declareBlock(List.of(new BlockerAssignment(0, 0)));
     }
