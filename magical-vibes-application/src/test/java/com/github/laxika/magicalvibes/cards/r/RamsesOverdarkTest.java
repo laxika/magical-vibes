@@ -52,6 +52,59 @@ class RamsesOverdarkTest extends BaseCardTest {
         assertThat(ramses.isTapped()).isFalse();
     }
 
+    @Test
+    void doesNotDestroyCreatureThatStopsBeingEnchantedBeforeResolution() {
+        Permanent ramses = addReadyRamses();
+        Permanent target = addEnchantedBoars();
+        Permanent aura = findPermanent(player1, "Demonic Torment");
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, aura));
+        harness.passBothPriorities();
+
+        assertThat(ramses.isTapped()).isTrue();
+        harness.assertOnBattlefield(player2, "Durkwood Boars");
+        harness.assertNotInGraveyard(player2, "Durkwood Boars");
+    }
+
+    @Test
+    void canDestroyOwnCreatureEnchantedByOpponent() {
+        addReadyRamses();
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new DurkwoodBoars());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new DemonicTorment());
+        aura.setAttachedTo(target.getId());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Durkwood Boars");
+        harness.assertInGraveyard(player1, "Durkwood Boars");
+        harness.assertInGraveyard(player2, "Demonic Torment");
+    }
+
+    @Test
+    void cannotActivateWhileSummoningSick() {
+        Permanent ramses = harness.addToBattlefieldAndReturn(player1, new RamsesOverdark());
+        Permanent target = addEnchantedBoars();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(ramses.isTapped()).isFalse();
+        harness.assertOnBattlefield(player2, "Durkwood Boars");
+    }
+
+    @Test
+    void cannotActivateWhileTapped() {
+        Permanent ramses = addReadyRamses();
+        Permanent target = addEnchantedBoars();
+        ramses.setTapped(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+        harness.assertOnBattlefield(player2, "Durkwood Boars");
+    }
     private Permanent addReadyRamses() {
         return addCreatureReady(player1, new RamsesOverdark());
     }
