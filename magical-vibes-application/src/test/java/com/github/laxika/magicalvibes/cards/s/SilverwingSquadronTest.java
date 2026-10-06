@@ -47,4 +47,39 @@ class SilverwingSquadronTest extends BaseCardTest {
         assertThat(knights.getFirst().getCard().getKeywords()).contains(Keyword.VIGILANCE);
         assertThat(knights.getFirst().isTapped()).isFalse();
     }
+
+    @Test
+    @DisplayName("Each attacking Squadron creates a Knight and counts the new creatures")
+    void multipleSquadronsEachTriggerAndGrow() {
+        Permanent first = addCreatureReady(player1, new SilverwingSquadron());
+        Permanent second = addCreatureReady(player1, new SilverwingSquadron());
+
+        declareAttackers(List.of(0, 1));
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Knight")).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(4);
+        assertThat(first.isTapped()).isFalse();
+        assertThat(second.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An opposing Squadron's attack creates tokens only for its controller")
+    void opposingSquadronCreatesTokensForItsController() {
+        Permanent defending = addCreatureReady(player1, new SilverwingSquadron());
+        Permanent attacking = addCreatureReady(player2, new SilverwingSquadron());
+
+        declareAttackers(player2, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Knight")).isZero();
+        assertThat(countPermanents(player2, "Knight")).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, defending)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, defending)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, attacking)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, attacking)).isEqualTo(2);
+    }
 }
