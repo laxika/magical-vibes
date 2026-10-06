@@ -63,6 +63,64 @@ class SelectiveObliterationTest extends BaseCardTest {
                 .contains("Raging Kavu");
     }
 
+    @Test
+    @DisplayName("Exiles monocolored permanents matching only the other player's choice")
+    void usesEachPermanentsControllerChoice() {
+        harness.addToBattlefield(player1, new ViashinoGrappler());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        castSelectiveObliteration();
+        harness.handleListChoice(player1, "GREEN");
+        harness.handleListChoice(player2, "RED");
+
+        harness.assertNotOnBattlefield(player1, "Viashino Grappler");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Viashino Grappler");
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.exiledCards).extracting(entry -> entry.card().getName())
+                .containsExactlyInAnyOrder("Viashino Grappler", "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Both players may choose the same color, but multicolored permanents are still exiled")
+    void allowsBothPlayersToChooseGreen() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new RagingKavu());
+
+        castSelectiveObliteration();
+        harness.handleListChoice(player1, "GREEN");
+        harness.handleListChoice(player2, "GREEN");
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Raging Kavu");
+        assertThat(gd.exiledCards).extracting(entry -> entry.card().getName())
+                .containsExactly("Raging Kavu");
+    }
+
+    @Test
+    @DisplayName("Exile waits until every player has chosen a color")
+    void waitsForAllChoicesBeforeExiling() {
+        harness.addToBattlefield(player1, new RagingKavu());
+        harness.addToBattlefield(player2, new RagingKavu());
+
+        castSelectiveObliteration();
+        harness.handleListChoice(player1, "BLUE");
+
+        harness.assertOnBattlefield(player1, "Raging Kavu");
+        harness.assertOnBattlefield(player2, "Raging Kavu");
+        assertThat(gd.exiledCards).isEmpty();
+
+        harness.handleListChoice(player2, "WHITE");
+
+        harness.assertNotOnBattlefield(player1, "Raging Kavu");
+        harness.assertNotOnBattlefield(player2, "Raging Kavu");
+        assertThat(gd.exiledCards).extracting(entry -> entry.card().getName())
+                .containsExactly("Raging Kavu", "Raging Kavu");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     private void castSelectiveObliteration() {
         harness.setHand(player1, List.of(new SelectiveObliteration()));
         harness.addMana(player1, ManaColor.COLORLESS, 5);
