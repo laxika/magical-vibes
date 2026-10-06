@@ -16,7 +16,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Reverberation.class, Pyrotechnics.class, Abomination.class, Darkness.class})
+@CardUsed({Reverberation.class, Pyrotechnics.class, Abomination.class, Darkness.class, Recall.class})
 class ReverberationTest extends BaseCardTest {
 
     @Test
@@ -29,8 +29,7 @@ class ReverberationTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLUE, 4);
 
         harness.castSorcery(player1, 0, Map.of(creature.getId(), 2, player2.getId(), 2));
-        harness.castInstant(player2, 0, pyrotechnics.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, pyrotechnics.getId());
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(16);
@@ -62,13 +61,9 @@ class ReverberationTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLUE, 4);
 
         harness.castSorcery(player1, 0, Map.of(player2.getId(), 4));
-        harness.castInstant(player2, 0, firstPyrotechnics.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, firstPyrotechnics.getId());
         harness.passBothPriorities();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
         harness.setHand(player2, List.of(new Pyrotechnics()));
@@ -77,5 +72,63 @@ class ReverberationTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(12);
+    }
+
+    @Test
+    void damageAlreadyAimedAtSorceryControllerIsDealtOnlyOnce() {
+        Pyrotechnics pyrotechnics = new Pyrotechnics();
+        harness.setHand(player1, List.of(pyrotechnics));
+        harness.setHand(player2, List.of(new Reverberation()));
+        harness.addMana(player1, ManaColor.RED, 5);
+        harness.addMana(player2, ManaColor.BLUE, 4);
+
+        harness.castSorcery(player1, 0, Map.of(player1.getId(), 2, player2.getId(), 2));
+        harness.castAndResolveInstant(player2, 0, pyrotechnics.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 16);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void doesNotRedirectDamageFromAnotherSorceryInTheSameTurn() {
+        Pyrotechnics pyrotechnics = new Pyrotechnics();
+        harness.setHand(player1, List.of(pyrotechnics, new Pyrotechnics()));
+        harness.setHand(player2, List.of(new Reverberation()));
+        harness.addMana(player1, ManaColor.RED, 10);
+        harness.addMana(player2, ManaColor.BLUE, 4);
+
+        harness.castSorcery(player1, 0, Map.of(player2.getId(), 4));
+        harness.castAndResolveInstant(player2, 0, pyrotechnics.getId());
+        harness.passBothPriorities();
+        harness.castSorcery(player1, 0, Map.of(player2.getId(), 4));
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 16);
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    void doesNotRedirectDamageWhenTheSameCardIsReturnedAndRecast() {
+        Pyrotechnics pyrotechnics = new Pyrotechnics();
+        harness.setHand(player1, List.of(pyrotechnics, new Recall(), new Darkness()));
+        harness.setHand(player2, List.of(new Reverberation()));
+        harness.addMana(player1, ManaColor.RED, 5);
+        harness.addMana(player2, ManaColor.BLUE, 4);
+
+        harness.castSorcery(player1, 0, Map.of(player2.getId(), 4));
+        harness.castAndResolveInstant(player2, 0, pyrotechnics.getId());
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.castAndResolveSorcery(player1, 0, 1);
+        harness.handleCardChosen(player1, 0);
+        harness.handleGraveyardCardChosen(player1, 0);
+        harness.addMana(player1, ManaColor.RED, 5);
+        harness.castSorcery(player1, 0, Map.of(player2.getId(), 4));
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 16);
+        harness.assertLife(player2, 16);
     }
 }
