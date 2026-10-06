@@ -49,8 +49,7 @@ class RushingTideZuberaTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ChoiceOfDamnations()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 5);
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleXValueChosen(player2, 0);
         harness.handleMayAbilityChosen(player1, false);
         if (gd.interaction.activeInteraction() != null) {
@@ -81,5 +80,43 @@ class RushingTideZuberaTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 3);
         harness.assertInGraveyard(player1, "Rushing-Tide Zubera");
+    }
+
+    @Test
+    @DisplayName("Does not trigger when sacrificed without taking damage")
+    void doesNotTriggerWithoutDamage() {
+        harness.addToBattlefield(player2, new RushingTideZubera());
+        harness.setLibrary(player2, List.of(new RushingTideZubera(), new RushingTideZubera(), new RushingTideZubera()));
+        int handSizeBefore = gd.playerHands.get(player2.getId()).size();
+
+        harness.setHand(player1, List.of(new ChoiceOfDamnations()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleXValueChosen(player2, 0);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(handSizeBefore);
+        harness.assertInGraveyard(player2, "Rushing-Tide Zubera");
+    }
+
+    @Test
+    @DisplayName("The dying Zubera's controller draws, rather than the damage source's controller")
+    void opponentDrawsForTheirZubera() {
+        Permanent zubera = harness.addToBattlefieldAndReturn(player2, new RushingTideZubera());
+        harness.setLibrary(player2, List.of(new RushingTideZubera(), new RushingTideZubera(), new RushingTideZubera()));
+        int opponentHandSizeBefore = gd.playerHands.get(player2.getId()).size();
+
+        harness.setHand(player1, List.of(new GhostLitRaider()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateHandAbility(player1, 0, zubera.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(opponentHandSizeBefore + 3);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player2, "Rushing-Tide Zubera");
     }
 }
