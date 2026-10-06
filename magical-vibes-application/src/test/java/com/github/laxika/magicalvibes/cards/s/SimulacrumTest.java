@@ -75,17 +75,91 @@ class SimulacrumTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Force of Nature");
     }
 
+    @Test
+    void lethalDamageToCreatureDoesNotPreventLifeGain() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        lightningBoltSelf();
+
+        castSimulacrum(bears.getId());
+
+        harness.assertLife(player1, 20);
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void damageTotalIsNotConsumedByFirstSimulacrum() {
+        Permanent firstSpider = harness.addToBattlefieldAndReturn(player1, new GiantSpider());
+        Permanent secondSpider = harness.addToBattlefieldAndReturn(player1, new GiantSpider());
+        lightningBoltSelf();
+
+        castSimulacrum(firstSpider.getId());
+        castSimulacrum(secondSpider.getId());
+
+        harness.assertLife(player1, 23);
+        assertThat(firstSpider.getMarkedDamage()).isEqualTo(3);
+        assertThat(secondSpider.getMarkedDamage()).isEqualTo(3);
+    }
+
+    @Test
+    void includesDamageDealtInResponse() {
+        Permanent elemental = harness.addToBattlefieldAndReturn(player1, new ForceOfNature());
+        lightningBoltSelf();
+        harness.setHand(player1, List.of(new Simulacrum()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castInstant(player1, 0, elemental.getId());
+
+        lightningBoltSelf();
+        harness.assertLife(player1, 14);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        assertThat(elemental.getMarkedDamage()).isEqualTo(6);
+    }
+
+    @Test
+    void gainsNoLifeWhenOnlyTargetDiesBeforeResolution() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        lightningBoltSelf();
+        harness.setHand(player1, List.of(new Simulacrum()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castInstant(player1, 0, bears.getId());
+
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 17);
+        harness.assertInGraveyard(player1, "Simulacrum");
+    }
+
+    @Test
+    void ignoresDamageDealtToOpponentAndCreatures() {
+        Permanent spider = harness.addToBattlefieldAndReturn(player1, new GiantSpider());
+        harness.setHand(player1, List.of(new LightningBolt(), new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.castAndResolveInstant(player1, 0, spider.getId());
+
+        castSimulacrum(spider.getId());
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 17);
+        assertThat(spider.getMarkedDamage()).isEqualTo(3);
+        harness.assertOnBattlefield(player1, "Giant Spider");
+    }
+
     private void lightningBoltSelf() {
         harness.setHand(player1, List.of(new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player1.getId());
     }
 
     private void castSimulacrum(UUID targetCreatureId) {
         harness.setHand(player1, List.of(new Simulacrum()));
         harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.castInstant(player1, 0, targetCreatureId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetCreatureId);
     }
 }
