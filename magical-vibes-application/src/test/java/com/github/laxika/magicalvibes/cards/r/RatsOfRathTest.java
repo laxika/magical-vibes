@@ -18,6 +18,40 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class RatsOfRathTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Can destroy itself while tapped and summoning sick")
+    void canDestroyItselfWhileTappedAndSummoningSick() {
+        Permanent rats = harness.addToBattlefieldAndReturn(player1, new RatsOfRath());
+        rats.setTapped(true);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, 0, null, rats.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(rats);
+        harness.assertInGraveyard(player1, "Rats of Rath");
+    }
+
+    @Test
+    @DisplayName("Ability resolves after Rats of Rath destroys itself in response")
+    void abilityResolvesAfterSourceLeavesBattlefield() {
+        Permanent rats = harness.addToBattlefieldAndReturn(player1, new RatsOfRath());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new MoggConscripts());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, 0, null, creature.getId());
+        harness.activateAbility(player1, 0, 0, null, rats.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(rats);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(creature);
+        harness.assertInGraveyard(player1, "Mogg Conscripts");
+    }
+
+    @Test
     @DisplayName("Destroys a creature its controller controls")
     void destroysOwnCreature() {
         harness.addToBattlefieldAndReturn(player1, new RatsOfRath());
