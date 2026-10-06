@@ -44,7 +44,7 @@ class RecklessSpiteTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, List.of(remainingCreature.getId(), leavingCreature.getId()));
 
-        // One target leaves before resolution — the life loss still happens.
+        // One target leaves before resolution â€” the life loss still happens.
         gd.playerBattlefields.get(player2.getId())
                 .removeIf(p -> p.getId().equals(leavingCreature.getId()));
 
@@ -163,6 +163,46 @@ class RecklessSpiteTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Yavimaya Barbarian");
         harness.assertInGraveyard(player2, "Yavimaya Barbarian");
         harness.assertLife(player1, 15);
+    }
+
+    @Test
+    @DisplayName("Can destroy creatures controlled by different players")
+    void canTargetOwnCreatureAndOpponentsCreature() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new YavimayaBarbarian());
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new YavimayaBarbarian());
+        prepareCast();
+
+        harness.castAndResolveInstant(player1, 0,
+                List.of(ownCreature.getId(), opposingCreature.getId()));
+
+        harness.assertNotOnBattlefield(player1, "Yavimaya Barbarian");
+        harness.assertNotOnBattlefield(player2, "Yavimaya Barbarian");
+        harness.assertInGraveyard(player1, "Yavimaya Barbarian");
+        harness.assertInGraveyard(player2, "Yavimaya Barbarian");
+        harness.assertLife(player1, 15);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Controller still loses five life when both legal targets regenerate")
+    void losesLifeWhenNeitherTargetIsDestroyed() {
+        Permanent firstCreature = harness.addToBattlefieldAndReturn(player2, new YavimayaBarbarian());
+        Permanent secondCreature = harness.addToBattlefieldAndReturn(player2, new YavimayaBarbarian());
+        firstCreature.setRegenerationShield(1);
+        secondCreature.setRegenerationShield(1);
+        prepareCast();
+
+        harness.castAndResolveInstant(player1, 0,
+                List.of(firstCreature.getId(), secondCreature.getId()));
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .extracting(Permanent::getId)
+                .containsExactlyInAnyOrder(firstCreature.getId(), secondCreature.getId());
+        harness.assertNotInGraveyard(player2, "Yavimaya Barbarian");
+        assertThat(firstCreature.isTapped()).isTrue();
+        assertThat(secondCreature.isTapped()).isTrue();
+        harness.assertLife(player1, 15);
+        harness.assertLife(player2, 20);
     }
 
     private void prepareCast() {
