@@ -71,6 +71,25 @@ class RoarOfTheWurmTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("The same Roar of the Wurm creates a second token when cast with flashback")
+    void castFromHandThenFlashbackCreatesTwoTokens() {
+        harness.castFromHand(player1, new RoarOfTheWurm(), "{6}{G}");
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Roar of the Wurm");
+
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castAndResolveFlashback(player1, 0, null);
+
+        assertThat(wurmTokens()).hasSize(2);
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        harness.assertNotInGraveyard(player1, "Roar of the Wurm");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .filteredOn(card -> card.getName().equals("Roar of the Wurm"))
+                .hasSize(1);
+    }
+
     private List<Permanent> wurmTokens() {
         return findPermanents(player1, "Wurm").stream()
                 .filter(permanent -> permanent.getCard().isToken())
