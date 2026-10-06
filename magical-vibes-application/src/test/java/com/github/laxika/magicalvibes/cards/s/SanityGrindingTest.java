@@ -32,8 +32,7 @@ class SanityGrindingTest extends BaseCardTest {
     private void cast() {
         harness.setHand(player1, List.of(new SanityGrinding()));
         harness.addMana(player1, ManaColor.BLUE, 3);
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
     }
 
     @Test
@@ -104,5 +103,81 @@ class SanityGrindingTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be an opponent");
+    }
+
+    @Test
+    @DisplayName("An empty caster library causes no mill and no reorder choice")
+    void emptyLibraryDoesNothing() {
+        harness.setLibrary(player1, List.of());
+        Card opponentCard = new NettleSentinel();
+        harness.setLibrary(player2, List.of(opponentCard));
+
+        cast();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A single revealed card is returned without a reorder choice")
+    void singleCardIsBottomedAutomatically() {
+        Card revealed = new StreamHopper();
+        Card milled = new NettleSentinel();
+        Card remaining = new StreamHopper();
+        harness.setLibrary(player1, List.of(revealed));
+        harness.setLibrary(player2, List.of(milled, remaining));
+
+        cast();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(revealed);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(milled);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(remaining);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Mill is limited to the cards remaining in the opponent's library")
+    void shortOpponentLibraryMillsAllAvailableCards() {
+        harness.setLibrary(player1, List.of(new SanityGrinding()));
+        Card first = new NettleSentinel();
+        Card second = new StreamHopper();
+        harness.setLibrary(player2, List.of(first, second));
+
+        cast();
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(first, second);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Only the top ten cards count and they go below the unrevealed cards in the chosen order")
+    void revealLimitAndBottomOrder() {
+        List<Card> revealed = IntStream.range(0, 10)
+                .mapToObj(i -> (Card) new NettleSentinel()).toList();
+        Card unrevealed = new SanityGrinding();
+        List<Card> library = new ArrayList<>(revealed);
+        library.add(unrevealed);
+        harness.setLibrary(player1, library);
+
+        cast();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        PendingInteraction.LibraryReorder reorder =
+                gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class);
+        assertThat(reorder).isNotNull();
+        assertThat(reorder.cards()).containsExactlyElementsOf(revealed);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(unrevealed);
+
+        List<Integer> order = IntStream.range(0, 10).map(i -> 9 - i).boxed().toList();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(order));
+
+        List<Card> expected = new ArrayList<>();
+        expected.add(unrevealed);
+        order.forEach(i -> expected.add(revealed.get(i)));
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyElementsOf(expected);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }
