@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.h.HumbleBudoka;
 import com.github.laxika.magicalvibes.cards.o.OrochiSustainer;
+import com.github.laxika.magicalvibes.cards.r.RendFlesh;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -14,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ShisatoWhisperingHunter.class, HumbleBudoka.class, OrochiSustainer.class})
+@CardUsed({ShisatoWhisperingHunter.class, HumbleBudoka.class, OrochiSustainer.class, RendFlesh.class})
 class ShisatoWhisperingHunterTest extends BaseCardTest {
 
     // "At the beginning of your upkeep, sacrifice a Snake."
@@ -105,10 +107,8 @@ class ShisatoWhisperingHunterTest extends BaseCardTest {
 
         harness.handleMultiplePermanentsChosen(player1, List.of(snake.getId()));
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getId().equals(shisato.getId()));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getId().equals(snake.getId()));
+        harness.assertOnBattlefield(player1, "Shisato, Whispering Hunter");
+        harness.assertNotOnBattlefield(player1, "Orochi Sustainer");
     }
 
     @Test
@@ -120,6 +120,70 @@ class ShisatoWhisperingHunterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Shisato, Whispering Hunter");
+    }
+
+    @Test
+    @DisplayName("The controller may sacrifice Shisato even when another Snake is available")
+    void upkeepCanSacrificeShisatoInsteadOfAnotherSnake() {
+        Permanent shisato = harness.addToBattlefieldAndReturn(player1, new ShisatoWhisperingHunter());
+        harness.addToBattlefield(player1, new OrochiSustainer());
+        harness.addToBattlefield(player1, new HumbleBudoka());
+        Permanent opposingSnake = harness.addToBattlefieldAndReturn(player2, new OrochiSustainer());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).doesNotContain(opposingSnake.getId());
+        assertThat(choice.validIds()).hasSize(2);
+        harness.handleMultiplePermanentsChosen(player1, List.of(shisato.getId()));
+
+        harness.assertInGraveyard(player1, "Shisato, Whispering Hunter");
+        harness.assertNotOnBattlefield(player1, "Shisato, Whispering Hunter");
+        harness.assertOnBattlefield(player1, "Orochi Sustainer");
+        harness.assertOnBattlefield(player1, "Humble Budoka");
+        harness.assertOnBattlefield(player2, "Orochi Sustainer");
+    }
+
+    @Test
+    @DisplayName("The upkeep sacrifice still resolves after Shisato is destroyed")
+    void upkeepStillSacrificesSnakeAfterSourceLeaves() {
+        Permanent shisato = harness.addToBattlefieldAndReturn(player1, new ShisatoWhisperingHunter());
+        harness.addToBattlefield(player1, new OrochiSustainer());
+        harness.addToBattlefield(player1, new HumbleBudoka());
+
+        advanceToUpkeep(player1);
+        harness.setHand(player2, List.of(new RendFlesh()));
+        harness.addMana(player2, ManaColor.BLACK, 3);
+        harness.castAndResolveInstant(player2, 0, shisato.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Shisato, Whispering Hunter");
+        harness.assertInGraveyard(player1, "Orochi Sustainer");
+        harness.assertNotOnBattlefield(player1, "Orochi Sustainer");
+        harness.assertOnBattlefield(player1, "Humble Budoka");
+    }
+
+    @Test
+    @DisplayName("The combat damage trigger skips untap even after Shisato is destroyed")
+    void combatDamageTriggerSurvivesSourceRemoval() {
+        Permanent shisato = addCreatureReady(player1, new ShisatoWhisperingHunter());
+        shisato.setAttacking(true);
+        Permanent enemyBudoka = addCreatureReady(player2, new HumbleBudoka());
+        enemyBudoka.tap();
+
+        resolveCombat();
+        harness.setHand(player2, List.of(new RendFlesh()));
+        harness.addMana(player2, ManaColor.BLACK, 3);
+        harness.castAndResolveInstant(player2, 0, shisato.getId());
+        resolveAllTriggers();
+        harness.assertInGraveyard(player1, "Shisato, Whispering Hunter");
+
+        endTurn();
+
+        assertThat(enemyBudoka.isTapped()).isTrue();
     }
 
     /** Ends the current turn; the other player becomes active and takes their untap step. */
