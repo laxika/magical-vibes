@@ -62,4 +62,50 @@ class SanguineGuardTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Sanguine Guard");
         harness.assertNotOnBattlefield(player2, "Gorilla Warrior");
     }
+
+    @Test
+    @DisplayName("Regeneration can be activated repeatedly while tapped and summoning sick")
+    void regenerationCanBeActivatedWhileTappedAndSummoningSick() {
+        Permanent guard = addCreatureReady(player1, new SanguineGuard());
+        guard.setSummoningSick(true);
+        guard.tap();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(guard.getRegenerationShield()).isEqualTo(2);
+        assertThat(guard.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+    }
+
+    @Test
+    @DisplayName("An activated regeneration shield removes lethal damage and removes the guard from combat")
+    void activatedRegenerationSavesGuardAndRemovesItFromCombat() {
+        Permanent guard = addCreatureReady(player1, new SanguineGuard());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(guard.isTapped()).isFalse();
+        guard.setBlocking(true);
+        guard.addBlockingTarget(0);
+        Permanent attacker = addCreatureReady(player2, new BullHippo());
+        attacker.setAttacking(true);
+
+        resolveCombat(player2);
+
+        harness.assertOnBattlefield(player1, "Sanguine Guard");
+        harness.assertOnBattlefield(player2, "Bull Hippo");
+        assertThat(guard.isTapped()).isTrue();
+        assertThat(guard.getRegenerationShield()).isZero();
+        assertThat(guard.getMarkedDamage()).isZero();
+        assertThat(guard.isBlocking()).isFalse();
+        assertThat(guard.getBlockingTargets()).isEmpty();
+    }
 }
