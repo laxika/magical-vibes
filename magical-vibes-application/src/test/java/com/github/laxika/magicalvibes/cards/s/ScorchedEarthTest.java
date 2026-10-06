@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.c.Capsize;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.f.FightingDrake;
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -16,7 +17,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ScorchedEarth.class, FightingDrake.class, Forest.class, Island.class, Mountain.class})
+@CardUsed({ScorchedEarth.class, FightingDrake.class, Forest.class, Island.class, Mountain.class, Capsize.class})
 class ScorchedEarthTest extends BaseCardTest {
 
     @Test
@@ -148,5 +149,115 @@ class ScorchedEarthTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("Must choose exactly X targets even when paying the full discard cost")
+    void cannotTargetFewerLandsThanX() {
+        harness.addToBattlefield(player2, new Forest());
+        harness.addToBattlefield(player2, new Island());
+        harness.setHand(player1, List.of(new ScorchedEarth(), new Mountain(), new Mountain()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        UUID forestId = harness.getPermanentId(player2, "Forest");
+
+        assertThatThrownBy(() -> harness.castSorceryWithDiscards(
+                player1, 0, 2, List.of(forestId), List.of(1, 2)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Positive X requires targets")
+    void cannotChooseNoTargetsForPositiveX() {
+        harness.addToBattlefield(player2, new Forest());
+        harness.setHand(player1, List.of(new ScorchedEarth(), new Mountain()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        assertThatThrownBy(() -> harness.castSorceryWithDiscards(
+                player1, 0, 1, List.of(), List.of(1)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The same land cannot be chosen twice")
+    void cannotChooseDuplicateTargets() {
+        harness.addToBattlefield(player2, new Forest());
+        harness.setHand(player1, List.of(new ScorchedEarth(), new Mountain(), new Mountain()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        UUID forestId = harness.getPermanentId(player2, "Forest");
+
+        assertThatThrownBy(() -> harness.castSorceryWithDiscards(
+                player1, 0, 2, List.of(forestId, forestId), List.of(1, 2)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The same land card cannot pay two discards")
+    void cannotChooseDuplicateDiscards() {
+        harness.addToBattlefield(player2, new Forest());
+        harness.addToBattlefield(player2, new Island());
+        harness.setHand(player1, List.of(new ScorchedEarth(), new Mountain(), new Mountain()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        UUID forestId = harness.getPermanentId(player2, "Forest");
+        UUID islandId = harness.getPermanentId(player2, "Island");
+
+        assertThatThrownBy(() -> harness.castSorceryWithDiscards(
+                player1, 0, 2, List.of(forestId, islandId), List.of(1, 1)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Discards are paid before resolution and remaining legal targets are destroyed")
+    void destroysRemainingTargetAfterOneLandLeaves() {
+        harness.addToBattlefield(player2, new Forest());
+        harness.addToBattlefield(player2, new Island());
+        harness.setHand(player1, List.of(new ScorchedEarth(), new Mountain(), new Mountain()));
+        harness.setHand(player2, List.of(new Capsize()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        UUID forestId = harness.getPermanentId(player2, "Forest");
+        UUID islandId = harness.getPermanentId(player2, "Island");
+
+        harness.castSorceryWithDiscards(player1, 0, 2, List.of(forestId, islandId), List.of(1, 2));
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(c -> c.getName().equals("Mountain")).hasSize(2);
+        harness.assertOnBattlefield(player2, "Forest");
+        harness.assertOnBattlefield(player2, "Island");
+
+        harness.castAndResolveInstant(player2, 0, forestId);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Forest");
+        harness.assertNotInGraveyard(player2, "Forest");
+        harness.assertInGraveyard(player2, "Island");
+        harness.assertInGraveyard(player1, "Scorched Earth");
+    }
+
+    @Test
+    @DisplayName("Discarded lands stay in the graveyard when all targets become illegal")
+    void doesNotRefundDiscardsWhenAllTargetsLeave() {
+        harness.addToBattlefield(player2, new Forest());
+        harness.setHand(player1, List.of(new Mountain(), new ScorchedEarth()));
+        harness.setHand(player2, List.of(new Capsize()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        UUID forestId = harness.getPermanentId(player2, "Forest");
+
+        harness.castSorceryWithDiscards(player1, 1, 1, List.of(forestId), List.of(0));
+        harness.assertInGraveyard(player1, "Mountain");
+        harness.castAndResolveInstant(player2, 0, forestId);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Forest");
+        harness.assertNotInGraveyard(player2, "Forest");
+        harness.assertInGraveyard(player1, "Mountain");
+        harness.assertInGraveyard(player1, "Scorched Earth");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 }
