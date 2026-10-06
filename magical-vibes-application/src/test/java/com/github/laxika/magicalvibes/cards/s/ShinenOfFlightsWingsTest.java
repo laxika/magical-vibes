@@ -55,9 +55,7 @@ class ShinenOfFlightsWingsTest extends BaseCardTest {
 
         harness.activateHandAbility(player1, 0, bears.getId());
         harness.passBothPriorities();
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isFalse();
     }
@@ -86,5 +84,41 @@ class ShinenOfFlightsWingsTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         harness.assertInHand(player1, "Shinen of Flight's Wings");
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Channel pays discard and mana before its effect resolves")
+    void channelPaysCostsBeforeResolution() {
+        harness.setHand(player1, List.of(new ShinenOfFlightsWings()));
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateHandAbility(player1, 0, bears.getId());
+
+        harness.assertNotInHand(player1, "Shinen of Flight's Wings");
+        harness.assertInGraveyard(player1, "Shinen of Flight's Wings");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Channel can be activated during an opponent's upkeep")
+    void channelWorksDuringOpponentsTurn() {
+        harness.setHand(player1, List.of(new ShinenOfFlightsWings()));
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateHandAbility(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
+        harness.assertInGraveyard(player1, "Shinen of Flight's Wings");
     }
 }
