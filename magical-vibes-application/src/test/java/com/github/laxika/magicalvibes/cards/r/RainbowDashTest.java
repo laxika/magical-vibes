@@ -69,4 +69,54 @@ class RainbowDashTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerCoolness.get(player1.getId())).isEqualTo(80);
     }
+
+    @Test
+    @DisplayName("An attacker with both flying and haste grants only 20% coolness")
+    void selfAttackCountsOnceForBothKeywords() {
+        addCreatureReady(player1, new RainbowDash());
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gd.playerCoolness.get(player1.getId())).isEqualTo(20);
+        assertThat(gd.playerCoolness.getOrDefault(player2.getId(), 0)).isZero();
+    }
+
+    @Test
+    @DisplayName("Opposing flying attackers do not increase your coolness")
+    void opposingAttackDoesNotGrantCoolness() {
+        addCreatureReady(player1, new RainbowDash());
+        addCreatureReady(player2, new AirElemental());
+
+        declareAttackers(player2, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gd.playerCoolness.getOrDefault(player1.getId(), 0)).isZero();
+        assertThat(gd.playerCoolness.getOrDefault(player2.getId(), 0)).isZero();
+    }
+
+    @Test
+    @DisplayName("Sonic Rainboom uses the stack and resets all coolness above 100%")
+    void sonicRainboomUsesStackAndResetsExcessCoolness() {
+        addCreatureReady(player1, new RainbowDash());
+        Card drawn = new GrizzlyBears();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(drawn));
+        gd.playerCoolness.put(player1.getId(), 140);
+        gd.playerCoolness.put(player2.getId(), 60);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerCoolness.get(player1.getId())).isEqualTo(140);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(5);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.playerCoolness.get(player1.getId())).isZero();
+        assertThat(gd.playerCoolness.get(player2.getId())).isEqualTo(60);
+    }
 }
