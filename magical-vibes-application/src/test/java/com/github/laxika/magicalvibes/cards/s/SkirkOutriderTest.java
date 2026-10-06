@@ -43,6 +43,17 @@ class SkirkOutriderTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Multiple Beasts grant the bonus only once")
+    void multipleBeastsGrantOnlyOneBonus() {
+        Permanent outrider = harness.addToBattlefieldAndReturn(player1, new SkirkOutrider());
+        harness.addToBattlefield(player1, new EnormousBaloth());
+        harness.addToBattlefield(player1, new EnormousBaloth());
+
+        assertThat(gqs.getEffectivePower(gd, outrider)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, outrider)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, outrider, Keyword.TRAMPLE)).isTrue();
+    }
+    @Test
     @DisplayName("Loses the bonus when your Beast leaves the battlefield")
     void losesBoostWhenBeastLeaves() {
         Permanent outrider = harness.addToBattlefieldAndReturn(player1, new SkirkOutrider());
