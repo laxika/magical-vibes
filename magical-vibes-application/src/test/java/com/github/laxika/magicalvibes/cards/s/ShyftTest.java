@@ -111,6 +111,37 @@ class ShyftTest extends BaseCardTest {
         assertThat(gqs.getEffectiveColors(gd, newShyft)).containsExactly(CardColor.BLUE);
     }
 
+    @Test
+    @DisplayName("Shyft does not trigger during an opponent's upkeep")
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        Permanent shyft = addCreatureReady(player1, new Shyft());
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gqs.getEffectiveColors(gd, shyft)).containsExactly(CardColor.BLUE);
+    }
+
+    @Test
+    @DisplayName("Declining a later upkeep preserves the previously chosen colors")
+    void decliningLaterUpkeepPreservesChosenColors() {
+        Permanent shyft = addCreatureReady(player1, new Shyft());
+
+        triggerUpkeepAndAccept(player1);
+        harness.handleListChoice(player1, "RED");
+        harness.handleListChoice(player1, "GREEN");
+        harness.handleListChoice(player1, "DONE");
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gqs.getEffectiveColors(gd, shyft))
+                .containsExactlyInAnyOrder(CardColor.RED, CardColor.GREEN);
+    }
+
     private void triggerUpkeepAndAccept(Player player) {
         advanceToUpkeep(player);
         harness.passBothPriorities(); // resolve MayEffect → may prompt
