@@ -64,4 +64,74 @@ class SereneStewardTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .containsExactly(steward.getId());
     }
+
+    @Test
+    @DisplayName("A single gain of several life puts only one counter on the target")
+    void largerLifeGainPutsOnlyOneCounter() {
+        Permanent steward = harness.addToBattlefieldAndReturn(player1, new SereneSteward());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 5));
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, steward.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(steward.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An opponent gaining life does not trigger the Steward")
+    void opponentLifeGainDoesNotTrigger() {
+        Permanent steward = harness.addToBattlefieldAndReturn(player1, new SereneSteward());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player2.getId(), 3));
+        harness.passBothPriorities();
+
+        assertThat(steward.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Separate life gains can each put a counter on the same creature")
+    void separateLifeGainsEachTrigger() {
+        Permanent steward = harness.addToBattlefieldAndReturn(player1, new SereneSteward());
+
+        for (int i = 0; i < 2; i++) {
+            harness.addMana(player1, ManaColor.WHITE, 1);
+            harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 1));
+            harness.passBothPriorities();
+            harness.handlePermanentChosen(player1, steward.getId());
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, true);
+            harness.passBothPriorities();
+        }
+
+        assertThat(steward.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Nonwhite mana cannot pay for the counter")
+    void nonwhiteManaCannotPay() {
+        Permanent steward = harness.addToBattlefieldAndReturn(player1, new SereneSteward());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 1));
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, steward.getId());
+        harness.passBothPriorities();
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        assertThat(steward.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
 }
