@@ -25,8 +25,7 @@ class SlaughterTest extends BaseCardTest {
         target.setRegenerationShield(1);
         prepareCast();
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         harness.assertInGraveyard(player2, "Raging Goblin");
     }
@@ -56,8 +55,7 @@ class SlaughterTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new RagingGoblin());
         prepareCast();
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         harness.assertInGraveyard(player1, "Slaughter");
         harness.assertNotInHand(player1, "Slaughter");
@@ -121,6 +119,48 @@ class SlaughterTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId()))
                 .extracting(Card::getName)
                 .containsExactly("Slaughter");
+    }
+
+    @Test
+    @DisplayName("Can destroy your own nonblack creature")
+    void destroysOwnNonblackCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new RagingGoblin());
+        prepareCast();
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertInGraveyard(player1, "Raging Goblin");
+        harness.assertInGraveyard(player1, "Slaughter");
+    }
+
+    @Test
+    @DisplayName("Buyback remains optional when the caster cannot afford its life cost")
+    void castsWithoutBuybackAtLowLife() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new RagingGoblin());
+        harness.setLife(player1, 3);
+        prepareCast();
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertLife(player1, 3);
+        harness.assertInGraveyard(player2, "Raging Goblin");
+        harness.assertInGraveyard(player1, "Slaughter");
+    }
+
+    @Test
+    @DisplayName("Buyback can leave the caster at one life")
+    void buybackAtFiveLife() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new RagingGoblin());
+        harness.setLife(player1, 5);
+        prepareCast();
+
+        harness.castInstantWithBuyback(player1, 0, target.getId());
+        harness.assertLife(player1, 1);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Raging Goblin");
+        harness.assertInHand(player1, "Slaughter");
+        harness.assertNotInGraveyard(player1, "Slaughter");
     }
 
     private void prepareCast() {
