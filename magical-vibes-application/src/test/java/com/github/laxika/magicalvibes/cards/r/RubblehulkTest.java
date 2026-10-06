@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Rubblehulk.class, Forest.class, Mountain.class, GrizzlyBears.class})
 class RubblehulkTest extends BaseCardTest {
 
     private void addLands(int count) {
@@ -97,4 +99,61 @@ class RubblehulkTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         harness.assertInHand(player1, "Rubblehulk");
     }
+    @Test
+    @DisplayName("Bloodrush counts lands at resolution and then keeps the boost fixed")
+    void bloodrushUsesResolutionLandCount() {
+        addLands(2);
+        harness.setHand(player1, List.of(new Rubblehulk()));
+        Permanent bears = attackingBears();
+
+        harness.activateHandAbility(player1, 0, bears.getId());
+        harness.assertNotInHand(player1, "Rubblehulk");
+        harness.assertInGraveyard(player1, "Rubblehulk");
+        addLands(1);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(5);
+        addLands(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Bloodrush can boost an opponent's attacker using the ability controller's lands")
+    void bloodrushCanTargetOpponentsAttacker() {
+        addLands(3);
+        harness.addToBattlefield(player2, new Forest());
+        harness.setHand(player1, List.of(new Rubblehulk()));
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        bears.setSummoningSick(false);
+        bears.setAttacking(true);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateHandAbility(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Bloodrush does not boost a target that stops attacking before resolution")
+    void bloodrushRechecksAttackingTarget() {
+        addLands(3);
+        harness.setHand(player1, List.of(new Rubblehulk()));
+        Permanent bears = attackingBears();
+
+        harness.activateHandAbility(player1, 0, bears.getId());
+        bears.setAttacking(false);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+        harness.assertInGraveyard(player1, "Rubblehulk");
+    }
+
 }
