@@ -1,12 +1,14 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.j.JayemdaeTome;
+import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
+import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
+import com.github.laxika.magicalvibes.cards.m.MindControl;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -15,10 +17,10 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Sleep.class, RuneclawBear.class, RodOfRuin.class, MindControl.class})
 class SleepTest extends BaseCardTest {
 
-    // ===== Spell resolution =====
-
+    @CardUsed({Sleep.class, RuneclawBear.class, RodOfRuin.class, MindControl.class})
     @Nested
     @DisplayName("Spell resolution")
     class SpellResolution {
@@ -26,8 +28,8 @@ class SleepTest extends BaseCardTest {
         @Test
         @DisplayName("Taps all creatures target player controls")
         void tapsAllCreatures() {
-            harness.addToBattlefield(player2, new GrizzlyBears());
-            harness.addToBattlefield(player2, new GrizzlyBears());
+            harness.addToBattlefield(player2, new RuneclawBear());
+            harness.addToBattlefield(player2, new RuneclawBear());
             List<Permanent> battlefield = gd.playerBattlefields.get(player2.getId());
             assertThat(battlefield).hasSize(2);
             assertThat(battlefield).allMatch(p -> !p.isTapped());
@@ -40,8 +42,8 @@ class SleepTest extends BaseCardTest {
         @Test
         @DisplayName("Sets skipUntapCount on all creatures target player controls")
         void setsSkipUntapOnAllCreatures() {
-            harness.addToBattlefield(player2, new GrizzlyBears());
-            harness.addToBattlefield(player2, new GrizzlyBears());
+            harness.addToBattlefield(player2, new RuneclawBear());
+            harness.addToBattlefield(player2, new RuneclawBear());
             List<Permanent> battlefield = gd.playerBattlefields.get(player2.getId());
 
             castAndResolveSleep(player2.getId());
@@ -52,7 +54,7 @@ class SleepTest extends BaseCardTest {
         @Test
         @DisplayName("Does not tap non-creature permanents")
         void doesNotTapNonCreatures() {
-            harness.addToBattlefield(player2, new JayemdaeTome());
+            harness.addToBattlefield(player2, new RodOfRuin());
             Permanent artifact = gd.playerBattlefields.get(player2.getId()).getFirst();
             assertThat(artifact.isTapped()).isFalse();
 
@@ -65,7 +67,7 @@ class SleepTest extends BaseCardTest {
         @Test
         @DisplayName("Already tapped creatures also get skipUntapCount set")
         void alreadyTappedCreaturesAlsoGetSkipUntap() {
-            harness.addToBattlefield(player2, new GrizzlyBears());
+            harness.addToBattlefield(player2, new RuneclawBear());
             Permanent bears = gd.playerBattlefields.get(player2.getId()).getFirst();
             bears.tap();
             assertThat(bears.isTapped()).isTrue();
@@ -79,8 +81,8 @@ class SleepTest extends BaseCardTest {
         @Test
         @DisplayName("Does not affect caster's creatures when targeting opponent")
         void doesNotAffectCasterCreatures() {
-            harness.addToBattlefield(player1, new GrizzlyBears());
-            harness.addToBattlefield(player2, new GrizzlyBears());
+            harness.addToBattlefield(player1, new RuneclawBear());
+            harness.addToBattlefield(player2, new RuneclawBear());
             Permanent casterCreature = gd.playerBattlefields.get(player1.getId()).getFirst();
 
             castAndResolveSleep(player2.getId());
@@ -92,7 +94,7 @@ class SleepTest extends BaseCardTest {
         @Test
         @DisplayName("Can target self to tap own creatures")
         void canTargetSelf() {
-            harness.addToBattlefield(player1, new GrizzlyBears());
+            harness.addToBattlefield(player1, new RuneclawBear());
             Permanent ownCreature = gd.playerBattlefields.get(player1.getId()).getFirst();
 
             castAndResolveSleep(player1.getId());
@@ -104,7 +106,7 @@ class SleepTest extends BaseCardTest {
         @Test
         @DisplayName("Sleep goes to graveyard after resolving")
         void goesToGraveyard() {
-            harness.addToBattlefield(player2, new GrizzlyBears());
+            harness.addToBattlefield(player2, new RuneclawBear());
 
             castAndResolveSleep(player2.getId());
 
@@ -112,16 +114,51 @@ class SleepTest extends BaseCardTest {
         }
     }
 
-    // ===== Untap step behavior =====
-
+    @CardUsed({Sleep.class, RuneclawBear.class, RodOfRuin.class, MindControl.class})
     @Nested
     @DisplayName("Untap step behavior")
     class UntapStepBehavior {
 
         @Test
+        @DisplayName("Affected creature untaps normally after changing controllers")
+        void changedControllerUntapsNormally() {
+            harness.addToBattlefield(player2, new RuneclawBear());
+            Permanent bears = gd.playerBattlefields.get(player2.getId()).getFirst();
+
+            castAndResolveSleep(player2.getId());
+            harness.setHand(player1, List.of(new MindControl()));
+            harness.addMana(player1, ManaColor.BLUE, 5);
+            harness.castEnchantment(player1, 0, bears.getId());
+            harness.passBothPriorities();
+            assertThat(gd.playerBattlefields.get(player1.getId())).contains(bears);
+            assertThat(bears.isTapped()).isTrue();
+
+            advanceToNextTurn(player1);
+            advanceToNextTurn(player2);
+
+            assertThat(bears.isTapped()).isFalse();
+        }
+
+        @Test
+        @DisplayName("Creatures entering after Sleep resolves untap normally")
+        void laterArrivalsUntapNormally() {
+            harness.addToBattlefield(player2, new RuneclawBear());
+            Permanent affected = gd.playerBattlefields.get(player2.getId()).getFirst();
+            castAndResolveSleep(player2.getId());
+            harness.addToBattlefield(player2, new RuneclawBear());
+            Permanent arrival = gd.playerBattlefields.get(player2.getId()).getLast();
+            arrival.tap();
+
+            advanceToNextTurn(player1);
+
+            assertThat(affected.isTapped()).isTrue();
+            assertThat(arrival.isTapped()).isFalse();
+        }
+
+        @Test
         @DisplayName("Affected creatures do not untap during next untap step")
         void creaturesDoNotUntapDuringNextUntapStep() {
-            harness.addToBattlefield(player2, new GrizzlyBears());
+            harness.addToBattlefield(player2, new RuneclawBear());
             Permanent bears = gd.playerBattlefields.get(player2.getId()).getFirst();
             bears.setSummoningSick(false);
 
@@ -138,7 +175,7 @@ class SleepTest extends BaseCardTest {
         @Test
         @DisplayName("Affected creatures untap normally on the turn after")
         void creaturesUntapOnFollowingTurn() {
-            harness.addToBattlefield(player2, new GrizzlyBears());
+            harness.addToBattlefield(player2, new RuneclawBear());
             Permanent bears = gd.playerBattlefields.get(player2.getId()).getFirst();
             bears.setSummoningSick(false);
 
@@ -159,8 +196,8 @@ class SleepTest extends BaseCardTest {
         @Test
         @DisplayName("Non-creature permanents of target player still untap normally")
         void nonCreaturesStillUntap() {
-            harness.addToBattlefield(player2, new JayemdaeTome());
-            harness.addToBattlefield(player2, new GrizzlyBears());
+            harness.addToBattlefield(player2, new RodOfRuin());
+            harness.addToBattlefield(player2, new RuneclawBear());
             Permanent artifact = gd.playerBattlefields.get(player2.getId()).get(0);
             Permanent bears = gd.playerBattlefields.get(player2.getId()).get(1);
             artifact.tap();
@@ -186,13 +223,10 @@ class SleepTest extends BaseCardTest {
         }
     }
 
-    // ===== Helpers =====
-
     private void castAndResolveSleep(java.util.UUID targetPlayerId) {
         harness.setHand(player1, List.of(new Sleep()));
         harness.addMana(player1, ManaColor.BLUE, 4);
-        harness.castSorcery(player1, 0, targetPlayerId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetPlayerId);
     }
 
     private void advanceToNextTurn(Player currentActivePlayer) {
@@ -201,8 +235,6 @@ class SleepTest extends BaseCardTest {
         harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities(); // END_STEP -> CLEANUP
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // CLEANUP -> next turn
+        harness.passUntil(currentActivePlayer == player1 ? player2 : player1, TurnStep.UPKEEP);
     }
 }
