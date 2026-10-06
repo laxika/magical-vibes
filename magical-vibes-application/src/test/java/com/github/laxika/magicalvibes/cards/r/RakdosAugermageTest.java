@@ -125,6 +125,101 @@ class RakdosAugermageTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Both empty hands resolve without a choice")
+    void bothHandsEmptyResolveWithoutChoice() {
+        int index = setupReadyAugermage();
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+
+        harness.activateAbility(player1, index, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Neither mandatory discard can be declined or chosen by the wrong player")
+    void choicesAreMandatoryAndBelongToTheCorrectPlayer() {
+        int index = setupReadyAugermage();
+        harness.setHand(player1, List.of(new RakdosAugermage()));
+        harness.setHand(player2, List.of(new RakdosAugermage()));
+
+        harness.activateAbility(player1, index, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleCardChosen(player2, -1))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleCardChosen(player2, 0);
+
+        assertThatThrownBy(() -> harness.handleCardChosen(player2, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, -1))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player1, "Rakdos Augermage");
+        harness.assertInGraveyard(player2, "Rakdos Augermage");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The ability cannot be activated during combat")
+    void cannotActivateOutsideMainPhase() {
+        int index = setupReadyAugermage();
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, index, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerBattlefields.get(player1.getId()).get(index).isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The ability can be activated during the postcombat main phase")
+    void canActivateDuringPostcombatMainPhase() {
+        int index = setupReadyAugermage();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+
+        harness.activateAbility(player1, index, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()).get(index).isTapped()).isTrue();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Augermage cannot pay the tap cost")
+    void cannotActivateWhileSummoningSick() {
+        int index = setupReadyAugermage();
+        gd.playerBattlefields.get(player1.getId()).get(index).setSummoningSick(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, index, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerBattlefields.get(player1.getId()).get(index).isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A second Augermage cannot activate while the first ability is on the stack")
+    void cannotActivateWithNonemptyStack() {
+        int firstIndex = setupReadyAugermage();
+        int secondIndex = addAugermage(player1);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+
+        harness.activateAbility(player1, firstIndex, null, player2.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, secondIndex, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerBattlefields.get(player1.getId()).get(secondIndex).isTapped()).isFalse();
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
     private int setupReadyAugermage() {
         int index = addAugermage(player1);
         harness.forceActivePlayer(player1);
