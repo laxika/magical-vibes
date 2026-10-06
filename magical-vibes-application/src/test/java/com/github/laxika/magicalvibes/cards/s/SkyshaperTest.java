@@ -63,6 +63,52 @@ class SkyshaperTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, enteringAfterResolution, Keyword.FLYING)).isFalse();
     }
 
+    @Test
+    @DisplayName("A tapped Skyshaper is sacrificed as a cost before flying is granted")
+    void tappedSourceIsSacrificedBeforeResolution() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new Skyshaper());
+        source.setTapped(true);
+        Permanent creature = addCreatureReady(player1, new RagingGoblin());
+
+        harness.activateAbility(player1, indexOf("Skyshaper"), null, null);
+
+        harness.assertNotOnBattlefield(player1, "Skyshaper");
+        harness.assertInGraveyard(player1, "Skyshaper");
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Skyshaper can be activated without creatures and does not affect later arrivals")
+    void activationWithNoCreaturesDoesNotAffectLaterArrivals() {
+        addSkyshaper();
+
+        activateSkyshaper();
+
+        harness.assertNotOnBattlefield(player1, "Skyshaper");
+        harness.assertInGraveyard(player1, "Skyshaper");
+        Permanent creature = addCreatureReady(player1, new RagingGoblin());
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Skyshaper grants flying to the activating player's creatures on the other player's turn")
+    void otherPlayerCanActivateAndReceivesFlying() {
+        harness.addToBattlefield(player2, new Skyshaper());
+        Permanent ownCreature = addCreatureReady(player2, new RagingGoblin());
+        Permanent opponentCreature = addCreatureReady(player1, new RagingGoblin());
+
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Skyshaper");
+        assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.FLYING)).isFalse();
+    }
+
     private void addSkyshaper() {
         harness.addToBattlefield(player1, new Skyshaper());
     }
@@ -74,12 +120,6 @@ class SkyshaperTest extends BaseCardTest {
     }
 
     private int indexOf(String name) {
-        var battlefield = gd.playerBattlefields.get(player1.getId());
-        for (int i = 0; i < battlefield.size(); i++) {
-            if (battlefield.get(i).getCard().getName().equals(name)) {
-                return i;
-            }
-        }
-        throw new IllegalStateException("Not found: " + name);
+        return gd.playerBattlefields.get(player1.getId()).indexOf(findPermanent(player1, name));
     }
 }
