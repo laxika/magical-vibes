@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -78,5 +79,54 @@ class RootwaterMysticTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(
                 player1, 0, null, harness.getPermanentId(player2, "Raging Goblin")))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can activate repeatedly while summoning sick and tapped")
+    void canActivateWhileSummoningSickAndTapped() {
+        Permanent mystic = harness.addToBattlefieldAndReturn(player1, new RootwaterMystic());
+        mystic.setSummoningSick(true);
+        mystic.setTapped(true);
+        Card topCard = new RagingGoblin();
+        Card secondCard = new RagingGoblin();
+        harness.setLibrary(player2, List.of(topCard, secondCard));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        for (int i = 0; i < 2; i++) {
+            harness.activateAbility(player1, 0, null, player2.getId());
+            harness.passBothPriorities();
+
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
+                    .params().cards()).containsExactly(topCard);
+            harness.handleCardChosen(player1, -1);
+
+            assertThat(gd.playerDecks.get(player2.getId())).containsExactly(topCard, secondCard);
+            assertThat(mystic.isTapped()).isTrue();
+        }
+    }
+
+    @Test
+    @DisplayName("Cannot activate without paying the generic part of the cost")
+    void cannotActivateWithOnlyOneBlueMana() {
+        addCreatureReady(player1, new RootwaterMystic());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Cannot pay the blue part of the cost with colorless mana")
+    void cannotActivateWithOnlyColorlessMana() {
+        addCreatureReady(player1, new RootwaterMystic());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }
