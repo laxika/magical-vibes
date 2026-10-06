@@ -15,8 +15,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(ShamblingVent.class)
+@CardUsed({ShamblingVent.class})
 class ShamblingVentTest extends BaseCardTest {
 
     @Test
@@ -104,10 +105,102 @@ class ShamblingVentTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, vent, Keyword.LIFELINK)).isFalse();
     }
 
+    @Test
+    @DisplayName("Shambling Vent can animate while tapped and remains tapped")
+    void canAnimateWhileTapped() {
+        harness.setHand(player1, List.of(new ShamblingVent()));
+        harness.playLand(player1, 0);
+        Permanent vent = findPermanent(player1, "Shambling Vent");
+        addAnimationMana();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        assertThat(gqs.isCreature(gd, vent)).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, vent)).isTrue();
+        assertThat(vent.isTapped()).isTrue();
+        assertThat(gqs.hasKeyword(gd, vent, Keyword.LIFELINK)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Animated Shambling Vent retains its mana ability")
+    void animatedVentCanProduceMana() {
+        Permanent vent = addVentReady(player1);
+        addAnimationMana();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        assertThat(vent.isTapped()).isFalse();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "WHITE");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(vent.isTapped()).isTrue();
+        assertThat(gqs.isCreature(gd, vent)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Shambling Vent gains life equal to its unblocked combat damage")
+    void unblockedCombatDamageGainsLife() {
+        addVentReady(player1);
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 20);
+        addAnimationMana();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+
+        harness.assertLife(player1, 12);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Repeated animation does not multiply Shambling Vent's lifelink")
+    void repeatedAnimationDoesNotMultiplyLifelink() {
+        addVentReady(player1);
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 20);
+        addAnimationMana();
+        addAnimationMana();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+
+        harness.assertLife(player1, 12);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("A newly played Shambling Vent can animate but cannot tap for mana as a creature")
+    void newlyPlayedAnimatedVentHasSummoningSickness() {
+        harness.setHand(player1, List.of(new ShamblingVent()));
+        harness.playLand(player1, 0);
+        Permanent vent = findPermanent(player1, "Shambling Vent");
+        vent.untap();
+        addAnimationMana();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, vent)).isTrue();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(vent.isTapped()).isFalse();
+    }
+
+    private void addAnimationMana() {
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+    }
+
     private Permanent addVentReady(Player player) {
-        Permanent vent = new Permanent(new ShamblingVent());
-        vent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(vent);
-        return vent;
+        return addCreatureReady(player, new ShamblingVent());
     }
 }
