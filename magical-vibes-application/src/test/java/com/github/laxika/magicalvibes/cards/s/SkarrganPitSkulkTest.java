@@ -60,6 +60,46 @@ class SkarrganPitSkulkTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Bloodthirst does not count life loss without damage")
+    void bloodthirstIgnoresLifeLoss() {
+        gd.playerLifeTotals.put(player2.getId(), 19);
+        castSkulk();
+
+        assertThat(findPermanent(player1, "Skarrgan Pit-Skulk")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Bloodthirst 1 adds only one counter regardless of damage amount")
+    void bloodthirstCounterCountDoesNotScaleWithDamage() {
+        gd.recordDamageToPlayer(player2.getId(), 5);
+        gd.recordDamageToPlayer(player2.getId(), 3);
+        castSkulk();
+
+        assertThat(findPermanent(player1, "Skarrgan Pit-Skulk")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Blocking restriction uses the blocker's power including counters")
+    void blockerWithCounterCanReachRequiredPower() {
+        gd.recordDamageToPlayer(player2.getId(), 1);
+        castSkulk();
+
+        Permanent skulk = findPermanent(player1, "Skarrgan Pit-Skulk");
+        Permanent blocker = addCreatureReady(player2, new SilhanaStarfletcher());
+        blocker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        skulk.setAttacking(true);
+        prepareDeclareBlockers(player1);
+
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(skulk);
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
     @DisplayName("A creature with less power cannot block it")
     void lowerPowerCreatureCannotBlock() {
         gd.recordDamageToPlayer(player2.getId(), 1);
