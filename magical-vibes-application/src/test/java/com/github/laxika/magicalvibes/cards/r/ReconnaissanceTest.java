@@ -94,6 +94,52 @@ class ReconnaissanceTest extends BaseCardTest {
         assertThat(attacker.isTapped()).isFalse();
     }
 
+    @Test
+    void removedAttackerDoesNotDealCombatDamage() {
+        harness.addToBattlefield(player1, new Reconnaissance());
+        harness.forceActivePlayer(player1);
+        Permanent attacker = addAttacker(player1);
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        harness.passBothPriorities();
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
+
+        harness.assertLife(player2, 20);
+        assertThat(attacker.isAttacking()).isFalse();
+        assertThat(attacker.isTapped()).isFalse();
+    }
+
+    @Test
+    void canTargetAnUntappedAttackingCreature() {
+        harness.addToBattlefield(player1, new Reconnaissance());
+        Permanent attacker = addAttacker(player1);
+        attacker.untap();
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        harness.passBothPriorities();
+
+        assertThat(attacker.isAttacking()).isFalse();
+        assertThat(attacker.isTapped()).isFalse();
+    }
+
+    @Test
+    void earlierActivationDoesNotUntapAgainAfterAnotherActivationRemovesTheTarget() {
+        harness.addToBattlefield(player1, new Reconnaissance());
+        Permanent attacker = addAttacker(player1);
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        harness.passBothPriorities();
+        assertThat(attacker.isAttacking()).isFalse();
+        assertThat(attacker.isTapped()).isFalse();
+
+        attacker.tap();
+        harness.passBothPriorities();
+
+        assertThat(attacker.isTapped()).isTrue();
+    }
+
     private Permanent addAttacker(Player controller) {
         Permanent attacker = addCreatureReady(controller, new RagingGoblin());
         attacker.setAttacking(true);
