@@ -59,14 +59,63 @@ class RuthlessDeathfangTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Giant Spider");
     }
 
+    @Test
+    @DisplayName("Deathfang triggers when it is itself sacrificed")
+    void sacrificingDeathfangTriggers() {
+        Permanent deathfang = harness.addToBattlefieldAndReturn(player1, new RuthlessDeathfang());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GiantSpider());
+
+        sacrificeAt(player1, deathfang);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Ruthless Deathfang");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Giant Spider");
+    }
+
+    @Test
+    @DisplayName("The targeted opponent chooses which creature to sacrifice")
+    void opponentChoosesCreature() {
+        harness.addToBattlefield(player1, new RuthlessDeathfang());
+        Permanent sacrificed = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GiantSpider());
+        Permanent chosen = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        sacrificeAt(player1, sacrificed);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player2, chosen.getId());
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Giant Spider");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opponent sacrificing a creature does not trigger Deathfang")
+    void opponentSacrificeDoesNotTrigger() {
+        harness.addToBattlefield(player1, new RuthlessDeathfang());
+        Permanent sacrificed = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GiantSpider());
+
+        sacrificeAt(player2, sacrificed);
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Giant Spider");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void sacrificeAt(Player player, Permanent permanent) {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.setHand(player, List.of(new DiabolicEdict()));
         harness.addMana(player, ManaColor.BLACK, 2);
-        harness.castInstant(player, 0, player.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player, 0, player.getId());
         harness.handlePermanentChosen(player, permanent.getId());
     }
 }
