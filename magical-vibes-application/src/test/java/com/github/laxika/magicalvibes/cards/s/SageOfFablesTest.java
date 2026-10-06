@@ -19,7 +19,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({SageOfFables.class, StonybrookSchoolmaster.class, BurrentonBombardier.class})
 class SageOfFablesTest extends BaseCardTest {
 
-    // ===== Static: other Wizards you control enter with an additional +1/+1 counter =====
 
     @Test
     @DisplayName("Other Wizard you control enters with an additional +1/+1 counter")
@@ -113,7 +112,6 @@ class SageOfFablesTest extends BaseCardTest {
         assertThat(sage.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
-    // ===== Activated ability: {2}, Remove a +1/+1 counter from a creature you control: Draw a card =====
 
     @Test
     @DisplayName("Ability removes a +1/+1 counter from a creature you control and draws a card")
@@ -182,7 +180,74 @@ class SageOfFablesTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Helpers =====
+
+
+    @Test
+    @DisplayName("A second Sage enters with a counter from the first Sage")
+    void secondSageBenefitsFromExistingSage() {
+        Permanent first = addReadySage(player1);
+        harness.setHand(player1, List.of(new SageOfFables()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(findPermanents(player1, "Sage of Fables").get(1)
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Counter payment lets you choose among eligible creatures and happens before drawing")
+    void choosesCreatureForCounterPayment() {
+        Permanent sage = addReadySage(player1);
+        Permanent bombardier = addCreatureReady(player1, new BurrentonBombardier());
+        sage.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        bombardier.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handlePermanentChosen(player1, bombardier.getId());
+
+        assertThat(sage.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(bombardier.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+    }
+
+    @Test
+    @DisplayName("Opponent's counters cannot pay for the ability")
+    void cannotRemoveOpponentsCounter() {
+        addReadySage(player1);
+        Permanent opponent = addCreatureReady(player2, new BurrentonBombardier());
+        opponent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("counter");
+        assertThat(opponent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Tapped summoning-sick Sage can activate without tapping")
+    void tappedSummoningSickSageCanActivate() {
+        Permanent sage = harness.addToBattlefieldAndReturn(player1, new SageOfFables());
+        sage.setSummoningSick(true);
+        sage.setTapped(true);
+        sage.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        assertThat(sage.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.passBothPriorities();
+
+        assertThat(sage.isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+    }
 
     private Permanent addReadySage(Player player) {
         return addCreatureReady(player, new SageOfFables());
