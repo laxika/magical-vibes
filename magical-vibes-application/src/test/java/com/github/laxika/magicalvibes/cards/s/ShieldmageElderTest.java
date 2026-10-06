@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.g.GoblinSharpshooter;
 import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
 import com.github.laxika.magicalvibes.cards.i.InformationDealer;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.t.Threaten;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,9 +18,10 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({ShieldmageElder.class, DaruHealer.class, InformationDealer.class, GlorySeeker.class,
-        Shock.class, GoblinSharpshooter.class})
+        Shock.class, GoblinSharpshooter.class, Threaten.class})
 class ShieldmageElderTest extends BaseCardTest {
 
     @Test
@@ -97,6 +99,80 @@ class ShieldmageElderTest extends BaseCardTest {
 
         assertThat(gd.targetSpellDamagePreventionShields)
                 .anyMatch(shield -> shield.spellCardId().equals(glorySeeker.getId()));
+    }
+
+    @Test
+    @DisplayName("Prevention follows a creature spell onto the battlefield")
+    void wizardPreventionAppliesToResolvedCreature() {
+        Permanent elder = addCreatureReady(player1, new ShieldmageElder());
+        Permanent wizard = addCreatureReady(player1, new InformationDealer());
+        addCreatureReady(player1, new InformationDealer());
+        GoblinSharpshooter shooterCard = new GoblinSharpshooter();
+        harness.setHand(player2, List.of(shooterCard, new Threaten()));
+        harness.addMana(player2, ManaColor.RED, 6);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castCreature(player2, 0);
+        activateAbility(elder, 1, shooterCard.getId(), elder.getId(), wizard.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        Permanent shooter = findPermanent(player2, "Goblin Sharpshooter");
+        harness.castAndResolveSorcery(player2, 0, shooter.getId());
+        harness.activateAbility(player2, gd.playerBattlefields.get(player2.getId()).indexOf(shooter),
+                null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Summoning-sick Clerics can pay the tap cost")
+    void summoningSickClericsCanPayCost() {
+        Permanent elder = harness.addToBattlefieldAndReturn(player1, new ShieldmageElder());
+        Permanent cleric = harness.addToBattlefieldAndReturn(player1, new DaruHealer());
+        Permanent attacker = addCreatureReady(player2, new GlorySeeker());
+
+        activateAbility(elder, 0, attacker.getId(), elder.getId(), cleric.getId());
+        harness.passBothPriorities();
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(player1.getId());
+        resolveCombat(player2);
+
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("A tapped Elder can activate by tapping two other Clerics")
+    void tappedElderCanUseOtherClerics() {
+        Permanent elder = addCreatureReady(player1, new ShieldmageElder());
+        elder.tap();
+        Permanent first = addCreatureReady(player1, new DaruHealer());
+        Permanent second = addCreatureReady(player1, new DaruHealer());
+        Permanent attacker = addCreatureReady(player2, new GlorySeeker());
+
+        activateAbility(elder, 0, attacker.getId(), first.getId(), second.getId());
+        harness.passBothPriorities();
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(player1.getId());
+        resolveCombat(player2);
+
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Opponent Clerics cannot pay the tap cost")
+    void opponentClericsCannotPayCost() {
+        Permanent elder = addCreatureReady(player1, new ShieldmageElder());
+        addCreatureReady(player2, new DaruHealer());
+        Permanent attacker = addCreatureReady(player2, new GlorySeeker());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(elder), 0, null, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(elder.isTapped()).isFalse();
     }
 
     private void activateAbility(Permanent elder, int abilityIndex, java.util.UUID targetId,
