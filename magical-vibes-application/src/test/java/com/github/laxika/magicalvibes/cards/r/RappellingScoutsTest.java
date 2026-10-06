@@ -64,9 +64,74 @@ class RappellingScoutsTest extends BaseCardTest {
         assertThat(gqs.hasProtectionFrom(gd, scouts, CardColor.BLUE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.hasProtectionFrom(gd, scouts, CardColor.BLUE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Repeated activations retain protection from both chosen colors and affect only the source")
+    void repeatedActivationsProtectOnlyTheirSource() {
+        Permanent scouts = addCreatureReady(player1, new RappellingScouts());
+        Permanent otherScouts = addCreatureReady(player1, new RappellingScouts());
+        Permanent opposingScouts = addCreatureReady(player2, new RappellingScouts());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(gqs.hasProtectionFrom(gd, scouts, CardColor.WHITE)).isFalse();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNull();
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "WHITE");
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "BLACK");
+
+        assertThat(gqs.hasProtectionFrom(gd, scouts, CardColor.WHITE)).isTrue();
+        assertThat(gqs.hasProtectionFrom(gd, scouts, CardColor.BLACK)).isTrue();
+        assertThat(gqs.hasProtectionFrom(gd, scouts, CardColor.RED)).isFalse();
+        assertThat(gqs.hasProtectionFrom(gd, otherScouts, CardColor.WHITE)).isFalse();
+        assertThat(gqs.hasProtectionFrom(gd, otherScouts, CardColor.BLACK)).isFalse();
+        assertThat(gqs.hasProtectionFrom(gd, opposingScouts, CardColor.WHITE)).isFalse();
+        assertThat(gqs.hasProtectionFrom(gd, opposingScouts, CardColor.BLACK)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Protection gained in response makes a red damage ability's target illegal")
+    void protectionInResponseStopsDamageAbility() {
+        Permanent scouts = addCreatureReady(player1, new RappellingScouts());
+        addCreatureReady(player2, new CinderElemental());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 4);
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.activateAbility(player2, 0, 4, scouts.getId());
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "RED");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Rappelling Scouts");
+        assertThat(scouts.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player2, "Cinder Elemental");
+    }
+
+    @Test
+    @DisplayName("The protection ability can be activated while tapped and summoning sick")
+    void activatesWhileTappedAndSummoningSick() {
+        Permanent scouts = addCreatureReady(player1, new RappellingScouts());
+        scouts.setTapped(true);
+        scouts.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(gqs.hasProtectionFrom(gd, scouts, CardColor.GREEN)).isTrue();
+        assertThat(scouts.isTapped()).isTrue();
     }
 }
