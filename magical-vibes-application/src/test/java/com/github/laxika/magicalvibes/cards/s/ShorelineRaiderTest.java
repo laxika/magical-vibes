@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.b.BloodfireKavu;
+import com.github.laxika.magicalvibes.cards.f.FlametongueKavu;
 import com.github.laxika.magicalvibes.cards.h.HuntingKavu;
 import com.github.laxika.magicalvibes.cards.k.KavuClimber;
 import com.github.laxika.magicalvibes.cards.m.MetathranZombie;
@@ -18,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({ShorelineRaider.class, BloodfireKavu.class, KavuClimber.class, MetathranZombie.class,
-        HuntingKavu.class})
+        HuntingKavu.class, FlametongueKavu.class})
 class ShorelineRaiderTest extends BaseCardTest {
 
     @Test
@@ -95,5 +96,57 @@ class ShorelineRaiderTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("protection");
         assertThat(kavu.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Shoreline Raider can block a Kavu and prevents its combat damage")
+    void canBlockKavuWithoutTakingCombatDamage() {
+        Permanent attacker = addCreatureReady(player1, new KavuClimber());
+        Permanent raider = addCreatureReady(player2, new ShorelineRaider());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertOnBattlefield(player2, "Shoreline Raider");
+        assertThat(raider.getMarkedDamage()).isZero();
+        assertThat(attacker.getMarkedDamage()).isEqualTo(2);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Protection prevents damage from a Kavu controlled by the same player")
+    void preventsDamageFromOwnKavu() {
+        addCreatureReady(player1, new BloodfireKavu());
+        Permanent raider = addCreatureReady(player1, new ShorelineRaider());
+        addCreatureReady(player2, new MetathranZombie());
+
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Shoreline Raider");
+        assertThat(raider.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player1, "Bloodfire Kavu");
+        harness.assertInGraveyard(player2, "Metathran Zombie");
+    }
+
+    @Test
+    @DisplayName("A Kavu's triggered ability cannot target Shoreline Raider")
+    void kavuTriggeredAbilityCannotTargetRaider() {
+        Permanent raider = addCreatureReady(player2, new ShorelineRaider());
+        Permanent other = addCreatureReady(player2, new MetathranZombie());
+        harness.castFromHand(player1, new FlametongueKavu(), "{3}{R}");
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, raider.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid permanent");
+        harness.handlePermanentChosen(player1, other.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Metathran Zombie");
+        harness.assertOnBattlefield(player2, "Shoreline Raider");
+        assertThat(raider.getMarkedDamage()).isZero();
     }
 }
