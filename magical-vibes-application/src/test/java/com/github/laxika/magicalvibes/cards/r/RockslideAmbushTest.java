@@ -96,4 +96,48 @@ class RockslideAmbushTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature");
     }
+
+    @Test
+    @DisplayName("Rockslide Ambush can target a creature you control")
+    void canTargetOwnCreature() {
+        harness.addToBattlefield(player1, new Mountain());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new ShuFootSoldiers());
+        harness.setHand(player1, List.of(new RockslideAmbush()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Shu Foot Soldiers");
+    }
+
+    @Test
+    @DisplayName("Rockslide Ambush can resolve with no Mountains and deals no damage")
+    void dealsNoDamageWithoutMountains() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new WeiInfantry());
+        harness.setHand(player1, List.of(new RockslideAmbush()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Wei Infantry");
+        harness.assertInGraveyard(player1, "Rockslide Ambush");
+    }
+
+    @Test
+    @DisplayName("Rockslide Ambush includes Mountains gained before resolution")
+    void countsMountainsGainedBeforeResolution() {
+        harness.addToBattlefield(player1, new Mountain());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ShuFootSoldiers());
+        harness.setHand(player1, List.of(new RockslideAmbush()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castSorcery(player1, 0, target.getId());
+        harness.addToBattlefield(player1, new Mountain());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player2, "Shu Foot Soldiers");
+    }
 }
