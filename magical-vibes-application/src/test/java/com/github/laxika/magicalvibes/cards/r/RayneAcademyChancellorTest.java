@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.b.BraidwoodCup;
 import com.github.laxika.magicalvibes.cards.f.Flicker;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.p.PlowUnder;
 import com.github.laxika.magicalvibes.cards.s.ScentOfCinder;
 import com.github.laxika.magicalvibes.cards.s.ScentOfNightshade;
@@ -26,6 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
         RayneAcademyChancellor.class,
         BraidwoodCup.class,
         Flicker.class,
+        Forest.class,
         PlowUnder.class,
         ScentOfCinder.class,
         ScentOfNightshade.class,
@@ -84,8 +86,7 @@ class RayneAcademyChancellorTest extends BaseCardTest {
     @Test
     @DisplayName("Draws an additional card when enchanted")
     void drawsAdditionalCardWhenEnchanted() {
-        harness.addToBattlefield(player1, new RayneAcademyChancellor());
-        UUID rayneId = harness.getPermanentId(player1, "Rayne, Academy Chancellor");
+        UUID rayneId = harness.addToBattlefieldAndReturn(player1, new RayneAcademyChancellor()).getId();
 
         harness.setHand(player1, List.of(new SigilOfSleep()));
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -110,8 +111,7 @@ class RayneAcademyChancellorTest extends BaseCardTest {
     @Test
     @DisplayName("Does not trigger for your own spell")
     void doesNotTriggerForOwnSpell() {
-        harness.addToBattlefield(player1, new RayneAcademyChancellor());
-        UUID rayneId = harness.getPermanentId(player1, "Rayne, Academy Chancellor");
+        UUID rayneId = harness.addToBattlefieldAndReturn(player1, new RayneAcademyChancellor()).getId();
         harness.setHand(player1, List.of(new ScentOfNightshade()));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -161,8 +161,7 @@ class RayneAcademyChancellorTest extends BaseCardTest {
     @Test
     @DisplayName("Can decline the additional draw while enchanted")
     void canDeclineAdditionalDrawWhileEnchanted() {
-        harness.addToBattlefield(player1, new RayneAcademyChancellor());
-        UUID rayneId = harness.getPermanentId(player1, "Rayne, Academy Chancellor");
+        UUID rayneId = harness.addToBattlefieldAndReturn(player1, new RayneAcademyChancellor()).getId();
 
         harness.setHand(player1, List.of(new SigilOfSleep()));
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -187,8 +186,7 @@ class RayneAcademyChancellorTest extends BaseCardTest {
     @Test
     @DisplayName("Checks whether Rayne is enchanted when the trigger resolves")
     void checksEnchantmentAtTriggerResolution() {
-        harness.addToBattlefield(player1, new RayneAcademyChancellor());
-        UUID rayneId = harness.getPermanentId(player1, "Rayne, Academy Chancellor");
+        UUID rayneId = harness.addToBattlefieldAndReturn(player1, new RayneAcademyChancellor()).getId();
         Permanent sigil = harness.addToBattlefieldAndReturn(player1, new SigilOfSleep());
         sigil.setAttachedTo(rayneId);
         harness.setHand(player1, List.of());
@@ -212,7 +210,7 @@ class RayneAcademyChancellorTest extends BaseCardTest {
     void triggersOnceForEachQualifyingTarget() {
         harness.addToBattlefield(player1, new RayneAcademyChancellor());
         Permanent firstLand = harness.addToBattlefieldAndReturn(player1, new YavimayaHollow());
-        Permanent secondLand = harness.addToBattlefieldAndReturn(player1, new YavimayaHollow());
+        Permanent secondLand = harness.addToBattlefieldAndReturn(player1, new Forest());
 
         harness.setHand(player2, List.of(new PlowUnder()));
         harness.addMana(player2, ManaColor.GREEN, 2);
@@ -223,5 +221,85 @@ class RayneAcademyChancellorTest extends BaseCardTest {
         harness.castSorcery(player2, 0, List.of(firstLand.getId(), secondLand.getId()));
 
         assertThat(gd.stack).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("Can decline the first draw and accept the enchanted bonus")
+    void canAcceptBonusAfterDecliningFirstDraw() {
+        Permanent rayne = harness.addToBattlefieldAndReturn(player1, new RayneAcademyChancellor());
+        Permanent sigil = harness.addToBattlefieldAndReturn(player1, new SigilOfSleep());
+        sigil.setAttachedTo(rayne.getId());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new ScentOfNightshade()));
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.castInstant(player2, 0, rayne.getId());
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Uses Rayne's last enchanted state after Rayne leaves the battlefield")
+    void retainsEnchantedBonusWhenRayneLeaves() {
+        Permanent rayne = harness.addToBattlefieldAndReturn(player1, new RayneAcademyChancellor());
+        Permanent sigil = harness.addToBattlefieldAndReturn(player1, new SigilOfSleep());
+        sigil.setAttachedTo(rayne.getId());
+        harness.setHand(player1, List.of());
+        harness.addToBattlefield(player2, new ThranFoundry());
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player2, 0, null, player1.getId());
+
+        harness.inMutationScope(() -> {
+            harness.getPermanentRemovalService().removePermanentToGraveyard(gd, rayne);
+            harness.getPermanentRemovalService().removeOrphanedAuras(gd);
+        });
+        harness.assertInGraveyard(player1, "Rayne, Academy Chancellor");
+        harness.assertInGraveyard(player1, "Sigil of Sleep");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Does not trigger while Rayne has lost all abilities")
+    void doesNotTriggerWithoutAbilities() {
+        Permanent rayne = harness.addToBattlefieldAndReturn(player1, new RayneAcademyChancellor());
+        rayne.setLosesAllAbilitiesUntilEndOfTurn(true);
+        harness.setHand(player2, List.of(new ScentOfNightshade()));
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.BLACK, 1);
+
+        harness.castInstant(player2, 0, rayne.getId());
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("An opponent's Aura triggers before it enchants Rayne")
+    void opposingAuraDoesNotGrantBonusBeforeResolving() {
+        Permanent rayne = harness.addToBattlefieldAndReturn(player1, new RayneAcademyChancellor());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new SigilOfSleep()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castEnchantment(player2, 0, rayne.getId());
+
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).hasSize(1);
     }
 }
