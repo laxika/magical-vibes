@@ -72,4 +72,61 @@ class SkyshroudBehemothTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Skyshroud Behemoth");
     }
+
+    @Test
+    @DisplayName("Fading waits for resolution before removing a counter")
+    void fadingWaitsForResolution() {
+        Permanent behemoth = addCreatureReady(player1, new SkyshroudBehemoth());
+        behemoth.setCounterCount(CounterType.FADE, 2);
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(behemoth.getCounterCount(CounterType.FADE)).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Skyshroud Behemoth");
+
+        harness.passBothPriorities();
+
+        assertThat(behemoth.getCounterCount(CounterType.FADE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Fading checks the available fade counters when its trigger resolves")
+    void sacrificesIfLastCounterIsRemovedBeforeResolution() {
+        Permanent behemoth = addCreatureReady(player1, new SkyshroudBehemoth());
+        behemoth.setCounterCount(CounterType.FADE, 1);
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        behemoth.setCounterCount(CounterType.FADE, 0);
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Skyshroud Behemoth");
+        harness.assertInGraveyard(player1, "Skyshroud Behemoth");
+    }
+
+    @Test
+    @DisplayName("A cast Skyshroud Behemoth survives two upkeeps and is sacrificed on the third")
+    void survivesTwoUpkeepsThenIsSacrificed() {
+        harness.castFromHand(player1, new SkyshroudBehemoth(), "{5}{G}{G}");
+        harness.passBothPriorities();
+        Permanent behemoth = findPermanent(player1, "Skyshroud Behemoth");
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        assertThat(behemoth.isTapped()).isFalse();
+        assertThat(behemoth.getCounterCount(CounterType.FADE)).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Skyshroud Behemoth");
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        assertThat(behemoth.getCounterCount(CounterType.FADE)).isZero();
+        harness.assertOnBattlefield(player1, "Skyshroud Behemoth");
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Skyshroud Behemoth");
+        harness.assertInGraveyard(player1, "Skyshroud Behemoth");
+    }
 }
