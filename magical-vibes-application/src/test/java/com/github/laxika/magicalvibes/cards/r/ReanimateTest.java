@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.c.CanopySpider;
 import com.github.laxika.magicalvibes.cards.d.DarkRitual;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,6 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Reanimate.class, CanopySpider.class, DarkRitual.class})
@@ -85,5 +87,51 @@ class ReanimateTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Canopy Spider");
         harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Returns the creature even when the resulting life loss is lethal")
+    void reanimatesWithLessLifeThanManaValue() {
+        Card creature = new CanopySpider();
+        harness.setGraveyard(player2, List.of(creature));
+        harness.setHand(player1, List.of(new Reanimate()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.setLife(player1, 1);
+        harness.setLife(player2, 20);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castAndResolveSorcery(player1, 0, creature.getId());
+
+        harness.assertOnBattlefield(player1, "Canopy Spider");
+        harness.assertNotOnBattlefield(player2, "Canopy Spider");
+        harness.assertNotInGraveyard(player2, "Canopy Spider");
+        harness.assertLife(player1, -1);
+        harness.assertLife(player2, 20);
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player2.getId());
+    }
+
+    @Test
+    @DisplayName("Returns only the targeted creature when several creatures are in the graveyard")
+    void returnsOnlyTargetedCreature() {
+        Card target = new CanopySpider();
+        Card other = new CanopySpider();
+        harness.setGraveyard(player2, List.of(other, target));
+        harness.setHand(player1, List.of(new Reanimate()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(permanent -> permanent.getCard().getId())
+                .containsExactly(target.getId());
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(other);
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
     }
 }
