@@ -70,6 +70,52 @@ class SecureDetentionTest extends BaseCardTest {
     }
 
     @Test
+    void preventsEnchantedArtifactsNonManaAbilityWithoutPayingCosts() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new MindStone());
+        castSecureDetention(target);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be activated");
+        assertThat(target.isTapped()).isFalse();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+    }
+
+    @Test
+    void canEnchantOwnPermanentAndCreatesExactlyOneSoldier() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new MindStone());
+
+        castSecureDetention(target);
+
+        assertThat(findPermanent(player1, "Secure Detention").getAttachedTo()).isEqualTo(target.getId());
+        assertThat(countPermanents(player1, "Soldier")).isEqualTo(1);
+        assertThat(countPermanents(player2, "Soldier")).isZero();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be activated");
+    }
+
+    @Test
+    void createsNoSoldierWhenTargetIsSacrificedBeforeResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new MindStone());
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new SecureDetention()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castEnchantment(player1, 0, target.getId());
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player2, 0, 1, null, null);
+
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Soldier")).isZero();
+        assertThat(countPermanents(player1, "Secure Detention")).isZero();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof SecureDetention);
+    }
+
+    @Test
     @DisplayName("Secure Detention cannot target a nonartifact noncreature permanent")
     void rejectsInvalidTarget() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new Plains());
@@ -87,7 +133,6 @@ class SecureDetentionTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.castEnchantment(player1, 0, target.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 }
