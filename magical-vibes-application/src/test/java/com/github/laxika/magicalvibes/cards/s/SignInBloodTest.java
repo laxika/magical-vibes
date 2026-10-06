@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,9 +13,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SignInBlood.class, SchemingSilvertongueSignInBlood.class})
 class SignInBloodTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Target player draws two cards and loses 2 life")
@@ -62,13 +61,12 @@ class SignInBloodTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a creature")
     void cannotTargetCreature() {
-        Permanent bear = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player2.getId()).add(bear);
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new SchemingSilvertongueSignInBlood());
 
         harness.setHand(player1, List.of(new SignInBlood()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        assertThatThrownBy(() -> harness.castSorcery(player1, 0, bear.getId()))
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, creature.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
