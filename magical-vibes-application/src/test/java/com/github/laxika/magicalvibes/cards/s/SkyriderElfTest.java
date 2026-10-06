@@ -34,13 +34,43 @@ class SkyriderElfTest extends BaseCardTest {
         assertThat(elf.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
+    @Test
+    @DisplayName("Repeated payments of the same color add only one counter for that color")
+    void repeatedColorsCountOnce() {
+        castWithMana(3, ManaColor.GREEN, ManaColor.BLUE, ManaColor.GREEN,
+                ManaColor.GREEN, ManaColor.BLUE);
+
+        Permanent elf = findPermanent(player1, "Skyrider Elf");
+        assertThat(elf.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Spending all five colors gives five counters")
+    void allFiveColorsCount() {
+        castWithMana(3, ManaColor.GREEN, ManaColor.BLUE, ManaColor.WHITE,
+                ManaColor.BLACK, ManaColor.RED);
+
+        Permanent elf = findPermanent(player1, "Skyrider Elf");
+        assertThat(elf.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Colors remaining in the mana pool do not contribute to converge")
+    void unspentColorsDoNotCount() {
+        castWithMana(0, ManaColor.GREEN, ManaColor.BLUE, ManaColor.WHITE,
+                ManaColor.BLACK, ManaColor.RED);
+
+        Permanent elf = findPermanent(player1, "Skyrider Elf");
+        assertThat(elf.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
     private void castWithMana(int x, ManaColor... manaColors) {
         harness.setHand(player1, List.of(new SkyriderElf()));
         for (ManaColor manaColor : manaColors) {
             harness.addMana(player1, manaColor, 1);
         }
 
-        gs.playCard(gd, player1, 0, x, null, null);
+        harness.castCreature(player1, 0, x);
         harness.passBothPriorities();
     }
 }
