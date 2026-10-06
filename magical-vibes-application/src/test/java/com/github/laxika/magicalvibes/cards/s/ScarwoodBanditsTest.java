@@ -85,8 +85,54 @@ class ScarwoodBanditsTest extends BaseCardTest {
         activate(bandits, artifact);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
-                .isEqualTo(player1.getId());
-        harness.handleMayAbilityChosen(player1, false);
+                .isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, false);
+    }
+
+    @Test
+    void untappingBanditsDoesNotEndControl() {
+        Permanent bandits = addBandits();
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FellwarStone());
+
+        activate(bandits, artifact);
+        harness.handleMayAbilityChosen(player2, false);
+        harness.performUntapStep(player1);
+
+        assertThat(bandits.isTapped()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(artifact);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(artifact);
+    }
+
+    @Test
+    void sourceLeavingBeforeResolutionPreventsControlChange() {
+        Permanent bandits = addBandits();
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FellwarStone());
+        addActivationMana();
+        harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(bandits), null, artifact.getId());
+        harness.inMutationScope(
+                () -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, bandits));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(artifact);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(artifact);
+    }
+
+    @Test
+    void targetLeavingBeforeResolutionDoesNotOfferPayment() {
+        Permanent bandits = addBandits();
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FellwarStone());
+        addActivationMana();
+        harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(bandits), null, artifact.getId());
+        harness.inMutationScope(
+                () -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, artifact));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player2, "Fellwar Stone");
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(artifact);
     }
 
     @Test
