@@ -25,8 +25,7 @@ class SacredRitesTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SacredRites(), new LeafDancer(), new LeafDancer(), new LeafDancer()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
         harness.handleXValueChosen(player1, 2);
         harness.handleCardChosen(player1, 0);
         harness.handleCardChosen(player1, 0);
@@ -45,8 +44,7 @@ class SacredRitesTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SacredRites(), new LeafDancer()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
         harness.handleXValueChosen(player1, 0);
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
@@ -61,8 +59,7 @@ class SacredRitesTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SacredRites(), new LeafDancer()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
         harness.handleXValueChosen(player1, 1);
         harness.handleCardChosen(player1, 0);
 
@@ -73,6 +70,87 @@ class SacredRitesTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Resolves with an empty hand after casting without requiring a discard choice")
+    void resolvesWithNoCardsToDiscard() {
+        Permanent creature = addCreature(player1);
+        harness.setHand(player1, List.of(new SacredRites()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Can discard the entire remaining hand even without controlling creatures")
+    void canDiscardAllCardsWithoutCreatures() {
+        LeafDancer firstDiscard = new LeafDancer();
+        LeafDancer secondDiscard = new LeafDancer();
+        harness.setHand(player1, List.of(new SacredRites(), firstDiscard, secondDiscard));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castAndResolveInstant(player1, 0);
+        harness.handleXValueChosen(player1, 2);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(firstDiscard, secondDiscard);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Creatures entering after resolution do not receive the boost")
+    void doesNotBoostCreaturesEnteringLater() {
+        Permanent existingCreature = addCreature(player1);
+        harness.setHand(player1, List.of(new SacredRites(), new LeafDancer(), new LeafDancer()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castAndResolveInstant(player1, 0);
+        harness.handleXValueChosen(player1, 1);
+        harness.handleCardChosen(player1, 0);
+
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectiveToughness(gd, existingCreature)).isEqualTo(3);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+        Permanent newCreature = gd.playerBattlefields.get(player1.getId()).get(1);
+        assertThat(gqs.getEffectivePower(gd, newCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, newCreature)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Discards the chosen card during resolution rather than as a casting cost")
+    void choosesWhichCardToDiscardOnResolution() {
+        Permanent creature = addCreature(player1);
+        LeafDancer keptCard = new LeafDancer();
+        SacredRites discardedCard = new SacredRites();
+        harness.setHand(player1, List.of(new SacredRites(), keptCard, discardedCard));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castInstant(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(keptCard, discardedCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(discardedCard);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+
+        harness.passBothPriorities();
+        harness.handleXValueChosen(player1, 1);
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(keptCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(discardedCard);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
     }
 
     private Permanent addCreature(Player player) {
