@@ -19,7 +19,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Rewind.class, GrizzlyBears.class, Island.class, GaeasHerald.class, Shock.class})
+@CardUsed({Rewind.class, GrizzlyBears.class, Island.class, Shock.class})
 class RewindTest extends BaseCardTest {
 
     private List<UUID> tappedIslandIds(Player player, int limit) {
@@ -87,8 +87,7 @@ class RewindTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, player2.getId());
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, shock.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, shock.getId());
 
         harness.assertInGraveyard(player1, "Shock");
         harness.handleMultiplePermanentsChosen(player2, tappedIslandIds(player2, 4));
@@ -140,6 +139,7 @@ class RewindTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed(GaeasHerald.class)
     @DisplayName("Still untaps lands when the target creature spell cannot be countered")
     void untapsLandsWhenTargetCannotBeCountered() {
         harness.addToBattlefield(player1, new GaeasHerald());
@@ -227,18 +227,50 @@ class RewindTest extends BaseCardTest {
         addTappedIslands(player2, 4);
 
         GrizzlyBears bears = new GrizzlyBears();
-        harness.setHand(player1, List.of(bears));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.setHand(player2, List.of(new Rewind()));
-        harness.addMana(player2, ManaColor.BLUE, 4);
-        harness.castCreature(player1, 0);
-        harness.passPriority(player1);
-        harness.castInstant(player2, 0, bears.getId());
+        castRewindOntoBears(bears);
         gd.stack.removeIf(stackEntry -> stackEntry.getCard().getId().equals(bears.getId()));
 
         harness.passBothPriorities();
 
         assertThat(untappedIslands(player2)).isZero();
         harness.assertInGraveyard(player2, "Rewind");
+    }
+
+    @Test
+    @DisplayName("Chooses lands using their state at resolution rather than at casting")
+    void canUntapLandTappedAfterCasting() {
+        Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
+        castRewindOntoBears(new GrizzlyBears());
+
+        harness.tapPermanent(player2, 0);
+        harness.passBothPriorities();
+
+        harness.handleMultiplePermanentsChosen(player2, List.of(island.getId()));
+
+        assertThat(island.isTapped()).isFalse();
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Rewind");
+    }
+
+    @Test
+    @DisplayName("Countering Rewind prevents its controller from untapping lands")
+    void counteredRewindDoesNotUntapItsControllersLands() {
+        addTappedIslands(player2, 4);
+        castRewindOntoBears(new GrizzlyBears());
+        UUID rewindId = gd.stack.getLast().getTargetableId();
+
+        harness.setHand(player1, List.of(new Rewind()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.passPriority(player2);
+        harness.castAndResolveInstant(player1, 0, rewindId);
+
+        harness.assertInGraveyard(player2, "Rewind");
+        assertThat(untappedIslands(player2)).isZero();
+
+        harness.handleMultiplePermanentsChosen(player1, List.of());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(untappedIslands(player2)).isZero();
     }
 }
