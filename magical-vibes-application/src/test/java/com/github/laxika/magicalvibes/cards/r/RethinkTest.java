@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.s.SpiketailHatchling;
+import com.github.laxika.magicalvibes.cards.w.WalkingBallista;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Rethink.class, SpiketailHatchling.class})
+@CardUsed({Rethink.class, SpiketailHatchling.class, WalkingBallista.class})
 class RethinkTest extends BaseCardTest {
 
     @Test
@@ -27,8 +28,7 @@ class RethinkTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, hatchling.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, hatchling.getId());
 
         harness.assertInGraveyard(player1, "Spiketail Hatchling");
         harness.assertNotOnBattlefield(player1, "Spiketail Hatchling");
@@ -46,8 +46,7 @@ class RethinkTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, hatchling.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, hatchling.getId());
 
         PendingInteraction.MayAbilityChoice choice = gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class);
         assertThat(choice).isNotNull();
@@ -73,8 +72,7 @@ class RethinkTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, hatchling.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, hatchling.getId());
 
         PendingInteraction.MayAbilityChoice choice = gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class);
         assertThat(choice).isNotNull();
@@ -85,5 +83,47 @@ class RethinkTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
         harness.assertInGraveyard(player1, "Spiketail Hatchling");
         harness.assertNotOnBattlefield(player1, "Spiketail Hatchling");
+    }
+
+    @Test
+    @DisplayName("Payment includes every X symbol in the targeted spell's mana cost")
+    void paymentCountsBothXSymbols() {
+        WalkingBallista ballista = new WalkingBallista();
+        harness.setHand(player1, List.of(ballista));
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+        harness.setHand(player2, List.of(new Rethink()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        harness.castCreature(player1, 0, 2);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, ballista.getId());
+
+        PendingInteraction.MayAbilityChoice choice = gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(4);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Walking Ballista");
+    }
+
+    @Test
+    @DisplayName("A spell with two X symbols is countered when only one X can be paid")
+    void countersWhenControllerCannotPayBothXSymbols() {
+        WalkingBallista ballista = new WalkingBallista();
+        harness.setHand(player1, List.of(ballista));
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.setHand(player2, List.of(new Rethink()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        harness.castCreature(player1, 0, 2);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, ballista.getId());
+
+        harness.assertInGraveyard(player1, "Walking Ballista");
+        harness.assertNotOnBattlefield(player1, "Walking Ballista");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
     }
 }
