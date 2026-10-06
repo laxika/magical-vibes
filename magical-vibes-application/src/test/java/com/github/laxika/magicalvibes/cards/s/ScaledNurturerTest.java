@@ -16,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(ScaledNurturer.class)
+@CardUsed({ScaledNurturer.class})
 class ScaledNurturerTest extends BaseCardTest {
 
     @Test
@@ -73,10 +73,41 @@ class ScaledNurturerTest extends BaseCardTest {
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore);
     }
 
+    @Test
+    @DisplayName("The delayed life gain still triggers after the mana source leaves")
+    void dragonCastAfterNurturerLeavesStillGainsLife() {
+        Permanent nurturer = addReadyNurturer();
+        harness.activateAbility(player1, 0, null, null);
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToHand(gd, nurturer));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.setHand(player1, List.of(new ScaledNurturer()));
+
+        int lifeBefore = gd.getLife(player1.getId());
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore + 2);
+    }
+
+    @Test
+    @DisplayName("Each mana from separate activations triggers life gain")
+    void twoManaFromSameNurturerGainFourLife() {
+        Permanent nurturer = addReadyNurturer();
+        harness.activateAbility(player1, 0, null, null);
+        nurturer.setTapped(false);
+        harness.activateAbility(player1, 0, null, null);
+        harness.setHand(player1, List.of(new ScaledNurturer()));
+
+        int lifeBefore = gd.getLife(player1.getId());
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore + 4);
+    }
+
     private Permanent addReadyNurturer() {
-        Permanent nurturer = harness.addToBattlefieldAndReturn(player1, new ScaledNurturer());
-        nurturer.setSummoningSick(false);
-        return nurturer;
+        return addCreatureReady(player1, new ScaledNurturer());
     }
 
     private ManaPool manaPool() {
