@@ -37,10 +37,7 @@ class RunescaleStormbroodTest extends BaseCardTest {
     void dragonSpellBoostsStormbrood() {
         Permanent stormbrood = castStormbrood();
 
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.setHand(player1, List.of(new RunescaleStormbrood()));
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new RunescaleStormbrood(), "{3}{R}");
         harness.passBothPriorities();
 
         assertThat(stormbrood.getEffectivePower()).isEqualTo(4);
@@ -51,9 +48,7 @@ class RunescaleStormbroodTest extends BaseCardTest {
     void nonDragonCreatureDoesNotBoostStormbrood() {
         Permanent stormbrood = castStormbrood();
 
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
         harness.passBothPriorities();
 
         assertThat(stormbrood.getEffectivePower()).isEqualTo(2);
@@ -118,11 +113,123 @@ class RunescaleStormbroodTest extends BaseCardTest {
         assertThat(stormbrood.getEffectivePower()).isEqualTo(2);
     }
 
-    private Permanent castStormbrood() {
-        harness.setHand(player1, List.of(new RunescaleStormbrood()));
+    @Test
+    void opponentSpellDoesNotBoostStormbrood() {
+        Permanent stormbrood = castStormbrood();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(stormbrood.getEffectivePower()).isEqualTo(2);
+    }
+
+    @Test
+    void successiveSpellsGiveCumulativeBoosts() {
+        Permanent stormbrood = castStormbrood();
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+        harness.castInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(stormbrood.getEffectivePower()).isEqualTo(6);
+        assertThat(stormbrood.getEffectiveToughness()).isEqualTo(4);
+    }
+
+    @Test
+    void omenCountersCreatureAtManaValueTwo() {
+        GrizzlyBears spell = new GrizzlyBears();
+        RunescaleStormbrood card = new RunescaleStormbrood();
+        harness.castFromHand(player1, spell, "{1}{G}");
+        harness.setHand(player2, List.of(card));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castWithAlternateCost(player2, 0, spell.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(spell);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).contains(card);
+        assertThat(gd.playerGraveyards.get(player2.getId())).doesNotContain(card);
+    }
+
+    @Test
+    void omenCastBoostsStormbroodOnce() {
+        Permanent stormbrood = castStormbrood();
+        Shock spell = new Shock();
+        RunescaleStormbrood omen = new RunescaleStormbrood();
+        harness.setHand(player2, List.of(spell));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.setHand(player1, List.of(omen));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player2, 0, player1.getId());
+        harness.castWithAlternateCost(player1, 0, spell.getId());
+        resolveAllTriggers();
+
+        assertThat(stormbrood.getEffectivePower()).isEqualTo(4);
+        assertThat(stormbrood.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gd.playerDecks.get(player1.getId())).contains(omen);
+    }
+
+    @Test
+    void omenCanCounterAnotherOmenUsingItsOwnManaValue() {
+        Shock spell = new Shock();
+        RunescaleStormbrood firstOmen = new RunescaleStormbrood();
+        RunescaleStormbrood secondOmen = new RunescaleStormbrood();
+        harness.setHand(player1, List.of(spell, secondOmen));
+        harness.setHand(player2, List.of(firstOmen));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castCreature(player1, 0);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.castWithAlternateCost(player2, 0, spell.getId());
+        harness.castWithAlternateCost(player1, 0, firstOmen.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(firstOmen);
+        assertThat(gd.playerDecks.get(player2.getId())).doesNotContain(firstOmen);
+        assertThat(gd.playerDecks.get(player1.getId())).contains(secondOmen);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(spell);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    void omenWithMissingTargetGoesToGraveyardInsteadOfLibrary() {
+        Shock spell = new Shock();
+        RunescaleStormbrood firstOmen = new RunescaleStormbrood();
+        RunescaleStormbrood secondOmen = new RunescaleStormbrood();
+        harness.setHand(player1, List.of(spell, secondOmen));
+        harness.setHand(player2, List.of(firstOmen));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.castWithAlternateCost(player2, 0, spell.getId());
+        harness.castWithAlternateCost(player1, 0, spell.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(spell);
+        assertThat(gd.playerDecks.get(player1.getId())).contains(secondOmen);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(firstOmen);
+        assertThat(gd.playerDecks.get(player2.getId())).doesNotContain(firstOmen);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+    private Permanent castStormbrood() {
+        harness.castFromHand(player1, new RunescaleStormbrood(), "{3}{R}");
         harness.passBothPriorities();
         return findPermanent(player1, "Runescale Stormbrood");
     }
