@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
+import com.github.laxika.magicalvibes.cards.g.Goldhound;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ReadyToRumble.class, AirElemental.class, ChandraNalaar.class, FountainOfYouth.class})
+@CardUsed({ReadyToRumble.class, AirElemental.class, ChandraNalaar.class, FountainOfYouth.class, Goldhound.class})
 class ReadyToRumbleTest extends BaseCardTest {
 
     @Test
@@ -29,9 +30,8 @@ class ReadyToRumbleTest extends BaseCardTest {
 
     @Test
     void dealsFiveDamageToTargetPlaneswalker() {
-        Permanent planeswalker = new Permanent(new ChandraNalaar());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
         planeswalker.setCounterCount(CounterType.LOYALTY, 8);
-        gd.playerBattlefields.get(player2.getId()).add(planeswalker);
 
         cast(0, planeswalker);
 
@@ -65,10 +65,54 @@ class ReadyToRumbleTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void damageModeCannotTargetAPlayer() {
+        prepareCast();
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void damageModeCanTargetAnArtifactCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new Goldhound());
+
+        cast(0, creature);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(creature);
+        harness.assertInGraveyard(player2, "Goldhound");
+    }
+
+    @Test
+    void artifactModeCanDestroyYourOwnArtifactCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new Goldhound());
+
+        cast(1, creature);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(creature);
+        harness.assertInGraveyard(player1, "Goldhound");
+    }
+
+    @Test
+    void damageModeDoesNotResolveWhenTargetIsSacrificedInResponse() {
+        Permanent creature = addCreatureReady(player2, new Goldhound());
+        prepareCast();
+        harness.castInstant(player1, 0, 0, creature.getId());
+
+        harness.activateAbility(player2, 0, null, null);
+        harness.handleListChoice(player2, ManaColor.RED.name());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(creature);
+        harness.assertInGraveyard(player2, "Goldhound");
+        harness.assertInGraveyard(player1, "Ready to Rumble");
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void cast(int modeIndex, Permanent target) {
         prepareCast();
-        harness.castInstant(player1, 0, modeIndex, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, modeIndex, target.getId());
     }
 
     private void prepareCast() {
