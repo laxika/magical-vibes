@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.s.Stifle;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(RidersOfRohan.class)
+@CardUsed({RidersOfRohan.class, Stifle.class})
 class RidersOfRohanTest extends BaseCardTest {
 
     @Test
@@ -39,9 +40,10 @@ class RidersOfRohanTest extends BaseCardTest {
         castNormally();
 
         Permanent riders = findPermanent(player1, "Riders of Rohan");
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        assertThat(riders.hasKeyword(Keyword.HASTE)).isFalse();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
 
         assertThat(findPermanent(player1, "Riders of Rohan")).isSameAs(riders);
     }
@@ -54,19 +56,42 @@ class RidersOfRohanTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.castWithAlternateCost(player1, 0, List.of());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent riders = findPermanent(player1, "Riders of Rohan");
         assertThat(riders.hasKeyword(Keyword.HASTE)).isTrue();
         assertThat(findPermanents(player1, "Human Knight")).hasSize(2);
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
 
         harness.assertInHand(player1, "Riders of Rohan");
         harness.assertNotOnBattlefield(player1, "Riders of Rohan");
+        assertThat(findPermanents(player1, "Human Knight")).hasSize(2);
+    }
+
+    @Test
+    void counteringDashReturnKeepsRidersOnBattlefield() {
+        harness.setHand(player1, List.of(new RidersOfRohan()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.setHand(player2, List.of(new Stifle()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.castWithAlternateCost(player1, 0, List.of());
+        resolveAllTriggers();
+        Permanent riders = findPermanent(player1, "Riders of Rohan");
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        assertThat(gd.stack).hasSize(1);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, gd.stack.getLast().getCard().getId());
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player1, "Riders of Rohan")).isSameAs(riders);
         assertThat(findPermanents(player1, "Human Knight")).hasSize(2);
     }
 
@@ -77,7 +102,6 @@ class RidersOfRohanTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 }
