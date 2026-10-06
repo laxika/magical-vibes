@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -34,7 +33,7 @@ class SiegeOfTowersTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, mountain)).isTrue();
         assertThat(gqs.getEffectivePower(gd, mountain)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, mountain)).isEqualTo(1);
-        assertThat(mountain.getCard().hasType(CardType.LAND)).isTrue();
+        assertThat(gqs.isLand(gd, mountain)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -94,6 +93,72 @@ class SiegeOfTowersTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, land.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Mountain");
+    }
+
+    @Test
+    @DisplayName("Can animate an opponent's Mountain without changing its controller")
+    void animatesOpponentsMountain() {
+        Permanent mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
+        castSiegeOfTowers(mountain, List.of());
+        resolveAllTriggers();
+
+        assertThat(gqs.isCreature(gd, mountain)).isTrue();
+        assertThat(gqs.isLand(gd, mountain)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, mountain)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, mountain)).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(mountain);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(mountain);
+    }
+
+    @Test
+    @DisplayName("Without replicate payments only the original spell is put on the stack")
+    void noCopiesWithoutReplicatePayment() {
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        castSiegeOfTowers(mountain, List.of());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().isCopy()).isFalse();
+        resolveAllTriggers();
+
+        assertThat(gqs.isCreature(gd, mountain)).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A retargeted replicate copy resolves even if the original target leaves")
+    void copyResolvesWhenOriginalTargetLeaves() {
+        Permanent originalTarget = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        Permanent copyTarget = harness.addToBattlefieldAndReturn(player2, new Mountain());
+        castSiegeOfTowers(originalTarget, List.of("{1}{R}"));
+        gd.playerBattlefields.get(player1.getId()).remove(originalTarget);
+        harness.setGraveyard(player1, List.of(originalTarget.getCard()));
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, copyTarget.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.isCreature(gd, copyTarget)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, copyTarget)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, copyTarget)).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(originalTarget);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An animated Mountain retains its red mana ability and color")
+    void animatedMountainRetainsManaAbilityAndColor() {
+        Permanent mountain = addCreatureReady(player1, new Mountain());
+        castSiegeOfTowers(mountain, List.of());
+        resolveAllTriggers();
+
+        harness.tapPermanent(player1, 0);
+
+        assertThat(mountain.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gqs.getEffectiveColors(gd, mountain)).isEmpty();
+        assertThat(gqs.isLand(gd, mountain)).isTrue();
     }
 
     private void castSiegeOfTowers(Permanent target, List<String> replicatePayments) {
