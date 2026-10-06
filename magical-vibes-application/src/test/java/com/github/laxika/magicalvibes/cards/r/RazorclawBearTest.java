@@ -14,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(RazorclawBear.class)
+@CardUsed({RazorclawBear.class})
 class RazorclawBearTest extends BaseCardTest {
 
     @Test
@@ -23,8 +23,7 @@ class RazorclawBearTest extends BaseCardTest {
         Permanent bear = addCreatureReady(player1, new RazorclawBear());
         addCreatureReady(player2, new RazorclawBear());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.stack).hasSize(1);
@@ -39,8 +38,7 @@ class RazorclawBearTest extends BaseCardTest {
         Permanent bear = addCreatureReady(player1, new RazorclawBear());
         addCreatureReady(player2, new RazorclawBear());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveAllTriggers();
 
@@ -57,8 +55,7 @@ class RazorclawBearTest extends BaseCardTest {
         addCreatureReady(player2, new RazorclawBear());
         addCreatureReady(player2, new RazorclawBear());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
                 new BlockerAssignment(1, 0)
@@ -74,8 +71,7 @@ class RazorclawBearTest extends BaseCardTest {
     void unblockedCreatesNoTrigger() {
         Permanent bear = addCreatureReady(player1, new RazorclawBear());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of());
 
         assertThat(gd.stack).isEmpty();
@@ -89,8 +85,7 @@ class RazorclawBearTest extends BaseCardTest {
         Permanent bear = addCreatureReady(player1, new RazorclawBear());
         addCreatureReady(player2, new RazorclawBear());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveAllTriggers();
 
@@ -103,5 +98,37 @@ class RazorclawBearTest extends BaseCardTest {
 
         assertThat(bear.getPowerModifier()).isZero();
         assertThat(bear.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Each blocked Bear boosts only itself after its trigger resolves")
+    void multipleBlockedBearsBoostIndependently() {
+        Permanent firstBear = addCreatureReady(player1, new RazorclawBear());
+        Permanent secondBear = addCreatureReady(player1, new RazorclawBear());
+        Permanent firstBlocker = addCreatureReady(player2, new RazorclawBear());
+        Permanent secondBlocker = addCreatureReady(player2, new RazorclawBear());
+
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 1)
+        ));
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(firstBear.getPowerModifier()).isZero();
+        assertThat(firstBear.getToughnessModifier()).isZero();
+        assertThat(secondBear.getPowerModifier()).isZero();
+        assertThat(secondBear.getToughnessModifier()).isZero();
+
+        resolveAllTriggers();
+
+        assertThat(firstBear.getPowerModifier()).isEqualTo(2);
+        assertThat(firstBear.getToughnessModifier()).isEqualTo(2);
+        assertThat(secondBear.getPowerModifier()).isEqualTo(2);
+        assertThat(secondBear.getToughnessModifier()).isEqualTo(2);
+        assertThat(firstBlocker.getPowerModifier()).isZero();
+        assertThat(firstBlocker.getToughnessModifier()).isZero();
+        assertThat(secondBlocker.getPowerModifier()).isZero();
+        assertThat(secondBlocker.getToughnessModifier()).isZero();
     }
 }
