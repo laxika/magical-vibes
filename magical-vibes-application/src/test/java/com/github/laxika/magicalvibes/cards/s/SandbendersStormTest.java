@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GiantWarthog;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,18 +15,18 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SandbendersStorm.class, Forest.class, GiantWarthog.class})
+@CardUsed({SandbendersStorm.class, Forest.class, SerpentOfThePass.class})
 class SandbendersStormTest extends BaseCardTest {
 
     @Test
     @DisplayName("The destroy mode destroys a creature with power 4 or greater")
     void destroysLargeCreature() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GiantWarthog());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new SerpentOfThePass());
 
         cast(0, creature.getId());
 
-        harness.assertNotOnBattlefield(player2, "Giant Warthog");
-        harness.assertInGraveyard(player2, "Giant Warthog");
+        harness.assertNotOnBattlefield(player2, "Serpent of the Pass");
+        harness.assertInGraveyard(player2, "Serpent of the Pass");
     }
 
     @Test
@@ -55,9 +54,7 @@ class SandbendersStormTest extends BaseCardTest {
                 .removePermanentToGraveyard(gd, land));
         harness.passBothPriorities();
 
-        Permanent returned = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().getId().equals(land.getCard().getId()))
-                .findFirst().orElseThrow();
+        Permanent returned = findPermanent(player1, "Forest");
         assertThat(returned.isTapped()).isTrue();
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .noneMatch(card -> card.getId().equals(land.getCard().getId()));
@@ -74,9 +71,7 @@ class SandbendersStormTest extends BaseCardTest {
                 .removePermanentToExile(gd, land));
         harness.passBothPriorities();
 
-        Permanent returned = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().getId().equals(land.getCard().getId()))
-                .findFirst().orElseThrow();
+        Permanent returned = findPermanent(player1, "Forest");
         assertThat(returned.isTapped()).isTrue();
         assertThat(gd.findExiledCard(land.getCard().getId())).isNull();
     }
@@ -92,6 +87,90 @@ class SandbendersStormTest extends BaseCardTest {
                 player1, 0, 1, 1, new int[]{1}, List.of(land.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("you control");
+    }
+
+    @Test
+    @DisplayName("The destroy mode accepts an animated land with exactly four power")
+    void destroysCreatureWithExactlyFourPower() {
+        Permanent land = addForest(player1);
+        cast(1, land.getId());
+        land.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 4);
+
+        cast(0, land.getId());
+        resolveAllTriggers();
+
+        Permanent returned = findPermanent(player1, "Forest");
+        assertThat(returned.getId()).isNotEqualTo(land.getId());
+        assertThat(returned.isTapped()).isTrue();
+        assertThat(gqs.isCreature(gd, returned)).isFalse();
+        assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("The destroy mode rejects a creature with three power")
+    void rejectsCreatureBelowPowerThreshold() {
+        Permanent land = addForest(player1);
+        cast(1, land.getId());
+        harness.setHand(player1, List.of(new SandbendersStorm()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castModalInstantWithModes(
+                player1, 0, 1, 1, new int[]{0}, List.of(land.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("The destroy mode rejects a noncreature land")
+    void rejectsNoncreature() {
+        Permanent land = addForest(player1);
+        harness.setHand(player1, List.of(new SandbendersStorm()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castModalInstantWithModes(
+                player1, 0, 1, 1, new int[]{0}, List.of(land.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The destroy mode rechecks power when resolving")
+    void doesNotDestroyTargetWhosePowerDropsBelowFour() {
+        Permanent land = addForest(player1);
+        cast(1, land.getId());
+        land.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 4);
+        harness.setHand(player1, List.of(new SandbendersStorm()));
+        addMana();
+        harness.castModalInstantWithModes(player1, 0, 1, 1, new int[]{0}, List.of(land.getId()));
+
+        land.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Forest").getId()).isEqualTo(land.getId());
+        harness.assertNotInGraveyard(player1, "Forest");
+        harness.assertInGraveyard(player1, "Sandbenders' Storm");
+    }
+
+    @Test
+    @DisplayName("Earthbending an animated land again adds counters and returns it only once")
+    void repeatedEarthbendAddsCountersAndReturnsFreshLand() {
+        Permanent land = addForest(player1);
+        cast(1, land.getId());
+        cast(1, land.getId());
+
+        assertThat(land.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, land)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, land)).isEqualTo(6);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToExile(gd, land));
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Forest")).isEqualTo(1);
+        Permanent returned = findPermanent(player1, "Forest");
+        assertThat(returned.isTapped()).isTrue();
+        assertThat(gqs.isCreature(gd, returned)).isFalse();
+        assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.hasKeyword(gd, returned, Keyword.HASTE)).isFalse();
     }
 
     private Permanent addForest(com.github.laxika.magicalvibes.model.Player player) {
