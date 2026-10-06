@@ -90,4 +90,76 @@ class RishadanPawnshopTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, opponentPermanent.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Can shuffle itself into its owner's library")
+    void canTargetItself() {
+        Permanent pawnshop = harness.addToBattlefieldAndReturn(player1, new RishadanPawnshop());
+        int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, pawnshop.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Rishadan Pawnshop");
+        harness.assertNotInGraveyard(player1, "Rishadan Pawnshop");
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .hasSize(deckSizeBefore + 1)
+                .contains(pawnshop.getCard());
+    }
+
+    @Test
+    @DisplayName("Cannot activate with less than two mana")
+    void cannotActivateWithoutEnoughMana() {
+        Permanent pawnshop = harness.addToBattlefieldAndReturn(player1, new RishadanPawnshop());
+        Permanent volunteers = harness.addToBattlefieldAndReturn(player1, new FreshVolunteers());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, volunteers.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(pawnshop.isTapped()).isFalse();
+        harness.assertOnBattlefield(player1, "Fresh Volunteers");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate while tapped")
+    void cannotActivateWhileTapped() {
+        Permanent pawnshop = harness.addToBattlefieldAndReturn(player1, new RishadanPawnshop());
+        Permanent volunteers = harness.addToBattlefieldAndReturn(player1, new FreshVolunteers());
+        pawnshop.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, volunteers.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Fresh Volunteers");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Ability still resolves after its source leaves the battlefield")
+    void abilityResolvesAfterSourceLeaves() {
+        Permanent firstPawnshop = harness.addToBattlefieldAndReturn(player1, new RishadanPawnshop());
+        harness.addToBattlefield(player1, new RishadanPawnshop());
+        Permanent volunteers = harness.addToBattlefieldAndReturn(player1, new FreshVolunteers());
+        int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, volunteers.getId());
+        harness.activateAbility(player1, 1, null, firstPawnshop.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(firstPawnshop);
+        harness.assertOnBattlefield(player1, "Fresh Volunteers");
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Fresh Volunteers");
+        harness.assertNotInGraveyard(player1, "Fresh Volunteers");
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .hasSize(deckSizeBefore + 2)
+                .contains(firstPawnshop.getCard(), volunteers.getCard());
+    }
 }
