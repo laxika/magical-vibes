@@ -15,6 +15,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({SadisticAugermage.class, LastGasp.class, GrayscaledGharial.class, ScreechingGriffin.class})
 class SadisticAugermageTest extends BaseCardTest {
@@ -121,6 +122,57 @@ class SadisticAugermageTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player1.getId())).startsWith(player1Card, player1OldTop);
         assertThat(gd.playerDecks.get(player2.getId())).startsWith(player2Card, player2OldTop);
+    }
+
+    @Test
+    @DisplayName("All players choose before any chosen card moves to a library")
+    void chosenCardsMoveSimultaneously() {
+        Permanent augermage = harness.addToBattlefieldAndReturn(player1, new SadisticAugermage());
+        Card player1Card = new GrayscaledGharial();
+        Card player2Card = new ScreechingGriffin();
+        Card player1OldTop = new ScreechingGriffin();
+        Card player2OldTop = new GrayscaledGharial();
+        harness.setHand(player1, List.of(new LastGasp(), player1Card));
+        harness.setHand(player2, List.of(player2Card));
+        harness.setLibrary(player1, List.of(player1OldTop));
+        harness.setLibrary(player2, List.of(player2OldTop));
+
+        kill(augermage);
+        harness.handleMultipleCardsChosen(player1, List.of(player1Card.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(player1Card);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(player1OldTop);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(player2Card);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(player2OldTop);
+
+        harness.handleMultipleCardsChosen(player2, List.of(player2Card.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(player1Card, player1OldTop);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(player2Card, player2OldTop);
+    }
+
+    @Test
+    @DisplayName("Putting a card on an empty library is mandatory when a hand card is available")
+    void mandatoryChoiceCanPopulateEmptyLibrary() {
+        Permanent augermage = harness.addToBattlefieldAndReturn(player1, new SadisticAugermage());
+        Card handCard = new GrayscaledGharial();
+        harness.setHand(player1, List.of(new LastGasp(), handCard));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of());
+
+        kill(augermage);
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(handCard);
+
+        harness.handleMultipleCardsChosen(player1, List.of(handCard.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(handCard);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     private void kill(Permanent augermage) {
