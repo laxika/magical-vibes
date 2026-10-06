@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -10,7 +9,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -24,10 +22,7 @@ class RavenousTyrannosaurusTest extends BaseCardTest {
     void devourPutsCountersOnEntry() {
         Permanent fodderA = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent fodderB = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        harness.setHand(player1, new ArrayList<>(List.of(new RavenousTyrannosaurus())));
-        addManaForRavenousTyrannosaurus();
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new RavenousTyrannosaurus(), "{4}{R}{G}");
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
@@ -45,7 +40,7 @@ class RavenousTyrannosaurusTest extends BaseCardTest {
     void attackDealsExcessDamageToController() {
         addCreatureReady(player1, new RavenousTyrannosaurus());
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
-        gd.playerLifeTotals.put(player2.getId(), 20);
+        harness.setLife(player2, 20);
 
         declareAttackers(List.of(0));
         harness.handlePermanentChosen(player1, target.getId());
@@ -82,9 +77,4 @@ class RavenousTyrannosaurusTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private void addManaForRavenousTyrannosaurus() {
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-    }
 }
