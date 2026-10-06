@@ -133,6 +133,51 @@ class SearchForTomorrowTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Search for Tomorrow");
     }
 
+    @Test
+    @DisplayName("The first suspend upkeep removes only one counter and does not cast the card")
+    void firstUpkeepLeavesCardSuspended() {
+        SearchForTomorrow card = suspendCard();
+
+        assertThat(gd.stack).isEmpty();
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 1);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotInGraveyard(player1, "Search for Tomorrow");
+    }
+
+    @Test
+    @DisplayName("The controller may find no land even when a basic land is available")
+    void canDeclineAvailableBasicLand() {
+        Forest land = new Forest();
+        harness.setLibrary(player1, List.of(land));
+
+        harness.castFromHand(player1, new SearchForTomorrow(), "{2}{G}");
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(land);
+        harness.assertNotOnBattlefield(player1, "Forest");
+        harness.assertInGraveyard(player1, "Search for Tomorrow");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Searching an empty library finishes without requesting a land choice")
+    void emptyLibraryFinishesSearch() {
+        harness.setLibrary(player1, List.of());
+
+        harness.castFromHand(player1, new SearchForTomorrow(), "{2}{G}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Search for Tomorrow");
+    }
+
     private void setupLibrary() {
         harness.setLibrary(player1, List.of(new Plains(), new Forest(), new Island(), new AshcoatBear()));
     }
