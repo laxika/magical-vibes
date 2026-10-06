@@ -8,15 +8,15 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SkitteringHeartstopper.class})
 class SkitteringHeartstopperTest extends BaseCardTest {
-
-    // ===== Deathtouch ability =====
 
     @Test
     @DisplayName("Activating deathtouch ability puts it on the stack")
@@ -29,7 +29,7 @@ class SkitteringHeartstopperTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(entry.getCard().getName()).isEqualTo("Skittering Heartstopper");
+        assertThat(entry.getCard()).isSameAs(heartstopper.getCard());
         assertThat(entry.getTargetId()).isEqualTo(heartstopper.getId());
     }
 
@@ -64,8 +64,6 @@ class SkitteringHeartstopperTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, heartstopper, Keyword.DEATHTOUCH)).isFalse();
     }
 
-    // ===== Activation constraints =====
-
     @Test
     @DisplayName("Activating ability does NOT tap Skittering Heartstopper")
     void activatingAbilityDoesNotTap() {
@@ -97,14 +95,12 @@ class SkitteringHeartstopperTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Skittering Heartstopper");
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(heartstopper.getCard());
     }
 
-    // ===== Fizzle =====
-
     @Test
-    @DisplayName("Ability fizzles if Skittering Heartstopper is removed before resolution")
-    void abilityFizzlesIfSourceRemoved() {
+    @DisplayName("Ability has no effect if Skittering Heartstopper is removed before resolution")
+    void abilityHasNoEffectIfSourceRemoved() {
         addHeartstopperReady(player1);
         harness.addMana(player1, ManaColor.BLACK, 1);
 
@@ -117,12 +113,46 @@ class SkitteringHeartstopperTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
-    // ===== Helper methods =====
+    @Test
+    @DisplayName("Summoning sick Heartstopper can activate and grants deathtouch only to itself")
+    void canActivateWhileSummoningSickAndOnlyAffectsSource() {
+        Permanent heartstopper = harness.addToBattlefieldAndReturn(player1, new SkitteringHeartstopper());
+        heartstopper.setSummoningSick(true);
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new SkitteringHeartstopper());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gqs.hasKeyword(gd, heartstopper, Keyword.DEATHTOUCH)).isFalse();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, heartstopper, Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.DEATHTOUCH)).isFalse();
+        assertThat(heartstopper.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A replacement Heartstopper does not receive the departed source's deathtouch")
+    void replacementDoesNotReceiveDeathtouch() {
+        Permanent heartstopper = addHeartstopperReady(player1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        gd.playerBattlefields.get(player1.getId()).remove(heartstopper);
+        Permanent replacement = harness.addToBattlefieldAndReturn(player1, heartstopper.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.hasKeyword(gd, replacement, Keyword.DEATHTOUCH)).isFalse();
+    }
 
     private Permanent addHeartstopperReady(Player player) {
-        Permanent perm = new Permanent(new SkitteringHeartstopper());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new SkitteringHeartstopper());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }
