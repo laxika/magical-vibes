@@ -82,11 +82,31 @@ class SilverErneTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Yavimaya Gnats");
     }
 
-    private Permanent attackingErne() {
-        Permanent erne = new Permanent(new SilverErne());
-        erne.setSummoningSick(false);
+    @Test
+    @DisplayName("Trample requires lethal damage to the blocker before damaging the defender")
+    void cannotTrampleWithoutAssigningLethalToBlocker() {
+        harness.setLife(player2, 20);
+        attackingErne();
+        Permanent blocker = addCreatureReady(player2, new YavimayaGnats());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        assertThatThrownBy(() -> harness.handleCombatDamageAssigned(player1, 0,
+                Map.of(player2.getId(), 2)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Trample");
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(blocker.getId(), 2));
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        harness.assertInGraveyard(player2, "Yavimaya Gnats");
+    }
+
+    private void attackingErne() {
+        Permanent erne = addCreatureReady(player1, new SilverErne());
         erne.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(erne);
-        return erne;
     }
 }
