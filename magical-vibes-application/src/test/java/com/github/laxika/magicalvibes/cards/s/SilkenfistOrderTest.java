@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.m.Mossdog;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -19,11 +20,9 @@ class SilkenfistOrderTest extends BaseCardTest {
     @DisplayName("Becoming blocked untaps Silkenfist Order")
     void becomingBlockedUntapsIt() {
         Permanent order = addCreatureReady(player1, new SilkenfistOrder());
-        order.setAttacking(true);
-        order.tap();
         addCreatureReady(player2, new Mossdog());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(order.isTapped()).isTrue();
@@ -36,12 +35,10 @@ class SilkenfistOrderTest extends BaseCardTest {
     @DisplayName("Multiple blockers trigger Silkenfist Order only once")
     void multipleBlockersTriggerOnce() {
         Permanent order = addCreatureReady(player1, new SilkenfistOrder());
-        order.setAttacking(true);
-        order.tap();
         addCreatureReady(player2, new Mossdog());
         addCreatureReady(player2, new Mossdog());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
                 new BlockerAssignment(1, 0)));
@@ -56,13 +53,11 @@ class SilkenfistOrderTest extends BaseCardTest {
     @DisplayName("Becoming blocked untaps only Silkenfist Order")
     void becomingBlockedUntapsOnlyIt() {
         Permanent order = addCreatureReady(player1, new SilkenfistOrder());
-        order.setAttacking(true);
-        order.tap();
         Permanent otherCreature = addCreatureReady(player1, new Mossdog());
         otherCreature.tap();
         Permanent blocker = addCreatureReady(player2, new Mossdog());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -75,13 +70,42 @@ class SilkenfistOrderTest extends BaseCardTest {
     @DisplayName("An unblocked Silkenfist Order does not trigger")
     void unblockedDoesNotTrigger() {
         Permanent order = addCreatureReady(player1, new SilkenfistOrder());
-        order.setAttacking(true);
-        order.tap();
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of());
 
         assertThat(gd.stack).isEmpty();
         assertThat(order.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Untapping after becoming blocked keeps Silkenfist Order in combat")
+    void untappingKeepsItInCombat() {
+        Permanent order = addCreatureReady(player1, new SilkenfistOrder());
+        addCreatureReady(player2, new Mossdog());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, harness::passBothPriorities);
+
+        assertThat(order.isTapped()).isFalse();
+        assertThat(order.isAttacking()).isTrue();
+        harness.resolveCombatDamage();
+
+        harness.assertOnBattlefield(player1, "Silkenfist Order");
+        harness.assertInGraveyard(player2, "Mossdog");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Blocking with Silkenfist Order does not trigger its ability")
+    void blockingDoesNotTrigger() {
+        addCreatureReady(player1, new Mossdog());
+        addCreatureReady(player2, new SilkenfistOrder());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(gd.stack).isEmpty();
     }
 }
