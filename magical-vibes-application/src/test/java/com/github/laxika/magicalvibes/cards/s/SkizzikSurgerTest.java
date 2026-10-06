@@ -18,6 +18,48 @@ import static org.assertj.core.api.Assertions.assertThat;
 class SkizzikSurgerTest extends BaseCardTest {
 
     @Test
+    void enteringDoesNotCreateAnEnterTheBattlefieldTrigger() {
+        harness.setHand(player1, List.of(new SkizzikSurger()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Skizzik Surger");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void opponentsLandsCannotPayEcho() {
+        castSkizzikSurger();
+        harness.addToBattlefield(player1, new DryadArbor());
+        harness.addToBattlefield(player2, new DryadArbor());
+        harness.addToBattlefield(player2, new DryadArbor());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Skizzik Surger");
+        assertThat(landCount(player1)).isEqualTo(1);
+        assertThat(landCount(player2)).isEqualTo(2);
+    }
+
+    @Test
+    void opponentsUpkeepDoesNotConsumeEcho() {
+        castSkizzikSurger();
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Skizzik Surger");
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Skizzik Surger");
+    }
+
+    @Test
     void insufficientLandsSacrificeSkizzikSurger() {
         castSkizzikSurger();
         harness.addToBattlefield(player1, new DryadArbor());
@@ -122,8 +164,7 @@ class SkizzikSurgerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.addMana(player1, ManaColor.RED, 2);
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
     private long landCount(Player player) {
