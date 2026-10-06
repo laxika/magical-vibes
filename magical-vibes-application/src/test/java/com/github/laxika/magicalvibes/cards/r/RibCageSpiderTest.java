@@ -22,8 +22,7 @@ class RibCageSpiderTest extends BaseCardTest {
         Permanent spider = addCreatureReady(player2, new RibCageSpider());
         addCreatureReady(player1, new DivingGriffin());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(spider.isBlocking()).isTrue();
@@ -35,10 +34,21 @@ class RibCageSpiderTest extends BaseCardTest {
         Permanent spider = addCreatureReady(player2, new RibCageSpider());
         addCreatureReady(player1, new VintaraElephant());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(spider.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Reach does not prevent a ground creature from blocking Rib Cage Spider")
+    void canBeBlockedByNonFlyingCreature() {
+        addCreatureReady(player1, new RibCageSpider());
+        Permanent elephant = addCreatureReady(player2, new VintaraElephant());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(elephant.isBlocking()).isTrue();
     }
 }
