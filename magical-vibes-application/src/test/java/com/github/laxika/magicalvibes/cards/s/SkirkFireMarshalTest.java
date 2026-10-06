@@ -90,6 +90,71 @@ class SkirkFireMarshalTest extends BaseCardTest {
         assertThat(tappedGoblin.isTapped()).isTrue();
     }
 
+    @Test
+    @DisplayName("Summoning-sick Goblins, including the Marshal, can pay the cost")
+    void canTapSummoningSickGoblins() {
+        Permanent marshal = harness.addToBattlefieldAndReturn(player1, new SkirkFireMarshal());
+        for (int i = 0; i < 4; i++) {
+            harness.addToBattlefield(player1, new GoblinSledder());
+        }
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(marshal.isTapped()).isTrue();
+        assertThat(findPermanents(player1, "Goblin Sledder")).allMatch(Permanent::isTapped);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 10);
+        harness.assertLife(player2, 10);
+        harness.assertOnBattlefield(player1, "Skirk Fire Marshal");
+        harness.assertNotOnBattlefield(player1, "Goblin Sledder");
+        assertThat(marshal.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("A tapped Marshal can activate by tapping five other Goblins")
+    void canActivateWhileMarshalIsTapped() {
+        Permanent marshal = addCreatureReady(player1, new SkirkFireMarshal());
+        marshal.tap();
+        List<Permanent> goblins = addReadyGoblins(5);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(goblins).allMatch(Permanent::isTapped);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 10);
+        harness.assertLife(player2, 10);
+        harness.assertOnBattlefield(player1, "Skirk Fire Marshal");
+        harness.assertNotOnBattlefield(player1, "Goblin Sledder");
+    }
+
+    @Test
+    @DisplayName("An opponent's Goblins cannot be chosen to pay the cost")
+    void cannotTapOpponentsGoblins() {
+        Permanent marshal = addCreatureReady(player1, new SkirkFireMarshal());
+        List<Permanent> goblins = addReadyGoblins(5);
+        Permanent opposingGoblin = addCreatureReady(player2, new GoblinSledder());
+
+        harness.activateAbility(player1, 0, null, null);
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, opposingGoblin.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        for (Permanent goblin : goblins) {
+            harness.handlePermanentChosen(player1, goblin.getId());
+        }
+
+        assertThat(opposingGoblin.isTapped()).isFalse();
+        assertThat(marshal.isTapped()).isFalse();
+        assertThat(goblins).allMatch(Permanent::isTapped);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 10);
+        harness.assertLife(player2, 10);
+        harness.assertOnBattlefield(player1, "Skirk Fire Marshal");
+        harness.assertNotOnBattlefield(player1, "Goblin Sledder");
+        harness.assertNotOnBattlefield(player2, "Goblin Sledder");
+    }
+
     private List<Permanent> addReadyGoblins(int count) {
         List<Permanent> goblins = new ArrayList<>();
         for (int i = 0; i < count; i++) {
