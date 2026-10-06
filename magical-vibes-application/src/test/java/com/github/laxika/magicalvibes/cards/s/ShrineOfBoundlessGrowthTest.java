@@ -1,23 +1,24 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.g.GlistenerElf;
+import com.github.laxika.magicalvibes.cards.g.GutShot;
+import com.github.laxika.magicalvibes.cards.m.MutagenicGrowth;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({ShrineOfBoundlessGrowth.class, MutagenicGrowth.class, GlistenerElf.class, GutShot.class})
 class ShrineOfBoundlessGrowthTest extends BaseCardTest {
-
-    // ===== Upkeep trigger =====
 
     @Test
     @DisplayName("Upkeep trigger adds a charge counter (mandatory)")
@@ -70,8 +71,6 @@ class ShrineOfBoundlessGrowthTest extends BaseCardTest {
         assertThat(shrine.getCounterCount(CounterType.CHARGE)).isEqualTo(0);
     }
 
-    // ===== Green spell cast trigger =====
-
     @Test
     @DisplayName("Casting a green spell adds a charge counter")
     void castingGreenSpellAddsChargeCounter() {
@@ -80,19 +79,17 @@ class ShrineOfBoundlessGrowthTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.GREEN, 1);
-        GiantGrowth giantGrowth = new GiantGrowth();
-        harness.setHand(player1, List.of(giantGrowth));
-        // Giant Growth targets a creature, so we need a creature
-        Card bears = new com.github.laxika.magicalvibes.cards.g.GrizzlyBears();
-        harness.addToBattlefield(player1, bears);
-        Permanent creature = findPermanent(player1, "Grizzly Bears");
+        MutagenicGrowth mutagenicGrowth = new MutagenicGrowth();
+        harness.setHand(player1, List.of(mutagenicGrowth));
+        // Mutagenic Growth targets a creature, so we need a creature
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GlistenerElf());
         harness.castInstant(player1, 0, creature.getId());
 
         // Spell cast trigger should put charge counter on shrine
         harness.passBothPriorities(); // resolve charge counter trigger
         assertThat(shrine.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
 
-        // Resolve the Giant Growth itself
+        // Resolve the Mutagenic Growth itself
         harness.passBothPriorities();
     }
 
@@ -104,18 +101,16 @@ class ShrineOfBoundlessGrowthTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.RED, 1);
-        Shock shock = new Shock();
-        harness.setHand(player1, List.of(shock));
-        // Shock targets any target — target opponent
+        GutShot gutShot = new GutShot();
+        harness.setHand(player1, List.of(gutShot));
+        // Gut Shot targets any target — target opponent
         harness.castInstant(player1, 0, player2.getId());
 
-        // No charge counter trigger should fire — resolve Shock
+        // No charge counter trigger should fire — resolve Gut Shot
         harness.passBothPriorities();
 
         assertThat(shrine.getCounterCount(CounterType.CHARGE)).isEqualTo(0);
     }
-
-    // ===== Activated ability: Tap + sacrifice for mana =====
 
     @Test
     @DisplayName("Sacrificing with charge counters adds colorless mana")
@@ -139,7 +134,7 @@ class ShrineOfBoundlessGrowthTest extends BaseCardTest {
     @Test
     @DisplayName("Sacrificing with zero counters adds no mana")
     void sacrificeWithZeroCountersAddsNoMana() {
-        Permanent shrine = addReadyShrine(player1);
+        addReadyShrine(player1);
         // No charge counters
 
         int colorlessBefore = gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS);
@@ -181,10 +176,8 @@ class ShrineOfBoundlessGrowthTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isGreaterThanOrEqualTo(3);
     }
 
-    // ===== Priority preservation after mana ability (CR 605.3b) =====
-
     @Test
-    @DisplayName("CR 605.3b: Activating Shrine mana ability does not clear priority")
+    @DisplayName("Activating Shrine mana ability does not clear priority")
     void manaAbilityDoesNotClearPriority() {
         Permanent shrine = addReadyShrine(player1);
         shrine.setCounterCount(CounterType.CHARGE, 2);
@@ -204,7 +197,7 @@ class ShrineOfBoundlessGrowthTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("CR 605.3b: Non-active player can cast after Shrine mana ability")
+    @DisplayName("Non-active player can cast after Shrine mana ability")
     void nonActivePlayerCanCastAfterShrineManaAbility() {
         Permanent shrine = addReadyShrine(player2);
         shrine.setCounterCount(CounterType.CHARGE, 4);
@@ -219,20 +212,20 @@ class ShrineOfBoundlessGrowthTest extends BaseCardTest {
         harness.ensurePriority(player2);
         harness.activateAbility(player2, 0, null, null);
 
-        // Player2 should still have priority — the Shock cast below should succeed
+        // Player2 should still have priority — the Gut Shot cast below should succeed
         harness.addMana(player2, ManaColor.RED, 1);
-        Shock shock = new Shock();
-        harness.setHand(player2, List.of(shock));
+        GutShot gutShot = new GutShot();
+        harness.setHand(player2, List.of(gutShot));
 
         // This would throw "You do not have priority" before the fix
         harness.castInstant(player2, 0, player1.getId());
 
         assertThat(gd.stack).isNotEmpty();
-        assertThat(gd.stack.getLast().getCard().getName()).isEqualTo("Shock");
+        assertThat(gd.stack.getLast().getCard().getName()).isEqualTo("Gut Shot");
     }
 
     @Test
-    @DisplayName("CR 605.3b: Multiple mana abilities in sequence don't clear priority")
+    @DisplayName("Multiple mana abilities in sequence don't clear priority")
     void multipleManaAbilitiesPreservePriority() {
         // Add two shrines
         Permanent shrine1 = addReadyShrine(player1);
@@ -257,13 +250,83 @@ class ShrineOfBoundlessGrowthTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isGreaterThanOrEqualTo(5);
     }
 
-    // ===== Helper methods =====
+    @Test
+    @DisplayName("Opponent casting a green spell does not charge your shrine")
+    void opponentGreenSpellDoesNotAddCounter() {
+        Permanent shrine = addReadyShrine(player1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.setHand(player2, List.of(new GlistenerElf()));
+
+        harness.castCreature(player2, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(shrine.getCounterCount(CounterType.CHARGE)).isZero();
+        harness.assertOnBattlefield(player2, "Glistener Elf");
+    }
+
+    @Test
+    @DisplayName("A green creature charges the shrine before the creature resolves")
+    void greenCreatureSpellChargesBeforeResolving() {
+        Permanent shrine = addReadyShrine(player1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.setHand(player1, List.of(new GlistenerElf()));
+
+        harness.castCreature(player1, 0);
+
+        assertThat(shrine.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        assertThat(shrine.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+        harness.assertNotOnBattlefield(player1, "Glistener Elf");
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Glistener Elf");
+    }
+
+    @Test
+    @DisplayName("Sacrificing in response to a charge trigger uses only existing counters")
+    void sacrificeBeforeChargeTriggerResolves() {
+        Permanent shrine = addReadyShrine(player1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        shrine.setCounterCount(CounterType.CHARGE, 2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.setHand(player1, List.of(new GlistenerElf()));
+        harness.castCreature(player1, 0);
+        int manaBefore = gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(manaBefore + 2);
+        assertThat(gd.stack).hasSize(2);
+        harness.assertInGraveyard(player1, "Shrine of Boundless Growth");
+        harness.passBothPriorities();
+        assertThat(shrine.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Glistener Elf");
+    }
+
+    @Test
+    @DisplayName("A shrine can activate on the turn it enters the battlefield")
+    void newlyEnteredShrineCanActivate() {
+        Permanent shrine = harness.addToBattlefieldAndReturn(player1, new ShrineOfBoundlessGrowth());
+        shrine.setCounterCount(CounterType.CHARGE, 1);
+        int manaBefore = gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(manaBefore + 1);
+        harness.assertInGraveyard(player1, "Shrine of Boundless Growth");
+        assertThat(gd.stack).isEmpty();
+    }
 
     private Permanent addReadyShrine(Player player) {
-        ShrineOfBoundlessGrowth card = new ShrineOfBoundlessGrowth();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new ShrineOfBoundlessGrowth());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }
