@@ -33,9 +33,7 @@ class RazorfinHunterTest extends BaseCardTest {
     @DisplayName("Deals 1 damage to target creature, destroying a 1/1")
     void deals1DamageDestroying1Toughness() {
         addCreatureReady(player1, new RazorfinHunter());
-        harness.addToBattlefield(player2, new UrborgElf());
-
-        UUID targetId = harness.getPermanentId(player2, "Urborg Elf");
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new UrborgElf()).getId();
         harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
 
@@ -46,9 +44,7 @@ class RazorfinHunterTest extends BaseCardTest {
     @DisplayName("Deals 1 damage to target creature, 2/2 creature survives")
     void deals1DamageDoesNotKill2Toughness() {
         addCreatureReady(player1, new RazorfinHunter());
-        harness.addToBattlefield(player2, new GaeasSkyfolk());
-
-        UUID targetId = harness.getPermanentId(player2, "Gaea's Skyfolk");
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new GaeasSkyfolk()).getId();
         harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
 
@@ -71,8 +67,7 @@ class RazorfinHunterTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate ability with summoning sickness")
     void cannotActivateWithSummoningSickness() {
-        Permanent hunter = new Permanent(new RazorfinHunter());
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(hunter);
+        harness.addToBattlefield(player1, new RazorfinHunter());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -89,5 +84,36 @@ class RazorfinHunterTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature, planeswalker, battle, or player");
         assertThat(hunter.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Can target itself and dies to its own damage")
+    void canTargetItself() {
+        Permanent hunter = addCreatureReady(player1, new RazorfinHunter());
+
+        harness.activateAbility(player1, 0, null, hunter.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Razorfin Hunter");
+        harness.assertNotOnBattlefield(player1, "Razorfin Hunter");
+    }
+
+    @Test
+    @DisplayName("Ability still resolves after its source is killed in response")
+    void abilityResolvesAfterSourceDies() {
+        harness.setLife(player2, 20);
+        Permanent hunter = addCreatureReady(player1, new RazorfinHunter());
+        addCreatureReady(player2, new RazorfinHunter());
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.activateAbility(player2, 0, null, hunter.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Razorfin Hunter");
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
     }
 }
