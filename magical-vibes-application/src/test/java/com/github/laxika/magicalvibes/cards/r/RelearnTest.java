@@ -103,4 +103,24 @@ class RelearnTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.gameLog).anyMatch(log -> log.plainText().contains("fizzles"));
     }
+
+    @Test
+    @DisplayName("Relearn returns only the selected card among multiple eligible cards")
+    void returnsOnlySelectedCard() {
+        Card target = new Disrupt();
+        Card otherInstant = new Disrupt();
+        Card sorcery = new Doomsday();
+        harness.setGraveyard(player1, List.of(target, otherInstant, sorcery));
+        harness.setHand(player1, List.of(new Relearn()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(target);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(otherInstant, sorcery);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(target);
+        harness.assertInGraveyard(player1, "Relearn");
+        assertThat(gd.stack).isEmpty();
+    }
 }
