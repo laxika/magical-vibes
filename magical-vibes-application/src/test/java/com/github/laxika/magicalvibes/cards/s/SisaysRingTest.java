@@ -47,4 +47,30 @@ class SisaysRingTest extends BaseCardTest {
                 .hasMessageContaining("already tapped");
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
     }
+
+    @Test
+    @DisplayName("Can tap for mana on the turn it enters the battlefield")
+    void canActivateImmediatelyAfterResolving() {
+        harness.castFromHand(player1, new SisaysRing(), "{4}");
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Mana is added only to the activating controller's pool")
+    void addsManaOnlyToController() {
+        Permanent ring = harness.addToBattlefieldAndReturn(player2, new SisaysRing());
+
+        harness.activateAbility(player2, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(ring.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
 }
