@@ -11,7 +11,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(RampagingClassmate.class)
+@CardUsed({RampagingClassmate.class})
 class RampagingClassmateTest extends BaseCardTest {
 
     @Test
@@ -54,16 +54,47 @@ class RampagingClassmateTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Counts an attacking creature controlled by another player")
-    void countsAttackingCreatureControlledByAnotherPlayer() {
+    @DisplayName("Does not count an opponent's nonattacking creature")
+    void doesNotCountOpponentsNonattackingCreature() {
         Permanent classmate = addCreatureReady(player1, new RampagingClassmate());
-        Permanent opponentClassmate = addCreatureReady(player2, new RampagingClassmate());
-        opponentClassmate.setAttacking(true);
+        addCreatureReady(player2, new RampagingClassmate());
 
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
-        assertThat(classmate.getPowerModifier()).isEqualTo(1);
+        assertThat(classmate.getPowerModifier()).isZero();
+        assertThat(classmate.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Each attacker gets +2/+0 when three Classmates attack")
+    void boostsEachAttackerForEveryOtherAttacker() {
+        Permanent first = addCreatureReady(player1, new RampagingClassmate());
+        Permanent second = addCreatureReady(player1, new RampagingClassmate());
+        Permanent third = addCreatureReady(player1, new RampagingClassmate());
+
+        declareAttackers(player1, List.of(0, 1, 2));
+        resolveAllTriggers();
+
+        for (Permanent attacker : List.of(first, second, third)) {
+            assertThat(attacker.getPowerModifier()).isEqualTo(2);
+            assertThat(attacker.getToughnessModifier()).isZero();
+        }
+    }
+
+    @Test
+    @DisplayName("Counts attackers at resolution after another attacker leaves")
+    void countsAttackersAtResolution() {
+        Permanent classmate = addCreatureReady(player1, new RampagingClassmate());
+        Permanent other = addCreatureReady(player1, new RampagingClassmate());
+
+        declareAttackers(player1, List.of(0, 1));
+        assertThat(gd.stack).hasSize(2);
+        gd.playerBattlefields.get(player1.getId()).remove(other);
+        gd.playerGraveyards.get(player1.getId()).add(other.getCard());
+        resolveAllTriggers();
+
+        assertThat(classmate.getPowerModifier()).isZero();
         assertThat(classmate.getToughnessModifier()).isZero();
     }
 
