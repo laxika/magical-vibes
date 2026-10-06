@@ -73,6 +73,93 @@ class ResurgentBeliefTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(card);
     }
 
+    @Test
+    void returnsAllEnchantmentsOnlyFromControllersGraveyard() {
+        suspendCard();
+        Card first = new Sanctimony();
+        Card second = new Sanctimony();
+        Card opponentsEnchantment = new Sanctimony();
+        harness.setGraveyard(player1, List.of(first, second));
+        harness.setGraveyard(player2, List.of(opponentsEnchantment));
+
+        reachSuspendCastChoice();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Sanctimony")).isEqualTo(2);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentsEnchantment);
+        harness.assertNotOnBattlefield(player2, "Sanctimony");
+    }
+
+    @Test
+    void returnedAuraCanEnchantOpponentsCreature() {
+        suspendCard();
+        Card aura = new PatternOfRebirth();
+        harness.setGraveyard(player1, List.of(aura));
+        harness.addToBattlefield(player1, new CapashenKnight());
+        harness.addToBattlefield(player2, new CapashenKnight());
+        var host = findPermanent(player2, "Capashen Knight");
+
+        reachSuspendCastChoice();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, host.getId());
+
+        assertThat(findPermanent(player1, "Pattern of Rebirth").getAttachedTo()).isEqualTo(host.getId());
+        harness.assertNotInGraveyard(player1, "Pattern of Rebirth");
+        harness.assertInGraveyard(player1, "Resurgent Belief");
+    }
+
+    @Test
+    void decliningSuspendCastLeavesCardExiledWithoutAnotherOffer() {
+        ResurgentBelief card = suspendCard();
+        Card enchantment = new Sanctimony();
+        harness.setGraveyard(player1, List.of(enchantment));
+
+        reachSuspendCastChoice();
+        harness.handleMayAbilityChosen(player1, false);
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
+        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(enchantment);
+        harness.assertNotOnBattlefield(player1, "Sanctimony");
+    }
+
+    @Test
+    void opponentsUpkeepDoesNotRemoveTimeCounters() {
+        ResurgentBelief card = suspendCard();
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 2);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
+    }
+
+    @Test
+    void resolvesWithEmptyGraveyard() {
+        ResurgentBelief card = suspendCard();
+        harness.setGraveyard(player1, List.of());
+
+        reachSuspendCastChoice();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(card);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(card);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    private void reachSuspendCastChoice() {
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+    }
     private ResurgentBelief suspendCard() {
         ResurgentBelief card = new ResurgentBelief();
         harness.setHand(player1, List.of(card));
