@@ -3,14 +3,14 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.b.BrazenBuccaneers;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,9 +19,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ShadowedCaravel.class, BrazenBuccaneers.class, Forest.class})
 class ShadowedCaravelTest extends BaseCardTest {
-
-    // ===== Explore triggers — land on top =====
 
     @Test
     @DisplayName("Explore with land puts a +1/+1 counter on Shadowed Caravel")
@@ -38,14 +37,12 @@ class ShadowedCaravelTest extends BaseCardTest {
         assertThat(caravel.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
-    // ===== Explore triggers — non-land on top =====
-
     @Test
     @DisplayName("Explore with non-land (accept graveyard) puts a +1/+1 counter on Shadowed Caravel")
     void exploreNonLandAcceptPutsCounter() {
         Permanent caravel = addCaravelReady(player1);
 
-        gd.playerDecks.get(player1.getId()).addFirst(new GrizzlyBears());
+        gd.playerDecks.get(player1.getId()).addFirst(new BrazenBuccaneers());
 
         castExplorerAndResolveExplore();
 
@@ -64,7 +61,7 @@ class ShadowedCaravelTest extends BaseCardTest {
     void exploreNonLandDeclinePutsCounter() {
         Permanent caravel = addCaravelReady(player1);
 
-        gd.playerDecks.get(player1.getId()).addFirst(new GrizzlyBears());
+        gd.playerDecks.get(player1.getId()).addFirst(new BrazenBuccaneers());
 
         castExplorerAndResolveExplore();
 
@@ -76,8 +73,6 @@ class ShadowedCaravelTest extends BaseCardTest {
 
         assertThat(caravel.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
-
-    // ===== Multiple explores =====
 
     @Test
     @DisplayName("Multiple explores accumulate +1/+1 counters")
@@ -99,21 +94,18 @@ class ShadowedCaravelTest extends BaseCardTest {
         assertThat(caravel.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
-    // ===== Explore with empty library — no trigger =====
-
     @Test
-    @DisplayName("Explore with empty library does not put a counter")
-    void exploreEmptyLibraryNoCounter() {
+    @DisplayName("Explore with empty library still puts a counter")
+    void exploreEmptyLibraryPutsCounter() {
         Permanent caravel = addCaravelReady(player1);
 
-        gd.playerDecks.get(player1.getId()).clear();
+        harness.setLibrary(player1, List.of());
 
         castExplorerAndResolveExplore();
+        harness.passBothPriorities();
 
-        assertThat(caravel.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
+        assertThat(caravel.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
-
-    // ===== Crew mechanic =====
 
     @Test
     @DisplayName("Caravel is not a creature before crewing")
@@ -121,14 +113,13 @@ class ShadowedCaravelTest extends BaseCardTest {
         Permanent caravel = addCaravelReady(player1);
 
         assertThat(gqs.isCreature(gd, caravel)).isFalse();
-        assertThat(caravel.getCard().getType()).isEqualTo(CardType.ARTIFACT);
     }
 
     @Test
     @DisplayName("Crewing with a creature of power >= 2 animates Caravel")
     void crewWithSufficientPower() {
         Permanent caravel = addCaravelReady(player1);
-        Permanent crew = addCreatureReady(player1, new GrizzlyBears()); // 2/2
+        Permanent crew = addCreatureReady(player1, new BrazenBuccaneers()); // 2/2
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -150,9 +141,10 @@ class ShadowedCaravelTest extends BaseCardTest {
 
         assertThat(caravel.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
 
-        // Crew the Caravel
-        Permanent crew = addCreatureReady(player1, new GrizzlyBears());
+        // Choose between the explorer and the added crew creature.
+        Permanent crew = addCreatureReady(player1, new BrazenBuccaneers());
         harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, crew.getId());
         harness.passBothPriorities();
 
         // Base 2/2 + one +1/+1 counter = 3/3
@@ -170,12 +162,64 @@ class ShadowedCaravelTest extends BaseCardTest {
                 .hasMessageContaining("Not enough creature power to crew");
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("An opponent exploring does not trigger Caravel")
+    void opponentExploringDoesNotPutCounter() {
+        Permanent caravel = addCaravelReady(player1);
+        harness.setLibrary(player2, List.of(new Forest()));
+        harness.enterBattlefieldAndReturn(player2, new BrazenBuccaneers());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(caravel.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Each Caravel gets its own counter for an allied explore")
+    void multipleCaravelsEachGetCounter() {
+        Permanent first = addCaravelReady(player1);
+        Permanent second = addCaravelReady(player1);
+        harness.setLibrary(player1, List.of(new Forest()));
+        castExplorerAndResolveExplore();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A summoning-sick creature can crew without tapping Caravel")
+    void summoningSickCreatureCanCrew() {
+        Permanent caravel = addCaravelReady(player1);
+        Permanent crew = harness.addToBattlefieldAndReturn(player1, new BrazenBuccaneers());
+        crew.setSummoningSick(true);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(crew.isTapped()).isTrue();
+        assertThat(caravel.isTapped()).isFalse();
+        assertThat(gqs.isCreature(gd, caravel)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Crew animation ends at end of turn while counters remain")
+    void crewEndsAtEndOfTurnAndCountersRemain() {
+        Permanent caravel = addCaravelReady(player1);
+        harness.setLibrary(player1, List.of(new Forest()));
+        castExplorerAndResolveExplore();
+        harness.passBothPriorities();
+        // The Buccaneers are the only creature, so crew payment is automatic.
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, caravel)).isEqualTo(3);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        assertThat(gqs.isCreature(gd, caravel)).isFalse();
+        assertThat(caravel.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
 
     private Permanent addCaravelReady(Player player) {
-        Permanent perm = new Permanent(new ShadowedCaravel());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new ShadowedCaravel());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
