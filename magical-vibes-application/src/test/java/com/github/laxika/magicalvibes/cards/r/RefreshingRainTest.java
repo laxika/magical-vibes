@@ -117,4 +117,41 @@ class RefreshingRainTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, forest.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Tapped qualifying lands still allow the free cast")
+    void tappedLandsAllowAlternateCost() {
+        var forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        var swamp = harness.addToBattlefieldAndReturn(player2, new Swamp());
+        forest.setTapped(true);
+        swamp.setTapped(true);
+        harness.setHand(player1, List.of(new RefreshingRain()));
+        int before = gd.playerLifeTotals.get(player1.getId());
+
+        harness.castWithAlternateCost(player1, 0, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(before + 6);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(forest);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(swamp);
+        assertThat(forest.isTapped()).isTrue();
+        assertThat(swamp.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("May pay the normal mana cost even when the free cast is available")
+    void canPayManaWhenAlternateCostIsAvailable() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new Swamp());
+        harness.setHand(player1, List.of(new RefreshingRain()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        int before = gd.playerLifeTotals.get(player2.getId());
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(before + 6);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
 }
