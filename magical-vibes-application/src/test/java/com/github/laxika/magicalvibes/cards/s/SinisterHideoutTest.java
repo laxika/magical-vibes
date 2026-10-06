@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -13,8 +12,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SinisterHideout.class, GrizzlyBears.class})
+@CardUsed({SinisterHideout.class})
 class SinisterHideoutTest extends BaseCardTest {
 
     @Test
@@ -47,7 +47,7 @@ class SinisterHideoutTest extends BaseCardTest {
     @DisplayName("Paying four mana and tapping surveils one")
     void paidAbilitySurveilsOne() {
         Permanent hideout = addReadyHideout();
-        Card topCard = new GrizzlyBears();
+        Card topCard = new SinisterHideout();
         harness.setLibrary(player1, List.of(topCard));
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
@@ -65,7 +65,7 @@ class SinisterHideoutTest extends BaseCardTest {
     @DisplayName("Declining surveil one leaves the top card on the library")
     void declinedSurveilLeavesTopCard() {
         Permanent hideout = addReadyHideout();
-        Card topCard = new GrizzlyBears();
+        Card topCard = new SinisterHideout();
         harness.setLibrary(player1, List.of(topCard));
         int graveyardBefore = gd.playerGraveyards.get(player1.getId()).size();
         harness.addMana(player1, ManaColor.COLORLESS, 4);
@@ -79,10 +79,92 @@ class SinisterHideoutTest extends BaseCardTest {
         assertThat(hideout.isTapped()).isTrue();
     }
 
+    @Test
+    @DisplayName("Mana ability resolves without using the stack")
+    void manaAbilityDoesNotUseStack() {
+        addReadyHideout();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, ManaColor.BLUE.name());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Surveil pays its costs immediately but waits for resolution")
+    void surveilUsesStackAndPaysCostsOnActivation() {
+        Permanent hideout = addReadyHideout();
+        Card topCard = new SinisterHideout();
+        Card nextCard = new SinisterHideout();
+        harness.setLibrary(player1, List.of(topCard, nextCard));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(hideout.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard, nextCard);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nextCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(topCard).doesNotContain(nextCard);
+    }
+
+    @Test
+    @DisplayName("Surveil on an empty library resolves without a choice")
+    void surveilEmptyLibrary() {
+        Permanent hideout = addReadyHideout();
+        harness.setLibrary(player1, List.of());
+        int graveyardBefore = gd.playerGraveyards.get(player1.getId()).size();
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(hideout.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(graveyardBefore);
+    }
+
+    @Test
+    @DisplayName("Three mana cannot pay the surveil cost")
+    void surveilRequiresFourMana() {
+        Permanent hideout = addReadyHideout();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(hideout.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped Hideout cannot activate either ability")
+    void tappedLandCannotActivateAbilities() {
+        harness.setHand(player1, List.of(new SinisterHideout()));
+        harness.playLand(player1, 0);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(4);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addReadyHideout() {
-        Permanent hideout = new Permanent(new SinisterHideout());
+        Permanent hideout = harness.addToBattlefieldAndReturn(player1, new SinisterHideout());
         hideout.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(hideout);
         return hideout;
     }
 }
