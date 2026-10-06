@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.s.StoneRain;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,6 +11,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({SilverbluffBridge.class, StoneRain.class})
 class SilverbluffBridgeTest extends BaseCardTest {
@@ -30,7 +30,7 @@ class SilverbluffBridgeTest extends BaseCardTest {
     @Test
     @DisplayName("Mana ability adds blue or red mana")
     void manaAbilityAddsBlueOrRedMana() {
-        Permanent bridge = addReadyBridge();
+        Permanent bridge = harness.addToBattlefieldAndReturn(player1, new SilverbluffBridge());
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.handleListChoice(player1, ManaColor.BLUE.name());
@@ -59,10 +59,38 @@ class SilverbluffBridgeTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Silverbluff Bridge");
     }
 
-    private Permanent addReadyBridge() {
-        Permanent bridge = new Permanent(new SilverbluffBridge());
-        bridge.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bridge);
-        return bridge;
+    @Test
+    @DisplayName("Cannot activate the mana ability while tapped after entering")
+    void cannotActivateWhileTappedAfterEntering() {
+        harness.setHand(player1, List.of(new SilverbluffBridge()));
+        harness.playLand(player1, 0);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An untapped bridge produces one mana immediately and cannot tap again")
+    void manaResolvesImmediatelyAndRequiresUntappedSource() {
+        harness.setHand(player1, List.of(new SilverbluffBridge()));
+        harness.playLand(player1, 0);
+        Permanent bridge = findPermanent(player1, "Silverbluff Bridge");
+        bridge.untap();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, ManaColor.RED.name());
+
+        assertThat(bridge.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
     }
 }
