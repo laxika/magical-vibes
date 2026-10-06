@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -16,9 +17,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Slagstorm.class, GrizzlyBears.class, GiantSpider.class})
 class SlagstormTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Casting Slagstorm puts it on the stack as a sorcery")
@@ -32,10 +32,11 @@ class SlagstormTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Slagstorm");
+        assertThat(entry.getCard()).isInstanceOf(Slagstorm.class);
     }
 
     @Nested
+    @CardUsed({Slagstorm.class, GrizzlyBears.class, GiantSpider.class})
     @DisplayName("Creature damage mode")
     class CreatureDamageMode {
 
@@ -49,15 +50,13 @@ class SlagstormTest extends BaseCardTest {
             harness.setLife(player1, 20);
             harness.setLife(player2, 20);
 
-            harness.castSorcery(player1, 0, 0); // mode 0 = creature damage
-            harness.passBothPriorities();
+            harness.castAndResolveSorcery(player1, 0, 0);
 
-            GameData gd = harness.getGameData();
             harness.assertNotOnBattlefield(player1, "Grizzly Bears");
             harness.assertNotOnBattlefield(player2, "Grizzly Bears");
             // Players should NOT take damage in creature mode
-            assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
-            assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+            harness.assertLife(player1, 20);
+            harness.assertLife(player2, 20);
         }
 
         @Test
@@ -67,14 +66,34 @@ class SlagstormTest extends BaseCardTest {
             harness.setHand(player1, List.of(new Slagstorm()));
             harness.addMana(player1, ManaColor.RED, 3);
 
-            harness.castSorcery(player1, 0, 0); // mode 0 = creature damage
-            harness.passBothPriorities();
+            harness.castAndResolveSorcery(player1, 0, 0);
 
             harness.assertOnBattlefield(player2, "Giant Spider");
+        }
+
+        @Test
+        @DisplayName("Damage remains marked and a second Slagstorm kills a surviving creature")
+        void damageAccumulatesAcrossResolutions() {
+            var spider = harness.addToBattlefieldAndReturn(player2, new GiantSpider());
+            harness.setHand(player1, List.of(new Slagstorm(), new Slagstorm()));
+            harness.addMana(player1, ManaColor.RED, 6);
+
+            harness.castAndResolveSorcery(player1, 0, 0);
+
+            harness.assertOnBattlefield(player2, "Giant Spider");
+            assertThat(spider.getMarkedDamage()).isEqualTo(3);
+
+            harness.castAndResolveSorcery(player1, 0, 0);
+
+            harness.assertNotOnBattlefield(player2, "Giant Spider");
+            harness.assertInGraveyard(player2, "Giant Spider");
+            harness.assertLife(player1, 20);
+            harness.assertLife(player2, 20);
         }
     }
 
     @Nested
+    @CardUsed({Slagstorm.class, GrizzlyBears.class})
     @DisplayName("Player damage mode")
     class PlayerDamageMode {
 
@@ -86,12 +105,10 @@ class SlagstormTest extends BaseCardTest {
             harness.setLife(player1, 20);
             harness.setLife(player2, 20);
 
-            harness.castSorcery(player1, 0, 1); // mode 1 = player damage
-            harness.passBothPriorities();
+            harness.castAndResolveSorcery(player1, 0, 1);
 
-            GameData gd = harness.getGameData();
-            assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
-            assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+            harness.assertLife(player1, 17);
+            harness.assertLife(player2, 17);
         }
 
         @Test
@@ -104,16 +121,14 @@ class SlagstormTest extends BaseCardTest {
             harness.setLife(player1, 20);
             harness.setLife(player2, 20);
 
-            harness.castSorcery(player1, 0, 1); // mode 1 = player damage
-            harness.passBothPriorities();
+            harness.castAndResolveSorcery(player1, 0, 1);
 
-            GameData gd = harness.getGameData();
             // Creatures should survive
             harness.assertOnBattlefield(player1, "Grizzly Bears");
             harness.assertOnBattlefield(player2, "Grizzly Bears");
             // Players take 3 damage
-            assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
-            assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+            harness.assertLife(player1, 17);
+            harness.assertLife(player2, 17);
         }
     }
 
@@ -134,8 +149,7 @@ class SlagstormTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Slagstorm()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        harness.castSorcery(player1, 0, 0); // mode 0 = creature damage
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
