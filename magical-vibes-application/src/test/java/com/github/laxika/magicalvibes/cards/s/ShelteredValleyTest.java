@@ -12,7 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ShelteredValley.class, SchoolOfTheUnseen.class})
+@CardUsed({ShelteredValley.class, SchoolOfTheUnseen.class, BloodSun.class})
 class ShelteredValleyTest extends BaseCardTest {
 
     @Test
@@ -129,5 +129,55 @@ class ShelteredValleyTest extends BaseCardTest {
         Permanent land = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(land.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A land count dropping below four after upkeep begins does not create a trigger")
+    void noTriggerWhenLandCountDropsAfterUpkeepBegins() {
+        harness.addToBattlefield(player1, new ShelteredValley());
+        harness.addToBattlefield(player1, new SchoolOfTheUnseen());
+        harness.addToBattlefield(player1, new SchoolOfTheUnseen());
+        Permanent otherLand = harness.addToBattlefieldAndReturn(player1, new SchoolOfTheUnseen());
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, otherLand));
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("The upkeep ability resolves even if Sheltered Valley leaves the battlefield")
+    void upkeepLifeGainSurvivesSourceLeaving() {
+        Permanent valley = harness.addToBattlefieldAndReturn(player1, new ShelteredValley());
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, valley));
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 21);
+    }
+
+    @Test
+    @CardUsed(BloodSun.class)
+    @DisplayName("Blood Sun suppresses the upkeep ability but preserves the mana ability")
+    void bloodSunSuppressesUpkeepButPreservesMana() {
+        harness.addToBattlefield(player1, new BloodSun());
+        harness.addToBattlefield(player1, new ShelteredValley());
+
+        harness.activateAbility(player1, 1, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        harness.passBothPriorities();
+        harness.assertLife(player1, 20);
     }
 }
