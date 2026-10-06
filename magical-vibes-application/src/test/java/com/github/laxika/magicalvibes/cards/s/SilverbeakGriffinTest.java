@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.a.AirElemental;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.g.GiantSpider;
+import com.github.laxika.magicalvibes.cards.h.HorizonScholar;
+import com.github.laxika.magicalvibes.cards.o.OreskosSwiftclaw;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,16 +15,17 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SilverbeakGriffin.class, OreskosSwiftclaw.class, HorizonScholar.class, GiantSpider.class})
 class SilverbeakGriffinTest extends BaseCardTest {
 
     @Test
     @DisplayName("Silverbeak Griffin can't be blocked by a creature without flying")
     void cannotBeBlockedByCreatureWithoutFlying() {
-        Permanent blocker = addCreature(player2, new GrizzlyBears());
-        Permanent attacker = addCreature(player1, new SilverbeakGriffin());
+        Permanent blocker = addCreatureReady(player2, new OreskosSwiftclaw());
+        Permanent attacker = addCreatureReady(player1, new SilverbeakGriffin());
         attacker.setAttacking(true);
 
-        prepareBlockers();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> declareBlocker(blocker, attacker))
                 .isInstanceOf(IllegalStateException.class);
@@ -33,29 +34,54 @@ class SilverbeakGriffinTest extends BaseCardTest {
     @Test
     @DisplayName("Silverbeak Griffin can be blocked by a creature with flying")
     void canBeBlockedByCreatureWithFlying() {
-        Permanent blocker = addCreature(player2, new AirElemental());
-        Permanent attacker = addCreature(player1, new SilverbeakGriffin());
+        Permanent blocker = addCreatureReady(player2, new HorizonScholar());
+        Permanent attacker = addCreatureReady(player1, new SilverbeakGriffin());
         attacker.setAttacking(true);
 
-        prepareBlockers();
+        prepareDeclareBlockers();
 
         declareBlocker(blocker, attacker);
 
         assertThat(blocker.isBlocking()).isTrue();
     }
 
-    private Permanent addCreature(com.github.laxika.magicalvibes.model.Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    @DisplayName("Silverbeak Griffin can be blocked by a creature with reach")
+    void canBeBlockedByCreatureWithReach() {
+        Permanent blocker = addCreatureReady(player2, new GiantSpider());
+        Permanent attacker = addCreatureReady(player1, new SilverbeakGriffin());
+        attacker.setAttacking(true);
+
+        prepareDeclareBlockers();
+        declareBlocker(blocker, attacker);
+
+        assertThat(blocker.isBlocking()).isTrue();
     }
 
-    private void prepareBlockers() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+    @Test
+    @DisplayName("Silverbeak Griffin can block a creature without flying")
+    void canBlockCreatureWithoutFlying() {
+        Permanent blocker = addCreatureReady(player2, new SilverbeakGriffin());
+        Permanent attacker = addCreatureReady(player1, new OreskosSwiftclaw());
+        attacker.setAttacking(true);
+
+        prepareDeclareBlockers();
+        declareBlocker(blocker, attacker);
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Silverbeak Griffin can block a creature with flying")
+    void canBlockCreatureWithFlying() {
+        Permanent blocker = addCreatureReady(player2, new SilverbeakGriffin());
+        Permanent attacker = addCreatureReady(player1, new HorizonScholar());
+        attacker.setAttacking(true);
+
+        prepareDeclareBlockers();
+        declareBlocker(blocker, attacker);
+
+        assertThat(blocker.isBlocking()).isTrue();
     }
 
     private void declareBlocker(Permanent blocker, Permanent attacker) {
