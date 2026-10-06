@@ -24,8 +24,7 @@ class RecallTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Recall(), new DurkwoodBoars(), new DurkwoodBoars()));
         harness.addMana(player1, ManaColor.BLUE, 3); // {X}{X}{U} with X=1 => 3 mana
 
-        harness.castSorcery(player1, 0, 1);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 1);
 
         // Recall resolves and asks the controller to discard one card.
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
@@ -51,8 +50,7 @@ class RecallTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Recall(), new DurkwoodBoars(), new BarbaryApes()));
         harness.addMana(player1, ManaColor.BLUE, 7); // X=3 => 7 mana
 
-        harness.castSorcery(player1, 0, 3);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 3);
 
         // Hand had two cards after casting; both are discarded (X exceeds hand size).
         harness.handleCardChosen(player1, 0);
@@ -77,8 +75,7 @@ class RecallTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Recall(), new BarbaryApes(), new DurkwoodBoars()));
         harness.addMana(player1, ManaColor.BLUE, 5); // X=2 => 5 mana
 
-        harness.castSorcery(player1, 0, 2);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 2);
 
         harness.handleCardChosen(player1, 0);
         harness.handleCardChosen(player1, 0);
@@ -101,8 +98,7 @@ class RecallTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Recall()));
         harness.addMana(player1, ManaColor.BLUE, 3); // X=1 => 3 mana
 
-        harness.castSorcery(player1, 0, 1);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 1);
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -116,8 +112,7 @@ class RecallTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Recall(), new BarbaryApes()));
         harness.addMana(player1, ManaColor.BLUE, 1); // X=0 => {U}
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         harness.assertInHand(player1, "Barbary Apes");
@@ -131,11 +126,68 @@ class RecallTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Recall(), new BarbaryApes()));
         harness.addMana(player1, ManaColor.BLUE, 3); // X=1 => {X}{X}{U}
 
-        harness.castSorcery(player1, 0, 1);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 1);
         harness.handleCardChosen(player1, 0);
 
         assertThatThrownBy(() -> harness.handleGraveyardCardChosen(player1, -1))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Discard happens during resolution and Recall cannot return itself")
+    void discardsDuringResolutionWithoutReturningResolvingSpell() {
+        harness.setHand(player1, List.of(new Recall(), new BarbaryApes()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castSorcery(player1, 0, 1);
+
+        harness.assertInHand(player1, "Barbary Apes");
+        harness.assertNotInGraveyard(player1, "Barbary Apes");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player1, "Barbary Apes");
+        harness.assertNotInGraveyard(player1, "Recall");
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThatThrownBy(() -> harness.handleGraveyardCardChosen(player1, 1))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.handleGraveyardCardChosen(player1, 0);
+
+        harness.assertInHand(player1, "Barbary Apes");
+        harness.assertNotInHand(player1, "Recall");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(c -> c.getName().equals("Recall"));
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Only the controller chooses cards and only their zones are affected")
+    void opponentCannotMakeDiscardOrReturnChoices() {
+        harness.setHand(player1, List.of(new Recall(), new BarbaryApes()));
+        harness.setHand(player2, List.of(new DurkwoodBoars()));
+        harness.setGraveyard(player2, List.of(new BarbaryApes()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 1);
+
+        assertThatThrownBy(() -> harness.handleCardChosen(player2, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleCardChosen(player1, 0);
+
+        assertThatThrownBy(() -> harness.handleGraveyardCardChosen(player2, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleGraveyardCardChosen(player1, 0);
+
+        harness.assertInHand(player1, "Barbary Apes");
+        harness.assertInHand(player2, "Durkwood Boars");
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        harness.assertInGraveyard(player2, "Barbary Apes");
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(c -> c.getName().equals("Recall"));
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 }
