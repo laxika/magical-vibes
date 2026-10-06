@@ -56,6 +56,64 @@ class SinisterGnarlbarkTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
+    @Test
+    void blightsItselfWhenItIsTheOnlyControlledCreature() {
+        Permanent gnarlbark = addCreatureReady(player1, new SinisterGnarlbark());
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
+        Card drawnCard = new Forest();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(drawnCard));
+
+        advanceToEndStep(player1);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gnarlbark.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(opponentCreature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void stillDrawsWhenNoControlledCreatureRemainsAtResolution() {
+        Permanent gnarlbark = addCreatureReady(player1, new SinisterGnarlbark());
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
+        Card drawnCard = new Forest();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(drawnCard));
+
+        advanceToEndStep(player1);
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(gnarlbark);
+        harness.setGraveyard(player1, List.of(gnarlbark.getCard()));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(opponentCreature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void stillBlightsAnotherCreatureAfterTheSourceLeavesTheBattlefield() {
+        Permanent gnarlbark = addCreatureReady(player1, new SinisterGnarlbark());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Card drawnCard = new Forest();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(drawnCard));
+
+        advanceToEndStep(player1);
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(gnarlbark);
+        harness.setGraveyard(player1, List.of(gnarlbark.getCard()));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(creature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void advanceToEndStep(Player player) {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
