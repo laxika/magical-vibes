@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.cards.c.ConeOfFlame;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,17 +22,44 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Redirect.class, Boomerang.class, CounselOfTheSoratami.class, GrizzlyBears.class, LavaAxe.class, ConeOfFlame.class})
 class RedirectTest extends BaseCardTest {
 
-    // ===== Casting =====
+    @Test
+    @DisplayName("Redirect allows exchanging two distinct targets of the same spell")
+    void canExchangeTargets() {
+        UUID first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears()).getId();
+        UUID second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()).getId();
+        ConeOfFlame cone = new ConeOfFlame();
+        harness.setHand(player1, List.of(cone));
+        harness.addMana(player1, ManaColor.RED, 5);
+        harness.setHand(player2, List.of(new Redirect()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.castSorcery(player1, 0, List.of(first, second, player1.getId()));
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, cone.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(harness.getGameData().interaction.activeInteraction(PendingInteraction.PermanentChoice.class)
+                .validIds()).contains(second);
+        harness.handlePermanentChosen(player2, second);
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handlePermanentChosen(player2, first);
+        harness.handleMayAbilityChosen(player2, false);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertLife(player1, 17);
+    }
 
     @Test
     @DisplayName("Casting Redirect puts it on the stack targeting a spell")
     void castingPutsOnStackTargetingSpell() {
         Boomerang boomerang = new Boomerang();
         GrizzlyBears bears = new GrizzlyBears();
-        harness.addToBattlefield(player1, bears);
-        UUID bearsPermId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID bearsPermId = harness.addToBattlefieldAndReturn(player1, bears).getId();
 
         harness.setHand(player1, List.of(boomerang));
         harness.addMana(player1, ManaColor.BLUE, 2);
@@ -70,14 +99,11 @@ class RedirectTest extends BaseCardTest {
         assertThat(redirectEntry.getCard().getName()).isEqualTo("Redirect");
     }
 
-    // ===== Resolving — targeted spell =====
-
     @Test
     @DisplayName("Resolving Redirect on a targeted spell offers may-ability to retarget")
     void resolvingOffersRetargetChoice() {
         GrizzlyBears bears = new GrizzlyBears();
-        harness.addToBattlefield(player1, bears);
-        UUID bearsPermId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID bearsPermId = harness.addToBattlefieldAndReturn(player1, bears).getId();
 
         Boomerang boomerang = new Boomerang();
         harness.setHand(player1, List.of(boomerang));
@@ -103,10 +129,8 @@ class RedirectTest extends BaseCardTest {
     void acceptRetargetChangesTarget() {
         GrizzlyBears bears1 = new GrizzlyBears();
         GrizzlyBears bears2 = new GrizzlyBears();
-        harness.addToBattlefield(player1, bears1);
-        harness.addToBattlefield(player2, bears2);
-        UUID bears1PermId = harness.getPermanentId(player1, "Grizzly Bears");
-        UUID bears2PermId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID bears1PermId = harness.addToBattlefieldAndReturn(player1, bears1).getId();
+        UUID bears2PermId = harness.addToBattlefieldAndReturn(player2, bears2).getId();
 
         Boomerang boomerang = new Boomerang();
         harness.setHand(player1, List.of(boomerang));
@@ -177,8 +201,6 @@ class RedirectTest extends BaseCardTest {
         harness.assertInHand(player1, "Grizzly Bears");
     }
 
-    // ===== Resolving — untargeted spell =====
-
     @Test
     @DisplayName("Resolving Redirect on an untargeted spell offers may prompt but accepting has no effect")
     void resolvingOnUntargetedSpellHasNoEffect() {
@@ -205,8 +227,6 @@ class RedirectTest extends BaseCardTest {
         // Counsel should still be on the stack, unaffected
         assertThat(gd.stack).anyMatch(se -> se.getCard().getName().equals("Counsel of the Soratami"));
     }
-
-    // ===== Retargeting player-targeted spells =====
 
     @Test
     @DisplayName("Redirect can retarget a player-targeting spell")
@@ -244,14 +264,11 @@ class RedirectTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(p2LifeBefore);
     }
 
-    // ===== Redirect goes to graveyard after resolving =====
-
     @Test
     @DisplayName("Redirect goes to caster's graveyard after resolving")
     void goesToCasterGraveyardAfterResolving() {
         GrizzlyBears bears = new GrizzlyBears();
-        harness.addToBattlefield(player1, bears);
-        UUID bearsPermId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID bearsPermId = harness.addToBattlefieldAndReturn(player1, bears).getId();
 
         Boomerang boomerang = new Boomerang();
         harness.setHand(player1, List.of(boomerang));
@@ -272,14 +289,11 @@ class RedirectTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Redirect");
     }
 
-    // ===== Fizzle =====
-
     @Test
     @DisplayName("Redirect fizzles if target spell is removed from the stack")
     void fizzlesIfTargetSpellRemoved() {
         GrizzlyBears bears = new GrizzlyBears();
-        harness.addToBattlefield(player1, bears);
-        UUID bearsPermId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID bearsPermId = harness.addToBattlefieldAndReturn(player1, bears).getId();
 
         Boomerang boomerang = new Boomerang();
         harness.setHand(player1, List.of(boomerang));
@@ -303,17 +317,13 @@ class RedirectTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Redirect");
     }
 
-    // ===== Stack empties after full resolution =====
-
     @Test
     @DisplayName("Stack is empty after Redirect and original spell resolve")
     void stackEmptyAfterFullResolution() {
         GrizzlyBears bears1 = new GrizzlyBears();
         GrizzlyBears bears2 = new GrizzlyBears();
-        harness.addToBattlefield(player1, bears1);
-        harness.addToBattlefield(player2, bears2);
-        UUID bears1PermId = harness.getPermanentId(player1, "Grizzly Bears");
-        UUID bears2PermId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID bears1PermId = harness.addToBattlefieldAndReturn(player1, bears1).getId();
+        UUID bears2PermId = harness.addToBattlefieldAndReturn(player2, bears2).getId();
 
         Boomerang boomerang = new Boomerang();
         harness.setHand(player1, List.of(boomerang));
