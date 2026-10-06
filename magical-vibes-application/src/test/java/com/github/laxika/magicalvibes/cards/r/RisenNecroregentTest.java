@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.s.SpikeshellHarrier;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RisenNecroregent.class, SpikeshellHarrier.class})
 class RisenNecroregentTest extends BaseCardTest {
 
     @Test
@@ -62,10 +65,39 @@ class RisenNecroregentTest extends BaseCardTest {
                 .noneMatch(permanent -> permanent.getCard().isToken());
     }
 
+    @Test
+    @DisplayName("Entering with start your engines starts the controller's speed")
+    void startsControllerSpeedWhenCast() {
+        harness.castFromHand(player1, new RisenNecroregent(), "{4}{B}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerSpeeds.get(player1.getId())).isEqualTo(1);
+        assertThat(gd.playerSpeeds.getOrDefault(player2.getId(), 0)).isZero();
+    }
+
+    @Test
+    @DisplayName("A max-speed trigger still creates its token after the controller's speed decreases")
+    void createsTokenIfSpeedDecreasesAfterTriggering() {
+        Permanent necroregent = harness.addToBattlefieldAndReturn(player1, new RisenNecroregent());
+        gd.playerSpeeds.put(player1.getId(), 4);
+
+        advanceToEndStep(player1);
+        assertThat(gd.stack).hasSize(1);
+        harness.enterBattlefieldAndReturn(player2, new SpikeshellHarrier());
+        harness.handlePermanentChosen(player2, necroregent.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerSpeeds.get(player1.getId())).isEqualTo(3);
+        harness.assertInHand(player1, "Risen Necroregent");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken())
+                .hasSize(1);
+    }
+
     private void advanceToEndStep(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.END_STEP);
     }
 }
