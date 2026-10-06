@@ -41,4 +41,36 @@ class SerraSphinxTest extends BaseCardTest {
                 List.of(new BlockerAssignment(blockerIndex, attackerIndex))))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("A flying creature can block Serra Sphinx and both deal lethal damage")
+    void canBeBlockedByFlyingCreature() {
+        addCreatureReady(player1, new SerraSphinx());
+        addCreatureReady(player2, new SerraSphinx());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertNotOnBattlefield(player1, "Serra Sphinx");
+        harness.assertNotOnBattlefield(player2, "Serra Sphinx");
+        harness.assertInGraveyard(player1, "Serra Sphinx");
+        harness.assertInGraveyard(player2, "Serra Sphinx");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Serra Sphinx can block a nonflying attacker")
+    void canBlockNonflyingCreature() {
+        addCreatureReady(player1, new PoulticeSliver());
+        addCreatureReady(player2, new SerraSphinx());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertInGraveyard(player1, "Poultice Sliver");
+        harness.assertOnBattlefield(player2, "Serra Sphinx");
+        harness.assertLife(player2, 20);
+    }
 }
