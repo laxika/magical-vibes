@@ -56,10 +56,20 @@ class SafeguardTest extends BaseCardTest {
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // POSTCOMBAT_MAIN -> END_STEP
+        harness.passUntil(player1, TurnStep.END_STEP);
+
+        assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gd.creaturesPreventedFromDealingCombatDamage).isEmpty();
+
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(player1.getId());
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
+
+        harness.assertLife(player1, 18);
     }
 
     @Test
@@ -68,8 +78,7 @@ class SafeguardTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
         harness.addToBattlefield(player1, new Safeguard());
-        Permanent fireslinger = harness.addToBattlefieldAndReturn(player2, new Fireslinger());
-        fireslinger.setSummoningSick(false);
+        Permanent fireslinger = addCreatureReady(player2, new Fireslinger());
 
         activateSafeguard(fireslinger);
 
@@ -93,6 +102,60 @@ class SafeguardTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Prevented attacker still receives combat damage from its blocker")
+    void preventsDamageByAttackerButNotDamageToIt() {
+        harness.addToBattlefield(player1, new Safeguard());
+        Permanent attacker = addAttacker(player2, new FightingDrake());
+        Permanent blocker = addCreatureReady(player1, new FightingDrake());
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+
+        activateSafeguard(attacker);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
+
+        assertThat(attacker.getMarkedDamage()).isEqualTo(2);
+        assertThat(blocker.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Can prevent combat damage by a blocking creature you control")
+    void preventsDamageByOwnBlocker() {
+        harness.addToBattlefield(player1, new Safeguard());
+        Permanent attacker = addAttacker(player2, new FightingDrake());
+        Permanent blocker = addCreatureReady(player1, new FightingDrake());
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+
+        activateSafeguard(blocker);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
+
+        assertThat(attacker.getMarkedDamage()).isZero();
+        assertThat(blocker.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Multiple activations prevent only the targeted creatures' damage")
+    void canPreventMultipleCreaturesWithoutPreventingOthers() {
+        harness.setLife(player1, 20);
+        harness.addToBattlefield(player1, new Safeguard());
+        Permanent first = addAttacker(player2, new FightingDrake());
+        Permanent second = addAttacker(player2, new FightingDrake());
+        addAttacker(player2, new FightingDrake());
+
+        activateSafeguard(first);
+        activateSafeguard(second);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
+
+        harness.assertLife(player1, 18);
+    }
+
     private void activateSafeguard(Permanent target) {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -101,8 +164,7 @@ class SafeguardTest extends BaseCardTest {
     }
 
     private Permanent addAttacker(Player owner, com.github.laxika.magicalvibes.model.Card card) {
-        Permanent attacker = harness.addToBattlefieldAndReturn(owner, card);
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(owner, card);
         attacker.setAttacking(true);
         attacker.setAttackTarget(player1.getId());
         return attacker;
