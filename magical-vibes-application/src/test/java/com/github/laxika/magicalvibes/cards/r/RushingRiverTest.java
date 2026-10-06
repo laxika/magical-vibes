@@ -108,6 +108,57 @@ class RushingRiverTest extends BaseCardTest {
                 .hasMessageContaining("a land");
     }
 
+    @Test
+    void kickedSpellStillReturnsRemainingTargetAfterFirstTargetLeaves() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new MeteorCrater());
+        Permanent firstTarget = harness.addToBattlefieldAndReturn(player2, new MoggJailer());
+        Permanent secondTarget = harness.addToBattlefieldAndReturn(player2, new ManaCylix());
+        harness.setHand(player1, List.of(new RushingRiver()));
+        harness.setHand(player2, List.of(new RushingRiver()));
+        addBaseMana();
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        gs.playCard(gd, player1, 0, 0, null, null,
+                List.of(firstTarget.getId(), secondTarget.getId()), List.of(), false,
+                land.getId(), null, null, null, null, true);
+        harness.castInstant(player2, 0, firstTarget.getId());
+        harness.passBothPriorities();
+        harness.assertInHand(player2, "Mogg Jailer");
+        harness.assertOnBattlefield(player2, "Mana Cylix");
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Mana Cylix");
+        harness.assertNotOnBattlefield(player2, "Mana Cylix");
+        harness.assertInGraveyard(player1, "Meteor Crater");
+        harness.assertInGraveyard(player1, "Rushing River");
+    }
+
+    @Test
+    void cannotKickWithOnlyOneTarget() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new MeteorCrater());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new MoggJailer());
+        harness.setHand(player1, List.of(new RushingRiver()));
+        addBaseMana();
+
+        assertThatThrownBy(() -> harness.castKickedInstantWithSacrifice(
+                player1, 0, target.getId(), land.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Meteor Crater");
+    }
+
+    @Test
+    void cannotChooseTwoTargetsWithoutKicker() {
+        Permanent firstTarget = harness.addToBattlefieldAndReturn(player2, new MoggJailer());
+        Permanent secondTarget = harness.addToBattlefieldAndReturn(player2, new ManaCylix());
+        harness.setHand(player1, List.of(new RushingRiver()));
+        addBaseMana();
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0,
+                List.of(firstTarget.getId(), secondTarget.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
     private void addBaseMana() {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
