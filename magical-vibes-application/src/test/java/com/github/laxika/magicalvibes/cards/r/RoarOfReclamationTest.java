@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.a.Arachnoid;
+import com.github.laxika.magicalvibes.cards.c.ConjurersBauble;
 import com.github.laxika.magicalvibes.cards.d.DrossCrocodile;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -13,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RoarOfReclamation.class, Arachnoid.class, DrossCrocodile.class})
+@CardUsed({RoarOfReclamation.class, Arachnoid.class, ConjurersBauble.class, DrossCrocodile.class})
 class RoarOfReclamationTest extends BaseCardTest {
 
     @Test
@@ -70,12 +71,48 @@ class RoarOfReclamationTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    @DisplayName("Returns noncreature artifacts untapped as well as artifact creatures")
+    void returnsNoncreatureArtifacts() {
+        Card artifact = new ConjurersBauble();
+        Card creature = new Arachnoid();
+        harness.setGraveyard(player1, List.of(artifact, creature));
+        castRoarOfReclamation();
+
+        harness.assertOnBattlefield(player1, artifact.getName());
+        harness.assertOnBattlefield(player1, creature.getName());
+        harness.assertNotInGraveyard(player1, artifact.getName());
+        harness.assertNotInGraveyard(player1, creature.getName());
+        assertThat(findPermanent(player1, artifact.getName()).isTapped()).isFalse();
+        assertThat(findPermanent(player1, creature.getName()).isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Returns all opposing artifacts even when the caster's graveyard is empty")
+    void returnsOpposingArtifactsWithEmptyCasterGraveyard() {
+        Card artifact = new ConjurersBauble();
+        Card creature = new Arachnoid();
+        Card nonartifact = new DrossCrocodile();
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of(artifact, creature, nonartifact));
+        castRoarOfReclamation();
+
+        harness.assertOnBattlefield(player2, artifact.getName());
+        harness.assertOnBattlefield(player2, creature.getName());
+        harness.assertNotOnBattlefield(player1, artifact.getName());
+        harness.assertNotOnBattlefield(player1, creature.getName());
+        harness.assertNotInGraveyard(player2, artifact.getName());
+        harness.assertNotInGraveyard(player2, creature.getName());
+        harness.assertInGraveyard(player2, nonartifact.getName());
+        harness.assertNotOnBattlefield(player2, nonartifact.getName());
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void castRoarOfReclamation() {
         harness.forceActivePlayer(player1);
         harness.setHand(player1, List.of(new RoarOfReclamation()));
         harness.addMana(player1, ManaColor.COLORLESS, 5);
         harness.addMana(player1, ManaColor.WHITE, 2);
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
     }
 }
