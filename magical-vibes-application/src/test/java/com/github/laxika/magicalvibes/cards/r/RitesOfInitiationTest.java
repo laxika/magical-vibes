@@ -26,8 +26,7 @@ class RitesOfInitiationTest extends BaseCardTest {
         harness.setHand(player1, List.of(new RitesOfInitiation(), new AvenFisher(), new AvenFisher(), new AvenFisher()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
         harness.handleXValueChosen(player1, 2);
 
         assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(4);
@@ -44,8 +43,7 @@ class RitesOfInitiationTest extends BaseCardTest {
         harness.setHand(player1, List.of(new RitesOfInitiation(), new AvenFisher()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
         harness.handleXValueChosen(player1, 0);
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
@@ -59,8 +57,7 @@ class RitesOfInitiationTest extends BaseCardTest {
         harness.setHand(player1, List.of(new RitesOfInitiation(), new AvenFisher()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
         harness.handleXValueChosen(player1, 1);
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
@@ -79,8 +76,7 @@ class RitesOfInitiationTest extends BaseCardTest {
         harness.setHand(player1, List.of(new RitesOfInitiation(), new AvenFisher()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
         harness.handleXValueChosen(player1, 1);
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
@@ -90,5 +86,55 @@ class RitesOfInitiationTest extends BaseCardTest {
 
     private Permanent addCreature(Player player) {
         return addCreatureReady(player, new AvenFisher());
+    }
+
+    @Test
+    @DisplayName("Resolves without a discard choice when your hand is empty")
+    void resolvesWithEmptyHand() {
+        Permanent creature = addCreature(player1);
+        harness.setHand(player1, List.of(new RitesOfInitiation()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Rites of Initiation");
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Can discard the entire remaining hand without boosting toughness")
+    void canDiscardEntireHand() {
+        Permanent creature = addCreature(player1);
+        harness.setHand(player1, List.of(new RitesOfInitiation(), new AvenFisher(), new Mountain()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0);
+        harness.handleXValueChosen(player1, 2);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
+        harness.assertInGraveyard(player1, "Aven Fisher");
+        harness.assertInGraveyard(player1, "Mountain");
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Creatures entering after resolution do not receive the boost")
+    void doesNotBoostCreaturesEnteringLater() {
+        Permanent existing = addCreature(player1);
+        harness.setHand(player1, List.of(new RitesOfInitiation(), new AvenFisher()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0);
+        harness.handleXValueChosen(player1, 1);
+        Permanent newcomer = harness.addToBattlefieldAndReturn(player1, new AvenFisher());
+
+        assertThat(gqs.getEffectivePower(gd, existing)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, newcomer)).isEqualTo(2);
     }
 }
