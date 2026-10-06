@@ -2,14 +2,11 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -37,10 +34,7 @@ class RimefurReindeerTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.addToBattlefield(player1, new RimefurReindeer());
 
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
         harness.passBothPriorities();
 
         assertThat(target.isTapped()).isFalse();
@@ -54,10 +48,7 @@ class RimefurReindeerTest extends BaseCardTest {
         harness.addToBattlefield(player1, new RimefurReindeer());
 
         harness.forceActivePlayer(player2);
-        harness.setHand(player2, List.of(new GloriousAnthem()));
-        harness.addMana(player2, ManaColor.WHITE, 2);
-        harness.addMana(player2, ManaColor.COLORLESS, 1);
-        harness.castEnchantment(player2, 0);
+        harness.castFromHand(player2, new GloriousAnthem(), "{1}{W}{W}");
         harness.passBothPriorities();
 
         assertThat(target.isTapped()).isFalse();
@@ -78,10 +69,55 @@ class RimefurReindeerTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("An already tapped opponent creature is a legal target")
+    void alreadyTappedCreatureIsLegalTarget() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        target.setTapped(true);
+        harness.addToBattlefield(player1, new RimefurReindeer());
+
+        castGloriousAnthem();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An enchantment entering with no legal targets does not leave a pending choice")
+    void noOpponentCreaturesLeavesNoPendingChoice() {
+        Permanent reindeer = harness.addToBattlefieldAndReturn(player1, new RimefurReindeer());
+        harness.addToBattlefield(player2, new GloriousAnthem());
+
+        castGloriousAnthem();
+        harness.passBothPriorities();
+
+        assertThat(reindeer.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The trigger resolves after Rimefur Reindeer leaves the battlefield")
+    void triggerResolvesAfterSourceDies() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent reindeer = harness.addToBattlefieldAndReturn(player1, new RimefurReindeer());
+
+        castGloriousAnthem();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        reindeer.setMarkedDamage(5);
+        harness.runStateBasedActions();
+        harness.assertInGraveyard(player1, "Rimefur Reindeer");
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void castGloriousAnthem() {
-        harness.setHand(player1, List.of(new GloriousAnthem()));
-        harness.addMana(player1, ManaColor.WHITE, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new GloriousAnthem(), "{1}{W}{W}");
     }
 }
