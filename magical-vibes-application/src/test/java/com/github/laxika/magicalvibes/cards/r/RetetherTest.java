@@ -28,10 +28,7 @@ class RetetherTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(aura));
         castRetether();
 
-        Permanent returnedAura = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().getId().equals(aura.getId()))
-                .findFirst()
-                .orElseThrow();
+        Permanent returnedAura = findPermanent(player1, "Keen Sense");
         assertThat(returnedAura.getAttachedTo()).isEqualTo(creature.getId());
         harness.assertNotInGraveyard(player1, "Keen Sense");
     }
@@ -53,9 +50,7 @@ class RetetherTest extends BaseCardTest {
 
         harness.handlePermanentChosen(player1, chosenCreature.getId());
 
-        Permanent returnedAura = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().getId().equals(aura.getId()))
-                .findFirst().orElseThrow();
+        Permanent returnedAura = findPermanent(player1, "Utopia Vow");
         assertThat(returnedAura.getAttachedTo()).isEqualTo(chosenCreature.getId());
     }
 
@@ -100,10 +95,60 @@ class RetetherTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(aura));
         castRetether();
 
-        Permanent returnedAura = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().getId().equals(aura.getId()))
-                .findFirst().orElseThrow();
+        Permanent returnedAura = findPermanent(player1, "Keen Sense");
         assertThat(returnedAura.getAttachedTo()).isEqualTo(opposingCreature.getId());
+    }
+
+    @Test
+    @DisplayName("Returns enchant-permanent Auras attached to creatures")
+    void returnsEnchantPermanentAuraAttachedToCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new SinewSliver());
+        harness.setGraveyard(player1, List.of(new RealityAcid()));
+
+        castRetether();
+
+        assertThat(findPermanent(player1, "Reality Acid").getAttachedTo()).isEqualTo(creature.getId());
+        harness.assertNotInGraveyard(player1, "Reality Acid");
+    }
+
+    @Test
+    @DisplayName("Leaves every Aura in the graveyard when there are no creatures")
+    void leavesAurasWhenThereAreNoCreatures() {
+        harness.setGraveyard(player1, List.of(new KeenSense(), new UtopiaVow()));
+
+        castRetether();
+
+        harness.assertInGraveyard(player1, "Keen Sense");
+        harness.assertInGraveyard(player1, "Utopia Vow");
+        harness.assertNotOnBattlefield(player1, "Keen Sense");
+        harness.assertNotOnBattlefield(player1, "Utopia Vow");
+        harness.assertInGraveyard(player1, "Retether");
+    }
+
+    @Test
+    @DisplayName("Does not return Auras from the opponent's graveyard")
+    void leavesOpponentsAurasInTheirGraveyard() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new SinewSliver());
+        harness.setGraveyard(player1, List.of(new KeenSense()));
+        harness.setGraveyard(player2, List.of(new UtopiaVow()));
+
+        castRetether();
+
+        assertThat(findPermanent(player1, "Keen Sense").getAttachedTo()).isEqualTo(creature.getId());
+        harness.assertInGraveyard(player2, "Utopia Vow");
+        harness.assertNotOnBattlefield(player1, "Utopia Vow");
+        harness.assertNotOnBattlefield(player2, "Utopia Vow");
+    }
+
+    @Test
+    @DisplayName("Resolves with an empty graveyard")
+    void resolvesWithEmptyGraveyard() {
+        harness.setGraveyard(player1, List.of());
+
+        castRetether();
+
+        harness.assertInGraveyard(player1, "Retether");
+        assertThat(gd.stack).isEmpty();
     }
 
     private void castRetether() {
