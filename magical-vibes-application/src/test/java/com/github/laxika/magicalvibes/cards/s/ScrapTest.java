@@ -25,8 +25,7 @@ class ScrapTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castInstant(player1, 0, artifact.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, artifact.getId());
 
         harness.assertNotOnBattlefield(player2, "Citanul Flute");
         harness.assertInGraveyard(player2, "Citanul Flute");
@@ -40,8 +39,7 @@ class ScrapTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castInstant(player1, 0, artifactCreature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, artifactCreature.getId());
 
         harness.assertNotOnBattlefield(player2, "Cathodion");
         harness.assertInGraveyard(player2, "Cathodion");
@@ -72,5 +70,54 @@ class ScrapTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Scrap");
         harness.assertInHand(player1, "Coral Merfolk");
+    }
+
+    @Test
+    @DisplayName("Can destroy an artifact controlled by the caster")
+    void destroysOwnArtifact() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new CitanulFlute());
+        harness.setHand(player1, List.of(new Scrap()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveInstant(player1, 0, artifact.getId());
+
+        harness.assertNotOnBattlefield(player1, "Citanul Flute");
+        harness.assertInGraveyard(player1, "Citanul Flute");
+        harness.assertInGraveyard(player1, "Scrap");
+    }
+
+    @Test
+    @DisplayName("Cycling discards as a cost and draws only on resolution")
+    void cyclingDiscardsBeforeDrawing() {
+        harness.setHand(player1, List.of(new Scrap()));
+        harness.setLibrary(player1, List.of(new CoralMerfolk()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertNotInHand(player1, "Scrap");
+        harness.assertInGraveyard(player1, "Scrap");
+        harness.assertNotInHand(player1, "Coral Merfolk");
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Coral Merfolk");
+        harness.assertInGraveyard(player1, "Scrap");
+    }
+
+    @Test
+    @DisplayName("Cycling requires two mana and leaves the card in hand if unpaid")
+    void cannotCycleWithInsufficientMana() {
+        harness.setHand(player1, List.of(new Scrap()));
+        harness.setLibrary(player1, List.of(new CoralMerfolk()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Scrap");
+        harness.assertNotInGraveyard(player1, "Scrap");
+        harness.assertNotInHand(player1, "Coral Merfolk");
     }
 }
