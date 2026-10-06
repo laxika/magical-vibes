@@ -83,8 +83,7 @@ class SacredBoonTest extends BaseCardTest {
     @Test
     @DisplayName("Prevented combat damage becomes +0/+1 counters at the next end step")
     void preventedCombatDamageBecomesCounters() {
-        Permanent defender = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        defender.setSummoningSick(false);
+        Permanent defender = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new SacredBoon()));
         harness.addMana(player1, ManaColor.WHITE, 2);
@@ -93,14 +92,10 @@ class SacredBoonTest extends BaseCardTest {
         defender.setBlocking(true);
         defender.addBlockingTarget(0);
 
-        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat();
 
         // Defender took 2 prevented combat damage → survives, 1 shield remaining.
         Permanent survivor = bears(player2);
@@ -244,13 +239,103 @@ class SacredBoonTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.castInstant(player1, 0, targetId);
 
-        Permanent aura = new Permanent(new ImprisonedInTheMoon());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new ImprisonedInTheMoon());
         aura.setAttachedTo(targetId);
-        gd.playerBattlefields.get(player1.getId()).add(aura);
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, bears)).isFalse();
         assertThat(bears.getDamageToCounterPreventionShield()).isZero();
+    }
+
+    @Test
+    @DisplayName("Unused prevention remains active after the delayed counter trigger resolves")
+    void preventionRemainsActiveDuringEndStep() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SacredBoon()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player1, 0, bear.getId());
+
+        advanceToEndStep(player1);
+        resolveAllTriggers();
+
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, bear.getId());
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(bear.getMarkedDamage()).isZero();
+        assertThat(bear.getCounterCount(CounterType.PLUS_ZERO_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The delayed trigger counts damage prevented in response to it")
+    void delayedTriggerCountsDamagePreventedWhileOnStack() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SacredBoon()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player1, 0, bear.getId());
+
+        advanceToEndStep(player1);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, bear.getId());
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(bear.getCounterCount(CounterType.PLUS_ZERO_PLUS_ONE)).isEqualTo(2);
+        assertThat(bear.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Sacred Boon does not create a shield or delayed trigger when its target has died")
+    void fizzlesWhenTargetLeavesBattlefield() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SacredBoon()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castInstant(player1, 0, bear.getId());
+
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, bear.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Sacred Boon");
+        advanceToEndStep(player1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A Boon cast during the end step keeps its delayed trigger but its shield expires at cleanup")
+    void expiredShieldDoesNotConsumeNextTurnsDamage() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new SacredBoon()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player1, 0, bear.getId());
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        assertThat(bear.getDamageToCounterPreventionShield()).isZero();
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.setHand(player2, List.of(new SacredBoon(), new Shock(), new Shock()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player2, 0, bear.getId());
+        harness.castAndResolveInstant(player2, 0, bear.getId());
+        harness.castAndResolveInstant(player2, 0, bear.getId());
+
+        assertThat(bear.getMarkedDamage()).isEqualTo(1);
+        advanceToEndStep(player2);
+        assertThat(gd.stack).hasSize(2);
+        resolveAllTriggers();
+        assertThat(bear.getCounterCount(CounterType.PLUS_ZERO_PLUS_ONE)).isEqualTo(3);
     }
 
     private Permanent bears(Player player) {
@@ -260,8 +345,7 @@ class SacredBoonTest extends BaseCardTest {
     private void advanceToEndStep(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.END_STEP);
     }
 
 }
