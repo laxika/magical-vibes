@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.b.BolassCitadel;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,8 +16,9 @@ import java.util.List;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SandmansQuicksand.class, HillGiant.class})
+@CardUsed({SandmansQuicksand.class, HillGiant.class, BolassCitadel.class})
 class SandmansQuicksandTest extends BaseCardTest {
 
     @Test
@@ -25,10 +27,7 @@ class SandmansQuicksandTest extends BaseCardTest {
         Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new HillGiant());
         Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new HillGiant());
 
-        harness.setHand(player1, List.of(new SandmansQuicksand()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new SandmansQuicksand(), "{1}{B}{B}");
         harness.passBothPriorities();
 
         assertThat(ownCreature.getEffectivePower()).isEqualTo(1);
@@ -55,6 +54,70 @@ class SandmansQuicksandTest extends BaseCardTest {
 
         assertThat(ownCreature.getEffectivePower()).isEqualTo(3);
         assertThat(ownCreature.getEffectiveToughness()).isEqualTo(3);
+        assertThat(opposingCreature.getEffectivePower()).isEqualTo(1);
+        assertThat(opposingCreature.getEffectiveToughness()).isEqualTo(1);
+    }
+
+    @Test
+    void reductionExpiresAtEndOfTurnAndDoesNotAffectLaterCreatures() {
+        Permanent existing = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.castFromHand(player1, new SandmansQuicksand(), "{1}{B}{B}");
+        harness.passBothPriorities();
+
+        Permanent later = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        assertThat(existing.getEffectiveToughness()).isEqualTo(1);
+        assertThat(later.getEffectivePower()).isEqualTo(3);
+        assertThat(later.getEffectiveToughness()).isEqualTo(3);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        assertThat(existing.getEffectivePower()).isEqualTo(3);
+        assertThat(existing.getEffectiveToughness()).isEqualTo(3);
+    }
+
+    @Test
+    void cannotUseMayhemWithoutDiscardingThisCard() {
+        harness.setGraveyard(player1, List.of(new SandmansQuicksand()));
+        prepareMainPhase();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Sandman's Quicksand");
+    }
+
+    @Test
+    void mayhemDoesNotAllowCastingOutsideMainPhase() {
+        Card card = new SandmansQuicksand();
+        harness.setGraveyard(player1, List.of(card));
+        gd.cardsDiscardedOrCycledThisTurn.put(player1.getId(), new HashSet<>(Set.of(card.getId())));
+        prepareMainPhase();
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @CardUsed({SandmansQuicksand.class, HillGiant.class, BolassCitadel.class})
+    void unrelatedAlternativeCostStillWeakensAllCreatures() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.addToBattlefield(player1, new BolassCitadel());
+        harness.setLibrary(player1, List.of(new SandmansQuicksand()));
+        prepareMainPhase();
+
+        harness.castAndResolveFromLibraryTop(player1);
+
+        harness.assertLife(player1, 17);
+        assertThat(ownCreature.getEffectivePower()).isEqualTo(1);
+        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(1);
         assertThat(opposingCreature.getEffectivePower()).isEqualTo(1);
         assertThat(opposingCreature.getEffectiveToughness()).isEqualTo(1);
     }
