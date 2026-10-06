@@ -75,4 +75,71 @@ class RecklessAbandonTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("sacrifice");
     }
+
+    @Test
+    @DisplayName("Sacrifice is paid before the spell resolves")
+    void sacrificeIsPaidBeforeResolution() {
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new GoliathBeetle());
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new RecklessAbandon()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castSorceryWithSacrifice(player1, 0, player2.getId(), sacrifice.getId());
+
+        harness.assertNotOnBattlefield(player1, "Goliath Beetle");
+        harness.assertInGraveyard(player1, "Goliath Beetle");
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    @DisplayName("Cannot sacrifice an opponent's creature")
+    void cannotSacrificeOpponentsCreature() {
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player2, new GoliathBeetle());
+        harness.setHand(player1, List.of(new RecklessAbandon()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castSorceryWithSacrifice(
+                player1, 0, player2.getId(), sacrifice.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("you control");
+
+        harness.assertOnBattlefield(player2, "Goliath Beetle");
+        harness.assertInHand(player1, "Reckless Abandon");
+    }
+
+    @Test
+    @DisplayName("Can target the creature sacrificed to pay the cost")
+    void canTargetSacrificedCreature() {
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new GoliathBeetle());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new RecklessAbandon()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castSorceryWithSacrifice(player1, 0, sacrifice.getId(), sacrifice.getId());
+        harness.assertInGraveyard(player1, "Goliath Beetle");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Reckless Abandon");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Can deal damage to its controller")
+    void canTargetController() {
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new GoliathBeetle());
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new RecklessAbandon()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castSorceryWithSacrifice(player1, 0, player1.getId(), sacrifice.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 16);
+        harness.assertInGraveyard(player1, "Goliath Beetle");
+    }
 }
