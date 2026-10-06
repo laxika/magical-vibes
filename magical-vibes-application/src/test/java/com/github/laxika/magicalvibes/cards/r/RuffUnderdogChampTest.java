@@ -41,7 +41,8 @@ class RuffUnderdogChampTest extends BaseCardTest {
                 creature("Opposing Hound", 1, 1, CardSubtype.HOUND));
 
         assertThat(gqs.effectiveCreatureSubtypes(gd, hound))
-                .contains(CardSubtype.HOUND, CardSubtype.DOG);
+                .contains(CardSubtype.DOG)
+                .doesNotContain(CardSubtype.HOUND);
         assertThat(gqs.getEffectivePower(gd, hound)).isEqualTo(1);
         assertThat(gqs.getEffectivePower(gd, dog)).isEqualTo(2);
         assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
@@ -66,4 +67,43 @@ class RuffUnderdogChampTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, dog)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, dog)).isEqualTo(1);
     }
+
+    @Test
+    @DisplayName("Hounds remain Dogs after a revealed Ruff leaves the battlefield")
+    void dogErrataPersistsAfterRuffLeaves() {
+        Permanent ruff = harness.addToBattlefieldAndReturn(player1, new RuffUnderdogChamp());
+        Permanent hound = harness.addToBattlefieldAndReturn(player2,
+                creature("Legacy Hound", 1, 1, CardSubtype.HOUND));
+
+        assertThat(gqs.effectiveCreatureSubtypes(gd, hound)).contains(CardSubtype.DOG);
+        gd.playerBattlefields.get(player1.getId()).remove(ruff);
+        gd.playerGraveyards.get(player1.getId()).add(ruff.getCard());
+
+        assertThat(gqs.effectiveCreatureSubtypes(gd, hound))
+                .contains(CardSubtype.DOG)
+                .doesNotContain(CardSubtype.HOUND);
+    }
+
+    @Test
+    @DisplayName("An opponent's prior loss does not enable the controller's Underdog")
+    void opponentLossDoesNotEnableUnderdog() {
+        Permanent ruff = harness.addToBattlefieldAndReturn(player1, new RuffUnderdogChamp());
+        gd.playersWhoLostGameThisMatch.add(player2.getId());
+
+        assertThat(gqs.getEffectivePower(gd, ruff)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, ruff)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Underdog boosts Ruff itself even when Ruff is no longer a Dog")
+    void underdogBoostsRuffRegardlessOfItsCreatureType() {
+        Permanent ruff = harness.addToBattlefieldAndReturn(player1, new RuffUnderdogChamp());
+        ruff.setTransientCreatureTypeOverride(CardSubtype.BEAR);
+        gd.playersWhoLostGameThisMatch.add(player1.getId());
+
+        assertThat(gqs.effectiveCreatureSubtypes(gd, ruff)).doesNotContain(CardSubtype.DOG);
+        assertThat(gqs.getEffectivePower(gd, ruff)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, ruff)).isEqualTo(3);
+    }
+
 }
