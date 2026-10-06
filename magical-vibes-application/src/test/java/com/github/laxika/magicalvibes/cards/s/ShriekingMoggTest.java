@@ -73,4 +73,33 @@ class ShriekingMoggTest extends BaseCardTest {
 
         assertThat(findPermanent(player1, "Shrieking Mogg").isAttackedThisTurn()).isTrue();
     }
+
+    @Test
+    @DisplayName("ETB taps creatures that entered after the trigger was created")
+    void etbChecksCreaturesAtResolution() {
+        Permanent mogg = harness.enterBattlefieldAndReturn(player1, new ShriekingMogg());
+        assertThat(gd.stack).hasSize(1);
+        Permanent laterCreature = harness.enterBattlefieldAndReturn(player2, new SpinelessThug());
+
+        resolveAllTriggers();
+
+        assertThat(laterCreature.isTapped()).isTrue();
+        assertThat(mogg.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("ETB leaves an already tapped source and other tapped creatures tapped")
+    void etbDoesNotUntapAlreadyTappedCreatures() {
+        Permanent otherCreature = harness.addToBattlefieldAndReturn(player2, new SpinelessThug());
+        otherCreature.setTapped(true);
+        Permanent mogg = harness.enterBattlefieldAndReturn(player1, new ShriekingMogg());
+        mogg.setTapped(true);
+
+        resolveAllTriggers();
+
+        assertThat(otherCreature.isTapped()).isTrue();
+        assertThat(mogg.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
 }
