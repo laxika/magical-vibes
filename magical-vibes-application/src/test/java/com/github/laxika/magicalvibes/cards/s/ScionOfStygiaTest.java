@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DireWolfProwler;
+import com.github.laxika.magicalvibes.cards.p.PowerWordKill;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.service.effect.normalfx.D20RollService;
@@ -17,7 +18,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ScionOfStygia.class, GrizzlyBears.class})
+@CardUsed({ScionOfStygia.class, DireWolfProwler.class, PowerWordKill.class})
 class ScionOfStygiaTest extends BaseCardTest {
 
     private RollD20EffectHandler rollD20EffectHandler;
@@ -63,7 +64,7 @@ class ScionOfStygiaTest extends BaseCardTest {
     @DisplayName("Cannot target a creature controlled by Scion of Stygia's controller")
     void cannotTargetOwnCreature() {
         setRoll(20);
-        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new DireWolfProwler());
         harness.setHand(player1, java.util.List.of(new ScionOfStygia()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -72,8 +73,93 @@ class ScionOfStygiaTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("A low result allows the target to untap normally")
+    void lowResultDoesNotPreventUntapping() {
+        setRoll(1);
+        Permanent target = addTarget();
+
+        castScion(target);
+        harness.performUntapStep(player2);
+
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A natural twenty prevents only the target controller's next untap")
+    void naturalTwentyLocksOnlyOneControllerUntapStep() {
+        setRoll(20);
+        Permanent target = addTarget();
+
+        castScion(target);
+        harness.performUntapStep(player1);
+        assertThat(target.isTapped()).isTrue();
+        assertThat(target.getSkipUntapCount()).isEqualTo(1);
+
+        harness.performUntapStep(player2);
+        assertThat(target.isTapped()).isTrue();
+        assertThat(target.getSkipUntapCount()).isZero();
+
+        harness.performUntapStep(player2);
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The high result locks a creature that was already tapped")
+    void alreadyTappedTargetStillSkipsUntap() {
+        setRoll(10);
+        Permanent target = addTarget();
+        target.setTapped(true);
+
+        castScion(target);
+        harness.performUntapStep(player2);
+
+        assertThat(target.isTapped()).isTrue();
+        harness.performUntapStep(player2);
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Flash allows Scion of Stygia to resolve during the opponent's turn")
+    void canCastDuringOpponentsTurn() {
+        setRoll(9);
+        Permanent target = addTarget();
+        harness.forceActivePlayer(player2);
+        harness.ensurePriority(player1);
+
+        castScion(target);
+
+        harness.assertOnBattlefield(player1, "Scion of Stygia");
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Removing the sole target before the trigger resolves prevents the die roll")
+    void doesNotRollWhenTargetLeavesBattlefield() {
+        setRoll(20);
+        Permanent target = addTarget();
+        harness.setHand(player1, java.util.List.of(new ScionOfStygia()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castCreature(player1, 0, target.getId());
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Scion of Stygia");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.setHand(player1, java.util.List.of(new PowerWordKill()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.assertInGraveyard(player2, "Dire Wolf Prowler");
+        resolveAllTriggers();
+
+        assertThat(gameLogContains("rolls a d20 for Scion of Stygia")).isFalse();
+        harness.assertOnBattlefield(player1, "Scion of Stygia");
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addTarget() {
-        return harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        return harness.addToBattlefieldAndReturn(player2, new DireWolfProwler());
     }
 
     private void castScion(Permanent target) {
@@ -81,8 +167,7 @@ class ScionOfStygiaTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castCreature(player1, 0, 0, target.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
     private void setRoll(int result) {
