@@ -82,6 +82,39 @@ class ShenanigansTest extends BaseCardTest {
         assertThat(gd.cardsDrawnThisTurn.get(player1.getId())).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("Can destroy an artifact controlled by the caster")
+    void destroysOwnArtifact() {
+        harness.addToBattlefield(player1, new LotusPetal());
+        harness.setHand(player1, List.of(new Shenanigans()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castSorcery(player1, 0, harness.getPermanentId(player1, "Lotus Petal"));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Lotus Petal");
+        harness.assertInGraveyard(player1, "Lotus Petal");
+    }
+
+    @Test
+    @DisplayName("Dredge mills only the top card and leaves the remaining library intact")
+    void dredgeMillsExactlyOneCard() {
+        Shenanigans shenanigans = new Shenanigans();
+        Card topCard = new Forest();
+        Card remainingCard = new Forest();
+        harness.setGraveyard(player1, List.of(shenanigans));
+        harness.setLibrary(player1, List.of(topCard, remainingCard));
+        harness.setHand(player1, List.of());
+
+        resolveDraw();
+        harness.handleGraveyardCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(shenanigans);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remainingCard);
+        assertThat(gd.cardsDrawnThisTurn.getOrDefault(player1.getId(), 0)).isZero();
+    }
+
     private void resolveDraw() {
         harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
     }
