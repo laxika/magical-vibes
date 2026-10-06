@@ -48,4 +48,38 @@ class RingOfRenewalTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
+
+    @Test
+    @DisplayName("Discards only on resolution, before drawing, and only for the controller")
+    void discardsBeforeDrawingOnResolutionForControllerOnly() {
+        Permanent ring = harness.addToBattlefieldAndReturn(player2, new RingOfRenewal());
+        RingOfRenewal originalHandCard = new RingOfRenewal();
+        RingOfRenewal firstDraw = new RingOfRenewal();
+        RingOfRenewal secondDraw = new RingOfRenewal();
+        RingOfRenewal opponentHandCard = new RingOfRenewal();
+        RingOfRenewal opponentLibraryCard = new RingOfRenewal();
+        harness.setHand(player2, List.of(originalHandCard));
+        harness.setLibrary(player2, List.of(firstDraw, secondDraw));
+        harness.setHand(player1, List.of(opponentHandCard));
+        harness.setLibrary(player1, List.of(opponentLibraryCard));
+        harness.addMana(player2, ManaColor.COLORLESS, 5);
+
+        harness.activateAbility(player2, 0, null, null);
+
+        assertThat(ring.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(originalHandCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(2);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(originalHandCard);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactlyInAnyOrder(firstDraw, secondDraw);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(opponentHandCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(opponentLibraryCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
 }
