@@ -47,7 +47,7 @@ class ShardVolleyTest extends BaseCardTest {
         harness.castInstantWithSacrifice(player1, 0, player2.getId(), land.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17); // 20 - 3
+        harness.assertLife(player2, 17);
     }
 
     @Test
@@ -104,5 +104,55 @@ class ShardVolleyTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstantWithSacrifice(player1, 0, player2.getId(), creature.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can sacrifice a tapped land and target yourself")
+    void canSacrificeTappedLandAndTargetYourself() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new MurmuringBosk());
+        land.setTapped(true);
+        harness.setHand(player1, List.of(new ShardVolley()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstantWithSacrifice(player1, 0, player1.getId(), land.getId());
+        harness.assertInGraveyard(player1, "Murmuring Bosk");
+        harness.assertLife(player1, 20);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Shard Volley");
+    }
+
+    @Test
+    @DisplayName("Cannot sacrifice an opponent's land")
+    void cannotSacrificeOpponentsLand() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new MurmuringBosk());
+        harness.setHand(player1, List.of(new ShardVolley()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castInstantWithSacrifice(player1, 0, player2.getId(), land.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player2, "Murmuring Bosk");
+        harness.assertInHand(player1, "Shard Volley");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot target a land that is not a creature")
+    void cannotTargetNoncreatureLand() {
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new MurmuringBosk());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new MurmuringBosk());
+        harness.setHand(player1, List.of(new ShardVolley()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castInstantWithSacrifice(player1, 0, target.getId(), sacrifice.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Murmuring Bosk");
+        harness.assertOnBattlefield(player2, "Murmuring Bosk");
+        harness.assertInHand(player1, "Shard Volley");
+        assertThat(gd.stack).isEmpty();
     }
 }
