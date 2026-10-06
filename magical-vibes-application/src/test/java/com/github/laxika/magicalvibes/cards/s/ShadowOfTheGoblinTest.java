@@ -110,4 +110,63 @@ class ShadowOfTheGoblinTest extends BaseCardTest {
         harness.assertLife(player2, 20);
         assertThat(gd.stack).isEmpty();
     }
+
+    @Test
+    @DisplayName("Casting a spell from hand does not trigger damage")
+    void handSpellCastDoesNotTriggerDamage() {
+        harness.addToBattlefield(player1, new ShadowOfTheGoblin());
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new ShadowOfTheGoblin()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castEnchantment(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("An opponent casting from exile does not trigger damage")
+    void opponentExileSpellDoesNotTriggerDamage() {
+        harness.addToBattlefield(player1, new ShadowOfTheGoblin());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        ShadowOfTheGoblin spell = new ShadowOfTheGoblin();
+        harness.setExile(player2, List.of(spell));
+        gd.exilePlayPermissions.put(spell.getId(), player2.getId());
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castFromExile(player2, spell.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("The rummage ability does not trigger in an opponent's first main phase")
+    void opponentFirstMainPhaseDoesNotRummage() {
+        harness.addToBattlefield(player1, new ShadowOfTheGoblin());
+        Forest held = new Forest();
+        Forest topCard = new Forest();
+        harness.setHand(player1, List.of(held));
+        harness.setLibrary(player1, List.of(topCard));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UNTAP);
+        harness.clearPriorityPassed();
+
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(held);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+    }
 }
