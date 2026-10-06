@@ -3,7 +3,9 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.c.CabalArchon;
 import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
 import com.github.laxika.magicalvibes.cards.i.Infest;
+import com.github.laxika.magicalvibes.cards.i.Imagecrafter;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -17,7 +19,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RotlungReanimator.class, CabalArchon.class, GlorySeeker.class, Infest.class, Shock.class})
+@CardUsed({RotlungReanimator.class, CabalArchon.class, GlorySeeker.class, Infest.class, Shock.class,
+        Imagecrafter.class})
 class RotlungReanimatorTest extends BaseCardTest {
 
     @Test
@@ -84,6 +87,86 @@ class RotlungReanimatorTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GlorySeeker());
 
         killWithShock(player2, player1, "Glory Seeker");
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(zombieTokens(player1)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Two Reanimators each trigger for both simultaneous deaths")
+    void twoReanimatorsSeeEachOthersDeath() {
+        harness.addToBattlefield(player1, new RotlungReanimator());
+        harness.addToBattlefield(player2, new RotlungReanimator());
+
+        harness.castFromHand(player1, new Infest(), "{1}{B}{B}");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(4);
+        resolveAllTriggers();
+
+        assertThat(zombieTokens(player1)).hasSize(2);
+        assertThat(zombieTokens(player2)).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("A pending trigger still resolves after the Reanimator dies")
+    void pendingTriggerSurvivesSourceDeath() {
+        harness.addToBattlefield(player1, new RotlungReanimator());
+        harness.addToBattlefield(player1, new CabalArchon());
+
+        killWithShock(player2, player1, "Cabal Archon");
+        killWithShock(player2, player1, "Rotlung Reanimator");
+
+        assertThat(gd.stack).hasSize(2);
+        resolveAllTriggers();
+
+        assertThat(zombieTokens(player1)).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Triggers for a creature that became a Cleric before dying")
+    void triggersForCreatureThatBecameCleric() {
+        addCreatureReady(player1, new Imagecrafter());
+        harness.addToBattlefield(player1, new RotlungReanimator());
+        harness.addToBattlefield(player2, new GlorySeeker());
+        harness.activateAbility(player1, 0, null, harness.getPermanentId(player2, "Glory Seeker"));
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, CardSubtype.CLERIC.name());
+
+        killWithShock(player1, player2, "Glory Seeker");
+
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        assertThat(zombieTokens(player1)).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Still triggers for its own death after losing the Cleric type")
+    void selfDeathDoesNotRequireClericType() {
+        addCreatureReady(player1, new Imagecrafter());
+        harness.addToBattlefield(player1, new RotlungReanimator());
+        harness.activateAbility(player1, 0, null, harness.getPermanentId(player1, "Rotlung Reanimator"));
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, CardSubtype.GOBLIN.name());
+
+        killWithShock(player2, player1, "Rotlung Reanimator");
+
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        assertThat(zombieTokens(player1)).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Does not trigger for another creature that stopped being a Cleric")
+    void doesNotTriggerForCreatureThatStoppedBeingCleric() {
+        addCreatureReady(player1, new Imagecrafter());
+        harness.addToBattlefield(player1, new RotlungReanimator());
+        harness.addToBattlefield(player2, new CabalArchon());
+        harness.activateAbility(player1, 0, null, harness.getPermanentId(player2, "Cabal Archon"));
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, CardSubtype.GOBLIN.name());
+
+        killWithShock(player1, player2, "Cabal Archon");
 
         assertThat(gd.stack).isEmpty();
         assertThat(zombieTokens(player1)).isEmpty();
