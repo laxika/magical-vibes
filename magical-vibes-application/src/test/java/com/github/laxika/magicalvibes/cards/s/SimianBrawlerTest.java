@@ -91,4 +91,55 @@ class SimianBrawlerTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(nonland);
         harness.assertInGraveyard(player1, "Snow-Covered Forest");
     }
+
+    @Test
+    @DisplayName("The land is discarded as a cost before the boost resolves")
+    void discardIsPaidBeforeResolution() {
+        Permanent brawler = harness.addToBattlefieldAndReturn(player1, new SimianBrawler());
+        int basePower = gqs.getEffectivePower(gd, brawler);
+        int baseToughness = gqs.getEffectiveToughness(gd, brawler);
+        harness.setHand(player1, List.of(new SnowCoveredForest()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player1, "Snow-Covered Forest");
+        harness.assertNotInHand(player1, "Snow-Covered Forest");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.getEffectivePower(gd, brawler)).isEqualTo(basePower);
+        assertThat(gqs.getEffectiveToughness(gd, brawler)).isEqualTo(baseToughness);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, brawler)).isEqualTo(basePower + 1);
+        assertThat(gqs.getEffectiveToughness(gd, brawler)).isEqualTo(baseToughness + 1);
+    }
+
+    @Test
+    @DisplayName("A tapped Simian Brawler can activate repeatedly and the boosts accumulate")
+    void tappedBrawlerCanActivateRepeatedly() {
+        Permanent brawler = harness.addToBattlefieldAndReturn(player1, new SimianBrawler());
+        brawler.setTapped(true);
+        int basePower = gqs.getEffectivePower(gd, brawler);
+        int baseToughness = gqs.getEffectiveToughness(gd, brawler);
+        harness.setHand(player1, List.of(new SnowCoveredForest(), new SnowCoveredForest()));
+
+        for (int i = 0; i < 2; i++) {
+            harness.activateAbility(player1, 0, null, null);
+            harness.handleCardChosen(player1, 0);
+            harness.passBothPriorities();
+        }
+
+        assertThat(gqs.getEffectivePower(gd, brawler)).isEqualTo(basePower + 2);
+        assertThat(gqs.getEffectiveToughness(gd, brawler)).isEqualTo(baseToughness + 2);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, brawler)).isEqualTo(basePower);
+        assertThat(gqs.getEffectiveToughness(gd, brawler)).isEqualTo(baseToughness);
+    }
 }
