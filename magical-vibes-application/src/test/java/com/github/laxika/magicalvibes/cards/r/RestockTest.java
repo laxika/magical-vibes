@@ -89,4 +89,83 @@ class RestockTest extends BaseCardTest {
         harness.assertInHand(player1, "Restock");
         assertThat(gd.stack).isEmpty();
     }
+
+    @Test
+    @DisplayName("Returns the remaining legal target and still exiles Restock")
+    void returnsRemainingLegalTarget() {
+        AlabasterLeech creature = new AlabasterLeech();
+        Forest land = new Forest();
+        harness.setGraveyard(player1, List.of(creature, land));
+        harness.setHand(player1, List.of(new Restock()));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId(), land.getId()));
+        harness.setGraveyard(player1, List.of(land));
+        harness.setExile(player1, List.of(creature));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Forest");
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(creature);
+        harness.assertNotInGraveyard(player1, "Restock");
+        assertThat(gd.exiledCards.stream().map(e -> e.card().getName()))
+                .contains("Alabaster Leech", "Restock");
+    }
+
+    @Test
+    @DisplayName("Restock goes to the graveyard when both targets become illegal")
+    void doesNotExileItselfWhenAllTargetsBecomeIllegal() {
+        AlabasterLeech creature = new AlabasterLeech();
+        Forest land = new Forest();
+        harness.setGraveyard(player1, List.of(creature, land));
+        harness.setHand(player1, List.of(new Restock()));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId(), land.getId()));
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(creature, land));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Restock");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.exiledCards.stream().map(e -> e.card().getName())).doesNotContain("Restock");
+    }
+
+    @Test
+    @DisplayName("Requires two distinct targets and rejects cards in the opponent's graveyard")
+    void rejectsInvalidTargetSelections() {
+        AlabasterLeech creature = new AlabasterLeech();
+        Forest land = new Forest();
+        Forest extraLand = new Forest();
+        Forest opponentLand = new Forest();
+        harness.setGraveyard(player1, List.of(creature, land, extraLand));
+        harness.setGraveyard(player2, List.of(opponentLand));
+        harness.setHand(player1, List.of(new Restock()));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+
+        harness.castSorcery(player1, 0, 0);
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1,
+                List.of(creature.getId(), land.getId(), extraLand.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1,
+                List.of(creature.getId(), creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1,
+                List.of(creature.getId(), opponentLand.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId(), land.getId()));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Alabaster Leech");
+        harness.assertInHand(player1, "Forest");
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(extraLand);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentLand);
+    }
 }
