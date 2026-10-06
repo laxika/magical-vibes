@@ -48,7 +48,6 @@ class RealityAnchorTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, soldier, Keyword.SHADOW)).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, soldier, Keyword.SHADOW)).isTrue();
@@ -66,6 +65,25 @@ class RealityAnchorTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, giant, Keyword.SHADOW)).isFalse();
         assertThat(harness.getGameData().playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Does not draw when the only target leaves before resolution")
+    void doesNotDrawWhenTargetLeaves() {
+        Permanent soldier = harness.addToBattlefieldAndReturn(player2, new SoltariFootSoldier());
+        harness.setLibrary(player1, List.of(new LowlandGiant()));
+        harness.setHand(player1, List.of(new RealityAnchor()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castInstant(player1, 0, soldier.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(soldier);
+        gd.playerGraveyards.get(player2.getId()).add(soldier.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Reality Anchor");
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
