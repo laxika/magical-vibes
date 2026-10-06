@@ -59,8 +59,60 @@ class RhythmicWaterVortexTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(muYanling.getId()));
 
         harness.assertInHand(player1, "Mu Yanling");
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(card -> "Mu Yanling".equals(card.getName()));
+        harness.assertNotInGraveyard(player1, "Mu Yanling");
+    }
+
+    @Test
+    @DisplayName("Returns one creature even when no Mu Yanling can be found")
+    void returnsOneCreatureWithoutSearchMatch() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new Island()));
+        harness.setGraveyard(player1, List.of());
+
+        cast(List.of(creature.getId()));
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Rhythmic Water Vortex");
+        harness.assertNotInHand(player1, "Mu Yanling");
+    }
+
+    @Test
+    @DisplayName("Finds only one Mu Yanling when both search zones contain a copy")
+    void choosesOneCardAcrossBothZones() {
+        MuYanling libraryCopy = new MuYanling();
+        MuYanling graveyardCopy = new MuYanling();
+        harness.setLibrary(player1, List.of(libraryCopy));
+        harness.setGraveyard(player1, List.of(graveyardCopy));
+
+        cast(List.of());
+
+        PendingInteraction.SearchLibraryAndOrGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
+        assertThat(choice.validCardIds()).containsExactlyInAnyOrder(libraryCopy.getId(), graveyardCopy.getId());
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(
+                player1, List.of(libraryCopy.getId(), graveyardCopy.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleMultipleCardsChosen(player1, List.of(graveyardCopy.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(graveyardCopy);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCopy);
+        harness.assertNotInGraveyard(player1, "Mu Yanling");
+    }
+
+    @Test
+    @DisplayName("May fail to find Mu Yanling when searching the library")
+    void mayFailToFindInLibrary() {
+        MuYanling muYanling = new MuYanling();
+        harness.setLibrary(player1, List.of(muYanling));
+        harness.setGraveyard(player1, List.of());
+
+        cast(List.of());
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        harness.assertNotInHand(player1, "Mu Yanling");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(muYanling);
+        harness.assertInGraveyard(player1, "Rhythmic Water Vortex");
     }
 
     @Test
@@ -70,6 +122,46 @@ class RhythmicWaterVortexTest extends BaseCardTest {
 
         assertThatThrownBy(() -> cast(List.of(island.getId())))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Does not search when its only target leaves before resolution")
+    void doesNotSearchWhenAllTargetsAreIllegal() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        MuYanling muYanling = new MuYanling();
+        harness.setLibrary(player1, List.of(muYanling));
+        harness.setHand(player1, List.of(new RhythmicWaterVortex()));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+        harness.castSorcery(player1, 0, List.of(creature.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(creature);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class))
+                .isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(muYanling);
+        harness.assertNotInHand(player1, "Mu Yanling");
+        harness.assertInGraveyard(player1, "Rhythmic Water Vortex");
+    }
+
+    @Test
+    @DisplayName("Returns the remaining legal target and searches when one target leaves")
+    void resolvesWithOneRemainingLegalTarget() {
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        MuYanling muYanling = new MuYanling();
+        harness.setLibrary(player1, List.of(muYanling));
+        harness.setHand(player1, List.of(new RhythmicWaterVortex()));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+        harness.castSorcery(player1, 0, List.of(first.getId(), second.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(first);
+
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(muYanling.getId()));
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(second.getCard());
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInHand(player1, "Mu Yanling");
     }
 
     private void cast(List<java.util.UUID> targetIds) {
