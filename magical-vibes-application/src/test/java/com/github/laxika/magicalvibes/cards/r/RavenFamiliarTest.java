@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.d.Disallow;
 import com.github.laxika.magicalvibes.cards.g.GiantCockroach;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RavenFamiliar.class, GiantCockroach.class})
+@CardUsed({RavenFamiliar.class, GiantCockroach.class, Disallow.class})
 class RavenFamiliarTest extends BaseCardTest {
 
     @Test
@@ -105,6 +106,44 @@ class RavenFamiliarTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertOnBattlefield(player1, "Raven Familiar");
+    }
+
+    @Test
+    @DisplayName("Countering the enters trigger does not remove echo")
+    void counteringEntersTriggerDoesNotRemoveEcho() {
+        harness.setLibrary(player1, List.of());
+        harness.castFromHand(player1, new RavenFamiliar(), "{2}{U}");
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+        var trigger = gd.stack.getFirst();
+        harness.setHand(player1, List.of(new Disallow()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player1, 0, trigger.getCard().getId());
+        assertThat(gd.stack).isEmpty();
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.assertInGraveyard(player1, "Raven Familiar");
+        harness.assertNotOnBattlefield(player1, "Raven Familiar");
+    }
+
+    @Test
+    @DisplayName("ETB with two cards takes one and bottoms the other")
+    void etbWithTwoCardsTakesOneAndBottomsTheOther() {
+        Card top = new GiantCockroach();
+        Card second = new GiantCockroach();
+        harness.setLibrary(player1, List.of(top, second));
+        harness.castFromHand(player1, new RavenFamiliar(), "{2}{U}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(second.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(second);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     private void castAndResolveRavenFamiliar() {
