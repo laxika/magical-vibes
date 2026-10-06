@@ -8,13 +8,37 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SandsteppeOutcast.class})
 class SandsteppeOutcastTest extends BaseCardTest {
+
+    @Test
+    void choosesModeWhenEntersAbilityIsPutOnStack() {
+        harness.setHand(player1, List.of(new SandsteppeOutcast()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        Permanent outcast = findPermanent(player1, "Sandsteppe Outcast");
+        assertThat(outcast.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.handleListChoice(player1, "Create a 1/1 white Spirit creature token with flying");
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+        assertThat(outcast.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
 
     @Test
     void putsCounterOnItself() {
@@ -50,8 +74,11 @@ class SandsteppeOutcastTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SandsteppeOutcast()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castCreature(player1, 0, mode);
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.handleListChoice(player1, mode == 0
+                ? "Put a +1/+1 counter on this creature"
+                : "Create a 1/1 white Spirit creature token with flying");
+        resolveAllTriggers();
     }
 }
