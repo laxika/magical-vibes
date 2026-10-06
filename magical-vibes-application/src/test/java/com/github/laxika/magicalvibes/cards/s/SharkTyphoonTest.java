@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.d.Divination;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AlmightyBrushwagg;
+import com.github.laxika.magicalvibes.cards.o.OfOneMind;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,18 +14,17 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SharkTyphoon.class, Divination.class, GrizzlyBears.class})
+@CardUsed({SharkTyphoon.class, AlmightyBrushwagg.class, OfOneMind.class})
 class SharkTyphoonTest extends BaseCardTest {
 
     @Test
     @DisplayName("Casting a noncreature spell creates a flying Shark with that spell's mana value")
     void noncreatureSpellCreatesManaValueShark() {
         harness.addToBattlefield(player1, new SharkTyphoon());
-        harness.setHand(player1, List.of(new Divination()));
+        harness.setHand(player1, List.of(new OfOneMind()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(countPermanents(player1, "Shark")).isEqualTo(1);
         Permanent shark = findPermanent(player1, "Shark");
@@ -38,7 +37,7 @@ class SharkTyphoonTest extends BaseCardTest {
     @DisplayName("Casting a creature spell does not create a Shark")
     void creatureSpellDoesNotCreateShark() {
         harness.addToBattlefield(player1, new SharkTyphoon());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new AlmightyBrushwagg()));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.castCreature(player1, 0);
@@ -50,11 +49,12 @@ class SharkTyphoonTest extends BaseCardTest {
     @DisplayName("Cycling creates a Shark using the chosen X and draws a card")
     void cyclingCreatesChosenSizeSharkAndDraws() {
         harness.setHand(player1, List.of(new SharkTyphoon()));
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new AlmightyBrushwagg()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateHandAbility(player1, 0, null, 2);
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(countPermanents(player1, "Shark")).isEqualTo(1);
@@ -63,6 +63,87 @@ class SharkTyphoonTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, shark)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, shark, Keyword.FLYING)).isTrue();
         harness.assertInGraveyard(player1, "Shark Typhoon");
-        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Almighty Brushwagg");
+    }
+
+    @Test
+    @DisplayName("The cycling Shark trigger resolves before drawing, with a separate priority round")
+    void cyclingSharkResolvesSeparatelyFromDraw() {
+        harness.setHand(player1, List.of(new SharkTyphoon()));
+        harness.setLibrary(player1, List.of(new AlmightyBrushwagg()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateHandAbility(player1, 0, null, 2);
+
+        harness.assertInGraveyard(player1, "Shark Typhoon");
+        harness.assertNotOnBattlefield(player1, "Shark");
+        harness.assertNotInHand(player1, "Almighty Brushwagg");
+
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Shark")).isEqualTo(1);
+        harness.assertNotInHand(player1, "Almighty Brushwagg");
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Almighty Brushwagg");
+    }
+
+    @Test
+    @DisplayName("Cycling with X zero still draws, and the zero-toughness Shark dies")
+    void cyclingWithZeroX() {
+        harness.setHand(player1, List.of(new SharkTyphoon()));
+        harness.setLibrary(player1, List.of(new AlmightyBrushwagg()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateHandAbility(player1, 0, null, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Shark");
+        harness.assertInHand(player1, "Almighty Brushwagg");
+        harness.assertInGraveyard(player1, "Shark Typhoon");
+    }
+
+    @Test
+    @DisplayName("An opponent's noncreature spell does not trigger Shark Typhoon")
+    void opponentSpellDoesNotCreateShark() {
+        gd.activePlayerId = player2.getId();
+        harness.addToBattlefield(player1, new SharkTyphoon());
+        harness.setHand(player2, List.of(new OfOneMind()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        harness.castSorcery(player2, 0, 0);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Shark");
+        harness.assertNotOnBattlefield(player2, "Shark");
+    }
+
+    @Test
+    @DisplayName("Each Shark Typhoon triggers independently before the noncreature spell resolves")
+    void multipleTyphoonsCreateSeparateSharks() {
+        harness.addToBattlefield(player1, new SharkTyphoon());
+        harness.addToBattlefield(player1, new SharkTyphoon());
+        harness.setHand(player1, List.of(new OfOneMind()));
+        harness.setLibrary(player1, List.of(new AlmightyBrushwagg(), new AlmightyBrushwagg()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Shark")).isEqualTo(1);
+        harness.assertNotInHand(player1, "Almighty Brushwagg");
+
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Shark")).isEqualTo(2);
+        harness.assertNotInHand(player1, "Almighty Brushwagg");
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Almighty Brushwagg");
     }
 }
