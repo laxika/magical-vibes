@@ -3,10 +3,10 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RunnersBane.class, HillGiant.class, AirElemental.class})
 class RunnersBaneTest extends BaseCardTest {
 
     @Test
@@ -47,7 +48,7 @@ class RunnersBaneTest extends BaseCardTest {
         aura.setAttachedTo(creature.getId());
         gd.playerBattlefields.get(player1.getId()).add(aura);
 
-        advanceToNextTurn(player1);
+        harness.performUntapStep(player2);
 
         assertThat(creature.isTapped()).isTrue();
     }
@@ -63,7 +64,7 @@ class RunnersBaneTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).add(aura);
         gd.playerBattlefields.get(player1.getId()).remove(aura);
 
-        advanceToNextTurn(player1);
+        harness.performUntapStep(player2);
 
         assertThat(creature.isTapped()).isFalse();
     }
@@ -99,14 +100,53 @@ class RunnersBaneTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Runner's Bane");
     }
 
-    private void advanceToNextTurn(Player currentActivePlayer) {
-        harness.forceActivePlayer(currentActivePlayer);
-        harness.setHand(player1, List.of());
-        harness.setHand(player2, List.of());
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
+    @Test
+    void fizzlesIfTargetPowerIncreasesBeforeResolution() {
+        Permanent creature = addCreatureReady(player2, new HillGiant());
+        harness.setHand(player1, List.of(new RunnersBane()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         harness.passBothPriorities();
-        harness.clearPriorityPassed();
+
+        harness.assertInGraveyard(player1, "Runner's Bane");
+        harness.assertNotOnBattlefield(player1, "Runner's Bane");
+        assertThat(creature.isTapped()).isFalse();
+    }
+
+    @Test
+    void enterTriggerStillTapsCreatureAfterPowerIncreaseMakesAuraFallOff() {
+        Permanent creature = addCreatureReady(player2, new HillGiant());
+        harness.setHand(player1, List.of(new RunnersBane()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castEnchantment(player1, 0, creature.getId());
         harness.passBothPriorities();
+        assertThat(creature.isTapped()).isFalse();
+
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.runStateBasedActions();
+        harness.assertInGraveyard(player1, "Runner's Bane");
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isTrue();
+    }
+
+    @Test
+    void auraFallsOffWhenEnchantedCreaturesPowerIncreases() {
+        Permanent creature = addCreatureReady(player2, new HillGiant());
+        harness.setHand(player1, List.of(new RunnersBane()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.runStateBasedActions();
+
+        harness.assertInGraveyard(player1, "Runner's Bane");
+        harness.assertNotOnBattlefield(player1, "Runner's Bane");
+        harness.performUntapStep(player2);
+        assertThat(creature.isTapped()).isFalse();
     }
 }
