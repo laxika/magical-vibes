@@ -104,4 +104,54 @@ class RainOfFilthTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
         harness.assertInGraveyard(player1, "Forest");
     }
+
+    @Test
+    @DisplayName("Lands retain their original mana ability after Rain of Filth resolves")
+    void retainsOriginalLandManaAbility() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.castFromHand(player1, new RainOfFilth(), "{B}");
+        harness.passBothPriorities();
+
+        harness.tapPermanent(player1, 0);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Forest");
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Forest");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Rain of Filth resolves without any lands to grant an ability to")
+    void resolvesWithoutLands() {
+        harness.castFromHand(player1, new RainOfFilth(), "{B}");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Rain of Filth");
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+    }
+
+    @Test
+    @DisplayName("A land cannot activate the granted sacrifice ability after cleanup")
+    void cannotSacrificeLandAfterCleanup() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.castFromHand(player1, new RainOfFilth(), "{B}");
+        harness.passBothPriorities();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Forest");
+        harness.assertNotInGraveyard(player1, "Forest");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+    }
 }
