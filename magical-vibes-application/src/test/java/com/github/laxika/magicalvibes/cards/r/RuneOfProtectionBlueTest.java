@@ -191,6 +191,34 @@ class RuneOfProtectionBlueTest extends BaseCardTest {
         harness.assertInHand(player1, "Elvish Lyrist");
     }
 
+    @Test
+    @DisplayName("A second damage event from the chosen source is not prevented")
+    void secondDamageEventFromChosenSourceIsNotPrevented() {
+        harness.setLife(player1, 20);
+        addReadyRune(player1);
+        Permanent crab = addReadyBlueCreature(player2);
+        Permanent study = harness.addToBattlefieldAndReturn(player2, new HermeticStudy());
+        study.setAttachedTo(crab.getId());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, crab.getId());
+
+        int crabIndex = gd.playerBattlefields.get(player2.getId()).indexOf(crab);
+        harness.activateAbility(player2, crabIndex, 1, null, player1.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player1, 20);
+
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.activateAbility(player2, crabIndex, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player2, crabIndex, 1, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+    }
+
     private Permanent addReadyRune(Player player) {
         return addCreatureReady(player, new RuneOfProtectionBlue());
     }
