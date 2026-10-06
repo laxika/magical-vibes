@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.p.PsionicGift;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.action.PoisonAtNextUpkeepUnlessPays;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SabertoothCobra.class, GiantMantis.class, Incinerate.class})
+@CardUsed({SabertoothCobra.class, GiantMantis.class, Incinerate.class, PsionicGift.class})
 class SabertoothCobraTest extends BaseCardTest {
 
     private int poison() {
@@ -29,11 +30,11 @@ class SabertoothCobraTest extends BaseCardTest {
         resolveAllTriggers();
     }
 
-    /** Advance to player2's upkeep and resolve the delayed obligation into the pay-or-poison prompt. */
+    /** Advance to player2's upkeep and resolve the delayed trigger. */
     private void advanceToPlayer2UpkeepObligation() {
         gd.turnNumber = 2;
         advanceToUpkeep(player2);
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
     @Test
@@ -64,35 +65,34 @@ class SabertoothCobraTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Declining to pay {2} gives another poison counter at the damaged player's next upkeep")
-    void declineGivesSecondPoison() {
+    @DisplayName("Not paying before upkeep gives another poison counter without a payment prompt")
+    void nonpaymentGivesSecondPoison() {
         Permanent cobra = addCreatureReady(player1, new SabertoothCobra());
         cobra.setAttacking(true);
 
         dealCombatDamageToPlayer2();
         advanceToPlayer2UpkeepObligation();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player2, false);
+        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         assertThat(poison()).isEqualTo(2);
     }
 
     @Test
-    @DisplayName("Paying {2} at the next upkeep prompt avoids the second poison counter")
-    void payAvoidsSecondPoisonAtUpkeepPrompt() {
+    @DisplayName("Mana available during upkeep cannot pay a cost whose deadline was before upkeep")
+    void cannotPayAfterUpkeepBegins() {
         Permanent cobra = addCreatureReady(player1, new SabertoothCobra());
         cobra.setAttacking(true);
 
         dealCombatDamageToPlayer2();
-        advanceToPlayer2UpkeepObligation();
+        gd.turnNumber = 2;
+        advanceToUpkeep(player2);
+        harness.addMana(player2, ManaColor.WHITE, 2);
+        harness.withAutoStop(TurnStep.UPKEEP, this::resolveAllTriggers);
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.addMana(player2, ManaColor.WHITE, 2); // mana empties between steps — add it at payment time
-        harness.handleMayAbilityChosen(player2, true);
-
-        assertThat(poison()).isEqualTo(1);
-        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(poison()).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.WHITE)).isEqualTo(2);
     }
 
     @Test
@@ -131,7 +131,7 @@ class SabertoothCobraTest extends BaseCardTest {
 
         assertThat(poison()).isEqualTo(1);
         advanceToPlayer2UpkeepObligation();
-        harness.handleMayAbilityChosen(player2, false);
+        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         assertThat(poison()).isEqualTo(2);
     }
@@ -149,5 +149,75 @@ class SabertoothCobraTest extends BaseCardTest {
 
         assertThat(poison()).isZero();
         assertThat(gd.getDelayedActions(PoisonAtNextUpkeepUnlessPays.class)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The delayed trigger is controlled by the controller of the original damage trigger")
+    void delayedTriggerKeepsOriginalController() {
+        Permanent cobra = addCreatureReady(player1, new SabertoothCobra());
+        cobra.setAttacking(true);
+        dealCombatDamageToPlayer2();
+
+        gd.turnNumber = 2;
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
+    }
+
+    @Test
+    @DisplayName("The delayed counter waits for the damaged player's upkeep")
+    void otherPlayersUpkeepDoesNotGiveSecondPoison() {
+        Permanent cobra = addCreatureReady(player1, new SabertoothCobra());
+        cobra.setAttacking(true);
+        dealCombatDamageToPlayer2();
+
+        gd.turnNumber = 2;
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(poison()).isEqualTo(1);
+        assertThat(gd.getDelayedActions(PoisonAtNextUpkeepUnlessPays.class)).hasSize(1);
+
+        advanceToPlayer2UpkeepObligation();
+
+        assertThat(poison()).isEqualTo(2);
+    }
+
+    @Test
+    @CardUsed(PsionicGift.class)
+    @DisplayName("Damage to the Cobra's own controller also gives poison")
+    void damageToOwnControllerGivesPoison() {
+        Permanent cobra = addCreatureReady(player1, new SabertoothCobra());
+        Permanent gift = harness.addToBattlefieldAndReturn(player1, new PsionicGift());
+        gift.setAttachedTo(cobra.getId());
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(gd.playerPoisonCounters.getOrDefault(player1.getId(), 0)).isEqualTo(1);
+        assertThat(poison()).isZero();
+
+        gd.turnNumber = 2;
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(gd.playerPoisonCounters.getOrDefault(player1.getId(), 0)).isEqualTo(2);
+        assertThat(poison()).isZero();
+    }
+
+    @Test
+    @DisplayName("Each Cobra's damage creates its own immediate and delayed counter")
+    void multipleCobrasGiveIndependentCounters() {
+        addCreatureReady(player1, new SabertoothCobra()).setAttacking(true);
+        addCreatureReady(player1, new SabertoothCobra()).setAttacking(true);
+
+        dealCombatDamageToPlayer2();
+
+        assertThat(poison()).isEqualTo(2);
+        advanceToPlayer2UpkeepObligation();
+
+        assertThat(poison()).isEqualTo(4);
     }
 }
