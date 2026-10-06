@@ -21,7 +21,6 @@ class RattlebackApothecaryTest extends BaseCardTest {
     @DisplayName("After a crime, the controller can grant menace to a creature they control")
     void grantsChosenMenaceAfterCrime() {
         Permanent apothecary = addCreatureReady(player1, new RattlebackApothecary());
-        harness.addToBattlefield(player2, new GrizzlyBears());
 
         commitCrime();
         harness.handlePermanentChosen(player1, apothecary.getId());
@@ -76,6 +75,56 @@ class RattlebackApothecaryTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, apothecary, Keyword.LIFELINK)).isFalse();
     }
 
+    @Test
+    @DisplayName("A crime can grant the keyword to another creature you control")
+    void grantsKeywordToAnotherCreature() {
+        Permanent apothecary = addCreatureReady(player1, new RattlebackApothecary());
+        Permanent recipient = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        commitCrime();
+        harness.handlePermanentChosen(player1, recipient.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "LIFELINK");
+
+        assertThat(gqs.hasKeyword(gd, recipient, Keyword.LIFELINK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, apothecary, Keyword.LIFELINK)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Each crime can grant a keyword, allowing both choices in one turn")
+    void triggersForEachCrimeInTheSameTurn() {
+        Permanent apothecary = addCreatureReady(player1, new RattlebackApothecary());
+
+        commitCrime();
+        harness.handlePermanentChosen(player1, apothecary.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "MENACE");
+        resolveAllTriggers();
+
+        commitCrime();
+        harness.handlePermanentChosen(player1, apothecary.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "LIFELINK");
+
+        assertThat(gqs.hasKeyword(gd, apothecary, Keyword.MENACE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, apothecary, Keyword.LIFELINK)).isTrue();
+    }
+
+    @Test
+    @DisplayName("An opponent committing a crime does not trigger Apothecary")
+    void doesNotTriggerForOpponentsCrime() {
+        Permanent apothecary = addCreatureReady(player1, new RattlebackApothecary());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertLife(player1, 18);
+        assertThat(gqs.hasKeyword(gd, apothecary, Keyword.MENACE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, apothecary, Keyword.LIFELINK)).isFalse();
+    }
     private void commitCrime() {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
