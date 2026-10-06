@@ -15,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RiseOfTheEldrazi.class, GrizzlyBears.class})
+@CardUsed({RiseOfTheEldrazi.class, GrizzlyBears.class, Counterspell.class})
 class RiseOfTheEldraziTest extends BaseCardTest {
 
     @Test
@@ -28,9 +28,8 @@ class RiseOfTheEldraziTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castSorcery(player1, 0, List.of(
+        harness.castAndResolveSorcery(player1, 0, List.of(
                 harness.getPermanentId(player2, "Grizzly Bears"), player2.getId()));
-        harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
@@ -58,7 +57,6 @@ class RiseOfTheEldraziTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(Counterspell.class)
     @DisplayName("Cannot be countered")
     void cannotBeCountered() {
         harness.addToBattlefield(player2, new GrizzlyBears());
@@ -80,5 +78,54 @@ class RiseOfTheEldraziTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Counterspell");
         assertThat(harness.getGameData().extraTurns).containsExactly(player1.getId());
+    }
+
+    @Test
+    @DisplayName("Can destroy its controller's permanent and draw four for its controller")
+    void canTargetOwnPermanentAndSelf() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new RiseOfTheEldrazi()));
+        harness.setLibrary(player1, List.of(
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
+                new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.COLORLESS, 12);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castAndResolveSorcery(player1, 0, List.of(
+                harness.getPermanentId(player1, "Grizzly Bears"), player1.getId()));
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.extraTurns).containsExactly(player1.getId());
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getName().equals("Rise of the Eldrazi"));
+    }
+
+    @Test
+    @DisplayName("Still draws, grants an extra turn, and exiles itself when the permanent target leaves")
+    void resolvesRemainingEffectsWhenPermanentTargetLeaves() {
+        var target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new RiseOfTheEldrazi()));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
+                new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.COLORLESS, 12);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castSorcery(player1, 0, List.of(target.getId(), player2.getId()));
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, target);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(4);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+        assertThat(gd.extraTurns).containsExactly(player1.getId());
+        harness.assertNotInGraveyard(player1, "Rise of the Eldrazi");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getName().equals("Rise of the Eldrazi"));
     }
 }
