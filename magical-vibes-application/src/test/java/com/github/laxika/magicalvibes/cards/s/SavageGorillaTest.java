@@ -122,6 +122,55 @@ class SavageGorillaTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
     }
 
+    @Test
+    void canTargetAnotherCreatureYouControl() {
+        addReadyGorilla();
+        Permanent target = addFourFourKavu(player1);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new SavageGorilla()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getEffectivePower()).isEqualTo(1);
+        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Savage Gorilla");
+        harness.assertInHand(player1, "Savage Gorilla");
+    }
+
+    @Test
+    void cannotActivateWhileTapped() {
+        Permanent gorilla = addReadyGorilla();
+        gorilla.setTapped(true);
+        Permanent target = addFourFourKavu(player2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Savage Gorilla");
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotPayBlackManaCostWithBlueMana() {
+        Permanent gorilla = addReadyGorilla();
+        Permanent target = addFourFourKavu(player2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Savage Gorilla");
+        assertThat(gorilla.isTapped()).isFalse();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addReadyGorilla() {
         return addCreatureReady(player1, new SavageGorilla());
     }
