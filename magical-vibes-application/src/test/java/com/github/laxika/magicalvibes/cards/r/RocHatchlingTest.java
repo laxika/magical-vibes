@@ -101,4 +101,76 @@ class RocHatchlingTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, hatchling)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, hatchling, Keyword.FLYING)).isTrue();
     }
+
+    @Test
+    @DisplayName("Entering without casting also supplies four shell counters immediately")
+    void entersWithoutCastingWithShellCounters() {
+        Permanent hatchling = harness.enterBattlefieldAndReturn(player1, new RocHatchling());
+
+        assertThat(hatchling.getCounterCount(CounterType.SHELL)).isEqualTo(4);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, hatchling)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, hatchling)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, hatchling, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("The last shell counter remains until the upkeep trigger resolves")
+    void lastCounterRemainsWhileTriggerIsOnStack() {
+        Permanent hatchling = addCreatureReady(player1, new RocHatchling());
+        hatchling.setCounterCount(CounterType.SHELL, 1);
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(hatchling.getCounterCount(CounterType.SHELL)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, hatchling)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, hatchling)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, hatchling, Keyword.FLYING)).isFalse();
+
+        resolveAllTriggers();
+
+        assertThat(hatchling.getCounterCount(CounterType.SHELL)).isZero();
+        assertThat(gqs.getEffectivePower(gd, hatchling)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, hatchling)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, hatchling, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Each hatchling removes its own counters and only its controller's upkeep triggers it")
+    void multipleHatchlingsTrackTheirOwnCounters() {
+        Permanent first = harness.enterBattlefieldAndReturn(player1, new RocHatchling());
+        Permanent second = harness.enterBattlefieldAndReturn(player1, new RocHatchling());
+        Permanent opposing = harness.enterBattlefieldAndReturn(player2, new RocHatchling());
+        first.setCounterCount(CounterType.SHELL, 1);
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(first.getCounterCount(CounterType.SHELL)).isZero();
+        assertThat(second.getCounterCount(CounterType.SHELL)).isEqualTo(3);
+        assertThat(opposing.getCounterCount(CounterType.SHELL)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, first, Keyword.FLYING)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, second)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, second, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Other counter types do not prevent the boost or get removed during upkeep")
+    void upkeepIgnoresOtherCounterTypes() {
+        Permanent hatchling = addCreatureReady(player1, new RocHatchling());
+        hatchling.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(hatchling.getCounterCount(CounterType.SHELL)).isZero();
+        assertThat(hatchling.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, hatchling)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, hatchling)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, hatchling, Keyword.FLYING)).isTrue();
+    }
 }
