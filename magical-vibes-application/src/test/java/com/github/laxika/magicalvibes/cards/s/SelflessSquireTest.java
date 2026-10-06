@@ -21,6 +21,7 @@ class SelflessSquireTest extends BaseCardTest {
     void preventsDamageAndAddsCounters() {
         Permanent squire = castSquire();
         castShockAtPlayer();
+        harness.passBothPriorities();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
         assertThat(squire.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
@@ -53,7 +54,65 @@ class SelflessSquireTest extends BaseCardTest {
     private void castShockAtPlayer() {
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, player1.getId());
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+    }
+
+    @Test
+    void countersUseTheStackAfterDamageIsPrevented() {
+        Permanent squire = castSquire();
+        castShockAtPlayer();
+
+        harness.assertLife(player1, 20);
+        assertThat(squire.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
+        assertThat(squire.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void preventionContinuesAfterSquireDies() {
+        Permanent squire = castSquire();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, squire.getId());
+        harness.assertInGraveyard(player1, "Selfless Squire");
+
+        castShockAtPlayer();
+
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    void preventionResolvesEvenIfSquireDiesInResponseToItsEnterTrigger() {
+        harness.setHand(player1, List.of(new SelflessSquire()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        Permanent squire = findPermanent(player1, "Selfless Squire");
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, squire.getId());
+        harness.assertInGraveyard(player1, "Selfless Squire");
+        harness.passBothPriorities();
+
+        castShockAtPlayer();
+
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    void everySquireTriggersForTheSamePreventedDamage() {
+        Permanent first = castSquire();
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new SelflessSquire());
+
+        castShockAtPlayer();
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 }
