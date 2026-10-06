@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -24,8 +25,7 @@ class SkateboardTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castArtifact(player1, 0, target.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(target.isTapped()).isTrue();
         harness.assertOnBattlefield(player1, "Skateboard");
@@ -74,5 +74,148 @@ class SkateboardTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castArtifact(player1, 0, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("cannot target players");
+    }
+
+    @Test
+    void enterTriggerResolvesAfterEquipmentAndSurvivesItsRemoval() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.setHand(player1, List.of(new Skateboard()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castArtifact(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Skateboard");
+        assertThat(target.isTapped()).isFalse();
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(findPermanent(player1, "Skateboard"));
+        resolveAllTriggers();
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void canTapOwnArtifactWithEnterTrigger() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Skateboard());
+        harness.setHand(player1, List.of(new Skateboard()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castArtifact(player1, 0, target.getId());
+        resolveAllTriggers();
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(countPermanents(player1, "Skateboard")).isEqualTo(2);
+    }
+
+    @Test
+    void enteringWithoutBeingCastCanTapItself() {
+        Permanent skateboard = harness.enterBattlefieldAndReturn(player1, new Skateboard());
+
+        harness.handlePermanentChosen(player1, skateboard.getId());
+        resolveAllTriggers();
+
+        assertThat(skateboard.isTapped()).isTrue();
+        harness.assertOnBattlefield(player1, "Skateboard");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void invalidEnterTriggerTargetDoesNotRemoveEquipment() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.setHand(player1, List.of(new Skateboard()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castArtifact(player1, 0, target.getId());
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Skateboard");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void reEquipMovesPowerAndHasteOnlyOnResolutionAndPaysOneMana() {
+        Permanent skateboard = harness.addToBattlefieldAndReturn(player1, new Skateboard());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, first.getId());
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, second.getId());
+
+        assertThat(skateboard.getAttachedTo()).isEqualTo(first.getId());
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, first, Keyword.HASTE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, second, Keyword.HASTE)).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(skateboard.getAttachedTo()).isEqualTo(second.getId());
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, first, Keyword.HASTE)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, second, Keyword.HASTE)).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void cannotEquipOpponentsCreature() {
+        harness.addToBattlefield(player1, new Skateboard());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a creature you control");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+    }
+
+    @Test
+    void cannotEquipNoncreaturePermanent() {
+        harness.addToBattlefield(player1, new Skateboard());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, land.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a creature you control");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+    }
+
+    @Test
+    void cannotEquipDuringCombat() {
+        harness.addToBattlefield(player1, new Skateboard());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery speed");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+    }
+
+    @Test
+    void failedReEquipPreservesOriginalPowerAndHaste() {
+        Permanent skateboard = harness.addToBattlefieldAndReturn(player1, new Skateboard());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, first.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, second.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(second);
+        harness.passBothPriorities();
+
+        assertThat(skateboard.getAttachedTo()).isEqualTo(first.getId());
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, first, Keyword.HASTE)).isTrue();
+        assertThat(gd.stack).isEmpty();
     }
 }
