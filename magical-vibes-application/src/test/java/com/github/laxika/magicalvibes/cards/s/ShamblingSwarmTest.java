@@ -102,6 +102,62 @@ class ShamblingSwarmTest extends BaseCardTest {
         assertThat(second.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
     }
 
+    @Test
+    @DisplayName("Can distribute counters to an opponent's creature")
+    void putsCountersOnOpponentsCreature() {
+        Permanent swarm = addCreatureReady(player1, new ShamblingSwarm());
+        Permanent target = addCreatureReady(player2, new CarrionWurm());
+
+        killSwarm(swarm);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.handleListChoice(player1, "3");
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(3);
+        resolveNextEndStepCounterRemovals();
+        assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("A death trigger with no remaining creatures does not ask for targets")
+    void noCreaturesRemainToTarget() {
+        Permanent swarm = addCreatureReady(player1, new ShamblingSwarm());
+
+        killSwarm(swarm);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(swarm.getCard());
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Counters assigned to a target that dies in response are not redistributed")
+    void lostTargetsCountersAreNotRedistributed() {
+        Permanent swarm = addCreatureReady(player1, new ShamblingSwarm());
+        Permanent first = addCreatureReady(player1, new CarrionWurm());
+        Permanent second = addCreatureReady(player2, new CarrionWurm());
+        first.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 2);
+
+        killSwarm(swarm);
+        harness.handlePermanentChosen(player1, first.getId());
+        harness.handlePermanentChosen(player1, second.getId());
+        harness.handleListChoice(player1, "2");
+        harness.handleListChoice(player1, "1");
+
+        harness.setHand(player1, List.of(new FieryTemper()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, first.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(first);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(first.getCard());
+        assertThat(second.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isOne();
+        resolveNextEndStepCounterRemovals();
+        assertThat(second.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+    }
+
     private void killSwarm(Permanent swarm) {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
