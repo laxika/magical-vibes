@@ -38,12 +38,9 @@ class SeaDasherOctopusTest extends BaseCardTest {
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Forest()));
         Permanent octopus = addAttacker(player1, new SeaDasherOctopus());
-        Permanent blocker = addReadyCreature(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
                 gd.playerBattlefields.get(player1.getId()).indexOf(octopus))));
@@ -53,26 +50,67 @@ class SeaDasherOctopusTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }
 
-    private void resolveUnblockedCombat() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+    @Test
+    @DisplayName("Can be cast during the opponent's upkeep using flash")
+    void castsDuringOpponentsUpkeep() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
         harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+
+        harness.castFromHand(player1, new SeaDasherOctopus(), "{1}{U}{U}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Sea-Dasher Octopus");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Each attacking Octopus draws one card independently")
+    void twoOctopusesDrawTwoCards() {
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
+        addAttacker(player1, new SeaDasherOctopus());
+        addAttacker(player1, new SeaDasherOctopus());
+
+        resolveUnblockedCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Draw trigger resolves for its controller after the source leaves")
+    void drawTriggerSurvivesSourceLeaving() {
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(new Forest(), new Forest()));
+        Permanent octopus = addAttacker(player2, new SeaDasherOctopus());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+
+        harness.resolveCombatDamage();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        gd.playerBattlefields.get(player2.getId()).remove(octopus);
+        gd.playerGraveyards.get(player2.getId()).add(octopus.getCard());
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    private void resolveUnblockedCombat() {
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of());
         harness.passBothPriorities();
         harness.passBothPriorities();
     }
 
     private Permanent addAttacker(Player player, Card card) {
-        Permanent attacker = addReadyCreature(player, card);
+        Permanent attacker = addCreatureReady(player, card);
         attacker.setAttacking(true);
         return attacker;
-    }
-
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent creature = new Permanent(card);
-        creature.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(creature);
-        return creature;
     }
 }
