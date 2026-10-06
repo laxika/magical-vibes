@@ -59,12 +59,74 @@ class SandstormSalvagerTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, golem, Keyword.TRAMPLE)).isFalse();
     }
 
+    @Test
+    @DisplayName("A token copy grants itself a counter and trample")
+    void tokenCopyIncludesItself() {
+        SandstormSalvager tokenCard = new SandstormSalvager();
+        tokenCard.setToken(true);
+        Permanent tokenSalvager = addCreatureReady(player1, tokenCard);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, indexOf(tokenSalvager), null, null);
+        assertThat(tokenSalvager.isTapped()).isTrue();
+        harness.passBothPriorities();
+
+        assertThat(tokenSalvager.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, tokenSalvager, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("All controlled creature tokens are boosted, but opposing tokens are excluded")
+    void boostsMultipleControlledTokensOnly() {
+        Permanent salvager = castSalvager();
+        Permanent golem = findPermanent(player1, "Golem");
+        SandstormSalvager ownTokenCard = new SandstormSalvager();
+        ownTokenCard.setToken(true);
+        Permanent ownToken = addCreatureReady(player1, ownTokenCard);
+        SandstormSalvager opposingTokenCard = new SandstormSalvager();
+        opposingTokenCard.setToken(true);
+        Permanent opposingToken = addCreatureReady(player2, opposingTokenCard);
+        salvager.setSummoningSick(false);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, indexOf(salvager), null, null);
+        harness.passBothPriorities();
+
+        for (Permanent token : List.of(golem, ownToken)) {
+            assertThat(token.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+            assertThat(gqs.hasKeyword(gd, token, Keyword.TRAMPLE)).isTrue();
+        }
+        assertThat(opposingToken.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.hasKeyword(gd, opposingToken, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Tokens are selected at resolution and later tokens receive no boost")
+    void selectsTokensAtResolution() {
+        Permanent salvager = castSalvager();
+        salvager.setSummoningSick(false);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, indexOf(salvager), null, null);
+
+        SandstormSalvager earlyTokenCard = new SandstormSalvager();
+        earlyTokenCard.setToken(true);
+        Permanent earlyToken = addCreatureReady(player1, earlyTokenCard);
+        harness.passBothPriorities();
+
+        SandstormSalvager lateTokenCard = new SandstormSalvager();
+        lateTokenCard.setToken(true);
+        Permanent lateToken = addCreatureReady(player1, lateTokenCard);
+
+        assertThat(earlyToken.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, earlyToken, Keyword.TRAMPLE)).isTrue();
+        assertThat(lateToken.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.hasKeyword(gd, lateToken, Keyword.TRAMPLE)).isFalse();
+    }
     private Permanent castSalvager() {
         harness.setHand(player1, List.of(new SandstormSalvager()));
         harness.addMana(player1, ManaColor.GREEN, 3);
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         return findPermanent(player1, "Sandstorm Salvager");
     }
 
