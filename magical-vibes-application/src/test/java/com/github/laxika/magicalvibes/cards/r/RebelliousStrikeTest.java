@@ -20,16 +20,14 @@ class RebelliousStrikeTest extends BaseCardTest {
 
     @Test
     void boostsTargetCreatureAndDrawsACard() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         harness.setHand(player1, List.of(new RebelliousStrike()));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
-        UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castInstant(player1, 0, bearId);
+        harness.castInstant(player1, 0, bear.getId());
         harness.passBothPriorities();
 
-        Permanent bear = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(bear.getPowerModifier()).isEqualTo(3);
         assertThat(bear.getToughnessModifier()).isEqualTo(0);
         assertThat(gd.playerHands.get(player1.getId())).singleElement().isInstanceOf(GrizzlyBears.class);
@@ -37,37 +35,55 @@ class RebelliousStrikeTest extends BaseCardTest {
 
     @Test
     void boostWearsOffAtCleanup() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new RebelliousStrike()));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
-        UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castInstant(player1, 0, bearId);
+        harness.castInstant(player1, 0, bear.getId());
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        Permanent bear = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(bear.getPowerModifier()).isEqualTo(0);
         assertThat(bear.getToughnessModifier()).isEqualTo(0);
     }
 
     @Test
     void doesNotDrawIfTargetIsRemovedBeforeResolution() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         harness.setHand(player1, List.of(new RebelliousStrike()));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
-        UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castInstant(player1, 0, bearId);
+        harness.castInstant(player1, 0, bear.getId());
         gd.playerBattlefields.get(player1.getId()).clear();
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).singleElement().isInstanceOf(GrizzlyBears.class);
+    }
+
+    @Test
+    void canBoostOpponentsCreatureAndOnlyCasterDraws() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new RebelliousStrike()));
+        harness.setHand(player2, List.of());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castInstant(player1, 0, bear.getId());
+        harness.passBothPriorities();
+
+        assertThat(bear.getPowerModifier()).isEqualTo(3);
+        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).singleElement().isInstanceOf(GrizzlyBears.class);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).singleElement().isInstanceOf(GrizzlyBears.class);
+        harness.assertInGraveyard(player1, "Rebellious Strike");
     }
 
     @Test
