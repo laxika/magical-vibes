@@ -4,10 +4,12 @@ import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,22 +19,21 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RitesOfReaping.class, AirElemental.class, FountainOfYouth.class,
+        GrizzlyBears.class, LlanowarElves.class, Unsummon.class})
 class RitesOfReapingTest extends BaseCardTest {
 
     @Test
     @DisplayName("First target gets +3/+3 and second gets -3/-3")
     void boostsFirstAndDebuffsSecond() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new LlanowarElves());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent elves = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
         harness.setHand(player1, List.of(new RitesOfReaping()));
         addCastMana();
 
-        UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
-        UUID elvesId = harness.getPermanentId(player2, "Llanowar Elves");
-        harness.castSorcery(player1, 0, List.of(bearsId, elvesId));
+        harness.castSorcery(player1, 0, List.of(bears.getId(), elves.getId()));
         harness.passBothPriorities();
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(bears.getEffectivePower()).isEqualTo(5);
         assertThat(bears.getEffectiveToughness()).isEqualTo(5);
         harness.assertNotOnBattlefield(player2, "Llanowar Elves");
@@ -43,18 +44,14 @@ class RitesOfReapingTest extends BaseCardTest {
     @Test
     @DisplayName("Both modifiers wear off at cleanup")
     void modifiersWearOffAtCleanup() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new AirElemental());
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opp = harness.addToBattlefieldAndReturn(player2, new AirElemental());
         harness.setHand(player1, List.of(new RitesOfReaping()));
         addCastMana();
 
-        UUID ownId = harness.getPermanentId(player1, "Grizzly Bears");
-        UUID oppId = harness.getPermanentId(player2, "Air Elemental");
-        harness.castSorcery(player1, 0, List.of(ownId, oppId));
+        harness.castSorcery(player1, 0, List.of(own.getId(), opp.getId()));
         harness.passBothPriorities();
 
-        Permanent own = gd.playerBattlefields.get(player1.getId()).getFirst();
-        Permanent opp = gd.playerBattlefields.get(player2.getId()).getFirst();
         assertThat(own.getEffectivePower()).isEqualTo(5);
         assertThat(opp.getEffectivePower()).isEqualTo(1);
         assertThat(opp.getEffectiveToughness()).isEqualTo(1);
@@ -92,6 +89,74 @@ class RitesOfReapingTest extends BaseCardTest {
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
         UUID fountainId = harness.getPermanentId(player1, "Fountain of Youth");
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(bearsId, fountainId)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Second target still gets -3/-3 when the first leaves the battlefield")
+    void secondTargetResolvesWhenFirstLeaves() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setHand(player1, List.of(new RitesOfReaping(), new Unsummon()));
+        addCastMana();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castSorcery(player1, 0, List.of(first.getId(), second.getId()));
+        harness.castInstant(player1, 0, first.getId());
+        harness.passBothPriorities();
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.passBothPriorities();
+
+        assertThat(second.getEffectivePower()).isEqualTo(1);
+        assertThat(second.getEffectiveToughness()).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Rites of Reaping");
+    }
+
+    @Test
+    @DisplayName("First target still gets +3/+3 when the second leaves the battlefield")
+    void firstTargetResolvesWhenSecondLeaves() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setHand(player1, List.of(new RitesOfReaping(), new Unsummon()));
+        addCastMana();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castSorcery(player1, 0, List.of(first.getId(), second.getId()));
+        harness.castInstant(player1, 0, second.getId());
+        harness.passBothPriorities();
+        harness.assertInHand(player2, "Air Elemental");
+        harness.passBothPriorities();
+
+        assertThat(first.getEffectivePower()).isEqualTo(5);
+        assertThat(first.getEffectiveToughness()).isEqualTo(5);
+        harness.assertInGraveyard(player1, "Rites of Reaping");
+    }
+
+    @Test
+    @DisplayName("Both targets may be controlled by the caster")
+    void bothTargetsMayHaveSameController() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new AirElemental());
+        harness.setHand(player1, List.of(new RitesOfReaping()));
+        addCastMana();
+
+        harness.castSorcery(player1, 0, List.of(first.getId(), second.getId()));
+        harness.passBothPriorities();
+
+        assertThat(first.getEffectivePower()).isEqualTo(5);
+        assertThat(first.getEffectiveToughness()).isEqualTo(5);
+        assertThat(second.getEffectivePower()).isEqualTo(1);
+        assertThat(second.getEffectiveToughness()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Cannot cast with only one target")
+    void requiresTwoTargets() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new RitesOfReaping()));
+        addCastMana();
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(creature.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
 
