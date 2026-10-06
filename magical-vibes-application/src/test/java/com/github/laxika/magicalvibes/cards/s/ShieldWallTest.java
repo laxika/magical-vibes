@@ -64,8 +64,7 @@ class ShieldWallTest extends BaseCardTest {
         assertBoostedCreature(creature);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.UPKEEP);
 
         assertThat(creature.getPowerModifier()).isEqualTo(0);
         assertThat(creature.getToughnessModifier()).isEqualTo(0);
@@ -95,6 +94,40 @@ class ShieldWallTest extends BaseCardTest {
         assertThat(laterCreature.getToughnessModifier()).isEqualTo(0);
         assertThat(gqs.getEffectivePower(gd, laterCreature)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, laterCreature)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Boost includes creatures that enter while the spell is on the stack")
+    void boostsCreaturesEnteringBeforeResolution() {
+        Permanent firstCreature = addCreatureReady(player1, new BarbaryApes());
+        harness.castFromHand(player1, new ShieldWall(), "{1}{W}");
+        Permanent enteringCreature = harness.enterBattlefieldAndReturn(player1, new BarbaryApes());
+
+        harness.passBothPriorities();
+
+        assertBoostedCreature(firstCreature);
+        assertBoostedCreature(enteringCreature);
+    }
+
+    @Test
+    @DisplayName("Multiple copies stack their boosts until cleanup")
+    void multipleCopiesStackUntilCleanup() {
+        Permanent creature = addCreatureReady(player1, new BarbaryApes());
+        harness.castFromHand(player1, new ShieldWall(), "{1}{W}");
+        harness.castFromHand(player1, new ShieldWall(), "{1}{W}");
+
+        harness.passBothPriorities();
+        assertBoostedCreature(creature);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(6);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(TurnStep.UPKEEP);
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
 
     private void assertBoostedCreature(Permanent creature) {
