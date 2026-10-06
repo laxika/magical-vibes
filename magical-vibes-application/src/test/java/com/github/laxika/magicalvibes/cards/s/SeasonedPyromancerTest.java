@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LlanowarTribe;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,14 +14,14 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 
 
-@CardUsed({SeasonedPyromancer.class, Forest.class, GrizzlyBears.class})
+@CardUsed({SeasonedPyromancer.class, SnowCoveredForest.class, LlanowarTribe.class})
 class SeasonedPyromancerTest extends BaseCardTest {
 
     @Test
     @DisplayName("Entering creates one Elemental for one nonland card discarded")
     void enteringCreatesTokensForNonlandDiscards() {
-        harness.setHand(player1, List.of(new GrizzlyBears(), new Forest()));
-        harness.setLibrary(player1, List.of(new Forest(), new GrizzlyBears()));
+        harness.setHand(player1, List.of(new LlanowarTribe(), new SnowCoveredForest()));
+        harness.setLibrary(player1, List.of(new SnowCoveredForest(), new LlanowarTribe()));
         harness.enterBattlefieldAndReturn(player1, new SeasonedPyromancer());
 
         harness.passBothPriorities();
@@ -30,11 +29,11 @@ class SeasonedPyromancerTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player1, "Grizzly Bears");
-        harness.assertInGraveyard(player1, "Forest");
+        harness.assertInGraveyard(player1, "Llanowar Tribe");
+        harness.assertInGraveyard(player1, "Snow-Covered Forest");
         assertThat(findPermanents(player1, "Elemental")).hasSize(1);
         assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName)
-                .containsExactly("Forest", "Grizzly Bears");
+                .containsExactly("Snow-Covered Forest", "Llanowar Tribe");
     }
 
     @Test
@@ -49,17 +48,110 @@ class SeasonedPyromancerTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Elemental")).hasSize(2);
         harness.assertNotInGraveyard(player1, "Seasoned Pyromancer");
     }
+
+    @Test
+    void emptyHandStillDrawsTwoWithoutCreatingTokens() {
+        SnowCoveredForest first = new SnowCoveredForest();
+        LlanowarTribe second = new LlanowarTribe();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(first, second));
+        harness.enterBattlefieldAndReturn(player1, new SeasonedPyromancer());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(first, second);
+        assertThat(countPermanents(player1, "Elemental")).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void singleLandIsDiscardedAndStillDrawsTwoWithoutTokens() {
+        SnowCoveredForest discarded = new SnowCoveredForest();
+        SnowCoveredForest first = new SnowCoveredForest();
+        LlanowarTribe second = new LlanowarTribe();
+        harness.setHand(player1, List.of(discarded));
+        harness.setLibrary(player1, List.of(first, second));
+        harness.enterBattlefieldAndReturn(player1, new SeasonedPyromancer());
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(discarded);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(first, second);
+        assertThat(countPermanents(player1, "Elemental")).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void singleNonlandCreatesTokenDuringTheOriginalResolution() {
+        LlanowarTribe discarded = new LlanowarTribe();
+        SnowCoveredForest first = new SnowCoveredForest();
+        SnowCoveredForest second = new SnowCoveredForest();
+        harness.setHand(player1, List.of(discarded));
+        harness.setLibrary(player1, List.of(first, second));
+        harness.enterBattlefieldAndReturn(player1, new SeasonedPyromancer());
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(discarded);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(first, second);
+        assertThat(countPermanents(player1, "Elemental")).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void twoNonlandsCreateBothTokensBeforePriorityReturns() {
+        LlanowarTribe firstDiscard = new LlanowarTribe();
+        LlanowarTribe secondDiscard = new LlanowarTribe();
+        SnowCoveredForest firstDraw = new SnowCoveredForest();
+        SnowCoveredForest secondDraw = new SnowCoveredForest();
+        harness.setHand(player1, List.of(firstDiscard, secondDiscard));
+        harness.setLibrary(player1, List.of(firstDraw, secondDraw));
+        harness.enterBattlefieldAndReturn(player1, new SeasonedPyromancer());
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .containsExactlyInAnyOrder(firstDiscard, secondDiscard);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw);
+        assertThat(countPermanents(player1, "Elemental")).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void twoLandsCreateNoTokens() {
+        SnowCoveredForest firstDiscard = new SnowCoveredForest();
+        SnowCoveredForest secondDiscard = new SnowCoveredForest();
+        LlanowarTribe firstDraw = new LlanowarTribe();
+        LlanowarTribe secondDraw = new LlanowarTribe();
+        harness.setHand(player1, List.of(firstDiscard, secondDiscard));
+        harness.setLibrary(player1, List.of(firstDraw, secondDraw));
+        harness.enterBattlefieldAndReturn(player1, new SeasonedPyromancer());
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .containsExactlyInAnyOrder(firstDiscard, secondDiscard);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw);
+        assertThat(countPermanents(player1, "Elemental")).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
 }
 
-@CardUsed({SeasonedPyromancer.class, Forest.class, GrizzlyBears.class})
+@CardUsed({SeasonedPyromancer.class, SnowCoveredForest.class, LlanowarTribe.class})
 class Mh1SeasonedPyromancerTest extends BaseCardTest {
 
     @Test
     void entersDiscardsTwoDrawsTwoAndCreatesElementalsForNonlands() {
-        Forest discardedLand = new Forest();
-        GrizzlyBears discardedNonland = new GrizzlyBears();
-        Forest drawnOne = new Forest();
-        GrizzlyBears drawnTwo = new GrizzlyBears();
+        SnowCoveredForest discardedLand = new SnowCoveredForest();
+        LlanowarTribe discardedNonland = new LlanowarTribe();
+        SnowCoveredForest drawnOne = new SnowCoveredForest();
+        LlanowarTribe drawnTwo = new LlanowarTribe();
         harness.setHand(player1, List.of(new SeasonedPyromancer(), discardedLand, discardedNonland));
         harness.setLibrary(player1, List.of(drawnOne, drawnTwo));
         harness.addMana(player1, ManaColor.RED, 2);
