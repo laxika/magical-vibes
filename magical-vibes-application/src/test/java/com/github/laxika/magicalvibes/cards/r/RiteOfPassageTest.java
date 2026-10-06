@@ -76,4 +76,52 @@ class RiteOfPassageTest extends BaseCardTest {
 
         assertThat(blocker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
+
+    @Test
+    @DisplayName("Each Rite of Passage adds one counter, regardless of the damage amount")
+    void multipleCopiesEachAddOneCounter() {
+        harness.addToBattlefield(player1, new RiteOfPassage());
+        harness.addToBattlefield(player1, new RiteOfPassage());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new Arachnoid());
+        harness.setHand(player2, List.of(new BeaconOfDestruction()));
+        harness.addMana(player2, ManaColor.RED, 5);
+
+        harness.castAndResolveInstant(player2, 0, creature.getId());
+        resolveAllTriggers();
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Damage to the controller does not trigger Rite of Passage")
+    void playerDamageDoesNotTrigger() {
+        harness.addToBattlefield(player1, new RiteOfPassage());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new Arachnoid());
+        harness.setHand(player2, List.of(new BeaconOfDestruction()));
+        harness.addMana(player2, ManaColor.RED, 5);
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Lethal combat damage still triggers but cannot save the creature")
+    void lethalCombatDamageStillTriggers() {
+        harness.addToBattlefield(player1, new RiteOfPassage());
+        Permanent blocker = addCreatureReady(player1, new FurnaceWhelp());
+        Permanent attacker = addCreatureReady(player2, new Arachnoid());
+        attacker.setAttacking(true);
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+        harness.forceActivePlayer(player2);
+
+        harness.resolveCombatDamage();
+
+        harness.assertNotOnBattlefield(player1, "Furnace Whelp");
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        assertThat(blocker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
 }
