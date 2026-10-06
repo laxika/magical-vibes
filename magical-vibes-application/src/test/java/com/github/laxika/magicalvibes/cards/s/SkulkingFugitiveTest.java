@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.c.Counterspell;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -11,7 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-@CardUsed({SkulkingFugitive.class, GiantGrowth.class, ProdigalPyromancer.class})
+@CardUsed({SkulkingFugitive.class, GiantGrowth.class, ProdigalPyromancer.class, Counterspell.class})
 class SkulkingFugitiveTest extends BaseCardTest {
 
     @Test
@@ -21,9 +22,7 @@ class SkulkingFugitiveTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new GiantGrowth()));
         harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.castInstant(player1, 0, fugitive.getId());
-
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, fugitive.getId());
 
         harness.assertNotOnBattlefield(player1, "Skulking Fugitive");
         harness.assertInGraveyard(player1, "Skulking Fugitive");
@@ -37,9 +36,7 @@ class SkulkingFugitiveTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new GiantGrowth()));
         harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.castInstant(player1, 0, otherCreature.getId());
-
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, otherCreature.getId());
 
         harness.assertOnBattlefield(player1, "Skulking Fugitive");
         harness.assertNotInGraveyard(player1, "Skulking Fugitive");
@@ -53,6 +50,48 @@ class SkulkingFugitiveTest extends BaseCardTest {
 
         harness.activateAbility(player2, gd.playerBattlefields.get(player2.getId()).indexOf(pyromancer),
                 null, fugitive.getId());
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Skulking Fugitive");
+        harness.assertInGraveyard(player1, "Skulking Fugitive");
+    }
+
+    @Test
+    @DisplayName("An opponent's spell triggers sacrifice only when the trigger resolves")
+    void opponentSpellSacrificesOnTriggerResolution() {
+        Permanent fugitive = harness.addToBattlefieldAndReturn(player1, new SkulkingFugitive());
+        harness.setHand(player2, List.of(new GiantGrowth()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.castInstant(player2, 0, fugitive.getId());
+
+        harness.assertOnBattlefield(player1, "Skulking Fugitive");
+        harness.assertNotInGraveyard(player1, "Skulking Fugitive");
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Skulking Fugitive");
+        harness.assertInGraveyard(player1, "Skulking Fugitive");
+
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Giant Growth");
+    }
+
+    @Test
+    @DisplayName("Countering the targeting spell does not stop the sacrifice trigger")
+    void sacrificeTriggerSurvivesCounteringTargetingSpell() {
+        Permanent fugitive = harness.addToBattlefieldAndReturn(player1, new SkulkingFugitive());
+        GiantGrowth growth = new GiantGrowth();
+        harness.setHand(player1, List.of(growth));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castInstant(player1, 0, fugitive.getId());
+
+        harness.setHand(player2, List.of(new Counterspell()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player2, 0, growth.getId());
+
+        harness.assertInGraveyard(player1, "Giant Growth");
+        harness.assertOnBattlefield(player1, "Skulking Fugitive");
 
         harness.passBothPriorities();
 
