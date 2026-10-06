@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({RustvaleBridge.class, StoneRain.class})
 class RustvaleBridgeTest extends BaseCardTest {
@@ -59,10 +60,40 @@ class RustvaleBridgeTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Rustvale Bridge");
     }
 
+    @Test
+    @DisplayName("Cannot activate the mana ability while tapped after entering")
+    void cannotActivateWhileTapped() {
+        harness.setHand(player1, List.of(new RustvaleBridge()));
+        harness.playLand(player1, 0);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("tapped");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An untapped bridge can produce mana the turn it enters without using the stack")
+    void producesManaImmediatelyAfterUntappingOnEntryTurn() {
+        harness.setHand(player1, List.of(new RustvaleBridge()));
+        harness.playLand(player1, 0);
+        Permanent bridge = gd.playerBattlefields.get(player1.getId()).getFirst();
+        bridge.untap();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, ManaColor.WHITE.name());
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        assertThat(bridge.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addReadyBridge() {
-        Permanent bridge = new Permanent(new RustvaleBridge());
+        Permanent bridge = harness.addToBattlefieldAndReturn(player1, new RustvaleBridge());
         bridge.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bridge);
         return bridge;
     }
 }
