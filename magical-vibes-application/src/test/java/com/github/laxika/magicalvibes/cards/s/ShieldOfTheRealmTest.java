@@ -2,43 +2,33 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
-import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.EquipEffect;
-import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ShieldOfTheRealm.class, GrizzlyBears.class, LightningBolt.class, Shock.class})
 class ShieldOfTheRealmTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    
-
     @Test
-    @DisplayName("Shield of the Realm has equip {1} ability")
-    void hasEquipAbility() {
-        ShieldOfTheRealm card = new ShieldOfTheRealm();
+    @DisplayName("Equip cannot be activated without paying its mana cost")
+    void cannotEquipWithoutMana() {
+        addShieldReady(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
 
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.getManaCost()).isEqualTo("{1}");
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.isNeedsTarget()).isTrue();
-        assertThat(ability.getTargetFilter()).isInstanceOf(ControlledPermanentPredicateTargetFilter.class);
-        assertThat(ability.getTimingRestriction()).isEqualTo(ActivationTimingRestriction.SORCERY_SPEED);
-        assertThat(ability.getEffects()).singleElement().isInstanceOf(EquipEffect.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
     }
-
-    // ===== Equip =====
 
     @Test
     @DisplayName("Resolving equip attaches Shield of the Realm to target creature")
@@ -53,8 +43,6 @@ class ShieldOfTheRealmTest extends BaseCardTest {
         assertThat(shield.getAttachedTo()).isEqualTo(creature.getId());
         assertThat(gd.stack).isEmpty();
     }
-
-    // ===== Damage prevention from spells =====
 
     @Test
     @DisplayName("Prevents 2 of 3 noncombat damage to equipped creature")
@@ -94,8 +82,6 @@ class ShieldOfTheRealmTest extends BaseCardTest {
         assertThat(creature.getMarkedDamage()).isEqualTo(0);
     }
 
-    // ===== Damage prevention from combat =====
-
     @Test
     @DisplayName("Prevents 2 combat damage to equipped creature from each attacker")
     void prevents2CombatDamageFromEachSource() {
@@ -124,8 +110,6 @@ class ShieldOfTheRealmTest extends BaseCardTest {
         assertThat(defender.getMarkedDamage()).isEqualTo(0);
     }
 
-    // ===== No prevention for unequipped creature =====
-
     @Test
     @DisplayName("Does not prevent damage to unequipped creature")
     void doesNotPreventDamageToUnequippedCreature() {
@@ -143,8 +127,6 @@ class ShieldOfTheRealmTest extends BaseCardTest {
                 .noneMatch(p -> p.getId().equals(creature.getId()));
         harness.assertInGraveyard(player1, "Grizzly Bears");
     }
-
-    // ===== Two shields stack =====
 
     @Test
     @DisplayName("Two Shields of the Realm prevent 4 damage total per source")
@@ -165,8 +147,6 @@ class ShieldOfTheRealmTest extends BaseCardTest {
         // 3 - 4 prevented = 0 damage (clamped at 0)
         assertThat(creature.getMarkedDamage()).isEqualTo(0);
     }
-
-    // ===== Re-equip =====
 
     @Test
     @DisplayName("Moving Shield of the Realm transfers prevention to new creature")
@@ -193,12 +173,70 @@ class ShieldOfTheRealmTest extends BaseCardTest {
         assertThat(creature2.getMarkedDamage()).isEqualTo(1);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Equip cannot target an opponent's creature")
+    void cannotEquipOpponentsCreature() {
+        Permanent shield = addShieldReady(player1);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(shield.getAttachedTo()).isNull();
+    }
+
+    @Test
+    @DisplayName("Equip requires sorcery timing")
+    void cannotEquipDuringOpponentsTurn() {
+        addShieldReady(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery speed");
+    }
+
+    @Test
+    @DisplayName("Prevention applies again to successive damage events")
+    void preventsDamageFromSuccessiveSpells() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent shield = addShieldReady(player1);
+        shield.setAttachedTo(creature.getId());
+        harness.setHand(player2, List.of(new Shock(), new Shock()));
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.castInstant(player2, 0, creature.getId());
+        harness.passBothPriorities();
+        harness.castInstant(player2, 0, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(creature.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("An opponent-controlled Shield still protects the equipped creature")
+    void preventsDamageRegardlessOfEquipmentController() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent shield = addShieldReady(player2);
+        shield.setAttachedTo(creature.getId());
+        harness.setHand(player2, List.of(new LightningBolt()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(creature.getMarkedDamage()).isEqualTo(1);
+    }
 
     private Permanent addShieldReady(Player player) {
-        Permanent perm = new Permanent(new ShieldOfTheRealm());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new ShieldOfTheRealm());
+        permanent.setSummoningSick(false);
+        return permanent;
     }
 }
