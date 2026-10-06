@@ -3,14 +3,14 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RazorfieldRhino.class, Spellbook.class})
 class RazorfieldRhinoTest extends BaseCardTest {
-
-    // ===== Without metalcraft =====
 
     @Test
     @DisplayName("Base 4/4 without metalcraft (only itself as artifact)")
@@ -34,8 +34,6 @@ class RazorfieldRhinoTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, rhino)).isEqualTo(4);
     }
 
-    // ===== With metalcraft =====
-
     @Test
     @DisplayName("Gets +2/+2 with three artifacts (itself + two) becoming 6/6")
     void metalcraftWithThreeArtifacts() {
@@ -48,8 +46,6 @@ class RazorfieldRhinoTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, rhino)).isEqualTo(6);
     }
 
-    // ===== Metalcraft lost =====
-
     @Test
     @DisplayName("Loses boost when artifact count drops below three")
     void losesMetalcraftWhenArtifactRemoved() {
@@ -61,16 +57,11 @@ class RazorfieldRhinoTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, rhino)).isEqualTo(6);
 
         // Remove one Spellbook — now only 2 artifacts (Rhino + 1 Spellbook)
-        gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Spellbook"))
-                .findFirst()
-                .ifPresent(p -> gd.playerBattlefields.get(player1.getId()).remove(p));
+        gd.playerBattlefields.get(player1.getId()).remove(findPermanent(player1, "Spellbook"));
 
         assertThat(gqs.getEffectivePower(gd, rhino)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, rhino)).isEqualTo(4);
     }
-
-    // ===== Opponent's artifacts =====
 
     @Test
     @DisplayName("Opponent's artifacts don't count for metalcraft")
@@ -86,7 +77,36 @@ class RazorfieldRhinoTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, rhino)).isEqualTo(4);
     }
 
-    // ===== Helpers =====
+
+    @Test
+    @CardUsed({RazorfieldRhino.class})
+    @DisplayName("Metalcraft turns on immediately when the third artifact enters")
+    void gainsMetalcraftAfterEntering() {
+        Permanent rhino = harness.addToBattlefieldAndReturn(player1, new RazorfieldRhino());
+        harness.addToBattlefield(player1, new RazorfieldRhino());
+        assertThat(gqs.getEffectivePower(gd, rhino)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, rhino)).isEqualTo(4);
+
+        Permanent thirdArtifact = harness.enterBattlefieldAndReturn(player1, new RazorfieldRhino());
+
+        assertThat(gqs.getEffectivePower(gd, rhino)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, rhino)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, thirdArtifact)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, thirdArtifact)).isEqualTo(6);
+    }
+
+    @Test
+    @CardUsed({RazorfieldRhino.class})
+    @DisplayName("Four artifacts still grant only one +2/+2 boost")
+    void extraArtifactsDoNotIncreaseBoost() {
+        Permanent rhino = harness.addToBattlefieldAndReturn(player1, new RazorfieldRhino());
+        harness.addToBattlefield(player1, new RazorfieldRhino());
+        harness.addToBattlefield(player1, new RazorfieldRhino());
+        harness.addToBattlefield(player1, new RazorfieldRhino());
+
+        assertThat(gqs.getEffectivePower(gd, rhino)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, rhino)).isEqualTo(6);
+    }
 
     private Permanent findRhino() {
         return findPermanent(player1, "Razorfield Rhino");
