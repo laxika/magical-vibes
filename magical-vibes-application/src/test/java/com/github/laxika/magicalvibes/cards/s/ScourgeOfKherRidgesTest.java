@@ -60,4 +60,59 @@ class ScourgeOfKherRidgesTest extends BaseCardTest {
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 20);
     }
+
+    @Test
+    @DisplayName("The first ability can be activated repeatedly while tapped and summoning sick")
+    void firstAbilityCanBeRepeatedWhileTappedAndSummoningSick() {
+        Permanent scourge = harness.addToBattlefieldAndReturn(player1, new ScourgeOfKherRidges());
+        scourge.setSummoningSick(true);
+        scourge.setTapped(true);
+        Permanent ownGroundCreature = addCreatureReady(player1, new FomoriNomad());
+        Permanent opposingGroundCreature = addCreatureReady(player2, new FomoriNomad());
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(ownGroundCreature.getMarkedDamage()).isEqualTo(2);
+        assertThat(opposingGroundCreature.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Fomori Nomad");
+        harness.assertOnBattlefield(player2, "Fomori Nomad");
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Fomori Nomad");
+        harness.assertInGraveyard(player2, "Fomori Nomad");
+        harness.assertNotOnBattlefield(player1, "Fomori Nomad");
+        harness.assertNotOnBattlefield(player2, "Fomori Nomad");
+        harness.assertOnBattlefield(player1, "Scourge of Kher Ridges");
+        assertThat(scourge.getMarkedDamage()).isZero();
+        assertThat(scourge.isTapped()).isTrue();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("The second ability excludes only its source, not another Scourge")
+    void secondAbilityDamagesAnotherScourge() {
+        Permanent scourge = harness.addToBattlefieldAndReturn(player1, new ScourgeOfKherRidges());
+        scourge.setSummoningSick(true);
+        scourge.setTapped(true);
+        addCreatureReady(player2, new ScourgeOfKherRidges());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Scourge of Kher Ridges");
+        harness.assertNotOnBattlefield(player2, "Scourge of Kher Ridges");
+        harness.assertInGraveyard(player2, "Scourge of Kher Ridges");
+        assertThat(scourge.getMarkedDamage()).isZero();
+        assertThat(scourge.isTapped()).isTrue();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
 }
