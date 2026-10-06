@@ -26,8 +26,7 @@ class RuneSnagTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, unicorn.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, unicorn.getId());
 
         GameData gd = harness.getGameData();
         harness.assertInGraveyard(player1, "Ronom Unicorn");
@@ -45,8 +44,7 @@ class RuneSnagTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, unicorn.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, unicorn.getId());
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -72,8 +70,7 @@ class RuneSnagTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, unicorn.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, unicorn.getId());
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -100,8 +97,7 @@ class RuneSnagTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, unicorn.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, unicorn.getId());
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -115,6 +111,42 @@ class RuneSnagTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Counters when the controller can pay the base cost but not the scaled cost")
+    void countersWhenControllerCannotPayScaledCost() {
+        harness.setGraveyard(player1, List.of(new RuneSnag()));
+        harness.setGraveyard(player2, List.of(new RuneSnag()));
+        RonomUnicorn unicorn = new RonomUnicorn();
+        harness.setHand(player1, List.of(unicorn));
+        harness.addMana(player1, ManaColor.WHITE, 7);
+        harness.setHand(player2, List.of(new RuneSnag()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, unicorn.getId());
+
+        harness.assertInGraveyard(player1, "Ronom Unicorn");
+        assertThat(harness.getGameData().stack).isEmpty();
+        assertThat(harness.getGameData().playerManaPools.get(player1.getId()).getTotal()).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Can target a spell controlled by its own controller")
+    void canCounterOwnSpell() {
+        RonomUnicorn unicorn = new RonomUnicorn();
+        harness.setHand(player1, List.of(unicorn, new RuneSnag()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castCreature(player1, 0);
+        harness.castAndResolveInstant(player1, 0, unicorn.getId());
+
+        harness.assertInGraveyard(player1, "Ronom Unicorn");
+        harness.assertInGraveyard(player1, "Rune Snag");
+        assertThat(harness.getGameData().stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Counters the spell when its controller declines to pay")
     void countersWhenControllerDeclinesToPay() {
         RonomUnicorn unicorn = new RonomUnicorn();
@@ -125,8 +157,7 @@ class RuneSnagTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, unicorn.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, unicorn.getId());
 
         harness.handleMayAbilityChosen(player1, false);
 
