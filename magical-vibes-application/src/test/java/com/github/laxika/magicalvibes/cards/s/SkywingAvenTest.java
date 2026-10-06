@@ -59,4 +59,48 @@ class SkywingAvenTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    void discardIsPaidBeforeResolutionEvenWhenTappedAndSummoningSick() {
+        Permanent skywing = harness.addToBattlefieldAndReturn(player1, new SkywingAven());
+        skywing.setTapped(true);
+        skywing.setSummoningSick(true);
+        harness.setHand(player1, List.of(new CephalidAristocrat()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player1, "Cephalid Aristocrat");
+        harness.assertNotInHand(player1, "Cephalid Aristocrat");
+        harness.assertOnBattlefield(player1, "Skywing Aven");
+        harness.assertNotInHand(player1, "Skywing Aven");
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Skywing Aven");
+        harness.assertNotOnBattlefield(player1, "Skywing Aven");
+    }
+
+    @Test
+    void multipleActivationsOnlyReturnTheirSourceAndEachRequireADiscard() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new SkywingAven());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new SkywingAven());
+        harness.setHand(player1, List.of(new CephalidAristocrat(), new CephalidAristocrat()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .extracting(card -> card.getId()).containsExactly(source.getCard().getId());
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(Permanent::getId).containsExactly(other.getId());
+    }
 }
