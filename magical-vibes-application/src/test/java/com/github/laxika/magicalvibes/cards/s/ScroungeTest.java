@@ -75,6 +75,71 @@ class ScroungeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Only the targeted opponent may choose, and the choice cannot be declined")
+    void opponentMustChooseAnArtifact() {
+        harness.setGraveyard(player2, List.of(new DarksteelIngot(), new DarksteelCitadel()));
+
+        cast(player2.getId());
+
+        assertThatThrownBy(() -> harness.handleGraveyardCardChosen(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleGraveyardCardChosen(player2, -1))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.handleGraveyardCardChosen(player2, 0);
+
+        harness.assertOnBattlefield(player1, "Darksteel Ingot");
+        harness.assertNotOnBattlefield(player2, "Darksteel Ingot");
+        harness.assertNotInGraveyard(player2, "Darksteel Ingot");
+        harness.assertInGraveyard(player2, "Darksteel Citadel");
+        harness.assertInGraveyard(player1, "Scrounge");
+    }
+
+    @Test
+    @DisplayName("Artifacts in the caster's graveyard are not eligible")
+    void ignoresCastersGraveyard() {
+        harness.setGraveyard(player1, List.of(new DarksteelIngot()));
+        harness.setGraveyard(player2, List.of(new CrazedGoblin()));
+
+        cast(player2.getId());
+
+        harness.assertInGraveyard(player1, "Darksteel Ingot");
+        harness.assertNotOnBattlefield(player1, "Darksteel Ingot");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("An artifact that enters the graveyard before resolution can be chosen")
+    void usesGraveyardAtResolution() {
+        harness.setGraveyard(player2, List.of());
+        harness.setHand(player1, List.of(new Scrounge()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
+        harness.setGraveyard(player2, List.of(new DarksteelIngot()));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Darksteel Ingot");
+        harness.assertNotOnBattlefield(player2, "Darksteel Ingot");
+        harness.assertNotInGraveyard(player2, "Darksteel Ingot");
+        harness.assertInGraveyard(player1, "Scrounge");
+    }
+
+    @Test
+    @DisplayName("An empty opponent graveyard is a legal target and the spell does nothing")
+    void emptyGraveyardDoesNothing() {
+        harness.setGraveyard(player2, List.of());
+
+        cast(player2.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Scrounge");
+    }
+
+    @Test
     @DisplayName("The spell cannot target its controller")
     void cannotTargetSelf() {
         harness.setHand(player1, List.of(new Scrounge()));
