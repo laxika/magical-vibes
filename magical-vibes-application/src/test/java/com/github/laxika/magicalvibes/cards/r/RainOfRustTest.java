@@ -104,6 +104,59 @@ class RainOfRustTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Entwine can destroy permanents controlled by its caster")
+    void entwineCanDestroyOwnPermanents() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Millstone());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Plains());
+
+        cast(new int[]{0, 1}, List.of(artifact.getId(), land.getId()), true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(artifact, land);
+        harness.assertInGraveyard(player1, "Millstone");
+        harness.assertInGraveyard(player1, "Plains");
+        harness.assertInGraveyard(player1, "Rain of Rust");
+    }
+
+    @Test
+    @DisplayName("Entwine still destroys the land when the artifact target has left the battlefield")
+    void entwineResolvesWithMissingArtifactTarget() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new Millstone());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Plains());
+        harness.setHand(player1, List.of(new RainOfRust()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.castModalInstantWithModes(player1, 0, 1, 2,
+                new int[]{0, 1}, List.of(artifact.getId(), land.getId()));
+
+        gd.playerBattlefields.get(player2.getId()).remove(artifact);
+        harness.setGraveyard(player2, List.of(artifact.getCard()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(land);
+        harness.assertInGraveyard(player2, "Plains");
+        harness.assertInGraveyard(player1, "Rain of Rust");
+    }
+
+    @Test
+    @DisplayName("Entwine still destroys the artifact when the land target has left the battlefield")
+    void entwineResolvesWithMissingLandTarget() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new Millstone());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Plains());
+        harness.setHand(player1, List.of(new RainOfRust()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.castModalInstantWithModes(player1, 0, 1, 2,
+                new int[]{0, 1}, List.of(artifact.getId(), land.getId()));
+
+        gd.playerBattlefields.get(player2.getId()).remove(land);
+        harness.setGraveyard(player2, List.of(land.getCard()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(artifact);
+        harness.assertInGraveyard(player2, "Millstone");
+        harness.assertInGraveyard(player1, "Rain of Rust");
+    }
     private void cast(int[] modes, List<java.util.UUID> targetIds, boolean entwined) {
         harness.setHand(player1, List.of(new RainOfRust()));
         if (entwined) {
