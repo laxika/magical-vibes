@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,9 +14,8 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ShortSword.class, GrizzlyBears.class})
 class ShortSwordTest extends BaseCardTest {
-
-    // ===== Equip ability: resolving =====
 
     @Test
     @DisplayName("Resolving equip ability attaches Short Sword to target creature")
@@ -76,8 +76,6 @@ class ShortSwordTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, creature2)).isEqualTo(3);
     }
 
-    // ===== Sorcery-speed timing restriction =====
-
     @Test
     @DisplayName("Cannot equip during opponent's turn")
     void cannotEquipDuringOpponentTurn() {
@@ -105,12 +103,96 @@ class ShortSwordTest extends BaseCardTest {
                 .hasMessageContaining("Not enough mana");
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Cannot equip an opponent's creature")
+    void cannotEquipOpponentCreature() {
+        addSwordReady(player1);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("creature you control");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot equip a noncreature permanent")
+    void cannotEquipNoncreature() {
+        addSwordReady(player1);
+        Permanent otherSword = addSwordReady(player1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, otherSword.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot equip outside a main phase")
+    void cannotEquipDuringUpkeep() {
+        addSwordReady(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery speed");
+    }
+
+    @Test
+    @DisplayName("Cannot equip while another equip ability is on the stack")
+    void cannotEquipWithNonemptyStack() {
+        addSwordReady(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.activateAbility(player1, 0, null, creature.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("stack is empty");
+        harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("An illegal new target leaves the sword attached to its original creature")
+    void targetLeavingDoesNotDetachSword() {
+        Permanent sword = addSwordReady(player1);
+        Permanent original = addCreatureReady(player1, new GrizzlyBears());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        sword.setAttachedTo(original.getId());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+        gd.playerGraveyards.get(player1.getId()).add(target.getCard());
+        harness.passBothPriorities();
+
+        assertThat(sword.getAttachedTo()).isEqualTo(original.getId());
+        assertThat(gqs.getEffectivePower(gd, original)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, original)).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The boost remains when the equipped creature changes controller")
+    void boostFollowsCreatureAcrossControllers() {
+        Permanent sword = addSwordReady(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        sword.setAttachedTo(creature.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(creature);
+        gd.playerBattlefields.get(player2.getId()).add(creature);
+
+        assertThat(sword.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+    }
 
     private Permanent addSwordReady(Player player) {
-        Permanent perm = new Permanent(new ShortSword());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new ShortSword());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }
