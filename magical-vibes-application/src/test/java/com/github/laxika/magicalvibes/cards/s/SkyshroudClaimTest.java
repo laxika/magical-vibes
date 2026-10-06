@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.t.TangledIslet;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SkyshroudClaim.class, Forest.class, Island.class, GrizzlyBears.class})
+@CardUsed({SkyshroudClaim.class, Forest.class, Island.class, GrizzlyBears.class, TangledIslet.class})
 class SkyshroudClaimTest extends BaseCardTest {
 
     @Test
@@ -80,6 +81,75 @@ class SkyshroudClaimTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(island, bears);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("May find zero cards even when Forests are available")
+    void mayFindZeroForests() {
+        Forest firstForest = new Forest();
+        Forest secondForest = new Forest();
+        castWithLibrary(List.of(firstForest, secondForest));
+
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .containsExactlyInAnyOrder(firstForest, secondForest);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Skyshroud Claim");
+    }
+
+    @Test
+    @DisplayName("Resolves normally with an empty library")
+    void resolvesWithEmptyLibrary() {
+        castWithLibrary(List.of());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Skyshroud Claim");
+    }
+
+    @Test
+    @DisplayName("Stops after two Forests and searches only the controller's library")
+    void stopsAtTwoForestsFromOwnLibrary() {
+        Forest firstForest = new Forest();
+        Forest secondForest = new Forest();
+        Forest thirdForest = new Forest();
+        Forest opposingForest = new Forest();
+        harness.setLibrary(player2, List.of(opposingForest));
+        castWithLibrary(List.of(firstForest, secondForest, thirdForest));
+
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).extracting(p -> p.getCard())
+                .containsExactly(firstForest, secondForest);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(thirdForest);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opposingForest);
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Skyshroud Claim");
+    }
+
+    @Test
+    @DisplayName("Can find a nonbasic Forest and respects its enters-tapped ability")
+    void findsNonbasicForestWithItsOwnEntryRestriction() {
+        TangledIslet islet = new TangledIslet();
+        Forest forest = new Forest();
+        castWithLibrary(List.of(islet, new Island(), forest));
+
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).extracting(p -> p.getCard())
+                .containsExactly(islet, forest);
+        assertThat(findPermanent(player1, "Tangled Islet").isTapped()).isTrue();
+        assertThat(findPermanent(player1, "Forest").isTapped()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getName)
+                .containsExactly("Island");
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
