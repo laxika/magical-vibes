@@ -51,4 +51,32 @@ class SilverMyrTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
         assertThat(perm.isTapped()).isTrue();
     }
+
+    @Test
+    @DisplayName("Mana is available immediately without using the stack")
+    void manaAbilityResolvesImmediately() {
+        Permanent perm = addCreatureReady(player1, new SilverMyr());
+
+        harness.tapPermanent(player1, 0);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(perm.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Silver Myr can produce mana again after untapping")
+    void canProduceManaAgainAfterUntapping() {
+        Permanent perm = addCreatureReady(player1, new SilverMyr());
+        harness.tapPermanent(player1, 0);
+
+        harness.performUntapStep(player1);
+
+        assertThat(perm.isTapped()).isFalse();
+        harness.tapPermanent(player1, 0);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(2);
+        assertThat(perm.isTapped()).isTrue();
+    }
 }
