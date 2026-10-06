@@ -1,8 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -10,7 +8,6 @@ import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -20,7 +17,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SerraTheBenevolent.class, AirElemental.class, GrizzlyBears.class, Shock.class, SerraAngel.class})
+@CardUsed({SerraTheBenevolent.class, GrizzlyBears.class, Shock.class, SerraAngel.class})
 class SerraTheBenevolentTest extends BaseCardTest {
 
     @Test
@@ -85,8 +82,7 @@ class SerraTheBenevolentTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(1);
         assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
@@ -106,18 +102,88 @@ class SerraTheBenevolentTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(-1);
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
     }
 
+    @Test
+    @DisplayName("+2 includes flyers entering before resolution, but not afterward")
+    void plusTwoDeterminesAffectedCreaturesAtResolution() {
+        Permanent serra = addReadySerra(4);
+        harness.activateAbility(player1, indexOf(serra), 0, null, null);
+        Permanent earlyAngel = harness.addToBattlefieldAndReturn(player1, new SerraAngel());
+        harness.passBothPriorities();
+        Permanent lateAngel = harness.addToBattlefieldAndReturn(player1, new SerraAngel());
+
+        assertThat(gqs.getEffectivePower(gd, earlyAngel)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, earlyAngel)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, lateAngel)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, lateAngel)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("-3 still creates its token when paying loyalty puts Serra into the graveyard")
+    void minusThreeResolvesAfterSerraLeavesBattlefield() {
+        Permanent serra = addReadySerra(3);
+
+        harness.activateAbility(player1, indexOf(serra), 1, null, null);
+        harness.assertNotOnBattlefield(player1, "Serra the Benevolent");
+        harness.assertInGraveyard(player1, "Serra the Benevolent");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken())
+                .singleElement().satisfies(token -> {
+                    assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(4);
+                    assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(4);
+                    assertThat(gqs.hasKeyword(gd, token, Keyword.FLYING)).isTrue();
+                    assertThat(gqs.hasKeyword(gd, token, Keyword.VIGILANCE)).isTrue();
+                });
+    }
+
+    @Test
+    @DisplayName("The emblem reduces lethal damage to 1 life rather than preventing all damage")
+    void emblemAllowsLifeToFallToOne() {
+        Permanent serra = addReadySerra(6);
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setLife(player1, 2);
+        harness.activateAbility(player1, indexOf(serra), 2, null, null);
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        harness.assertLife(player1, 1);
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+    }
+
+    @Test
+    @DisplayName("The emblem stops protecting its controller when their last creature dies")
+    void emblemRechecksCreatureConditionForEachDamageEvent() {
+        Permanent serra = addReadySerra(6);
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new SerraAngel());
+        harness.setLife(player1, 1);
+        harness.activateAbility(player1, indexOf(serra), 2, null, null);
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new Shock(), new Shock()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player2, 0, bears.getId());
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        harness.assertLife(player1, -1);
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+    }
+
     private Permanent addReadySerra(int loyalty) {
-        Permanent serra = new Permanent(new SerraTheBenevolent());
+        Permanent serra = harness.addToBattlefieldAndReturn(player1, new SerraTheBenevolent());
         serra.setCounterCount(CounterType.LOYALTY, loyalty);
         serra.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(serra);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return serra;
