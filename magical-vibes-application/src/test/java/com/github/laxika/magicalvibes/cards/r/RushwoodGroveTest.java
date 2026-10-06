@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed(RushwoodGrove.class)
 class RushwoodGroveTest extends BaseCardTest {
@@ -90,6 +91,53 @@ class RushwoodGroveTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(greenMana()).isZero();
         assertThat(grove.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Adding a storage counter uses the stack and does not produce mana")
+    void addingStorageCounterUsesStack() {
+        Permanent grove = addGroveWithCounters(0);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(grove.isTapped()).isTrue();
+        assertThat(grove.getCounterCount(CounterType.STORAGE)).isZero();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(greenMana()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(grove.getCounterCount(CounterType.STORAGE)).isEqualTo(1);
+        assertThat(greenMana()).isZero();
+    }
+
+    @Test
+    @DisplayName("Removing storage counters produces mana without using the stack")
+    void removingStorageCountersDoesNotUseStack() {
+        Permanent grove = addGroveWithCounters(2);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "2");
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(grove.getCounterCount(CounterType.STORAGE)).isZero();
+        assertThat(greenMana()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Neither ability can be activated while the land is tapped")
+    void tappedLandCannotActivateEitherAbility() {
+        Permanent grove = addGroveWithCounters(2);
+        grove.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(grove.getCounterCount(CounterType.STORAGE)).isEqualTo(2);
+        assertThat(greenMana()).isZero();
+        assertThat(gd.stack).isEmpty();
     }
 
     private Permanent addGroveWithCounters(int counters) {
