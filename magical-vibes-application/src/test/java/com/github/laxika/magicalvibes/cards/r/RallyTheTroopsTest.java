@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.a.AlertShuInfantry;
 import com.github.laxika.magicalvibes.cards.n.NicolBolasPlaneswalker;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.p.PortalMage;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -13,11 +14,13 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RallyTheTroops.class, AlertShuInfantry.class, Plains.class})
+@CardUsed({RallyTheTroops.class, AlertShuInfantry.class, Plains.class, NicolBolasPlaneswalker.class,
+        PortalMage.class})
 class RallyTheTroopsTest extends BaseCardTest {
 
     @Test
@@ -31,8 +34,7 @@ class RallyTheTroopsTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.WHITE, 1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
 
-        harness.castInstant(player2, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0);
 
         assertThat(gd.stack).isEmpty();
         assertThat(tapped1.isTapped()).isFalse();
@@ -100,6 +102,68 @@ class RallyTheTroopsTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.WHITE, 1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
 
+        assertThatThrownBy(() -> harness.castInstant(player2, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("Can cast after the declared attacker leaves combat")
+    void canCastAfterAttackerLeavesCombat() {
+        Permanent attacker = addCreatureReady(player1, new AlertShuInfantry());
+        Permanent defender = tappedCreature(player2);
+        harness.setHand(player2, List.of(new RallyTheTroops()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
+        attacker.setAttacking(false);
+        attacker.setAttackTarget(null);
+
+        harness.castAndResolveInstant(player2, 0);
+
+        assertThat(defender.isTapped()).isFalse();
+        harness.assertInGraveyard(player2, "Rally the Troops");
+    }
+
+    @Test
+    @DisplayName("Can cast with no creatures to untap")
+    void canCastWithNoControlledCreatures() {
+        addCreatureReady(player1, new AlertShuInfantry());
+        harness.setHand(player2, List.of(new RallyTheTroops()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
+
+        harness.castAndResolveInstant(player2, 0);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player2, "Rally the Troops");
+    }
+
+    @Test
+    @CardUsed({NicolBolasPlaneswalker.class, PortalMage.class})
+    @DisplayName("Redirecting an attacker from your planeswalker to you does not count as being attacked")
+    void cannotCastAfterAttackerIsRedirectedFromPlaneswalkerToPlayer() {
+        Permanent attacker = addCreatureReady(player1, new AlertShuInfantry());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new NicolBolasPlaneswalker());
+        harness.setHand(player1, List.of(new PortalMage()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.setHand(player2, List.of(new RallyTheTroops()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.beginAttackerDeclarationInput();
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            gs.declareAttackers(gd, player1, List.of(0), Map.of(0, planeswalker.getId()));
+            harness.castCreature(player1, 0, attacker.getId());
+            harness.passBothPriorities();
+            harness.handlePermanentChosen(player1, attacker.getId());
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, true);
+            harness.handlePermanentChosen(player1, player2.getId());
+        });
+
+        assertThat(gd.currentStep).isEqualTo(TurnStep.DECLARE_ATTACKERS);
+        assertThat(attacker.getAttackTarget()).isEqualTo(player2.getId());
         assertThatThrownBy(() -> harness.castInstant(player2, 0))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
