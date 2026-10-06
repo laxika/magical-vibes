@@ -3,8 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.Hurricane;
 import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -22,9 +20,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ShantottoTacticianMagicianTest extends BaseCardTest {
 
     private Permanent addShantotto(Player player) {
-        Permanent permanent = new Permanent(new ShantottoTacticianMagician());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new ShantottoTacticianMagician());
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 
@@ -34,8 +31,7 @@ class ShantottoTacticianMagicianTest extends BaseCardTest {
     }
 
     private void setDeck(Player player) {
-        gd.playerDecks.get(player.getId()).clear();
-        gd.playerDecks.get(player.getId()).addAll(List.of(new Island(), new Island()));
+        harness.setLibrary(player, List.of(new Island(), new Island()));
     }
 
     @Test
@@ -88,5 +84,94 @@ class ShantottoTacticianMagicianTest extends BaseCardTest {
 
         assertThat(shantotto.getPowerModifier()).isZero();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore);
+    }
+
+    @Test
+    void opponentsNoncreatureSpellDoesNotTrigger() {
+        Permanent shantotto = addShantotto(player1);
+        setDeck(player1);
+        setUpMainPhase(player2);
+        harness.setHand(player2, List.of(new Hurricane()));
+        harness.addMana(player2, ManaColor.GREEN, 4);
+
+        harness.castSorcery(player2, 0, 3);
+        harness.passBothPriorities();
+
+        assertThat(shantotto.getPowerModifier()).isZero();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    void threeManaIsBelowDrawThreshold() {
+        Permanent shantotto = addShantotto(player1);
+        setDeck(player1);
+        setUpMainPhase(player1);
+        harness.setHand(player1, List.of(new Hurricane()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castSorcery(player1, 0, 2);
+        harness.passBothPriorities();
+
+        assertThat(shantotto.getPowerModifier()).isEqualTo(3);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    void eachPendingTriggerRetainsItsOwnManaSpent() {
+        Permanent shantotto = addShantotto(player1);
+        setDeck(player1);
+        setUpMainPhase(player1);
+        harness.setHand(player1, List.of(new Hurricane(), new Shock()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castSorcery(player1, 0, 3);
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        assertThat(shantotto.getPowerModifier()).isEqualTo(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(shantotto.getPowerModifier()).isEqualTo(5);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void drawStillResolvesAfterShantottoLeavesBattlefield() {
+        Permanent shantotto = addShantotto(player1);
+        setDeck(player1);
+        setUpMainPhase(player1);
+        harness.setHand(player1, List.of(new Hurricane()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.castSorcery(player1, 0, 3);
+        harness.setHand(player2, List.of(new Shock(), new Shock()));
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.castInstant(player2, 0, shantotto.getId());
+        harness.passBothPriorities();
+        harness.castInstant(player2, 0, shantotto.getId());
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Shantotto, Tactician Magician");
+
+        harness.passBothPriorities();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        harness.assertInHand(player1, "Island");
+    }
+
+    @Test
+    void boostExpiresAtEndOfTurn() {
+        Permanent shantotto = addShantotto(player1);
+        setUpMainPhase(player1);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        assertThat(shantotto.getPowerModifier()).isEqualTo(1);
+
+        harness.passUntil(TurnStep.UPKEEP);
+
+        assertThat(shantotto.getPowerModifier()).isZero();
+        assertThat(shantotto.getToughnessModifier()).isZero();
     }
 }
