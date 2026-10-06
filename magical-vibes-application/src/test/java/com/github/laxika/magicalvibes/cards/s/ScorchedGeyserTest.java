@@ -19,6 +19,68 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ScorchedGeyserTest extends BaseCardTest {
 
     @Test
+    void entersTappedWithNoBasicLands() {
+        playScorchedGeyser();
+
+        assertThat(findScorchedGeyser(player1).isTapped()).isTrue();
+    }
+
+    @Test
+    void entersUntappedWithTwoTappedBasicLandsOfTheSameType() {
+        harness.addToBattlefieldAndReturn(player1, new Forest()).tap();
+        harness.addToBattlefieldAndReturn(player1, new Forest()).tap();
+
+        playScorchedGeyser();
+
+        assertThat(findScorchedGeyser(player1).isTapped()).isFalse();
+    }
+
+    @Test
+    void entersUntappedWithMoreThanTwoBasicLands() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Plains());
+
+        playScorchedGeyser();
+
+        assertThat(findScorchedGeyser(player1).isTapped()).isFalse();
+    }
+
+    @Test
+    void oneBasicAndOneNonbasicLandAreInsufficient() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new DrownedCatacomb());
+
+        playScorchedGeyser();
+
+        assertThat(findScorchedGeyser(player1).isTapped()).isTrue();
+    }
+
+    @Test
+    void basicLandTypesDoNotMakeOtherGeysersBasic() {
+        harness.addToBattlefield(player1, new ScorchedGeyser());
+        harness.addToBattlefield(player1, new ScorchedGeyser());
+
+        playScorchedGeyser();
+
+        assertThat(findPermanents(player1, "Scorched Geyser")).hasSize(3);
+        assertThat(findPermanents(player1, "Scorched Geyser").get(2).isTapped()).isTrue();
+    }
+
+    @Test
+    void canProduceManaImmediatelyAfterEnteringUntapped() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Plains());
+        playScorchedGeyser();
+
+        harness.activateAbility(player1, 2, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(findScorchedGeyser(player1).isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     void entersTappedWithFewerThanTwoBasicLands() {
         harness.addToBattlefield(player1, new Forest());
 
@@ -83,10 +145,7 @@ class ScorchedGeyserTest extends BaseCardTest {
     }
 
     private Permanent addReadyScorchedGeyser(Player player) {
-        Permanent permanent = new Permanent(new ScorchedGeyser());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        return addCreatureReady(player, new ScorchedGeyser());
     }
 
     private Permanent findScorchedGeyser(Player player) {
