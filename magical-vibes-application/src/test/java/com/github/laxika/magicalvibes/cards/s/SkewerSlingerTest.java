@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -19,7 +18,7 @@ class SkewerSlingerTest extends BaseCardTest {
 
     @Test
     void blockingDealsDamageToAttacker() {
-        Permanent slinger = addReadySlinger(player2);
+        Permanent slinger = addCreatureReady(player2, new SkewerSlinger());
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
 
@@ -39,7 +38,7 @@ class SkewerSlingerTest extends BaseCardTest {
 
     @Test
     void becomingBlockedDealsDamageToBlocker() {
-        Permanent slinger = addReadySlinger(player1);
+        Permanent slinger = addCreatureReady(player1, new SkewerSlinger());
         slinger.setAttacking(true);
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
@@ -58,7 +57,7 @@ class SkewerSlingerTest extends BaseCardTest {
 
     @Test
     void becomingBlockedByMultipleCreaturesDealsDamageToEachBlocker() {
-        Permanent slinger = addReadySlinger(player1);
+        Permanent slinger = addCreatureReady(player1, new SkewerSlinger());
         slinger.setAttacking(true);
         Permanent firstBlocker = addCreatureReady(player2, new GrizzlyBears());
         Permanent secondBlocker = addCreatureReady(player2, new GrizzlyBears());
@@ -81,7 +80,7 @@ class SkewerSlingerTest extends BaseCardTest {
 
     @Test
     void combatTriggersAreNonTargeting() {
-        Permanent slinger = addReadySlinger(player1);
+        Permanent slinger = addCreatureReady(player1, new SkewerSlinger());
         slinger.setAttacking(true);
         addCreatureReady(player2, new GrizzlyBears());
 
@@ -91,10 +90,70 @@ class SkewerSlingerTest extends BaseCardTest {
         assertThat(gd.stack.getFirst().isNonTargeting()).isTrue();
     }
 
-    private Permanent addReadySlinger(Player player) {
-        Permanent perm = new Permanent(new SkewerSlinger());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    @Test
+    void blockingTriggerStillDealsDamageAfterSlingerLeavesBattlefield() {
+        Permanent slinger = addCreatureReady(player2, new SkewerSlinger());
+        Permanent attacker = addCreatureReady(player1, new SkewerSlinger());
+        attacker.setAttacking(true);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        harness.getPermanentRemovalService().sacrificePermanentToGraveyard(gd, slinger);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(attacker.getMarkedDamage()).isEqualTo(1);
+        harness.assertInGraveyard(player2, "Skewer Slinger");
+    }
+
+    @Test
+    void becomingBlockedTriggerStillDealsDamageAfterSlingerLeavesBattlefield() {
+        Permanent slinger = addCreatureReady(player1, new SkewerSlinger());
+        slinger.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new SkewerSlinger());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        harness.getPermanentRemovalService().sacrificePermanentToGraveyard(gd, slinger);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(blocker.getMarkedDamage()).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Skewer Slinger");
+    }
+
+    @Test
+    void lethalTriggerDamageKillsAttackerBeforeCombatDamageButItsTriggerStillResolves() {
+        Permanent attacker = addCreatureReady(player1, new SkewerSlinger());
+        attacker.setAttacking(true);
+        attacker.setMarkedDamage(2);
+        Permanent blocker = addCreatureReady(player2, new SkewerSlinger());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Skewer Slinger");
+        harness.assertInGraveyard(player1, "Skewer Slinger");
+        assertThat(blocker.getMarkedDamage()).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(blocker.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    void attackingWithoutBlockersDoesNotTriggerDamageAbility() {
+        Permanent slinger = addCreatureReady(player1, new SkewerSlinger());
+        slinger.setAttacking(true);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of());
+
+        assertThat(gd.stack).isEmpty();
     }
 }
