@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.a.AnabaShaman;
 import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -20,8 +19,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SanctumGuardian.class, GrizzlyBears.class, AnabaShaman.class, Shock.class})
+@CardUsed({SanctumGuardian.class, GrizzlyBears.class, AnabaShaman.class, Shock.class, ChandraNalaar.class})
 class SanctumGuardianTest extends BaseCardTest {
 
     // ===== Activation / source choice =====
@@ -31,7 +31,7 @@ class SanctumGuardianTest extends BaseCardTest {
     void activatingSacrificesAndPutsOnStack() {
         Permanent guardian = addCreatureReady(player1, new SanctumGuardian());
 
-        harness.activateAbility(player1, indexOf(player1, guardian), null, null);
+        harness.activateAbility(player1, indexOf(player1, guardian), null, player1.getId());
 
         harness.assertNotOnBattlefield(player1, "Sanctum Guardian");
         harness.assertInGraveyard(player1, "Sanctum Guardian");
@@ -45,7 +45,7 @@ class SanctumGuardianTest extends BaseCardTest {
         Permanent guardian = addCreatureReady(player1, new SanctumGuardian());
         addReadyStats(player2, 2, 2);
 
-        harness.activateAbility(player1, indexOf(player1, guardian), null, null);
+        harness.activateAbility(player1, indexOf(player1, guardian), null, player1.getId());
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
@@ -66,7 +66,7 @@ class SanctumGuardianTest extends BaseCardTest {
         harness.castInstant(player2, 0, player1.getId());
         harness.passPriority(player2);
 
-        harness.activateAbility(player1, indexOf(player1, guardian), null, null);
+        harness.activateAbility(player1, indexOf(player1, guardian), null, player1.getId());
         harness.passBothPriorities();
 
         PendingInteraction.PermanentChoice choice =
@@ -86,7 +86,7 @@ class SanctumGuardianTest extends BaseCardTest {
         Permanent guardian = addCreatureReady(player1, new SanctumGuardian());
         Permanent source = addReadyStats(player2, 2, 2);
 
-        harness.activateAbility(player1, indexOf(player1, guardian), null, null);
+        harness.activateAbility(player1, indexOf(player1, guardian), null, player1.getId());
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, source.getId());
 
@@ -104,7 +104,7 @@ class SanctumGuardianTest extends BaseCardTest {
         Permanent shaman = addCreatureReady(player1, new AnabaShaman());
         Permanent creature = addReadyStats(player2, 3, 3);
 
-        harness.activateAbility(player1, indexOf(player1, guardian), null, null);
+        harness.activateAbility(player1, indexOf(player1, guardian), null, creature.getId());
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, shaman.getId());
 
@@ -123,7 +123,7 @@ class SanctumGuardianTest extends BaseCardTest {
         Permanent guardian = addCreatureReady(player1, new SanctumGuardian());
         Permanent shaman = addCreatureReady(player1, new AnabaShaman());
 
-        harness.activateAbility(player1, indexOf(player1, guardian), null, null);
+        harness.activateAbility(player1, indexOf(player1, guardian), null, player2.getId());
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, shaman.getId());
 
@@ -143,7 +143,7 @@ class SanctumGuardianTest extends BaseCardTest {
         Permanent decoy = addReadyStats(player1, 2, 2);
         Permanent creature = addReadyStats(player2, 3, 3);
 
-        harness.activateAbility(player1, indexOf(player1, guardian), null, null);
+        harness.activateAbility(player1, indexOf(player1, guardian), null, creature.getId());
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, decoy.getId());
 
@@ -166,7 +166,7 @@ class SanctumGuardianTest extends BaseCardTest {
         Permanent guardian = addCreatureReady(player1, new SanctumGuardian());
         Permanent attacker = addReadyStats(player2, 2, 2);
 
-        harness.activateAbility(player1, indexOf(player1, guardian), null, null);
+        harness.activateAbility(player1, indexOf(player1, guardian), null, player1.getId());
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, attacker.getId());
 
@@ -184,7 +184,7 @@ class SanctumGuardianTest extends BaseCardTest {
         Permanent blocker = addReadyStats(player1, 3, 3);
         Permanent attacker = addReadyStats(player2, 2, 2);
 
-        harness.activateAbility(player1, indexOf(player1, guardian), null, null);
+        harness.activateAbility(player1, indexOf(player1, guardian), null, blocker.getId());
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, attacker.getId());
 
@@ -205,7 +205,7 @@ class SanctumGuardianTest extends BaseCardTest {
         Permanent guardian = addCreatureReady(player1, new SanctumGuardian());
         Permanent source = addReadyStats(player2, 2, 2);
 
-        harness.activateAbility(player1, indexOf(player1, guardian), null, null);
+        harness.activateAbility(player1, indexOf(player1, guardian), null, player1.getId());
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, source.getId());
 
@@ -220,20 +220,21 @@ class SanctumGuardianTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("No permanents on the battlefield leaves no prompt and no shield")
-    void noPermanentsNoShield() {
+    @DisplayName("The sacrificed Guardian remains a legal source referenced by its resolving ability")
+    void canChooseSacrificedGuardian() {
         Permanent guardian = addCreatureReady(player1, new SanctumGuardian());
 
-        harness.activateAbility(player1, indexOf(player1, guardian), null, null);
+        harness.activateAbility(player1, indexOf(player1, guardian), null, player1.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
-        assertThat(gd.sourceNextDamageToAnyTargetShields).isEmpty();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("No permanents on the battlefield"));
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validPermanentIds()).contains(guardian.getId());
+        harness.handlePermanentChosen(player1, guardian.getId());
     }
 
     @Test
-    @CardUsed(ChandraNalaar.class)
     @DisplayName("Prevents the chosen source's next damage to a planeswalker")
     void preventsDamageToPlaneswalker() {
         Permanent guardian = addCreatureReady(player1, new SanctumGuardian());
@@ -241,7 +242,7 @@ class SanctumGuardianTest extends BaseCardTest {
         Permanent planeswalker = harness.addToBattlefieldAndReturn(player1, new ChandraNalaar());
         planeswalker.setCounterCount(CounterType.LOYALTY, 6);
 
-        harness.activateAbility(player1, indexOf(player1, guardian), null, null);
+        harness.activateAbility(player1, indexOf(player1, guardian), null, planeswalker.getId());
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, source.getId());
 
@@ -261,7 +262,7 @@ class SanctumGuardianTest extends BaseCardTest {
         Permanent guardian = addCreatureReady(player1, new SanctumGuardian());
         Permanent source = addReadyStats(player2, 2, 2);
 
-        harness.activateAbility(player1, indexOf(player1, guardian), null, null);
+        harness.activateAbility(player1, indexOf(player1, guardian), null, player1.getId());
         harness.passBothPriorities();
         assertThat(gd.pendingEffectResolutionEntry).isNotNull();
 
@@ -271,16 +272,127 @@ class SanctumGuardianTest extends BaseCardTest {
         assertThat(gd.deferPlayerLossCheck).isFalse();
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Prevents simultaneous damage only to the targeted player, not their creatures")
+    void onlyProtectsTargetDuringSimultaneousDamage() {
+        harness.setLife(player2, 20);
+        Permanent guardian = addCreatureReady(player1, new SanctumGuardian());
+        Permanent chandra = harness.addToBattlefieldAndReturn(player1, new ChandraNalaar());
+        chandra.setCounterCount(CounterType.LOYALTY, 9);
+        Permanent firstCreature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent secondCreature = addCreatureReady(player2, new GrizzlyBears());
+
+        harness.activateAbility(player1, indexOf(player1, guardian), null, player2.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, chandra.getId());
+
+        harness.activateAbility(player1, indexOf(player1, chandra), 2, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(firstCreature, secondCreature);
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .contains(firstCreature.getCard(), secondCreature.getCard());
+    }
+
+    @Test
+    @DisplayName("Damage from a later activation of the chosen source is not prevented")
+    void onlyPreventsFirstDamageEvent() {
+        harness.setLife(player2, 20);
+        Permanent guardian = addCreatureReady(player1, new SanctumGuardian());
+        Permanent shaman = addCreatureReady(player1, new AnabaShaman());
+
+        harness.activateAbility(player1, indexOf(player1, guardian), null, player2.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, shaman.getId());
+
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.activateAbility(player1, indexOf(player1, shaman), null, player2.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player2, 20);
+
+        shaman.setTapped(false);
+        harness.activateAbility(player1, indexOf(player1, shaman), null, player2.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("A sacrificed creature targeted by a spell on the stack remains a legal source choice")
+    void canChooseDepartedSpellTarget() {
+        Permanent guardian = addCreatureReady(player1, new SanctumGuardian());
+        Shock shock = new Shock();
+        harness.setHand(player1, List.of(shock));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, guardian.getId());
+
+        harness.activateAbility(player1, indexOf(player1, guardian), null, player1.getId());
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validPermanentIds()).contains(guardian.getId(), shock.getId());
+        harness.handlePermanentChosen(player1, guardian.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Shock");
+    }
+
+    @Test
+    @DisplayName("Activation requires a target before the Guardian is sacrificed")
+    void cannotActivateWithoutTarget() {
+        Permanent guardian = addCreatureReady(player1, new SanctumGuardian());
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, indexOf(player1, guardian), null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Sanctum Guardian");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Damage to another player neither receives prevention nor consumes the target's shield")
+    void damageToOtherRecipientDoesNotConsumeShield() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        Permanent guardian = addCreatureReady(player1, new SanctumGuardian());
+        Permanent shaman = addCreatureReady(player1, new AnabaShaman());
+
+        harness.activateAbility(player1, indexOf(player1, guardian), null, player1.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, shaman.getId());
+
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.activateAbility(player1, indexOf(player1, shaman), null, player2.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player2, 19);
+
+        shaman.setTapped(false);
+        harness.activateAbility(player1, indexOf(player1, shaman), null, player1.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("An ability targeting the sacrificed Guardian does not resolve or ask for a source")
+    void doesNotResolveWhenTargetLeavesBattlefield() {
+        Permanent guardian = addCreatureReady(player1, new SanctumGuardian());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        harness.activateAbility(player1, indexOf(player1, guardian), null, guardian.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        assertThat(gd.sourceNextDamageToAnyTargetShields).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
 
     private Permanent addReadyStats(Player player, int power, int toughness) {
         GrizzlyBears card = new GrizzlyBears();
         card.setPower(power);
         card.setToughness(toughness);
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, card);
     }
 
     private int indexOf(Player player, Permanent perm) {
