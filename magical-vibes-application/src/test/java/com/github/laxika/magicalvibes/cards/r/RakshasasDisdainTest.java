@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RakshasasDisdain.class, GrizzlyBears.class, GiantGrowth.class})
 class RakshasasDisdainTest extends BaseCardTest {
 
     private void castRakshasasDisdainOnBears(GrizzlyBears bears) {
@@ -73,6 +75,51 @@ class RakshasasDisdainTest extends BaseCardTest {
 
         assertThat(harness.getGameData().interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Counters when the controller declines an affordable payment")
+    void decliningPaymentCountersSpell() {
+        harness.setGraveyard(player2, List.of(new GiantGrowth()));
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        castRakshasasDisdainOnBears(bears);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(harness.getGameData().playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Counts graveyard cards at resolution rather than at casting")
+    void countsCardsAddedBeforeResolution() {
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        castRakshasasDisdainOnBears(bears);
+
+        harness.setGraveyard(player2, List.of(new GiantGrowth(), new GrizzlyBears()));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(harness.getGameData().stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Ignores the targeted spell controller's graveyard")
+    void ignoresOpponentsGraveyard() {
+        harness.setGraveyard(player1, List.of(new GiantGrowth(), new GrizzlyBears()));
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        castRakshasasDisdainOnBears(bears);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
