@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MaggotCarrier;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -29,7 +28,6 @@ class RazingSniddTest extends BaseCardTest {
         castRazingSnidd();
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         UUID sniddId = harness.getPermanentId(player1, "Razing Snidd");
@@ -61,6 +59,7 @@ class RazingSniddTest extends BaseCardTest {
         castRazingSnidd();
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Raging Goblin"));
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
         UUID landId = gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)
@@ -81,6 +80,7 @@ class RazingSniddTest extends BaseCardTest {
         castRazingSnidd();
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Razing Snidd"));
+        harness.passBothPriorities();
 
         harness.assertInHand(player1, "Razing Snidd");
         harness.assertNotOnBattlefield(player1, "Razing Snidd");
@@ -100,6 +100,7 @@ class RazingSniddTest extends BaseCardTest {
         harness.passBothPriorities();
         UUID sniddId = harness.getPermanentId(player1, "Razing Snidd");
         harness.handlePermanentChosen(player1, goblinId);
+        harness.passBothPriorities();
 
         PendingInteraction.MultiPermanentChoice player1Choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
@@ -118,6 +119,27 @@ class RazingSniddTest extends BaseCardTest {
                 .containsExactlyInAnyOrder(sniddId, player1SecondLandId);
         assertThat(gd.playerBattlefields.get(player2.getId()).stream()
                 .map(permanent -> permanent.getId()).toList()).containsExactly(player2SecondLandId);
+    }
+
+    @Test
+    @DisplayName("Entering creates two independent triggered abilities")
+    void enteringCreatesTwoIndependentTriggeredAbilities() {
+        castRazingSnidd();
+
+        harness.assertOnBattlefield(player1, "Razing Snidd");
+        assertThat(gd.stack).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Returning a creature is mandatory even when neither player controls a land")
+    void returnsCreatureWhenNeitherPlayerControlsLands() {
+        castRazingSnidd();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Razing Snidd"));
+
+        harness.assertInHand(player1, "Razing Snidd");
+        harness.assertNotOnBattlefield(player1, "Razing Snidd");
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     private void castRazingSnidd() {
