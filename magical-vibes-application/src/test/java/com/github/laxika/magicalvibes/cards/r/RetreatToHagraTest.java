@@ -89,4 +89,58 @@ class RetreatToHagraTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.handleListChoice(player1, BOOST_MODE))
                 .isInstanceOf(IllegalArgumentException.class);
     }
+
+    @Test
+    @DisplayName("An opponent's land does not trigger landfall")
+    void opponentLandDoesNotTrigger() {
+        harness.addToBattlefield(player1, new RetreatToHagra());
+        harness.setHand(player2, List.of(new Forest()));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.playLand(player2, 0);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Drain uses the landfall ability's controller")
+    void drainUsesAbilityController() {
+        harness.addToBattlefield(player2, new RetreatToHagra());
+        harness.setHand(player2, List.of(new Forest()));
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 10);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.playLand(player2, 0);
+        harness.handleListChoice(player2, DRAIN_MODE);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 11);
+    }
+
+    @Test
+    @DisplayName("A landfall ability resolves after Retreat to Hagra leaves the battlefield")
+    void drainResolvesWithoutSource() {
+        Permanent retreat = harness.addToBattlefieldAndReturn(player1, new RetreatToHagra());
+        harness.setHand(player1, List.of(new Forest()));
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 20);
+
+        harness.playLand(player1, 0);
+        harness.handleListChoice(player1, DRAIN_MODE);
+        gd.playerBattlefields.get(player1.getId()).remove(retreat);
+        gd.playerGraveyards.get(player1.getId()).add(retreat.getCard());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 11);
+        harness.assertLife(player2, 19);
+    }
 }
