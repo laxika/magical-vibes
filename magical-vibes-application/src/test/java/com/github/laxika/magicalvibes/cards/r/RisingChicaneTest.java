@@ -71,6 +71,46 @@ class RisingChicaneTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, chicane)).isFalse();
     }
 
+    @Test
+    void startsEnginesWhenPlayed() {
+        playLand(player1);
+
+        assertThat(gd.playerSpeeds.get(player1.getId())).isEqualTo(1);
+        assertThat(gd.playerSpeeds).doesNotContainKey(player2.getId());
+    }
+
+    @Test
+    void doesNotResetExistingSpeedWhenPlayed() {
+        gd.playerSpeeds.put(player1.getId(), 4);
+
+        playLand(player1);
+
+        assertThat(gd.playerSpeeds.get(player1.getId())).isEqualTo(4);
+    }
+
+    @Test
+    void doesNotAnimateDuringOpponentsCombat() {
+        Permanent chicane = harness.addToBattlefieldAndReturn(player1, new RisingChicane());
+        gd.playerSpeeds.put(player1.getId(), 4);
+
+        advanceToCombat(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.isCreature(gd, chicane)).isFalse();
+    }
+
+    @Test
+    void opponentsMaxSpeedDoesNotGrantAnimation() {
+        Permanent chicane = harness.addToBattlefieldAndReturn(player1, new RisingChicane());
+        gd.playerSpeeds.put(player1.getId(), 3);
+        gd.playerSpeeds.put(player2.getId(), 4);
+
+        advanceToCombat(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.isCreature(gd, chicane)).isFalse();
+    }
+
     private void playLand(com.github.laxika.magicalvibes.model.Player player) {
         harness.setHand(player, java.util.List.of(new RisingChicane()));
         gd.activePlayerId = player.getId();
@@ -82,8 +122,7 @@ class RisingChicaneTest extends BaseCardTest {
     private void advanceToCombat(com.github.laxika.magicalvibes.model.Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.BEGINNING_OF_COMBAT);
     }
 
     private Permanent findChicane(com.github.laxika.magicalvibes.model.Player player) {
