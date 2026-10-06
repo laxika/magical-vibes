@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.l.LotusPetal;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -25,8 +26,7 @@ class SkyshroudCondorTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(permanent -> permanent.getCard() instanceof SkyshroudCondor);
+        harness.assertOnBattlefield(player1, "Skyshroud Condor");
     }
 
     @Test
@@ -45,6 +45,30 @@ class SkyshroudCondorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.forceActivePlayer(player1);
+
+        assertThatThrownBy(() -> harness.castFromHand(player1, new SkyshroudCondor(), "{1}{U}"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("Putting a permanent onto the battlefield does not count as casting a spell")
+    void permanentEnteringDoesNotEnableCast() {
+        harness.addToBattlefield(player1, new LotusPetal());
+
+        assertThatThrownBy(() -> harness.castFromHand(player1, new SkyshroudCondor(), "{1}{U}"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("A spell cast on a previous turn does not satisfy the cast condition")
+    void previousTurnSpellDoesNotEnableCast() {
+        harness.castFromHand(player1, new LotusPetal(), "{0}");
+        harness.passBothPriorities();
+
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
 
         assertThatThrownBy(() -> harness.castFromHand(player1, new SkyshroudCondor(), "{1}{U}"))
                 .isInstanceOf(IllegalStateException.class)
