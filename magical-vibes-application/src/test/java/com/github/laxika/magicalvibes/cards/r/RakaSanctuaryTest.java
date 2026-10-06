@@ -129,4 +129,64 @@ class RakaSanctuaryTest extends BaseCardTest {
 
         assertThat(target.getMarkedDamage()).isZero();
     }
+    @Test
+    @DisplayName("Damage increases when the second qualifying color appears before resolution")
+    void damageIncreasesWhenBluePermanentEntersBeforeResolution() {
+        harness.addToBattlefield(player1, new RakaSanctuary());
+        harness.addToBattlefield(player1, new CoalitionHonorGuard());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Cromat());
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.addToBattlefield(player1, new GaeasSkyfolk());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Damage decreases when one qualifying color leaves before resolution")
+    void damageDecreasesWhenBluePermanentLeavesBeforeResolution() {
+        harness.addToBattlefield(player1, new RakaSanctuary());
+        harness.addToBattlefield(player1, new CoalitionHonorGuard());
+        Permanent bluePermanent = harness.addToBattlefieldAndReturn(player1, new GaeasSkyfolk());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Cromat());
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(bluePermanent);
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The ability still resolves after the sanctuary leaves the battlefield")
+    void resolvesAfterSanctuaryLeavesBattlefield() {
+        Permanent sanctuary = harness.addToBattlefieldAndReturn(player1, new RakaSanctuary());
+        harness.addToBattlefield(player1, new Cromat());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Cromat());
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(sanctuary);
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Three damage destroys a creature with two toughness")
+    void destroysCreatureWithLethalDamage() {
+        harness.addToBattlefield(player1, new RakaSanctuary());
+        harness.addToBattlefield(player1, new Cromat());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GaeasSkyfolk());
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+        harness.assertInGraveyard(player2, "Gaea's Skyfolk");
+    }
 }
