@@ -126,6 +126,41 @@ class RimeDryadTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
     }
 
+    @Test
+    @DisplayName("A tapped snow Forest still prevents blocking")
+    void cantBeBlockedWithTappedSnowForest() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new SnowCoveredForest());
+        forest.setTapped(true);
+        Permanent blocker = addCreatureReady(player2, new BalduvianBears());
+        Permanent dryad = readyAttacker(player1);
+
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(dryad)))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+    }
+
+    @Test
+    @DisplayName("A non-snow Forest and a snow Swamp do not together enable snow forestwalk")
+    void separateForestAndSnowLandDoNotPreventBlocking() {
+        harness.addToBattlefield(player2, new Forest());
+        harness.addToBattlefield(player2, new SnowCoveredSwamp());
+        Permanent blocker = addCreatureReady(player2, new BalduvianBears());
+        Permanent dryad = readyAttacker(player1);
+        harness.setLife(player2, 20);
+
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(dryad))));
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
     private Permanent readyAttacker(Player player) {
         Permanent perm = addCreatureReady(player, new RimeDryad());
         perm.setAttacking(true);
