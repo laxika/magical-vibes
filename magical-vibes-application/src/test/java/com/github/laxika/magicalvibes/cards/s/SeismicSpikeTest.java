@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.b.BorosRecruit;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -57,5 +58,38 @@ class SeismicSpikeTest extends BaseCardTest {
         UUID creatureId = harness.getPermanentId(player2, "Boros Recruit");
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, creatureId))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Adds mana even when the target land is indestructible")
+    void addsManaWhenLandCannotBeDestroyed() {
+        var mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
+        mountain.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        harness.setHand(player1, List.of(new SeismicSpike()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castAndResolveSorcery(player1, 0, mountain.getId());
+
+        harness.assertOnBattlefield(player2, "Mountain");
+        harness.assertNotInGraveyard(player2, "Mountain");
+        harness.assertInGraveyard(player1, "Seismic Spike");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Does not add mana when the target land leaves before resolution")
+    void doesNotAddManaWhenTargetLeaves() {
+        var mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
+        harness.setHand(player1, List.of(new SeismicSpike()));
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.castSorcery(player1, 0, mountain.getId());
+
+        gd.playerBattlefields.get(player2.getId()).remove(mountain);
+        gd.playerGraveyards.get(player2.getId()).add(mountain.getCard());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Seismic Spike");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
     }
 }
