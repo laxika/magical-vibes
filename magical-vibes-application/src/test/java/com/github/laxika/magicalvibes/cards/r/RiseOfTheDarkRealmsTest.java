@@ -1,27 +1,28 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AcademyRaider;
+import com.github.laxika.magicalvibes.cards.g.GiantSpider;
+import com.github.laxika.magicalvibes.cards.i.IntoTheWilds;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.o.OgreBattledriver;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RiseOfTheDarkRealms.class, GiantSpider.class, AcademyRaider.class, IntoTheWilds.class,
+        Mountain.class, OgreBattledriver.class})
 class RiseOfTheDarkRealmsTest extends BaseCardTest {
 
     private void castRiseOfTheDarkRealms() {
-        harness.setHand(player1, new ArrayList<>(List.of(new RiseOfTheDarkRealms())));
-        harness.addMana(player1, ManaColor.COLORLESS, 7);
-        harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new RiseOfTheDarkRealms(), "{7}{B}{B}");
         harness.passBothPriorities();
     }
 
@@ -31,12 +32,12 @@ class RiseOfTheDarkRealmsTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        Card creature = new GrizzlyBears();
+        Card creature = new GiantSpider();
         gd.playerGraveyards.get(player1.getId()).add(creature);
 
         castRiseOfTheDarkRealms();
 
-        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Giant Spider");
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(creature);
     }
 
@@ -46,13 +47,13 @@ class RiseOfTheDarkRealmsTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        Card opponentCreature = new GrizzlyBears();
+        Card opponentCreature = new GiantSpider();
         gd.playerGraveyards.get(player2.getId()).add(opponentCreature);
 
         castRiseOfTheDarkRealms();
 
-        harness.assertOnBattlefield(player1, "Grizzly Bears");
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Giant Spider");
+        harness.assertNotOnBattlefield(player2, "Giant Spider");
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
     }
 
@@ -62,14 +63,14 @@ class RiseOfTheDarkRealmsTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        gd.playerGraveyards.get(player1.getId()).add(new GrizzlyBears());
-        gd.playerGraveyards.get(player2.getId()).add(new RagingGoblin());
+        gd.playerGraveyards.get(player1.getId()).add(new GiantSpider());
+        gd.playerGraveyards.get(player2.getId()).add(new AcademyRaider());
 
         castRiseOfTheDarkRealms();
 
-        harness.assertOnBattlefield(player1, "Grizzly Bears");
-        harness.assertOnBattlefield(player1, "Raging Goblin");
-        harness.assertNotOnBattlefield(player2, "Raging Goblin");
+        harness.assertOnBattlefield(player1, "Giant Spider");
+        harness.assertOnBattlefield(player1, "Academy Raider");
+        harness.assertNotOnBattlefield(player2, "Academy Raider");
     }
 
     @Test
@@ -78,20 +79,39 @@ class RiseOfTheDarkRealmsTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        Card enchantment = new GloriousAnthem();
+        Card enchantment = new IntoTheWilds();
         Card land = new Mountain();
-        Card creature = new GrizzlyBears();
+        Card creature = new GiantSpider();
         gd.playerGraveyards.get(player1.getId()).addAll(List.of(enchantment, land, creature));
 
         castRiseOfTheDarkRealms();
 
-        harness.assertOnBattlefield(player1, "Grizzly Bears");
-        harness.assertNotOnBattlefield(player1, "Glorious Anthem");
+        harness.assertOnBattlefield(player1, "Giant Spider");
+        harness.assertNotOnBattlefield(player1, "Into the Wilds");
         harness.assertNotOnBattlefield(player1, "Mountain");
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .contains(enchantment, land)
                 .anyMatch(c -> c.getName().equals("Rise of the Dark Realms"))
                 .hasSize(3);
+    }
+
+    @Test
+    @DisplayName("Returned creatures see other creatures entering simultaneously")
+    void returnedCreatureTriggersForEarlierCardInGraveyard() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setGraveyard(player2, List.of(new GiantSpider(), new OgreBattledriver()));
+
+        castRiseOfTheDarkRealms();
+
+        harness.assertOnBattlefield(player1, "Giant Spider");
+        harness.assertOnBattlefield(player1, "Ogre Battledriver");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        var spider = findPermanent(player1, "Giant Spider");
+        assertThat(gqs.getEffectivePower(gd, spider)).isEqualTo(4);
+        assertThat(spider.hasKeyword(Keyword.HASTE)).isTrue();
     }
 
     @Test
