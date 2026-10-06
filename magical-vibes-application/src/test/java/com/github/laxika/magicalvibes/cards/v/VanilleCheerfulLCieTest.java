@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.FangFearlessLCie;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.RagnarokDivineDeliverance;
+import com.github.laxika.magicalvibes.cards.r.RelmsSketching;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({VanilleCheerfulLCie.class, RagnarokDivineDeliverance.class, FangFearlessLCie.class,
-        Forest.class, GrizzlyBears.class})
+        Forest.class, GrizzlyBears.class, RelmsSketching.class})
 class VanilleCheerfulLCieTest extends BaseCardTest {
 
     @Test
@@ -94,6 +95,51 @@ class VanilleCheerfulLCieTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.assertNotOnBattlefield(player2, "Fang, Fearless l'Cie");
         harness.assertOnBattlefield(player1, "Forest");
+    }
+
+    @Test
+    void tokenCopyOfFangIsExiledButCannotMeld() {
+        harness.addToBattlefield(player1, new VanilleCheerfulLCie());
+        Permanent originalFang = harness.addToBattlefieldAndReturn(player2, new FangFearlessLCie());
+        harness.setHand(player1, List.of(new RelmsSketching()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castAndResolveSorcery(player1, 0, originalFang.getId());
+        harness.assertOnBattlefield(player1, "Fang, Fearless l'Cie");
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DRAW);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Ragnarok, Divine Deliverance");
+        harness.assertNotOnBattlefield(player1, "Vanille, Cheerful l'Cie");
+        harness.assertNotOnBattlefield(player1, "Fang, Fearless l'Cie");
+        assertThat(gd.exiledCards).anyMatch(entry -> entry.card() instanceof VanilleCheerfulLCie);
+    }
+
+    @Test
+    void decliningPaymentLeavesBothMeldComponentsOnBattlefield() {
+        harness.addToBattlefield(player1, new VanilleCheerfulLCie());
+        harness.addToBattlefield(player1, new FangFearlessLCie());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DRAW);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertOnBattlefield(player1, "Vanille, Cheerful l'Cie");
+        harness.assertOnBattlefield(player1, "Fang, Fearless l'Cie");
+        harness.assertNotOnBattlefield(player1, "Ragnarok, Divine Deliverance");
     }
 
     @Test
