@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.InvasionOfDominaria;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -25,8 +25,8 @@ class SivitriDragonMasterTest extends BaseCardTest {
     @DisplayName("+1 makes attacks against you and your planeswalkers cost 2 life per creature")
     void plusOneTaxesAttacksAgainstPlayerAndPlaneswalker() {
         Permanent sivitri = addReadySivitri(player1, 4);
-        Permanent firstAttacker = addReadyCreature(player2, new GrizzlyBears());
-        Permanent secondAttacker = addReadyCreature(player2, new GrizzlyBears());
+        Permanent firstAttacker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent secondAttacker = addCreatureReady(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, battlefieldIndex(player1, sivitri), 0, null, null);
         harness.passBothPriorities();
@@ -50,7 +50,7 @@ class SivitriDragonMasterTest extends BaseCardTest {
     @DisplayName("+1 prevents an attack when its life cost cannot be paid")
     void plusOneRejectsUnaffordableAttack() {
         Permanent sivitri = addReadySivitri(player1, 4);
-        Permanent attacker = addReadyCreature(player2, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, battlefieldIndex(player1, sivitri), 0, null, null);
         harness.passBothPriorities();
@@ -71,7 +71,7 @@ class SivitriDragonMasterTest extends BaseCardTest {
 
         harness.activateAbility(player1, battlefieldIndex(player1, sivitri), 1, null, null);
         harness.passBothPriorities();
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).contains(dragon);
         assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(dragon);
@@ -81,8 +81,8 @@ class SivitriDragonMasterTest extends BaseCardTest {
     @DisplayName("-7 destroys every non-Dragon creature")
     void minusSevenDestroysNonDragons() {
         Permanent sivitri = addReadySivitri(player1, 7);
-        Permanent dragon = addReadyCreature(player2, new ShivanDragon());
-        Permanent nonDragon = addReadyCreature(player2, new GrizzlyBears());
+        Permanent dragon = addCreatureReady(player2, new ShivanDragon());
+        Permanent nonDragon = addCreatureReady(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, battlefieldIndex(player1, sivitri), 2, null, null);
         harness.passBothPriorities();
@@ -90,19 +90,101 @@ class SivitriDragonMasterTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(dragon).doesNotContain(nonDragon);
     }
 
+    @Test
+    @DisplayName("+1 still taxes attacks after Sivitri leaves the battlefield")
+    void plusOnePersistsAfterSivitriLeaves() {
+        Permanent sivitri = addReadySivitri(player1, 4);
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        harness.activateAbility(player1, battlefieldIndex(player1, sivitri), 0, null, null);
+        harness.passBothPriorities();
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, sivitri);
+        harness.setLife(player2, 10);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackersAtPlayer(player2, attacker));
+
+        harness.assertLife(player2, 8);
+    }
+
+    @Test
+    @DisplayName("-3 allows failing to find even when a Dragon is in the library")
+    void minusThreeMayFailToFind() {
+        Permanent sivitri = addReadySivitri(player1, 4);
+        Card dragon = new ShivanDragon();
+        harness.setLibrary(player1, List.of(dragon));
+        harness.activateAbility(player1, battlefieldIndex(player1, sivitri), 1, null, null);
+        harness.passBothPriorities();
+
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(dragon);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(dragon);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("-3 resolves without a choice when no Dragon exists")
+    void minusThreeWithoutDragons() {
+        Permanent sivitri = addReadySivitri(player1, 4);
+        Card bear = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(bear));
+        harness.activateAbility(player1, battlefieldIndex(player1, sivitri), 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(bear);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(bear);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("-7 destroys your non-Dragons too and preserves your Dragons and Sivitri")
+    void minusSevenAffectsBothPlayers() {
+        Permanent sivitri = addReadySivitri(player1, 8);
+        Permanent dragon = addCreatureReady(player1, new ShivanDragon());
+        Permanent ownBear = addCreatureReady(player1, new GrizzlyBears());
+        Permanent opposingBear = addCreatureReady(player2, new GrizzlyBears());
+        harness.activateAbility(player1, battlefieldIndex(player1, sivitri), 2, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(sivitri, dragon).doesNotContain(ownBear);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(opposingBear);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(ownBear.getCard());
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(opposingBear.getCard());
+    }
+
+    @Test
+    @CardUsed({InvasionOfDominaria.class, SerraFaithkeeper.class})
+    @DisplayName("+1 does not tax attacks against a battle you protect")
+    void plusOneDoesNotTaxBattleAttacks() {
+        Permanent sivitri = addReadySivitri(player1, 4);
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent battle = harness.addToBattlefieldAndReturn(player2, new InvasionOfDominaria());
+        battle.setProtectorPlayerId(player1.getId());
+        battle.setCounterCount(CounterType.DEFENSE, 5);
+        harness.activateAbility(player1, battlefieldIndex(player1, sivitri), 0, null, null);
+        harness.passBothPriorities();
+        harness.setLife(player2, 10);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            harness.forceActivePlayer(player2);
+            harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+            harness.clearPriorityPassed();
+            harness.beginAttackerDeclarationInput();
+            int attackerIndex = battlefieldIndex(player2, attacker);
+            gs.declareAttackers(gd, player2, List.of(attackerIndex),
+                    Map.of(attackerIndex, battle.getId()));
+        });
+
+        harness.assertLife(player2, 10);
+    }
+
     private Permanent addReadySivitri(Player player, int loyalty) {
-        Permanent sivitri = addReadyCreature(player, new SivitriDragonMaster());
+        Permanent sivitri = addCreatureReady(player, new SivitriDragonMaster());
         sivitri.setCounterCount(CounterType.LOYALTY, loyalty);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         return sivitri;
-    }
-
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent permanent = harness.addToBattlefieldAndReturn(player, card);
-        permanent.setSummoningSick(false);
-        return permanent;
     }
 
     private void declareAttackersAtPlayer(Player player, Permanent attacker) {
