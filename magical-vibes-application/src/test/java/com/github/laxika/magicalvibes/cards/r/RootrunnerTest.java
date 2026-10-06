@@ -67,6 +67,9 @@ class RootrunnerTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(spirit.getId()));
         harness.passBothPriorities();
 
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
         assertThat(gd.playerHands.get(player1.getId()))
                 .anyMatch(c -> c.getId().equals(spirit.getId()));
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -87,7 +90,7 @@ class RootrunnerTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Soulshift can be declined even when a legal Spirit target exists")
+    @DisplayName("Soulshift can be declined at resolution after choosing a legal Spirit target")
     void soulshiftCanBeDeclined() {
         harness.addToBattlefield(player1, new Rootrunner());
         harness.addToBattlefield(player2, new Forest());
@@ -98,13 +101,46 @@ class RootrunnerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, harness.getPermanentId(player2, "Forest"));
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
-        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.handleMultipleCardsChosen(player1, List.of(spirit.getId()));
         harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(card -> card.getId().equals(spirit.getId()));
         assertThat(gd.playerHands.get(player1.getId()))
                 .noneMatch(card -> card.getId().equals(spirit.getId()));
+    }
+
+    @Test
+    @DisplayName("Soulshift requires a target even when its controller intends to decline the return")
+    void soulshiftCannotChooseZeroTargets() {
+        harness.addToBattlefield(player1, new Rootrunner());
+        harness.addToBattlefield(player2, new Forest());
+        harness.setGraveyard(player1, List.of(new LanternKami()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, harness.getPermanentId(player2, "Forest"));
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A tapped Rootrunner can sacrifice itself to put its controller's land on top")
+    void tappedRootrunnerCanTargetOwnLand() {
+        harness.addToBattlefieldAndReturn(player1, new Rootrunner()).setTapped(true);
+        Card land = new Forest();
+        harness.addToBattlefield(player1, land);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, harness.getPermanentId(player1, "Forest"));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Rootrunner");
+        harness.assertNotOnBattlefield(player1, "Forest");
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(land);
     }
 
     @Test
