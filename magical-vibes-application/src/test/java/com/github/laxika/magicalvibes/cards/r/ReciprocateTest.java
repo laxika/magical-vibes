@@ -87,6 +87,53 @@ class ReciprocateTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Exiles a creature after actual unblocked combat damage")
+    void exilesCreatureAfterCombatDamage() {
+        Permanent creature = addCreatureReady(player2, new WanderingOnes());
+
+        declareAttackers(player2, List.of(0));
+        resolveCombat(player2);
+        harness.assertLife(player1, 19);
+
+        castReciprocate(player1, creature.getId());
+
+        harness.assertNotOnBattlefield(player2, "Wandering Ones");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(card -> card.getName().equals("Wandering Ones"));
+    }
+
+    @Test
+    @DisplayName("Can exile your own creature that damaged you")
+    void exilesOwnCreatureThatDamagedYou() {
+        Permanent frostwielder = addCreatureReady(player1, new Frostwielder());
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player1, 19);
+
+        castReciprocate(player1, frostwielder.getId());
+
+        harness.assertNotOnBattlefield(player1, "Frostwielder");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getName().equals("Frostwielder"));
+    }
+
+    @Test
+    @DisplayName("Cannot target a creature that dealt noncombat damage only to another player")
+    void cannotTargetNoncombatDamageToAnotherPlayer() {
+        Permanent frostwielder = addCreatureReady(player2, new Frostwielder());
+
+        harness.activateAbility(player2, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player2, 19);
+        harness.assertLife(player1, 20);
+
+        assertThatThrownBy(() -> castReciprocate(player1, frostwielder.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player2, "Frostwielder");
+    }
+
     private void castReciprocate(com.github.laxika.magicalvibes.model.Player caster, UUID targetId) {
         harness.setHand(caster, List.of(new Reciprocate()));
         harness.addMana(caster, ManaColor.WHITE, 1);
