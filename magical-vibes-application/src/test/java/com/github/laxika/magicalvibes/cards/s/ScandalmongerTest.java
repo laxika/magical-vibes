@@ -110,4 +110,68 @@ class ScandalmongerTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
     }
+
+    @Test
+    void opponentMayTargetThemselvesAndChooseWhichCardToDiscard() {
+        harness.addToBattlefield(player1, new Scandalmonger());
+        harness.setHand(player2, List.of(new FreshVolunteers(), new Scandalmonger()));
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+
+        harness.activateAbility(player2, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 1);
+
+        harness.assertInHand(player2, "Fresh Volunteers");
+        harness.assertNotInHand(player2, "Scandalmonger");
+        harness.assertInGraveyard(player2, "Scandalmonger");
+        harness.assertNotInGraveyard(player2, "Fresh Volunteers");
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    void targetPlayerChoosesOneCardAndAbilityMayBeActivatedAgainAfterResolution() {
+        harness.addToBattlefield(player1, new Scandalmonger());
+        harness.setHand(player2, List.of(new FreshVolunteers(), new Scandalmonger()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 1);
+
+        harness.assertInHand(player2, "Fresh Volunteers");
+        harness.assertInGraveyard(player2, "Scandalmonger");
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+        harness.assertInGraveyard(player2, "Fresh Volunteers");
+    }
+
+    @Test
+    void abilityCannotBeActivatedWhileAnotherActivationIsOnTheStack() {
+        harness.addToBattlefield(player1, new Scandalmonger());
+        harness.setHand(player2, List.of(new FreshVolunteers()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("stack is empty");
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player2, "Fresh Volunteers");
+    }
 }
