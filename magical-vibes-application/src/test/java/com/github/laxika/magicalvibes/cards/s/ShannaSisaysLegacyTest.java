@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AcademyJourneymage;
 import com.github.laxika.magicalvibes.cards.r.RoyalAssassin;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,10 +15,9 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ShannaSisaysLegacy.class, GrizzlyBears.class, RoyalAssassin.class, Shock.class})
+@CardUsed({ShannaSisaysLegacy.class, GrizzlyBears.class, RoyalAssassin.class, Shock.class,
+        AcademyJourneymage.class})
 class ShannaSisaysLegacyTest extends BaseCardTest {
-
-    // ===== Static effect: +1/+1 per creature you control =====
 
     @Test
     @DisplayName("Base 0/0 plus herself = 1/1 with only Shanna on the battlefield")
@@ -83,8 +83,6 @@ class ShannaSisaysLegacyTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, shanna)).isEqualTo(1);
     }
 
-    // ===== Targeting restriction: can't be the target of opponents' abilities =====
-
     @Test
     @DisplayName("Opponent cannot target Shanna with activated abilities")
     void opponentCannotTargetWithAbilities() {
@@ -94,14 +92,12 @@ class ShannaSisaysLegacyTest extends BaseCardTest {
         shanna.tap();
 
         // Give player2 a Royal Assassin (T: Destroy target tapped creature)
-        Permanent assassin = new Permanent(new RoyalAssassin());
+        Permanent assassin = harness.addToBattlefieldAndReturn(player2, new RoyalAssassin());
         assassin.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(assassin);
 
         // Also add a valid tapped target so the ability is activatable
-        Permanent bears = new Permanent(new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         bears.tap();
-        gd.playerBattlefields.get(player1.getId()).add(bears);
 
         harness.passPriority(player1);
 
@@ -128,8 +124,7 @@ class ShannaSisaysLegacyTest extends BaseCardTest {
         harness.passPriority(player1);
 
         // This should NOT throw — spells can target Shanna
-        harness.castInstant(player2, 0, shanna.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, shanna.getId());
 
         // Shock dealt 2 damage to Shanna (3/3), she should have 2 damage
         assertThat(shanna.getMarkedDamage()).isEqualTo(2);
@@ -143,9 +138,8 @@ class ShannaSisaysLegacyTest extends BaseCardTest {
         shanna.tap();
 
         // Give player1 a Royal Assassin (T: Destroy target tapped creature)
-        Permanent assassin = new Permanent(new RoyalAssassin());
+        Permanent assassin = harness.addToBattlefieldAndReturn(player1, new RoyalAssassin());
         assassin.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(assassin);
 
         // Controller should be able to target their own Shanna with abilities
         // Royal Assassin targets tapped creatures — Shanna is tapped
@@ -157,4 +151,36 @@ class ShannaSisaysLegacyTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Shanna, Sisay's Legacy");
     }
 
+    @Test
+    @DisplayName("Opponent's enter-the-battlefield ability has no legal target when only Shanna is available")
+    void opponentTriggeredAbilityCannotTargetShanna() {
+        harness.addToBattlefield(player2, new ShannaSisaysLegacy());
+        harness.setHand(player1, List.of(new AcademyJourneymage()));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Academy Journeymage");
+        harness.assertOnBattlefield(player2, "Shanna, Sisay's Legacy");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Losing another creature can make marked damage lethal to Shanna")
+    void shrinkingAfterAnotherCreatureDiesMakesDamageLethal() {
+        Permanent shanna = harness.addToBattlefieldAndReturn(player1, new ShannaSisaysLegacy());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player1, 0, shanna.getId());
+        harness.assertOnBattlefield(player1, "Shanna, Sisay's Legacy");
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+
+        harness.assertNotOnBattlefield(player1, "Shanna, Sisay's Legacy");
+        harness.assertInGraveyard(player1, "Shanna, Sisay's Legacy");
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+    }
 }
