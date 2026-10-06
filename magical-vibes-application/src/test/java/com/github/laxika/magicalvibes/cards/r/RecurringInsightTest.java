@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.action.ReboundAtNextUpkeep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -13,6 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RecurringInsight.class, Forest.class})
 class RecurringInsightTest extends BaseCardTest {
 
     @Test
@@ -23,8 +25,7 @@ class RecurringInsightTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
         harness.addMana(player1, ManaColor.BLUE, 6);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
@@ -40,8 +41,7 @@ class RecurringInsightTest extends BaseCardTest {
                 new Forest(), new Forest(), new Forest(), new Forest(), new Forest(), new Forest()));
         harness.addMana(player1, ManaColor.BLUE, 6);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.setHand(player2, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
 
         harness.forceStep(TurnStep.END_STEP);
@@ -60,6 +60,64 @@ class RecurringInsightTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Recurring Insight");
     }
 
+    @Test
+    void initialDrawUsesOpponentsHandSizeAtResolution() {
+        harness.setHand(player1, List.of(new RecurringInsight()));
+        harness.setHand(player2, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.setHand(player2, List.of(new Forest(), new Forest(), new Forest()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(3);
+    }
+
+    @Test
+    void emptyOpponentsHandDrawsNothingButStillRebounds() {
+        RecurringInsight card = new RecurringInsight();
+        harness.setHand(player1, List.of(card));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.findExiledCard(card.getId())).isNotNull();
+        assertThat(gd.delayedActions).anyMatch(action -> action instanceof ReboundAtNextUpkeep);
+    }
+
+    @Test
+    void decliningReboundLeavesCardExiledAndDoesNotOfferItAgain() {
+        RecurringInsight card = new RecurringInsight();
+        harness.setHand(player1, List.of(card));
+        harness.setHand(player2, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.findExiledCard(card.getId())).isNotNull();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.delayedActions).noneMatch(action -> action instanceof ReboundAtNextUpkeep);
+        harness.assertNotInGraveyard(player1, "Recurring Insight");
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.findExiledCard(card.getId())).isNotNull();
+    }
     @Test
     void cannotTargetSelf() {
         harness.setHand(player1, List.of(new RecurringInsight()));
