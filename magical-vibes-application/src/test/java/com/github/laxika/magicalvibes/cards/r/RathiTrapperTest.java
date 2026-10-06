@@ -54,4 +54,63 @@ class RathiTrapperTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, land.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("A summoning-sick Rathi Trapper cannot pay the tap cost")
+    void cannotActivateWithSummoningSickness() {
+        Permanent trapper = harness.addToBattlefieldAndReturn(player1, new RathiTrapper());
+        Permanent target = addCreatureReady(player2, new MireBoa());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+
+        assertThat(trapper.isTapped()).isFalse();
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An already-tapped Rathi Trapper cannot pay the tap cost")
+    void cannotActivateWhileTapped() {
+        Permanent trapper = addCreatureReady(player1, new RathiTrapper());
+        trapper.tap();
+        Permanent target = addCreatureReady(player2, new MireBoa());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Rathi Trapper can target itself despite tapping to pay its cost")
+    void canTargetItself() {
+        Permanent trapper = addCreatureReady(player1, new RathiTrapper());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, trapper.getId());
+        harness.passBothPriorities();
+
+        assertThat(trapper.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An already-tapped creature is a legal target")
+    void canTargetTappedCreature() {
+        Permanent trapper = addCreatureReady(player1, new RathiTrapper());
+        Permanent target = addCreatureReady(player1, new MireBoa());
+        target.tap();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(trapper.isTapped()).isTrue();
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
 }
