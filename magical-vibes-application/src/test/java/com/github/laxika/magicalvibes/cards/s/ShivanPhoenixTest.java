@@ -14,6 +14,36 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ShivanPhoenixTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Phoenixes dying together return separately when their death triggers resolve")
+    void simultaneousDeathsReturnOnlyAfterTriggersResolve() {
+        ShivanPhoenix first = new ShivanPhoenix();
+        ShivanPhoenix second = new ShivanPhoenix();
+        harness.addToBattlefield(player1, first);
+        harness.addToBattlefield(player1, second);
+
+        harness.castFromHand(player1, new WrathOfGod(), "{2}{W}{W}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(first, second);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(first, second);
+        harness.assertNotOnBattlefield(player1, "Shivan Phoenix");
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .filteredOn(card -> card.getId().equals(first.getId()) || card.getId().equals(second.getId()))
+                .hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card.getId().equals(first.getId()) || card.getId().equals(second.getId()))
+                .hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(first, second);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(first, second);
+    }
+
+    @Test
     @DisplayName("When Shivan Phoenix dies, it returns to its owner's hand")
     void diesReturnsToOwnersHand() {
         Permanent phoenix = harness.addToBattlefieldAndReturn(player1, new ShivanPhoenix());
