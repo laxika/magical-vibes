@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.c.CaseOfTheUneatenFeast;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.m.MagnifyingGlass;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.p.PhyrexianArena;
 import com.github.laxika.magicalvibes.cards.t.TormodsCrypt;
@@ -18,7 +20,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ReliveThePast.class, TormodsCrypt.class, Forest.class, PhyrexianArena.class, Pacifism.class})
+@CardUsed({ReliveThePast.class, TormodsCrypt.class, Forest.class, PhyrexianArena.class, Pacifism.class,
+        CaseOfTheUneatenFeast.class, MagnifyingGlass.class})
 class ReliveThePastTest extends BaseCardTest {
 
     @Test
@@ -77,6 +80,76 @@ class ReliveThePastTest extends BaseCardTest {
                         .anyMatch(card -> card.getId().equals(permanent.getCard().getId())));
     }
 
+    @Test
+    @DisplayName("Returned noncreatures enter as creatures and trigger life gain")
+    void returnedPermanentsEnterAsCreatures() {
+        harness.addToBattlefield(player1, new CaseOfTheUneatenFeast());
+        MagnifyingGlass artifact = new MagnifyingGlass();
+        Forest land = new Forest();
+        harness.setGraveyard(player1, List.of(artifact, land));
+
+        castReliveThePast();
+        choose(artifact);
+        choose(land);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 22);
+        assertThat(gqs.isCreature(gd, returnedPermanent(artifact))).isTrue();
+        assertThat(gqs.isCreature(gd, returnedPermanent(land))).isTrue();
+        assertThat(findPermanents(player1, "Case of the Uneaten Feast")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("An illegal target already on the battlefield is not animated")
+    void doesNotAnimateTargetReturnedByAnotherEffect() {
+        MagnifyingGlass artifact = new MagnifyingGlass();
+        Forest land = new Forest();
+        harness.setGraveyard(player1, List.of(artifact, land));
+
+        castReliveThePast();
+        choose(artifact);
+        choose(land);
+
+        // Model another effect returning the artifact while this spell is on the stack.
+        harness.setGraveyard(player1, List.of(land));
+        Permanent independentlyReturned = harness.addToBattlefieldAndReturn(player1, artifact);
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, independentlyReturned)).isFalse();
+        assertThat(gqs.isCreature(gd, returnedPermanent(land))).isTrue();
+        assertThat(gqs.getEffectivePower(gd, returnedPermanent(land))).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("The spell does not resolve when its only target leaves the graveyard")
+    void doesNotResolveWhenAllTargetsAreIllegal() {
+        MagnifyingGlass artifact = new MagnifyingGlass();
+        harness.setGraveyard(player1, List.of(artifact));
+
+        castReliveThePast();
+        choose(artifact);
+        harness.setGraveyard(player1, List.of());
+        Permanent independentlyReturned = harness.addToBattlefieldAndReturn(player1, artifact);
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, independentlyReturned)).isFalse();
+        harness.assertInGraveyard(player1, "Relive the Past");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can resolve with an empty graveyard and no targets")
+    void resolvesWithNoAvailableTargets() {
+        harness.setGraveyard(player1, List.of());
+
+        castReliveThePast();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Relive the Past");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
     private void castReliveThePast() {
         harness.setHand(player1, List.of(new ReliveThePast()));
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -94,9 +167,6 @@ class ReliveThePastTest extends BaseCardTest {
     }
 
     private Permanent returnedPermanent(Card card) {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().getId().equals(card.getId()))
-                .findFirst()
-                .orElseThrow();
+        return findPermanent(player1, card.getName());
     }
 }
