@@ -34,8 +34,7 @@ class RestorativeTechniqueTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castSorcery(player1, 0, List.of(player2.getId(), bearId));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(player2.getId(), bearId));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(22);
 
@@ -62,8 +61,7 @@ class RestorativeTechniqueTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castSorcery(player1, 0, List.of(player2.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(player2.getId()));
         gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(0));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(22);
@@ -85,4 +83,92 @@ class RestorativeTechniqueTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature");
     }
+
+    @Test
+    @DisplayName("The caster may receive a land while an opposing creature receives the counter")
+    void mayTargetSelfAndOpposingCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Forest forest = new Forest();
+        harness.setHand(player1, List.of(new RestorativeTechnique()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), forest));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveSorcery(player1, 0, List.of(player1.getId(), creature.getId()));
+
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 20);
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search).isNotNull();
+        assertThat(search.params().cards()).containsExactly(forest);
+
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(
+                permanent -> permanent.getCard() == forest && permanent.isTapped());
+        assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(forest);
+        harness.assertNotOnBattlefield(player2, "Forest");
+        harness.assertInGraveyard(player1, "Restorative Technique");
+    }
+
+    @Test
+    @DisplayName("Failing to find an available basic land still allows the counter")
+    void mayFailToFindAndStillPutCounter() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Forest forest = new Forest();
+        harness.setHand(player1, List.of(new RestorativeTechnique()));
+        harness.setLibrary(player2, List.of(forest));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveSorcery(player1, 0, List.of(player2.getId(), creature.getId()));
+        gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(-1));
+
+        harness.assertLife(player2, 22);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(forest);
+        harness.assertNotOnBattlefield(player2, "Forest");
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Restorative Technique");
+    }
+
+    @Test
+    @DisplayName("An empty library does not prevent life gain or the counter")
+    void emptyLibraryStillResolvesOtherEffects() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new RestorativeTechnique()));
+        harness.setLibrary(player2, List.of());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveSorcery(player1, 0, List.of(player2.getId(), creature.getId()));
+
+        harness.assertLife(player2, 22);
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Restorative Technique");
+    }
+
+    @Test
+    @DisplayName("A removed creature does not prevent the player's effects")
+    void removedCreatureDoesNotPreventPlayerEffects() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new RestorativeTechnique()));
+        harness.setLibrary(player2, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castSorcery(player1, 0, List.of(player2.getId(), creature.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(creature);
+        harness.setGraveyard(player1, List.of(creature.getCard()));
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(0));
+
+        harness.assertLife(player2, 22);
+        harness.assertOnBattlefield(player2, "Forest");
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertInGraveyard(player1, "Restorative Technique");
+    }
+
 }
