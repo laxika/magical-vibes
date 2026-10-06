@@ -16,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ReluctantRoleModel.class, Assassinate.class, GrizzlyBears.class})
+@CardUsed({ReluctantRoleModel.class, Assassinate.class, GrizzlyBears.class, RelentlessAssault.class})
 class ReluctantRoleModelTest extends BaseCardTest {
 
     @Test
@@ -58,21 +58,135 @@ class ReluctantRoleModelTest extends BaseCardTest {
     }
 
     @Test
-    void survivalTriggersOnlyOnceForThePermanentObject() {
+    void survivalDoesNotTriggerDuringThirdMainPhase() {
         Permanent roleModel = addRoleModel();
         roleModel.tap();
 
         advanceToPostcombatMain(player1);
         harness.passBothPriorities();
         harness.handleListChoice(player1, "Put a +1/+1 counter on this creature");
-        harness.passBothPriorities();
 
-        roleModel.untap();
-        roleModel.tap();
-        advanceToPostcombatMain(player1);
+        harness.setHand(player1, List.of(new RelentlessAssault()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player1, TurnStep.POSTCOMBAT_MAIN);
 
         assertThat(gd.stack).isEmpty();
         assertThat(roleModel.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void survivalTriggersAgainOnLaterTurns() {
+        Permanent roleModel = addRoleModel();
+        roleModel.tap();
+        advanceToPostcombatMain(player1);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "Put a +1/+1 counter on this creature");
+        harness.passBothPriorities();
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
+        roleModel.tap();
+        harness.passUntilWithNoAttackers(player1, TurnStep.POSTCOMBAT_MAIN);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "Put a +1/+1 counter on this creature");
+        harness.passBothPriorities();
+
+        assertThat(roleModel.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void survivalDoesNothingIfUntappedBeforeResolution() {
+        Permanent roleModel = addRoleModel();
+        roleModel.tap();
+        advanceToPostcombatMain(player1);
+        assertThat(gd.stack).hasSize(1);
+        roleModel.untap();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(roleModel.getCounterCount(CounterType.FLYING)).isZero();
+        assertThat(roleModel.getCounterCount(CounterType.LIFELINK)).isZero();
+        assertThat(roleModel.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void survivalDoesNotTriggerDuringOpponentsTurn() {
+        Permanent roleModel = addRoleModel();
+        roleModel.tap();
+        advanceToPostcombatMain(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void ownDeathWithoutCountersDoesNotTrigger() {
+        Permanent roleModel = addRoleModel();
+        destroyWithAssassinateFromPlayerTwo(roleModel);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void counterTransferCanChooseNoTarget() {
+        Permanent roleModel = addRoleModel();
+        roleModel.setCounterCount(CounterType.FLYING, 1);
+        Permanent recipient = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        destroyWithAssassinateFromPlayerTwo(roleModel);
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(recipient.getCounterCount(CounterType.FLYING)).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void opponentsCreatureDeathDoesNotTriggerTransfer() {
+        addRoleModel();
+        Permanent dyingCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        dyingCreature.setCounterCount(CounterType.FLYING, 1);
+        destroyWithAssassinateFromPlayerTwo(dyingCreature);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void minusOneCountersAreTransferredAndCanKillRecipient() {
+        addRoleModel();
+        Permanent dyingCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        dyingCreature.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 2);
+        Permanent recipient = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, recipient.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(recipient);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(recipient.getCard());
+    }
+
+    @Test
+    void simultaneousDeathTriggersForBothRoleModelAndAnotherCreature() {
+        Permanent roleModel = addRoleModel();
+        roleModel.setCounterCount(CounterType.FLYING, 1);
+        Permanent dyingCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        dyingCreature.setCounterCount(CounterType.LIFELINK, 2);
+        Permanent recipient = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        roleModel.setMarkedDamage(2);
+        dyingCreature.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, recipient.getId());
+        harness.handlePermanentChosen(player1, recipient.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(recipient.getCounterCount(CounterType.FLYING)).isEqualTo(1);
+        assertThat(recipient.getCounterCount(CounterType.LIFELINK)).isEqualTo(2);
     }
 
     @Test
@@ -129,8 +243,7 @@ class ReluctantRoleModelTest extends BaseCardTest {
     private void advanceToPostcombatMain(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.END_OF_COMBAT);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.POSTCOMBAT_MAIN);
         assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
     }
 
@@ -140,9 +253,9 @@ class ReluctantRoleModelTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player2, List.of(new Assassinate()));
         harness.addMana(player2, ManaColor.BLACK, 1);
-        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
 
-        gs.playCard(gd, player2, 0, 0, target.getId(), null);
+        harness.castSorcery(player2, 0, target.getId());
         harness.passBothPriorities();
     }
 }
