@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.k.KraulWarrior;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RiotPiker.class, KraulWarrior.class})
 class RiotPikerTest extends BaseCardTest {
 
     @Test
@@ -31,9 +34,7 @@ class RiotPikerTest extends BaseCardTest {
     @Test
     @DisplayName("Declaring no attackers while Riot Piker can attack throws exception")
     void mustAttackWhenAble() {
-        Permanent piker = new Permanent(new RiotPiker());
-        piker.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(piker);
+        addCreatureReady(player1, new RiotPiker());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -48,13 +49,9 @@ class RiotPikerTest extends BaseCardTest {
     @Test
     @DisplayName("Omitting Riot Piker from attackers while declaring other creatures throws exception")
     void mustBeIncludedAmongAttackers() {
-        Permanent piker = new Permanent(new RiotPiker());
-        piker.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(piker);
+        addCreatureReady(player1, new RiotPiker());
 
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        addCreatureReady(player1, new KraulWarrior());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -71,19 +68,11 @@ class RiotPikerTest extends BaseCardTest {
     void doesNotAttackWithSummoningSickness() {
         harness.setLife(player2, 20);
 
-        Permanent piker = new Permanent(new RiotPiker());
-        gd.playerBattlefields.get(player1.getId()).add(piker);
+        harness.addToBattlefield(player1, new RiotPiker());
 
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        addCreatureReady(player1, new KraulWarrior());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        gs.declareAttackers(gd, player1, List.of(1));
+        declareAttackers(player1, List.of(1));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
@@ -93,17 +82,42 @@ class RiotPikerTest extends BaseCardTest {
     void dealsTwoDamageUnblocked() {
         harness.setLife(player2, 20);
 
-        Permanent piker = new Permanent(new RiotPiker());
-        piker.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(piker);
+        addCreatureReady(player1, new RiotPiker());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        gs.declareAttackers(gd, player1, List.of(0));
+        declareAttackers(player1, List.of(0));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("A tapped Riot Piker is not required to attack")
+    void tappedPikerDoesNotHaveToAttack() {
+        Permanent piker = addCreatureReady(player1, new RiotPiker());
+        piker.setTapped(true);
+        addCreatureReady(player1, new KraulWarrior());
+        harness.setLife(player2, 20);
+
+        declareAttackers(player1, List.of(1));
+
+        harness.assertLife(player2, 18);
+        assertThat(piker.isAttacking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("First strike kills a blocker before it can damage Riot Piker")
+    void firstStrikeKillsBlockerBeforeItDealsDamage() {
+        Permanent piker = addCreatureReady(player1, new RiotPiker());
+        addCreatureReady(player2, new KraulWarrior());
+        harness.setLife(player2, 20);
+
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Riot Piker");
+        harness.assertInGraveyard(player2, "Kraul Warrior");
+        assertThat(piker.getMarkedDamage()).isZero();
+        harness.assertLife(player2, 20);
     }
 }
