@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.b.BlackCat;
-import com.github.laxika.magicalvibes.cards.d.DoomBlade;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.c.Chatterstorm;
+import com.github.laxika.magicalvibes.cards.d.Damn;
+import com.github.laxika.magicalvibes.cards.d.DressDown;
+import com.github.laxika.magicalvibes.cards.n.NestedShambler;
+import com.github.laxika.magicalvibes.cards.u.UnholyHeat;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SanctifierEnVec.class, BlackCat.class, DoomBlade.class, GrizzlyBears.class, Shock.class})
+@CardUsed({SanctifierEnVec.class, NestedShambler.class, Chatterstorm.class, UnholyHeat.class, DressDown.class, Damn.class})
 class SanctifierEnVecTest extends BaseCardTest {
 
     @Test
@@ -30,10 +31,10 @@ class SanctifierEnVecTest extends BaseCardTest {
 
     @Test
     void entersAndExilesBlackAndRedCardsFromAllGraveyards() {
-        Card redCard = new Shock();
-        Card blackCard = new DoomBlade();
-        Card ownGreenCard = new GrizzlyBears();
-        Card opponentGreenCard = new GrizzlyBears();
+        Card redCard = new UnholyHeat();
+        Card blackCard = new NestedShambler();
+        Card ownGreenCard = new Chatterstorm();
+        Card opponentGreenCard = new Chatterstorm();
         harness.setGraveyard(player1, List.of(redCard, ownGreenCard));
         harness.setGraveyard(player2, List.of(blackCard, opponentGreenCard));
 
@@ -48,19 +49,80 @@ class SanctifierEnVecTest extends BaseCardTest {
     @Test
     void exilesBlackPermanentAndRedSpellInsteadOfGraveyards() {
         harness.addToBattlefield(player1, new SanctifierEnVec());
-        Permanent blackCat = harness.addToBattlefieldAndReturn(player2, new BlackCat());
-        harness.setHand(player1, List.of(new Shock()));
+        Permanent shambler = harness.addToBattlefieldAndReturn(player2, new NestedShambler());
+        harness.setHand(player1, List.of(new UnholyHeat()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, blackCat.getId());
+        harness.castAndResolveInstant(player1, 0, shambler.getId());
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).doesNotContain(shambler.getCard());
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(shambler.getCard());
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .noneMatch(card -> card.getName().equals("Unholy Heat"));
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getName().equals("Unholy Heat"));
+    }
+
+    @Test
+    void abilityLossDisablesGraveyardReplacement() {
+        harness.addToBattlefield(player1, new SanctifierEnVec());
+        harness.addToBattlefield(player2, new DressDown());
+        Permanent shambler = harness.addToBattlefieldAndReturn(player2, new NestedShambler());
+        Card heat = new UnholyHeat();
+        harness.setHand(player1, List.of(heat));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, shambler.getId());
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(shambler.getCard());
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(heat);
+        assertThat(gd.findExiledCard(shambler.getCard().getId())).isNull();
+        assertThat(gd.findExiledCard(heat.getId())).isNull();
+    }
+
+    @Test
+    void greenSpellStillGoesToGraveyard() {
+        harness.addToBattlefield(player1, new SanctifierEnVec());
+        Card chatterstorm = new Chatterstorm();
+        harness.setHand(player1, List.of(chatterstorm));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player2.getId())).doesNotContain(blackCat.getCard());
-        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(blackCat.getCard());
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(card -> card.getName().equals("Shock"));
-        assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(card -> card.getName().equals("Shock"));
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(chatterstorm);
+        assertThat(gd.findExiledCard(chatterstorm.getId())).isNull();
+        harness.assertOnBattlefield(player1, "Squirrel");
+    }
+
+    @Test
+    void entersWithNoMatchingGraveyardCards() {
+        Card greenCard = new Chatterstorm();
+        harness.setGraveyard(player2, List.of(greenCard));
+
+        castSanctifier();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(greenCard);
+        assertThat(gd.findExiledCard(greenCard.getId())).isNull();
+    }
+
+    @Test
+    void exilesBlackCreatureDyingSimultaneouslyWithSanctifier() {
+        Permanent sanctifier = harness.addToBattlefieldAndReturn(player1, new SanctifierEnVec());
+        Permanent shambler = harness.addToBattlefieldAndReturn(player1, new NestedShambler());
+        Card damn = new Damn();
+        harness.setHand(player1, List.of(damn));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castWithOverload(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(sanctifier.getCard(), damn);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(shambler.getCard());
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(shambler.getCard());
+        harness.assertNotOnBattlefield(player1, "Squirrel");
     }
 
     private void castSanctifier() {
