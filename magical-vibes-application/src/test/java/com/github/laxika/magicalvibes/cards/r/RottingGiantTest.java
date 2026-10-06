@@ -57,8 +57,7 @@ class RottingGiantTest extends BaseCardTest {
         Permanent giant = addCreatureReady(player1, new RottingGiant());
         addCreatureReady(player2, new WoodlandDruid());
 
-        declareAttackers(player2, List.of(0));
-        prepareDeclareBlockers(player2);
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -73,8 +72,7 @@ class RottingGiantTest extends BaseCardTest {
         Card cardToExile = new Forest();
         harness.setGraveyard(player1, List.of(cardToExile));
 
-        declareAttackers(player2, List.of(0));
-        prepareDeclareBlockers(player2);
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -84,5 +82,51 @@ class RottingGiantTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(giant);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.exiledCards).extracting(exiled -> exiled.card()).contains(cardToExile);
+    }
+
+    @Test
+    void attackingWithEmptyGraveyardSacrifices() {
+        Permanent giant = addCreatureReady(player1, new RottingGiant());
+        harness.setGraveyard(player1, List.of());
+
+        declareAttackers(player1, List.of(0));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(giant);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(giant.getCard());
+        assertThat(gd.exiledCards).isEmpty();
+    }
+
+    @Test
+    void opponentsGraveyardCannotPayForAttackTrigger() {
+        Permanent giant = addCreatureReady(player1, new RottingGiant());
+        Card opponentsCard = new Forest();
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of(opponentsCard));
+
+        declareAttackers(player1, List.of(0));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(giant);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(giant.getCard());
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentsCard);
+        assertThat(gd.exiledCards).isEmpty();
+    }
+
+    @Test
+    void decliningToExileSacrificesAfterBlocking() {
+        Permanent giant = addCreatureReady(player1, new RottingGiant());
+        addCreatureReady(player2, new WoodlandDruid());
+        Card cardInGraveyard = new Forest();
+        harness.setGraveyard(player1, List.of(cardInGraveyard));
+
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(giant);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(cardInGraveyard, giant.getCard());
+        assertThat(gd.exiledCards).isEmpty();
     }
 }
