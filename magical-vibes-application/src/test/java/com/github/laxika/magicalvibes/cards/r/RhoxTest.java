@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Rhox.class, Mossdog.class, VolrathTheFallen.class})
 class RhoxTest extends BaseCardTest {
@@ -112,6 +113,59 @@ class RhoxTest extends BaseCardTest {
         assertThat(survivingRhox.isTapped()).isTrue();
         assertThat(survivingRhox.isAttacking()).isFalse();
         assertThat(survivingRhox.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Rhox cannot split damage between its blocker and defending player")
+    void cannotSplitDamageBetweenBlockerAndPlayer() {
+        harness.setLife(player2, 20);
+        Permanent rhox = addCreatureReady(player1, new Rhox());
+        Permanent blocker = addCreatureReady(player2, new Mossdog());
+        declareBlockers(rhox, blocker);
+        resolveCombat();
+
+        assertThatThrownBy(() -> harness.handleCombatDamageAssigned(
+                player1, 0, Map.of(blocker.getId(), 1, player2.getId(), 4)))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(player2.getId(), 5));
+        harness.assertLife(player2, 15);
+        harness.assertOnBattlefield(player2, "Mossdog");
+    }
+
+    @Test
+    @DisplayName("Assigning damage as though unblocked does not prevent the blocker's damage")
+    void blockerStillDealsLethalDamageWithoutRegeneration() {
+        harness.setLife(player2, 20);
+        Permanent rhox = addCreatureReady(player1, new Rhox());
+        Permanent blocker = addCreatureReady(player2, new VolrathTheFallen());
+        declareBlockers(rhox, blocker);
+        resolveCombat();
+
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(player2.getId(), 5));
+
+        harness.assertLife(player2, 15);
+        harness.assertNotOnBattlefield(player1, "Rhox");
+        harness.assertInGraveyard(player1, "Rhox");
+        harness.assertOnBattlefield(player2, "Volrath the Fallen");
+    }
+
+    @Test
+    @DisplayName("Regeneration can be activated while tapped and does not immediately heal damage")
+    void tappedRhoxCanCreateShieldWithoutHealingDamage() {
+        Permanent rhox = addCreatureReady(player1, new Rhox());
+        rhox.setTapped(true);
+        rhox.setMarkedDamage(2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(rhox.getRegenerationShield()).isEqualTo(1);
+        assertThat(rhox.getMarkedDamage()).isEqualTo(2);
+        assertThat(rhox.isTapped()).isTrue();
+        harness.assertOnBattlefield(player1, "Rhox");
     }
 
     private void declareBlockers(Permanent attacker, Permanent... blockers) {
