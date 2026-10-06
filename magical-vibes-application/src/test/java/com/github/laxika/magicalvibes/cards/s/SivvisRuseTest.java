@@ -1,11 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.Blastoderm;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -18,19 +16,9 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SivvisRuse.class, GrizzlyBears.class, Mountain.class, Plains.class})
+@CardUsed({SivvisRuse.class, GrizzlyBears.class, Blastoderm.class, SkyshroudRidgeback.class,
+        SealOfFire.class, Mountain.class, Plains.class})
 class SivvisRuseTest extends BaseCardTest {
-
-    private static Card createCreature(String name, int power, int toughness) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{1}");
-        card.setColor(CardColor.GREEN);
-        card.setPower(power);
-        card.setToughness(toughness);
-        return card;
-    }
 
     @Test
     @DisplayName("Can be cast for free when an opponent controls a Mountain and you control a Plains")
@@ -74,8 +62,7 @@ class SivvisRuseTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         harness.assertInGraveyard(player1, "Sivvi's Ruse");
     }
@@ -88,10 +75,9 @@ class SivvisRuseTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
-        Permanent attacker = addCreatureReady(player2, createCreature("Large Bear", 5, 5));
+        Permanent attacker = addCreatureReady(player2, new Blastoderm());
         attacker.setAttacking(true);
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
@@ -108,15 +94,58 @@ class SivvisRuseTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
-        Permanent attacker = addCreatureReady(player2, createCreature("Large Bear", 5, 5));
+        Permanent attacker = addCreatureReady(player2, new Blastoderm());
         attacker.setAttacking(true);
 
         harness.setLife(player1, 20);
         resolveCombat(player2);
 
         harness.assertLife(player1, 15);
+    }
+
+    @Test
+    @DisplayName("Prevents repeated noncombat damage, including to a creature entering after resolution")
+    void preventsNoncombatDamageToLaterCreature() {
+        harness.setHand(player1, List.of(new SivvisRuse(), new SkyshroudRidgeback()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castAndResolveInstant(player1, 0);
+
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        Permanent creature = findPermanent(player1, "Skyshroud Ridgeback");
+        harness.addToBattlefield(player2, new SealOfFire());
+        harness.addToBattlefield(player2, new SealOfFire());
+
+        harness.activateAbility(player2, 0, null, creature.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player2, 0, null, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Skyshroud Ridgeback");
+        assertThat(creature.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Does not prevent damage dealt by your creatures to opposing creatures")
+    void doesNotPreventDamageToOpposingCreatures() {
+        Permanent attacker = addCreatureReady(player1, new Blastoderm());
+        Permanent blocker = addCreatureReady(player2, new SkyshroudRidgeback());
+        harness.setHand(player1, List.of(new SivvisRuse()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castAndResolveInstant(player1, 0);
+
+        attacker.setAttacking(true);
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+        resolveCombat(player1);
+
+        harness.assertInGraveyard(player2, "Skyshroud Ridgeback");
+        harness.assertOnBattlefield(player1, "Blastoderm");
+        assertThat(attacker.getMarkedDamage()).isZero();
     }
 }
