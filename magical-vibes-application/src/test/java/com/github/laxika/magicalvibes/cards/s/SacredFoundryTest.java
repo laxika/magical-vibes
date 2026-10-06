@@ -83,6 +83,46 @@ class SacredFoundryTest extends BaseCardTest {
         assertThat(foundry.isTapped()).isTrue();
     }
 
+    @Test
+    @DisplayName("Sacred Foundry can produce mana immediately after paying life on entry")
+    void producesManaOnTurnItEnters() {
+        playSacredFoundry(20);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(findSacredFoundry(player1).isTapped()).isTrue();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Sacred Foundry offers its controller the life payment when put onto the battlefield")
+    void enteringWithoutLandPlayOffersPaymentToController() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 10);
+        Permanent foundry = harness.enterBattlefieldAndReturn(player2, new SacredFoundry());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(8);
+        assertThat(foundry.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Sacred Foundry enters tapped when payment is declined after being put onto the battlefield")
+    void enteringWithoutLandPlayCanDeclinePayment() {
+        harness.setLife(player2, 10);
+        Permanent foundry = harness.enterBattlefieldAndReturn(player2, new SacredFoundry());
+
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(10);
+        assertThat(foundry.isTapped()).isTrue();
+    }
+
     private void playSacredFoundry(int life) {
         harness.setLife(player1, life);
         harness.setHand(player1, List.of(new SacredFoundry()));
@@ -92,9 +132,7 @@ class SacredFoundryTest extends BaseCardTest {
     }
 
     private Permanent addSacredFoundryReady(Player player) {
-        Permanent foundry = harness.addToBattlefieldAndReturn(player, new SacredFoundry());
-        foundry.setSummoningSick(false);
-        return foundry;
+        return addCreatureReady(player, new SacredFoundry());
     }
 
     private Permanent findSacredFoundry(Player player) {
