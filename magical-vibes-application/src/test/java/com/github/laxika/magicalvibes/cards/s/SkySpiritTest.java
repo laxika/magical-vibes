@@ -44,4 +44,49 @@ class SkySpiritTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(blocker.getCard());
     }
+
+    @Test
+    @DisplayName("Sky Spirit destroys a flying attacker before regular combat damage while blocking")
+    void firstStrikeWorksWhileBlocking() {
+        Permanent attacker = addCreatureReady(player1, new WindDrake());
+        Permanent skySpirit = addCreatureReady(player2, new SkySpirit());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(attacker.getCard());
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(skySpirit);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Two Sky Spirits deal lethal first-strike damage to each other simultaneously")
+    void firstStrikersDealDamageSimultaneously() {
+        Permanent attacker = addCreatureReady(player1, new SkySpirit());
+        Permanent blocker = addCreatureReady(player2, new SkySpirit());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(attacker.getCard());
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(blocker.getCard());
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("An unblocked Sky Spirit deals combat damage only once")
+    void unblockedFirstStrikerDoesNotDealDamageAgainInRegularStep() {
+        addCreatureReady(player1, new SkySpirit());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat();
+
+        harness.assertLife(player2, 18);
+    }
 }
