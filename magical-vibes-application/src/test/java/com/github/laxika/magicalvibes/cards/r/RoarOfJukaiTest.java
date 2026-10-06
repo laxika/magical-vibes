@@ -4,8 +4,6 @@ import com.github.laxika.magicalvibes.cards.f.FirstVolley;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -58,25 +56,19 @@ class RoarOfJukaiTest extends BaseCardTest {
 
     @Test
     @DisplayName("Boosts each blocked creature regardless of its controller")
-    void boostsBlockedCreaturesOnEitherBattlefield() {
+    void boostsOpponentsBlockedCreature() {
         harness.addToBattlefield(player1, new Forest());
-        Permanent player1Blocked = addAttackingCreature(player1);
+        gd.activePlayerId = player2.getId();
         Permanent player2Blocked = addAttackingCreature(player2);
         Permanent player1Blocker = addReadyCreature(player1);
         player1Blocker.setBlocking(true);
         player1Blocker.addBlockingTargetId(player2Blocked.getId());
-        Permanent player2Blocker = addReadyCreature(player2);
-        player2Blocker.setBlocking(true);
-        player2Blocker.addBlockingTargetId(player1Blocked.getId());
 
         castRoar();
 
-        assertThat(player1Blocked.getEffectivePower()).isEqualTo(4);
-        assertThat(player1Blocked.getEffectiveToughness()).isEqualTo(4);
         assertThat(player2Blocked.getEffectivePower()).isEqualTo(4);
         assertThat(player2Blocked.getEffectiveToughness()).isEqualTo(4);
         assertThat(player1Blocker.getPowerModifier()).isZero();
-        assertThat(player2Blocker.getPowerModifier()).isZero();
     }
 
     @Test
@@ -93,7 +85,6 @@ class RoarOfJukaiTest extends BaseCardTest {
         assertThat(blocked.getEffectiveToughness()).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(blocked.getPowerModifier()).isZero();
@@ -110,16 +101,17 @@ class RoarOfJukaiTest extends BaseCardTest {
         Permanent blocker = addReadyCreature(player2);
         blocker.setBlocking(true);
         blocker.addBlockingTargetId(blocked.getId());
-        Card arcaneHost = new HolyDay().createRuntimeCopy();
-        arcaneHost.setSubtypes(List.of(CardSubtype.ARCANE));
-        harness.setHand(player1, List.of(arcaneHost, new RoarOfJukai()));
+        Permanent target = addReadyCreature(player2);
+        harness.setHand(player1, List.of(new FirstVolley(), new RoarOfJukai()));
         harness.setLife(player2, 10);
-        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castWithSplice(player1, 0, null, List.of(1));
+        harness.castWithSplice(player1, 0, target.getId(), List.of(1));
+        harness.assertLife(player2, 15);
         harness.passBothPriorities();
 
-        harness.assertLife(player2, 15);
+        harness.assertLife(player2, 14);
         assertThat(blocked.getEffectivePower()).isEqualTo(4);
         assertThat(blocked.getEffectiveToughness()).isEqualTo(4);
         harness.assertInHand(player1, "Roar of Jukai");
@@ -163,6 +155,95 @@ class RoarOfJukaiTest extends BaseCardTest {
     private void castRoar() {
         harness.castFromHand(player1, new RoarOfJukai(), "{2}{G}");
         harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("Splice life gain is paid even without a Forest and before resolution")
+    void paysSpliceCostWithoutForest() {
+        Permanent target = addReadyCreature(player2);
+        harness.setHand(player1, List.of(new FirstVolley(), new RoarOfJukai()));
+        harness.setLife(player2, 10);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castWithSplice(player1, 0, target.getId(), List.of(1));
+
+        harness.assertLife(player2, 15);
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.assertInHand(player1, "Roar of Jukai");
+        harness.passBothPriorities();
+        harness.assertLife(player2, 14);
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        assertThat(target.getPowerModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("An opponent's Forest does not satisfy the condition")
+    void opponentsForestDoesNotEnableBoost() {
+        harness.addToBattlefield(player2, new Forest());
+        Permanent blocked = addAttackingCreature(player1);
+        blocked.setBlockedWithoutBlockers(true);
+
+        castRoar();
+
+        assertThat(blocked.getPowerModifier()).isZero();
+        assertThat(blocked.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("The splice cost remains paid when the host's only target becomes illegal")
+    void spliceLifeGainSurvivesIllegalHostTarget() {
+        Permanent target = addReadyCreature(player2);
+        harness.setHand(player1, List.of(new FirstVolley(), new RoarOfJukai()));
+        harness.setLife(player2, 10);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castWithSplice(player1, 0, target.getId(), List.of(1));
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 15);
+        harness.assertInGraveyard(player1, "First Volley");
+        harness.assertInHand(player1, "Roar of Jukai");
+    }
+
+    @Test
+    @DisplayName("A blocked attacker still receives the boost with no remaining blockers")
+    void boostsBlockedAttackerWithoutRemainingBlockers() {
+        harness.addToBattlefield(player1, new Forest());
+        Permanent blocked = addAttackingCreature(player1);
+        blocked.setBlockedWithoutBlockers(true);
+
+        castRoar();
+
+        assertThat(blocked.getEffectivePower()).isEqualTo(4);
+        assertThat(blocked.getEffectiveToughness()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("The Forest condition is checked at resolution")
+    void losingForestBeforeResolutionPreventsBoost() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent blocked = addAttackingCreature(player1);
+        blocked.setBlockedWithoutBlockers(true);
+        harness.castFromHand(player1, new RoarOfJukai(), "{2}{G}");
+        gd.playerBattlefields.get(player1.getId()).remove(forest);
+
+        harness.passBothPriorities();
+
+        assertThat(blocked.getPowerModifier()).isZero();
+        assertThat(blocked.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Can resolve with no Forest and no creatures")
+    void resolvesOnEmptyBattlefield() {
+        castRoar();
+
+        harness.assertInGraveyard(player1, "Roar of Jukai");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
     }
 
     private Permanent addAttackingCreature(com.github.laxika.magicalvibes.model.Player player) {
