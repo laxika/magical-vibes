@@ -182,9 +182,9 @@ class SereneSunsetTest extends BaseCardTest {
     @DisplayName("Prevents combat damage from each of multiple targeted creatures")
     void preventsCombatDamageFromEachTarget() {
         harness.setLife(player2, 20);
-        Permanent firstTarget = addAttackerForJudReview();
-        Permanent secondTarget = addAttackerForJudReview();
-        addAttackerForJudReview();
+        Permanent firstTarget = addAttacker(player1);
+        Permanent secondTarget = addAttacker(player1);
+        addAttacker(player1);
 
         harness.setHand(player1, List.of(new SereneSunset()));
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -215,7 +215,7 @@ class SereneSunsetTest extends BaseCardTest {
     @DisplayName("X=0 requires no targets and has no effect")
     void zeroXHasNoTargetsAndNoEffect() {
         harness.setLife(player2, 20);
-        addAttackerForJudReview();
+        addAttacker(player1);
 
         harness.setHand(player1, List.of(new SereneSunset()));
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -227,10 +227,40 @@ class SereneSunsetTest extends BaseCardTest {
         assertThat(gd.getLife(player2.getId())).isEqualTo(19);
     }
 
-    private Permanent addAttackerForJudReview() {
-        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
-        attacker.setSummoningSick(false);
-        attacker.setAttacking(true);
-        return attacker;
+    @Test
+    @DisplayName("Still prevents damage from the remaining legal target")
+    void resolvesWithOneTargetMissing() {
+        harness.setLife(player2, 20);
+        Permanent removedTarget = addAttacker(player1);
+        Permanent remainingTarget = addAttacker(player1);
+        addAttacker(player1);
+
+        harness.setHand(player1, List.of(new SereneSunset()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castInstantForX(player1, 0, 2,
+                List.of(removedTarget.getId(), remainingTarget.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(removedTarget);
+        gd.playerGraveyards.get(player1.getId()).add(removedTarget.getCard());
+        harness.passBothPriorities();
+
+        resolveCombat(player1);
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(19);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof SereneSunset);
+    }
+
+    @Test
+    @DisplayName("Cannot choose the same creature twice for X=2")
+    void rejectsDuplicateTargets() {
+        Permanent target = addCreatureReady(player1, new SuntailHawk());
+        harness.setHand(player1, List.of(new SereneSunset()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castInstantForX(
+                player1, 0, 2, List.of(target.getId(), target.getId())))
+                .isInstanceOf(IllegalStateException.class);
     }
 }
