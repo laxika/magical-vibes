@@ -36,8 +36,8 @@ class ChampionOfRhonasTest extends BaseCardTest {
         Permanent champion = addReadyChampion(player1);
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.HandCardChoice.class);
         harness.handleCardChosen(player1, 0);
@@ -57,8 +57,8 @@ class ChampionOfRhonasTest extends BaseCardTest {
         Permanent champion = addReadyChampion(player1);
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
         harness.handleCardChosen(player1, -1);
 
         assertThat(champion.getSkipUntapCount()).isGreaterThan(0);
@@ -73,7 +73,6 @@ class ChampionOfRhonasTest extends BaseCardTest {
         Permanent champion = addReadyChampion(player1);
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(champion.getSkipUntapCount()).isZero();
@@ -88,8 +87,8 @@ class ChampionOfRhonasTest extends BaseCardTest {
         addReadyChampion(player1);
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.HandCardChoice.class);
         assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).validIndices())
@@ -121,7 +120,6 @@ class ChampionOfRhonasTest extends BaseCardTest {
 
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
             declareAttackers(List.of(0));
-            harness.passBothPriorities();
             harness.handleMayAbilityChosen(player1, true);
             harness.passBothPriorities();
             harness.handleCardChosen(player1, -1);
@@ -144,7 +142,6 @@ class ChampionOfRhonasTest extends BaseCardTest {
 
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
             declareAttackers(List.of(0));
-            harness.passBothPriorities();
             harness.handleMayAbilityChosen(player1, true);
             harness.passBothPriorities();
         });

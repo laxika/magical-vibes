@@ -12111,8 +12111,14 @@ public class SpellCastingService {
             return new SpellManaPayment(before - pool.getTotalAllMana(), 0);
         }
 
+        // Phyrexian symbols the player chose to pay with life are no longer mana the reductions can
+        // remove (CR 601.2b fixes the choice before CR 601.2f totals the cost), so set them aside first.
+        ManaCost printedCost = new ManaCost(totalMana);
+        int phyrexianSymbolsPaidWithLife = phyrexianLifeCount == null
+                ? 0 : Math.max(0, Math.min(phyrexianLifeCount, printedCost.getPhyrexianManaCount()));
         ManaCost cost = castingCostService.applyColoredManaCostReductions(
-                gameData, playerId, card, new ManaCost(totalMana), castTargetIds);
+                gameData, playerId, card, printedCost.withoutPhyrexianSymbols(phyrexianSymbolsPaidWithLife),
+                castTargetIds);
         if (convokeContributions != null
                 && convokeContributions.size() > cost.getManaValue() - cost.getGenericCost()
                 + Math.max(0, cost.getGenericCost() + additionalCost
@@ -12130,7 +12136,7 @@ public class SpellCastingService {
                 throw new IllegalStateException("Can only spend mana produced by basic lands to cast this spell");
             }
             cost.payBasicLandOnly(pool, effectiveXValue, additionalCost);
-            return new SpellManaPayment(before - pool.getTotalAllMana(), 0);
+            return new SpellManaPayment(before - pool.getTotalAllMana(), phyrexianSymbolsPaidWithLife);
         }
 
         // Vizier of the Menagerie: eligible spells (e.g. creature spells) may be paid with mana of any
@@ -12156,7 +12162,7 @@ public class SpellCastingService {
             if (gameData.hasPendingAnyManaTypeForNextSpellThisTurn(playerId)) {
                 gameData.markSpellPaidUsingPendingAnyManaType(card.getId());
             }
-        return new SpellManaPayment(before - pool.getTotalAllMana(), 0);
+        return new SpellManaPayment(before - pool.getTotalAllMana(), phyrexianSymbolsPaidWithLife);
     }
 
         ManaRestrictionFlags flags = computeManaRestrictionFlags(gameData, playerId, card, kicked, effectiveXValue);
@@ -12281,10 +12287,10 @@ public class SpellCastingService {
         // generic costs consume it. Without an explicit player choice, use mana only where the
         // rest of the cost stays payable, falling back to life otherwise (playability assumes
         // life is always an option).
-        int phyrexianLifeCost = 0;
+        int phyrexianLifeCost = 2 * phyrexianSymbolsPaidWithLife;
         if (cost.hasPhyrexianMana()) {
             if (phyrexianLifeCount != null) {
-                phyrexianLifeCost = cost.payPhyrexianMana(pool, phyrexianLifeCount);
+                phyrexianLifeCost += cost.payPhyrexianMana(pool, phyrexianLifeCount - phyrexianSymbolsPaidWithLife);
             } else {
                 int restDemand = cost.hasX() ? effectiveXValue + additionalCost : additionalCost;
                 phyrexianLifeCost = cost.payPhyrexianManaAuto(pool, restDemand);

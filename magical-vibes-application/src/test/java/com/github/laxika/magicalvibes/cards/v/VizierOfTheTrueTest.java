@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.c.ColossalDreadmaw;
+import com.github.laxika.magicalvibes.cards.h.HoodedBrawler;
+import com.github.laxika.magicalvibes.cards.s.StewardOfSolidarity;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,16 +16,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 class VizierOfTheTrueTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Attacking queues the exert trigger for target selection")
-    void attackQueuesTargetSelection() {
+    @DisplayName("Attacking offers the exert choice before any target is chosen")
+    void attackOffersExertChoice() {
         addCreatureReady(player1, new VizierOfTheTrue());
         addCreatureReady(player2, new ColossalDreadmaw());
 
         declareAttackers(List.of(0));
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        assertThat(gd.interaction.permanentChoiceContext())
-                .isInstanceOf(PermanentChoiceContext.AttackTriggerTarget.class);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
@@ -34,9 +34,9 @@ class VizierOfTheTrueTest extends BaseCardTest {
         Permanent dreadmaw = addCreatureReady(player2, new ColossalDreadmaw());
 
         declareAttackers(List.of(0));
-        harness.handlePermanentChosen(player1, dreadmaw.getId());
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, dreadmaw.getId());
+        resolveAllTriggers();
 
         assertThat(dreadmaw.isTapped()).isTrue();
         assertThat(vizier.getSkipUntapCount()).isGreaterThan(0);
@@ -49,10 +49,9 @@ class VizierOfTheTrueTest extends BaseCardTest {
         Permanent dreadmaw = addCreatureReady(player2, new ColossalDreadmaw());
 
         declareAttackers(List.of(0));
-        harness.handlePermanentChosen(player1, dreadmaw.getId());
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
         assertThat(dreadmaw.isTapped()).isFalse();
         assertThat(vizier.getSkipUntapCount()).isZero();
     }
@@ -65,6 +64,7 @@ class VizierOfTheTrueTest extends BaseCardTest {
         Permanent opponentDreadmaw = addCreatureReady(player2, new ColossalDreadmaw());
 
         declareAttackers(List.of(0));
+        harness.handleMayAbilityChosen(player1, true);
 
         PendingInteraction interaction = gd.interaction.activeInteraction();
         assertThat(interaction).isInstanceOf(PendingInteraction.PermanentChoice.class);
@@ -74,5 +74,32 @@ class VizierOfTheTrueTest extends BaseCardTest {
         assertThat(choice.validIds()).doesNotContain(ownDreadmaw.getId());
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Exerting another creature as it attacks also triggers the tap")
+    void exertingAnotherAttackerTriggers() {
+        addCreatureReady(player1, new VizierOfTheTrue());
+        addCreatureReady(player1, new HoodedBrawler());
+        Permanent dreadmaw = addCreatureReady(player2, new ColossalDreadmaw());
+
+        declareAttackers(List.of(1));
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, dreadmaw.getId());
+        resolveAllTriggers();
+
+        assertThat(dreadmaw.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Exerting a creature as an activation cost also triggers the tap")
+    void activationCostExertTriggers() {
+        addCreatureReady(player1, new VizierOfTheTrue());
+        addCreatureReady(player1, new StewardOfSolidarity());
+        Permanent dreadmaw = addCreatureReady(player2, new ColossalDreadmaw());
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.handlePermanentChosen(player1, dreadmaw.getId());
+        resolveAllTriggers();
+
+        assertThat(dreadmaw.isTapped()).isTrue();
+    }
 }

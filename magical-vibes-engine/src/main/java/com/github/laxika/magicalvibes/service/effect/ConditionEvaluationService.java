@@ -367,6 +367,7 @@ import com.github.laxika.magicalvibes.model.condition.SelfHasKeyword;
 import com.github.laxika.magicalvibes.model.condition.SelfWasDealtDamageThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SnowManaSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.SourceAddedManaThisTurn;
+import com.github.laxika.magicalvibes.model.condition.SourceExertedThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceAttackedBattleThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceCardToughnessAtLeast;
 import com.github.laxika.magicalvibes.model.condition.SourceAttackedDuringControllersLastTurn;
@@ -1858,6 +1859,9 @@ public class ConditionEvaluationService {
             case SourceAddedManaThisTurn ignored ->
                     ctx.sourcePermanentId() != null
                             && gameData.permanentsThatAddedManaWithAbilityThisTurn.contains(ctx.sourcePermanentId());
+            case SourceExertedThisTurn ignored ->
+                    ctx.sourcePermanentId() != null
+                            && gameData.permanentsExertedThisTurn.contains(ctx.sourcePermanentId());
             case SourceAttackedBattleThisTurn ignored ->
                     ctx.sourcePermanentId() != null
                             && gameData.permanentsThatAttackedBattlesThisTurn.contains(ctx.sourcePermanentId());

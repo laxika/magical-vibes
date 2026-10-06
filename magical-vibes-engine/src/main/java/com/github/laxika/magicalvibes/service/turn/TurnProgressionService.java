@@ -1250,6 +1250,7 @@ public class TurnProgressionService {
         gameData.permanentsWithPlusOneCountersPutByPlayerThisTurn.clear();
         gameData.plusOnePlusOneCountersPutOnControlledCreaturesThisTurn.clear();
         gameData.onceEachTurnAttackTriggersFiredThisTurn.clear();
+        gameData.permanentsExertedThisTurn.clear();
         gameData.bendingTypesCompletedThisTurn.clear();
         gameData.tokenCreationReplacementUsedThisTurn.clear();
         gameData.creatureCardsDamagedThisTurnBySourcePermanent.clear();

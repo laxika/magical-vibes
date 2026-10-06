@@ -110,8 +110,7 @@ class CombatCelebrantTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
 
-        assertThat(gd.interaction.activeInteraction())
-                .isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.pendingMayAbilities).isEmpty();
     }
 

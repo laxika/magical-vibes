@@ -50,11 +50,11 @@ class DevotedCropMateTest extends BaseCardTest {
             addReadyCropMate(player1);
 
             declareAttackers(List.of(0));
-            harness.passBothPriorities();
             harness.handleMayAbilityChosen(player1, true);
 
-            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
-            harness.handleGraveyardCardChosen(player1, 0);
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+            harness.handleMultipleCardsChosen(player1, List.of(gd.playerGraveyards.get(player1.getId()).get(0).getId()));
+            resolveAllTriggers();
 
             harness.assertOnBattlefield(player1, "Gust Walker");
             harness.assertNotInGraveyard(player1, "Gust Walker");
@@ -67,10 +67,9 @@ class DevotedCropMateTest extends BaseCardTest {
             addReadyCropMate(player1);
 
             declareAttackers(List.of(0));
-            harness.passBothPriorities();
             harness.handleMayAbilityChosen(player1, true);
 
-            assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
         }
 
         @Test
@@ -80,10 +79,9 @@ class DevotedCropMateTest extends BaseCardTest {
             addReadyCropMate(player1);
 
             declareAttackers(List.of(0));
-            harness.passBothPriorities();
             harness.handleMayAbilityChosen(player1, true);
 
-            assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
         }
 
         @Test
@@ -93,10 +91,9 @@ class DevotedCropMateTest extends BaseCardTest {
             addReadyCropMate(player1);
 
             declareAttackers(List.of(0));
-            harness.passBothPriorities();
             harness.handleMayAbilityChosen(player1, true);
 
-            assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
         }
 
         @Test
@@ -106,10 +103,9 @@ class DevotedCropMateTest extends BaseCardTest {
             addReadyCropMate(player1);
 
             declareAttackers(List.of(0));
-            harness.passBothPriorities();
             harness.handleMayAbilityChosen(player1, false);
 
-            assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
             harness.assertInGraveyard(player1, "Gust Walker");
         }
 
@@ -119,10 +115,9 @@ class DevotedCropMateTest extends BaseCardTest {
             addReadyCropMate(player1);
 
             declareAttackers(List.of(0));
-            harness.passBothPriorities();
             harness.handleMayAbilityChosen(player1, true);
 
-            assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
         }
 
         @Test
@@ -137,14 +132,14 @@ class DevotedCropMateTest extends BaseCardTest {
             addReadyCropMate(player1);
 
             declareAttackers(List.of(0));
-            harness.passBothPriorities();
             harness.handleMayAbilityChosen(player1, true);
 
-            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
 
-            assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class).validIndices())
-                    .containsExactly(0);
-            harness.handleGraveyardCardChosen(player1, 0);
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).cards())
+                    .containsExactly(walker);
+            harness.handleMultipleCardsChosen(player1, List.of(walker.getId()));
+            resolveAllTriggers();
 
             harness.assertOnBattlefield(player1, "Gust Walker");
         }
@@ -158,9 +153,9 @@ class DevotedCropMateTest extends BaseCardTest {
         Permanent cropMate = addReadyCropMate(player1);
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handleGraveyardCardChosen(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(gd.playerGraveyards.get(player1.getId()).get(0).getId()));
+        resolveAllTriggers();
 
         harness.performUntapStep(player2);
         assertThat(cropMate.isTapped()).isTrue();
@@ -177,12 +172,27 @@ class DevotedCropMateTest extends BaseCardTest {
         Permanent cropMate = addReadyCropMate(player1);
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         harness.performUntapStep(player1);
         assertThat(cropMate.isTapped()).isFalse();
         harness.assertInGraveyard(player1, "Gust Walker");
+    }
+
+    @Test
+    @DisplayName("Exerting skips the next untap even with no legal graveyard target")
+    void exertWithoutTargetStillSkipsUntap() {
+        Permanent cropMate = addReadyCropMate(player1);
+
+        declareAttackers(List.of(0));
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(cropMate.getSkipUntapCount()).isPositive();
+        harness.performUntapStep(player1);
+        assertThat(cropMate.isTapped()).isTrue();
+        harness.performUntapStep(player1);
+        assertThat(cropMate.isTapped()).isFalse();
     }
 
     @Test

@@ -20,7 +20,7 @@ public class NefCropEntangler extends Card {
         addEffect(EffectSlot.ON_ATTACK, new MayEffect(
                 SequenceEffect.of(
                         new BoostSelfEffect(1, 2),
-                        new SkipNextUntapEffect(TapUntapScope.SELF)
+                        new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true)
                 ),
                 "Exert Nef-Crop Entangler as it attacks? (It gets +1/+2 until end of turn.)"
         ));

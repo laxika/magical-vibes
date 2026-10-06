@@ -40,8 +40,8 @@ class RhonassStalwartTest extends BaseCardTest {
         Permanent stalwart = addReadyStalwart(player1);
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, stalwart)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, stalwart)).isEqualTo(3);
@@ -53,8 +53,8 @@ class RhonassStalwartTest extends BaseCardTest {
         Permanent stalwart = addReadyStalwart(player1);
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
 
         assertThat(stalwart.isTapped()).isTrue();
         assertThat(stalwart.getSkipUntapCount()).isGreaterThan(0);
@@ -67,7 +67,6 @@ class RhonassStalwartTest extends BaseCardTest {
         Permanent bears = addCreatureReady(player2, new RhonassStalwart());
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
@@ -87,7 +86,6 @@ class RhonassStalwartTest extends BaseCardTest {
         Permanent giant = addCreatureReady(player2, new SidewinderNaga());
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
@@ -108,7 +106,6 @@ class RhonassStalwartTest extends BaseCardTest {
         Permanent bears = addCreatureReady(player2, new RhonassStalwart());
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
 
@@ -133,7 +130,6 @@ class RhonassStalwartTest extends BaseCardTest {
 
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
             declareAttackers(List.of(0));
-            harness.passBothPriorities();
             harness.handleMayAbilityChosen(player1, true);
 
             assertThat(stalwart.getSkipUntapCount()).isPositive();
@@ -152,7 +148,6 @@ class RhonassStalwartTest extends BaseCardTest {
         Permanent stalwart = addReadyStalwart(player1);
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
 
@@ -172,7 +167,6 @@ class RhonassStalwartTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new RhonassStalwart()));
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
         harness.passUntil(player2, TurnStep.UPKEEP);
@@ -182,7 +176,6 @@ class RhonassStalwartTest extends BaseCardTest {
 
         stalwart.untap();
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -195,7 +188,6 @@ class RhonassStalwartTest extends BaseCardTest {
         Permanent stalwart = addReadyStalwart(player1);
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
 

@@ -37,8 +37,8 @@ class ClockworkDroidTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new ClockworkDroid()));
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
 
         assertThat(gqs.hasCantBeBlocked(gd, droid)).isTrue();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.Scry.class);
@@ -55,7 +55,6 @@ class ClockworkDroidTest extends BaseCardTest {
         Permanent droid = addReadyDroid(player1);
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gqs.hasCantBeBlocked(gd, droid)).isFalse();
@@ -79,8 +78,8 @@ class ClockworkDroidTest extends BaseCardTest {
         harness.setLibrary(player1, List.of());
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
 
         harness.performUntapStep(player1);
         assertThat(droid.isTapped()).isTrue();
@@ -95,8 +94,8 @@ class ClockworkDroidTest extends BaseCardTest {
         harness.setLibrary(player1, List.of());
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
 
         gd.playerBattlefields.get(player1.getId()).remove(droid);
         gd.playerBattlefields.get(player2.getId()).add(droid);
@@ -112,8 +111,8 @@ class ClockworkDroidTest extends BaseCardTest {
         harness.setLibrary(player1, List.of());
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
 
         gd.playerBattlefields.get(player1.getId()).remove(droid);
         gd.playerBattlefields.get(player2.getId()).add(droid);
@@ -134,8 +133,8 @@ class ClockworkDroidTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(top, second));
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
                 .containsExactly(top);
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(), List.of(0)));

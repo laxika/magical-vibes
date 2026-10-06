@@ -22,7 +22,7 @@ public class ClockworkDroid extends Card {
                 SequenceEffect.of(
                         new MakeCreatureUnblockableEffect(true),
                         new ScryEffect(1),
-                        new SkipNextUntapEffect(TapUntapScope.SELF)
+                        new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true)
                 ),
                 "Exert Clockwork Droid as it attacks? (It can't be blocked this turn and you scry 1.)"
         ));

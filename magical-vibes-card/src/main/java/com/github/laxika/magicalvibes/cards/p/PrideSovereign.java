@@ -33,7 +33,7 @@ public class PrideSovereign extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true, "{W}",
                 List.of(
-                        new SkipNextUntapEffect(TapUntapScope.SELF),
+                        new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true, true),
                         new CreateTokenEffect(
                                 2, "Cat", 1, 1, CardColor.WHITE,
                                 List.of(CardSubtype.CAT),

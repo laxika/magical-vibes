@@ -21,7 +21,10 @@ public class ArchonOfValorsReach extends Card {
                 CardType.KINDRED,
                 CardType.PLANE,
                 CardType.PHENOMENON,
-                CardType.SCHEME
+                CardType.SCHEME,
+                CardType.CONSPIRACY,
+                CardType.DUNGEON,
+                CardType.VANGUARD
         )));
         addEffect(EffectSlot.STATIC, new PlayersCantCastSpellsMatchingPredicateEffect(
                 new CardHasSourceChosenCardTypePredicate()));

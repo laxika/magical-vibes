@@ -1190,6 +1190,10 @@ public class CombatAttackService {
                         && ce.interveningIf()
                         && !conditionEvaluationService.isMet(
                                 gameData, ce.condition(), ConditionContext.forPermanent(attacker, playerId)));
+                // A trigger-time-only condition has been checked; unwrap it so a wrapped "you may"
+                // (Combat Celebrant's exert choice) is offered as declared rather than re-checked.
+                allEffects.replaceAll(e -> e instanceof ConditionalEffect ce && ce.triggerTimeOnly()
+                        ? ce.wrapped() : e);
 
                 if (!allEffects.isEmpty()) {
                     // Separate non-targeting "you may" effects (e.g. Primeval Titan's may-search) from

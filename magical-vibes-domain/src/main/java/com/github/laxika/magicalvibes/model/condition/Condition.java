@@ -343,6 +343,7 @@ public sealed interface Condition permits
         SelfHasKeyword,
         SelfWasDealtDamageThisTurn,
         SourceAddedManaThisTurn,
+        SourceExertedThisTurn,
         SourceCardInCommandZone,
         SourceCardOnBattlefield,
         SourceCardInGraveyard,

@@ -23,7 +23,7 @@ public class RhetCropSpearmaster extends Card {
                 SequenceEffect.of(
                         new BoostSelfEffect(1, 0),
                         new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.SELF),
-                        new SkipNextUntapEffect(TapUntapScope.SELF)
+                        new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true)
                 ),
                 "Exert Rhet-Crop Spearmaster as it attacks? (It gets +1/+0 and gains first strike until end of turn.)"
         ));

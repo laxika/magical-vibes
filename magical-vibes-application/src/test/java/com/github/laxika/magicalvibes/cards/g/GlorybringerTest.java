@@ -28,6 +28,23 @@ class GlorybringerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Glorybringer stays exerted even if its damage target leaves before the ability resolves")
+    void exertStandsWhenTargetLeaves() {
+        Permanent glorybringer = addCreatureReady(player1, new Glorybringer());
+        Permanent sandwurm = addCreatureReady(player2, new GreaterSandwurm());
+
+        declareAttackers(List.of(0));
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, sandwurm.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(sandwurm);
+        resolveAllTriggers();
+
+        assertThat(glorybringer.getSkipUntapCount()).isPositive();
+        harness.performUntapStep(player1);
+        assertThat(glorybringer.isTapped()).isTrue();
+    }
+
+    @Test
     @DisplayName("Exerting deals 4 damage to the target and skips the dragon's next untap")
     void exertDealsFourDamageAndSkipsUntap() {
         Permanent glorybringer = addCreatureReady(player1, new Glorybringer());

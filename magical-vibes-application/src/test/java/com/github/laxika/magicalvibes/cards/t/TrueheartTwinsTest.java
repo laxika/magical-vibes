@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HoodedBrawler;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -35,8 +36,8 @@ class TrueheartTwinsTest extends BaseCardTest {
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, twins)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, twins)).isEqualTo(4);
@@ -50,8 +51,8 @@ class TrueheartTwinsTest extends BaseCardTest {
         Permanent twins = addReadyTwins(player1);
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
 
         assertThat(twins.isTapped()).isTrue();
         assertThat(twins.getSkipUntapCount()).isGreaterThan(0);
@@ -64,7 +65,6 @@ class TrueheartTwinsTest extends BaseCardTest {
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gqs.getEffectivePower(gd, twins)).isEqualTo(4);
@@ -79,7 +79,6 @@ class TrueheartTwinsTest extends BaseCardTest {
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
         gd.interaction.clearAwaitingInput();
@@ -91,7 +90,21 @@ class TrueheartTwinsTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Exerting another creature also gives creatures you control +1/+0")
+    void exertingAnotherCreatureTriggers() {
+        Permanent twins = addReadyTwins(player1);
+        Permanent brawler = addCreatureReady(player1, new HoodedBrawler());
+
+        declareAttackers(List.of(1));
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, twins)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, brawler)).isEqualTo(6);
+        assertThat(twins.getSkipUntapCount()).isZero();
+    }
+
 
     private Permanent addReadyTwins(Player player) {
         return addCreatureReady(player, new TrueheartTwins());

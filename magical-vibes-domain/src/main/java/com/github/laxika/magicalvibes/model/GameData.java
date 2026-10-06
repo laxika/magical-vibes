@@ -2890,6 +2890,10 @@ public class GameData {
      *  other. Cleared at start of new turn. */
     public final Set<UUID> onceEachTurnAttackTriggersFiredThisTurn = ConcurrentHashMap.newKeySet();
 
+    /** Permanents (by UUID) exerted this turn, as an attack choice or an activation cost — "if this
+     *  creature hasn't been exerted this turn" (Combat Celebrant). Cleared at start of new turn. */
+    public final Set<UUID> permanentsExertedThisTurn = ConcurrentHashMap.newKeySet();
+
     public final Map<UUID, Set<BendingType>> bendingTypesCompletedThisTurn = new ConcurrentHashMap<>();
 
     /**
@@ -7492,6 +7496,7 @@ public class GameData {
             copy.firstResolutionTriggerKeysThisTurn.put(k, keys);
         });
         copy.onceEachTurnAttackTriggersFiredThisTurn.addAll(this.onceEachTurnAttackTriggersFiredThisTurn);
+        copy.permanentsExertedThisTurn.addAll(this.permanentsExertedThisTurn);
         this.bendingTypesCompletedThisTurn.forEach((k, v) ->
                 copy.bendingTypesCompletedThisTurn.put(k, new java.util.HashSet<>(v)));
         copy.tokenCreationReplacementUsedThisTurn.addAll(this.tokenCreationReplacementUsedThisTurn);

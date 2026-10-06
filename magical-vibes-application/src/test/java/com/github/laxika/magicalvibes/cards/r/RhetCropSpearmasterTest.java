@@ -38,8 +38,8 @@ class RhetCropSpearmasterTest extends BaseCardTest {
         Permanent spearmaster = addReadySpearmaster(player1);
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, spearmaster)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, spearmaster)).isEqualTo(1);
@@ -52,8 +52,8 @@ class RhetCropSpearmasterTest extends BaseCardTest {
         Permanent spearmaster = addReadySpearmaster(player1);
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
 
         assertThat(spearmaster.isTapped()).isTrue();
         assertThat(spearmaster.getSkipUntapCount()).isGreaterThan(0);
@@ -65,7 +65,6 @@ class RhetCropSpearmasterTest extends BaseCardTest {
         Permanent spearmaster = addReadySpearmaster(player1);
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gqs.getEffectivePower(gd, spearmaster)).isEqualTo(3);
@@ -81,7 +80,6 @@ class RhetCropSpearmasterTest extends BaseCardTest {
 
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
             declareAttackers(List.of(0));
-            harness.passBothPriorities();
             harness.handleMayAbilityChosen(player1, true);
 
             assertThat(spearmaster.getSkipUntapCount()).isPositive();
@@ -96,7 +94,6 @@ class RhetCropSpearmasterTest extends BaseCardTest {
         Permanent spearmaster = addReadySpearmaster(player1);
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
 
@@ -115,7 +112,6 @@ class RhetCropSpearmasterTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new RhetCropSpearmaster()));
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
@@ -130,7 +126,6 @@ class RhetCropSpearmasterTest extends BaseCardTest {
         Permanent spearmaster = addReadySpearmaster(player1);
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
 

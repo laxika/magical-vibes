@@ -27,8 +27,8 @@ class OketrasAvengerTest extends BaseCardTest {
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
 
         blockAndResolveCombat(0, 0);
 
@@ -44,7 +44,6 @@ class OketrasAvengerTest extends BaseCardTest {
         addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         blockAndResolveCombat(0, 0);
@@ -60,8 +59,8 @@ class OketrasAvengerTest extends BaseCardTest {
         addCreatureReady(player1, new ProdigalSorcerer()); // T: deal 1 damage to any target
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
 
         // Ping the exerted attacker for 1 noncombat damage — combat-only prevention does not stop it.
         harness.activateAbility(player1, 1, null, avenger.getId());
@@ -76,8 +75,8 @@ class OketrasAvengerTest extends BaseCardTest {
         Permanent avenger = addCreatureReady(player1, new OketrasAvenger());
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
 
         assertThat(avenger.isTapped()).isTrue();
         assertThat(avenger.getSkipUntapCount()).isGreaterThan(0);
@@ -90,7 +89,6 @@ class OketrasAvengerTest extends BaseCardTest {
 
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
             declareAttackers(List.of(0));
-            harness.passBothPriorities();
             harness.handleMayAbilityChosen(player1, true);
 
             assertThat(avenger.getSkipUntapCount()).isPositive();
@@ -104,7 +102,6 @@ class OketrasAvengerTest extends BaseCardTest {
         Permanent avenger = addCreatureReady(player1, new OketrasAvenger());
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
 
@@ -122,7 +119,6 @@ class OketrasAvengerTest extends BaseCardTest {
         Permanent avenger = addCreatureReady(player1, new OketrasAvenger());
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
 
@@ -149,9 +145,9 @@ class OketrasAvengerTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new OketrasAvenger()));
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
+        gs.declareBlockers(gd, player2, List.of());
         harness.passUntil(player2, TurnStep.UPKEEP);
         avenger.untap();
 

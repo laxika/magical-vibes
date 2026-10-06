@@ -20,7 +20,7 @@ public class WatchfulNaga extends Card {
         addEffect(EffectSlot.ON_ATTACK, new MayEffect(
                 SequenceEffect.of(
                         new DrawCardEffect(1),
-                        new SkipNextUntapEffect(TapUntapScope.SELF)
+                        new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true)
                 ),
                 "Exert Watchful Naga as it attacks? (Draw a card.)"
         ));

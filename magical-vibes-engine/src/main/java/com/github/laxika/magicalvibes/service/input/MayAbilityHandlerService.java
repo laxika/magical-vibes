@@ -66,6 +66,8 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.BendOrBreakEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.RagingRiverEffectHandler;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
+import com.github.laxika.magicalvibes.service.effect.normalfx.QueueReflexiveAbilityEffectHandler;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
@@ -117,6 +119,9 @@ public class MayAbilityHandlerService {
 
     @Autowired @Lazy
     private LifeSupport lifeSupport;
+
+    @Autowired @Lazy
+    private QueueReflexiveAbilityEffectHandler queueReflexiveAbilityEffectHandler;
 
     public MayAbilityHandlerService(InputCompletionService inputCompletionService,
                                     MayCastHandlerService mayCastHandlerService,
@@ -189,12 +194,14 @@ public class MayAbilityHandlerService {
             if (accepted) {
                 List<CardEffect> exertCosts = new ArrayList<>();
                 List<CardEffect> triggeredEffects = new ArrayList<>();
+                List<QueueReflexiveAbilityEffect> reflexiveEffects = new ArrayList<>();
                 for (CardEffect effect : ability.effects()) {
                     List<CardEffect> steps = effect instanceof SequenceEffect sequence
                             ? sequence.steps() : List.of(effect);
                     for (CardEffect step : steps) {
                         if (step instanceof com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect skip
                                 && skip.controllerStepOnly()) exertCosts.add(step);
+                        else if (step instanceof QueueReflexiveAbilityEffect reflexive) reflexiveEffects.add(reflexive);
                         else triggeredEffects.add(step);
                     }
                 }
@@ -202,6 +209,7 @@ public class MayAbilityHandlerService {
                         ability.sourceCard(), ability.controllerId(), ability.sourceCard().getName() + " is exerted",
                         exertCosts, null, ability.sourcePermanentId());
                 exert.setSourcePermanentSnapshot(ability.sourcePermanentSnapshot());
+                exert.setAttackedTargetId(ability.attackedTargetId());
                 effectResolutionService.resolveEffects(gameData, exert);
                 triggerCollectionService.checkExertTriggers(
                         gameData, ability.controllerId(), ability.sourcePermanentId());
@@ -213,6 +221,11 @@ public class MayAbilityHandlerService {
                     triggered.setTargetId(ability.targetCardId());
                     triggered.setAttackedTargetId(ability.attackedTargetId());
                     gameData.stack.add(triggered);
+                }
+                // "When you do, <targeted effect>": the reflexive trigger goes on the stack now and
+                // picks its target as it does, rather than waiting behind a wrapper trigger.
+                for (QueueReflexiveAbilityEffect reflexive : reflexiveEffects) {
+                    queueReflexiveAbilityEffectHandler.resolve(gameData, exert, reflexive);
                 }
 
             }

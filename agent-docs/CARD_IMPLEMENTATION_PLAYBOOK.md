@@ -604,6 +604,7 @@ Which engine layers support each ConditionalEffect. Check this before using a co
 | `ConditionalEffect(new SourceIsAttacking(), wrapped)` | yes | - | - | "as long as this creature is attacking" — reads `source.isAttacking()`. Thorned Moloch STATIC first strike |
 | `ConditionalEffect(new SourceIsAttackingOrBlocking(), wrapped)` | yes | - | - | "unless it's attacking or blocking" — reads the source's current combat flags. Tromokratis's conditional hexproof |
 | `ConditionalEffect(new SourceAttackedThisTurn(), wrapped)` | yes | - | - | "as long as this permanent attacked this turn" — reads the source's turn attack record, so the condition remains true after combat. The Lunar Whale |
+| `ConditionalEffect.atTriggerTime(new NotCondition(new SourceExertedThisTurn()), MayEffect(<exert>))` | yes | - | - | "if this creature hasn't been exerted this turn, you may exert it as it attacks" — reads `GameData.permanentsExertedThisTurn` (recorded by every exert path via `checkExertTriggers`); the attack-trigger collector unwraps the trigger-time conditional so the exert choice is still offered. Combat Celebrant |
 | `ConditionalEffect(new DefendingPlayerPoisoned(), wrapped)` | - | yes | - |
 | `ConditionalEffect(new PermanentEnteredThisTurn(predicate, minCount), wrapped)` | - | yes | - | Defaults to permanents entering under the controller's control; pass `CountScope.ANY_PLAYER` for an unqualified "a permanent entered" condition |
 | `ConditionalEffect(new ControllerTurn(), wrapped)` | yes | - | - |

@@ -28,7 +28,7 @@ public class RhonassStalwart extends Card {
                                 new PermanentPowerAtLeastPredicate(3),
                                 "creatures with power 3 or greater",
                                 true),
-                        new SkipNextUntapEffect(TapUntapScope.SELF)
+                        new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true)
                 ),
                 "Exert Rhonas's Stalwart as it attacks? (It gets +1/+1 until end of turn and can't be blocked by creatures with power 2 or less this turn.)"
         ));

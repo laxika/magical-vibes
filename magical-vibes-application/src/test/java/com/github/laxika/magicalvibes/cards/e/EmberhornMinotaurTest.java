@@ -36,8 +36,8 @@ class EmberhornMinotaurTest extends BaseCardTest {
         Permanent minotaur = addReadyMinotaur(player1);
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, minotaur)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, minotaur)).isEqualTo(4);
@@ -50,8 +50,8 @@ class EmberhornMinotaurTest extends BaseCardTest {
         Permanent minotaur = addReadyMinotaur(player1);
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
 
         assertThat(minotaur.isTapped()).isTrue();
         assertThat(minotaur.getSkipUntapCount()).isGreaterThan(0);
@@ -63,7 +63,6 @@ class EmberhornMinotaurTest extends BaseCardTest {
         Permanent minotaur = addReadyMinotaur(player1);
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gqs.getEffectivePower(gd, minotaur)).isEqualTo(4);
@@ -88,10 +87,9 @@ class EmberhornMinotaurTest extends BaseCardTest {
         Permanent minotaur = addReadyMinotaur(player1);
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
 
+        assertThat(minotaur.getSkipUntapCount()).isGreaterThan(0);
         assertThat(gqs.getEffectivePower(gd, minotaur)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, minotaur)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, minotaur, Keyword.MENACE)).isFalse();
@@ -109,7 +107,6 @@ class EmberhornMinotaurTest extends BaseCardTest {
         Permanent minotaur = addReadyMinotaur(player1);
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
@@ -128,7 +125,6 @@ class EmberhornMinotaurTest extends BaseCardTest {
         Permanent minotaur = addReadyMinotaur(player1);
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 

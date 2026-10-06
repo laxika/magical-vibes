@@ -43,7 +43,7 @@ public class Themberchaud extends Card {
         addEffect(EffectSlot.ON_ATTACK, new MayEffect(
                 SequenceEffect.of(
                         new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF),
-                        new SkipNextUntapEffect(TapUntapScope.SELF)
+                        new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true)
                 ),
                 "Exert Themberchaud as it attacks? (It gains flying until end of turn.)"
         ));

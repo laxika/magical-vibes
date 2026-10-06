@@ -221,6 +221,21 @@ class AvatarAangTest extends BaseCardTest {
     }
 
     @Test
+    void backFaceReductionCannotRemovePhyrexianSymbolChosenToBePaidWithLife() {
+        Permanent aang = harness.addToBattlefieldAndReturn(player1, new AvatarAang());
+        aang.setCard(aang.getOriginalCard().getBackFaceCard());
+        aang.setTransformed(true);
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new PorcelainLegionnaire()));
+
+        gs.playCard(gd, player1, 0, 0, null, null, List.of(), List.of(), false, null, 1);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Porcelain Legionnaire");
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
     void rewardsAlsoApplyOnOpponentsUpkeep() {
         Permanent aang = harness.addToBattlefieldAndReturn(player1, new AvatarAang());
         aang.setCard(aang.getOriginalCard().getBackFaceCard());

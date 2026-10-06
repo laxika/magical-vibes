@@ -57,6 +57,9 @@ public class MtgjsonOracleLoader implements OracleLoader {
     private static final ObjectMapper MAPPER = JsonMapper.builder().build();
     private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(20);
     private static final Duration REQUEST_TIMEOUT = Duration.ofMinutes(2);
+    /** A generic browser User-Agent; MTGJSON's edge rejects the old app-specific one with 403. */
+    static final String USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+            + "(KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36";
     // MTGJSON omits these MSC Beginner Box numbers but includes the same cards as alternate
     // printings. Prefer the real number if the upstream set file gains it later.
     private static final Map<String, String> MSC_BEGINNER_BOX_ALIASES = Map.of(
@@ -257,7 +260,7 @@ public class MtgjsonOracleLoader implements OracleLoader {
         return HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .timeout(REQUEST_TIMEOUT)
-                .header("User-Agent", "MagicalVibes/1.0")
+                .header("User-Agent", USER_AGENT)
                 .header("Accept", "application/json")
                 .GET()
                 .build();

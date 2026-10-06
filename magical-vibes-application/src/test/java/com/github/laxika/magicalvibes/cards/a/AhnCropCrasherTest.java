@@ -98,6 +98,24 @@ class AhnCropCrasherTest extends BaseCardTest {
         assertThat(crasher.isTapped()).isFalse();
     }
 
+    @Test
+    @DisplayName("Exerting puts only the targeted reflexive ability on the stack")
+    void exertPutsSingleReflexiveAbilityOnStack() {
+        Permanent crasher = addReadyCrasher(player1);
+        Permanent target = addCreatureReady(player2, new HyenaPack());
+
+        declareAttackers(List.of(0));
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(crasher.getSkipUntapCount()).isGreaterThan(0);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+
+        harness.handlePermanentChosen(player1, target.getId());
+
+        assertThat(gd.stack).singleElement()
+                .satisfies(entry -> assertThat(entry.getTargetId()).isEqualTo(target.getId()));
+    }
+
     private Permanent addReadyCrasher(Player player) {
         return addCreatureReady(player, new AhnCropCrasher());
     }

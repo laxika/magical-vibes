@@ -20,10 +20,10 @@ public class FerventPaincaster extends Card {
                 List.of(new DealDamageToTargetPlayerOrPlaneswalkerEffect(1)),
                 "{T}: Fervent Paincaster deals 1 damage to target player or planeswalker."));
 
-        // {T}, Exert this creature: It deals 1 damage to target creature. Exert is the extra cost of
-        // keeping the creature tapped through its next untap step (SkipNextUntapEffect, SELF).
+        // {T}, Exert this creature: It deals 1 damage to target creature. Exert is paid as part of
+        // the activation cost (SkipNextUntapEffect with activationCost).
         addActivatedAbility(new ActivatedAbility(true, null,
-                List.of(new DealDamageToTargetCreatureEffect(1), new SkipNextUntapEffect(TapUntapScope.SELF)),
+                List.of(new DealDamageToTargetCreatureEffect(1), new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true, true)),
                 "{T}, Exert Fervent Paincaster: It deals 1 damage to target creature."));
     }
 }

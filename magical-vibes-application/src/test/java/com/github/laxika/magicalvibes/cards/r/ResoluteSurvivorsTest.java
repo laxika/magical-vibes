@@ -37,8 +37,8 @@ class ResoluteSurvivorsTest extends BaseCardTest {
         int combatDamage = gqs.getEffectivePower(gd, survivors);
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
         // Combat also deals the attacker's combat damage to the defending player.
         assertThat(gd.getLife(player2.getId())).isEqualTo(opponentLifeBefore - 1 - combatDamage);
         assertThat(gd.getLife(player1.getId())).isEqualTo(controllerLifeBefore + 1);
@@ -50,8 +50,8 @@ class ResoluteSurvivorsTest extends BaseCardTest {
         Permanent survivors = addReadySurvivors(player1);
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
 
         assertThat(survivors.isTapped()).isTrue();
         assertThat(survivors.getSkipUntapCount()).isGreaterThan(0);
@@ -66,7 +66,6 @@ class ResoluteSurvivorsTest extends BaseCardTest {
         int combatDamage = gqs.getEffectivePower(gd, survivors);
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         // Only combat damage, no ability damage/life gain.
         assertThat(gd.getLife(player2.getId())).isEqualTo(opponentLifeBefore - combatDamage);
@@ -84,7 +83,6 @@ class ResoluteSurvivorsTest extends BaseCardTest {
         int controllerLifeBefore = gd.getLife(player1.getId());
 
         declareAttackers(List.of(1));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
         resolveCombat();
@@ -109,7 +107,6 @@ class ResoluteSurvivorsTest extends BaseCardTest {
         Permanent survivors = addReadySurvivors(player1);
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
 
@@ -127,7 +124,6 @@ class ResoluteSurvivorsTest extends BaseCardTest {
         Permanent survivors = addReadySurvivors(player1);
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
 

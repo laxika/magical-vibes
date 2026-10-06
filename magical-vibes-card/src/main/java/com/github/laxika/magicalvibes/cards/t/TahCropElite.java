@@ -20,7 +20,7 @@ public class TahCropElite extends Card {
         addEffect(EffectSlot.ON_ATTACK, new MayEffect(
                 SequenceEffect.of(
                         new BoostAllOwnCreaturesEffect(1, 1),
-                        new SkipNextUntapEffect(TapUntapScope.SELF)
+                        new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true)
                 ),
                 "Exert Tah-Crop Elite as it attacks? (Creatures you control get +1/+1 until end of turn.)"
         ));

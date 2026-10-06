@@ -22,7 +22,7 @@ public class ChampionOfRhonas extends Card {
         // The declinable hand-card choice covers the inner "you may put".
         addEffect(EffectSlot.ON_ATTACK, new MayEffect(
                 SequenceEffect.of(
-                        new SkipNextUntapEffect(TapUntapScope.SELF),
+                        new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true),
                         new PutCardToBattlefieldEffect(new CardTypePredicate(CardType.CREATURE), "creature")
                 ),
                 "Exert Champion of Rhonas as it attacks? (You may put a creature card from your hand onto the battlefield.)"

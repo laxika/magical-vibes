@@ -52,7 +52,9 @@ class AltaRIbnLaAhadTest extends BaseCardTest {
         assertThat(tokens).allSatisfy(token -> {
             assertThat(token.getCard().isToken()).isTrue();
             assertThat(token.isTapped()).isTrue();
-            assertThat(token.isAttackedThisTurn()).isTrue();
+            assertThat(token.isAttacking()).isTrue();
+            // CR 508.4: put onto the battlefield attacking, so it never "attacked".
+            assertThat(token.isAttackedThisTurn()).isFalse();
             assertThat(token.getAttackTarget()).isEqualTo(player2.getId());
         });
         assertThat(gd.getPlayerExiledCards(player1.getId()))

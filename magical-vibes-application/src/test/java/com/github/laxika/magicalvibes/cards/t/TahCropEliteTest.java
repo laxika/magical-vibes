@@ -35,8 +35,8 @@ class TahCropEliteTest extends BaseCardTest {
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, elite)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, elite)).isEqualTo(3);
@@ -50,8 +50,8 @@ class TahCropEliteTest extends BaseCardTest {
         Permanent elite = addReadyElite(player1);
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
 
         assertThat(elite.isTapped()).isTrue();
         assertThat(elite.getSkipUntapCount()).isGreaterThan(0);
@@ -64,7 +64,6 @@ class TahCropEliteTest extends BaseCardTest {
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gqs.getEffectivePower(gd, elite)).isEqualTo(2);
@@ -79,7 +78,6 @@ class TahCropEliteTest extends BaseCardTest {
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
         gd.interaction.clearAwaitingInput();

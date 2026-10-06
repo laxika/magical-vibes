@@ -35,8 +35,8 @@ class WatchfulNagaTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
 
         harness.assertInHand(player1, "Grizzly Bears");
     }
@@ -48,8 +48,8 @@ class WatchfulNagaTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
 
         assertThat(naga.isTapped()).isTrue();
         assertThat(naga.getSkipUntapCount()).isGreaterThan(0);
@@ -62,7 +62,6 @@ class WatchfulNagaTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         harness.assertNotInHand(player1, "Grizzly Bears");

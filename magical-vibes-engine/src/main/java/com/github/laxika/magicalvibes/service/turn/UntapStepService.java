@@ -423,14 +423,23 @@ public class UntapStepService {
                 && isActiveSelfCrossPlayerUntap(gameData, source, controllerId, step, conditional.wrapped());
     }
 
-    /** Queues the batched untap-step triggers after all untap choices are complete. */
-    public void finishUntapStep(GameData gameData, UUID activePlayerId) {
+    /**
+     * Ends exert-style "won't untap during your next untap step" restrictions owed to
+     * {@code activePlayerId}, wherever the permanent is now — they expire with that player's
+     * untap step even if another player controls the permanent.
+     */
+    public void expireControllerStepUntapRestrictions(GameData gameData, UUID activePlayerId) {
         gameData.forEachPermanent((controllerId, permanent) -> {
             if (activePlayerId.equals(permanent.getSkipUntapControllerId())) {
                 permanent.setSkipUntapCount(0);
                 permanent.setSkipUntapControllerId(null);
             }
         });
+    }
+
+    /** Queues the batched untap-step triggers after all untap choices are complete. */
+    public void finishUntapStep(GameData gameData, UUID activePlayerId) {
+        expireControllerStepUntapRestrictions(gameData, activePlayerId);
         if (activePlayerId.equals(gameData.untapStepPlayerId)) {
             triggerCollectionService.checkControllerUntapsDuringUntapStepTriggers(
                     gameData, activePlayerId, gameData.untapStepUntappedPermanentCount);

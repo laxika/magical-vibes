@@ -2126,7 +2126,10 @@ public class GameTestHarness {
 
     public void performUntapStep(Player activePlayer) {
         forceActivePlayer(activePlayer);
-        inMutationScope(() -> untapStepService.untapPermanents(gameData, activePlayer.getId()));
+        inMutationScope(() -> {
+            untapStepService.untapPermanents(gameData, activePlayer.getId());
+            untapStepService.expireControllerStepUntapRestrictions(gameData, activePlayer.getId());
+        });
     }
 
     public void clearPriorityPassed() {

@@ -38,8 +38,8 @@ class KhenraScrapperTest extends BaseCardTest {
         Permanent scrapper = addReadyScrapper(player1);
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, scrapper)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, scrapper)).isEqualTo(3);
@@ -51,8 +51,8 @@ class KhenraScrapperTest extends BaseCardTest {
         Permanent scrapper = addReadyScrapper(player1);
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
 
         assertThat(scrapper.isTapped()).isTrue();
         assertThat(scrapper.getSkipUntapCount()).isGreaterThan(0);
@@ -64,7 +64,6 @@ class KhenraScrapperTest extends BaseCardTest {
         Permanent scrapper = addReadyScrapper(player1);
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gqs.getEffectivePower(gd, scrapper)).isEqualTo(2);
@@ -93,7 +92,6 @@ class KhenraScrapperTest extends BaseCardTest {
 
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
             declareAttackers(List.of(0));
-            harness.passBothPriorities();
             harness.handleMayAbilityChosen(player1, true);
 
             assertThat(scrapper.getSkipUntapCount()).isPositive();
@@ -109,7 +107,6 @@ class KhenraScrapperTest extends BaseCardTest {
     void exertSkipsOnlyNextUntap() {
         Permanent scrapper = addReadyScrapper(player1);
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
 
@@ -127,7 +124,6 @@ class KhenraScrapperTest extends BaseCardTest {
         Permanent scrapper = addReadyScrapper(player1);
         harness.setLibrary(player2, List.of(new KhenraScrapper()));
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
@@ -140,7 +136,6 @@ class KhenraScrapperTest extends BaseCardTest {
     void exertRestrictionDoesNotFollowNewController() {
         Permanent scrapper = addReadyScrapper(player1);
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
 
@@ -164,7 +159,6 @@ class KhenraScrapperTest extends BaseCardTest {
         addReadyScrapper(player1);
         addReadyScrapper(player2);
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         prepareDeclareBlockers();
 
@@ -181,7 +175,6 @@ class KhenraScrapperTest extends BaseCardTest {
         Permanent first = addReadyScrapper(player2);
         Permanent second = addReadyScrapper(player2);
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         prepareDeclareBlockers();
 

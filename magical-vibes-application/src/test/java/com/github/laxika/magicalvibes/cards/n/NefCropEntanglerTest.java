@@ -38,8 +38,8 @@ class NefCropEntanglerTest extends BaseCardTest {
         Permanent entangler = addReadyEntangler(player1);
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, entangler)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, entangler)).isEqualTo(3);
@@ -51,8 +51,8 @@ class NefCropEntanglerTest extends BaseCardTest {
         Permanent entangler = addReadyEntangler(player1);
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
 
         assertThat(entangler.isTapped()).isTrue();
         assertThat(entangler.getSkipUntapCount()).isGreaterThan(0);
@@ -64,7 +64,6 @@ class NefCropEntanglerTest extends BaseCardTest {
         Permanent entangler = addReadyEntangler(player1);
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gqs.getEffectivePower(gd, entangler)).isEqualTo(2);
@@ -79,7 +78,6 @@ class NefCropEntanglerTest extends BaseCardTest {
 
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
             declareAttackers(List.of(0));
-            harness.passBothPriorities();
             harness.handleMayAbilityChosen(player1, true);
 
             assertThat(entangler.getSkipUntapCount()).isPositive();
@@ -97,7 +95,6 @@ class NefCropEntanglerTest extends BaseCardTest {
         Permanent entangler = addReadyEntangler(player1);
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
 
@@ -116,7 +113,6 @@ class NefCropEntanglerTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new NefCropEntangler()));
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passUntil(player2, TurnStep.UPKEEP);
 
@@ -130,7 +126,6 @@ class NefCropEntanglerTest extends BaseCardTest {
         Permanent entangler = addReadyEntangler(player1);
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
 
@@ -158,7 +153,6 @@ class NefCropEntanglerTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new NefCropEntangler()));
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
 

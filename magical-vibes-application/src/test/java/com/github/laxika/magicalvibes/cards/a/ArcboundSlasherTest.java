@@ -22,8 +22,7 @@ class ArcboundSlasherTest extends BaseCardTest {
 
     @Test
     void entersWithFourModularCountersAndRiotCanAddAnother() {
-        Permanent slasher = castSlasher();
-        harness.handleMayAbilityChosen(player1, true);
+        Permanent slasher = castSlasher(true);
 
         assertThat(slasher.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
         assertThat(gqs.getEffectivePower(gd, slasher)).isEqualTo(5);
@@ -32,8 +31,7 @@ class ArcboundSlasherTest extends BaseCardTest {
 
     @Test
     void riotCanGiveHasteInsteadOfAnotherCounter() {
-        Permanent slasher = castSlasher();
-        harness.handleMayAbilityChosen(player1, false);
+        Permanent slasher = castSlasher(false);
 
         assertThat(slasher.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, slasher, Keyword.HASTE)).isTrue();
@@ -61,8 +59,7 @@ class ArcboundSlasherTest extends BaseCardTest {
 
     @Test
     void modularCanBeDeclinedAfterChoosingATarget() {
-        Permanent slasher = castSlasher();
-        harness.handleMayAbilityChosen(player1, false);
+        Permanent slasher = castSlasher(false);
         Permanent target = addCreatureReady(player1, new Ornithopter());
 
         destroySlasher(slasher);
@@ -77,8 +74,7 @@ class ArcboundSlasherTest extends BaseCardTest {
 
     @Test
     void modularIncludesRiotCounterAndCanTargetOpponentsArtifactCreature() {
-        Permanent slasher = castSlasher();
-        harness.handleMayAbilityChosen(player1, true);
+        Permanent slasher = castSlasher(true);
         Permanent target = addCreatureReady(player2, new Ornithopter());
         target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
 
@@ -95,9 +91,10 @@ class ArcboundSlasherTest extends BaseCardTest {
                 .anyMatch(card -> card instanceof ArcboundSlasher);
     }
 
-    private Permanent castSlasher() {
+    private Permanent castSlasher(boolean riotCounter) {
         harness.castFromHand(player1, new ArcboundSlasher(), "{4}{R}");
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, riotCounter);
         return findPermanent(player1, "Arcbound Slasher");
     }
 

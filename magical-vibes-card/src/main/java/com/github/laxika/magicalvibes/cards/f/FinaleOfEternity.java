@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.SpellXAtLeast;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardsFromControllerGraveyardToBattlefieldEffect;
@@ -30,6 +31,6 @@ public class FinaleOfEternity extends Card {
         addEffect(EffectSlot.SPELL, new ConditionalEffect(
                 new SpellXAtLeast(10),
                 new ReturnCardsFromControllerGraveyardToBattlefieldEffect(
-                        new CardTypePredicate(CardType.CREATURE), Integer.MAX_VALUE)));
+                        new CardTypePredicate(CardType.CREATURE), new Fixed(Integer.MAX_VALUE), true)));
     }
 }

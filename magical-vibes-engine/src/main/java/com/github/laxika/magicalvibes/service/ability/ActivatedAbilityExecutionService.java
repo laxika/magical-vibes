@@ -716,6 +716,7 @@ public class ActivatedAbilityExecutionService {
                     && skip.scope() == TapUntapScope.SELF && skip.activationCost()) {
                 permanent.setSkipUntapCount(Math.max(permanent.getSkipUntapCount(), skip.untapSteps()));
                 permanent.setSkipUntapControllerId(playerId);
+                triggerCollectionService.checkExertTriggers(gameData, playerId, permanent.getId());
             }
         }
 

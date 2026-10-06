@@ -32,7 +32,7 @@ public class HopeTender extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true, "{1}",
                 List.of(
-                        new SkipNextUntapEffect(TapUntapScope.SELF),
+                        new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true, true),
                         new UntapPermanentsEffect(TapUntapScope.ALL_TARGETS)
                 ),
                 "{1}, {T}, Exert this creature: Untap two target lands.",

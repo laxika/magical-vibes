@@ -120,6 +120,26 @@ class ManaCostTest {
         assertThat(reduced.getColoredCosts()).doesNotContainKey(ManaColor.RED);
     }
 
+    @Test
+    void coloredReductionReducesMatchingPhyrexianSymbolAndExcessReducesGeneric() {
+        ManaCost cost = new ManaCost("{2}{W/P}");
+
+        ManaCost reduced = cost.reducedBy(new ManaCost("{W}{U}"));
+
+        assertThat(reduced.getPhyrexianManaCount()).isZero();
+        assertThat(reduced.getGenericCost()).isEqualTo(1);
+    }
+
+    @Test
+    void colorReductionFallsToGenericOnceItsPhyrexianSymbolIsSetAsideForLife() {
+        ManaCost cost = new ManaCost("{2}{W/P}{U/P}");
+
+        ManaCost reduced = cost.withoutPhyrexianSymbols(1).reducedBy(new ManaCost("{W}"));
+
+        assertThat(reduced.getPhyrexianManaCount()).isEqualTo(1);
+        assertThat(reduced.getGenericCost()).isEqualTo(1);
+    }
+
     @Nested
     @DisplayName("payPhyrexianManaAuto")
     class PayPhyrexianManaAuto {

@@ -4,6 +4,11 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.condition.SourceRoomDoorUnlocked;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -31,11 +36,13 @@ public class FuneralRoomAwakeningHall extends Card {
         SequenceEffect drain = SequenceEffect.of(
                 new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT),
                 new GainLifeEffect(1));
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, drain);
+        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+                new SourceRoomDoorUnlocked(0),
+                new GrantTriggeredAbilityEffect(EffectSlot.ON_ALLY_CREATURE_DIES, drain, GrantScope.SELF)));
 
         addEffect(EffectSlot.ON_SELF_ROOM_DOOR_UNLOCKED,
                 new TriggeringRoomDoorConditionalEffect(1,
                         new ReturnCardsFromControllerGraveyardToBattlefieldEffect(
-                                new CardTypePredicate(CardType.CREATURE), Integer.MAX_VALUE)));
+                                new CardTypePredicate(CardType.CREATURE), new Fixed(Integer.MAX_VALUE), true)));
     }
 }

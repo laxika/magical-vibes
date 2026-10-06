@@ -192,6 +192,7 @@ public class ManaCost {
             return this;
         }
         Map<ManaColor, Integer> remainingColored = new EnumMap<>(coloredCosts);
+        Map<ManaColor, Integer> remainingPhyrexian = new EnumMap<>(phyrexianCosts);
         List<HybridSymbol> remainingHybrid = new ArrayList<>(hybridCosts);
         int genericReduction = reduction.genericCost;
         for (HybridSymbol hybrid : reduction.hybridCosts) {
@@ -200,22 +201,16 @@ public class ManaCost {
             }
         }
         for (Map.Entry<ManaColor, Integer> entry : reduction.coloredCosts.entrySet()) {
-            int matching = Math.min(remainingColored.getOrDefault(entry.getKey(), 0), entry.getValue());
-            if (matching > 0) {
-                remainingColored.merge(entry.getKey(), -matching, Integer::sum);
-            }
-            genericReduction += entry.getValue() - matching;
+            genericReduction += reduceColoredRequirement(
+                    remainingColored, remainingPhyrexian, remainingHybrid, entry.getKey(), entry.getValue());
         }
         for (Map.Entry<ManaColor, Integer> entry : reduction.phyrexianCosts.entrySet()) {
-            int matching = Math.min(remainingColored.getOrDefault(entry.getKey(), 0), entry.getValue());
-            if (matching > 0) {
-                remainingColored.merge(entry.getKey(), -matching, Integer::sum);
-            }
-            genericReduction += entry.getValue() - matching;
+            genericReduction += reduceColoredRequirement(
+                    remainingColored, remainingPhyrexian, remainingHybrid, entry.getKey(), entry.getValue());
         }
         return new ManaCost(
                 Math.max(0, genericCost - genericReduction),
-                remainingColored, phyrexianCosts, remainingHybrid, snowCost, legendarySourceCost, xSymbolCount,
+                remainingColored, remainingPhyrexian, remainingHybrid, snowCost, legendarySourceCost, xSymbolCount,
                 cumulativeUpkeepPayment);
     }
 
@@ -243,6 +238,21 @@ public class ManaCost {
         return new ManaCost(
                 genericCost, remainingColored, remainingPhyrexian, remainingHybrid, snowCost,
                 legendarySourceCost, xSymbolCount, cumulativeUpkeepPayment);
+    }
+
+    /**
+     * Reduces one color's requirement across ordinary, Phyrexian, and hybrid symbols of that color
+     * (CR 118.7c), returning the unmatched amount, which reduces generic mana instead.
+     */
+    private static int reduceColoredRequirement(Map<ManaColor, Integer> colored,
+                                                Map<ManaColor, Integer> phyrexian,
+                                                List<HybridSymbol> hybrids,
+                                                ManaColor color, int reduction) {
+        int remaining = reduceColoredComponent(colored, color, reduction);
+        remaining = reduceColoredComponent(phyrexian, color, remaining);
+        int hybridsBefore = hybrids.size();
+        removeMatchingHybridSymbols(hybrids, color, remaining);
+        return remaining - (hybridsBefore - hybrids.size());
     }
 
     private static int reduceColoredComponent(Map<ManaColor, Integer> components,
@@ -578,6 +588,36 @@ public class ManaCost {
             }
         }
         return lifeCost;
+    }
+
+    /**
+     * Removes {@code count} Phyrexian symbols, in the order {@link #payPhyrexianMana(ManaPool, Integer)}
+     * assigns life payments, for symbols the player has already chosen to pay with life (CR 601.2b).
+     * Cost reductions applied afterwards can then only reduce the mana-paid part of the cost.
+     */
+    public ManaCost withoutPhyrexianSymbols(int count) {
+        if (count <= 0) {
+            return this;
+        }
+        int remaining = count;
+        Map<ManaColor, Integer> remainingPhyrexian = new EnumMap<>(ManaColor.class);
+        for (Map.Entry<ManaColor, Integer> entry : phyrexianCosts.entrySet()) {
+            int removed = Math.min(remaining, entry.getValue());
+            remaining -= removed;
+            if (entry.getValue() > removed) {
+                remainingPhyrexian.put(entry.getKey(), entry.getValue() - removed);
+            }
+        }
+        List<HybridSymbol> remainingHybrid = new ArrayList<>();
+        for (HybridSymbol hybrid : hybridCosts) {
+            if (hybrid.phyrexianAlternative() && remaining > 0) {
+                remaining--;
+            } else {
+                remainingHybrid.add(hybrid);
+            }
+        }
+        return new ManaCost(genericCost, coloredCosts, remainingPhyrexian, remainingHybrid,
+                snowCost, legendarySourceCost, xSymbolCount, cumulativeUpkeepPayment);
     }
 
     public int getPhyrexianManaCount() {

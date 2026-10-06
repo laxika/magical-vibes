@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardsFromControllerGraveyardToBattlefieldEffect;
@@ -25,7 +26,7 @@ public class AftermathAnalyst extends Card {
                 List.of(
                         new SacrificeSelfCost(),
                         new ReturnCardsFromControllerGraveyardToBattlefieldEffect(
-                                new CardTypePredicate(CardType.LAND), Integer.MAX_VALUE, false, null, true)
+                                new CardTypePredicate(CardType.LAND), new Fixed(Integer.MAX_VALUE), false, null, true, true)
                 ),
                 "{3}{G}, Sacrifice this creature: Return all land cards from your graveyard to the battlefield tapped."
         ));

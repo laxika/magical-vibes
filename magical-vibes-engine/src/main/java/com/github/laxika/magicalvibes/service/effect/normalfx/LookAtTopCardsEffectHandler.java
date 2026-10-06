@@ -223,7 +223,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                         .prompt(prompt)
                         .destination(e.chosenDestination())
                         .grantHaste(e.grantHaste())
-                        .returnToHandAtEndStep(e.returnToHandAtEndStep())
+                        .returnToHandAtEndStep(e.returnToHandAtEndStep() || e.returnToHandAtNextEndStep())
                         .returnToHandAtControllerEndStepId(e.returnToHandAtEndStep() ? controllerId : null)
                         .enterWithCounters(e.battlefieldEntryReplacement())
                         .build(),
@@ -241,7 +241,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                     .shuffleAfterSelection(false)
                     .prompt("You may put one of these cards onto the battlefield.")
                     .grantHaste(e.grantHaste())
-                    .returnToHandAtEndStep(e.returnToHandAtEndStep())
+                    .returnToHandAtEndStep(e.returnToHandAtEndStep() || e.returnToHandAtNextEndStep())
                     .returnToHandAtControllerEndStepId(e.returnToHandAtEndStep() ? controllerId : null)
                     .enterWithCounters(e.battlefieldEntryReplacement())
                     .destination(e.chosenDestination())

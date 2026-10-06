@@ -35,6 +35,12 @@ class MtgjsonOracleLoaderTest {
     }
 
     @Test
+    void sendsGenericBrowserUserAgent() {
+        assertThat(MtgjsonOracleLoader.createRequest("grn").headers().firstValue("User-Agent"))
+                .hasValueSatisfying(userAgent -> assertThat(userAgent).startsWith("Mozilla/5.0").contains("Chrome/"));
+    }
+
+    @Test
     void parsesFrontFaceOfTransformCard() {
         JsonNode face = MAPPER.readTree("""
                 {

@@ -20,7 +20,7 @@ public class OketrasAvenger extends Card {
         addEffect(EffectSlot.ON_ATTACK, new MayEffect(
                 SequenceEffect.of(
                         PreventDamageEffect.allCombatToSelf(),
-                        new SkipNextUntapEffect(TapUntapScope.SELF)
+                        new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true)
                 ),
                 "Exert Oketra's Avenger as it attacks? (Prevent all combat damage that would be dealt to it this turn.)"
         ));

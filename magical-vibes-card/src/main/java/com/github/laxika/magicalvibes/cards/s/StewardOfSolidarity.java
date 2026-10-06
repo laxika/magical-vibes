@@ -20,13 +20,12 @@ public class StewardOfSolidarity extends Card {
 
     public StewardOfSolidarity() {
         // {T}, Exert this creature: Create a 1/1 white Warrior creature token with vigilance.
-        // Exert ("won't untap during your next untap step") is modeled as SkipNextUntapEffect(SELF),
-        // matching the existing exert pattern (Ahn-Crop Crasher / Battlefield Scavenger). The {T} is the
-        // tap cost (requiresTap); there is no mana cost.
+        // Exert is paid as part of the activation cost (SkipNextUntapEffect with activationCost). The
+        // {T} is the tap cost (requiresTap); there is no mana cost.
         addActivatedAbility(new ActivatedAbility(
                 true, "",
                 List.of(
-                        new SkipNextUntapEffect(TapUntapScope.SELF),
+                        new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true, true),
                         new CreateTokenEffect(
                                 "Warrior", 1, 1, CardColor.WHITE,
                                 List.of(CardSubtype.WARRIOR),

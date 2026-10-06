@@ -7263,10 +7263,12 @@ public class TriggerCollectionService {
         }
     }
 
+    /** Records that {@code exertedCreatureId} was exerted this turn and fires its controller's exert triggers. */
     public void checkExertTriggers(GameData gameData, UUID exertingPlayerId, UUID exertedCreatureId) {
         if (exertingPlayerId == null || exertedCreatureId == null) {
             return;
         }
+        gameData.permanentsExertedThisTurn.add(exertedCreatureId);
         List<Permanent> battlefield = gameData.playerBattlefields.get(exertingPlayerId);
         if (battlefield == null) {
             return;

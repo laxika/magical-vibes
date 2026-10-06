@@ -25,7 +25,7 @@ public class GustWalker extends Card {
                 SequenceEffect.of(
                         new BoostSelfEffect(1, 1),
                         new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF),
-                        new SkipNextUntapEffect(TapUntapScope.SELF)
+                        new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true)
                 ),
                 "Exert Gust Walker as it attacks? (It gets +1/+1 and gains flying until end of turn.)"
         ));

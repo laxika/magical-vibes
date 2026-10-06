@@ -59,8 +59,8 @@ class ThemberchaudTest extends BaseCardTest {
         Permanent themberchaud = addReadyThemberchaud();
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
 
         assertThat(gqs.hasKeyword(gd, themberchaud, Keyword.FLYING)).isTrue();
         assertThat(themberchaud.isTapped()).isTrue();
@@ -73,7 +73,6 @@ class ThemberchaudTest extends BaseCardTest {
         Permanent themberchaud = addReadyThemberchaud();
 
         declareAttackers(List.of(0));
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gqs.hasKeyword(gd, themberchaud, Keyword.FLYING)).isFalse();
