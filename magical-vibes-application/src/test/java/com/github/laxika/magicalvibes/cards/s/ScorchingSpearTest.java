@@ -21,6 +21,38 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class ScorchingSpearTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Scorching Spear can target its controller")
+    void canTargetController() {
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new ScorchingSpear()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castSorcery(player1, 0, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+    }
+
+    @Test
+    @DisplayName("Damage from two Scorching Spears kills a creature in the same turn")
+    void accumulatedDamageKillsCreature() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new ScorchingSpear(), new ScorchingSpear()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castSorcery(player1, 0, bear.getId());
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(bear.getMarkedDamage()).isEqualTo(1);
+
+        harness.castSorcery(player1, 0, bear.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
     @DisplayName("Scorching Spear deals 1 damage to target player")
     void deals1DamageToPlayer() {
         harness.setLife(player2, 20);
