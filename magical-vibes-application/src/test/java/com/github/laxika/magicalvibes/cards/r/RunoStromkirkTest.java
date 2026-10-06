@@ -2,12 +2,13 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.c.ColossalDreadmaw;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HullbreakerHorror;
 import com.github.laxika.magicalvibes.cards.k.KrothussLordOfTheDeep;
+import com.github.laxika.magicalvibes.cards.m.MarneusCalgar;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -20,7 +21,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({RunoStromkirk.class, KrothussLordOfTheDeep.class, GrizzlyBears.class,
-        ColossalDreadmaw.class})
+        ColossalDreadmaw.class, HullbreakerHorror.class, MarneusCalgar.class, Card.class})
 class RunoStromkirkTest extends BaseCardTest {
 
     @Test
@@ -28,12 +29,7 @@ class RunoStromkirkTest extends BaseCardTest {
     void putsTargetCreatureFromGraveyardOnTopOfLibrary() {
         Card creature = new GrizzlyBears();
         harness.setGraveyard(player1, List.of(creature));
-        harness.setHand(player1, List.of(new RunoStromkirk()));
-
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new RunoStromkirk(), "{1}{U}{B}");
         harness.passBothPriorities();
 
         PendingInteraction.MultiGraveyardChoice choice = gd.interaction
@@ -116,6 +112,76 @@ class RunoStromkirkTest extends BaseCardTest {
         assertThat(tokenCopies).hasSize(1);
         assertThat(tokenCopies).allMatch(Permanent::isTapped).allMatch(Permanent::isAttacking);
         assertThat(krothuss.isAttacking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("May decline the graveyard target even when a creature is available")
+    void mayChooseNoGraveyardTarget() {
+        Card creature = new GrizzlyBears();
+        Card topCard = new ColossalDreadmaw();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setLibrary(player1, List.of(topCard));
+        harness.castFromHand(player1, new RunoStromkirk(), "{1}{U}{B}");
+        harness.passBothPriorities();
+
+        harness.handleMultipleCardsChosen(player1, List.of());
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(creature);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+    }
+
+    @Test
+    @DisplayName("Declining to reveal a qualifying creature leaves Runo untransformed")
+    void mayDeclineToRevealLargeCreature() {
+        Permanent runo = addCreatureReady(player1, new RunoStromkirk());
+        Card creature = new HullbreakerHorror();
+        harness.setLibrary(player1, List.of(creature));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(runo.isTransformed()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(creature);
+    }
+
+    @Test
+    @DisplayName("An empty library does not transform Runo or offer a reveal choice")
+    void emptyLibraryDoesNotTransform() {
+        Permanent runo = addCreatureReady(player1, new RunoStromkirk());
+        harness.setLibrary(player1, List.of());
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(runo.isTransformed()).isFalse();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The two Kraken copies enter together and trigger Marneus only once")
+    void seaMonsterCopiesEnterAsOneBatch() {
+        transformedRuno();
+        Permanent kraken = addCreatureReady(player1, new HullbreakerHorror());
+        addCreatureReady(player1, new MarneusCalgar());
+        addCreatureReady(player2, new GrizzlyBears());
+        harness.setLife(player2, 100);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new RunoStromkirk(), new RunoStromkirk(), new RunoStromkirk()));
+
+        declareAttackers(player1, List.of(0, 1));
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, kraken.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Hullbreaker Horror").stream()
+                .filter(permanent -> permanent.getCard().isToken()).toList()).hasSize(2);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 
     private Permanent transformedRuno() {
