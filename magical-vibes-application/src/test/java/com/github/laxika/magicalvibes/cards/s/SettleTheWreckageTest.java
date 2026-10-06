@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -11,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.t.TreetopVillage;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -25,9 +26,10 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SettleTheWreckage.class, GrizzlyBears.class, HillGiant.class,
+        Plains.class, Forest.class, Island.class, Mountain.class, TreetopVillage.class})
 class SettleTheWreckageTest extends BaseCardTest {
 
-    // ===== Exile attacking creatures =====
 
     @Test
     @DisplayName("Exiles all attacking creatures target player controls")
@@ -49,9 +51,9 @@ class SettleTheWreckageTest extends BaseCardTest {
     @DisplayName("Does not exile non-attacking creatures")
     void doesNotExileNonAttackingCreatures() {
         // Add one attacking and one non-attacking creature
-        Permanent attacker = addReadyCreature(player2, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
         attacker.setAttacking(true);
-        addReadyCreature(player2, new HillGiant()); // not attacking
+        addCreatureReady(player2, new HillGiant()); // not attacking
 
         castSettleTheWreckage(player1, player2);
         harness.passBothPriorities(); // resolve Settle
@@ -61,7 +63,6 @@ class SettleTheWreckageTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Hill Giant");
     }
 
-    // ===== Library search for basic lands =====
 
     @Test
     @DisplayName("Target player gets library search for basic lands after exile")
@@ -90,11 +91,11 @@ class SettleTheWreckageTest extends BaseCardTest {
         int battlefieldBefore = gd.playerBattlefields.get(player2.getId()).size();
 
         // Pick first land
-        gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player2, 0);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
 
         // Pick second land
-        gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player2, 0);
 
         // Both lands should be on the battlefield tapped
         assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(battlefieldBefore + 2);
@@ -105,8 +106,8 @@ class SettleTheWreckageTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Target player may decline to search (fail to find)")
-    void targetPlayerMayDeclineSearch() {
+    @DisplayName("Target player may fail to find any basic lands")
+    void targetPlayerMayFailToFind() {
         setupAttackingCreatures(player2, 1);
         setupLibraryWithBasicLands(player2);
 
@@ -115,8 +116,8 @@ class SettleTheWreckageTest extends BaseCardTest {
 
         int battlefieldBefore = gd.playerBattlefields.get(player2.getId()).size();
 
-        // Decline search
-        gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(-1));
+        // Fail to find a basic land
+        harness.handleCardChosen(player2, -1);
 
         // No lands entered
         assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(battlefieldBefore);
@@ -132,11 +133,11 @@ class SettleTheWreckageTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve Settle
 
         // Should be able to pick 3 lands (one per exiled creature)
-        gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(0)); // pick 1
+        harness.handleCardChosen(player2, 0); // pick 1
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-        gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(0)); // pick 2
+        harness.handleCardChosen(player2, 0); // pick 2
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-        gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(0)); // pick 3
+        harness.handleCardChosen(player2, 0); // pick 3
 
         // All 3 exiled, 3 lands found
         assertThat(exiledCardsOwnedBy(player2)).hasSize(3);
@@ -146,13 +147,12 @@ class SettleTheWreckageTest extends BaseCardTest {
         assertThat(tappedLandCount).isGreaterThanOrEqualTo(3);
     }
 
-    // ===== Edge cases =====
 
     @Test
-    @DisplayName("No attacking creatures — no exile, no search")
-    void noAttackingCreaturesNoExileNoSearch() {
+    @DisplayName("No attacking creatures still permits searching for zero lands and shuffling")
+    void noAttackingCreaturesStillPermitsSearch() {
         // Add a non-attacking creature
-        addReadyCreature(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
         setupLibraryWithBasicLands(player2);
 
         castSettleTheWreckage(player1, player2);
@@ -160,8 +160,8 @@ class SettleTheWreckageTest extends BaseCardTest {
 
         // No creatures exiled
         assertThat(exiledCardsOwnedBy(player2)).isEmpty();
-        // No library search initiated
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNotNull();
+        assertThat(gd.interaction.activeInteraction().decidingPlayerId()).isEqualTo(player2.getId());
         harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
@@ -214,33 +214,99 @@ class SettleTheWreckageTest extends BaseCardTest {
         int battlefieldBefore = gd.playerBattlefields.get(player2.getId()).size();
 
         // Pick 1 land, then decline
-        gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(0));
-        gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(-1));
+        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, -1);
 
         // Only 1 land should have entered
         assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(battlefieldBefore + 1);
     }
 
-    // ===== Helper methods =====
+
+    @Test
+    @DisplayName("Exiles an attacking animated land and grants a basic land search")
+    void exilesAttackingAnimatedLand() {
+        Permanent village = addCreatureReady(player2, new TreetopVillage());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+        village.setAttacking(true);
+        setupLibraryWithBasicLands(player2);
+
+        castSettleTheWreckage(player1, player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(village);
+        assertThat(exiledCardsOwnedBy(player2)).extracting(e -> e.card().getName())
+                .containsExactly("Treetop Village");
+        assertThat(gd.interaction.activeInteraction()).isNotNull();
+    }
+
+    @Test
+    @DisplayName("Declining the optional search leaves the library unchanged")
+    void mayDeclineSearchWithoutShuffling() {
+        setupAttackingCreatures(player2, 1);
+        setupLibraryWithBasicLands(player2);
+        List<Card> originalLibrary = List.copyOf(gd.playerDecks.get(player2.getId()));
+
+        castSettleTheWreckage(player1, player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactlyElementsOf(originalLibrary);
+        assertThat(exiledCardsOwnedBy(player2)).hasSize(1);
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .noneMatch(entry -> entry.contains("searches their library") || entry.contains("Library is shuffled"));
+    }
+
+    @Test
+    @DisplayName("Can exile the caster's own attacking creatures")
+    void canTargetCaster() {
+        setupAttackingCreatures(player1, 1);
+        setupLibraryWithBasicLands(player1);
+        Permanent opposingAttacker = addCreatureReady(player2, new GrizzlyBears());
+        opposingAttacker.setAttacking(true);
+
+        castSettleTheWreckage(player1, player1);
+        harness.passBothPriorities();
+
+        assertThat(exiledCardsOwnedBy(player1)).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opposingAttacker);
+        assertThat(gd.interaction.activeInteraction().decidingPlayerId()).isEqualTo(player1.getId());
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getCard().hasType(CardType.LAND) && p.isTapped());
+    }
+
+    @Test
+    @DisplayName("Searching without matching basic lands still counts as searching")
+    void searchWithoutMatchingBasicLandsCountsAsSearch() {
+        setupAttackingCreatures(player2, 1);
+        harness.setLibrary(player2, List.of(new GrizzlyBears(), new HillGiant()));
+
+        castSettleTheWreckage(player1, player2);
+        harness.passBothPriorities();
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player2, true);
+        }
+
+        assertThat(gd.playersWhoSearchedLibraryThisTurn).contains(player2.getId());
+        assertThat(exiledCardsOwnedBy(player2)).hasSize(1);
+    }
 
     private void setupAttackingCreatures(com.github.laxika.magicalvibes.model.Player player, int count) {
         for (int i = 0; i < count; i++) {
-            Permanent creature = addReadyCreature(player, new GrizzlyBears());
+            Permanent creature = addCreatureReady(player, new GrizzlyBears());
             creature.setAttacking(true);
         }
     }
 
-    private Permanent addReadyCreature(com.github.laxika.magicalvibes.model.Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
     private void setupLibraryWithBasicLands(com.github.laxika.magicalvibes.model.Player player) {
-        List<Card> deck = gd.playerDecks.get(player.getId());
-        deck.clear();
-        deck.addAll(List.of(new Plains(), new Forest(), new Island(), new Mountain(), new GrizzlyBears()));
+        harness.setLibrary(player,
+                List.of(new Plains(), new Forest(), new Island(), new Mountain(), new GrizzlyBears()));
     }
 
     private void castSettleTheWreckage(com.github.laxika.magicalvibes.model.Player caster,
