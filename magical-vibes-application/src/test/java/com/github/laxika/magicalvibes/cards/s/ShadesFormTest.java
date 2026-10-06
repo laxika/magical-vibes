@@ -47,8 +47,7 @@ class ShadesFormTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.UPKEEP);
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
@@ -98,6 +97,55 @@ class ShadesFormTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, nonCreature.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Repeated activations each give the enchanted creature +1/+1")
+    void repeatedActivationsAccumulate() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new HellBentRaider());
+        castShadesForm(player1, creature);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("An owned creature returns untapped without the Aura or its previous boost")
+    void returnsOwnedCreatureWithoutAuraOrPreviousBoost() {
+        Permanent creature = addCreatureReady(player1, new HellBentRaider());
+        Card creatureCard = creature.getCard();
+        castShadesForm(player1, creature);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        creature.setTapped(true);
+
+        killCreature(player2, player1);
+
+        Permanent returned = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().getId().equals(creatureCard.getId()))
+                .findFirst().orElseThrow();
+        assertThat(returned.getId()).isNotEqualTo(creature.getId());
+        assertThat(returned.isTapped()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, returned)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, returned)).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(p -> p.getCard() instanceof ShadesForm);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(c -> c instanceof ShadesForm);
+
+        killCreature(player2, player1);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(p -> p.getCard().getId().equals(creatureCard.getId()));
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(c -> c.getId().equals(creatureCard.getId()));
     }
 
     private void castShadesForm(Player controller, Permanent target) {
