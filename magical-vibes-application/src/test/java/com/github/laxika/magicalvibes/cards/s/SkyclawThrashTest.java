@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SkyclawThrash.class})
 class SkyclawThrashTest extends BaseCardTest {
 
     @Test
@@ -47,9 +48,9 @@ class SkyclawThrashTest extends BaseCardTest {
                 .isTrue();
 
         if (won) {
-            assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(l -> l.contains("wins the coin flip"));
+            assertThat(gameLogContains("wins the coin flip")).isTrue();
         } else {
-            assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(l -> l.contains("loses the coin flip"));
+            assertThat(gameLogContains("loses the coin flip")).isTrue();
         }
     }
 
@@ -70,5 +71,51 @@ class SkyclawThrashTest extends BaseCardTest {
         assertThat(thrash.getPowerModifier()).isZero();
         assertThat(thrash.getToughnessModifier()).isZero();
         assertThat(gqs.hasKeyword(gd, thrash, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Only the attacking Thrash triggers and receives the coin-flip reward")
+    void nonattackingCopyDoesNotTriggerOrReceiveReward() {
+        Permanent attacker = addCreatureReady(player1, new SkyclawThrash());
+        Permanent nonattacker = addCreatureReady(player1, new SkyclawThrash());
+        Permanent opponent = addCreatureReady(player2, new SkyclawThrash());
+
+        declareAttackers(player1, List.of(0));
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gameLogContains("wins the coin flip")).isFalse();
+        assertThat(gameLogContains("loses the coin flip")).isFalse();
+        assertThat(attacker.getPowerModifier()).isZero();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.FLYING)).isFalse();
+
+        resolveAllTriggers();
+
+        boolean won = gameLogContains("wins the coin flip");
+        assertThat(attacker.getPowerModifier()).isEqualTo(won ? 1 : 0);
+        assertThat(attacker.getToughnessModifier()).isEqualTo(won ? 1 : 0);
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.FLYING)).isEqualTo(won);
+        for (Permanent other : List.of(nonattacker, opponent)) {
+            assertThat(other.getPowerModifier()).isZero();
+            assertThat(other.getToughnessModifier()).isZero();
+            assertThat(gqs.hasKeyword(gd, other, Keyword.FLYING)).isFalse();
+        }
+    }
+
+    @Test
+    @DisplayName("Removing the attacker does not prevent its pending coin flip")
+    void pendingTriggerStillFlipsAfterSourceLeaves() {
+        Permanent attacker = addCreatureReady(player1, new SkyclawThrash());
+        Permanent other = addCreatureReady(player1, new SkyclawThrash());
+
+        declareAttackers(player1, List.of(0));
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, attacker);
+        resolveAllTriggers();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gameLogContains("wins the coin flip")
+                ^ gameLogContains("loses the coin flip")).isTrue();
+        assertThat(other.getPowerModifier()).isZero();
+        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.FLYING)).isFalse();
     }
 }
