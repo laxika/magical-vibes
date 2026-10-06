@@ -102,6 +102,58 @@ class RemoveEnchantmentsTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).contains(auraCard);
     }
 
+    @Test
+    @DisplayName("Destroys an opponent-controlled Aura on your creature while leaving unrelated enchantments alone")
+    void destroysOpponentControlledAuraOnOwnCreature() {
+        Permanent ownCreature = addCreature(player1);
+        Permanent opponentAura = addAura(player2, new UnholyStrength(), ownCreature);
+        Permanent opponentEnchantment = harness.addToBattlefieldAndReturn(player2, new GloriousAnthem());
+        Permanent opponentCreature = addCreature(player2);
+        Permanent unrelatedAura = addAura(player2, new HolyStrength(), opponentCreature);
+
+        harness.castFromHand(player1, new RemoveEnchantments(), "{W}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(ownCreature);
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .doesNotContain(opponentAura)
+                .contains(opponentEnchantment, opponentCreature, unrelatedAura);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(opponentAura.getCard());
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(opponentAura.getCard());
+    }
+
+    @Test
+    @DisplayName("Returns your controlled Aura even when attached to a nonattacking opposing creature")
+    void returnsControlledAuraOnOpponentNonattacker() {
+        Permanent opponentCreature = addCreature(player2);
+        Permanent ownAura = addAura(player1, new HolyStrength(), opponentCreature);
+
+        harness.castFromHand(player1, new RemoveEnchantments(), "{W}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(ownAura);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentCreature);
+        assertThat(gd.playerHands.get(player1.getId())).contains(ownAura.getCard());
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(ownAura.getCard());
+    }
+
+    @Test
+    @DisplayName("Resolves normally when no permanents qualify")
+    void resolvesWithNoQualifyingPermanents() {
+        Permanent ownCreature = addCreature(player1);
+        Permanent opponentCreature = addCreature(player2);
+        RemoveEnchantments spell = new RemoveEnchantments();
+
+        harness.castFromHand(player1, spell, "{W}");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(ownCreature);
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(opponentCreature);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(spell);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
     private Permanent addCreature(Player player) {
         return harness.addToBattlefieldAndReturn(player, new GrizzlyBears());
     }
