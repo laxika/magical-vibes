@@ -165,4 +165,58 @@ class ShinenOfLifesRoarTest extends BaseCardTest {
         harness.assertInHand(player1, "Shinen of Life's Roar");
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(4);
     }
+
+    @Test
+    @DisplayName("Channel discards its source and pays mana before resolving")
+    void channelPaysCostsBeforeResolution() {
+        Permanent target = addCreatureReady(player1, new GodosIrregulars());
+        harness.setHand(player1, List.of(new ShinenOfLifesRoar()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateHandAbility(player1, 0, target.getId());
+
+        harness.assertNotInHand(player1, "Shinen of Life's Roar");
+        harness.assertInGraveyard(player1, "Shinen of Life's Roar");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Defenders may split blocks between two attacking Shinens")
+    void competingRequirementsAllowSplitBlocks() {
+        addCreatureReady(player1, new ShinenOfLifesRoar()).setAttacking(true);
+        addCreatureReady(player1, new ShinenOfLifesRoar()).setAttacking(true);
+        Permanent firstBlocker = addCreatureReady(player2, new GodosIrregulars());
+        Permanent secondBlocker = addCreatureReady(player2, new GodosIrregulars());
+
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must block");
+
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0), new BlockerAssignment(1, 1)));
+
+        assertThat(firstBlocker.isBlocking()).isTrue();
+        assertThat(secondBlocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A nonattacking Shinen does not force blocks of another creature")
+    void nonattackingShinenDoesNotForceBlocks() {
+        addCreatureReady(player1, new ShinenOfLifesRoar());
+        addCreatureReady(player1, new GodosIrregulars()).setAttacking(true);
+        Permanent defender = addCreatureReady(player2, new GodosIrregulars());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of());
+
+        assertThat(defender.isBlocking()).isFalse();
+    }
 }
