@@ -114,4 +114,73 @@ class RitualOfTheMachineTest extends BaseCardTest {
         harness.assertInHand(player1, "Ritual of the Machine");
         harness.assertNotInGraveyard(player1, "Elvish Ranger");
     }
+
+    @Test
+    @DisplayName("The target can itself be sacrificed to pay the additional cost")
+    void canSacrificeItsOwnTarget() {
+        Permanent target = addCreatureReady(player1, new ElvishRanger());
+        harness.setHand(player1, List.of(new RitualOfTheMachine()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castSorceryWithSacrifice(player1, 0, target.getId(), target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Elvish Ranger");
+        harness.assertInGraveyard(player1, "Elvish Ranger");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Ritual of the Machine");
+        harness.assertNotOnBattlefield(player1, "Elvish Ranger");
+        harness.assertNotOnBattlefield(player2, "Elvish Ranger");
+    }
+
+    @Test
+    @DisplayName("A black creature can pay the sacrifice cost")
+    void canSacrificeBlackCreature() {
+        Permanent fodder = addCreatureReady(player1, new LimDLsHighGuard());
+        Permanent target = addCreatureReady(player2, new StormCrow());
+        harness.setHand(player1, List.of(new RitualOfTheMachine()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castSorceryWithSacrifice(player1, 0, target.getId(), fodder.getId());
+
+        harness.assertInGraveyard(player1, fodder.getCard().getName());
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+    }
+
+    @Test
+    @DisplayName("An artifact creature can pay the sacrifice cost")
+    void canSacrificeArtifactCreature() {
+        Permanent fodder = addCreatureReady(player1, new AesthirGlider());
+        Permanent target = addCreatureReady(player2, new StormCrow());
+        harness.setHand(player1, List.of(new RitualOfTheMachine()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castSorceryWithSacrifice(player1, 0, target.getId(), fodder.getId());
+
+        harness.assertInGraveyard(player1, "Aesthir Glider");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+    }
+
+    @Test
+    @DisplayName("A creature controlled by the opponent cannot pay the sacrifice cost")
+    void cannotSacrificeOpponentsCreature() {
+        Permanent target = addCreatureReady(player2, new StormCrow());
+        harness.setHand(player1, List.of(new RitualOfTheMachine()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        assertThatThrownBy(() -> harness.castSorceryWithSacrifice(player1, 0, target.getId(), target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        harness.assertInHand(player1, "Ritual of the Machine");
+    }
 }
