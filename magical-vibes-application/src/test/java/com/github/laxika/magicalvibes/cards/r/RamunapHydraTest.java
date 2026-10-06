@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.SunscorchedDesert;
+import com.github.laxika.magicalvibes.cards.f.FeralProwler;
+import com.github.laxika.magicalvibes.cards.h.HashepOasis;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,6 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RamunapHydra.class, HashepOasis.class, FeralProwler.class})
 class RamunapHydraTest extends BaseCardTest {
 
     @Test
@@ -27,7 +29,7 @@ class RamunapHydraTest extends BaseCardTest {
     @DisplayName("Gets +1/+1 (4/4) when controller controls a Desert")
     void boostWithDesertOnBattlefield() {
         harness.addToBattlefield(player1, new RamunapHydra());
-        harness.addToBattlefield(player1, new SunscorchedDesert());
+        harness.addToBattlefield(player1, new HashepOasis());
 
         Permanent hydra = findHydra();
         assertThat(gqs.getEffectivePower(gd, hydra)).isEqualTo(4);
@@ -37,7 +39,7 @@ class RamunapHydraTest extends BaseCardTest {
     @Test
     @DisplayName("Gets +1/+1 (4/4) when there is a Desert card in the graveyard")
     void boostWithDesertInGraveyard() {
-        harness.setGraveyard(player1, List.of(new SunscorchedDesert()));
+        harness.setGraveyard(player1, List.of(new HashepOasis()));
         harness.addToBattlefield(player1, new RamunapHydra());
 
         Permanent hydra = findHydra();
@@ -48,9 +50,9 @@ class RamunapHydraTest extends BaseCardTest {
     @Test
     @DisplayName("Gets +2/+2 (5/5) with Desert on battlefield and in graveyard")
     void bothBoostsStack() {
-        harness.setGraveyard(player1, List.of(new SunscorchedDesert()));
+        harness.setGraveyard(player1, List.of(new HashepOasis()));
         harness.addToBattlefield(player1, new RamunapHydra());
-        harness.addToBattlefield(player1, new SunscorchedDesert());
+        harness.addToBattlefield(player1, new HashepOasis());
 
         Permanent hydra = findHydra();
         assertThat(gqs.getEffectivePower(gd, hydra)).isEqualTo(5);
@@ -61,7 +63,7 @@ class RamunapHydraTest extends BaseCardTest {
     @DisplayName("Non-Desert permanents do not grant the battlefield boost")
     void nonDesertDoesNotBoost() {
         harness.addToBattlefield(player1, new RamunapHydra());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new FeralProwler());
 
         Permanent hydra = findHydra();
         assertThat(gqs.getEffectivePower(gd, hydra)).isEqualTo(3);
@@ -72,7 +74,7 @@ class RamunapHydraTest extends BaseCardTest {
     @DisplayName("Opponent's Desert does not grant the battlefield boost")
     void opponentDesertDoesNotCount() {
         harness.addToBattlefield(player1, new RamunapHydra());
-        harness.addToBattlefield(player2, new SunscorchedDesert());
+        harness.addToBattlefield(player2, new HashepOasis());
 
         Permanent hydra = findHydra();
         assertThat(gqs.getEffectivePower(gd, hydra)).isEqualTo(3);
@@ -82,7 +84,7 @@ class RamunapHydraTest extends BaseCardTest {
     @Test
     @DisplayName("Opponent's graveyard Desert does not grant the graveyard boost")
     void opponentGraveyardDoesNotCount() {
-        harness.setGraveyard(player2, List.of(new SunscorchedDesert()));
+        harness.setGraveyard(player2, List.of(new HashepOasis()));
         harness.addToBattlefield(player1, new RamunapHydra());
 
         Permanent hydra = findHydra();
@@ -94,13 +96,13 @@ class RamunapHydraTest extends BaseCardTest {
     @DisplayName("Loses battlefield boost when Desert leaves")
     void losesBoostWhenDesertLeaves() {
         harness.addToBattlefield(player1, new RamunapHydra());
-        harness.addToBattlefield(player1, new SunscorchedDesert());
+        harness.addToBattlefield(player1, new HashepOasis());
 
         Permanent hydra = findHydra();
         assertThat(gqs.getEffectivePower(gd, hydra)).isEqualTo(4);
 
         gd.playerBattlefields.get(player1.getId())
-                .removeIf(p -> p.getCard().getName().equals("Sunscorched Desert"));
+                .removeIf(p -> p.getCard().getName().equals("Hashep Oasis"));
 
         assertThat(gqs.getEffectivePower(gd, hydra)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, hydra)).isEqualTo(3);
@@ -109,9 +111,9 @@ class RamunapHydraTest extends BaseCardTest {
     @Test
     @DisplayName("Static boosts survive end-of-turn modifier reset")
     void staticBoostsSurviveEndOfTurnReset() {
-        harness.setGraveyard(player1, List.of(new SunscorchedDesert()));
+        harness.setGraveyard(player1, List.of(new HashepOasis()));
         harness.addToBattlefield(player1, new RamunapHydra());
-        harness.addToBattlefield(player1, new SunscorchedDesert());
+        harness.addToBattlefield(player1, new HashepOasis());
 
         Permanent hydra = findHydra();
         assertThat(gqs.getEffectivePower(gd, hydra)).isEqualTo(5);
@@ -120,6 +122,34 @@ class RamunapHydraTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, hydra)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, hydra)).isEqualTo(5);
+    }
+
+    @Test
+    void multipleDesertsDoNotMultiplyEitherBonus() {
+        harness.addToBattlefield(player1, new RamunapHydra());
+        harness.addToBattlefield(player1, new HashepOasis());
+        harness.addToBattlefield(player1, new HashepOasis());
+        harness.setGraveyard(player1, List.of(new HashepOasis(), new HashepOasis()));
+
+        Permanent hydra = findHydra();
+        assertThat(gqs.getEffectivePower(gd, hydra)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, hydra)).isEqualTo(5);
+    }
+
+    @Test
+    void graveyardBonusUpdatesWhenDesertIsRemoved() {
+        harness.addToBattlefield(player1, new RamunapHydra());
+        harness.addToBattlefield(player1, new HashepOasis());
+        harness.setGraveyard(player1, List.of(new HashepOasis()));
+
+        Permanent hydra = findHydra();
+        assertThat(gqs.getEffectivePower(gd, hydra)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, hydra)).isEqualTo(5);
+
+        harness.setGraveyard(player1, List.of(new FeralProwler()));
+
+        assertThat(gqs.getEffectivePower(gd, hydra)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, hydra)).isEqualTo(4);
     }
 
     private Permanent findHydra() {
