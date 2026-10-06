@@ -27,10 +27,8 @@ class ReverberatingSummonsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new LightningBolt(), new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         advanceToCombat();
         harness.passBothPriorities();
@@ -51,8 +49,7 @@ class ReverberatingSummonsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         advanceToCombat();
 
@@ -75,6 +72,111 @@ class ReverberatingSummonsTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(summons);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(summons.getCard());
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    void animatesDuringOpponentsCombatAfterControllerCastsTwoSpells() {
+        Permanent summons = addSummons();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new LightningBolt(), new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        advanceToCombat();
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, summons)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, summons)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, summons, Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    void opponentsSpellsDoNotSatisfyCondition() {
+        Permanent summons = addSummons();
+        prepareMainPhase();
+        harness.setHand(player2, List.of(new LightningBolt(), new LightningBolt()));
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        advanceToCombat();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.isCreature(gd, summons)).isFalse();
+    }
+
+    @Test
+    void castingSecondSpellAfterCombatBeginsDoesNotCreateTrigger() {
+        Permanent summons = addSummons();
+        prepareMainPhase();
+        harness.setHand(player1, List.of(new LightningBolt(), new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        advanceToCombat();
+
+        assertThat(gd.stack).isEmpty();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        assertThat(gqs.isCreature(gd, summons)).isFalse();
+    }
+
+    @Test
+    void emptyHandCanPayDiscardHandCostAndCostsArePaidBeforeResolution() {
+        Permanent summons = addSummons();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Plains(), new Plains()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(summons);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(summons.getCard());
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    void animationExpiresAtEndOfTurn() {
+        Permanent summons = addSummons();
+        prepareMainPhase();
+        harness.setHand(player1, List.of(new LightningBolt(), new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        advanceToCombat();
+        harness.passBothPriorities();
+        assertThat(gqs.isCreature(gd, summons)).isTrue();
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.isCreature(gd, summons)).isFalse();
+        assertThat(gqs.hasKeyword(gd, summons, Keyword.HASTE)).isFalse();
+        assertThat(summons.getTransientSubtypes()).doesNotContain(CardSubtype.MONK);
+    }
+
+    @Test
+    void entireHandIsDiscardedBeforeDrawAbilityResolves() {
+        Permanent summons = addSummons();
+        LightningBolt first = new LightningBolt();
+        LightningBolt second = new LightningBolt();
+        harness.setHand(player1, List.of(first, second));
+        harness.setLibrary(player1, List.of(new Plains(), new Plains()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .contains(first, second, summons.getCard());
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(summons);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2).doesNotContain(first, second);
     }
 
     private Permanent addSummons() {
