@@ -42,14 +42,22 @@ class RideTheShoopufTest extends BaseCardTest {
     @DisplayName("Landfall cannot target a creature controlled by an opponent")
     void landfallCannotTargetOpponentCreature() {
         harness.addToBattlefield(player1, new RideTheShoopuf());
+        Permanent ownBears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent opponentBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new Forest()));
 
         harness.playLand(player1, 0);
         harness.passBothPriorities();
 
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, opponentBears.getId()))
                 .isInstanceOf(IllegalStateException.class);
+
+        harness.handlePermanentChosen(player1, ownBears.getId());
+        harness.passBothPriorities();
+
+        assertThat(ownBears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(opponentBears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     @Test
@@ -69,9 +77,77 @@ class RideTheShoopufTest extends BaseCardTest {
         assertThat(shoopuf.getGrantedSubtypes()).contains(CardSubtype.BEAST);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, shoopuf)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Animated Ride the Shoopuf can target itself with landfall and keeps counters when animated again")
+    void animatedShoopufCanReceiveLandfallCounterAndBeAnimatedAgain() {
+        Permanent shoopuf = harness.addToBattlefieldAndReturn(player1, new RideTheShoopuf());
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Forest()));
+        harness.playLand(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, shoopuf.getId());
+        harness.passBothPriorities();
+
+        assertThat(shoopuf.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, shoopuf)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, shoopuf)).isEqualTo(8);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(shoopuf.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, shoopuf)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, shoopuf)).isEqualTo(8);
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.isCreature(gd, shoopuf)).isTrue();
+        assertThat(gqs.isEnchantment(gd, shoopuf)).isTrue();
+        assertThat(shoopuf.getGrantedSubtypes()).contains(CardSubtype.BEAST);
+        assertThat(gqs.getEffectivePower(gd, shoopuf)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, shoopuf)).isEqualTo(8);
+    }
+
+    @Test
+    @DisplayName("An opponent's land entering does not trigger landfall")
+    void opponentsLandDoesNotTriggerLandfall() {
+        Permanent shoopuf = harness.addToBattlefieldAndReturn(player1, new RideTheShoopuf());
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new Forest()));
+        harness.playLand(player2, 0);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(shoopuf.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("A noncreature Ride the Shoopuf cannot target itself with landfall")
+    void noncreatureShoopufCannotTargetItself() {
+        Permanent shoopuf = harness.addToBattlefieldAndReturn(player1, new RideTheShoopuf());
+        harness.setHand(player1, List.of(new Forest()));
+        harness.playLand(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(shoopuf.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 }
