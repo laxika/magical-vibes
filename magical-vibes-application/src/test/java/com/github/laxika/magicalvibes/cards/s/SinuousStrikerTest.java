@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GiftOfStrength;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,9 +17,9 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SinuousStriker.class, GiftOfStrength.class})
 class SinuousStrikerTest extends BaseCardTest {
 
-    // ===== {U}: +1/-1 self-boost =====
 
     @Test
     @DisplayName("{U} gives this creature +1/-1 until end of turn")
@@ -57,14 +58,13 @@ class SinuousStrikerTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, striker)).isEqualTo(2);
     }
 
-    // ===== Eternalize—{3}{U}{U}, Discard a card =====
 
     private void setUpEternalize() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.setGraveyard(player1, List.of(new SinuousStriker()));
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new GiftOfStrength()));
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
     }
@@ -86,7 +86,7 @@ class SinuousStrikerTest extends BaseCardTest {
 
         // Discard cost: the hand card went to the graveyard.
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Gift of Strength");
         // Exile cost: the source card left the graveyard for exile.
         harness.assertNotInGraveyard(player1, "Sinuous Striker");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -117,7 +117,7 @@ class SinuousStrikerTest extends BaseCardTest {
     @DisplayName("Eternalize can only be activated at sorcery speed")
     void eternalizeOnlyAtSorcerySpeed() {
         harness.setGraveyard(player1, List.of(new SinuousStriker()));
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new GiftOfStrength()));
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
@@ -129,5 +129,80 @@ class SinuousStrikerTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         harness.assertInGraveyard(player1, "Sinuous Striker");
+    }
+
+    @Test
+    @DisplayName("Two self-boost activations put the creature into the graveyard at zero toughness")
+    void repeatedSelfBoostKillsCreature() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addToBattlefield(player1, new SinuousStriker());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Sinuous Striker");
+        harness.assertInGraveyard(player1, "Sinuous Striker");
+    }
+
+    @Test
+    @DisplayName("The eternalized token retains the self-boost ability and boosts its 4/4 body")
+    void eternalizedTokenRetainsSelfBoost() {
+        setUpEternalize();
+        harness.activateGraveyardAbility(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+        Permanent token = eternalizedToken();
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(2);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Eternalize cannot be activated outside a main phase even during your turn")
+    void eternalizeCannotBeActivatedDuringEndStep() {
+        setUpEternalize();
+        harness.forceStep(TurnStep.END_STEP);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInGraveyard(player1, "Sinuous Striker");
+        harness.assertInHand(player1, "Gift of Strength");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Eternalize cannot be activated while another ability is on the stack")
+    void eternalizeRequiresEmptyStack() {
+        setUpEternalize();
+        harness.addToBattlefield(player1, new SinuousStriker());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(gd.stack).hasSize(1);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInGraveyard(player1, "Sinuous Striker");
+        harness.assertInHand(player1, "Gift of Strength");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
     }
 }
