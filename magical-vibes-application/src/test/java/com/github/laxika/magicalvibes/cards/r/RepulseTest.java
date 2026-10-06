@@ -42,14 +42,57 @@ class RepulseTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Repulse()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.assertNotOnBattlefield(player2, "Raging Kavu");
         harness.assertInHand(player2, "Raging Kavu");
         harness.assertInHand(player1, "Island");
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore - 1);
+        harness.assertInGraveyard(player1, "Repulse");
+    }
+
+    @Test
+    @DisplayName("Repulse can return your own creature and draws a card")
+    void returnsOwnCreatureAndDrawsCard() {
+        UUID targetId = harness.addToBattlefieldAndReturn(player1, new RagingKavu()).getId();
+        harness.setHand(player1, List.of(new Repulse()));
+        harness.setLibrary(player1, List.of(new Island()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castAndResolveInstant(player1, 0, targetId);
+
+        harness.assertNotOnBattlefield(player1, "Raging Kavu");
+        harness.assertInHand(player1, "Raging Kavu");
+        harness.assertInHand(player1, "Island");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Repulse");
+    }
+
+    @Test
+    @DisplayName("Repulse returns a stolen creature to its owner while its caster draws")
+    void returnsStolenCreatureToOwnerAndCasterDraws() {
+        RagingKavu creature = new RagingKavu();
+        creature.setOwnerId(player2.getId());
+        UUID targetId = harness.addToBattlefieldAndReturn(player1, creature).getId();
+        gd.stolenCreatures.put(targetId, player2.getId());
+        harness.setHand(player1, List.of(new Repulse()));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new Island()));
+        harness.setLibrary(player2, List.of(new Island()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castAndResolveInstant(player1, 0, targetId);
+
+        harness.assertNotOnBattlefield(player1, "Raging Kavu");
+        harness.assertInHand(player2, "Raging Kavu");
+        harness.assertNotInHand(player1, "Raging Kavu");
+        harness.assertInHand(player1, "Island");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
         harness.assertInGraveyard(player1, "Repulse");
     }
 
