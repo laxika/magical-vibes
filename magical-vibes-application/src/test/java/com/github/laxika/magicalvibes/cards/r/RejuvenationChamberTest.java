@@ -84,4 +84,44 @@ class RejuvenationChamberTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
         assertThat(chamber.isTapped()).isTrue();
     }
+
+    @Test
+    @DisplayName("Rejuvenation Chamber can tap for life on the turn it enters")
+    void canActivateOnTurnItEnters() {
+        harness.castFromHand(player1, new RejuvenationChamber(), "{3}");
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertLife(player1, 20);
+        assertThat(findPermanent(player1, "Rejuvenation Chamber").isTapped()).isTrue();
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Rejuvenation Chamber can gain life in response to its final fading trigger")
+    void canActivateBeforeFadingSacrifice() {
+        Permanent chamber = harness.addToBattlefieldAndReturn(player1, new RejuvenationChamber());
+        chamber.setTapped(true);
+
+        advanceToUpkeep(player1);
+        harness.assertOnBattlefield(player1, "Rejuvenation Chamber");
+        assertThat(chamber.isTapped()).isFalse();
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 22);
+        harness.assertOnBattlefield(player1, "Rejuvenation Chamber");
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Rejuvenation Chamber");
+        harness.assertInGraveyard(player1, "Rejuvenation Chamber");
+        harness.assertLife(player1, 22);
+    }
 }
