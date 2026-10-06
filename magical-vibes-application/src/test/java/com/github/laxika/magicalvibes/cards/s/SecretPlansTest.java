@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.a.AinokTracker;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.z.ZoeticCavern;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SecretPlans.class, AinokTracker.class, ZoeticCavern.class})
 class SecretPlansTest extends BaseCardTest {
 
     @Test
@@ -34,7 +36,7 @@ class SecretPlansTest extends BaseCardTest {
     @DisplayName("Turning a permanent you control face up draws a card")
     void drawsWhenYourPermanentTurnsFaceUp() {
         harness.addToBattlefield(player1, new SecretPlans());
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new AinokTracker()));
         Permanent tracker = harness.addToBattlefieldAndReturn(player1, new AinokTracker());
         tracker.setFaceDown(2, 2, Set.of(CardType.CREATURE));
         harness.addMana(player1, ManaColor.COLORLESS, 4);
@@ -44,6 +46,55 @@ class SecretPlansTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(tracker.isFaceDown()).isFalse();
-        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Ainok Tracker");
+    }
+
+    @Test
+    @DisplayName("Turning a morph land face up draws a card")
+    void drawsWhenYourLandTurnsFaceUp() {
+        harness.addToBattlefield(player1, new SecretPlans());
+        harness.setLibrary(player1, List.of(new AinokTracker()));
+        Permanent cavern = harness.addToBattlefieldAndReturn(player1, new ZoeticCavern());
+        cavern.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(cavern));
+        harness.passBothPriorities();
+
+        assertThat(cavern.isFaceDown()).isFalse();
+        harness.assertInHand(player1, "Ainok Tracker");
+    }
+
+    @Test
+    @DisplayName("Turning an opponent's permanent face up does not draw a card")
+    void doesNotDrawWhenOpponentsPermanentTurnsFaceUp() {
+        harness.addToBattlefield(player1, new SecretPlans());
+        harness.setLibrary(player1, List.of(new AinokTracker()));
+        Permanent tracker = harness.addToBattlefieldAndReturn(player2, new AinokTracker());
+        tracker.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        harness.addMana(player2, ManaColor.COLORLESS, 4);
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.turnFaceUp(player2, gd.playerBattlefields.get(player2.getId()).indexOf(tracker));
+        harness.passBothPriorities();
+
+        assertThat(tracker.isFaceDown()).isFalse();
+        harness.assertNotInHand(player1, "Ainok Tracker");
+    }
+
+    @Test
+    @DisplayName("Turning a creature face up removes the toughness bonus")
+    void stopsBoostingCreatureWhenTurnedFaceUp() {
+        harness.addToBattlefield(player1, new SecretPlans());
+        harness.setLibrary(player1, List.of(new AinokTracker()));
+        Permanent tracker = harness.addToBattlefieldAndReturn(player1, new AinokTracker());
+        tracker.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(tracker));
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectiveToughness(gd, tracker)).isEqualTo(3);
     }
 }
