@@ -6,13 +6,16 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RuggedHighlands.class})
 class RuggedHighlandsTest extends BaseCardTest {
 
     @Test
@@ -66,10 +69,40 @@ class RuggedHighlandsTest extends BaseCardTest {
         assertThat(highlands.isTapped()).isTrue();
     }
 
+    @Test
+    @DisplayName("Entering without being played gains life only for its controller")
+    void enteringWithoutBeingPlayedGainsLifeForController() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        Permanent highlands = harness.enterBattlefieldAndReturn(player2, new RuggedHighlands());
+
+        assertThat(highlands.isTapped()).isTrue();
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 21);
+    }
+
+    @Test
+    @DisplayName("A tapped Highlands cannot activate its mana ability")
+    void tappedHighlandsCannotProduceMana() {
+        Permanent highlands = addReadyHighlands(player1);
+        highlands.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("tapped");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
     private Permanent addReadyHighlands(Player player) {
-        Permanent perm = new Permanent(new RuggedHighlands());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new RuggedHighlands());
     }
 }
