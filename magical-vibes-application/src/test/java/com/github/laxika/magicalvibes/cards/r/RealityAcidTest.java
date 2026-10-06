@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.f.FuryCharm;
 import com.github.laxika.magicalvibes.cards.s.Saltblast;
 import com.github.laxika.magicalvibes.cards.u.UrborgTombOfYawgmoth;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RealityAcid.class, Saltblast.class, UrborgTombOfYawgmoth.class})
+@CardUsed({RealityAcid.class, FuryCharm.class, Saltblast.class, UrborgTombOfYawgmoth.class})
 class RealityAcidTest extends BaseCardTest {
 
     @Test
@@ -104,6 +105,54 @@ class RealityAcidTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Urborg, Tomb of Yawgmoth");
         harness.assertInGraveyard(player2, "Urborg, Tomb of Yawgmoth");
+    }
+
+    @Test
+    @DisplayName("Removing the last time counter with another spell triggers vanishing")
+    void externalCounterRemovalCausesSacrifice() {
+        Permanent urborg = addTargetPermanent(player2);
+        Permanent aura = addAuraAttachedTo(player1, urborg);
+        aura.setCounterCount(CounterType.TIME, 2);
+
+        harness.setHand(player1, List.of(new FuryCharm()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, 2, aura.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Reality Acid");
+        harness.assertInGraveyard(player1, "Reality Acid");
+        harness.assertNotOnBattlefield(player2, "Urborg, Tomb of Yawgmoth");
+        harness.assertInGraveyard(player2, "Urborg, Tomb of Yawgmoth");
+    }
+
+    @Test
+    @DisplayName("Vanishing does not put an upkeep ability on the stack without time counters")
+    void noTimeCountersDoesNotCreateUpkeepTrigger() {
+        Permanent urborg = addTargetPermanent(player2);
+        addAuraAttachedTo(player1, urborg);
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Reality Acid");
+        harness.assertOnBattlefield(player2, "Urborg, Tomb of Yawgmoth");
+    }
+
+    @Test
+    @DisplayName("Vanishing sacrifices the enchanted permanent even when the Aura controller owns it")
+    void vanishingSacrificesOwnEnchantedPermanent() {
+        Permanent urborg = addTargetPermanent(player1);
+        Permanent aura = addAuraAttachedTo(player1, urborg);
+        aura.setCounterCount(CounterType.TIME, 1);
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Reality Acid");
+        harness.assertInGraveyard(player1, "Reality Acid");
+        harness.assertNotOnBattlefield(player1, "Urborg, Tomb of Yawgmoth");
+        harness.assertInGraveyard(player1, "Urborg, Tomb of Yawgmoth");
     }
 
     private Permanent addTargetPermanent(com.github.laxika.magicalvibes.model.Player controller) {
