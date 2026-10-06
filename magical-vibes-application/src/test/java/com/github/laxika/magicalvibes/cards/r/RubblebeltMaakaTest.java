@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RubblebeltMaaka.class, GrizzlyBears.class})
 class RubblebeltMaakaTest extends BaseCardTest {
 
     @Test
@@ -69,5 +71,70 @@ class RubblebeltMaakaTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         harness.assertInHand(player1, "Rubblebelt Maaka");
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Bloodrush can boost an opponent's attacking creature")
+    void bloodrushBoostsOpponentsAttacker() {
+        harness.setHand(player1, List.of(new RubblebeltMaaka()));
+        Permanent attacker = harness.addToBattlefieldAndReturn(player2, new RubblebeltMaaka());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.ensurePriority(player1);
+
+        harness.activateHandAbility(player1, 0, attacker.getId());
+
+        harness.assertNotInHand(player1, "Rubblebelt Maaka");
+        harness.assertInGraveyard(player1, "Rubblebelt Maaka");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(3);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("Bloodrush does not resolve if the target stops attacking")
+    void bloodrushDoesNotBoostTargetThatStopsAttacking() {
+        harness.setHand(player1, List.of(new RubblebeltMaaka()));
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new RubblebeltMaaka());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateHandAbility(player1, 0, attacker.getId());
+        attacker.setAttacking(false);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(3);
+        harness.assertInGraveyard(player1, "Rubblebelt Maaka");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Bloodrush requires red mana and does not discard if it cannot be paid")
+    void bloodrushRejectsWrongMana() {
+        harness.setHand(player1, List.of(new RubblebeltMaaka()));
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new RubblebeltMaaka());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Rubblebelt Maaka");
+        harness.assertNotInGraveyard(player1, "Rubblebelt Maaka");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
     }
 }
