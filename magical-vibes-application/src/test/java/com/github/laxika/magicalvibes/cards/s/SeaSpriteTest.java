@@ -105,4 +105,37 @@ class SeaSpriteTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("protection from red");
     }
+
+    @Test
+    @DisplayName("Can block a red attacker and prevents its combat damage")
+    void canBlockRedAttackerAndPreventsCombatDamage() {
+        Permanent dragon = addCreatureReady(player1, new DragonWhelp());
+        Permanent sprite = addCreatureReady(player2, new SeaSprite());
+
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat(player1);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(sprite);
+        assertThat(sprite.getMarkedDamage()).isZero();
+        assertThat(dragon.getMarkedDamage()).isEqualTo(1);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Can be blocked by a nonred flying creature and takes its damage")
+    void canBeBlockedByNonRedFlyingCreature() {
+        addCreatureReady(player1, new SeaSprite());
+        addCreatureReady(player2, new SeaSprite());
+
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat(player1);
+
+        harness.assertNotOnBattlefield(player1, "Sea Sprite");
+        harness.assertNotOnBattlefield(player2, "Sea Sprite");
+        harness.assertInGraveyard(player1, "Sea Sprite");
+        harness.assertInGraveyard(player2, "Sea Sprite");
+        harness.assertLife(player2, 20);
+    }
 }
