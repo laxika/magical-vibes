@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.d.DarettiScrapSavant;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -17,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DisplayName("Rite of the Raging Storm")
-@CardUsed(RiteOfTheRagingStorm.class)
+@CardUsed({RiteOfTheRagingStorm.class, DarettiScrapSavant.class})
 class RiteOfTheRagingStormTest extends BaseCardTest {
 
     @Test
@@ -55,7 +56,7 @@ class RiteOfTheRagingStormTest extends BaseCardTest {
     @DisplayName("Lightning Ragers can't attack the enchantment controller's planeswalker")
     void lightningRagerCannotAttackControllerPlaneswalker() {
         harness.addToBattlefield(player1, new RiteOfTheRagingStorm());
-        Permanent planeswalker = addPlaneswalker(player1);
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player1, new DarettiScrapSavant());
 
         advanceToUpkeep(player2);
         harness.passBothPriorities();
@@ -89,14 +90,68 @@ class RiteOfTheRagingStormTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Lightning Rager");
     }
 
-    private Permanent addPlaneswalker(com.github.laxika.magicalvibes.model.Player player) {
-        com.github.laxika.magicalvibes.model.Card card = new com.github.laxika.magicalvibes.model.Card();
-        card.setName("Test Planeswalker");
-        card.setType(com.github.laxika.magicalvibes.model.CardType.PLANESWALKER);
-        card.setLoyalty(4);
-        Permanent permanent = new Permanent(card);
-        permanent.setCounterCount(com.github.laxika.magicalvibes.model.CounterType.LOYALTY, 4);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    @DisplayName("The controller's token can attack immediately and deal five damage")
+    void controllerTokenCanAttackOpponentImmediately() {
+        harness.addToBattlefield(player1, new RiteOfTheRagingStorm());
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Lightning Rager")).isEqualTo(1);
+        assertThat(countPermanents(player2, "Lightning Rager")).isZero();
+        Permanent rager = findPermanent(player1, "Lightning Rager");
+        declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(rager)));
+        resolveCombat(player1);
+
+        harness.assertLife(player2, 15);
+    }
+
+    @Test
+    @DisplayName("Each copy creates a separate token for the active player")
+    void multipleCopiesCreateMultipleTokens() {
+        harness.addToBattlefield(player1, new RiteOfTheRagingStorm());
+        harness.addToBattlefield(player2, new RiteOfTheRagingStorm());
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player2, "Lightning Rager")).isEqualTo(2);
+        assertThat(countPermanents(player1, "Lightning Rager")).isZero();
+    }
+
+    @Test
+    @DisplayName("An upkeep trigger still creates its token after the enchantment leaves")
+    void pendingTriggerSurvivesSourceLeaving() {
+        Permanent rite = harness.addToBattlefieldAndReturn(player1, new RiteOfTheRagingStorm());
+
+        advanceToUpkeep(player2);
+        gd.playerBattlefields.get(player1.getId()).remove(rite);
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player2, "Lightning Rager")).isEqualTo(1);
+        assertThat(countPermanents(player1, "Lightning Rager")).isZero();
+    }
+
+    @Test
+    @DisplayName("A token can attack after Rite leaves but still sacrifices on either player's end step")
+    void tokenAbilitiesPersistWithoutEnchantment() {
+        Permanent rite = harness.addToBattlefieldAndReturn(player1, new RiteOfTheRagingStorm());
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+        Permanent rager = findPermanent(player2, "Lightning Rager");
+        gd.playerBattlefields.get(player1.getId()).remove(rite);
+
+        declareAttackers(player2, List.of(gd.playerBattlefields.get(player2.getId()).indexOf(rager)));
+        resolveCombat(player2);
+        harness.assertLife(player1, 15);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Lightning Rager");
     }
 }
