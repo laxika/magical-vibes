@@ -7,11 +7,13 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -100,10 +102,8 @@ class ShivanHellkiteTest extends BaseCardTest {
     @DisplayName("Deals 1 damage to target creature, destroying a 1/1")
     void deals1DamageDestroying1Toughness() {
         addReadyHellkite(player1);
-        harness.addToBattlefield(player2, new LlanowarElves());
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new LlanowarElves()).getId();
         harness.addMana(player1, ManaColor.RED, 2);
-
-        UUID targetId = harness.getPermanentId(player2, "Llanowar Elves");
         harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
 
@@ -115,10 +115,8 @@ class ShivanHellkiteTest extends BaseCardTest {
     @DisplayName("Deals 1 damage to target creature, 2/2 creature survives")
     void deals1DamageDoesNotKill2Toughness() {
         addReadyHellkite(player1);
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()).getId();
         harness.addMana(player1, ManaColor.RED, 2);
-
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
         harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
 
@@ -174,10 +172,8 @@ class ShivanHellkiteTest extends BaseCardTest {
     @DisplayName("Ability fizzles if target creature is removed before resolution")
     void fizzlesIfTargetCreatureRemoved() {
         addReadyHellkite(player1);
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()).getId();
         harness.addMana(player1, ManaColor.RED, 2);
-
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
         harness.activateAbility(player1, 0, null, targetId);
 
         harness.getGameData().playerBattlefields.get(player2.getId()).clear();
@@ -186,6 +182,105 @@ class ShivanHellkiteTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gameLogContains("fizzles")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Repeated activations accumulate lethal damage")
+    void repeatedActivationsAccumulateDamage() {
+        addReadyHellkite(player1);
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()).getId();
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.activateAbility(player1, 0, null, targetId);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+
+        harness.activateAbility(player1, 0, null, targetId);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Ability still deals damage after its source leaves the battlefield")
+    void resolvesAfterSourceLeavesBattlefield() {
+        Permanent hellkite = addReadyHellkite(player1);
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(hellkite);
+        gd.playerGraveyards.get(player1.getId()).add(hellkite.getCard());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Generic mana can be paid with green mana")
+    void acceptsOtherColorForGenericCost() {
+        addReadyHellkite(player1);
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Two generic mana cannot replace the red mana requirement")
+    void requiresRedMana() {
+        addReadyHellkite(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can target itself and mark one damage")
+    void canDamageItself() {
+        Permanent hellkite = addReadyHellkite(player1);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, hellkite.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Shivan Hellkite");
+        assertThat(hellkite.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Flying prevents a ground creature from blocking")
+    void cannotBeBlockedByGroundCreature() {
+        addReadyHellkite(player1);
+        addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A flying creature can block Shivan Hellkite")
+    void canBeBlockedByFlyingCreature() {
+        addReadyHellkite(player1);
+        Permanent blocker = addReadyHellkite(player2);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
     }
 
     private Permanent addReadyHellkite(Player player) {
