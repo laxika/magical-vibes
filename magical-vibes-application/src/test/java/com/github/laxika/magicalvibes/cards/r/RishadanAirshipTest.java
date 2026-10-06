@@ -44,4 +44,28 @@ class RishadanAirshipTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can only block creatures with flying");
     }
+
+    @Test
+    @DisplayName("Rishadan Airship cannot be blocked by a creature without flying or reach")
+    void cannotBeBlockedByGroundCreature() {
+        addCreatureReady(player1, new RishadanAirship());
+        addCreatureReady(player2, new FreshVolunteers());
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("flying");
+    }
+
+    @Test
+    @DisplayName("Rishadan Airship can be blocked by a creature with flying")
+    void canBeBlockedByFlyingCreature() {
+        addCreatureReady(player1, new RishadanAirship());
+        Permanent blocker = addCreatureReady(player2, new DrakeHatchling());
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
 }
