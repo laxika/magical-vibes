@@ -101,6 +101,48 @@ class RevenantTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, perm)).isEqualTo(2);
     }
 
+    @Test
+    @DisplayName("Revenant dies with an empty graveyard and then counts itself there")
+    void diesWithEmptyGraveyardAndCountsItselfAfterDeath() {
+        Revenant card = new Revenant();
+        harness.addToBattlefield(player1, card);
+
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Revenant");
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(card);
+        assertThat(gqs.getEffectiveCardPower(gd, card)).isEqualTo(1);
+        assertThat(gqs.getEffectiveCardToughness(gd, card)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Revenant shrinks and dies when the last creature card leaves its graveyard")
+    void diesWhenLastCreatureCardLeavesGraveyard() {
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        Permanent perm = addRevenantReady(player1);
+        assertThat(gqs.getEffectiveToughness(gd, perm)).isEqualTo(1);
+
+        harness.setGraveyard(player1, List.of(new Shock()));
+        assertThat(gqs.getEffectivePower(gd, perm)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, perm)).isZero();
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Revenant");
+        harness.assertInGraveyard(player1, "Revenant");
+    }
+
+    @Test
+    @DisplayName("Revenant's defining ability works in hand and counts its owner's graveyard")
+    void definingAbilityWorksInHand() {
+        Revenant card = new Revenant();
+        harness.setHand(player1, List.of(card));
+        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new Shock()));
+        harness.setGraveyard(player2, createCreatureCards(4));
+
+        assertThat(gqs.getEffectiveCardPower(gd, card)).isEqualTo(2);
+        assertThat(gqs.getEffectiveCardToughness(gd, card)).isEqualTo(2);
+    }
+
     private Permanent addRevenantReady(Player player) {
         return addCreatureReady(player, new Revenant());
     }
