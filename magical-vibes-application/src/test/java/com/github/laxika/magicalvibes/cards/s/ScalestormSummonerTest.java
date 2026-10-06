@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.l.LuxuriousLocomotive;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ScalestormSummoner.class, AirElemental.class})
+@CardUsed({ScalestormSummoner.class, AirElemental.class, LuxuriousLocomotive.class})
 class ScalestormSummonerTest extends BaseCardTest {
 
     @Test
@@ -51,6 +52,70 @@ class ScalestormSummonerTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(0));
         airElemental.setPowerModifier(-1);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Dinosaur")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The attack ability triggers even without a power-4 creature")
+    void triggersWithoutPower4Creature() {
+        addCreatureReady(player1, new ScalestormSummoner());
+
+        declareAttackers(player1, List.of(0));
+
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        assertThat(findPermanents(player1, "Dinosaur")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Raising the Summoner's power in response permits a Dinosaur token")
+    void raisingPowerInResponseCreatesToken() {
+        Permanent summoner = addCreatureReady(player1, new ScalestormSummoner());
+
+        declareAttackers(player1, List.of(0));
+        summoner.setPowerModifier(1);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Dinosaur")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The Summoner itself can satisfy the power condition")
+    void boostedSummonerCreatesOneUntappedNonattackingToken() {
+        Permanent summoner = addCreatureReady(player1, new ScalestormSummoner());
+        summoner.setPowerModifier(1);
+
+        declareAttackers(player1, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Dinosaur")).hasSize(1);
+        Permanent token = findPermanent(player1, "Dinosaur");
+        assertThat(token.isTapped()).isFalse();
+        assertThat(token.isAttacking()).isFalse();
+        assertThat(findPermanents(player2, "Dinosaur")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opponent's power-4 creature does not satisfy the condition")
+    void opponentsCreatureDoesNotSatisfyCondition() {
+        addCreatureReady(player1, new ScalestormSummoner());
+        addCreatureReady(player2, new AirElemental());
+
+        declareAttackers(player1, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Dinosaur")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An uncrewed Vehicle does not satisfy the creature power condition")
+    void uncrewedVehicleDoesNotSatisfyCondition() {
+        addCreatureReady(player1, new ScalestormSummoner());
+        harness.addToBattlefield(player1, new LuxuriousLocomotive());
+
+        declareAttackers(player1, List.of(0));
         resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Dinosaur")).isEmpty();
