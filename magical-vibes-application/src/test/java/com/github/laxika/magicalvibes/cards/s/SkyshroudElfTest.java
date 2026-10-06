@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(SkyshroudElf.class)
+@CardUsed({SkyshroudElf.class})
 class SkyshroudElfTest extends BaseCardTest {
 
     @Test
@@ -88,5 +88,69 @@ class SkyshroudElfTest extends BaseCardTest {
         harness.handleListChoice(player1, "RED");
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Summoning sickness prevents tapping for green")
+    void summoningSicknessPreventsTapAbility() {
+        Permanent elf = harness.addToBattlefieldAndReturn(player1, new SkyshroudElf());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+
+        assertThat(elf.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Summoning sickness does not prevent filtering mana")
+    void filterWorksWithSummoningSickness() {
+        Permanent elf = harness.addToBattlefieldAndReturn(player1, new SkyshroudElf());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        assertThat(gd.stack).isEmpty();
+        harness.handleListChoice(player1, "WHITE");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(elf.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The elf can filter its own green mana repeatedly while tapped")
+    void filterOwnGreenManaRepeatedly() {
+        Permanent elf = addCreatureReady(player1, new SkyshroudElf());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "RED");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "WHITE");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(elf.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped elf cannot activate its tap ability again")
+    void tapAbilityCannotBeRepeatedWithoutUntapping() {
+        addCreatureReady(player1, new SkyshroudElf());
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
     }
 }
