@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -81,6 +82,67 @@ class RushwoodLegateTest extends BaseCardTest {
     @Test
     @DisplayName("Can be cast normally for its mana cost")
     void castsNormally() {
+        harness.castFromHand(player1, new RushwoodLegate(), "{2}{G}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Rushwood Legate");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Tapped lands satisfy the alternate casting condition without being consumed")
+    void tappedLandsPermitAlternateCast() {
+        var forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        var island = harness.addToBattlefieldAndReturn(player2, new Island());
+        forest.setTapped(true);
+        island.setTapped(true);
+        harness.setHand(player1, List.of(new RushwoodLegate()));
+
+        harness.castWithAlternateCost(player1, 0, (UUID) null);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Rushwood Legate");
+        harness.assertOnBattlefield(player1, "Forest");
+        harness.assertOnBattlefield(player2, "Island");
+        assertThat(forest.isTapped()).isTrue();
+        assertThat(island.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Losing the required lands after casting does not prevent resolution")
+    void resolvesAfterCastingConditionStopsBeingMet() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new Island());
+        harness.setHand(player1, List.of(new RushwoodLegate()));
+
+        harness.castWithAlternateCost(player1, 0, (UUID) null);
+        gd.playerBattlefields.get(player1.getId()).clear();
+        gd.playerBattlefields.get(player2.getId()).clear();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Rushwood Legate");
+    }
+
+    @Test
+    @DisplayName("The alternate cost does not allow casting outside a main phase")
+    void alternateCostDoesNotGrantFlash() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new Island());
+        harness.setHand(player1, List.of(new RushwoodLegate()));
+        harness.forceStep(TurnStep.UPKEEP);
+
+        assertThatThrownBy(() -> harness.castWithAlternateCost(player1, 0, (UUID) null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInHand(player1, "Rushwood Legate");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Paying the normal mana cost remains optional when the free cost is available")
+    void castsNormallyWhenAlternateCostIsAvailable() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new Island());
+
         harness.castFromHand(player1, new RushwoodLegate(), "{2}{G}");
         harness.passBothPriorities();
 
