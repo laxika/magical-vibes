@@ -45,16 +45,20 @@ class RathiIntimidatorTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Spineless Thug");
         harness.assertNotOnBattlefield(player1, "Mossdog");
         harness.assertNotOnBattlefield(player1, "Rathi Fiend");
+        assertThat(findPermanent(player1, "Spineless Thug").isTapped()).isFalse();
+        assertThat(findPermanent(player1, "Spineless Thug").isSummoningSick()).isTrue();
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .extracting(Card::getName)
+                .containsExactlyInAnyOrder("Mossdog", "Rathi Fiend");
     }
 
     @Test
     @DisplayName("Fear prevents nonblack, nonartifact creatures from blocking")
     void fearPreventsNonBlackNonArtifactBlockers() {
-        Permanent attacker = addCreatureReady(player1, new RathiIntimidator());
-        attacker.setAttacking(true);
+        addCreatureReady(player1, new RathiIntimidator());
         addCreatureReady(player2, new Mossdog());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0))))
@@ -65,12 +69,11 @@ class RathiIntimidatorTest extends BaseCardTest {
     @Test
     @DisplayName("Fear allows black and artifact creatures to block")
     void fearAllowsBlackAndArtifactBlockers() {
-        Permanent attacker = addCreatureReady(player1, new RathiIntimidator());
-        attacker.setAttacking(true);
+        addCreatureReady(player1, new RathiIntimidator());
         addCreatureReady(player2, new RathiFiend());
         addCreatureReady(player2, new FlowstoneThopter());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatCode(() -> gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
@@ -92,5 +95,75 @@ class RathiIntimidatorTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId()))
                 .extracting(Card::getName)
                 .containsExactlyInAnyOrder("Mossdog", "Rathi Fiend");
+    }
+
+    @Test
+    void mayFailToFindEvenWhenAnEligibleMercenaryExists() {
+        addCreatureReady(player1, new RathiIntimidator());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.setLibrary(player1, List.of(new SpinelessThug()));
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        harness.assertNotOnBattlefield(player1, "Spineless Thug");
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .extracting(Card::getName).containsExactly("Spineless Thug");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void activationTapsSourceAndCannotBeRepeatedWhileTapped() {
+        Permanent source = addCreatureReady(player1, new RathiIntimidator());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.setLibrary(player1, List.of(new SpinelessThug()));
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(source.isTapped()).isTrue();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.assertOnBattlefield(player1, "Spineless Thug");
+    }
+
+    @Test
+    void cannotActivateWithOnlyOneMana() {
+        Permanent source = addCreatureReady(player1, new RathiIntimidator());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(source.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotActivateWhileSummoningSick() {
+        harness.addToBattlefield(player1, new RathiIntimidator());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void searchResolvesAfterSourceLeavesBattlefield() {
+        Permanent source = addCreatureReady(player1, new RathiIntimidator());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.setLibrary(player1, List.of(new SpinelessThug()));
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        gd.playerGraveyards.get(player1.getId()).add(source.getCard());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Spineless Thug");
+        harness.assertInGraveyard(player1, "Rathi Intimidator");
     }
 }
