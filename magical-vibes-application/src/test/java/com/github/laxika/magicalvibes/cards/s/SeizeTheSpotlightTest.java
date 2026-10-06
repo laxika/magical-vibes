@@ -30,6 +30,51 @@ class SeizeTheSpotlightTest extends BaseCardTest {
     }
 
     @Test
+    void fortuneLeavesOpponentsCreatureUnchanged() {
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        creature.tap();
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        castSpell();
+
+        harness.handleListChoice(player2, ChoiceContext.SeizeTheSpotlightChoice.FORTUNE);
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    void fameWithNoCreaturesGivesNeitherCardNorTreasure() {
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        castSpell();
+
+        harness.handleListChoice(player2, ChoiceContext.SeizeTheSpotlightChoice.FAME);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertNotInHand(player1, "Grizzly Bears");
+        assertThat(findPermanents(player1, "Treasure")).isEmpty();
+        harness.assertInGraveyard(player1, "Seize the Spotlight");
+    }
+
+    @Test
+    void fameAutomaticallyTakesTheOnlyCreature() {
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        bears.tap();
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        castSpell();
+
+        harness.handleListChoice(player2, ChoiceContext.SeizeTheSpotlightChoice.FAME);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        assertThat(bears.isTapped()).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isTrue();
+        harness.assertNotInHand(player1, "Grizzly Bears");
+        assertThat(findPermanents(player1, "Treasure")).isEmpty();
+    }
+
+    @Test
     void fameLetsControllerChooseCreatureAndTemporaryControlExpires() {
         Permanent bears = addCreatureReady(player2, new GrizzlyBears());
         addCreatureReady(player2, new GiantSpider()).tap();
@@ -59,8 +104,7 @@ class SeizeTheSpotlightTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SeizeTheSpotlight()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castSorcery(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         assertThat(choice).isNotNull();
