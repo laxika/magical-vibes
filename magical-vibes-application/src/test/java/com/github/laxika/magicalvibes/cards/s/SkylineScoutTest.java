@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SkylineScout.class})
 class SkylineScoutTest extends BaseCardTest {
 
     @Test
@@ -57,6 +59,40 @@ class SkylineScoutTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, scout, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("The generic part of the payment can use another color and only the attacker gains flying")
+    void mixedManaPaymentOnlyGrantsFlyingToAttacker() {
+        Permanent attacker = addReadyScout();
+        Permanent nonattacker = addReadyScout();
+        Permanent opponent = addCreatureReady(player2, new SkylineScout());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, nonattacker, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponent, Keyword.FLYING)).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Two mana without white cannot pay for the flying trigger")
+    void paymentRequiresWhiteMana() {
+        Permanent scout = addReadyScout();
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gqs.hasKeyword(gd, scout, Keyword.FLYING)).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(2);
     }
 
     private Permanent addReadyScout() {
