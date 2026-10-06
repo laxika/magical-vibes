@@ -1,16 +1,16 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.DeckFormat;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ResoluteArchangel.class})
 class ResoluteArchangelTest extends BaseCardTest {
 
     @Test
@@ -53,15 +53,69 @@ class ResoluteArchangelTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(13);
     }
 
-    private void castResoluteArchangel() {
+    @Test
+    @DisplayName("No ability triggers when life is already at the starting total")
+    void doesNotTriggerAtStartingLife() {
+        castUntilEntry();
+
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Losing life after entry cannot enable an ability that did not trigger")
+    void losingLifeAfterEntryDoesNotEnableTrigger() {
+        castUntilEntry();
+        harness.setLife(player1, 15);
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(15);
+    }
+
+    @Test
+    @DisplayName("The life condition is checked again when the ability resolves")
+    void lifeAboveStartingTotalBeforeResolutionIsUnchanged() {
+        harness.setLife(player1, 7);
+        castUntilEntry();
+        assertThat(gd.stack).hasSize(1);
+        harness.setLife(player1, 25);
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(25);
+    }
+
+    @Test
+    @DisplayName("Commander life below twenty is restored to forty")
+    void commanderLowLifeIsRestoredToForty() {
+        gd.format = DeckFormat.COMMANDER;
+        harness.setLife(player1, 7);
+
+        castResoluteArchangel();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(40);
+    }
+
+    @Test
+    @DisplayName("Commander life between twenty and forty is restored to forty")
+    void commanderLifeAboveTwentyIsRestoredToForty() {
+        gd.format = DeckFormat.COMMANDER;
+        harness.setLife(player1, 30);
+
+        castResoluteArchangel();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(40);
+    }
+
+    private void castUntilEntry() {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player1, List.of(new ResoluteArchangel()));
-        harness.addMana(player1, ManaColor.WHITE, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.castFromHand(player1, new ResoluteArchangel(), "{5}{W}{W}");
+        harness.passBothPriorities();
+    }
 
-        harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+    private void castResoluteArchangel() {
+        castUntilEntry();
+        resolveAllTriggers();
     }
 }
