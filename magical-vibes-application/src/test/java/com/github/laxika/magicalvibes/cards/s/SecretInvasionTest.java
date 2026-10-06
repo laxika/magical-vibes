@@ -53,8 +53,7 @@ class SecretInvasionTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.castInstant(player2, 0, aura.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, aura.getId());
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(permanent -> permanent.getOriginalCard().getId().equals(target.getOriginalCard().getId()));
@@ -72,11 +71,64 @@ class SecretInvasionTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.castInstant(player2, 0, enchanted.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, enchanted.getId());
 
         harness.assertInGraveyard(player2, "Shock");
         assertThat(enchanted.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void mayChooseNoCreatureAndStillGrantsWard() {
+        Permanent enchanted = addCreatureReady(player1, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new HillGiant());
+        castSecretInvasion(enchanted);
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        assertThat(enchanted.getCard().getName()).isEqualTo("Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castAndResolveInstant(player2, 0, enchanted.getId());
+
+        harness.assertInGraveyard(player2, "Shock");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(enchanted);
+        assertThat(enchanted.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void mayExileAnotherCreatureYouControl() {
+        Permanent enchanted = addCreatureReady(player1, new GrizzlyBears());
+        Permanent target = addCreatureReady(player1, new HillGiant());
+        castAndResolveSecretInvasion(enchanted, target);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(enchanted).doesNotContain(target);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(target.getOriginalCard());
+        assertThat(enchanted.getCard().getName()).isEqualTo("Hill Giant");
+    }
+
+    @Test
+    void auraLeavingBeforeTriggerResolvesPreventsExileAndCopy() {
+        Permanent enchanted = addCreatureReady(player1, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new HillGiant());
+        castSecretInvasion(enchanted);
+        harness.handlePermanentChosen(player1, target.getId());
+
+        Permanent aura = findPermanent(player1, "Secret Invasion");
+        harness.setHand(player1, List.of(new Demystify()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player1, 0, aura.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(enchanted.getCard().getName()).isEqualTo("Grizzly Bears");
+        harness.assertInGraveyard(player1, "Secret Invasion");
     }
 
     private void castSecretInvasion(Permanent enchanted) {
