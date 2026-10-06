@@ -77,11 +77,80 @@ class RallyManeuverTest extends BaseCardTest {
                 .hasMessageContaining("creature");
     }
 
+    @Test
+    void cannotChooseTheSameCreatureForBothTargets() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new RallyManeuver()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of(creature.getId(), creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotCastWithoutTheMandatoryTarget() {
+        harness.setHand(player1, List.of(new RallyManeuver()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, List.<UUID>of()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void canTargetOpponentsCreatures() {
+        Permanent firstTarget = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent secondTarget = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        castRallyManeuver(List.of(firstTarget.getId(), secondTarget.getId()));
+
+        assertThat(firstTarget.getPowerModifier()).isEqualTo(2);
+        assertThat(firstTarget.getGrantedKeywords()).contains(Keyword.FIRST_STRIKE).doesNotContain(Keyword.LIFELINK);
+        assertThat(secondTarget.getToughnessModifier()).isEqualTo(2);
+        assertThat(secondTarget.getGrantedKeywords()).contains(Keyword.LIFELINK).doesNotContain(Keyword.FIRST_STRIKE);
+    }
+
+    @Test
+    void secondTargetStillGetsItsEffectsWhenFirstTargetLeaves() {
+        Permanent firstTarget = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent secondTarget = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new RallyManeuver()));
+        addMana();
+        harness.castInstant(player1, 0, List.of(firstTarget.getId(), secondTarget.getId()));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, firstTarget));
+        harness.passBothPriorities();
+
+        assertThat(secondTarget.getPowerModifier()).isZero();
+        assertThat(secondTarget.getToughnessModifier()).isEqualTo(2);
+        assertThat(secondTarget.getGrantedKeywords()).contains(Keyword.LIFELINK).doesNotContain(Keyword.FIRST_STRIKE);
+    }
+
+    @Test
+    void firstTargetStillGetsOnlyItsEffectsWhenSecondTargetLeaves() {
+        Permanent firstTarget = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent secondTarget = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new RallyManeuver()));
+        addMana();
+        harness.castInstant(player1, 0, List.of(firstTarget.getId(), secondTarget.getId()));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, secondTarget));
+        harness.passBothPriorities();
+
+        assertThat(firstTarget.getPowerModifier()).isEqualTo(2);
+        assertThat(firstTarget.getToughnessModifier()).isZero();
+        assertThat(firstTarget.getGrantedKeywords()).contains(Keyword.FIRST_STRIKE).doesNotContain(Keyword.LIFELINK);
+    }
+
+    @Test
+    void decliningSecondTargetDoesNotGrantItsEffectsToFirstTarget() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        castRallyManeuver(List.of(creature.getId()));
+
+        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(creature.getGrantedKeywords()).doesNotContain(Keyword.LIFELINK);
+    }
+
     private void castRallyManeuver(List<UUID> targetIds) {
         harness.setHand(player1, List.of(new RallyManeuver()));
         addMana();
-        harness.castInstant(player1, 0, targetIds);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetIds);
     }
 
     private void addMana() {
