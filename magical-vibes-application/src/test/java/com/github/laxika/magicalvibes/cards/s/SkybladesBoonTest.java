@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.FaithlessSalvaging;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SkybladesBoon.class, GrizzlyBears.class, Mountain.class})
+@CardUsed({SkybladesBoon.class, GrizzlyBears.class, Mountain.class, FaithlessSalvaging.class})
 class SkybladesBoonTest extends BaseCardTest {
 
     @Test
@@ -43,9 +44,8 @@ class SkybladesBoonTest extends BaseCardTest {
     @DisplayName("Activating Skyblade's Boon returns it from the battlefield to its owner's hand")
     void battlefieldAbilityReturnsToHand() {
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-        Permanent boon = new Permanent(new SkybladesBoon());
+        Permanent boon = harness.addToBattlefieldAndReturn(player1, new SkybladesBoon());
         boon.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(boon);
 
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -86,5 +86,71 @@ class SkybladesBoonTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, mountain.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void canEnchantOpponentsCreatureAndReturnWithoutReturningCreature() {
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SkybladesBoon()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Skyblade's Boon");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    void graveyardAbilityReturnsOnlyActivatedCopyDuringOpponentsTurn() {
+        SkybladesBoon first = new SkybladesBoon();
+        SkybladesBoon second = new SkybladesBoon();
+        harness.setGraveyard(player1, List.of(first, second));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateGraveyardAbility(player1, 1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(second);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(first);
+    }
+
+    @Test
+    void graveyardAbilityCannotReturnSourceThatLeftAndReenteredGraveyard() {
+        SkybladesBoon boon = new SkybladesBoon();
+        SkybladesBoon drawnCard = new SkybladesBoon();
+        harness.setGraveyard(player1, List.of(boon));
+        harness.setHand(player1, List.of(new FaithlessSalvaging()));
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).contains(boon);
+
+        harness.castAndResolveInstant(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(boon);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(boon);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
     }
 }
