@@ -1,13 +1,13 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,9 +16,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SkithiryxTheBlightDragon.class, SteelHellkite.class})
 class SkithiryxTheBlightDragonTest extends BaseCardTest {
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting Skithiryx puts it on the stack")
@@ -30,7 +29,7 @@ class SkithiryxTheBlightDragonTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Skithiryx, the Blight Dragon");
+        assertThat(gd.stack.getFirst().getCard()).isInstanceOf(SkithiryxTheBlightDragon.class);
     }
 
     @Test
@@ -44,8 +43,6 @@ class SkithiryxTheBlightDragonTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Skithiryx, the Blight Dragon");
     }
-
-    // ===== Haste ability =====
 
     @Test
     @DisplayName("Activating haste ability puts it on the stack")
@@ -109,8 +106,6 @@ class SkithiryxTheBlightDragonTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
     }
 
-    // ===== Regenerate ability =====
-
     @Test
     @DisplayName("Activating regenerate ability puts it on the stack")
     void regenerateAbilityPutsOnStack() {
@@ -173,18 +168,18 @@ class SkithiryxTheBlightDragonTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
     }
 
-    // ===== Regeneration saves from lethal damage =====
-
     @Test
     @DisplayName("Regeneration shield saves Skithiryx from lethal regular combat damage")
     void regenerationSavesFromLethalCombatDamage() {
-        Permanent skithiryx = addSkithiryxReady(player1);
-        skithiryx.setRegenerationShield(1);
+        Permanent skithiryx = addCreatureReady(player1, new SkithiryxTheBlightDragon());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
         skithiryx.setBlocking(true);
         skithiryx.addBlockingTarget(0);
 
         // Use a non-infect creature so damage is regular (not -1/-1 counters)
-        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player2, new SteelHellkite());
         attacker.setAttacking(true);
 
         harness.forceActivePlayer(player2);
@@ -193,24 +188,26 @@ class SkithiryxTheBlightDragonTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        // Skithiryx (4/4) takes only 2 damage from Grizzly Bears - not lethal, survives without regen
         harness.assertOnBattlefield(player1, "Skithiryx, the Blight Dragon");
-        // Shield not consumed since damage wasn't lethal
-        Permanent survived = findPermanent(player1, "Skithiryx, the Blight Dragon");
-        assertThat(survived.getRegenerationShield()).isEqualTo(1);
+        assertThat(skithiryx.getRegenerationShield()).isZero();
+        assertThat(skithiryx.isTapped()).isTrue();
+        assertThat(skithiryx.isBlocking()).isFalse();
+        assertThat(skithiryx.getMarkedDamage()).isZero();
     }
 
     @Test
     @DisplayName("Skithiryx dies to infect damage even with regeneration shield (0 toughness from counters)")
     void diesFromInfectDespiteRegenerationShield() {
         // Infect deals -1/-1 counters which persist after regeneration
-        Permanent skithiryx = addSkithiryxReady(player1);
-        skithiryx.setRegenerationShield(1);
+        Permanent skithiryx = addCreatureReady(player1, new SkithiryxTheBlightDragon());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
         skithiryx.setBlocking(true);
         skithiryx.addBlockingTarget(0);
 
         // Another infect creature with 4+ power
-        Permanent attacker = addSkithiryxReady(player2);
+        Permanent attacker = addCreatureReady(player2, new SkithiryxTheBlightDragon());
         attacker.setAttacking(true);
 
         harness.forceActivePlayer(player2);
@@ -224,12 +221,10 @@ class SkithiryxTheBlightDragonTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Skithiryx, the Blight Dragon");
     }
 
-    // ===== Infect combat interaction =====
-
     @Test
     @DisplayName("Skithiryx deals poison counters to defending player when unblocked")
     void dealsPoison() {
-        Permanent skithiryx = addSkithiryxReady(player1);
+        Permanent skithiryx = addCreatureReady(player1, new SkithiryxTheBlightDragon());
         skithiryx.setAttacking(true);
 
         harness.forceActivePlayer(player1);
@@ -246,11 +241,11 @@ class SkithiryxTheBlightDragonTest extends BaseCardTest {
     @Test
     @DisplayName("Skithiryx deals -1/-1 counters to blocking creature")
     void dealsMinusCountersToBlocker() {
-        Permanent skithiryx = addSkithiryxReady(player1);
+        Permanent skithiryx = addCreatureReady(player1, new SkithiryxTheBlightDragon());
         skithiryx.setAttacking(true);
 
         // Block with a 5/5 so it survives
-        Permanent blocker = addCreatureReady(player2, new SkithiryxTheBlightDragon());
+        Permanent blocker = addCreatureReady(player2, new SteelHellkite());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
@@ -260,18 +255,45 @@ class SkithiryxTheBlightDragonTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        // The blocker (4/4) takes 4 damage as -1/-1 counters → 0/0 → dies
-        harness.assertNotOnBattlefield(player2, "Skithiryx, the Blight Dragon");
+        harness.assertOnBattlefield(player2, "Steel Hellkite");
+        assertThat(blocker.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(4);
+        assertThat(blocker.getMarkedDamage()).isZero();
     }
 
-    // ===== Helper methods =====
+    @Test
+    @DisplayName("Resolved haste lets a summoning-sick Skithiryx attack")
+    void hasteAllowsAttackingImmediately() {
+        Permanent skithiryx = harness.addToBattlefieldAndReturn(player1, new SkithiryxTheBlightDragon());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
 
-    private Permanent addSkithiryxReady(Player player) {
-        SkithiryxTheBlightDragon card = new SkithiryxTheBlightDragon();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.beginAttackerDeclarationInput();
+        gs.declareAttackers(gd, player1, List.of(0));
+
+        assertThat(skithiryx.isAttacking()).isTrue();
+        assertThat(skithiryx.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Haste and unused regeneration shields expire at cleanup")
+    void temporaryAbilitiesExpireAtCleanup() {
+        Permanent skithiryx = harness.addToBattlefieldAndReturn(player1, new SkithiryxTheBlightDragon());
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(skithiryx.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(skithiryx.getRegenerationShield()).isEqualTo(1);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(skithiryx.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(skithiryx.getRegenerationShield()).isZero();
     }
 
 }
