@@ -85,4 +85,60 @@ class ShroudedSerpentTest extends BaseCardTest {
 
         assertThat(serpent.isCantBeBlocked()).isTrue();
     }
+
+    @Test
+    @DisplayName("Defending player may decline even with enough mana")
+    void decliningWithEnoughManaMakesSerpentUnblockable() {
+        Permanent serpent = addCreatureReady(player1, new ShroudedSerpent());
+        addCreatureReady(player2, new VintaraSnapper());
+        harness.addMana(player2, ManaColor.COLORLESS, 4);
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(serpent.isCantBeBlocked()).isTrue();
+        resolveCombat();
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    @DisplayName("Three mana cannot pay the four-mana cost")
+    void insufficientManaMakesSerpentUnblockable() {
+        Permanent serpent = addCreatureReady(player1, new ShroudedSerpent());
+        addCreatureReady(player2, new VintaraSnapper());
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(serpent.isCantBeBlocked()).isTrue();
+        resolveCombat();
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    @DisplayName("The other defending player can pay generic mana with colored mana")
+    void otherDefendingPlayerPaysWithColoredMana() {
+        Permanent serpent = addCreatureReady(player2, new ShroudedSerpent());
+        addCreatureReady(player1, new VintaraSnapper());
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        declareAttackers(player2, List.of(0));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(serpent.isCantBeBlocked()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+
+        prepareDeclareBlockers(player2);
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat(player2);
+
+        harness.assertLife(player1, 20);
+    }
 }
