@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.o.OracleOfNectars;
+import com.github.laxika.magicalvibes.cards.p.PowerOfFire;
 import com.github.laxika.magicalvibes.cards.t.ThornwatchScarecrow;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SickleRipper.class, ThornwatchScarecrow.class, OracleOfNectars.class})
+@CardUsed({SickleRipper.class, ThornwatchScarecrow.class, OracleOfNectars.class, PowerOfFire.class})
 class SickleRipperTest extends BaseCardTest {
 
     @Test
@@ -23,10 +24,8 @@ class SickleRipperTest extends BaseCardTest {
         // Thornwatch Scarecrow is a 4/4 blocker, so it survives and we can inspect the counters.
         addCreatureReady(player2, new ThornwatchScarecrow());
 
-        Permanent attacker = addCreatureReady(player1, new SickleRipper());
-        attacker.setAttacking(true);
-
-        prepareDeclareBlockers();
+        addCreatureReady(player1, new SickleRipper());
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
 
@@ -39,12 +38,11 @@ class SickleRipperTest extends BaseCardTest {
     @Test
     @DisplayName("Wither combat damage of lethal counters kills the blocker")
     void witherKillsSmallBlocker() {
-        Permanent attacker = addCreatureReady(player1, new SickleRipper());
-        attacker.setAttacking(true);
+        addCreatureReady(player1, new SickleRipper());
 
         addCreatureReady(player2, new OracleOfNectars());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
 
@@ -57,14 +55,44 @@ class SickleRipperTest extends BaseCardTest {
     void witherDealsNormalDamageToPlayer() {
         harness.setLife(player2, 20);
 
-        Permanent attacker = addCreatureReady(player1, new SickleRipper());
-        attacker.setAttacking(true);
-
-        prepareDeclareBlockers();
+        addCreatureReady(player1, new SickleRipper());
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of());
         resolveCombat();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
         assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Wither deals blocking damage as counters even when Sickle Ripper dies")
+    void witherDealsCountersWhileBlocking() {
+        Permanent attacker = addCreatureReady(player1, new ThornwatchScarecrow());
+        addCreatureReady(player2, new SickleRipper());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        assertThat(attacker.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
+        assertThat(attacker.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player1, "Thornwatch Scarecrow");
+        harness.assertInGraveyard(player2, "Sickle Ripper");
+    }
+
+    @Test
+    @DisplayName("Wither applies to noncombat damage from a granted ability")
+    void witherAppliesToGrantedDamageAbility() {
+        Permanent ripper = addCreatureReady(player1, new SickleRipper());
+        Permanent target = addCreatureReady(player2, new ThornwatchScarecrow());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new PowerOfFire());
+        aura.setAttachedTo(ripper.getId());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Thornwatch Scarecrow");
     }
 }
