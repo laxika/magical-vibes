@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -50,5 +51,28 @@ class SecureTheWastesTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Warrior").stream()
                 .filter(permanent -> permanent.getCard().isToken())
                 .toList()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Casting on the opponent's turn creates untapped tokens for the caster on resolution")
+    void createsTokensForCasterOnOpponentsTurn() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new SecureTheWastes()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.castInstant(player2, 0, 2, null);
+
+        assertThat(findPermanents(player2, "Warrior")).isEmpty();
+
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Warrior")).isEmpty();
+        assertThat(findPermanents(player2, "Warrior")).hasSize(2).allSatisfy(token -> {
+            assertThat(token.getCard().isToken()).isTrue();
+            assertThat(token.isTapped()).isFalse();
+            assertThat(token.isSummoningSick()).isTrue();
+        });
     }
 }
