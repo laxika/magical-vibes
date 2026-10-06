@@ -2,13 +2,11 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.a.AngelsMercy;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.cards.t.Twincast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -139,6 +137,76 @@ class SeeDoubleTest extends BaseCardTest {
         assertThat(gd.stack).noneMatch(entry -> "Copy of See Double".equals(entry.getDescription()));
     }
 
+    @Test
+    @DisplayName("Both chosen modes still resolve after the opponent's graveyard empties")
+    void bothModesRemainChosenAfterGraveyardEmpties() {
+        List<Card> graveyard = new ArrayList<>();
+        for (int i = 0; i < 8; i++) {
+            graveyard.add(new SeeDouble());
+        }
+        harness.setGraveyard(player2, graveyard);
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        GrizzlyBears bearsSpell = new GrizzlyBears();
+        harness.setHand(player1, List.of(bearsSpell, new SeeDouble()));
+        addSeeDoubleMana(player1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castCreature(player1, 0);
+        castSeeDouble(player1, new int[]{0, 1}, bearsSpell.getId(), List.of(bears.getId()));
+        harness.setGraveyard(player2, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).anyMatch(entry -> entry.isCopy()
+                && entry.getDescription().equals("Copy of Grizzly Bears"));
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1)
+                .allMatch(permanent -> permanent.getCard().isToken()
+                        && permanent.getCard().getName().equals("Grizzly Bears"));
+    }
+
+    @Test
+    @DisplayName("Eight cards in the controller's graveyard do not allow both modes")
+    void controllersGraveyardDoesNotEnableBothModes() {
+        List<Card> graveyard = new ArrayList<>();
+        for (int i = 0; i < 8; i++) {
+            graveyard.add(new SeeDouble());
+        }
+        harness.setGraveyard(player1, graveyard);
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        GrizzlyBears bearsSpell = new GrizzlyBears();
+        harness.setHand(player1, List.of(bearsSpell, new SeeDouble()));
+        addSeeDoubleMana(player1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castCreature(player1, 0);
+
+        assertThatThrownBy(() -> castSeeDouble(player1, new int[]{0, 1}, bearsSpell.getId(),
+                List.of(bears.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The spell mode still resolves when the creature target leaves the battlefield")
+    void copiesSpellWhenCreatureTargetIsGone() {
+        List<Card> graveyard = new ArrayList<>();
+        for (int i = 0; i < 8; i++) {
+            graveyard.add(new SeeDouble());
+        }
+        harness.setGraveyard(player2, graveyard);
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        GrizzlyBears bearsSpell = new GrizzlyBears();
+        harness.setHand(player1, List.of(bearsSpell, new SeeDouble()));
+        addSeeDoubleMana(player1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castCreature(player1, 0);
+        castSeeDouble(player1, new int[]{0, 1}, bearsSpell.getId(), List.of(bears.getId()));
+
+        gd.playerBattlefields.get(player2.getId()).remove(bears);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).anyMatch(entry -> entry.isCopy()
+                && entry.getDescription().equals("Copy of Grizzly Bears"));
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+    }
+
     private void addSeeDoubleMana(Player player) {
         harness.addMana(player, ManaColor.BLUE, 2);
         harness.addMana(player, ManaColor.COLORLESS, 3);
@@ -146,7 +214,6 @@ class SeeDoubleTest extends BaseCardTest {
 
     private void castSeeDouble(Player player, int[] modeIndices, java.util.UUID targetId,
                                List<java.util.UUID> targetIds) {
-        gs.playCard(gd, player, 0, ChooseOneEffect.encodeModeSelection(1, 2, modeIndices),
-                targetId, null, targetIds, List.of());
+        harness.castModalInstantWithModes(player, 0, 1, 2, modeIndices, targetId, targetIds);
     }
 }
