@@ -57,6 +57,44 @@ class SlimyKavuTest extends BaseCardTest {
     }
 
     @Test
+    void convertedForestProducesBlackManaInsteadOfGreen() {
+        Permanent forest = addKavuAndForest();
+
+        harness.activateAbility(player1, 0, null, forest.getId());
+        harness.passBothPriorities();
+        harness.tapPermanent(player1, 1);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
+    void cannotActivateWhileSummoningSick() {
+        Permanent kavu = harness.addToBattlefieldAndReturn(player1, new SlimyKavu());
+        kavu.setSummoningSick(true);
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, forest.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(kavu.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.effectiveBasicLandTypes(gd, forest)).containsExactly(CardSubtype.FOREST);
+    }
+
+    @Test
+    void cannotActivateAgainWhileTapped() {
+        Permanent forest = addKavuAndForest();
+
+        harness.activateAbility(player1, 0, null, forest.getId());
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, forest.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     void cannotTargetANonLandPermanent() {
         addCreatureReady(player1, new SlimyKavu());
         Permanent otherKavu = addCreatureReady(player1, new SlimyKavu());
