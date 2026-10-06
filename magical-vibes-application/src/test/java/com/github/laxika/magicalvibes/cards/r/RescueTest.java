@@ -29,11 +29,10 @@ class RescueTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Rescue puts it on the stack with target")
     void castingPutsOnStack() {
-        harness.addToBattlefield(player1, new GoliathBeetle());
+        UUID targetId = harness.addToBattlefieldAndReturn(player1, new GoliathBeetle()).getId();
         harness.setHand(player1, List.of(new Rescue()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        UUID targetId = harness.getPermanentId(player1, "Goliath Beetle");
         harness.castInstant(player1, 0, targetId);
 
         GameData gd = harness.getGameData();
@@ -145,6 +144,28 @@ class RescueTest extends BaseCardTest {
     }
 
     // ===== Fizzle =====
+
+    @Test
+    @DisplayName("Does not return a target that an opponent controls at resolution")
+    void fizzlesIfTargetChangesController() {
+        var target = harness.addToBattlefieldAndReturn(player1, new GoliathBeetle());
+        harness.setHand(player1, List.of(new Rescue()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castInstant(player1, 0, target.getId());
+
+        // Simulate a control change while Rescue is on the stack, preserving ownership.
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+        gd.playerBattlefields.get(player2.getId()).add(target);
+        gd.stolenCreatures.put(target.getId(), player1.getId());
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Goliath Beetle");
+        harness.assertNotInHand(player1, "Goliath Beetle");
+        harness.assertNotInHand(player2, "Goliath Beetle");
+        harness.assertInGraveyard(player1, "Rescue");
+        assertThat(gd.stack).isEmpty();
+    }
 
     @Test
     @DisplayName("Fizzles if target is removed before resolution")
