@@ -67,4 +67,26 @@ class RustrazorButcherTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
         assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isZero();
     }
+
+    @Test
+    @DisplayName("Opposing Butchers deal simultaneous first-strike wither damage only once")
+    void opposingButchersDealSimultaneousFirstStrikeDamage() {
+        Permanent attacker = addCreatureReady(player1, new RustrazorButcher());
+        Permanent blocker = addCreatureReady(player2, new RustrazorButcher());
+        declareAttackersAndPrepareBlockers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
+        resolveCombat();
+
+        harness.assertOnBattlefield(player1, "Rustrazor Butcher");
+        harness.assertOnBattlefield(player2, "Rustrazor Butcher");
+        assertThat(attacker.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(blocker.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(attacker.getMarkedDamage()).isZero();
+        assertThat(blocker.getMarkedDamage()).isZero();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
 }
