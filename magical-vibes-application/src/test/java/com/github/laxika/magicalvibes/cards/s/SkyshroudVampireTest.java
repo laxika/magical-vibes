@@ -19,6 +19,45 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class SkyshroudVampireTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Discard is paid before resolution and only the activating Vampire is boosted")
+    void discardIsPaidBeforeBoostResolves() {
+        Permanent vampire = addCreatureReady(player1, new SkyshroudVampire());
+        Permanent otherVampire = addCreatureReady(player1, new SkyshroudVampire());
+        harness.setHand(player1, List.of(new FightingDrake()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertNotInHand(player1, "Fighting Drake");
+        harness.assertInGraveyard(player1, "Fighting Drake");
+        assertThat(gqs.getEffectivePower(gd, vampire)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, vampire)).isEqualTo(3);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, vampire)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, vampire)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, otherVampire)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, otherVampire)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Summoning sickness does not prevent the discard ability")
+    void canActivateWhileSummoningSick() {
+        Permanent vampire = addCreatureReady(player1, new SkyshroudVampire());
+        vampire.setSummoningSick(true);
+        harness.setHand(player1, List.of(new FightingDrake()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Fighting Drake");
+        assertThat(gqs.getEffectivePower(gd, vampire)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, vampire)).isEqualTo(5);
+    }
+
+    @Test
     @DisplayName("Discarding a creature card gives Skyshroud Vampire +2/+2")
     void discardCreatureBoosts() {
         Permanent vampire = addCreatureReady(player1, new SkyshroudVampire());
