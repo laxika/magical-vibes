@@ -3,7 +3,9 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.a.ArmadilloCloak;
 import com.github.laxika.magicalvibes.cards.b.BenalishLancer;
 import com.github.laxika.magicalvibes.cards.c.ChargingTroll;
+import com.github.laxika.magicalvibes.cards.o.OrimsTouch;
 import com.github.laxika.magicalvibes.cards.r.Repulse;
+import com.github.laxika.magicalvibes.cards.r.Rout;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -17,7 +19,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ShivanZombie.class, BenalishLancer.class, ChargingTroll.class, ArmadilloCloak.class, Repulse.class})
+@CardUsed({ShivanZombie.class, BenalishLancer.class, ChargingTroll.class, ArmadilloCloak.class,
+        Repulse.class, OrimsTouch.class, Rout.class})
 class ShivanZombieTest extends BaseCardTest {
 
     @Test
@@ -76,5 +79,47 @@ class ShivanZombieTest extends BaseCardTest {
         harness.castInstant(player2, 0, zombie.getId());
 
         assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Even its controller cannot target Shivan Zombie with a white instant")
+    void cannotBeTargetedByControllersWhiteInstant() {
+        Permanent zombie = addCreatureReady(player1, new ShivanZombie());
+        harness.setHand(player1, List.of(new OrimsTouch()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, zombie.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection");
+    }
+
+    @Test
+    @DisplayName("Nonwhite creatures can block and deal lethal damage to Shivan Zombie")
+    void nonwhiteCreatureCanBlockAndDealDamage() {
+        addCreatureReady(player1, new ShivanZombie());
+        addCreatureReady(player2, new ShivanZombie());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertNotOnBattlefield(player1, "Shivan Zombie");
+        harness.assertNotOnBattlefield(player2, "Shivan Zombie");
+        harness.assertInGraveyard(player1, "Shivan Zombie");
+        harness.assertInGraveyard(player2, "Shivan Zombie");
+    }
+
+    @Test
+    @DisplayName("Protection does not stop untargeted destruction by a white spell")
+    void whiteBoardWipeDestroysZombie() {
+        addCreatureReady(player1, new ShivanZombie());
+        harness.setHand(player1, List.of(new Rout()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        harness.assertNotOnBattlefield(player1, "Shivan Zombie");
+        harness.assertInGraveyard(player1, "Shivan Zombie");
     }
 }
