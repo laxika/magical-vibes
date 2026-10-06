@@ -10,9 +10,70 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({SakuraTribeScout.class, MikokoroCenterOfTheSea.class})
 class SakuraTribeScoutTest extends BaseCardTest {
+    @Test
+    @DisplayName("Cannot activate while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        harness.addToBattlefield(player1, new SakuraTribeScout());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate while already tapped")
+    void cannotActivateWhileTapped() {
+        Permanent scout = addCreatureReady(player1, new SakuraTribeScout());
+        scout.setTapped(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can activate with an empty hand and finish resolving")
+    void resolvesWithEmptyHand() {
+        Permanent scout = addCreatureReady(player1, new SakuraTribeScout());
+        harness.setHand(player1, List.of());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(scout.isTapped()).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(scout);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Ability resolves after the Scout leaves the battlefield")
+    void resolvesWithoutSource() {
+        Permanent scout = addCreatureReady(player1, new SakuraTribeScout());
+        MikokoroCenterOfTheSea landCard = new MikokoroCenterOfTheSea();
+        harness.setHand(player1, List.of(landCard));
+
+        harness.activateAbility(player1, 0, null, null);
+        gd.playerBattlefields.get(player1.getId()).remove(scout);
+        harness.setGraveyard(player1, List.of(scout.getCard()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(Permanent::getCard).containsExactly(landCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(scout.getCard());
+    }
 
     @Test
     @DisplayName("Puts a land from hand onto the battlefield untapped")
