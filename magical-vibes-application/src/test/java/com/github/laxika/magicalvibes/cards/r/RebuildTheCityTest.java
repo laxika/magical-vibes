@@ -52,11 +52,92 @@ class RebuildTheCityTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a land");
     }
 
+    @Test
+    @DisplayName("Copies an opponent's land under the spell controller's control")
+    void copiesOpponentsLand() {
+        Permanent mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
+
+        castRebuildTheCity(mountain);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(3)
+                .allSatisfy(token -> assertThat(token.getCard().isToken()).isTrue());
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(mountain);
+    }
+
+    @Test
+    @DisplayName("Copies of a tapped Mountain enter untapped")
+    void doesNotCopyTappedStatus() {
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        mountain.tap();
+
+        castRebuildTheCity(mountain);
+
+        assertThat(mountain.isTapped()).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken()).toList())
+                .hasSize(3)
+                .allSatisfy(token -> assertThat(token.isTapped()).isFalse());
+    }
+
+    @Test
+    @DisplayName("Creates no tokens if the target land leaves before resolution")
+    void createsNoTokensWhenTargetLeaves() {
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        harness.setHand(player1, List.of(new RebuildTheCity()));
+        addMana();
+        harness.castSorcery(player1, 0, mountain.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(mountain);
+        gd.playerGraveyards.get(player1.getId()).add(mountain.getCard());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Rebuild the City");
+    }
+
+    @Test
+    @DisplayName("Copied Mountain mana abilities respect summoning sickness")
+    void copiedLandManaAbilityRespectsSummoningSickness() {
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        castRebuildTheCity(mountain);
+
+        assertThatThrownBy(() -> harness.tapPermanent(player1, 1))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+
+        Permanent token = gd.playerBattlefields.get(player1.getId()).get(1);
+        token.setSummoningSick(false);
+        harness.tapPermanent(player1, 1);
+        assertThat(token.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Can copy a land token created by Rebuild the City")
+    void copiesExistingLandToken() {
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        castRebuildTheCity(mountain);
+        Permanent originalToken = gd.playerBattlefields.get(player1.getId()).get(1);
+
+        castRebuildTheCity(originalToken);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken()).toList())
+                .hasSize(6)
+                .allSatisfy(token -> {
+                    assertThat(token.getCard().hasType(CardType.LAND)).isTrue();
+                    assertThat(token.getCard().hasType(CardType.CREATURE)).isTrue();
+                    assertThat(token.getEffectivePower()).isEqualTo(3);
+                    assertThat(token.getEffectiveToughness()).isEqualTo(3);
+                    assertThat(token.hasKeyword(Keyword.VIGILANCE)).isTrue();
+                    assertThat(token.hasKeyword(Keyword.MENACE)).isTrue();
+                });
+    }
+
     private void castRebuildTheCity(Permanent target) {
         harness.setHand(player1, List.of(new RebuildTheCity()));
         addMana();
-        harness.castSorcery(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, target.getId());
     }
 
     private void addMana() {
