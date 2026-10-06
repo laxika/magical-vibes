@@ -60,14 +60,13 @@ class SageOfEpityrTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SageOfEpityr()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
         Card cardA = new SageOfEpityr();
         Card cardB = new SageOfEpityr();
         Card cardC = new SageOfEpityr();
         Card cardD = new SageOfEpityr();
         Card cardE = new SageOfEpityr();
-        deck.addAll(List.of(cardA, cardB, cardC, cardD, cardE));
+        harness.setLibrary(player1, List.of(cardA, cardB, cardC, cardD, cardE));
+        List<Card> deck = gd.playerDecks.get(player1.getId());
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
@@ -85,11 +84,10 @@ class SageOfEpityrTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SageOfEpityr()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
         Card cardA = new SageOfEpityr();
         Card cardB = new SageOfEpityr();
-        deck.addAll(List.of(cardA, cardB));
+        harness.setLibrary(player1, List.of(cardA, cardB));
+        List<Card> deck = gd.playerDecks.get(player1.getId());
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
@@ -110,7 +108,7 @@ class SageOfEpityrTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SageOfEpityr()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        gd.playerDecks.get(player1.getId()).clear();
+        harness.setLibrary(player1, List.of());
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
@@ -118,4 +116,68 @@ class SageOfEpityrTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
+
+    @Test
+    @DisplayName("Sage of Epityr returns the only card in a one-card library")
+    void returnsOnlyCardInLibrary() {
+        Card onlyCard = new SageOfEpityr();
+        harness.setLibrary(player1, List.of(onlyCard));
+        harness.enterBattlefieldAndReturn(player1, new SageOfEpityr());
+
+        harness.passBothPriorities();
+
+        PendingInteraction.LibraryReorder reorder = gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class);
+        if (reorder != null) {
+            assertThat(reorder.playerId()).isEqualTo(player1.getId());
+            assertThat(reorder.cards()).containsExactly(onlyCard);
+            gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0)));
+        }
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(onlyCard);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An opponent's Sage of Epityr reorders only that opponent's library")
+    void opponentControlsReorderingOfTheirOwnLibrary() {
+        Card cardA = new SageOfEpityr();
+        Card cardB = new SageOfEpityr();
+        Card untouched = new SageOfEpityr();
+        harness.setLibrary(player1, List.of(untouched));
+        harness.setLibrary(player2, List.of(cardA, cardB));
+        harness.enterBattlefieldAndReturn(player2, new SageOfEpityr());
+
+        harness.passBothPriorities();
+
+        PendingInteraction.LibraryReorder reorder = gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class);
+        assertThat(reorder).isNotNull();
+        assertThat(reorder.playerId()).isEqualTo(player2.getId());
+        assertThat(reorder.cards()).containsExactly(cardA, cardB);
+        gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.CardOrder(List.of(1, 0)));
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(cardB, cardA);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(untouched);
+    }
+
+    @Test
+    @DisplayName("Sage of Epityr's trigger resolves after it leaves the battlefield")
+    void triggerResolvesAfterSourceLeavesBattlefield() {
+        Card cardA = new SageOfEpityr();
+        Card cardB = new SageOfEpityr();
+        harness.setLibrary(player1, List.of(cardA, cardB));
+        var sage = harness.enterBattlefieldAndReturn(player1, new SageOfEpityr());
+        gd.playerBattlefields.get(player1.getId()).remove(sage);
+        harness.setGraveyard(player1, List.of(sage.getCard()));
+
+        harness.passBothPriorities();
+
+        PendingInteraction.LibraryReorder reorder = gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class);
+        assertThat(reorder).isNotNull();
+        assertThat(reorder.cards()).containsExactly(cardA, cardB);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(1, 0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(cardB, cardA);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
 }
