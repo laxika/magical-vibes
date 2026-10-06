@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -45,7 +44,7 @@ class SaheelisSilverwingTest extends BaseCardTest {
 
         harness.passBothPriorities();
         harness.passBothPriorities();
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+        harness.handleCardChosen(player1, -1);
 
         List<Card> deckAfter = gd.playerDecks.get(player2.getId());
         assertThat(deckAfter).hasSize(deckSizeBefore);
@@ -61,6 +60,44 @@ class SaheelisSilverwingTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castCreature(player1, 0, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be an opponent");
+    }
+
+    @Test
+    @DisplayName("Only the top card is shown to the ability's controller")
+    void onlyControllerLooksAtExactlyOneCard() {
+        Card topCard = new Island();
+        Card secondCard = new Island();
+        harness.setLibrary(player2, List.of(topCard, secondCard));
+        castSilverwing(player2.getId());
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        PendingInteraction.LibrarySearch look = gd.interaction
+                .activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(look).isNotNull();
+        assertThat(look.decidingPlayerId()).isEqualTo(player1.getId());
+        assertThat(look.params().cards()).containsExactly(topCard);
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(topCard, secondCard);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Looking at an empty opponent library finishes without a choice")
+    void emptyLibraryDoesNotRequireAcknowledgement() {
+        harness.setLibrary(player2, List.of());
+        castSilverwing(player2.getId());
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Saheeli's Silverwing");
     }
 
     private Card setTopCard(UUID playerId, Card card) {
