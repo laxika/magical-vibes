@@ -89,4 +89,49 @@ class SealOfCleansingTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Bottle Gnomes");
         harness.assertNotInGraveyard(player2, "Bottle Gnomes");
     }
+
+    @Test
+    @DisplayName("Seal can target itself and is sacrificed before resolution")
+    void canTargetItself() {
+        Permanent seal = harness.addToBattlefieldAndReturn(player1, new SealOfCleansing());
+
+        harness.activateAbility(player1, 0, null, seal.getId());
+
+        harness.assertNotOnBattlefield(player1, "Seal of Cleansing");
+        harness.assertInGraveyard(player1, "Seal of Cleansing");
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Seal of Cleansing");
+    }
+
+    @Test
+    @DisplayName("Sacrifice cost remains paid when the target leaves in response")
+    void targetCanBeSacrificedInResponse() {
+        harness.addToBattlefield(player1, new SealOfCleansing());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BottleGnomes());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 23);
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Seal of Cleansing");
+        harness.assertInGraveyard(player1, "Seal of Cleansing");
+        harness.assertInGraveyard(player2, "Bottle Gnomes");
+        harness.assertLife(player2, 23);
+    }
+
+    @Test
+    @DisplayName("A tapped Seal can activate without paying mana")
+    void tappedSealCanActivate() {
+        Permanent seal = harness.addToBattlefieldAndReturn(player1, new SealOfCleansing());
+        seal.tap();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AngelicChorus());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Seal of Cleansing");
+        harness.assertInGraveyard(player2, "Angelic Chorus");
+    }
 }
