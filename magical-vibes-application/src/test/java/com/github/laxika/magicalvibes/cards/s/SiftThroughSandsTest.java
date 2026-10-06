@@ -88,6 +88,85 @@ class SiftThroughSandsTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
+    @Test
+    @DisplayName("Named spells still on the stack satisfy the search condition")
+    void namedSpellsNeedNotResolve() {
+        harness.setLibrary(player1, List.of(new LanternKami(), new LanternKami(), new TheUnspeakable()));
+        harness.castFromHand(player1, new ReachThroughMists(), "{U}");
+        harness.castFromHand(player1, new PeerThroughDepths(), "{1}{U}");
+
+        castSift();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player1, "The Unspeakable");
+        assertThat(gd.stack).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("An opponent's named spell does not satisfy the controller's condition")
+    void opponentsNamedSpellDoesNotCount() {
+        harness.setLibrary(player1, List.of());
+        castPeerThroughDepths();
+        harness.setLibrary(player2, List.of(new LanternKami()));
+        harness.castFromHand(player2, new ReachThroughMists(), "{U}");
+        harness.passBothPriorities();
+
+        harness.setLibrary(player1, List.of(new LanternKami(), new LanternKami(), new TheUnspeakable()));
+        castSift();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotOnBattlefield(player1, "The Unspeakable");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The controller may fail to find even when The Unspeakable is in the library")
+    void mayFailToFindTheUnspeakable() {
+        harness.setLibrary(player1, List.of());
+        castPeerThroughDepths();
+        harness.setLibrary(player1, List.of(new LanternKami()));
+        castReachThroughMists();
+
+        TheUnspeakable unspeakable = new TheUnspeakable();
+        harness.setLibrary(player1, List.of(new LanternKami(), new LanternKami(), unspeakable));
+        castSift();
+        harness.handleCardChosen(player1, 0);
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(unspeakable);
+        harness.assertNotOnBattlefield(player1, "The Unspeakable");
+        harness.assertInGraveyard(player1, "Sift Through Sands");
+    }
+
+    @Test
+    @DisplayName("Accepting a search with no matching card finishes normally")
+    void searchWithNoMatchingCard() {
+        harness.setLibrary(player1, List.of());
+        castPeerThroughDepths();
+        harness.setLibrary(player1, List.of(new LanternKami()));
+        castReachThroughMists();
+
+        LanternKami remainingCard = new LanternKami();
+        harness.setLibrary(player1, List.of(new LanternKami(), new LanternKami(), remainingCard));
+        castSift();
+        harness.handleCardChosen(player1, 0);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remainingCard);
+        harness.assertNotOnBattlefield(player1, "The Unspeakable");
+        harness.assertInGraveyard(player1, "Sift Through Sands");
+    }
+
     private void castSift() {
         harness.castFromHand(player1, new SiftThroughSands(), "{1}{U}{U}");
         harness.passBothPriorities();
