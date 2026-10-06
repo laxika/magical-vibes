@@ -7,10 +7,12 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.h.HallowedFountain;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
+import com.github.laxika.magicalvibes.cards.t.TransguildCourier;
 import com.github.laxika.magicalvibes.cards.w.WalkingCorpse;
 import com.github.laxika.magicalvibes.cards.y.YouthfulKnight;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -27,7 +29,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 
 
-@CardUsed({ScionOfDraco.class, Forest.class, Island.class, Swamp.class, Mountain.class, Plains.class, EliteVanguard.class, FugitiveWizard.class, WalkingCorpse.class, HillGiant.class, GrizzlyBears.class, AirElemental.class, AshenmoorCohort.class, YouthfulKnight.class})
+@CardUsed({ScionOfDraco.class, Forest.class, Island.class, Swamp.class, Mountain.class, Plains.class, EliteVanguard.class, FugitiveWizard.class, WalkingCorpse.class, HillGiant.class, GrizzlyBears.class, AirElemental.class, AshenmoorCohort.class, YouthfulKnight.class, HallowedFountain.class, TransguildCourier.class})
 class ScionOfDracoTest extends BaseCardTest {
 
     @Test
@@ -120,6 +122,53 @@ class ScionOfDracoTest extends BaseCardTest {
         var opponentCreature = addCreatureReady(player2, new GrizzlyBears());
 
         assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A nonbasic land contributes each of its basic land types to domain")
+    void domainCountsBothTypesOfNonbasicLand() {
+        harness.addToBattlefield(player1, new HallowedFountain());
+        harness.addToBattlefield(player1, new Island());
+        harness.setHand(player1, List.of(new ScionOfDraco()));
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("With no lands Scion of Draco costs the full twelve mana")
+    void noLandsRequiresFullCost() {
+        harness.setHand(player1, List.of(new ScionOfDraco()));
+        harness.addMana(player1, ManaColor.COLORLESS, 12);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("An all-colors creature gains all five keywords and loses them when Scion leaves")
+    void multicoloredCreatureGainsAllMatchingKeywordsWhileScionIsPresent() {
+        Permanent courier = addCreatureReady(player1, new TransguildCourier());
+        Permanent scion = addCreatureReady(player1, new ScionOfDraco());
+        List<Keyword> grantedKeywords = List.of(Keyword.VIGILANCE, Keyword.HEXPROOF,
+                Keyword.LIFELINK, Keyword.FIRST_STRIKE, Keyword.TRAMPLE);
+
+        for (Keyword keyword : grantedKeywords) {
+            assertThat(gqs.hasKeyword(gd, courier, keyword)).isTrue();
+            assertThat(gqs.hasKeyword(gd, scion, keyword)).isFalse();
+        }
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, scion));
+
+        for (Keyword keyword : grantedKeywords) {
+            assertThat(gqs.hasKeyword(gd, courier, keyword)).isFalse();
+        }
     }
 
 }
