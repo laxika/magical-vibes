@@ -77,4 +77,22 @@ class SagesKnowledgeTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).noneMatch(c -> c.getId().equals(sorcery.getId()));
         assertThat(gd.gameLog).anyMatch(log -> log.plainText().contains("fizzles"));
     }
+
+    @Test
+    @DisplayName("Sage's Knowledge returns only the targeted copy among eligible sorceries")
+    void returnsOnlyTargetedCopyAmongEligibleSorceries() {
+        Card target = new SagesKnowledge();
+        Card otherSorcery = new StrategicPlanning();
+        Card spell = new SagesKnowledge();
+        harness.setGraveyard(player1, List.of(otherSorcery, target));
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(target);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(otherSorcery, spell);
+        assertThat(gd.stack).isEmpty();
+    }
 }
