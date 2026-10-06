@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -11,11 +10,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 
 
 
-@CardUsed({SilentClearing.class, GrizzlyBears.class})
+@CardUsed({SilentClearing.class})
 class SilentClearingTest extends BaseCardTest {
 
     @Test
@@ -50,7 +50,7 @@ class SilentClearingTest extends BaseCardTest {
     @DisplayName("{1}, {T}, Sacrifice this land: Draw a card draws and sacrifices Silent Clearing")
     void sacrificesToDraw() {
         addReadyClearing(player1);
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new SilentClearing()));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
@@ -63,10 +63,80 @@ class SilentClearingTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Silent Clearing");
     }
 
+    @Test
+    @DisplayName("Sacrifice and mana payment occur before the draw ability resolves")
+    void sacrificesAsCostBeforeDrawing() {
+        addReadyClearing(player1);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new SilentClearing()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, 2, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Silent Clearing");
+        harness.assertInGraveyard(player1, "Silent Clearing");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Silent Clearing");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("A tapped Clearing cannot activate either mana ability or the draw ability")
+    void tappedLandCannotActivate() {
+        Permanent clearing = addReadyClearing(player1);
+        clearing.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        for (int abilityIndex = 0; abilityIndex < 3; abilityIndex++) {
+            int index = abilityIndex;
+            assertThatThrownBy(() -> harness.activateAbility(player1, 0, index, null, null))
+                    .isInstanceOf(IllegalStateException.class);
+        }
+
+        harness.assertOnBattlefield(player1, "Silent Clearing");
+        harness.assertNotInGraveyard(player1, "Silent Clearing");
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The draw ability cannot use the same land to pay its mana cost")
+    void drawRequiresManaFromAnotherSource() {
+        Permanent clearing = addReadyClearing(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(clearing.isTapped()).isFalse();
+        harness.assertOnBattlefield(player1, "Silent Clearing");
+        harness.assertNotInGraveyard(player1, "Silent Clearing");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A noncreature land can tap for mana on the turn it enters")
+    void newlyEnteredLandCanProduceMana() {
+        Permanent clearing = addReadyClearing(player1);
+        clearing.setSummoningSick(true);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(clearing.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        harness.assertLife(player1, 19);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addReadyClearing(Player player) {
-        Permanent permanent = new Permanent(new SilentClearing());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new SilentClearing());
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -74,7 +144,7 @@ class SilentClearingTest extends BaseCardTest {
     }
 }
 
-@CardUsed({SilentClearing.class, GrizzlyBears.class})
+@CardUsed({SilentClearing.class})
 class Mh1SilentClearingTest extends BaseCardTest {
 
     @Test
@@ -109,7 +179,7 @@ class Mh1SilentClearingTest extends BaseCardTest {
     @DisplayName("{1}, {T}, Sacrifice this land: Draw a card draws and sacrifices Silent Clearing")
     void sacrificesToDraw() {
         addReadyClearing(player1);
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new SilentClearing()));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
@@ -122,9 +192,8 @@ class Mh1SilentClearingTest extends BaseCardTest {
     }
 
     private Permanent addReadyClearing(Player player) {
-        Permanent permanent = new Permanent(new SilentClearing());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new SilentClearing());
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
