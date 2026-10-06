@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.t.Terror;
 import com.github.laxika.magicalvibes.cards.t.TrollsOfTelJilad;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -14,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ScytheOfTheWretched.class, TrollsOfTelJilad.class, Terror.class, SpikeshotGoblin.class})
+@CardUsed({ScytheOfTheWretched.class, TrollsOfTelJilad.class, Terror.class, SpikeshotGoblin.class, StalkingStones.class})
 class ScytheOfTheWretchedTest extends BaseCardTest {
 
     @Test
@@ -55,12 +54,8 @@ class ScytheOfTheWretchedTest extends BaseCardTest {
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveCombat();
+        resolveAllTriggers();
 
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .noneMatch(card -> card.getId().equals(blocker.getCard().getId()));
@@ -122,6 +117,54 @@ class ScytheOfTheWretchedTest extends BaseCardTest {
                 .findFirst()
                 .orElse(null);
         assertThat(returned).isNotNull();
+        assertThat(scythe.getAttachedTo()).isEqualTo(returned.getId());
+    }
+
+    @Test
+    @DisplayName("Returns a damaged animated land without attaching to the returned land")
+    void returnsAnimatedLandWithoutAttaching() {
+        Permanent goblin = addCreatureReady(player1, new SpikeshotGoblin());
+        Permanent scythe = harness.addToBattlefieldAndReturn(player1, new ScytheOfTheWretched());
+        scythe.setAttachedTo(goblin.getId());
+        Permanent stones = harness.addToBattlefieldAndReturn(player2, new StalkingStones());
+
+        harness.addMana(player2, ManaColor.COLORLESS, 6);
+        harness.activateAbility(player2, 0, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(gqs.isCreature(gd, stones)).isTrue();
+
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, 0, 0, null, stones.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertNotInGraveyard(player2, "Stalking Stones");
+        Permanent returned = findPermanent(player1, "Stalking Stones");
+        assertThat(gqs.isCreature(gd, returned)).isFalse();
+        assertThat(scythe.getAttachedTo()).isEqualTo(goblin.getId());
+    }
+
+    @Test
+    @DisplayName("Equipment controller receives the creature even when another player controls the equipped creature")
+    void returnsCreatureToEquipmentController() {
+        Permanent scythe = harness.addToBattlefieldAndReturn(player1, new ScytheOfTheWretched());
+        Permanent goblin = addCreatureReady(player2, new SpikeshotGoblin());
+        Permanent target = addCreatureReady(player2, new TrollsOfTelJilad());
+        scythe.setAttachedTo(goblin.getId());
+
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.activateAbility(player2, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Terror()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        resolveAllTriggers();
+
+        harness.assertNotInGraveyard(player2, "Trolls of Tel-Jilad");
+        Permanent returned = findPermanent(player1, "Trolls of Tel-Jilad");
+        assertThat(returned.getCard().getId()).isEqualTo(target.getCard().getId());
         assertThat(scythe.getAttachedTo()).isEqualTo(returned.getId());
     }
 }
