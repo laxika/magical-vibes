@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,12 +16,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SigiledStarfish.class})
 class SigiledStarfishTest extends BaseCardTest {
 
     @Test
     @DisplayName("Activating the ability costs no mana, taps the Starfish and uses the stack")
     void activatingTapsAndUsesStack() {
-        Permanent starfish = addReadyStarfish();
+        Permanent starfish = addCreatureReady(player1, new SigiledStarfish());
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -33,7 +35,7 @@ class SigiledStarfishTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving the ability scries exactly one card")
     void resolvingScriesOne() {
-        addReadyStarfish();
+        addCreatureReady(player1, new SigiledStarfish());
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -45,7 +47,7 @@ class SigiledStarfishTest extends BaseCardTest {
     @Test
     @DisplayName("Keeping the scried card leaves it on top")
     void scryKeepOnTop() {
-        addReadyStarfish();
+        addCreatureReady(player1, new SigiledStarfish());
         GameData gd = harness.getGameData();
         List<Card> deck = gd.playerDecks.get(player1.getId());
         Card top = deck.getFirst();
@@ -62,7 +64,7 @@ class SigiledStarfishTest extends BaseCardTest {
     @Test
     @DisplayName("Bottoming the scried card moves it to the bottom of the library")
     void scryBottom() {
-        addReadyStarfish();
+        addCreatureReady(player1, new SigiledStarfish());
         GameData gd = harness.getGameData();
         List<Card> deck = gd.playerDecks.get(player1.getId());
         Card top = deck.getFirst();
@@ -85,9 +87,72 @@ class SigiledStarfishTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private Permanent addReadyStarfish() {
-        Permanent perm = harness.addToBattlefieldAndReturn(player1, new SigiledStarfish());
-        perm.setSummoningSick(false);
-        return perm;
+    @Test
+    @DisplayName("An already-tapped Starfish cannot activate its tap ability")
+    void tappedCannotActivate() {
+        addCreatureReady(player1, new SigiledStarfish()).setTapped(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Scrying an empty library completes without a choice or a draw")
+    void emptyLibraryNeedsNoChoice() {
+        addCreatureReady(player1, new SigiledStarfish());
+        harness.setLibrary(player1, List.of());
+        List<Card> handBefore = List.copyOf(gd.playerHands.get(player1.getId()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyElementsOf(handBefore);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Bottoming the only card leaves it as the only card in the library")
+    void bottomOnlyCard() {
+        addCreatureReady(player1, new SigiledStarfish());
+        Card onlyCard = new SigiledStarfish();
+        harness.setLibrary(player1, List.of(onlyCard));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(onlyCard);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The activated ability still scries its controller's library after the source leaves")
+    void resolvesAfterSourceLeavesBattlefield() {
+        Permanent starfish = addCreatureReady(player1, new SigiledStarfish());
+        Card top = new SigiledStarfish();
+        Card next = new SigiledStarfish();
+        Card opponentTop = new SigiledStarfish();
+        harness.setLibrary(player1, List.of(top, next));
+        harness.setLibrary(player2, List.of(opponentTop));
+
+        harness.activateAbility(player1, 0, null, null);
+        gd.playerBattlefields.get(player1.getId()).remove(starfish);
+        harness.setGraveyard(player1, List.of(starfish.getCard()));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
+                .containsExactly(top);
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(next, top);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentTop);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }
