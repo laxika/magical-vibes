@@ -51,6 +51,52 @@ class ScreamsOfTheDamnedTest extends BaseCardTest {
     }
 
     @Test
+    void canActivateRepeatedlyAndDamagePlayersWithoutCreatures() {
+        harness.addToBattlefield(player1, new ScreamsOfTheDamned());
+        CentaurGarden firstCard = new CentaurGarden();
+        Halberdier secondCard = new Halberdier();
+        harness.setGraveyard(player1, List.of(firstCard, secondCard));
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleGraveyardCardChosen(player1, 0);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(firstCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(secondCard);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleGraveyardCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 18);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(firstCard, secondCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        harness.assertOnBattlefield(player1, "Screams of the Damned");
+    }
+
+    @Test
+    void cannotActivateWithoutEnoughMana() {
+        harness.addToBattlefield(player1, new ScreamsOfTheDamned());
+        CentaurGarden card = new CentaurGarden();
+        harness.setGraveyard(player1, List.of(card));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(card);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(card);
+    }
+
+    @Test
     void cannotActivateWithoutACardInTheGraveyard() {
         harness.addToBattlefieldAndReturn(player1, new ScreamsOfTheDamned());
         harness.addMana(player1, ManaColor.BLACK, 1);
