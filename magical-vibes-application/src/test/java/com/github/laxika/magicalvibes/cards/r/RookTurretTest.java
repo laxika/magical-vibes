@@ -66,4 +66,54 @@ class RookTurretTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
+
+    @Test
+    void opponentArtifactEnteringDoesNotTriggerLoot() {
+        harness.addToBattlefield(player2, new RookTurret());
+        harness.setHand(player1, List.of(new RookTurret()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void nonartifactEnteringDoesNotTriggerLoot() {
+        harness.addToBattlefield(player1, new RookTurret());
+        harness.setHand(player1, List.of(new Forest()));
+
+        harness.playLand(player1, 0);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void anotherTurretTriggersLootAndAllowsDiscardingAnExistingCard() {
+        harness.addToBattlefield(player1, new RookTurret());
+        Forest existingCard = new Forest();
+        RookTurret drawnCard = new RookTurret();
+        harness.setHand(player1, List.of(new RookTurret(), existingCard));
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(existingCard, drawnCard);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(existingCard);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
 }
