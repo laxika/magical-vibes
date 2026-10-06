@@ -63,6 +63,39 @@ class SilverSeraphTest extends BaseCardTest {
         assertStats(player1, "Suntail Hawk", 3, 3);
     }
 
+    @Test
+    void multipleSeraphsBoostEachOtherAndTheirBonusesStack() {
+        harness.setGraveyard(player1, graveyardWithCards(8));
+        var first = harness.addToBattlefieldAndReturn(player1, new SilverSeraph());
+        var second = harness.addToBattlefieldAndReturn(player1, new SilverSeraph());
+        harness.addToBattlefield(player1, new SuntailHawk());
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(8);
+        assertStats(player1, "Suntail Hawk", 5, 5);
+    }
+
+    @Test
+    void seraphInGraveyardDoesNotBoostCreatures() {
+        List<Card> graveyard = new ArrayList<>(graveyardWithCards(6));
+        graveyard.add(new SilverSeraph());
+        harness.setGraveyard(player1, graveyard);
+        harness.addToBattlefield(player1, new SuntailHawk());
+
+        assertStats(player1, "Suntail Hawk", 1, 1);
+    }
+
+    @Test
+    void creaturesEnteringAfterThresholdReceiveTheBonus() {
+        harness.setGraveyard(player1, graveyardWithCards(7));
+        harness.addToBattlefield(player1, new SilverSeraph());
+
+        harness.enterBattlefieldAndReturn(player1, new SuntailHawk());
+
+        assertStats(player1, "Suntail Hawk", 3, 3);
+    }
     private List<Card> graveyardWithCards(int count) {
         return java.util.stream.IntStream.range(0, count)
                 .mapToObj(ignored -> (Card) new SuntailHawk())
