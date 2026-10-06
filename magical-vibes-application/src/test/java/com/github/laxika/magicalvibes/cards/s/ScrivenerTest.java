@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.a.AboshanCephalidEmperor;
 import com.github.laxika.magicalvibes.cards.a.AetherBurst;
 import com.github.laxika.magicalvibes.cards.f.FerventDenial;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -105,6 +106,55 @@ class ScrivenerTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of());
         harness.passBothPriorities();
 
+        harness.assertNotInHand(player1, "Fervent Denial");
+    }
+
+    @Test
+    @DisplayName("The return resolves even if Scrivener leaves the battlefield")
+    void returnsInstantAfterSourceLeavesBattlefield() {
+        FerventDenial ferventDenial = new FerventDenial();
+        harness.setGraveyard(player1, List.of(ferventDenial));
+
+        castScrivener();
+        harness.handleMultipleCardsChosen(player1, List.of(ferventDenial.getId()));
+
+        harness.setHand(player1, List.of(new AetherBurst()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player1, 0,
+                List.of(harness.getPermanentId(player1, "Scrivener")));
+        harness.assertNotOnBattlefield(player1, "Scrivener");
+        harness.assertInHand(player1, "Scrivener");
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInHand(player1, "Fervent Denial");
+        harness.assertNotInGraveyard(player1, "Fervent Denial");
+        harness.assertInGraveyard(player1, "Aether Burst");
+    }
+
+    @Test
+    @DisplayName("Entering without being cast returns an instant from the entering controller's graveyard")
+    void enteringWithoutCastingUsesControllersGraveyard() {
+        AetherBurst ownInstant = new AetherBurst();
+        FerventDenial opponentInstant = new FerventDenial();
+        harness.setGraveyard(player2, List.of(ownInstant));
+        harness.setGraveyard(player1, List.of(opponentInstant));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.enterBattlefieldAndReturn(player2, new Scrivener());
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.validCardIds()).containsExactly(ownInstant.getId());
+        harness.handleMultipleCardsChosen(player2, List.of(ownInstant.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertInHand(player2, "Aether Burst");
+        harness.assertNotInGraveyard(player2, "Aether Burst");
+        harness.assertInGraveyard(player1, "Fervent Denial");
         harness.assertNotInHand(player1, "Fervent Denial");
     }
 }
