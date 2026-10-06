@@ -14,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(SaprazzanCove.class)
+@CardUsed({SaprazzanCove.class})
 class SaprazzanCoveTest extends BaseCardTest {
 
     @Test
@@ -106,5 +106,54 @@ class SaprazzanCoveTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
+    }
+
+    @Test
+    @DisplayName("The storage ability uses the stack and adds its counter only on resolution")
+    void storageAbilityAddsCounterOnlyOnResolution() {
+        Permanent cove = harness.addToBattlefieldAndReturn(player1, new SaprazzanCove());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(cove.isTapped()).isTrue();
+        assertThat(cove.getCounterCount(CounterType.STORAGE)).isZero();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(cove.getCounterCount(CounterType.STORAGE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("All storage counters can be removed for mana without using the stack")
+    void removingAllStorageCountersResolvesImmediately() {
+        Permanent cove = harness.addToBattlefieldAndReturn(player1, new SaprazzanCove());
+        cove.setCounterCount(CounterType.STORAGE, 3);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "3");
+
+        assertThat(cove.getCounterCount(CounterType.STORAGE)).isZero();
+        assertThat(cove.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(3);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The storage ability cannot be activated while the land is tapped")
+    void cannotActivateStorageAbilityWhileTapped() {
+        Permanent cove = harness.addToBattlefieldAndReturn(player1, new SaprazzanCove());
+        cove.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+
+        assertThat(cove.getCounterCount(CounterType.STORAGE)).isZero();
+        assertThat(gd.stack).isEmpty();
     }
 }
