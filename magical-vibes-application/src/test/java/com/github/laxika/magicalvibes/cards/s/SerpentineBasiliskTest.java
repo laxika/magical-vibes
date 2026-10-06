@@ -2,8 +2,10 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.a.AnuridMurkdiver;
 import com.github.laxika.magicalvibes.cards.t.ThoughtboundPrimoc;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -11,6 +13,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -28,6 +31,7 @@ class SerpentineBasiliskTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         resolveCombat();
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
 
         harness.assertNotOnBattlefield(player2, "Thoughtbound Primoc");
         harness.assertInGraveyard(player2, "Thoughtbound Primoc");
@@ -43,6 +47,7 @@ class SerpentineBasiliskTest extends BaseCardTest {
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of());
         resolveCombat();
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
 
         harness.assertLife(player2, 18);
         harness.assertOnBattlefield(player2, "Thoughtbound Primoc");
@@ -60,6 +65,7 @@ class SerpentineBasiliskTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
 
         resolveCombat();
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
 
         harness.assertOnBattlefield(player2, "Thoughtbound Primoc");
     }
@@ -75,6 +81,7 @@ class SerpentineBasiliskTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         resolveCombat();
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
 
         harness.assertNotOnBattlefield(player1, "Serpentine Basilisk");
 
@@ -103,5 +110,45 @@ class SerpentineBasiliskTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(basilisk.isFaceDown()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A face-down Basilisk has no destruction trigger")
+    void faceDownCombatDamageDoesNotDestroyCreature() {
+        Permanent basilisk = addCreatureReady(player1, new SerpentineBasilisk());
+        basilisk.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        basilisk.setAttacking(true);
+        addCreatureReady(player2, new ThoughtboundPrimoc());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+        resolveAllTriggers();
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
+
+        harness.assertOnBattlefield(player2, "Thoughtbound Primoc");
+        harness.assertNotOnBattlefield(player1, "Serpentine Basilisk");
+    }
+
+    @Test
+    @DisplayName("End-of-combat destruction uses the stack and allows responses")
+    void delayedDestructionWaitsForEndOfCombatTriggerToResolve() {
+        Permanent basilisk = addCreatureReady(player1, new SerpentineBasilisk());
+        basilisk.setAttacking(true);
+        addCreatureReady(player2, new ThoughtboundPrimoc());
+
+        prepareDeclareBlockers();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE,
+                () -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))));
+        harness.passUntil(player1, TurnStep.COMBAT_DAMAGE);
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, this::resolveAllTriggers);
+        harness.assertOnBattlefield(player2, "Thoughtbound Primoc");
+
+        harness.passUntil(player1, TurnStep.END_OF_COMBAT);
+
+        harness.assertOnBattlefield(player2, "Thoughtbound Primoc");
+        assertThat(gd.stack).isNotEmpty();
+        resolveAllTriggers();
+        harness.assertInGraveyard(player2, "Thoughtbound Primoc");
     }
 }
