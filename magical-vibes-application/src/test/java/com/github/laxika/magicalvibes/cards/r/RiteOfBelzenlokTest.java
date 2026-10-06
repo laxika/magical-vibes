@@ -1,11 +1,10 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.b.BalothGorger;
+import com.github.laxika.magicalvibes.cards.o.OnSerrasWings;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -13,19 +12,17 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.SacrificeOtherCreatureOrDamageEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({RiteOfBelzenlok.class, BalothGorger.class, OnSerrasWings.class})
 class RiteOfBelzenlokTest extends BaseCardTest {
-
-    // ===== ETB: first lore counter and chapter I triggers =====
 
     @Test
     @DisplayName("Casting Rite of Belzenlok adds a lore counter and triggers chapter I")
@@ -39,9 +36,7 @@ class RiteOfBelzenlokTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
 
-        Permanent saga = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Rite of Belzenlok"))
-                .findFirst().orElse(null);
+        Permanent saga = findPermanent(player1, "Rite of Belzenlok");
         assertThat(saga).isNotNull();
         assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(1);
 
@@ -76,15 +71,11 @@ class RiteOfBelzenlokTest extends BaseCardTest {
         }
     }
 
-    // ===== Chapter II =====
-
     @Test
     @DisplayName("Chapter II creates two more Cleric tokens")
     void chapterIICreatesTwoMoreClerics() {
         harness.addToBattlefield(player1, new RiteOfBelzenlok());
-        Permanent saga = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Rite of Belzenlok"))
-                .findFirst().orElse(null);
+        Permanent saga = findPermanent(player1, "Rite of Belzenlok");
         assertThat(saga).isNotNull();
         saga.setCounterCount(CounterType.LORE, 1);
 
@@ -108,15 +99,11 @@ class RiteOfBelzenlokTest extends BaseCardTest {
         assertThat(clericCount).isEqualTo(2);
     }
 
-    // ===== Chapter III: Demon token creation =====
-
     @Test
     @DisplayName("Chapter III creates a 6/6 black Demon token with flying and trample")
     void chapterIIICreatesDemonToken() {
         harness.addToBattlefield(player1, new RiteOfBelzenlok());
-        Permanent saga = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Rite of Belzenlok"))
-                .findFirst().orElse(null);
+        Permanent saga = findPermanent(player1, "Rite of Belzenlok");
         assertThat(saga).isNotNull();
         saga.setCounterCount(CounterType.LORE, 2);
 
@@ -132,9 +119,7 @@ class RiteOfBelzenlokTest extends BaseCardTest {
 
         gd = harness.getGameData();
 
-        Permanent demon = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Demon") && p.getCard().isToken())
-                .findFirst().orElse(null);
+        Permanent demon = findPermanent(player1, "Demon");
         assertThat(demon).isNotNull();
         assertThat(demon.getCard().getPower()).isEqualTo(6);
         assertThat(demon.getCard().getToughness()).isEqualTo(6);
@@ -143,13 +128,10 @@ class RiteOfBelzenlokTest extends BaseCardTest {
         assertThat(demon.getCard().getKeywords()).contains(Keyword.FLYING, Keyword.TRAMPLE);
     }
 
-    // ===== Demon token upkeep trigger =====
-
     @Test
     @DisplayName("Demon token deals 6 damage to controller when no other creatures are present")
     void demonDealsDamageWhenNoOtherCreatures() {
-        // Create a Demon token directly to test its upkeep trigger
-        Permanent demon = addDemonToken(player1);
+        addDemonToken(player1);
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
         advanceToUpkeep(player1);
@@ -161,16 +143,16 @@ class RiteOfBelzenlokTest extends BaseCardTest {
     @Test
     @DisplayName("Demon token sacrifices another creature instead of dealing damage")
     void demonSacrificesOtherCreature() {
-        Permanent demon = addDemonToken(player1);
-        addCreature(player1, new GrizzlyBears());
+        addDemonToken(player1);
+        addCreatureReady(player1, new BalothGorger());
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve trigger
 
-        // Grizzly Bears should be sacrificed
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        // Baloth Gorger should be sacrificed
+        harness.assertNotOnBattlefield(player1, "Baloth Gorger");
+        harness.assertInGraveyard(player1, "Baloth Gorger");
         // No damage dealt
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
         // Demon remains
@@ -178,15 +160,11 @@ class RiteOfBelzenlokTest extends BaseCardTest {
                 .anyMatch(p -> p.getCard().getName().equals("Demon") && p.getCard().isToken());
     }
 
-    // ===== Saga lifecycle =====
-
     @Test
     @DisplayName("Saga is sacrificed after chapter III resolves")
     void sagaSacrificedAfterChapterIII() {
         harness.addToBattlefield(player1, new RiteOfBelzenlok());
-        Permanent saga = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Rite of Belzenlok"))
-                .findFirst().orElse(null);
+        Permanent saga = findPermanent(player1, "Rite of Belzenlok");
         assertThat(saga).isNotNull();
         saga.setCounterCount(CounterType.LORE, 2);
 
@@ -211,9 +189,7 @@ class RiteOfBelzenlokTest extends BaseCardTest {
     @DisplayName("Saga is not sacrificed while chapter III ability is on the stack")
     void sagaNotSacrificedWhileChapterOnStack() {
         harness.addToBattlefield(player1, new RiteOfBelzenlok());
-        Permanent saga = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Rite of Belzenlok"))
-                .findFirst().orElse(null);
+        Permanent saga = findPermanent(player1, "Rite of Belzenlok");
         assertThat(saga).isNotNull();
         saga.setCounterCount(CounterType.LORE, 2);
 
@@ -228,30 +204,77 @@ class RiteOfBelzenlokTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(saga);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("The controller chooses another creature to sacrifice when several are available")
+    void controllerChoosesSacrifice() {
+        Permanent demon = addDemonToken(player1);
+        Permanent chosen = addCreatureReady(player1, new BalothGorger());
+        Permanent other = addCreatureReady(player1, new BalothGorger());
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
-    private Permanent addCreature(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, chosen.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(demon, other).doesNotContain(chosen);
+        harness.assertInGraveyard(player1, "Baloth Gorger");
+        harness.assertLife(player1, lifeBefore);
+    }
+
+    @Test
+    @DisplayName("The Demon does not trigger during its opponent's upkeep")
+    void demonDoesNotTriggerOnOpponentsUpkeep() {
+        addDemonToken(player1);
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, lifeBefore);
+    }
+
+    @Test
+    @DisplayName("An opponent's creature cannot satisfy the Demon's sacrifice")
+    void opponentsCreatureCannotBeSacrificed() {
+        Permanent demon = addDemonToken(player1);
+        Permanent opponentCreature = addCreatureReady(player2, new BalothGorger());
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, lifeBefore - 6);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(demon);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentCreature);
+    }
+
+    @Test
+    @DisplayName("A Demon with lifelink gains life from its own upkeep damage")
+    void demonWithLifelinkGainsLifeFromUpkeepDamage() {
+        Permanent demon = addDemonToken(player1);
+        harness.setHand(player1, List.of(new OnSerrasWings()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castEnchantment(player1, 0, demon.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.hasKeyword(gd, demon, Keyword.LIFELINK)).isTrue();
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, lifeBefore);
     }
 
     private Permanent addDemonToken(Player player) {
-        Card tokenCard = new Card();
-        tokenCard.setToken(true);
-        tokenCard.setName("Demon");
-        tokenCard.setPower(6);
-        tokenCard.setToughness(6);
-        tokenCard.setColor(CardColor.BLACK);
-        tokenCard.setType(CardType.CREATURE);
-        tokenCard.setSubtypes(List.of(CardSubtype.DEMON));
-        tokenCard.setKeywords(java.util.Set.of(Keyword.FLYING, Keyword.TRAMPLE));
-        tokenCard.addEffect(EffectSlot.UPKEEP_TRIGGERED, new SacrificeOtherCreatureOrDamageEffect(6));
-
-        Permanent perm = new Permanent(tokenCard);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        harness.addToBattlefield(player, new RiteOfBelzenlok());
+        Permanent saga = findPermanent(player, "Rite of Belzenlok");
+        saga.setCounterCount(CounterType.LORE, 2);
+        harness.forceActivePlayer(player);
+        harness.forceStep(TurnStep.DRAW);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        return findPermanent(player, "Demon");
     }
 }
