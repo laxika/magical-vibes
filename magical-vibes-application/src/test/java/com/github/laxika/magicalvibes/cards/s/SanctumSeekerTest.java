@@ -1,15 +1,13 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.n.NestRobber;
+import com.github.laxika.magicalvibes.cards.q.QueensBaySoldier;
+import com.github.laxika.magicalvibes.cards.v.VanquishTheWeak;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,9 +15,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SanctumSeeker.class, QueensBaySoldier.class, NestRobber.class, VanquishTheWeak.class})
 class SanctumSeekerTest extends BaseCardTest {
-
-    // ===== Trigger: Vampire attacks =====
 
     @Test
     @DisplayName("Puts triggered ability on stack when a Vampire attacks")
@@ -27,8 +24,8 @@ class SanctumSeekerTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
-        addSanctumSeekerReady(player1);
-        addVampireCreatureReady(player1);
+        addCreatureReady(player1, new SanctumSeeker());
+        addCreatureReady(player1, new QueensBaySoldier());
 
         declareAttackers(List.of(1)); // Vampire creature attacks (2/2)
 
@@ -51,9 +48,9 @@ class SanctumSeekerTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
-        addSanctumSeekerReady(player1);
-        addVampireCreatureReady(player1);
-        addVampireCreatureReady(player1);
+        addCreatureReady(player1, new SanctumSeeker());
+        addCreatureReady(player1, new QueensBaySoldier());
+        addCreatureReady(player1, new QueensBaySoldier());
 
         declareAttackers(List.of(1, 2)); // both Vampires attack (each 2/2)
 
@@ -75,7 +72,7 @@ class SanctumSeekerTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
-        addSanctumSeekerReady(player1);
+        addCreatureReady(player1, new SanctumSeeker());
 
         declareAttackers(List.of(0)); // Sanctum Seeker attacks (3/4)
 
@@ -90,13 +87,11 @@ class SanctumSeekerTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(21);
     }
 
-    // ===== No trigger: non-Vampire attackers =====
-
     @Test
     @DisplayName("Does not trigger when a non-Vampire creature attacks")
     void doesNotTriggerForNonVampire() {
-        addSanctumSeekerReady(player1);
-        addNonVampireCreatureReady(player1);
+        addCreatureReady(player1, new SanctumSeeker());
+        addCreatureReady(player1, new NestRobber());
 
         declareAttackers(List.of(1)); // non-Vampire attacks
 
@@ -107,9 +102,9 @@ class SanctumSeekerTest extends BaseCardTest {
     @Test
     @DisplayName("Triggers only for attacking Vampires in a mixed group")
     void triggersOnlyForVampiresInMixedGroup() {
-        addSanctumSeekerReady(player1);
-        addVampireCreatureReady(player1);
-        addNonVampireCreatureReady(player1);
+        addCreatureReady(player1, new SanctumSeeker());
+        addCreatureReady(player1, new QueensBaySoldier());
+        addCreatureReady(player1, new NestRobber());
 
         declareAttackers(List.of(1, 2)); // Vampire + non-Vampire attack
 
@@ -124,15 +119,11 @@ class SanctumSeekerTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
-        addSanctumSeekerReady(player1);
-        addVampireCreatureReady(player2);
+        addCreatureReady(player1, new SanctumSeeker());
+        addCreatureReady(player2, new QueensBaySoldier());
 
         // Opponent declares attackers
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player2, List.of(0));
+        declareAttackers(player2, List.of(0));
 
         // Sanctum Seeker belongs to player1 — opponent's Vampires shouldn't trigger it
         // Stack should have no Sanctum Seeker triggers
@@ -141,36 +132,58 @@ class SanctumSeekerTest extends BaseCardTest {
                 .count()).isZero();
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Each Sanctum Seeker triggers for every attacking Vampire")
+    void multipleSeekersTriggerIndependently() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        addCreatureReady(player1, new SanctumSeeker());
+        addCreatureReady(player1, new SanctumSeeker());
 
-    private Permanent addSanctumSeekerReady(Player player) {
-        SanctumSeeker card = new SanctumSeeker();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        declareAttackers(List.of(0, 1));
+
+        assertThat(gd.stack).hasSize(4);
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(24);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(10);
     }
 
-    private Permanent addVampireCreatureReady(Player player) {
-        Card creature = new Card();
-        creature.setName("Test Vampire");
-        creature.setType(CardType.CREATURE);
-        creature.setManaCost("{B}");
-        creature.setColor(CardColor.BLACK);
-        creature.setSubtypes(List.of(CardSubtype.VAMPIRE));
-        creature.setPower(2);
-        creature.setToughness(2);
-        Permanent perm = new Permanent(creature);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    @Test
+    @DisplayName("Removing Sanctum Seeker does not stop its pending trigger")
+    void triggerResolvesAfterSourceDies() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        Permanent seeker = addCreatureReady(player1, new SanctumSeeker());
+        addCreatureReady(player1, new QueensBaySoldier());
+        harness.setHand(player2, List.of(new VanquishTheWeak()));
+        harness.addMana(player2, ManaColor.BLACK, 3);
+
+        declareAttackers(List.of(1));
+        harness.castInstant(player2, 0, seeker.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(seeker.getCard());
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(21);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
     }
 
-    private Permanent addNonVampireCreatureReady(Player player) {
-        Card creature = new GrizzlyBears();
-        Permanent perm = new Permanent(creature);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    @Test
+    @DisplayName("Removing the attacking Vampire does not stop the pending trigger")
+    void triggerResolvesAfterAttackerDies() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        addCreatureReady(player1, new SanctumSeeker());
+        Permanent attacker = addCreatureReady(player1, new QueensBaySoldier());
+        harness.setHand(player2, List.of(new VanquishTheWeak()));
+        harness.addMana(player2, ManaColor.BLACK, 3);
+
+        declareAttackers(List.of(1));
+        harness.castInstant(player2, 0, attacker.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(attacker.getCard());
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(21);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
     }
 }
