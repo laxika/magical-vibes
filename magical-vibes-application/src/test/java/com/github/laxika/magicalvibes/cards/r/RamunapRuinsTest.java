@@ -1,16 +1,18 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GraspingDunes;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RamunapRuins.class})
 class RamunapRuinsTest extends BaseCardTest {
 
     @Test
@@ -61,9 +63,8 @@ class RamunapRuinsTest extends BaseCardTest {
     @DisplayName("With multiple Deserts, controller chooses which to sacrifice")
     void choosesWhichDesertToSacrifice() {
         Permanent ruins = addReadyRuins(player1);
-        Permanent otherDesert = new Permanent(new GraspingDunes());
+        Permanent otherDesert = harness.addToBattlefieldAndReturn(player1, new RamunapRuins());
         otherDesert.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(otherDesert);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.RED, 2);
         int opponentLifeBefore = gd.playerLifeTotals.get(player2.getId());
@@ -94,10 +95,61 @@ class RamunapRuinsTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(opponentLifeBefore - 2);
     }
 
+    @Test
+    @DisplayName("Damage ability pays its sacrifice cost before opponents can respond")
+    void sacrificeIsPaidBeforeResolution() {
+        addReadyRuins(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.RED, 2);
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        harness.activateAbility(player1, 0, 2, null, null);
+
+        harness.assertInGraveyard(player1, "Ramunap Ruins");
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+        harness.assertLife(player2, lifeBefore);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, lifeBefore - 2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Damage ability requires two red mana as well as two generic mana")
+    void cannotPayDamageCostWithOnlyOneRedMana() {
+        Permanent ruins = addReadyRuins(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(ruins.isTapped()).isFalse();
+        harness.assertOnBattlefield(player1, "Ramunap Ruins");
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A land can produce mana the turn it enters")
+    void newlyEnteredLandCanProduceMana() {
+        Permanent ruins = harness.addToBattlefieldAndReturn(player1, new RamunapRuins());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(ruins.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addReadyRuins(Player player) {
-        Permanent perm = new Permanent(new RamunapRuins());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new RamunapRuins());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
