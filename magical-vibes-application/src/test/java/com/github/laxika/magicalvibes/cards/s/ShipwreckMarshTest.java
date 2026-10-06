@@ -1,13 +1,12 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
-import com.github.laxika.magicalvibes.cards.m.Mountain;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.n.NoviceOccultist;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ShipwreckMarsh.class, NoviceOccultist.class})
 class ShipwreckMarshTest extends BaseCardTest {
 
     @Test
@@ -28,7 +28,7 @@ class ShipwreckMarshTest extends BaseCardTest {
     @Test
     @DisplayName("Enters tapped when you control one other land")
     void entersTappedWithOneLand() {
-        addBasicLand(player1);
+        addLand(player1);
 
         playMarsh();
 
@@ -38,8 +38,8 @@ class ShipwreckMarshTest extends BaseCardTest {
     @Test
     @DisplayName("Enters untapped when you control exactly two other lands")
     void entersUntappedWithTwoLands() {
-        addBasicLand(player1);
-        addBasicLand(player1);
+        addLand(player1);
+        addLand(player1);
 
         playMarsh();
 
@@ -50,7 +50,7 @@ class ShipwreckMarshTest extends BaseCardTest {
     @DisplayName("Non-land permanents do not count toward the land check")
     void nonLandPermanentsDoNotCount() {
         for (int i = 0; i < 3; i++) {
-            gd.playerBattlefields.get(player1.getId()).add(new Permanent(new LlanowarElves()));
+            harness.addToBattlefield(player1, new NoviceOccultist());
         }
 
         playMarsh();
@@ -62,7 +62,7 @@ class ShipwreckMarshTest extends BaseCardTest {
     @DisplayName("Opponent's lands do not count toward the land check")
     void opponentLandsDoNotCount() {
         for (int i = 0; i < 5; i++) {
-            addBasicLand(player2);
+            addLand(player2);
         }
 
         playMarsh();
@@ -73,7 +73,7 @@ class ShipwreckMarshTest extends BaseCardTest {
     @Test
     @DisplayName("Tapping for blue mana produces one blue")
     void tappingProducesBlueMana() {
-        addMarshReady(player1);
+        harness.addToBattlefield(player1, new ShipwreckMarsh());
 
         harness.activateAbility(player1, 0, 0, null, null);
 
@@ -84,7 +84,7 @@ class ShipwreckMarshTest extends BaseCardTest {
     @Test
     @DisplayName("Tapping for black mana produces one black")
     void tappingProducesBlackMana() {
-        addMarshReady(player1);
+        harness.addToBattlefield(player1, new ShipwreckMarsh());
 
         harness.activateAbility(player1, 0, 1, null, null);
 
@@ -92,26 +92,55 @@ class ShipwreckMarshTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
     }
 
+    @Test
+    @DisplayName("Tapped lands count toward entering untapped")
+    void tappedLandsCount() {
+        harness.addToBattlefieldAndReturn(player1, new ShipwreckMarsh()).tap();
+        harness.addToBattlefieldAndReturn(player1, new ShipwreckMarsh()).tap();
+
+        playMarsh();
+
+        assertThat(findMarsh().isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Enters untapped with more than two other lands")
+    void entersUntappedWithThreeLands() {
+        for (int i = 0; i < 3; i++) {
+            addLand(player1);
+        }
+
+        playMarsh();
+
+        assertThat(findMarsh().isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Can produce mana immediately after entering untapped")
+    void producesManaOnEntryTurn() {
+        addLand(player1);
+        addLand(player1);
+        playMarsh();
+
+        harness.activateAbility(player1, 2, 0, null, null);
+
+        assertThat(findMarsh().isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+    }
+
     private void playMarsh() {
         harness.setHand(player1, List.of(new ShipwreckMarsh()));
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
     }
 
-    private void addMarshReady(Player player) {
-        Permanent perm = new Permanent(new ShipwreckMarsh());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-    }
-
-    private void addBasicLand(Player player) {
-        Card land = new Mountain();
-        gd.playerBattlefields.get(player.getId()).add(new Permanent(land));
+    private void addLand(Player player) {
+        harness.addToBattlefield(player, new ShipwreckMarsh());
     }
 
     private Permanent findMarsh() {
-        return findPermanent(player1, "Shipwreck Marsh");
+        return gd.playerBattlefields.get(player1.getId()).getLast();
     }
 }
