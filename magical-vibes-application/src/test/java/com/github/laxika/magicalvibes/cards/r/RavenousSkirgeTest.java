@@ -40,6 +40,41 @@ class RavenousSkirgeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Attack boost waits for its triggered ability to resolve")
+    void boostWaitsForResolution() {
+        Permanent skirge = addCreatureReady(player1, new RavenousSkirge());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(player1, List.of(0)));
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(skirge.getPowerModifier()).isZero();
+
+        resolveAllTriggers();
+
+        assertThat(skirge.getPowerModifier()).isEqualTo(2);
+        assertThat(skirge.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Each attacking Skirge gets its own boost without boosting an opposing Skirge")
+    void simultaneousAttackersEachGetOneBoost() {
+        Permanent first = addCreatureReady(player1, new RavenousSkirge());
+        Permanent second = addCreatureReady(player1, new RavenousSkirge());
+        Permanent opposing = addCreatureReady(player2, new RavenousSkirge());
+
+        declareAttackers(player1, List.of(0, 1));
+        resolveAllTriggers();
+
+        assertThat(first.getPowerModifier()).isEqualTo(2);
+        assertThat(second.getPowerModifier()).isEqualTo(2);
+        assertThat(first.getToughnessModifier()).isZero();
+        assertThat(second.getToughnessModifier()).isZero();
+        assertThat(opposing.getPowerModifier()).isZero();
+        assertThat(opposing.getToughnessModifier()).isZero();
+    }
+
+    @Test
     @DisplayName("Boost wears off at end of turn")
     void boostWearsOff() {
         Permanent skirge = addCreatureReady(player1, new RavenousSkirge());
