@@ -96,4 +96,42 @@ class RegressTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("This spell cannot target players");
     }
+
+    @Test
+    @DisplayName("Can return a permanent controlled by the caster")
+    void returnsCastersOwnPermanent() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AlphaMyr());
+        harness.setHand(player1, List.of(new Regress()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Alpha Myr");
+        harness.assertInHand(player1, "Alpha Myr");
+        harness.assertNotInGraveyard(player1, "Alpha Myr");
+        harness.assertInGraveyard(player1, "Regress");
+    }
+
+    @Test
+    @DisplayName("A second Regress can return the target before the first resolves")
+    void targetReturnedInResponseStaysInHand() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AlphaMyr());
+        harness.setHand(player1, List.of(new Regress()));
+        harness.setHand(player2, List.of(new Regress()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.castAndResolveInstant(player2, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Alpha Myr");
+        harness.assertInHand(player2, "Alpha Myr");
+        harness.assertNotInGraveyard(player2, "Alpha Myr");
+        harness.assertInGraveyard(player1, "Regress");
+        harness.assertInGraveyard(player2, "Regress");
+    }
 }
