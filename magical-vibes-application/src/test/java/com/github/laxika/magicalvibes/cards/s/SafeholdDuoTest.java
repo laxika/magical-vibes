@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,6 +17,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SafeholdDuo.class, GrizzlyBears.class, EliteVanguard.class, FugitiveWizard.class,
+        SafeholdElite.class})
 class SafeholdDuoTest extends BaseCardTest {
 
     @BeforeEach
@@ -27,15 +30,11 @@ class SafeholdDuoTest extends BaseCardTest {
     }
 
     private void castGreenSpell() {
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
     }
 
     private void castWhiteSpell() {
-        harness.setHand(player1, List.of(new EliteVanguard()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new EliteVanguard(), "{W}");
     }
 
     private Permanent duo() {
@@ -66,9 +65,7 @@ class SafeholdDuoTest extends BaseCardTest {
     @Test
     @DisplayName("Casting a non-green, non-white spell does not trigger either ability")
     void otherColorDoesNotTrigger() {
-        harness.setHand(player1, List.of(new FugitiveWizard()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new FugitiveWizard(), "{U}");
         harness.passBothPriorities();
 
         assertThat(duo().getPowerModifier()).isEqualTo(0);
@@ -101,6 +98,72 @@ class SafeholdDuoTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
+        assertThat(duo().hasKeyword(Keyword.VIGILANCE)).isFalse();
+    }
+
+    @Test
+    void hybridSpellPaidWithGreenTriggersBothAbilities() {
+        assertHybridSpellTriggersBothAbilities(ManaColor.GREEN);
+    }
+
+    @Test
+    void hybridSpellPaidWithWhiteTriggersBothAbilities() {
+        assertHybridSpellTriggersBothAbilities(ManaColor.WHITE);
+    }
+
+    private void assertHybridSpellTriggersBothAbilities(ManaColor payment) {
+        harness.setHand(player1, List.of(new SafeholdElite()));
+        harness.addMana(player1, payment, 2);
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(3);
+        assertThat(duo().getPowerModifier()).isZero();
+        assertThat(duo().hasKeyword(Keyword.VIGILANCE)).isFalse();
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(duo().getPowerModifier()).isEqualTo(1);
+        assertThat(duo().getToughnessModifier()).isEqualTo(1);
+        assertThat(duo().hasKeyword(Keyword.VIGILANCE)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(duo().getPowerModifier()).isZero();
+        assertThat(duo().getToughnessModifier()).isZero();
+        assertThat(duo().hasKeyword(Keyword.VIGILANCE)).isFalse();
+    }
+
+    @Test
+    void opponentsGreenWhiteSpellDoesNotTrigger() {
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new SafeholdElite()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.castCreature(player2, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(duo().getPowerModifier()).isZero();
+        assertThat(duo().getToughnessModifier()).isZero();
+        assertThat(duo().hasKeyword(Keyword.VIGILANCE)).isFalse();
+    }
+
+    @Test
+    void repeatedGreenSpellsGiveCumulativeBoosts() {
+        castGreenSpell();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        castGreenSpell();
+        harness.passBothPriorities();
+
+        assertThat(duo().getPowerModifier()).isEqualTo(2);
+        assertThat(duo().getToughnessModifier()).isEqualTo(2);
         assertThat(duo().hasKeyword(Keyword.VIGILANCE)).isFalse();
     }
 }
