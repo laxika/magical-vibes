@@ -15,7 +15,13 @@ import org.junit.jupiter.api.Test;
 import java.util.*;
 import static org.assertj.core.api.Assertions.*;
 
-@CardUsed({Shahrazad.class, Plains.class, BurningWish.class, Counterspell.class})
+@CardUsed({Shahrazad.class, Plains.class, BurningWish.class, Counterspell.class,
+        PlatinumEmperion.class, Tazeem.class, KarnLiberated.class, Fork.class,
+        com.github.laxika.magicalvibes.cards.l.LivingWish.class,
+        com.github.laxika.magicalvibes.cards.t.Thragtusk.class,
+        com.github.laxika.magicalvibes.cards.g.GrafRats.class,
+        com.github.laxika.magicalvibes.cards.m.MidnightScavengers.class,
+        com.github.laxika.magicalvibes.cards.g.GisaAndGeralf.class})
 class ShahrazadTest extends BaseCardTest {
     private List<Card> library(int count) {
         List<Card> cards = new ArrayList<>();
@@ -28,8 +34,7 @@ class ShahrazadTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, List.of(new Shahrazad()));
         harness.addMana(player1, ManaColor.WHITE, 2);
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
         return gd.session.active();
     }
 
@@ -101,6 +106,44 @@ class ShahrazadTest extends BaseCardTest {
     private void keep(GameData game) {
         gs.keepHand(game, player1);
         gs.keepHand(game, player2);
+    }
+
+    @Test
+    @CardUsed(com.github.laxika.magicalvibes.cards.g.GisaAndGeralf.class)
+    void commanderInTheCommandZoneMovesIntoTheSubgameAndReturns() {
+        gd.format = DeckFormat.COMMANDER;
+        Card commander = new com.github.laxika.magicalvibes.cards.g.GisaAndGeralf();
+        commander.setOwnerId(player1.getId());
+        gd.makeCommander(player1.getId(), commander);
+        gd.playerCommandZones.get(player1.getId()).add(commander);
+        harness.setLibrary(player1, library(20));
+        harness.setLibrary(player2, library(20));
+
+        GameData child = cast();
+
+        assertThat(gd.playerCommandZones.get(player1.getId())).doesNotContain(commander);
+        assertThat(child.playerCommandZones.get(player1.getId())).containsExactly(commander);
+        assertThat(child.isCommander(commander.getId())).isTrue();
+        gs.surrender(child, player2);
+        assertThat(gd.playerCommandZones.get(player1.getId())).containsExactly(commander);
+        assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(commander);
+    }
+
+    @Test
+    void winnerKeepsTheirLifeAndOneLifeLoserLosesTheirLastLife() {
+        harness.setLibrary(player1, library(20));
+        harness.setLibrary(player2, library(20));
+        harness.setLife(player1, 17);
+        harness.setLife(player2, 1);
+
+        GameData child = cast();
+        gs.surrender(child, player2);
+
+        assertThat(gd.session.active()).isSameAs(gd);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(17);
+        assertThat(gd.getLife(player2.getId())).isZero();
+        assertThat(gd.winnerPlayerId).isEqualTo(player1.getId());
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
     }
 
     private void castIn(GameData game, Card card, ManaColor color, int mana) {
