@@ -35,8 +35,7 @@ class ScorchRiderTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.castKickedCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent rider = findPermanent(player1, "Scorch Rider");
         assertThat(gqs.hasKeyword(gd, rider, Keyword.HASTE)).isTrue();
@@ -44,6 +43,38 @@ class ScorchRiderTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, rider, Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    void hasteWaitsForEnterTriggerToResolveAndAppliesOnlyToItsSource() {
+        Permanent otherRider = harness.addToBattlefieldAndReturn(player1, new ScorchRider());
+        Permanent opposingRider = harness.addToBattlefieldAndReturn(player2, new ScorchRider());
+        harness.setHand(player1, List.of(new ScorchRider()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castKickedCreature(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent kickedRider = findPermanents(player1, "Scorch Rider").stream()
+                .filter(permanent -> !permanent.getId().equals(otherRider.getId()))
+                .findFirst().orElseThrow();
+        assertThat(gqs.hasKeyword(gd, kickedRider, Keyword.HASTE)).isFalse();
+
+        resolveAllTriggers();
+
+        assertThat(gqs.hasKeyword(gd, kickedRider, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, otherRider, Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opposingRider, Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    void enteringWithoutBeingCastDoesNotGrantHaste() {
+        Permanent rider = harness.enterBattlefieldAndReturn(player1, new ScorchRider());
+
+        resolveAllTriggers();
 
         assertThat(gqs.hasKeyword(gd, rider, Keyword.HASTE)).isFalse();
     }
