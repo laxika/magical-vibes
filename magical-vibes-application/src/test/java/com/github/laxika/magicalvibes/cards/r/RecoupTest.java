@@ -140,6 +140,65 @@ class RecoupTest extends BaseCardTest {
                 .anyMatch(card -> card.getName().equals("Recoup"));
     }
 
+    @Test
+    @DisplayName("Only the targeted sorcery gains flashback")
+    void onlyTargetedSorceryGainsFlashback() {
+        Concentrate target = new Concentrate();
+        Concentrate other = new Concentrate();
+        harness.setGraveyard(player1, List.of(target, other));
+        harness.setHand(player1, List.of(new Recoup()));
+        addRecoupMana();
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castFlashback(player1, 1))
+                .isInstanceOf(IllegalStateException.class);
+        harness.castAndResolveFlashback(player1, 0, null);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(other).doesNotContain(target);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(target);
+    }
+
+    @Test
+    @DisplayName("Expired flashback cannot be used on the next turn")
+    void expiredFlashbackCannotBeUsed() {
+        Concentrate concentrate = new Concentrate();
+        harness.setGraveyard(player1, List.of(concentrate));
+        harness.setHand(player1, List.of(new Recoup()));
+        addRecoupMana();
+        harness.castAndResolveSorcery(player1, 0, concentrate.getId());
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castFlashback(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Concentrate");
+    }
+
+    @Test
+    @DisplayName("Granted flashback can use mana cost even when printed flashback is affordable")
+    void grantedFlashbackCanUseCheaperCostWhenPrintedCostIsAffordable() {
+        Recoup target = new Recoup();
+        Concentrate concentrate = new Concentrate();
+        harness.setGraveyard(player1, List.of(target, concentrate));
+        harness.setHand(player1, List.of(new Recoup()));
+        addRecoupMana();
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castAndResolveFlashback(player1, 0, concentrate.getId());
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(target);
+        assertThat(gd.cardsGrantedFlashbackUntilEndOfTurn).contains(concentrate.getId());
+    }
+
     private void addRecoupMana() {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
