@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.b.BarkshellBlessing;
+import com.github.laxika.magicalvibes.cards.e.EssenceInfusion;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
@@ -18,7 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SilverquillApprentice.class, BarkshellBlessing.class, GiantGrowth.class,
+@CardUsed({SilverquillApprentice.class, BarkshellBlessing.class, EssenceInfusion.class, GiantGrowth.class,
         GrizzlyBears.class, HillGiant.class, Shock.class})
 class SilverquillApprenticeTest extends BaseCardTest {
 
@@ -33,8 +34,7 @@ class SilverquillApprenticeTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, target.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(target.getEffectivePower()).isEqualTo(4);
         assertThat(target.getEffectiveToughness()).isEqualTo(3);
@@ -52,8 +52,7 @@ class SilverquillApprenticeTest extends BaseCardTest {
 
         harness.castWithConspire(player1, 0, target.getId(), List.of(conspireA.getId(), conspireB.getId()));
         harness.handlePermanentChosen(player1, target.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
 
@@ -76,8 +75,7 @@ class SilverquillApprenticeTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, target.getId());
         harness.handlePermanentChosen(player1, target.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
@@ -96,5 +94,49 @@ class SilverquillApprenticeTest extends BaseCardTest {
         harness.castCreature(player1, 0);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+    }
+
+    @Test
+    @CardUsed({SilverquillApprentice.class, EssenceInfusion.class})
+    @DisplayName("Casting a sorcery can boost a creature other than the spell's target")
+    void castingSorceryBoostsIndependentTarget() {
+        Permanent apprentice = addCreatureReady(player1, new SilverquillApprentice());
+        Permanent spellTarget = addCreatureReady(player2, new SilverquillApprentice());
+        harness.setHand(player1, List.of(new EssenceInfusion()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castSorcery(player1, 0, spellTarget.getId());
+        harness.handlePermanentChosen(player1, apprentice.getId());
+        harness.passBothPriorities();
+
+        assertThat(apprentice.getEffectivePower()).isEqualTo(3);
+        assertThat(apprentice.getEffectiveToughness()).isEqualTo(2);
+        assertThat(spellTarget.getEffectivePower()).isEqualTo(2);
+        assertThat(spellTarget.getEffectiveToughness()).isEqualTo(2);
+
+        resolveAllTriggers();
+
+        assertThat(apprentice.getEffectivePower()).isEqualTo(3);
+        assertThat(spellTarget.getEffectivePower()).isEqualTo(4);
+        assertThat(spellTarget.getEffectiveToughness()).isEqualTo(4);
+    }
+
+    @Test
+    @CardUsed({SilverquillApprentice.class, EssenceInfusion.class})
+    @DisplayName("An opponent's sorcery does not trigger magecraft")
+    void opponentCastingSorceryDoesNotTriggerMagecraft() {
+        Permanent apprentice = addCreatureReady(player1, new SilverquillApprentice());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new EssenceInfusion()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+
+        harness.castSorcery(player2, 0, apprentice.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        assertThat(apprentice.getEffectivePower()).isEqualTo(4);
+        assertThat(apprentice.getEffectiveToughness()).isEqualTo(4);
     }
 }
