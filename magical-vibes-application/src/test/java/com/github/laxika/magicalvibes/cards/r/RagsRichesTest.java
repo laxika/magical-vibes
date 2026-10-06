@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RagsRiches.class, HillGiant.class, GrizzlyBears.class, GiantSpider.class})
 class RagsRichesTest extends BaseCardTest {
 
     @Test
@@ -57,8 +59,7 @@ class RagsRichesTest extends BaseCardTest {
         assertThat(giant(player1).getEffectivePower()).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(giant(player1).getEffectivePower()).isEqualTo(3);
         assertThat(giant(player1).getEffectiveToughness()).isEqualTo(3);
@@ -72,8 +73,7 @@ class RagsRichesTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 5);
 
-        harness.castFlashback(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, null);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getId().equals(bears.getId()));
@@ -95,8 +95,7 @@ class RagsRichesTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 5);
 
-        harness.castFlashback(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, null);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId())
@@ -119,8 +118,7 @@ class RagsRichesTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 5);
 
-        harness.castFlashback(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, null);
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -138,6 +136,60 @@ class RagsRichesTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castFlashback(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Rags does not debuff creatures entering after it resolves")
+    void ragsDoesNotAffectLaterCreatures() {
+        harness.addToBattlefield(player2, new GiantSpider());
+        harness.setHand(player1, List.of(new RagsRiches()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        Permanent affected = findPermanent(player2, "Giant Spider");
+        assertThat(affected.getEffectivePower()).isZero();
+        assertThat(affected.getEffectiveToughness()).isEqualTo(2);
+
+        Permanent later = harness.addToBattlefieldAndReturn(player1, new GiantSpider());
+        assertThat(later.getEffectivePower()).isEqualTo(2);
+        assertThat(later.getEffectiveToughness()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Riches control persists after cleanup")
+    void richesControlPersistsAfterCleanup() {
+        Permanent spider = harness.addToBattlefieldAndReturn(player2, new GiantSpider());
+        harness.setGraveyard(player1, List.of(new RagsRiches()));
+        harness.addMana(player1, ManaColor.BLUE, 7);
+
+        harness.castAndResolveFlashback(player1, 0, null);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(TurnStep.CLEANUP);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(spider);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(spider);
+    }
+
+    @Test
+    @DisplayName("Riches lets the opponent choose only their own creatures")
+    void richesRejectsChoosingControllersCreature() {
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new GiantSpider());
+        Permanent chosen = harness.addToBattlefieldAndReturn(player2, new GiantSpider());
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new GiantSpider());
+        harness.setGraveyard(player1, List.of(new RagsRiches()));
+        harness.addMana(player1, ManaColor.BLUE, 7);
+
+        harness.castAndResolveFlashback(player1, 0, null);
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player2, own.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handlePermanentChosen(player2, chosen.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(own, chosen);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(other).doesNotContain(chosen);
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(c -> c.getName().equals("Rags"));
     }
 
     private Permanent giant(Player player) {
