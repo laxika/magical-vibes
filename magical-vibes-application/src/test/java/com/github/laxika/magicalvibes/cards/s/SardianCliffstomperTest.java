@@ -3,11 +3,13 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SardianCliffstomper.class, Mountain.class})
 class SardianCliffstomperTest extends BaseCardTest {
 
     @Test
@@ -46,6 +48,56 @@ class SardianCliffstomperTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, cliffstomper)).isZero();
         assertThat(gqs.getEffectiveToughness(gd, cliffstomper)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Opponent's Mountains neither enable nor increase the boost")
+    void opponentsMountainsDoNotCount() {
+        Permanent cliffstomper = addCliffstomperWithMountains(3);
+        for (int i = 0; i < 5; i++) {
+            harness.addToBattlefield(player2, new Mountain());
+        }
+        harness.forceActivePlayer(player1);
+
+        assertThat(gqs.getEffectivePower(gd, cliffstomper)).isZero();
+
+        harness.addToBattlefield(player1, new Mountain());
+
+        assertThat(gqs.getEffectivePower(gd, cliffstomper)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("The boost updates immediately as Mountains leave the battlefield")
+    void boostUpdatesWhenMountainsLeave() {
+        Permanent cliffstomper = addCliffstomperWithMountains(4);
+        Permanent fifthMountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        harness.forceActivePlayer(player1);
+
+        assertThat(gqs.getEffectivePower(gd, cliffstomper)).isEqualTo(5);
+
+        gd.playerBattlefields.get(player1.getId()).remove(fifthMountain);
+
+        assertThat(gqs.getEffectivePower(gd, cliffstomper)).isEqualTo(4);
+
+        Permanent fourthMountain = findPermanent(player1, "Mountain");
+        gd.playerBattlefields.get(player1.getId()).remove(fourthMountain);
+
+        assertThat(gqs.getEffectivePower(gd, cliffstomper)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, cliffstomper)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("The boost follows the active player without persisting into the opponent's turn")
+    void boostUpdatesAsActivePlayerChanges() {
+        Permanent cliffstomper = addCliffstomperWithMountains(4);
+        harness.forceActivePlayer(player1);
+        assertThat(gqs.getEffectivePower(gd, cliffstomper)).isEqualTo(4);
+
+        harness.forceActivePlayer(player2);
+        assertThat(gqs.getEffectivePower(gd, cliffstomper)).isZero();
+
+        harness.forceActivePlayer(player1);
+        assertThat(gqs.getEffectivePower(gd, cliffstomper)).isEqualTo(4);
     }
 
     private Permanent addCliffstomperWithMountains(int mountainCount) {
