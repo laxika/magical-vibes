@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.c.ChartoothCougar;
 import com.github.laxika.magicalvibes.cards.e.ExtraArms;
 import com.github.laxika.magicalvibes.cards.g.GoblinBrigand;
+import com.github.laxika.magicalvibes.cards.k.KrosanDrover;
 import com.github.laxika.magicalvibes.cards.l.LingeringDeath;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -19,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({SilverKnight.class, GoblinBrigand.class, ChartoothCougar.class, SparkSpray.class,
-        ExtraArms.class, LingeringDeath.class})
+        ExtraArms.class, LingeringDeath.class, KrosanDrover.class})
 class SilverKnightTest extends BaseCardTest {
 
     @Test
@@ -104,5 +105,53 @@ class SilverKnightTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Lingering Death");
+    }
+
+    @Test
+    @DisplayName("First strike kills a non-red blocker before it can deal damage")
+    void firstStrikeKillsNonRedBlocker() {
+        Permanent knight = addCreatureReady(player1, new SilverKnight());
+        knight.setAttacking(true);
+        addCreatureReady(player2, new KrosanDrover());
+
+        prepareDeclareBlockers(player1);
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Krosan Drover");
+        harness.assertOnBattlefield(player1, "Silver Knight");
+        assertThat(knight.getMarkedDamage()).isZero();
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("First strike kills a non-red attacker before it can deal damage")
+    void firstStrikeKillsNonRedAttacker() {
+        Permanent attacker = addCreatureReady(player1, new KrosanDrover());
+        attacker.setAttacking(true);
+        Permanent knight = addCreatureReady(player2, new SilverKnight());
+
+        prepareDeclareBlockers(player1);
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Krosan Drover");
+        harness.assertOnBattlefield(player2, "Silver Knight");
+        assertThat(knight.getMarkedDamage()).isZero();
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("An attached red Aura is removed by state-based actions")
+    void attachedRedAuraIsRemoved() {
+        Permanent knight = harness.addToBattlefieldAndReturn(player2, new SilverKnight());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new ExtraArms());
+        aura.setAttachedTo(knight.getId());
+
+        harness.runStateBasedActions();
+
+        harness.assertInGraveyard(player1, "Extra Arms");
+        harness.assertNotOnBattlefield(player1, "Extra Arms");
+        harness.assertOnBattlefield(player2, "Silver Knight");
     }
 }
