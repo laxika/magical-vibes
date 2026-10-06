@@ -1,21 +1,64 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.b.BeastWalkers;
+import com.github.laxika.magicalvibes.cards.j.Jump;
 import com.github.laxika.magicalvibes.cards.w.WillowFaerie;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.Set;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SerraAviary.class, WillowFaerie.class, BeastWalkers.class})
+@CardUsed({SerraAviary.class, WillowFaerie.class, BeastWalkers.class, Jump.class})
 class SerraAviaryTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("The bonus follows temporarily granted flying and ends when flying expires")
+    void bonusFollowsTemporaryFlying() {
+        harness.addToBattlefield(player1, new SerraAviary());
+        Permanent walkers = harness.addToBattlefieldAndReturn(player2, new BeastWalkers());
+        harness.setHand(player1, List.of(new Jump()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThat(gqs.getEffectivePower(gd, walkers)).isEqualTo(2);
+        harness.castAndResolveInstant(player1, 0, walkers.getId());
+
+        assertThat(gqs.getEffectivePower(gd, walkers)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, walkers)).isEqualTo(3);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, walkers, Keyword.FLYING)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, walkers)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, walkers)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A newer Serra Aviary replaces an opponent's older world enchantment")
+    void newerWorldReplacesOlderAviary() {
+        harness.enterBattlefieldAndReturn(player1, new SerraAviary());
+        Permanent flier = harness.addToBattlefieldAndReturn(player1, new WillowFaerie());
+        harness.enterBattlefieldAndReturn(player2, new SerraAviary());
+
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Serra Aviary");
+        harness.assertInGraveyard(player1, "Serra Aviary");
+        harness.assertOnBattlefield(player2, "Serra Aviary");
+        assertThat(gqs.getEffectivePower(gd, flier)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, flier)).isEqualTo(3);
+    }
 
     @Test
     @DisplayName("Own creatures with flying get +1/+1")
