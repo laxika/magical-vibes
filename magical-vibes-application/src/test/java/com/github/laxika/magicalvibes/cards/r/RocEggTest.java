@@ -1,14 +1,16 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
+import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -16,13 +18,14 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RocEgg.class, WrathOfGod.class, LightningBolt.class, Unsummon.class})
 class RocEggTest extends BaseCardTest {
-
-    // ===== Death trigger =====
 
     @Nested
     @DisplayName("Death trigger")
+    @CardUsed({RocEgg.class, WrathOfGod.class, LightningBolt.class, Unsummon.class})
     class DeathTriggerTests {
 
         @Test
@@ -30,13 +33,8 @@ class RocEggTest extends BaseCardTest {
         void deathTriggerCreatesBirdToken() {
             harness.addToBattlefield(player1, new RocEgg());
 
-            harness.setHand(player1, List.of(new WrathOfGod()));
-            harness.addMana(player1, ManaColor.WHITE, 4);
-
-            harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, null, null);
+            harness.castFromHand(player1, new WrathOfGod(), "{2}{W}{W}");
             harness.passBothPriorities(); // Resolve Wrath — Roc Egg dies
-
-            GameData gd = harness.getGameData();
 
             // Roc Egg should be in the graveyard
             harness.assertInGraveyard(player1, "Roc Egg");
@@ -66,10 +64,7 @@ class RocEggTest extends BaseCardTest {
         void deathTriggerBelongsToController() {
             harness.addToBattlefield(player2, new RocEgg());
 
-            harness.setHand(player1, List.of(new WrathOfGod()));
-            harness.addMana(player1, ManaColor.WHITE, 4);
-
-            harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, null, null);
+            harness.castFromHand(player1, new WrathOfGod(), "{2}{W}{W}");
             harness.passBothPriorities(); // Resolve Wrath — Roc Egg dies
             harness.passBothPriorities(); // Resolve death trigger
 
@@ -81,5 +76,61 @@ class RocEggTest extends BaseCardTest {
             List<Permanent> player1Tokens = findPermanents(player1, "Bird");
             assertThat(player1Tokens).isEmpty();
         }
+
+        @Test
+        void lethalDamageCreatesTokenOnlyAfterTriggerResolves() {
+            Permanent egg = harness.addToBattlefieldAndReturn(player1, new RocEgg());
+            harness.setHand(player1, List.of(new LightningBolt()));
+            harness.addMana(player1, ManaColor.RED, 1);
+
+            harness.castAndResolveInstant(player1, 0, egg.getId());
+
+            harness.assertInGraveyard(player1, "Roc Egg");
+            assertThat(gd.stack).hasSize(1);
+            assertThat(findPermanents(player1, "Bird")).isEmpty();
+
+            resolveAllTriggers();
+
+            assertThat(findPermanents(player1, "Bird")).hasSize(1);
+            assertThat(findPermanent(player1, "Bird").isTapped()).isFalse();
+        }
+
+        @Test
+        void returningEggToHandDoesNotCreateToken() {
+            Permanent egg = harness.addToBattlefieldAndReturn(player1, new RocEgg());
+            harness.setHand(player1, List.of(new Unsummon()));
+            harness.addMana(player1, ManaColor.BLUE, 1);
+
+            harness.castAndResolveInstant(player1, 0, egg.getId());
+
+            harness.assertInHand(player1, "Roc Egg");
+            harness.assertNotInGraveyard(player1, "Roc Egg");
+            assertThat(gd.stack).isEmpty();
+            assertThat(findPermanents(player1, "Bird")).isEmpty();
+        }
+
+        @Test
+        void eachEggCreatesItsOwnTokenWhenTheyDieTogether() {
+            harness.addToBattlefield(player1, new RocEgg());
+            harness.addToBattlefield(player1, new RocEgg());
+            harness.castFromHand(player1, new WrathOfGod(), "{2}{W}{W}");
+
+            harness.passBothPriorities();
+            assertThat(gd.stack).hasSize(2);
+            assertThat(findPermanents(player1, "Bird")).isEmpty();
+
+            resolveAllTriggers();
+
+            assertThat(findPermanents(player1, "Bird")).hasSize(2);
+            harness.assertNotOnBattlefield(player1, "Roc Egg");
+        }
+    }
+
+    @Test
+    void defenderPreventsEggFromAttacking() {
+        addCreatureReady(player1, new RocEgg());
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
     }
 }
