@@ -2,9 +2,11 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.a.AngelOfMercy;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,9 +14,10 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RampagingFerocidon.class, AngelOfMercy.class, GrizzlyBears.class,
+        RayOfCommand.class, TurnToFrog.class})
 class RampagingFerocidonTest extends BaseCardTest {
 
-    // ===== Players can't gain life =====
 
     @Test
     @DisplayName("Opponent can't gain life while Ferocidon is on the battlefield")
@@ -58,7 +61,6 @@ class RampagingFerocidonTest extends BaseCardTest {
         harness.assertLife(player1, 19);
     }
 
-    // ===== Creature enters — deals 1 damage to that creature's controller =====
 
     @Test
     @DisplayName("Deals 1 damage to opponent when opponent's creature enters")
@@ -96,7 +98,6 @@ class RampagingFerocidonTest extends BaseCardTest {
         harness.assertLife(player1, 19);
     }
 
-    // ===== Does not trigger for itself entering =====
 
     @Test
     @DisplayName("Does not trigger when Rampaging Ferocidon itself enters the battlefield")
@@ -115,7 +116,6 @@ class RampagingFerocidonTest extends BaseCardTest {
         harness.assertLife(player1, 20);
     }
 
-    // ===== Multiple creatures entering =====
 
     @Test
     @DisplayName("Triggers separately for each creature that enters")
@@ -144,7 +144,6 @@ class RampagingFerocidonTest extends BaseCardTest {
         harness.assertLife(player2, 18);
     }
 
-    // ===== Trigger stops after Ferocidon leaves =====
 
     @Test
     @DisplayName("No longer triggers after Ferocidon leaves the battlefield")
@@ -169,7 +168,6 @@ class RampagingFerocidonTest extends BaseCardTest {
         harness.assertLife(player2, 20);
     }
 
-    // ===== Life gain works after Ferocidon leaves =====
 
     @Test
     @DisplayName("Life gain works again after Ferocidon leaves the battlefield")
@@ -193,5 +191,80 @@ class RampagingFerocidonTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB gain life effect
 
         harness.assertLife(player2, 23);
+    }
+
+    @Test
+    @DisplayName("Damage is dealt to the entering creature's controller at resolution")
+    void damageFollowsEnteringCreatureControlChange() {
+        harness.addToBattlefield(player1, new RampagingFerocidon());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.castCreature(player2, 0);
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new RayOfCommand()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Life gain works while Ferocidon has lost all abilities")
+    void lifeGainWorksWhileAbilitiesAreRemoved() {
+        var ferocidon = harness.addToBattlefieldAndReturn(player1, new RampagingFerocidon());
+        harness.setHand(player1, List.of(new TurnToFrog()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, ferocidon.getId());
+
+        harness.setHand(player1, List.of(new AngelOfMercy()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 23);
+    }
+
+    @Test
+    @DisplayName("Ferocidon does not trigger while it has lost all abilities")
+    void noEntryTriggerWhileAbilitiesAreRemoved() {
+        var ferocidon = harness.addToBattlefieldAndReturn(player1, new RampagingFerocidon());
+        harness.setHand(player1, List.of(new TurnToFrog()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, ferocidon.getId());
+
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("A pending entry trigger still deals damage after Ferocidon leaves")
+    void pendingTriggerSurvivesSourceLeaving() {
+        harness.addToBattlefield(player1, new RampagingFerocidon());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player1.getId()).removeIf(
+                permanent -> permanent.getCard() instanceof RampagingFerocidon);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
     }
 }
