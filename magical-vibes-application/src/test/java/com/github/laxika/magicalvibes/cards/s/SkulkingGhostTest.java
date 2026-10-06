@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.i.IcyManipulator;
 import com.github.laxika.magicalvibes.cards.m.MtendaHerder;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SkulkingGhost.class, Shock.class, IcyManipulator.class, MtendaHerder.class})
+@CardUsed({SkulkingGhost.class, Shock.class, IcyManipulator.class, MtendaHerder.class, Boomerang.class})
 class SkulkingGhostTest extends BaseCardTest {
 
     @Test
@@ -40,8 +41,7 @@ class SkulkingGhostTest extends BaseCardTest {
     void sacrificesWhenTargetedByAbility() {
         Permanent ghost = harness.addToBattlefieldAndReturn(player1, new SkulkingGhost());
 
-        harness.addToBattlefield(player2, new IcyManipulator());
-        Permanent icy = findPermanent(player2, "Icy Manipulator");
+        Permanent icy = harness.addToBattlefieldAndReturn(player2, new IcyManipulator());
         icy.setSummoningSick(false);
 
         harness.addMana(player2, ManaColor.COLORLESS, 1);
@@ -70,6 +70,49 @@ class SkulkingGhostTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Skulking Ghost");
         harness.assertInGraveyard(player1, "Skulking Ghost");
+    }
+
+    @Test
+    @DisplayName("A controller's non-damaging spell triggers sacrifice before returning the Ghost")
+    void sacrificesBeforeOwnReturnSpellResolves() {
+        Permanent ghost = harness.addToBattlefieldAndReturn(player1, new SkulkingGhost());
+        harness.setHand(player1, List.of(new Boomerang()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castInstant(player1, 0, ghost.getId());
+
+        harness.assertOnBattlefield(player1, "Skulking Ghost");
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Skulking Ghost");
+        harness.assertInGraveyard(player1, "Skulking Ghost");
+        resolveAllTriggers();
+        harness.assertNotInHand(player1, "Skulking Ghost");
+        harness.assertInGraveyard(player1, "Boomerang");
+    }
+
+    @Test
+    @DisplayName("Each targeting spell triggers separately before sacrifice resolves")
+    void repeatedTargetingQueuesSeparateSacrificeTriggers() {
+        Permanent ghost = harness.addToBattlefieldAndReturn(player1, new SkulkingGhost());
+        harness.setHand(player2, List.of(new Shock(), new Shock()));
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.castInstant(player2, 0, ghost.getId());
+        harness.castInstant(player2, 0, ghost.getId());
+
+        harness.assertOnBattlefield(player1, "Skulking Ghost");
+        assertThat(gd.stack).hasSize(4);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Skulking Ghost");
+        harness.assertInGraveyard(player1, "Skulking Ghost");
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card.getName().equals("Skulking Ghost")).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .filteredOn(card -> card.getName().equals("Shock")).hasSize(2);
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
