@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed(SaltFlats.class)
 class SaltFlatsTest extends BaseCardTest {
@@ -72,4 +73,46 @@ class SaltFlatsTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    @DisplayName("Entering tapped prevents activating any mana ability")
+    void cannotActivateWhileTapped() {
+        harness.setHand(player1, List.of(new SaltFlats()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.playLand(player1, 0);
+
+        for (int abilityIndex = 0; abilityIndex < 3; abilityIndex++) {
+            int index = abilityIndex;
+            assertThatThrownBy(() -> harness.activateAbility(player1, 0, index, null, null))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("already tapped");
+        }
+
+        harness.assertLife(player1, 20);
+        assertThat(harness.getGameData().playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(harness.getGameData().playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(harness.getGameData().playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+    }
+
+    @Test
+    @DisplayName("Colored mana damages only the controller and pays the tap cost")
+    void coloredManaDamagesOnlyController() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new SaltFlats());
+
+        harness.activateAbility(player2, 0, 1, null, null);
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 19);
+        assertThat(land.isTapped()).isTrue();
+        assertThat(harness.getGameData().playerManaPools.get(player2.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(harness.getGameData().stack).isEmpty();
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, 2, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+        harness.assertLife(player2, 19);
+        assertThat(harness.getGameData().playerManaPools.get(player2.getId()).get(ManaColor.BLACK)).isZero();
+    }
 }
