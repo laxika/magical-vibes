@@ -1,9 +1,8 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.w.WhiteKnight;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.cards.b.BalduvianBarbarians;
+import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.t.Terror;
 import com.github.laxika.magicalvibes.cards.c.CircleOfProtectionRed;
 import com.github.laxika.magicalvibes.cards.h.Hydroblast;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
@@ -20,7 +19,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SleightOfMind.class, CircleOfProtectionRed.class, WhiteKnight.class})
+@CardUsed({SleightOfMind.class, CircleOfProtectionRed.class, WhiteKnight.class, HillGiant.class,
+        Hydroblast.class, Terror.class})
 class SleightOfMindTest extends BaseCardTest {
 
     @Test
@@ -31,8 +31,7 @@ class SleightOfMindTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         UUID targetId = harness.getPermanentId(player2, "Circle of Protection: Red");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.handleListChoice(player1, "RED");
         harness.handleListChoice(player1, "GREEN");
@@ -50,8 +49,7 @@ class SleightOfMindTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         UUID targetId = harness.getPermanentId(player2, "Circle of Protection: Red");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         assertThatThrownBy(() -> harness.handleListChoice(player1, "SWAMP"))
                 .isInstanceOf(IllegalArgumentException.class);
@@ -66,7 +64,7 @@ class SleightOfMindTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         // Circle of Protection: Red enchantment spell goes on the stack (index 1; Sleight of Mind stays at index 0).
-        harness.castCreature(player1, 1);
+        harness.castEnchantment(player1, 1);
         UUID circleSpellId = gd.stack.getFirst().getCard().getId();
 
         harness.castInstant(player1, 0, circleSpellId);
@@ -82,21 +80,20 @@ class SleightOfMindTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed({BalduvianBarbarians.class, Hydroblast.class})
     @DisplayName("Changes the text of an instant spell before it resolves")
     void changesColorWordOnInstantSpell() {
-        BalduvianBarbarians barbarians = new BalduvianBarbarians();
+        HillGiant giant = new HillGiant();
         Hydroblast hydroblast = new Hydroblast();
-        harness.setHand(player1, List.of(barbarians, new SleightOfMind()));
+        harness.setHand(player1, List.of(giant, new SleightOfMind()));
         harness.setHand(player2, List.of(hydroblast));
-        harness.addMana(player1, ManaColor.RED, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player2, ManaColor.BLUE, 1);
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, 0, barbarians.getId());
+        harness.castInstant(player2, 0, 0, giant.getId());
         harness.castInstant(player1, 0, hydroblast.getId());
         harness.passBothPriorities();
 
@@ -105,7 +102,7 @@ class SleightOfMindTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player1, "Balduvian Barbarians");
+        harness.assertOnBattlefield(player1, "Hill Giant");
         harness.assertInGraveyard(player2, "Hydroblast");
     }
 
@@ -117,8 +114,7 @@ class SleightOfMindTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         UUID targetId = harness.getPermanentId(player2, "Circle of Protection: Red");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.handleListChoice(player1, "RED");
         harness.handleListChoice(player1, "GREEN");
@@ -152,12 +148,71 @@ class SleightOfMindTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         UUID targetId = harness.getPermanentId(player2, "White Knight");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.handleListChoice(player1, "BLACK");
 
         assertThatThrownBy(() -> harness.handleListChoice(player1, "BLACK"))
                 .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    @DisplayName("Changed color words in a spell's targeting restriction are checked on resolution")
+    void changedTargetRestrictionMakesExistingTargetIllegal() {
+        harness.addToBattlefield(player2, new HillGiant());
+        UUID giantId = harness.getPermanentId(player2, "Hill Giant");
+        Terror terror = new Terror();
+        harness.setHand(player1, List.of(new SleightOfMind()));
+        harness.setHand(player2, List.of(terror));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, giantId);
+        harness.castAndResolveInstant(player1, 0, terror.getId());
+        harness.handleListChoice(player1, "BLACK");
+        harness.handleListChoice(player1, "RED");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Hill Giant");
+        harness.assertInGraveyard(player2, "Terror");
+    }
+
+    @Test
+    @DisplayName("Changing printed protection changes which spells can target the permanent")
+    void changedProtectionPreventsBlueTargeting() {
+        harness.addToBattlefield(player2, new WhiteKnight());
+        UUID knightId = harness.getPermanentId(player2, "White Knight");
+        harness.setHand(player1, List.of(new SleightOfMind(), new SleightOfMind()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castAndResolveInstant(player1, 0, knightId);
+        harness.handleListChoice(player1, "BLACK");
+        harness.handleListChoice(player1, "BLUE");
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, knightId))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection");
+        harness.assertOnBattlefield(player2, "White Knight");
+    }
+
+    @Test
+    @DisplayName("A color word absent from the target's text may still be chosen")
+    void absentColorWordDoesNotChangeProtection() {
+        harness.addToBattlefield(player2, new WhiteKnight());
+        UUID knightId = harness.getPermanentId(player2, "White Knight");
+        harness.setHand(player1, List.of(new SleightOfMind(), new SleightOfMind()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castAndResolveInstant(player1, 0, knightId);
+        harness.handleListChoice(player1, "RED");
+        harness.handleListChoice(player1, "BLUE");
+        harness.castAndResolveInstant(player1, 0, knightId);
+        harness.handleListChoice(player1, "BLACK");
+        harness.handleListChoice(player1, "GREEN");
+
+        harness.assertInGraveyard(player1, "Sleight of Mind");
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }
