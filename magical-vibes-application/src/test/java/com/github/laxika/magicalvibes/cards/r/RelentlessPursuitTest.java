@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -91,6 +90,107 @@ class RelentlessPursuitTest extends BaseCardTest {
                 .anyMatch(log -> log.contains("reveals") && log.contains("Relentless Pursuit"));
     }
 
+    @Test
+    void canTakeOnlyLandAfterDecliningCreature() {
+        Card bears = new GrizzlyBears();
+        Card forest = new Forest();
+        setupTopFour(bears, forest);
+
+        resolvePursuit();
+        chooseCard(-1);
+        chooseCard(0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(forest);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(bears);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void canTakeOnlyCreatureAfterDecliningLand() {
+        Card bears = new GrizzlyBears();
+        Card forest = new Forest();
+        setupTopFour(bears, forest);
+
+        resolvePursuit();
+        chooseCard(0);
+        chooseCard(-1);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(bears);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(forest);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void offersLandDirectlyWhenNoCreatureIsRevealed() {
+        Card forest = new Forest();
+        Card shock = new Shock();
+        setupTopFour(shock, forest);
+
+        resolvePursuit();
+        assertThat(searchCards()).containsExactly("Forest");
+        chooseCard(0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(forest);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(shock);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void finishesAfterCreaturePickWhenNoLandIsRevealed() {
+        Card bears = new GrizzlyBears();
+        Card shock = new Shock();
+        setupTopFour(bears, shock);
+
+        resolvePursuit();
+        chooseCard(0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(bears);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(shock);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void millsIneligibleCardsWithoutOfferingAChoice() {
+        Card first = new Shock();
+        Card second = new Shock();
+        setupTopFour(first, second);
+
+        resolvePursuit();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(first, second);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void leavesCardsBelowTopFourInTheirOriginalOrder() {
+        Card fifth = new HillGiant();
+        Card sixth = new Forest();
+        harness.setLibrary(player1, List.of(new Shock(), new Shock(), new Shock(), new Shock(), fifth, sixth));
+
+        resolvePursuit();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(fifth, sixth);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card instanceof Shock).hasSize(4);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void resolvesWithAnEmptyLibrary() {
+        harness.setLibrary(player1, List.of());
+
+        resolvePursuit();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof RelentlessPursuit);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void resolvePursuit() {
         harness.setHand(player1, List.of(new RelentlessPursuit()));
         harness.addMana(player1, ManaColor.GREEN, 3);
@@ -99,8 +199,7 @@ class RelentlessPursuitTest extends BaseCardTest {
     }
 
     private void chooseCard(int index) {
-        harness.getGameService().handleInteractionAnswer(
-                harness.getGameData(), player1, new InteractionAnswer.LibraryCardChosen(index));
+        harness.handleCardChosen(player1, index);
     }
 
     private List<String> searchCards() {
@@ -109,8 +208,6 @@ class RelentlessPursuitTest extends BaseCardTest {
     }
 
     private void setupTopFour(Card... cards) {
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(cards));
+        harness.setLibrary(player1, List.of(cards));
     }
 }
