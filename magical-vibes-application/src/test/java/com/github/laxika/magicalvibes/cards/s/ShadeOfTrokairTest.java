@@ -89,6 +89,52 @@ class ShadeOfTrokairTest extends BaseCardTest {
         assertThat(permanent.getToughnessModifier()).isZero();
     }
 
+    @Test
+    @DisplayName("Suspend removes counters only during its owner's upkeep")
+    void suspendCountsOnlyOwnersUpkeeps() {
+        ShadeOfTrokair card = suspendCard();
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 3);
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 2);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
+    }
+
+    @Test
+    @DisplayName("A tapped summoning-sick Shade can activate its pump repeatedly")
+    void pumpStacksWithoutTapOrSummoningSicknessRestriction() {
+        Permanent permanent = addReadyShadeOfTrokair(player1);
+        permanent.setSummoningSick(true);
+        permanent.setTapped(true);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(permanent.getPowerModifier()).isEqualTo(2);
+        assertThat(permanent.getToughnessModifier()).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Casting Shade normally does not grant suspend haste")
+    void normalCastDoesNotGrantHaste() {
+        harness.setHand(player1, List.of(new ShadeOfTrokair()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent permanent = findPermanent(player1, "Shade of Trokair");
+        assertThat(gqs.hasKeyword(gd, permanent, Keyword.HASTE)).isFalse();
+    }
+
     private ShadeOfTrokair suspendCard() {
         ShadeOfTrokair card = new ShadeOfTrokair();
         harness.setHand(player1, List.of(card));
