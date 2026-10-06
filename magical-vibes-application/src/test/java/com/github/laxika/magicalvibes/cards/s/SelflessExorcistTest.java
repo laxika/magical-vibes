@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.c.CentaurRootcaster;
 import com.github.laxika.magicalvibes.cards.e.Envelop;
 import com.github.laxika.magicalvibes.cards.g.GoretuskFirebeast;
 import com.github.laxika.magicalvibes.cards.k.KraulStinger;
+import com.github.laxika.magicalvibes.cards.m.Mortivore;
 import com.github.laxika.magicalvibes.cards.p.PhantomNomad;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CentaurRootcaster.class, Envelop.class, GoretuskFirebeast.class, KraulStinger.class, PhantomNomad.class, SelflessExorcist.class})
+@CardUsed({CentaurRootcaster.class, Envelop.class, GoretuskFirebeast.class, KraulStinger.class, Mortivore.class, PhantomNomad.class, SelflessExorcist.class})
 class SelflessExorcistTest extends BaseCardTest {
 
     @Test
@@ -144,5 +145,72 @@ class SelflessExorcistTest extends BaseCardTest {
         harness.assertNotInGraveyard(player2, "Goretusk Firebeast");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .extracting(Card::getId).contains(firebeast.getId());
+    }
+
+    @Test
+    @DisplayName("Uses a creature card's characteristic-defined power after exiling it")
+    void variablePowerIsEvaluatedInExile() {
+        Permanent exorcist = addReadyExorcist();
+        Card mortivore = new Mortivore();
+        harness.setGraveyard(player2, List.of(mortivore, new CentaurRootcaster()));
+        harness.setGraveyard(player1, List.of(new GoretuskFirebeast()));
+
+        harness.activateAbility(player1, 0, null, mortivore.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+
+        harness.assertNotInGraveyard(player2, "Mortivore");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .extracting(Card::getId).contains(mortivore.getId());
+        assertThat(exorcist.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Selfless Exorcist");
+    }
+
+    @Test
+    @DisplayName("A variable-power creature card can deal lethal damage")
+    void variablePowerCreatureCanKillExorcist() {
+        addReadyExorcist();
+        Card mortivore = new Mortivore();
+        harness.setGraveyard(player2, List.of(mortivore, new CentaurRootcaster(),
+                new CentaurRootcaster(), new CentaurRootcaster(), new CentaurRootcaster()));
+
+        harness.activateAbility(player1, 0, null, mortivore.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .extracting(Card::getId).contains(mortivore.getId());
+        harness.assertNotOnBattlefield(player1, "Selfless Exorcist");
+        harness.assertInGraveyard(player1, "Selfless Exorcist");
+    }
+
+    @Test
+    @DisplayName("Cannot pay the tap cost while summoning sick")
+    void summoningSicknessPreventsActivation() {
+        Permanent exorcist = harness.addToBattlefieldAndReturn(player1, new SelflessExorcist());
+        exorcist.setSummoningSick(true);
+        Card rootcaster = new CentaurRootcaster();
+        harness.setGraveyard(player2, List.of(rootcaster));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, rootcaster.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(exorcist.isTapped()).isFalse();
+        harness.assertInGraveyard(player2, "Centaur Rootcaster");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate again while tapped")
+    void tappedExorcistCannotActivateAgain() {
+        Permanent exorcist = addReadyExorcist();
+        Card rootcaster = new CentaurRootcaster();
+        harness.setGraveyard(player2, List.of(rootcaster));
+
+        harness.activateAbility(player1, 0, null, rootcaster.getId(), Zone.GRAVEYARD);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, rootcaster.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(exorcist.isTapped()).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(exorcist.getMarkedDamage()).isEqualTo(2);
     }
 }
