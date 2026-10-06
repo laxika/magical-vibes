@@ -96,4 +96,50 @@ class SlinkingGiantTest extends BaseCardTest {
         assertThat(blocker.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
         assertThat(blocker.getMarkedDamage()).isZero();
     }
+
+    @Test
+    @DisplayName("Multiple blockers cause only one -3/-0 penalty")
+    void multipleBlockersApplyPenaltyOnce() {
+        Permanent giant = addCreatureReady(player1, new SlinkingGiant());
+        addCreatureReady(player2, new CrabappleCohort());
+        addCreatureReady(player2, new CrabappleCohort());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(1);
+        assertThat(giant.getPowerModifier()).isEqualTo(-3);
+    }
+
+    @Test
+    @DisplayName("A blocking Slinking Giant deals one damage as a -1/-1 counter")
+    void witherAppliesWhileBlocking() {
+        Permanent attacker = addCreatureReady(player1, new CrabappleCohort());
+        addCreatureReady(player2, new SlinkingGiant());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+        resolveCombat();
+
+        assertThat(attacker.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(attacker.getMarkedDamage()).isZero();
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("An unblocked Slinking Giant deals four ordinary damage to a player")
+    void unblockedWitherDealsOrdinaryPlayerDamage() {
+        harness.setLife(player2, 20);
+        addCreatureReady(player1, new SlinkingGiant());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat();
+
+        harness.assertLife(player2, 16);
+    }
 }
