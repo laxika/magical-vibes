@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.d.DiabolicServitude;
 import com.github.laxika.magicalvibes.cards.f.FleshReaver;
 import com.github.laxika.magicalvibes.cards.s.SanguineGuard;
 import com.github.laxika.magicalvibes.cards.s.SerraZealot;
@@ -17,7 +18,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RuneOfProtectionBlack.class, SanguineGuard.class, SerraZealot.class, FleshReaver.class})
+@CardUsed({RuneOfProtectionBlack.class, SanguineGuard.class, SerraZealot.class, FleshReaver.class,
+        DiabolicServitude.class})
 class RuneOfProtectionBlackTest extends BaseCardTest {
 
     @Test
@@ -168,6 +170,56 @@ class RuneOfProtectionBlackTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Rune of Protection: Black");
+        harness.assertInHand(player1, "Serra Zealot");
+    }
+
+    @Test
+    @DisplayName("Can choose a black graveyard card referred to by a pending triggered ability")
+    void canChooseBlackGraveyardCardReferencedByTrigger() {
+        addReadyRune(player1);
+        SanguineGuard graveyardCard = new SanguineGuard();
+        harness.setGraveyard(player2, List.of(graveyardCard));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castFromHand(player2, new DiabolicServitude(), "{3}{B}");
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player2, List.of(graveyardCard.getId()));
+        assertThat(gd.stack).isNotEmpty();
+        harness.assertInGraveyard(player2, "Sanguine Guard");
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validPermanentIds()).contains(graveyardCard.getId());
+        harness.handlePermanentChosen(player1, graveyardCard.getId());
+        resolveAllTriggers();
+    }
+
+    @Test
+    @DisplayName("Cycling on an opponent's turn discards immediately and draws only on resolution")
+    void cyclingPaysDiscardBeforeDrawingOnOpponentsTurn() {
+        harness.setHand(player1, List.of(new RuneOfProtectionBlack()));
+        harness.setLibrary(player1, List.of(new SerraZealot()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertInGraveyard(player1, "Rune of Protection: Black");
+        harness.assertNotInHand(player1, "Rune of Protection: Black");
+        harness.assertNotInHand(player1, "Serra Zealot");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
         harness.assertInHand(player1, "Serra Zealot");
     }
 
