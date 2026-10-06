@@ -50,6 +50,45 @@ class ScythecatCubTest extends BaseCardTest {
         assertThat(cub.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
     }
 
+    @Test
+    @DisplayName("The second resolution doubles all existing counters without first adding one")
+    void secondResolutionDoublesExistingCounters() {
+        Permanent cub = addCreatureReady(player1, new ScythecatCub());
+        cub.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+
+        triggerLandfall(cub);
+        assertThat(cub.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+
+        triggerLandfall(cub);
+
+        assertThat(cub.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(8);
+    }
+
+    @Test
+    @DisplayName("Doubling zero counters on the second resolution adds no counters")
+    void secondResolutionWithNoCountersAddsNothing() {
+        Permanent cub = addCreatureReady(player1, new ScythecatCub());
+        triggerLandfall(cub);
+        cub.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+
+        triggerLandfall(cub);
+
+        assertThat(cub.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("A newly entered Cub starts its own resolution count")
+    void newCubStartsItsOwnResolutionCount() {
+        Permanent firstCub = addCreatureReady(player1, new ScythecatCub());
+        triggerLandfall(firstCub);
+        triggerLandfall(firstCub);
+        gd.playerBattlefields.get(player1.getId()).remove(firstCub);
+        Permanent newCub = addCreatureReady(player1, new ScythecatCub());
+
+        triggerLandfall(newCub);
+
+        assertThat(newCub.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
     private void triggerLandfall(Permanent target) {
         gd.landsPlayedThisTurn.put(player1.getId(), 0);
         harness.setHand(player1, List.of(new Forest()));
