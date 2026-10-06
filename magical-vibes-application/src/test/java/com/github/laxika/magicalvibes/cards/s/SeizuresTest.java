@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.i.IcyManipulator;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.r.RayOfCommand;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Seizures.class, BalduvianBears.class, Mountain.class, IcyManipulator.class})
+@CardUsed({Seizures.class, BalduvianBears.class, Mountain.class, IcyManipulator.class, RayOfCommand.class})
 class SeizuresTest extends BaseCardTest {
 
     @Test
@@ -99,7 +100,7 @@ class SeizuresTest extends BaseCardTest {
     @Test
     @DisplayName("An un-enchanted creature becoming tapped does not trigger")
     void unenchantedCreatureDoesNotTrigger() {
-        Permanent creature = addCreatureReady(player2, new BalduvianBears());
+        addCreatureReady(player2, new BalduvianBears());
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
 
         declareAttackers(player2, List.of(0));
@@ -136,6 +137,86 @@ class SeizuresTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore);
+    }
+
+    @Test
+    @DisplayName("The creature's new controller is offered payment when control changes before resolution")
+    void newControllerCanPayAfterControlChanges() {
+        Permanent creature = addCreatureReady(player2, new BalduvianBears());
+        attachSeizures(creature);
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        stealCreatureInResponseToTrigger(creature);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    @DisplayName("Declining payment damages the creature's controller at resolution after a control change")
+    void newControllerTakesDamageAfterControlChanges() {
+        Permanent creature = addCreatureReady(player2, new BalduvianBears());
+        attachSeizures(creature);
+        int newControllerLife = gd.playerLifeTotals.get(player1.getId());
+        int oldControllerLife = gd.playerLifeTotals.get(player2.getId());
+
+        stealCreatureInResponseToTrigger(creature);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(newControllerLife - 3);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(oldControllerLife);
+    }
+
+    @Test
+    @DisplayName("Declining with enough mana still deals damage and leaves the mana unspent")
+    void canDeclineDespiteHavingEnoughMana() {
+        Permanent creature = addCreatureReady(player2, new BalduvianBears());
+        attachSeizures(creature);
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+
+        activateIcyManipulator(creature);
+        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN,
+                () -> harness.handleMayAbilityChosen(player2, false));
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 3);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Seizures also triggers on its controller's own enchanted creature")
+    void damagesAuraControllerWhenEnchantingOwnCreature() {
+        Permanent creature = addCreatureReady(player1, new BalduvianBears());
+        attachSeizures(creature);
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        activateIcyManipulator(creature);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 3);
+    }
+
+    private void stealCreatureInResponseToTrigger(Permanent creature) {
+        harness.setHand(player1, List.of(new RayOfCommand()));
+        activateIcyManipulator(creature);
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, harness::passBothPriorities);
+        assertThat(creature.isTapped()).isTrue();
+
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
     }
 
     private void attachSeizures(Permanent creature) {
