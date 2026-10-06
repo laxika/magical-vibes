@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -22,9 +23,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({ShrineOfLimitlessPower.class, DementiaBat.class, Forest.class, GrizzlyBears.class, Peek.class})
 class ShrineOfLimitlessPowerTest extends BaseCardTest {
 
-    // ===== Upkeep trigger =====
 
     @Test
     @DisplayName("Upkeep trigger puts a charge counter on Shrine (mandatory)")
@@ -61,7 +62,6 @@ class ShrineOfLimitlessPowerTest extends BaseCardTest {
         assertThat(shrine.getCounterCount(CounterType.CHARGE)).isEqualTo(0);
     }
 
-    // ===== Black spell cast trigger =====
 
     @Test
     @DisplayName("Casting a black spell puts a charge counter on Shrine")
@@ -112,7 +112,6 @@ class ShrineOfLimitlessPowerTest extends BaseCardTest {
         assertThat(shrine.getCounterCount(CounterType.CHARGE)).isEqualTo(0);
     }
 
-    // ===== Activated ability =====
 
     @Test
     @DisplayName("Activating ability causes target player to discard cards equal to charge counters")
@@ -240,13 +239,67 @@ class ShrineOfLimitlessPowerTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
     }
 
-    // ===== Helper methods =====
 
+    @Test
+    @DisplayName("Controller can target themselves and choose which card to discard")
+    void canTargetControllerAndChooseDiscard() {
+        Permanent shrine = addReadyShrine(player1);
+        shrine.setCounterCount(CounterType.CHARGE, 1);
+        harness.setHand(player1, List.of(new Forest(), new DementiaBat()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleCardChosen(player1, 1);
+
+        harness.assertInHand(player1, "Forest");
+        harness.assertNotInHand(player1, "Dementia Bat");
+        harness.assertInGraveyard(player1, "Dementia Bat");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Target discards their entire hand when counters exceed hand size")
+    void countersExceedingHandSizeDiscardAllAvailableCards() {
+        Permanent shrine = addReadyShrine(player1);
+        shrine.setCounterCount(CounterType.CHARGE, 5);
+        harness.setHand(player2, List.of(new Forest(), new DementiaBat()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 1);
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player2, "Forest");
+        harness.assertInGraveyard(player2, "Dementia Bat");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Sacrificing before an upkeep trigger resolves uses only existing counters")
+    void pendingUpkeepCounterDoesNotCountForDiscard() {
+        Permanent shrine = addReadyShrine(player1);
+        shrine.setCounterCount(CounterType.CHARGE, 1);
+        harness.setHand(player2, List.of(new Forest(), new DementiaBat()));
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).remainingCount())
+                .isEqualTo(1);
+        harness.handleCardChosen(player2, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        harness.assertNotOnBattlefield(player1, "Shrine of Limitless Power");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
     private Permanent addReadyShrine(Player player) {
-        ShrineOfLimitlessPower card = new ShrineOfLimitlessPower();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new ShrineOfLimitlessPower());
     }
 }
