@@ -89,4 +89,39 @@ class ScaldTest extends BaseCardTest {
         assertThat(island.isTapped()).isTrue();
         assertThat(gd.getLife(player2.getId())).isEqualTo(20);
     }
+
+    @Test
+    @DisplayName("Scald damage waits for its triggered ability to resolve")
+    void damageWaitsForTriggerResolution() {
+        harness.addToBattlefield(player1, new Scald());
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new Island());
+        harness.setLife(player1, 20);
+
+        harness.tapPermanent(player1, 1);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+
+        harness.tapPermanent(player1, 2);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Scalds controlled by different players each damage the player tapping an Island")
+    void multipleScaldsTriggerForSameIsland() {
+        harness.addToBattlefield(player1, new Scald());
+        harness.addToBattlefield(player2, new Scald());
+        harness.addToBattlefield(player2, new Island());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.tapPermanent(player2, 1);
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+    }
 }
