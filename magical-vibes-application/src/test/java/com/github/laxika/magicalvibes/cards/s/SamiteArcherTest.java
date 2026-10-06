@@ -69,4 +69,58 @@ class SamiteArcherTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Samite Archer");
         assertThat(archer.isTapped()).isTrue();
     }
+
+    @Test
+    @DisplayName("Prevention is consumed by the first point of damage")
+    void preventionIsConsumedByFirstDamage() {
+        addCreatureReady(player1, new SamiteArcher());
+        addCreatureReady(player1, new SamiteArcher());
+        addCreatureReady(player1, new SamiteArcher());
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, 1, null, player2.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player2, 20);
+
+        harness.activateAbility(player1, 2, 1, null, player2.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Damage ability resolves after its source is destroyed in response")
+    void damageResolvesAfterSourceIsDestroyed() {
+        Permanent archer = addCreatureReady(player1, new SamiteArcher());
+        addCreatureReady(player2, new SamiteArcher());
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, 1, null, player2.getId());
+        harness.activateAbility(player2, 0, 1, null, archer.getId());
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Samite Archer");
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Prevention ability resolves after its source is destroyed in response")
+    void preventionResolvesAfterSourceIsDestroyed() {
+        Permanent archer = addCreatureReady(player1, new SamiteArcher());
+        addCreatureReady(player1, new SamiteArcher());
+        addCreatureReady(player2, new SamiteArcher());
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, 0, null, player1.getId());
+        harness.activateAbility(player2, 0, 1, null, archer.getId());
+        harness.passBothPriorities();
+        assertThat(countPermanents(player1, "Samite Archer")).isEqualTo(1);
+        resolveAllTriggers();
+
+        harness.activateAbility(player1, 0, 1, null, player1.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player1, 20);
+    }
 }
