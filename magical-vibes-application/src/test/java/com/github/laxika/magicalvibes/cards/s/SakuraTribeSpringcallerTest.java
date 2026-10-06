@@ -35,9 +35,7 @@ class SakuraTribeSpringcallerTest extends BaseCardTest {
         ManaPool pool = gd.playerManaPools.get(player1.getId());
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        gs.advanceStep(gd);
+        harness.passUntil(player1, TurnStep.BEGINNING_OF_COMBAT);
 
         assertThat(pool.get(ManaColor.GREEN)).isEqualTo(1);
         assertThat(pool.get(ManaColor.RED)).isZero();
@@ -71,5 +69,51 @@ class SakuraTribeSpringcallerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
+    @DisplayName("The upkeep ability uses the stack and resolves after its source leaves")
+    void triggerResolvesAfterSourceLeaves() {
+        harness.addToBattlefield(player1, new SakuraTribeSpringcaller());
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Each Springcaller adds its own persistent mana")
+    void multipleCopiesAddManaIndependently() {
+        harness.addToBattlefield(player1, new SakuraTribeSpringcaller());
+        harness.addToBattlefield(player1, new SakuraTribeSpringcaller());
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
+    @DisplayName("Only the generated mana survives, even when other mana is also green")
+    void ordinaryGreenManaDoesNotPersist() {
+        harness.addToBattlefield(player1, new SakuraTribeSpringcaller());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(3);
+
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
     }
 }
