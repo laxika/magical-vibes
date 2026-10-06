@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.a.Archangel;
 import com.github.laxika.magicalvibes.cards.d.DarajaGriffin;
 import com.github.laxika.magicalvibes.cards.g.GiantCaterpillar;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -23,8 +24,7 @@ class RetributionOfTheMeekTest extends BaseCardTest {
         harness.setHand(player1, List.of(new RetributionOfTheMeek()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         harness.assertNotOnBattlefield(player1, "Archangel");
         harness.assertNotOnBattlefield(player2, "Archangel");
@@ -40,8 +40,7 @@ class RetributionOfTheMeekTest extends BaseCardTest {
         harness.setHand(player1, List.of(new RetributionOfTheMeek()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         harness.assertOnBattlefield(player1, "Daraja Griffin");
         harness.assertOnBattlefield(player1, "Giant Caterpillar");
@@ -55,8 +54,7 @@ class RetributionOfTheMeekTest extends BaseCardTest {
         harness.setHand(player1, List.of(new RetributionOfTheMeek()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         harness.assertNotOnBattlefield(player1, "Archangel");
         harness.assertOnBattlefield(player1, "Giant Caterpillar");
@@ -71,10 +69,48 @@ class RetributionOfTheMeekTest extends BaseCardTest {
         harness.setHand(player1, List.of(new RetributionOfTheMeek()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         harness.assertNotOnBattlefield(player2, "Archangel");
         harness.assertInGraveyard(player2, "Archangel");
+    }
+
+    @Test
+    @DisplayName("Destroys a creature whose counters raise its power to exactly four")
+    void destroysCreatureWithPowerRaisedToFour() {
+        Permanent caterpillar = harness.addToBattlefieldAndReturn(player2, new GiantCaterpillar());
+        caterpillar.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.setHand(player1, List.of(new RetributionOfTheMeek()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        harness.assertNotOnBattlefield(player2, "Giant Caterpillar");
+        harness.assertInGraveyard(player2, "Giant Caterpillar");
+    }
+
+    @Test
+    @DisplayName("Spares a creature whose counters reduce its power below four")
+    void sparesCreatureWithPowerReducedBelowFour() {
+        Permanent archangel = harness.addToBattlefieldAndReturn(player2, new Archangel());
+        archangel.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 2);
+        harness.setHand(player1, List.of(new RetributionOfTheMeek()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        harness.assertOnBattlefield(player2, "Archangel");
+        harness.assertNotInGraveyard(player2, "Archangel");
+    }
+
+    @Test
+    @DisplayName("Resolves on an empty battlefield without requiring a target")
+    void resolvesOnEmptyBattlefield() {
+        harness.setHand(player1, List.of(new RetributionOfTheMeek()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        harness.assertInGraveyard(player1, "Retribution of the Meek");
     }
 }
