@@ -4,33 +4,22 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RaptorHatchling.class, Shock.class, GrizzlyBears.class})
 class RaptorHatchlingTest extends BaseCardTest {
-
-    private Permanent findToken(Player player, String tokenName) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().isToken() && p.getCard().getName().equals(tokenName))
-                .findFirst()
-                .orElseThrow(() -> new AssertionError("Token not found: " + tokenName));
-    }
-
-    private long countTokens(Player player, String tokenName) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().isToken() && p.getCard().getName().equals(tokenName))
-                .count();
-    }
-
-    // ===== Non-combat damage trigger =====
 
     @Test
     @DisplayName("When dealt spell damage, creates a 3/3 green Dinosaur token with trample")
@@ -50,17 +39,17 @@ class RaptorHatchlingTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Hatchling dies from lethal damage but trigger still resolves
-        assertThat(gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> !p.getCard().isToken() && p.getCard().getName().equals("Raptor Hatchling"))
-                .count()).isZero();
+        harness.assertNotOnBattlefield(player2, "Raptor Hatchling");
 
         // Token should be on the battlefield
-        Permanent token = findToken(player2, "Dinosaur");
+        Permanent token = findPermanent(player2, "Dinosaur");
         assertThat(token.getCard().getPower()).isEqualTo(3);
         assertThat(token.getCard().getToughness()).isEqualTo(3);
+        assertThat(token.getCard().isToken()).isTrue();
+        assertThat(token.getCard().getColor()).isEqualTo(CardColor.GREEN);
+        assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.DINOSAUR);
+        assertThat(token.getCard().getKeywords()).contains(Keyword.TRAMPLE);
     }
-
-    // ===== Combat damage trigger =====
 
     @Test
     @DisplayName("When dealt combat damage, creates a 3/3 Dinosaur token")
@@ -77,22 +66,16 @@ class RaptorHatchlingTest extends BaseCardTest {
         hatchling.setBlocking(true);
         hatchling.addBlockingTarget(0);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
         // Resolve combat damage and trigger
-        harness.passBothPriorities(); // combat damage
+        resolveCombat(player1);
         harness.passBothPriorities(); // trigger on stack
         harness.passBothPriorities(); // resolve trigger
 
         // Token should exist
-        Permanent token = findToken(player2, "Dinosaur");
+        Permanent token = findPermanent(player2, "Dinosaur");
         assertThat(token.getCard().getPower()).isEqualTo(3);
         assertThat(token.getCard().getToughness()).isEqualTo(3);
     }
-
-    // ===== Multiple triggers =====
 
     @Test
     @DisplayName("Multiple damage events create multiple tokens")
@@ -118,10 +101,8 @@ class RaptorHatchlingTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve second trigger
 
         // Should have two Dinosaur tokens
-        assertThat(countTokens(player1, "Dinosaur")).isEqualTo(2);
+        assertThat(countPermanents(player1, "Dinosaur")).isEqualTo(2);
     }
-
-    // ===== Token belongs to correct player =====
 
     @Test
     @DisplayName("Token is created under the Hatchling controller's control")
@@ -136,11 +117,9 @@ class RaptorHatchlingTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve trigger
 
         // Token should be on player2's battlefield, not player1's
-        assertThat(countTokens(player2, "Dinosaur")).isEqualTo(1);
-        assertThat(countTokens(player1, "Dinosaur")).isZero();
+        assertThat(countPermanents(player2, "Dinosaur")).isEqualTo(1);
+        assertThat(countPermanents(player1, "Dinosaur")).isZero();
     }
-
-    // ===== Trigger still fires even when creature dies =====
 
     @Test
     @DisplayName("Trigger fires even when Hatchling dies from the damage")
@@ -159,11 +138,32 @@ class RaptorHatchlingTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve trigger
 
         // Hatchling should be dead
-        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> !p.getCard().isToken() && p.getCard().getName().equals("Raptor Hatchling"))
-                .count()).isZero();
+        harness.assertNotOnBattlefield(player1, "Raptor Hatchling");
 
         // But the Dinosaur token should exist
-        assertThat(countTokens(player1, "Dinosaur")).isEqualTo(1);
+        assertThat(countPermanents(player1, "Dinosaur")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Simultaneous damage from two blockers triggers enrage only once")
+    void simultaneousCombatDamageTriggersOnce() {
+        Permanent hatchling = addCreatureReady(player1, new RaptorHatchling());
+        hatchling.setAttacking(true);
+        for (int i = 0; i < 2; i++) {
+            Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+            blocker.setBlocking(true);
+            blocker.addBlockingTarget(0);
+        }
+
+        resolveCombat(player1);
+        if (gd.interaction.isAwaitingInput()) {
+            List<Permanent> blockers = findPermanents(player2, "Grizzly Bears");
+            harness.handleCombatDamageAssigned(player1, 0,
+                    Map.of(blockers.get(0).getId(), 1, blockers.get(1).getId(), 0));
+        }
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Raptor Hatchling");
+        assertThat(countPermanents(player1, "Dinosaur")).isEqualTo(1);
     }
 }
