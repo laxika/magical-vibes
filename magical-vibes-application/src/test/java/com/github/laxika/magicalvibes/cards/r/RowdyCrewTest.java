@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.model.GameLogEntry;
+import com.github.laxika.magicalvibes.model.GameStatus;
+import com.github.laxika.magicalvibes.cards.a.Abundance;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -13,15 +16,14 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({RowdyCrew.class, GrizzlyBears.class, Forest.class, Shock.class, Abundance.class})
 class RowdyCrewTest extends BaseCardTest {
 
-    // ===== ETB: draw and discard =====
 
     @Test
     @DisplayName("ETB draws 3 cards and discards 2 at random (net +1 card in hand)")
@@ -31,14 +33,13 @@ class RowdyCrewTest extends BaseCardTest {
         harness.clearPriorityPassed();
 
         // Set up deck with 3 creatures so we know what type is drawn
-        setDeck(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
 
-        harness.setHand(player1, new ArrayList<>(List.of(new RowdyCrew())));
+        harness.setHand(player1, List.of(new RowdyCrew()));
         harness.addMana(player1, ManaColor.RED, 4);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell → enters battlefield
-        harness.passBothPriorities(); // resolve ETB trigger
+        resolveAllTriggers();
 
         // Drew 3, discarded 2 → 1 card in hand
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
@@ -51,7 +52,6 @@ class RowdyCrewTest extends BaseCardTest {
         assertThat(randomDiscardLogs).isEqualTo(2);
     }
 
-    // ===== Counters: shared card type =====
 
     @Test
     @DisplayName("Gets +1/+1 counters when discarded cards share a card type (all creatures)")
@@ -61,14 +61,13 @@ class RowdyCrewTest extends BaseCardTest {
         harness.clearPriorityPassed();
 
         // All 3 drawn cards are creatures — any 2 discarded will share type
-        setDeck(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
 
-        harness.setHand(player1, new ArrayList<>(List.of(new RowdyCrew())));
+        harness.setHand(player1, List.of(new RowdyCrew()));
         harness.addMana(player1, ManaColor.RED, 4);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve ETB trigger
+        resolveAllTriggers();
 
         Permanent rowdyCrew = findPermanent(player1, "Rowdy Crew");
 
@@ -78,7 +77,6 @@ class RowdyCrewTest extends BaseCardTest {
         assertThat(rowdyCrew.getEffectiveToughness()).isEqualTo(5);
     }
 
-    // ===== Counters: no shared card type =====
 
     @Test
     @DisplayName("No counters when discarded cards do not share a card type")
@@ -89,14 +87,16 @@ class RowdyCrewTest extends BaseCardTest {
 
         // Deck has exactly 1 creature and 1 land — draws only 2 (deck runs out),
         // then discards both at random. Creature and land don't share a card type.
-        setDeck(player1, List.of(new GrizzlyBears(), new Forest()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new Forest()));
 
-        harness.setHand(player1, new ArrayList<>(List.of(new RowdyCrew())));
+        harness.setHand(player1, List.of(new RowdyCrew()));
         harness.addMana(player1, ManaColor.RED, 4);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve ETB trigger
+        resolveAllTriggers();
+
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player2.getId());
 
         Permanent rowdyCrew = findPermanent(player1, "Rowdy Crew");
 
@@ -106,7 +106,6 @@ class RowdyCrewTest extends BaseCardTest {
         assertThat(rowdyCrew.getEffectiveToughness()).isEqualTo(3);
     }
 
-    // ===== Edge: only 1 card to discard =====
 
     @Test
     @DisplayName("No counters when only 1 card can be discarded (not enough for shared type check)")
@@ -116,14 +115,16 @@ class RowdyCrewTest extends BaseCardTest {
         harness.clearPriorityPassed();
 
         // Deck has only 1 card — draws 1, discards 1 (can't discard 2)
-        setDeck(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
 
-        harness.setHand(player1, new ArrayList<>(List.of(new RowdyCrew())));
+        harness.setHand(player1, List.of(new RowdyCrew()));
         harness.addMana(player1, ManaColor.RED, 4);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve ETB trigger
+        resolveAllTriggers();
+
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player2.getId());
 
         Permanent rowdyCrew = findPermanent(player1, "Rowdy Crew");
 
@@ -132,7 +133,6 @@ class RowdyCrewTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
-    // ===== Edge: empty deck =====
 
     @Test
     @DisplayName("No counters and no discard when deck is empty (no cards drawn)")
@@ -142,14 +142,16 @@ class RowdyCrewTest extends BaseCardTest {
         harness.clearPriorityPassed();
 
         // Empty deck — draws 0
-        setDeck(player1, List.of());
+        harness.setLibrary(player1, List.of());
 
-        harness.setHand(player1, new ArrayList<>(List.of(new RowdyCrew())));
+        harness.setHand(player1, List.of(new RowdyCrew()));
         harness.addMana(player1, ManaColor.RED, 4);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve ETB trigger
+        resolveAllTriggers();
+
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player2.getId());
 
         Permanent rowdyCrew = findPermanent(player1, "Rowdy Crew");
 
@@ -162,7 +164,6 @@ class RowdyCrewTest extends BaseCardTest {
         assertThat(randomDiscardLogs).isEqualTo(0);
     }
 
-    // ===== Counters when both instants =====
 
     @Test
     @DisplayName("Gets counters when both discarded cards are instants")
@@ -173,21 +174,22 @@ class RowdyCrewTest extends BaseCardTest {
 
         // Deck has exactly 2 instants — draws 2 (deck runs out), discards both.
         // Both are instants → shared type → counters.
-        setDeck(player1, List.of(new Shock(), new Shock()));
+        harness.setLibrary(player1, List.of(new Shock(), new Shock()));
 
-        harness.setHand(player1, new ArrayList<>(List.of(new RowdyCrew())));
+        harness.setHand(player1, List.of(new RowdyCrew()));
         harness.addMana(player1, ManaColor.RED, 4);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve ETB trigger
+        resolveAllTriggers();
+
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player2.getId());
 
         Permanent rowdyCrew = findPermanent(player1, "Rowdy Crew");
 
         assertThat(rowdyCrew.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
-    // ===== Opponent not affected =====
 
     @Test
     @DisplayName("Opponent's hand and graveyard are not affected")
@@ -196,26 +198,43 @@ class RowdyCrewTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        setDeck(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
 
         int opponentHandSize = gd.playerHands.get(player2.getId()).size();
         int opponentGraveyardSize = gd.playerGraveyards.get(player2.getId()).size();
 
-        harness.setHand(player1, new ArrayList<>(List.of(new RowdyCrew())));
+        harness.setHand(player1, List.of(new RowdyCrew()));
         harness.addMana(player1, ManaColor.RED, 4);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve ETB trigger
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(opponentHandSize);
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(opponentGraveyardSize);
     }
 
-    // ===== Helpers =====
 
-    private void setDeck(com.github.laxika.magicalvibes.model.Player player, List<Card> cards) {
-        gd.playerDecks.get(player.getId()).clear();
-        gd.playerDecks.get(player.getId()).addAll(cards);
+    @Test
+    @DisplayName("Draw replacement choices finish before random discard and counters")
+    void completesDrawChoicesBeforeDiscarding() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addToBattlefield(player1, new Abundance());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player1, List.of(new RowdyCrew()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        for (int i = 0; i < 3; i++) {
+            harness.handleMayAbilityChosen(player1, false);
+        }
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        assertThat(findPermanent(player1, "Rowdy Crew").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
+                .isEqualTo(2);
     }
 }
