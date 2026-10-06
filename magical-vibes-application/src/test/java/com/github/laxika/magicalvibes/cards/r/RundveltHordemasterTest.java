@@ -99,14 +99,144 @@ class RundveltHordemasterTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("An opposing Goblin dying does not exile a card")
+    void opponentGoblinDeathDoesNotTrigger() {
+        Card topCard = new RagingGoblin();
+        harness.setLibrary(player1, List.of(topCard));
+        harness.addToBattlefield(player1, new RundveltHordemaster());
+        Permanent opponentGoblin = harness.addToBattlefieldAndReturn(player2, new RagingGoblin());
+        destroyWithShock(opponentGoblin);
+
+        harness.assertInGraveyard(player2, "Raging Goblin");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(topCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+    }
+
+    @Test
+    @DisplayName("Simultaneous deaths trigger once for the Hordemaster and each other Goblin")
+    void simultaneousGoblinDeathsExileOneCardEach() {
+        Card first = new RagingGoblin();
+        Card second = new GrizzlyBears();
+        Card third = new Shock();
+        harness.setLibrary(player1, List.of(first, second, third));
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new RundveltHordemaster());
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new RagingGoblin());
+        source.setMarkedDamage(1);
+        goblin.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Rundvelt Hordemaster");
+        harness.assertInGraveyard(player1, "Raging Goblin");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(first, second);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(third);
+    }
+
+    @Test
+    @DisplayName("Multiple Hordemasters boost each other and trigger separately")
+    void multipleHordemastersEachTrigger() {
+        Card first = new RagingGoblin();
+        Card second = new GrizzlyBears();
+        Card third = new Shock();
+        harness.setLibrary(player1, List.of(first, second, third));
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new RundveltHordemaster());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new RundveltHordemaster());
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new RagingGoblin());
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(2);
+        goblin.setMarkedDamage(3);
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(first, second);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(third);
+    }
+
+    @Test
+    @DisplayName("A death trigger with an empty library does not make its controller lose")
+    void emptyLibraryDoesNotCauseLoss() {
+        harness.setLibrary(player1, List.of());
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new RundveltHordemaster());
+        destroyWithShock(source);
+
+        assertThat(gd.status).isEqualTo(com.github.laxika.magicalvibes.model.GameStatus.RUNNING);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Rundvelt Hordemaster");
+    }
+
+    @Test
+    @DisplayName("Casting an exiled Goblin still requires paying its mana cost")
+    void exiledGoblinRequiresMana() {
+        Card exiledGoblin = new RagingGoblin();
+        harness.setLibrary(player1, List.of(exiledGoblin));
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new RundveltHordemaster());
+        destroyWithShock(source);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, exiledGoblin.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(exiledGoblin);
+    }
+
+    @Test
+    @DisplayName("Permission to cast an exiled Goblin does not bypass creature timing")
+    void exiledGoblinCannotBeCastOnOpponentsTurn() {
+        Card exiledGoblin = new RagingGoblin();
+        harness.setLibrary(player1, List.of(exiledGoblin));
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new RundveltHordemaster());
+        destroyWithShock(source);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.ensurePriority(player1);
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, exiledGoblin.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(exiledGoblin);
+    }
+
+    @Test
+    @DisplayName("An exiled Goblin remains castable on the controller's next turn after the source dies")
+    void permissionSurvivesUntilNextTurnWithoutSource() {
+        Card exiledGoblin = new RagingGoblin();
+        harness.setLibrary(player1, List.of(exiledGoblin, new GrizzlyBears(), new GrizzlyBears()));
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new RundveltHordemaster());
+        destroyWithShock(source);
+        harness.passUntilWithNoAttackers(player1, com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castFromExile(player1, exiledGoblin.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Raging Goblin");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(exiledGoblin);
+    }
+
+    @Test
+    @DisplayName("An uncast exiled Goblin stays exiled but loses casting permission after the next turn")
+    void permissionExpiresAfterNextTurn() {
+        Card exiledGoblin = new RagingGoblin();
+        harness.setLibrary(player1, List.of(exiledGoblin, new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player2, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new RundveltHordemaster());
+        destroyWithShock(source);
+        harness.passUntilWithNoAttackers(player1, com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player2, com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, exiledGoblin.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(exiledGoblin);
+    }
+
     private void destroyWithShock(Permanent target) {
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
         harness.forceActivePlayer(player2);
         harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.castInstant(player2, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, target.getId());
         harness.passBothPriorities();
     }
 }
