@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.github.laxika.magicalvibes.cards.f.FightingDrake;
+import com.github.laxika.magicalvibes.cards.l.LightningBlast;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,7 +14,7 @@ import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-@CardUsed({Shocker.class, FightingDrake.class, Mountain.class})
+@CardUsed({Shocker.class, FightingDrake.class, Mountain.class, SoulsFire.class, LightningBlast.class})
 class ShockerTest extends BaseCardTest {
 
     @Test
@@ -74,7 +75,6 @@ class ShockerTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(SoulsFire.class)
     @DisplayName("Noncombat damage to a player also triggers the ability")
     void noncombatDamageTriggersAbility() {
         Permanent shocker = addCreatureReady(player1, new Shocker());
@@ -91,6 +91,56 @@ class ShockerTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The trigger uses the hand at resolution and survives Shocker leaving the battlefield")
+    void responseChangesHandBeforeTriggerResolves() {
+        addAttackingShocker(player1);
+        Permanent shocker = findPermanent(player1, "Shocker");
+        FightingDrake discardedCard = new FightingDrake();
+        Mountain drawnCard = new Mountain();
+        harness.setHand(player2, List.of(new LightningBlast(), discardedCard));
+        harness.setLibrary(player2, List.of(drawnCard, new Mountain()));
+        harness.addMana(player2, ManaColor.RED, 4);
+
+        resolveCombat();
+        assertThat(gd.stack).hasSize(1);
+        harness.castInstant(player2, 0, shocker.getId());
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Shocker");
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(drawnCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(discardedCard);
+        harness.assertInGraveyard(player2, "Lightning Blast");
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Damage to Shocker's controller makes that controller discard and draw")
+    void damageToControllerWheelsControllersHand() {
+        Permanent shocker = addCreatureReady(player1, new Shocker());
+        FightingDrake discardedCard = new FightingDrake();
+        Mountain discardedLand = new Mountain();
+        Mountain firstDraw = new Mountain();
+        Mountain secondDraw = new Mountain();
+        harness.setHand(player1, List.of(new SoulsFire(), discardedCard, discardedLand));
+        harness.setLibrary(player1, List.of(firstDraw, secondDraw, new Mountain()));
+        harness.setHand(player2, List.of(new FightingDrake()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castInstant(player1, 0, List.of(shocker.getId(), player1.getId()));
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 19);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(discardedCard, discardedLand);
+        harness.assertInGraveyard(player1, "Soul's Fire");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
     }
 
     private void addAttackingShocker(Player player) {
