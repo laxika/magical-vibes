@@ -69,4 +69,109 @@ class RoshanHiddenMagisterTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).contains(drawn);
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore - 1);
     }
+
+    @Test
+    void triggersWhenRoshanItselfTurnsFaceUp() {
+        Permanent roshan = harness.addToBattlefieldAndReturn(player1, new RoshanHiddenMagister());
+        roshan.setFaceDownAsCloaked();
+        Forest drawn = new Forest();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(drawn));
+        harness.setLife(player1, 20);
+
+        gs.turnPermanentFaceUpWithoutPayingManaCost(gd, roshan);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+        harness.assertLife(player1, 19);
+    }
+
+    @Test
+    void doesNotTriggerForAnOpponentsPermanent() {
+        addCreatureReady(player1, new RoshanHiddenMagister());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        opponent.setFaceDownAsCloaked();
+        Forest undrawn = new Forest();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(undrawn));
+        harness.setLife(player1, 20);
+
+        gs.turnPermanentFaceUpWithoutPayingManaCost(gd, opponent);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    void triggerResolvesAfterBothRoshanAndTheTurnedPermanentLeave() {
+        Permanent roshan = addCreatureReady(player1, new RoshanHiddenMagister());
+        Permanent faceDown = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        faceDown.setFaceDownAsCloaked();
+        Forest drawn = new Forest();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(drawn));
+        harness.setLife(player1, 20);
+
+        gs.turnPermanentFaceUpWithoutPayingManaCost(gd, faceDown);
+        harness.inMutationScope(() -> {
+            harness.getPermanentRemovalService().removePermanentToGraveyard(gd, faceDown);
+            harness.getPermanentRemovalService().removePermanentToGraveyard(gd, roshan);
+        });
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+        harness.assertLife(player1, 19);
+    }
+
+    @Test
+    void faceDownRoshanDoesNotGrantTypesOrTriggerForOtherPermanents() {
+        Permanent roshan = harness.addToBattlefieldAndReturn(player1, new RoshanHiddenMagister());
+        roshan.setFaceDownAsCloaked();
+        Permanent faceDown = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        faceDown.setFaceDownAsCloaked();
+        GrizzlyBears handCreature = new GrizzlyBears();
+        harness.setHand(player1, List.of(handCreature));
+
+        assertThat(gqs.hasEffectiveSubtype(gd, faceDown, CardSubtype.ASSASSIN)).isFalse();
+        assertThat(gqs.cardHasSubtype(handCreature, CardSubtype.ASSASSIN, gd, player1.getId())).isFalse();
+        assertThat(gqs.hasKeyword(gd, faceDown, Keyword.MENACE)).isFalse();
+
+        gs.turnPermanentFaceUpWithoutPayingManaCost(gd, faceDown);
+
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void grantsAssassinToCreatureSpellsAndPreservesTheirOtherTypes() {
+        addCreatureReady(player1, new RoshanHiddenMagister());
+        GrizzlyBears spell = new GrizzlyBears();
+
+        harness.castFromHand(player1, spell, "{1}{G}");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.cardHasSubtype(spell, CardSubtype.ASSASSIN, gd, player1.getId())).isTrue();
+        assertThat(gqs.cardHasSubtype(spell, CardSubtype.BEAR, gd, player1.getId())).isTrue();
+        harness.passBothPriorities();
+        Permanent resolved = findPermanent(player1, "Grizzly Bears");
+        assertThat(gqs.hasEffectiveSubtype(gd, resolved, CardSubtype.ASSASSIN)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, resolved, CardSubtype.BEAR)).isTrue();
+    }
+
+    @Test
+    void triggersWhenTheTurnedPermanentIsNotACreatureAfterTurningFaceUp() {
+        addCreatureReady(player1, new RoshanHiddenMagister());
+        Permanent faceDownLand = harness.addToBattlefieldAndReturn(player1, new Forest());
+        faceDownLand.setFaceDownAsCloaked();
+        Forest drawn = new Forest();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(drawn));
+        harness.setLife(player1, 20);
+
+        gs.turnPermanentFaceUpWithoutPayingManaCost(gd, faceDownLand);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+        harness.assertLife(player1, 19);
+    }
 }
