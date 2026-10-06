@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -42,9 +43,8 @@ class ShortCircuitTest extends BaseCardTest {
     @DisplayName("Short Circuit gives an enchanted creature -3/-0 and removes flying")
     void debuffsEnchantedCreatureAndRemovesFlying() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new AirElemental());
-        Permanent aura = new Permanent(new ShortCircuit());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new ShortCircuit());
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
@@ -55,9 +55,8 @@ class ShortCircuitTest extends BaseCardTest {
     @DisplayName("Short Circuit has no creature effect on an enchanted noncreature artifact")
     void doesNotAffectNoncreatureArtifact() {
         Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
-        Permanent aura = new Permanent(new ShortCircuit());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new ShortCircuit());
         aura.setAttachedTo(artifact.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         assertThat(gqs.isCreature(gd, artifact)).isFalse();
         assertThat(gqs.getEffectivePower(gd, artifact)).isEqualTo(0);
@@ -68,15 +67,52 @@ class ShortCircuitTest extends BaseCardTest {
     @DisplayName("Short Circuit's effects stop when it leaves the battlefield")
     void effectsStopWhenRemoved() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new AirElemental());
-        Permanent aura = new Permanent(new ShortCircuit());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new ShortCircuit());
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         gd.playerBattlefields.get(player1.getId()).remove(aura);
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Short Circuit can be cast during the opponent's combat")
+    void canCastDuringOpponentsCombat() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.setHand(player1, List.of(new ShortCircuit()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Short Circuit");
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Multiple Short Circuits stack and can reduce power below zero")
+    void multipleCopiesStack() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new ShortCircuit());
+        first.setAttachedTo(creature.getId());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new ShortCircuit());
+        second.setAttachedTo(creature.getId());
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(-2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isFalse();
+
+        gd.playerBattlefields.get(player1.getId()).remove(first);
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isFalse();
     }
 
     @Test
