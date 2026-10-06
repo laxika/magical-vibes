@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.a.AngelsFeather;
+import com.github.laxika.magicalvibes.cards.b.BidentOfThassa;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,7 +14,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RunawayTrashBot.class, AngelsFeather.class, GloriousAnthem.class, GrizzlyBears.class})
+@CardUsed({RunawayTrashBot.class, AngelsFeather.class, GloriousAnthem.class, GrizzlyBears.class,
+        BidentOfThassa.class})
 class RunawayTrashBotTest extends BaseCardTest {
 
     @Test
@@ -40,6 +42,34 @@ class RunawayTrashBotTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new GloriousAnthem(), new GrizzlyBears()));
 
         assertThat(gqs.getEffectivePower(gd, bot)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, bot)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Gets no boost from an empty graveyard or qualifying cards in other zones")
+    void ignoresOtherZonesAndEmptyGraveyard() {
+        Permanent bot = addBot(player1);
+        harness.addToBattlefield(player1, new AngelsFeather());
+        harness.setExile(player1, List.of(new AngelsFeather()));
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of(new GloriousAnthem()));
+
+        assertThat(gqs.getEffectivePower(gd, bot)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, bot)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Counts an artifact enchantment once and loses its boost when the graveyard empties")
+    void countsArtifactEnchantmentOnce() {
+        Permanent bot = addBot(player1);
+        harness.setGraveyard(player1, List.of(new BidentOfThassa()));
+
+        assertThat(gqs.getEffectivePower(gd, bot)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, bot)).isEqualTo(4);
+
+        harness.setGraveyard(player1, List.of());
+
+        assertThat(gqs.getEffectivePower(gd, bot)).isZero();
         assertThat(gqs.getEffectiveToughness(gd, bot)).isEqualTo(4);
     }
 
