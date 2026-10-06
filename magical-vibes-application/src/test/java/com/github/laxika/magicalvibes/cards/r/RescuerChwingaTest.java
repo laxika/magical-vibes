@@ -3,14 +3,13 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -80,11 +79,73 @@ class RescuerChwingaTest extends BaseCardTest {
                 .doesNotContain(bearsId);
     }
 
+    @Test
+    @DisplayName("Accepting with no other permanent cannot return the source")
+    void noOtherPermanentLeavesSourceOnBattlefield() {
+        castAndResolve();
+        if (gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class) != null) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Rescuer Chwinga");
+        harness.assertNotInHand(player1, "Rescuer Chwinga");
+    }
+
+    @Test
+    @DisplayName("Another Rescuer Chwinga can be returned without returning the source")
+    void returnsAnotherCreatureOfTheSameName() {
+        RescuerChwinga earlierChwinga = new RescuerChwinga();
+        UUID earlierId = harness.addToBattlefieldAndReturn(player1, earlierChwinga).getId();
+
+        castAndResolve();
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactly(earlierId);
+        harness.handlePermanentChosen(player1, earlierId);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(earlierChwinga);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .hasSize(1)
+                .noneMatch(permanent -> permanent.getId().equals(earlierId));
+        harness.assertOnBattlefield(player1, "Rescuer Chwinga");
+    }
+
+    @Test
+    @DisplayName("A controlled permanent returns to its owner's hand")
+    void returnsBorrowedPermanentToOwner() {
+        Island borrowedIsland = new Island();
+        borrowedIsland.setOwnerId(player2.getId());
+        UUID islandId = harness.addToBattlefieldAndReturn(player1, borrowedIsland).getId();
+
+        castAndResolve();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, islandId);
+
+        harness.assertNotOnBattlefield(player1, "Island");
+        harness.assertNotInHand(player1, "Island");
+        assertThat(gd.playerHands.get(player2.getId())).contains(borrowedIsland);
+        harness.assertOnBattlefield(player1, "Rescuer Chwinga");
+    }
+
+    @Test
+    @DisplayName("Flash allows casting during the opponent's upkeep")
+    void canCastDuringOpponentsUpkeep() {
+        harness.addToBattlefield(player1, new Island());
+        UUID islandId = harness.getPermanentId(player1, "Island");
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        castAndResolve();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, islandId);
+
+        harness.assertOnBattlefield(player1, "Rescuer Chwinga");
+        harness.assertInHand(player1, "Island");
+    }
+
     private void castAndResolve() {
-        harness.setHand(player1, List.of(new RescuerChwinga()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new RescuerChwinga(), "{1}{W}");
         harness.passBothPriorities();
         harness.passBothPriorities();
     }
