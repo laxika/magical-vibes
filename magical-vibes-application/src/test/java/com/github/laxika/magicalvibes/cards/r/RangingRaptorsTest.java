@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -8,13 +7,12 @@ import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -23,9 +21,9 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RangingRaptors.class, Shock.class, GrizzlyBears.class, HillGiant.class,
+        Plains.class, Forest.class, Island.class})
 class RangingRaptorsTest extends BaseCardTest {
-
-    // ===== Spell damage trigger: accept =====
 
     @Test
     @DisplayName("Shock deals damage to Ranging Raptors, accept may, choose basic land — enters tapped, Raptors survives")
@@ -53,7 +51,7 @@ class RangingRaptorsTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
 
         int battlefieldBefore = gd.playerBattlefields.get(player1.getId()).size();
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         // Chosen land should be on the battlefield tapped
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldBefore + 1);
@@ -63,8 +61,6 @@ class RangingRaptorsTest extends BaseCardTest {
         // Ranging Raptors should survive (2 damage to a 2/3)
         harness.assertOnBattlefield(player1, "Ranging Raptors");
     }
-
-    // ===== Spell damage trigger: decline =====
 
     @Test
     @DisplayName("Shock deals damage to Ranging Raptors, decline may — no search")
@@ -89,8 +85,6 @@ class RangingRaptorsTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Ranging Raptors");
     }
 
-    // ===== Combat damage trigger: non-lethal =====
-
     @Test
     @DisplayName("Ranging Raptors takes non-lethal combat damage, accept may, choose basic land")
     void nonLethalCombatDamageAcceptSearch() {
@@ -108,13 +102,8 @@ class RangingRaptorsTest extends BaseCardTest {
         raptors.setBlocking(true);
         raptors.addBlockingTarget(0);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities(); // advance to combat damage
-        harness.passBothPriorities(); // deal combat damage, triggers go on stack
-        harness.passBothPriorities(); // resolve MayEffect → may prompt
+        resolveCombat(player1);
+        resolveAllTriggers(); // resolve MayEffect → may prompt
 
         GameData gd = harness.getGameData();
 
@@ -126,7 +115,7 @@ class RangingRaptorsTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, true);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
 
-        harness.getGameService().handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player2, 0);
 
         // Land should be on the battlefield tapped
         assertThat(gd.playerBattlefields.get(player2.getId()))
@@ -135,8 +124,6 @@ class RangingRaptorsTest extends BaseCardTest {
         // Ranging Raptors should survive (2/3 took 2 damage)
         harness.assertOnBattlefield(player2, "Ranging Raptors");
     }
-
-    // ===== Combat damage trigger: lethal =====
 
     @Test
     @DisplayName("Ranging Raptors takes lethal combat damage, enrage still triggers")
@@ -155,13 +142,8 @@ class RangingRaptorsTest extends BaseCardTest {
         raptors.setBlocking(true);
         raptors.addBlockingTarget(0);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities(); // advance to combat damage
-        harness.passBothPriorities(); // deal combat damage, triggers go on stack
-        harness.passBothPriorities(); // resolve MayEffect → may prompt
+        resolveCombat(player1);
+        resolveAllTriggers(); // resolve MayEffect → may prompt
 
         GameData gd = harness.getGameData();
 
@@ -170,7 +152,7 @@ class RangingRaptorsTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, true);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
 
-        harness.getGameService().handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player2, 0);
 
         // Ranging Raptors should be in the graveyard (2/3 took 3 lethal from Hill Giant)
         harness.assertInGraveyard(player2, "Ranging Raptors");
@@ -180,8 +162,6 @@ class RangingRaptorsTest extends BaseCardTest {
                 .anyMatch(p -> p.getCard().hasType(CardType.LAND) && p.isTapped());
     }
 
-    // ===== No basic lands in library =====
-
     @Test
     @DisplayName("Ranging Raptors enrage triggers, accept may, no basic lands — no search prompt")
     void noBasicLandsNoPrompt() {
@@ -190,9 +170,7 @@ class RangingRaptorsTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
 
         // Library with only non-basic cards
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
 
         UUID raptorsId = harness.getPermanentId(player1, "Ranging Raptors");
         harness.castInstant(player2, 0, raptorsId);
@@ -209,9 +187,74 @@ class RangingRaptorsTest extends BaseCardTest {
                 .noneMatch(p -> p.getCard().hasType(CardType.LAND));
     }
 
+    @Test
+    @DisplayName("An accepted search may fail to find even when a basic land is available")
+    void acceptedSearchCanFailToFind() {
+        harness.addToBattlefield(player1, new RangingRaptors());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, harness.getPermanentId(player1, "Ranging Raptors"));
+        harness.passBothPriorities();
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gameLogContains("shuffled")).isTrue();
+    }
+
+    @Test
+    @DisplayName("An accepted search of an empty library finishes without adding a land")
+    void acceptedSearchOfEmptyLibrary() {
+        harness.addToBattlefield(player1, new RangingRaptors());
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, harness.getPermanentId(player1, "Ranging Raptors"));
+        harness.passBothPriorities();
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gameLogContains("shuffled")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Separate damage events each trigger enrage, including lethal spell damage")
+    void separateDamageEventsEachTrigger() {
+        harness.addToBattlefield(player1, new RangingRaptors());
+        harness.setLibrary(player1, List.of(new Forest(), new Plains()));
+        harness.setHand(player2, List.of(new Shock(), new Shock()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        UUID raptorsId = harness.getPermanentId(player1, "Ranging Raptors");
+
+        harness.castInstant(player2, 0, raptorsId);
+        harness.passBothPriorities();
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+
+        harness.castInstant(player2, 0, raptorsId);
+        harness.passBothPriorities();
+        resolveAllTriggers();
+        harness.assertInGraveyard(player1, "Ranging Raptors");
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2)
+                .allMatch(p -> p.getCard().hasType(CardType.LAND) && p.isTapped());
+    }
+
     private void setupLibrary(com.github.laxika.magicalvibes.model.Player player) {
-        List<Card> deck = harness.getGameData().playerDecks.get(player.getId());
-        deck.clear();
-        deck.addAll(List.of(new Plains(), new Forest(), new Island(), new GrizzlyBears()));
+        harness.setLibrary(player, List.of(new Plains(), new Forest(), new Island(), new GrizzlyBears()));
     }
 }
