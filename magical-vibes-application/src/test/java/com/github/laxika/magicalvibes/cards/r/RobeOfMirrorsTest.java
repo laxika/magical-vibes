@@ -245,15 +245,68 @@ class RobeOfMirrorsTest extends BaseCardTest {
     void cannotEnchantALand() {
         // A creature must exist so the spell is playable; targeting the land is then rejected.
         addCreatureReady(player2, new GrizzlyBears());
-        harness.addToBattlefield(player1, new Mountain());
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
         harness.setHand(player1, List.of(new RobeOfMirrors()));
         harness.addMana(player1, ManaColor.BLUE, 1);
-
-        Permanent mountain = findPermanent(player1, "Mountain");
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, mountain.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("The Aura remains targetable and bouncing it removes shroud")
+    void auraItselfRemainsTargetable() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent robe = attachRobe(bears, player1);
+        harness.setHand(player1, List.of(new Boomerang()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castAndResolveInstant(player1, 0, robe.getId());
+
+        harness.assertInHand(player1, "Robe of Mirrors");
+        harness.assertNotOnBattlefield(player1, "Robe of Mirrors");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.SHROUD)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A spell whose target gains shroud does not resolve")
+    void gainingShroudInvalidatesPendingSpellTarget() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Boomerang()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castInstant(player1, 0, bears.getId());
+
+        attachRobe(bears, player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Boomerang");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Gaining shroud does not remove an Aura already attached")
+    void existingAuraRemainsAttachedAfterGainingShroud() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Pacifism()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+        Permanent pacifism = findPermanent(player1, "Pacifism");
+
+        harness.setHand(player1, List.of(new RobeOfMirrors()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+        harness.runStateBasedActions();
+
+        harness.assertOnBattlefield(player1, "Pacifism");
+        harness.assertOnBattlefield(player1, "Robe of Mirrors");
+        assertThat(pacifism.getAttachedTo()).isEqualTo(bears.getId());
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.SHROUD)).isTrue();
     }
 
     private Permanent attachRobe(Permanent creature, Player controller) {
