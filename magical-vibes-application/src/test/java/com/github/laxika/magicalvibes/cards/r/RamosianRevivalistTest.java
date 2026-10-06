@@ -117,6 +117,59 @@ class RamosianRevivalistTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Cannot activate the tap ability while summoning sick")
+    void requiresSourceWithoutSummoningSickness() {
+        harness.addToBattlefield(player1, new RamosianRevivalist());
+        Card target = new SamiteCenserBearer();
+        harness.setGraveyard(player1, List.of(target));
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, 0, 0, List.of(target.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Does not return another Rebel when the target leaves the graveyard")
+    void doesNotReplaceMissingTarget() {
+        int revivalistIndex = addReadyRevivalist();
+        Card target = new SamiteCenserBearer();
+        Card otherRebel = new RamosianRevivalist();
+        harness.setGraveyard(player1, List.of(target, otherRebel));
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.activateAbilityWithGraveyardTargets(player1, revivalistIndex, 0, List.of(target.getId()));
+        gd.playerGraveyards.get(player1.getId()).remove(target);
+        harness.setExile(player1, List.of(target));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Samite Censer-Bearer");
+        harness.assertInGraveyard(player1, "Ramosian Revivalist");
+        assertThat(countPermanents(player1, "Ramosian Revivalist")).isEqualTo(1);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(target);
+    }
+
+    @Test
+    @DisplayName("The ability resolves even after its source leaves the battlefield")
+    void resolvesAfterSourceLeavesBattlefield() {
+        int revivalistIndex = addReadyRevivalist();
+        Permanent source = findPermanent(player1, "Ramosian Revivalist");
+        Card target = new SamiteCenserBearer();
+        harness.setGraveyard(player1, List.of(target));
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.activateAbilityWithGraveyardTargets(player1, revivalistIndex, 0, List.of(target.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        gd.playerGraveyards.get(player1.getId()).add(source.getCard());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Samite Censer-Bearer");
+        harness.assertNotInGraveyard(player1, "Samite Censer-Bearer");
+        harness.assertInGraveyard(player1, "Ramosian Revivalist");
+        assertThat(findPermanent(player1, "Samite Censer-Bearer").isTapped()).isFalse();
+        assertThat(findPermanent(player1, "Samite Censer-Bearer").isSummoningSick()).isTrue();
+    }
     private int addReadyRevivalist() {
         Permanent revivalist = addCreatureReady(player1, new RamosianRevivalist());
         return gd.playerBattlefields.get(player1.getId()).indexOf(revivalist);
