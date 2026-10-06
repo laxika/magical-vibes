@@ -74,6 +74,68 @@ class SeekerTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    @DisplayName("White and artifact creatures can block together")
+    void canBeBlockedByMixedAllowedBlockers() {
+        enchantedAttacker();
+        Permanent lions = addCreatureReady(player2, new SavannahLions());
+        Permanent thopter = addCreatureReady(player2, new Ornithopter());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+
+        assertThat(lions.isBlocking()).isTrue();
+        assertThat(thopter.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Every blocker must be white or an artifact creature")
+    void everyBlockerMustMatchRestriction() {
+        enchantedAttacker();
+        addCreatureReady(player2, new SavannahLions());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("artifact creatures and white creatures");
+    }
+
+    @Test
+    @DisplayName("Restriction ends when Seeker leaves the battlefield")
+    void removingAuraRestoresNormalBlocking() {
+        enchantedAttacker();
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, findPermanent(player1, "Seeker")));
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Seeker can enchant an opponent's creature and restrict its blockers")
+    void canEnchantOpponentsCreature() {
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Seeker()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.castEnchantment(player1, 0, attacker.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Seeker").getAttachedTo()).isEqualTo(attacker.getId());
+        attacker.setAttacking(true);
+        addCreatureReady(player1, new GrizzlyBears());
+        prepareDeclareBlockers(player2);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(1, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("artifact creatures and white creatures");
+    }
+
     private void enchantedAttacker() {
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
