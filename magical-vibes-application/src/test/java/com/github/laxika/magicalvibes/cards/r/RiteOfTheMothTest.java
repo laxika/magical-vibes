@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
+import com.github.laxika.magicalvibes.cards.s.Solemnity;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RiteOfTheMoth.class, GrizzlyBears.class, HolyDay.class})
+@CardUsed({RiteOfTheMoth.class, GrizzlyBears.class, HolyDay.class, Solemnity.class})
 class RiteOfTheMothTest extends BaseCardTest {
 
     @Test
@@ -27,8 +28,7 @@ class RiteOfTheMothTest extends BaseCardTest {
         harness.setHand(player1, List.of(new RiteOfTheMoth()));
         addNormalMana();
 
-        harness.castSorcery(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, creature.getId());
 
         Permanent returned = findPermanent(player1, "Grizzly Bears");
         assertThat(returned.getCounterCount(CounterType.FINALITY)).isEqualTo(1);
@@ -42,8 +42,7 @@ class RiteOfTheMothTest extends BaseCardTest {
         harness.setHand(player1, List.of(new RiteOfTheMoth()));
         addNormalMana();
 
-        harness.castSorcery(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, creature.getId());
         Permanent returned = findPermanent(player1, "Grizzly Bears");
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
@@ -75,13 +74,78 @@ class RiteOfTheMothTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(rite, creature));
         addFlashbackMana();
 
-        harness.castFlashback(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, creature.getId());
 
         Permanent returned = findPermanent(player1, "Grizzly Bears");
         assertThat(returned.getCounterCount(CounterType.FINALITY)).isEqualTo(1);
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getId().equals(rite.getId()));
+    }
+
+    @Test
+    @DisplayName("Cannot target a creature in an opponent's graveyard")
+    void cannotTargetOpponentsCreature() {
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(creature));
+        harness.setHand(player1, List.of(new RiteOfTheMoth()));
+        addNormalMana();
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("An illegal target prevents the return and puts the normal spell in the graveyard")
+    void removedTargetStopsNormalReturn() {
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setHand(player1, List.of(new RiteOfTheMoth()));
+        addNormalMana();
+
+        harness.castSorcery(player1, 0, creature.getId());
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Rite of the Moth");
+    }
+
+    @Test
+    @DisplayName("Flashback exiles the spell even when its target becomes illegal")
+    void removedTargetStillExilesFlashbackSpell() {
+        Card rite = new RiteOfTheMoth();
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(rite, creature));
+        addFlashbackMana();
+
+        harness.castFlashback(player1, 0, creature.getId());
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Rite of the Moth");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getId().equals(rite.getId()));
+    }
+
+    @Test
+    @DisplayName("Solemnity prevents the finality counter without preventing the return")
+    void solemnityPreventsFinalityCounter() {
+        harness.addToBattlefield(player2, new Solemnity());
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setHand(player1, List.of(new RiteOfTheMoth()));
+        addNormalMana();
+
+        harness.castAndResolveSorcery(player1, 0, creature.getId());
+
+        Permanent returned = findPermanent(player1, "Grizzly Bears");
+        assertThat(returned.getCounterCount(CounterType.FINALITY)).isZero();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, returned));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .noneMatch(card -> card.getId().equals(creature.getId()));
     }
 
     private void addNormalMana() {
