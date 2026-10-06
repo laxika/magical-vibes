@@ -1,12 +1,15 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.c.Cloudshift;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +19,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ShelteringWord.class, GrizzlyBears.class, AirElemental.class,
+        SnareTheSkies.class, Cloudshift.class, Forest.class})
 class ShelteringWordTest extends BaseCardTest {
 
     @Test
@@ -74,10 +79,72 @@ class ShelteringWordTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature you control");
     }
 
+    @Test
+    @DisplayName("Uses toughness at resolution after a pump spell resolves in response")
+    void usesToughnessAtResolution() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new ShelteringWord(), new SnareTheSkies()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castInstant(player1, 0, bears.getId());
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 23);
+        assertThat(bears.getGrantedKeywords()).contains(Keyword.HEXPROOF);
+    }
+
+    @Test
+    @DisplayName("Does not gain life when the target is blinked in response")
+    void blinkedTargetMakesSpellFailToResolve() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new ShelteringWord(), new Cloudshift()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castInstant(player1, 0, bears.getId());
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+        resolveAllTriggers();
+
+        Permanent returnedBears = findPermanent(player1, "Grizzly Bears");
+        assertThat(returnedBears.getId()).isNotEqualTo(bears.getId());
+        assertThat(returnedBears.getGrantedKeywords()).doesNotContain(Keyword.HEXPROOF);
+        harness.assertLife(player1, 20);
+        harness.assertInGraveyard(player1, "Sheltering Word");
+    }
+
+    @Test
+    @DisplayName("Granted hexproof prevents opposing targeting but allows your own spells")
+    void hexproofRestrictsOnlyOpponents() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        castResolve(bears);
+        harness.setHand(player2, List.of(new SnareTheSkies()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, bears.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.setHand(player1, List.of(new ShelteringWord()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+
+        harness.assertLife(player1, 24);
+    }
+
+    @Test
+    @DisplayName("Cannot target a noncreature permanent you control")
+    void cannotTargetNoncreature() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.setHand(player1, List.of(new ShelteringWord()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, forest.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
     private void castResolve(Permanent target) {
         harness.setHand(player1, List.of(new ShelteringWord()));
         harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 }
