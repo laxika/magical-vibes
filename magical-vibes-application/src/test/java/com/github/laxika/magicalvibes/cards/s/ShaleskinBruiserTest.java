@@ -82,4 +82,48 @@ class ShaleskinBruiserTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, bruiser)).isEqualTo(baseToughness);
     }
 
+    @Test
+    @DisplayName("Two attacking Bruisers each count the other but not themselves")
+    void attackingBruisersBoostEachOther() {
+        Permanent first = addCreatureReady(player1, new ShaleskinBruiser());
+        Permanent second = addCreatureReady(player1, new ShaleskinBruiser());
+        int firstBasePower = gqs.getEffectivePower(gd, first);
+        int secondBasePower = gqs.getEffectivePower(gd, second);
+
+        declareAttackers(List.of(0, 1));
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(firstBasePower + 3);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(secondBasePower + 3);
+    }
+
+    @Test
+    @DisplayName("Counts Beasts still attacking when the trigger resolves")
+    void countsAttackingBeastsAtResolution() {
+        Permanent bruiser = addCreatureReady(player1, new ShaleskinBruiser());
+        Permanent beast = addCreatureReady(player1, new BarkhideMauler());
+        int basePower = gqs.getEffectivePower(gd, bruiser);
+
+        declareAttackers(List.of(0, 1));
+        assertThat(gqs.getEffectivePower(gd, bruiser)).isEqualTo(basePower);
+        beast.setAttacking(false);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, bruiser)).isEqualTo(basePower);
+    }
+
+    @Test
+    @DisplayName("The resolved boost remains when another Beast stops attacking")
+    void resolvedBoostDoesNotRecalculate() {
+        Permanent bruiser = addCreatureReady(player1, new ShaleskinBruiser());
+        Permanent beast = addCreatureReady(player1, new BarkhideMauler());
+        int basePower = gqs.getEffectivePower(gd, bruiser);
+
+        declareAttackers(List.of(0, 1));
+        harness.passBothPriorities();
+        beast.setAttacking(false);
+
+        assertThat(gqs.getEffectivePower(gd, bruiser)).isEqualTo(basePower + 3);
+    }
+
 }
