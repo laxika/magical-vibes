@@ -109,4 +109,57 @@ class RemandTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player2, 0, watchwolf.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Can counter your own spell and return it while drawing a card")
+    void canCounterOwnSpell() {
+        Watchwolf watchwolf = new Watchwolf();
+        Watchwolf drawnCard = new Watchwolf();
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.setHand(player1, List.of(watchwolf, new Remand()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castCreature(player1, 0);
+        harness.castAndResolveInstant(player1, 0, watchwolf.getId());
+
+        assertThat(harness.getGameData().playerHands.get(player1.getId()))
+                .containsExactlyInAnyOrder(watchwolf, drawnCard);
+        harness.assertNotOnBattlefield(player1, "Watchwolf");
+        harness.assertNotInGraveyard(player1, "Watchwolf");
+        harness.assertInGraveyard(player1, "Remand");
+        assertThat(harness.getGameData().stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not draw when its target leaves the stack before resolution")
+    void doesNotDrawWhenTargetLeavesStack() {
+        Watchwolf watchwolf = new Watchwolf();
+        Watchwolf drawnCard = new Watchwolf();
+        Remand firstRemand = new Remand();
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.setLibrary(player2, List.of(new Watchwolf()));
+        harness.setHand(player1, List.of(watchwolf, new Remand()));
+        harness.setHand(player2, List.of(firstRemand));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castCreature(player1, 0);
+        harness.castInstant(player2, 0, watchwolf.getId());
+        harness.castAndResolveInstant(player1, 0, watchwolf.getId());
+        harness.passBothPriorities();
+
+        assertThat(harness.getGameData().playerHands.get(player1.getId()))
+                .containsExactlyInAnyOrder(watchwolf, drawnCard);
+        assertThat(harness.getGameData().playerHands.get(player2.getId())).isEmpty();
+        assertThat(harness.getGameData().playerDecks.get(player2.getId())).hasSize(1);
+        harness.assertInGraveyard(player2, "Remand");
+        assertThat(harness.getGameData().stack).isEmpty();
+    }
 }
