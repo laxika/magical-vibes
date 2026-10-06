@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({RazortrapGorge.class})
 class RazortrapGorgeTest extends BaseCardTest {
@@ -58,16 +59,63 @@ class RazortrapGorgeTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
     }
 
+    @Test
+    void entersUntappedWhenControllerHasLessThan13Life() {
+        harness.setLife(player1, 1);
+        playGorge();
+
+        assertThat(gorge().isTapped()).isFalse();
+    }
+
+    @Test
+    void entersUntappedWhenOpponentHasLessThan13Life() {
+        harness.setLife(player2, 1);
+        playGorge();
+
+        assertThat(gorge().isTapped()).isFalse();
+    }
+
+    @Test
+    void newlyPlayedUntappedGorgeCanProduceManaImmediately() {
+        harness.setLife(player1, 13);
+        playGorge();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gorge().isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void gorgeEnteringTappedCannotProduceMana() {
+        playGorge();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gorge().isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+    }
+
+    @Test
+    void producingBlackManaPreventsProducingRedManaWithoutUntapping() {
+        addReadyGorge();
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+    }
+
     private void playGorge() {
         harness.setHand(player1, List.of(new RazortrapGorge()));
         harness.playLand(player1, 0);
     }
 
     private Permanent addReadyGorge() {
-        Permanent gorge = new Permanent(new RazortrapGorge());
-        gorge.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(gorge);
-        return gorge;
+        return addCreatureReady(player1, new RazortrapGorge());
     }
 
     private Permanent gorge() {
