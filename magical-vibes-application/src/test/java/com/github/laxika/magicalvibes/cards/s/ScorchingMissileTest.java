@@ -49,9 +49,8 @@ class ScorchingMissileTest extends BaseCardTest {
     @Test
     @DisplayName("Deals 4 damage to a targeted planeswalker")
     void damageToTargetPlaneswalker() {
-        Permanent elspeth = new Permanent(new ElspethKnightErrant());
+        Permanent elspeth = harness.addToBattlefieldAndReturn(player2, new ElspethKnightErrant());
         elspeth.setCounterCount(CounterType.LOYALTY, 5);
-        gd.playerBattlefields.get(player2.getId()).add(elspeth);
         giveScorchingMissile();
 
         harness.castAndResolveSorcery(player1, 0, elspeth.getId());
@@ -102,9 +101,30 @@ class ScorchingMissileTest extends BaseCardTest {
     @DisplayName("Flashback requires one red mana")
     void flashbackRequiresRedMana() {
         harness.setGraveyard(player1, List.of(new ScorchingMissile()));
-        harness.addMana(player1, ManaColor.COLORLESS, 9);
+        harness.addMana(player1, ManaColor.COLORLESS, 10);
 
         assertThatThrownBy(() -> harness.castFlashback(player1, 0, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Flashback is exiled even when its planeswalker target leaves the battlefield")
+    void flashbackExilesSpellWithIllegalTarget() {
+        Permanent elspeth = harness.addToBattlefieldAndReturn(player2, new ElspethKnightErrant());
+        elspeth.setCounterCount(CounterType.LOYALTY, 5);
+        harness.setGraveyard(player1, List.of(new ScorchingMissile()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 9);
+
+        harness.castFlashback(player1, 0, elspeth.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(elspeth);
+        gd.playerGraveyards.get(player2.getId()).add(elspeth.getCard());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20);
+        harness.assertNotInGraveyard(player1, "Scorching Missile");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getName().equals("Scorching Missile"));
+        assertThat(gd.stack).isEmpty();
     }
 }
