@@ -54,6 +54,49 @@ class SephirothPlanetsHeirTest extends BaseCardTest {
         assertThat(sephiroth.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("Each opponent creature killed by the enters ability gives Sephiroth a counter")
+    void gainsOneCounterForEachCreatureKilledByEtb() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        castSephiroth();
+
+        Permanent sephiroth = findPermanent(player1, "Sephiroth, Planet's Heir");
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(ownCreature);
+        assertThat(sephiroth.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Creatures entering after the enters ability resolves are not shrunk")
+    void laterCreaturesAreNotAffected() {
+        castSephiroth();
+
+        Permanent laterCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        assertThat(gqs.getEffectivePower(gd, laterCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, laterCreature)).isEqualTo(2);
+        assertThat(findPermanent(player1, "Sephiroth, Planet's Heir")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Deaths of its controller's creatures do not give Sephiroth counters")
+    void ownCreatureDeathsDoNotGiveCounters() {
+        Permanent originalSephiroth = harness.addToBattlefieldAndReturn(player2, new SephirothPlanetsHeir());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        castSephiroth();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
+        assertThat(originalSephiroth.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(findPermanent(player1, "Sephiroth, Planet's Heir")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
     private void castSephiroth() {
         harness.setHand(player1, List.of(new SephirothPlanetsHeir()));
         harness.addMana(player1, ManaColor.BLUE, 1);
