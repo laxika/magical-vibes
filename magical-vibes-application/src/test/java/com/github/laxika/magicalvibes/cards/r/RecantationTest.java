@@ -19,6 +19,67 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class RecantationTest extends BaseCardTest {
 
     @Test
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        Permanent recantation = harness.addToBattlefieldAndReturn(player1, new Recantation());
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(recantation.getCounterCount(CounterType.VERSE)).isZero();
+    }
+
+    @Test
+    void canChooseZeroTargetsWithVerseCounters() {
+        Permanent recantation = harness.addToBattlefieldAndReturn(player1, new Recantation());
+        recantation.setCounterCount(CounterType.VERSE, 2);
+        harness.addToBattlefield(player2, new CoralMerfolk());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Recantation");
+        harness.assertOnBattlefield(player2, "Coral Merfolk");
+    }
+
+    @Test
+    void canTargetItselfAndStillReturnOtherLegalTarget() {
+        Permanent recantation = harness.addToBattlefieldAndReturn(player1, new Recantation());
+        recantation.setCounterCount(CounterType.VERSE, 2);
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new CoralMerfolk());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0,
+                List.of(recantation.getId(), creature.getId()));
+
+        harness.assertInGraveyard(player1, "Recantation");
+        harness.assertOnBattlefield(player2, "Coral Merfolk");
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Recantation");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInHand(player2, "Coral Merfolk");
+    }
+
+    @Test
+    void returnsStolenPermanentToOwnerRatherThanController() {
+        Permanent recantation = harness.addToBattlefieldAndReturn(player1, new Recantation());
+        recantation.setCounterCount(CounterType.VERSE, 1);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new CoralMerfolk());
+        gd.stolenCreatures.put(creature.getId(), player2.getId());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(creature.getId()));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Coral Merfolk");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Recantation");
+    }
+
+    @Test
     @DisplayName("Accepting the upkeep trigger puts a verse counter on Recantation")
     void upkeepAcceptedAddsVerseCounter() {
         Permanent recantation = harness.addToBattlefieldAndReturn(player1, new Recantation());
