@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.s.Sewerdreg;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -44,6 +43,25 @@ class SellSwordBruteTest extends BaseCardTest {
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
         assertThat(gd.getLife(player2.getId())).isEqualTo(18);
         harness.assertInGraveyard(player2, "Sell-Sword Brute");
+    }
+
+    @Test
+    @DisplayName("Brutes dying in the same combat each damage their own controller")
+    void simultaneousDeathsDamageBothControllers() {
+        Permanent attacker = addCreatureReady(player1, new SellSwordBrute());
+        Permanent blocker = addCreatureReady(player2, new SellSwordBrute());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        resolveCombat(attacker, blocker);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 18);
+        harness.assertInGraveyard(player1, "Sell-Sword Brute");
+        harness.assertInGraveyard(player2, "Sell-Sword Brute");
+        harness.assertNotOnBattlefield(player1, "Sell-Sword Brute");
+        harness.assertNotOnBattlefield(player2, "Sell-Sword Brute");
     }
 
     private void killSellSwordBrute() {
