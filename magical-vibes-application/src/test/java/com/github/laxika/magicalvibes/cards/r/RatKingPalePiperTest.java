@@ -71,6 +71,82 @@ class RatKingPalePiperTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void tokenCopyCanSacrificeItselfToDrawAndCreateRat() {
+        RatKingPalePiper tokenCopy = new RatKingPalePiper();
+        tokenCopy.setToken(true);
+        harness.addToBattlefield(player1, tokenCopy);
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Rat King, Pale Piper");
+        assertThat(findPermanents(player1, "Rat")).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
+    }
+
+    @Test
+    void tokenCopyTriggersWhenItLeavesBattlefield() {
+        RatKingPalePiper tokenCopy = new RatKingPalePiper();
+        tokenCopy.setToken(true);
+        Permanent ratKing = addCreatureReady(player1, tokenCopy);
+
+        removeFromBattlefield(ratKing);
+
+        assertThat(findPermanents(player1, "Rat")).hasSize(1);
+    }
+
+    @Test
+    void createsRatWhenAnotherNontokenCreatureReturnsToHand() {
+        addCreatureReady(player1, new RatKingPalePiper());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToHand(gd, bears));
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        assertThat(findPermanents(player1, "Rat")).hasSize(1);
+    }
+
+    @Test
+    void createsRatWhenRatKingIsExiled() {
+        Permanent ratKing = addCreatureReady(player1, new RatKingPalePiper());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToExile(gd, ratKing));
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Rat King, Pale Piper");
+        assertThat(findPermanents(player1, "Rat")).hasSize(1);
+    }
+
+    @Test
+    void doesNotTriggerForOpponentsNontokenCreature() {
+        addCreatureReady(player1, new RatKingPalePiper());
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+
+        removeFromBattlefield(bears);
+
+        assertThat(findPermanents(player1, "Rat")).isEmpty();
+        assertThat(findPermanents(player2, "Rat")).isEmpty();
+    }
+
+    @Test
+    void cannotActivateWithInsufficientManaEvenWithToken() {
+        addCreatureReady(player1, new RatKingPalePiper());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        removeFromBattlefield(bears);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(findPermanents(player1, "Rat")).hasSize(1);
+    }
+
     private void removeFromBattlefield(Permanent permanent) {
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .removePermanentToGraveyard(gd, permanent));
