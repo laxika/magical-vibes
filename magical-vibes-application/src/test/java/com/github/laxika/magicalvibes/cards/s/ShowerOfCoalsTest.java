@@ -82,6 +82,56 @@ class ShowerOfCoalsTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Shower of Coals");
     }
 
+    @Test
+    @DisplayName("Checks threshold when resolving after the graveyard reaches seven cards")
+    void gainsThresholdBeforeResolution() {
+        harness.setGraveyard(player1, List.of(
+                new Forest(), new Forest(), new Forest(),
+                new Forest(), new Forest(), new Forest()));
+        harness.setHand(player1, List.of(new ShowerOfCoals()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.setLife(player2, 20);
+        harness.castSorcery(player1, 0, List.of(player2.getId()));
+
+        harness.setGraveyard(player1, List.of(
+                new Forest(), new Forest(), new Forest(), new Forest(),
+                new Forest(), new Forest(), new Forest()));
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    @DisplayName("Checks threshold when resolving after the graveyard drops below seven cards")
+    void losesThresholdBeforeResolution() {
+        harness.setGraveyard(player1, List.of(
+                new Forest(), new Forest(), new Forest(), new Forest(),
+                new Forest(), new Forest(), new Forest()));
+        harness.setHand(player1, List.of(new ShowerOfCoals()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.setLife(player2, 20);
+        harness.castSorcery(player1, 0, List.of(player2.getId()));
+
+        harness.setGraveyard(player1, List.of(
+                new Forest(), new Forest(), new Forest(),
+                new Forest(), new Forest(), new Forest()));
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Can target your own creature and yourself with two targets")
+    void canDamageOwnCreatureAndController() {
+        harness.addToBattlefield(player1, new WildMongrel());
+        harness.setLife(player1, 20);
+        cast(List.of(harness.getPermanentId(player1, "Wild Mongrel"), player1.getId()));
+
+        harness.assertNotOnBattlefield(player1, "Wild Mongrel");
+        harness.assertLife(player1, 18);
+    }
     private void cast(List<UUID> targetIds) {
         harness.setHand(player1, List.of(new ShowerOfCoals()));
         harness.addMana(player1, ManaColor.RED, 2);
