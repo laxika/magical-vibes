@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.c.ClatteringSkeletons;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DireWolfProwler;
+import com.github.laxika.magicalvibes.cards.p.PowerWordKill;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -16,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SkeletalSwarming.class, ClatteringSkeletons.class, GrizzlyBears.class})
+@CardUsed({SkeletalSwarming.class, ClatteringSkeletons.class, DireWolfProwler.class, PowerWordKill.class})
 class SkeletalSwarmingTest extends BaseCardTest {
 
     @Test
@@ -41,21 +43,14 @@ class SkeletalSwarmingTest extends BaseCardTest {
     void onlyOwnSkeletonsMustAttack() {
         harness.addToBattlefield(player1, new SkeletalSwarming());
         Permanent ownSkeleton = addCreatureReady(player1, new ClatteringSkeletons());
-        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new DireWolfProwler());
 
-        beginDeclareAttackers(player1);
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of()))
+        assertThatThrownBy(() -> declareAttackers(player1, List.of()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("must attack");
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
         addCreatureReady(player2, new ClatteringSkeletons());
-        harness.beginAttackerDeclarationInput();
-
-        gs.declareAttackers(gd, player2, List.of());
+        declareAttackers(player2, List.of());
         assertThat(ownSkeleton.isAttacking()).isFalse();
     }
 
@@ -86,18 +81,76 @@ class SkeletalSwarmingTest extends BaseCardTest {
         assertThat(tokens).allMatch(Permanent::isTapped);
     }
 
+    @Test
+    void loneSkeletonDoesNotCountItselfAndBoostUpdatesWhenTokensEnter() {
+        Permanent skeleton = addCreatureReady(player1, new ClatteringSkeletons());
+        Permanent wolf = addCreatureReady(player1, new DireWolfProwler());
+        int basePower = gqs.getEffectivePower(gd, skeleton);
+        int baseToughness = gqs.getEffectiveToughness(gd, skeleton);
+        int wolfPower = gqs.getEffectivePower(gd, wolf);
+        harness.addToBattlefield(player1, new SkeletalSwarming());
+
+        assertThat(gqs.getEffectivePower(gd, skeleton)).isEqualTo(basePower);
+        assertThat(gqs.hasKeyword(gd, skeleton, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, wolf)).isEqualTo(wolfPower);
+        assertThat(gqs.hasKeyword(gd, wolf, Keyword.TRAMPLE)).isFalse();
+
+        advanceToEndStep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, skeleton)).isEqualTo(basePower + 1);
+        assertThat(gqs.getEffectiveToughness(gd, skeleton)).isEqualTo(baseToughness);
+        Permanent token = skeletonTokens(player1).getFirst();
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, token, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    void tappedAndSummoningSickSkeletonsAreNotRequiredToAttack() {
+        harness.addToBattlefield(player1, new SkeletalSwarming());
+        Permanent tapped = addCreatureReady(player1, new ClatteringSkeletons());
+        tapped.setTapped(true);
+        harness.addToBattlefield(player1, new ClatteringSkeletons());
+
+        declareAttackers(player1, List.of());
+
+        assertThat(findPermanents(player1, "Clattering Skeletons"))
+                .allMatch(permanent -> !permanent.isAttacking());
+    }
+
+    @Test
+    void doesNotCreateTokensDuringOpponentsEndStep() {
+        harness.addToBattlefield(player1, new SkeletalSwarming());
+        gd.creatureDeathCountThisTurn.put(player1.getId(), 1);
+
+        advanceToEndStep(player2);
+        harness.passBothPriorities();
+
+        assertThat(skeletonTokens(player1)).isEmpty();
+        assertThat(skeletonTokens(player2)).isEmpty();
+    }
+
+    @Test
+    void creatureDyingInResponseUpgradesTokenCreation() {
+        harness.addToBattlefield(player1, new SkeletalSwarming());
+        Permanent victim = addCreatureReady(player2, new DireWolfProwler());
+        harness.setHand(player1, List.of(new PowerWordKill()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        advanceToEndStep(player1);
+        harness.castAndResolveInstant(player1, 0, victim.getId());
+        harness.passBothPriorities();
+
+        assertThat(skeletonTokens(player1)).hasSize(2).allMatch(Permanent::isTapped);
+        harness.assertInGraveyard(player2, "Dire Wolf Prowler");
+    }
+
     private List<Permanent> skeletonTokens(Player player) {
         return gd.playerBattlefields.get(player.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken()
                         && permanent.getCard().getName().equals("Skeleton"))
                 .toList();
-    }
-
-    private void beginDeclareAttackers(Player activePlayer) {
-        harness.forceActivePlayer(activePlayer);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
     }
 
     private void advanceToEndStep(Player player) {
