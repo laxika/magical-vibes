@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.s.SolRing;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -13,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Reconstruction.class, SolRing.class, LightningBolt.class})
+@CardUsed({Reconstruction.class, SolRing.class, LightningBolt.class, Ornithopter.class})
 class ReconstructionTest extends BaseCardTest {
 
     @Test
@@ -82,10 +83,56 @@ class ReconstructionTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.castSorcery(player1, 0, artifact.getId());
-        harness.getGameData().playerGraveyards.get(player1.getId()).clear();
+        harness.setGraveyard(player1, List.of());
         harness.passBothPriorities();
 
         harness.assertNotInHand(player1, "Sol Ring");
+        harness.assertInGraveyard(player1, "Reconstruction");
+    }
+
+    @Test
+    @DisplayName("Returns an artifact creature card to hand")
+    void returnsArtifactCreatureToHand() {
+        Card artifactCreature = new Ornithopter();
+        harness.setGraveyard(player1, List.of(artifactCreature));
+        harness.setHand(player1, List.of(new Reconstruction()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveSorcery(player1, 0, artifactCreature.getId());
+
+        harness.assertInHand(player1, "Ornithopter");
+        harness.assertNotInGraveyard(player1, "Ornithopter");
+        harness.assertInGraveyard(player1, "Reconstruction");
+    }
+
+    @Test
+    @DisplayName("Cannot be cast without a target even when an artifact is available")
+    void cannotCastWithoutTarget() {
+        harness.setGraveyard(player1, List.of(new SolRing()));
+        harness.setHand(player1, List.of(new Reconstruction()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Does not return another artifact when the targeted artifact leaves the graveyard")
+    void doesNotSubstituteAnotherArtifactForMissingTarget() {
+        Card target = new SolRing();
+        Card otherArtifact = new Ornithopter();
+        harness.setGraveyard(player1, List.of(target, otherArtifact));
+        harness.setHand(player1, List.of(new Reconstruction()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castSorcery(player1, 0, target.getId());
+        harness.setGraveyard(player1, List.of(otherArtifact));
+        harness.setExile(player1, List.of(target));
+        harness.passBothPriorities();
+
+        harness.assertNotInHand(player1, "Sol Ring");
+        harness.assertNotInHand(player1, "Ornithopter");
+        harness.assertInGraveyard(player1, "Ornithopter");
         harness.assertInGraveyard(player1, "Reconstruction");
     }
 }
