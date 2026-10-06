@@ -125,6 +125,81 @@ class RapidDecayTest extends BaseCardTest {
         harness.assertInHand(player1, "Goliath Beetle");
     }
 
+    @Test
+    @DisplayName("Can resolve with no cards in either graveyard")
+    void resolvesWithEmptyGraveyards() {
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of());
+        harness.setHand(player1, List.of(new RapidDecay()));
+        addSpellMana();
+
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Rapid Decay");
+        assertThat(gd.exiledCards).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot choose more than three cards")
+    void rejectsFourTargets() {
+        Card first = new GoliathBeetle();
+        Card second = new GoliathBeetle();
+        Card third = new PlatedSpider();
+        Card fourth = new PlatedSpider();
+        harness.setGraveyard(player1, List.of(first, second, third, fourth));
+        harness.setHand(player1, List.of(new RapidDecay()));
+        addSpellMana();
+
+        harness.castInstant(player1, 0);
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1,
+                List.of(first.getId(), second.getId(), third.getId(), fourth.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(first, second, third, fourth);
+        assertThat(gd.exiledCards).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot choose the same card twice")
+    void rejectsDuplicateTargets() {
+        Card first = new GoliathBeetle();
+        Card second = new PlatedSpider();
+        harness.setGraveyard(player1, List.of(first, second));
+        harness.setHand(player1, List.of(new RapidDecay()));
+        addSpellMana();
+
+        harness.castInstant(player1, 0);
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1,
+                List.of(first.getId(), first.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(first, second);
+        assertThat(gd.exiledCards).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cycling discards as a cost and draws only on resolution")
+    void cyclingDiscardsBeforeDrawing() {
+        Card draw = new GoliathBeetle();
+        harness.setHand(player1, List.of(new RapidDecay()));
+        harness.setLibrary(player1, List.of(draw));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertInGraveyard(player1, "Rapid Decay");
+        harness.assertNotInHand(player1, "Rapid Decay");
+        harness.assertNotInHand(player1, "Goliath Beetle");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(draw);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Goliath Beetle");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
     private void addSpellMana() {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
