@@ -2,7 +2,10 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.d.DragonWhelp;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.CardSupertype;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SarkhanSoulAflame.class, DragonWhelp.class, GrizzlyBears.class})
+@CardUsed({SarkhanSoulAflame.class, DragonWhelp.class, GrizzlyBears.class, Unsummon.class})
 class SarkhanSoulAflameTest extends BaseCardTest {
 
     @Test
@@ -64,9 +67,7 @@ class SarkhanSoulAflameTest extends BaseCardTest {
     void nonDragonDoesNotTriggerCopyAbility() {
         Permanent sarkhan = addSarkhan();
 
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -97,10 +98,148 @@ class SarkhanSoulAflameTest extends BaseCardTest {
     }
 
     private void castDragonWhelp() {
+        harness.castFromHand(player1, new DragonWhelp(), "{2}{R}{R}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+    }
+
+    @Test
+    void decliningCopyKeepsAbilityForNextDragon() {
+        Permanent sarkhan = addSarkhan();
+        castDragonWhelp();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gqs.getEffectiveToughness(gd, sarkhan)).isEqualTo(4);
+
+        castDragonWhelp();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gqs.getEffectiveToughness(gd, sarkhan)).isEqualTo(3);
+    }
+
+    @Test
+    void opponentsDragonDoesNotTriggerCopy() {
+        Permanent sarkhan = addSarkhan();
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, new DragonWhelp(), "{2}{R}{R}");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gqs.getEffectiveToughness(gd, sarkhan)).isEqualTo(4);
+    }
+
+    @Test
+    void opponentsDragonDoesNotReceiveCostReduction() {
+        addSarkhan();
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new DragonWhelp()));
+        harness.addMana(player2, ManaColor.RED, 3);
+
+        assertThatThrownBy(() -> harness.castCreature(player2, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void copyingDragonRemovesCostReduction() {
+        addSarkhan();
+        castDragonWhelp();
+        harness.handleMayAbilityChosen(player1, true);
+        gd.playerManaPools.get(player1.getId()).clear();
         harness.setHand(player1, List.of(new DragonWhelp()));
-        harness.addMana(player1, ManaColor.RED, 4);
-        harness.castCreature(player1, 0);
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void copyingDragonRemovesCopyTrigger() {
+        addSarkhan();
+        castDragonWhelp();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.castFromHand(player1, new DragonWhelp(), "{2}{R}{R}");
         harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void copiedDragonActivatedAbilityWorks() {
+        Permanent sarkhan = addSarkhan();
+        castDragonWhelp();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, sarkhan)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, sarkhan)).isEqualTo(3);
+    }
+
+    @Test
+    void copiesDragonThatLeftBeforeResolution() {
+        Permanent sarkhan = addSarkhan();
+        harness.castFromHand(player1, new DragonWhelp(), "{2}{R}{R}");
+        harness.passBothPriorities();
+        var dragonId = harness.getPermanentId(player1, "Dragon Whelp");
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, dragonId);
+        harness.assertNotOnBattlefield(player1, "Dragon Whelp");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gqs.getEffectivePower(gd, sarkhan)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, sarkhan)).isEqualTo(3);
+        assertThat(sarkhan.getCard().getName()).isEqualTo("Sarkhan, Soul Aflame");
+        assertThat(sarkhan.getCard().getSupertypes()).contains(CardSupertype.LEGENDARY);
+    }
+
+    @Test
+    void copyAbilityDoesNotTargetDragonWithShroud() {
+        Permanent sarkhan = addSarkhan();
+        harness.castFromHand(player1, new DragonWhelp(), "{2}{R}{R}");
+        harness.passBothPriorities();
+        Permanent dragon = gqs.findPermanentById(gd, harness.getPermanentId(player1, "Dragon Whelp"));
+        dragon.getGrantedKeywords().add(Keyword.SHROUD);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gqs.getEffectiveToughness(gd, sarkhan)).isEqualTo(3);
+    }
+
+    @Test
+    void copyingDoesNotCopyCountersAndPreservesSarkhansCounters() {
+        Permanent sarkhan = addSarkhan();
+        sarkhan.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.castFromHand(player1, new DragonWhelp(), "{2}{R}{R}");
+        harness.passBothPriorities();
+        Permanent dragon = gqs.findPermanentById(gd, harness.getPermanentId(player1, "Dragon Whelp"));
+        dragon.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gqs.getEffectivePower(gd, sarkhan)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, sarkhan)).isEqualTo(4);
+        assertThat(sarkhan.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void reductionDoesNotReplaceRequiredColoredMana() {
+        addSarkhan();
+        harness.setHand(player1, List.of(new DragonWhelp()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
     }
 }
