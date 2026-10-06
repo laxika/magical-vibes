@@ -48,4 +48,61 @@ class SheHulkAttorneyAtLawTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("only once");
     }
+
+    @Test
+    @DisplayName("Entry-turn reduction removes both generic and hybrid mana requirements")
+    void entryTurnPowerUpCostsFourGenericMana() {
+        Permanent sheHulk = harness.enterBattlefieldAndReturn(player1, new SheHulkAttorneyAtLaw());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(sheHulk.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Outside the entry turn the full cost can be paid with white mana")
+    void fullCostAcceptsWhiteMana() {
+        Permanent sheHulk = addCreatureReady(player1, new SheHulkAttorneyAtLaw());
+        sheHulk.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(sheHulk.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(8);
+    }
+
+    @Test
+    @DisplayName("Doubling does not add counters to creatures with none or double other counter types")
+    void doublingOnlyAddsExistingPlusOneCounters() {
+        Permanent sheHulk = harness.enterBattlefieldAndReturn(player1, new SheHulkAttorneyAtLaw());
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        ownCreature.setCounterCount(CounterType.CHARGE, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(sheHulk.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(ownCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(ownCreature.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("The once-only restriction applies before the first activation resolves")
+    void cannotActivateAgainWhileAbilityIsOnStack() {
+        Permanent sheHulk = harness.enterBattlefieldAndReturn(player1, new SheHulkAttorneyAtLaw());
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("only once");
+        harness.passBothPriorities();
+        assertThat(sheHulk.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
 }
