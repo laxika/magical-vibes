@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.r.ReinsOfPower;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SkeletonScavengers.class, SpinedWurm.class})
+@CardUsed({SkeletonScavengers.class, SpinedWurm.class, ReinsOfPower.class})
 class SkeletonScavengersTest extends BaseCardTest {
 
     @Test
@@ -117,6 +118,72 @@ class SkeletonScavengersTest extends BaseCardTest {
         assertThat(regenerated.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("Multiple shields add only one counter per regeneration")
+    void multipleShieldsTriggerSeparately() {
+        Permanent scavengers = addScavengersReady();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+
+        scavengers.setMarkedDamage(1);
+        harness.runStateBasedActions();
+        assertThat(scavengers.getRegenerationShield()).isEqualTo(1);
+        assertThat(scavengers.getMarkedDamage()).isZero();
+        assertThat(scavengers.isTapped()).isTrue();
+        assertThat(scavengers.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        assertThat(scavengers.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+
+        scavengers.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        assertThat(scavengers.getRegenerationShield()).isZero();
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        assertThat(scavengers.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Regeneration with two counters cannot be activated for one mana")
+    void insufficientManaAfterRegeneration() {
+        Permanent scavengers = addScavengersReady();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+        scavengers.setMarkedDamage(1);
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("The delayed counter trigger retains the regeneration ability's controller")
+    void delayedTriggerControllerSurvivesControlChange() {
+        Permanent scavengers = addScavengersReady();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+
+        harness.setHand(player1, List.of(new ReinsOfPower()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(scavengers);
+
+        scavengers.setMarkedDamage(1);
+        harness.runStateBasedActions();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
+        resolveAllTriggers();
+        assertThat(scavengers.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
     private Permanent addScavengersReady() {
         castScavengers();
         return findPermanent(player1, "Skeleton Scavengers");
@@ -132,8 +199,7 @@ class SkeletonScavengersTest extends BaseCardTest {
         int attackerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(attacker);
         int blockerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(scavengers);
 
-        declareAttackers(player2, List.of(attackerIndex));
-        prepareDeclareBlockers(player2);
+        declareAttackersAndPrepareBlockers(player2, List.of(attackerIndex));
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
         harness.passBothPriorities();
         resolveAllTriggers();
