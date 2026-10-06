@@ -25,13 +25,49 @@ class SanitationAutomatonTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SanitationAutomaton()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(topCard);
         assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(topCard);
+    }
+
+    @Test
+    void canKeepTopCardWithoutChangingEitherLibrary() {
+        Card topCard = new SanitationAutomaton();
+        Card nextCard = new SanitationAutomaton();
+        Card opponentCard = new SanitationAutomaton();
+        harness.setLibrary(player1, List.of(topCard, nextCard));
+        harness.setLibrary(player2, List.of(opponentCard));
+        harness.setHand(player1, List.of(new SanitationAutomaton()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard, nextCard);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(topCard, nextCard);
+        assertThat(gd.playersWhoSurveilledThisTurn).contains(player1.getId()).doesNotContain(player2.getId());
+    }
+
+    @Test
+    void surveilsWithAnEmptyLibraryWithoutPrompting() {
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new SanitationAutomaton()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playersWhoSurveilledThisTurn).contains(player1.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
     }
 }
