@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.k.KolaghanAspirant;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RecklessImp.class, GrizzlyBears.class})
+@CardUsed({RecklessImp.class, KolaghanAspirant.class})
 class RecklessImpTest extends BaseCardTest {
 
     @Test
@@ -32,9 +32,9 @@ class RecklessImpTest extends BaseCardTest {
         Permanent imp = findPermanent(player1, "Reckless Imp");
         assertThat(imp.hasKeyword(Keyword.HASTE)).isFalse();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
 
         assertThat(findPermanent(player1, "Reckless Imp")).isSameAs(imp);
     }
@@ -48,14 +48,14 @@ class RecklessImpTest extends BaseCardTest {
 
         harness.castWithAlternateCost(player1, 0, (java.util.UUID) null);
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent imp = findPermanent(player1, "Reckless Imp");
         assertThat(imp.hasKeyword(Keyword.HASTE)).isTrue();
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
 
         harness.assertInHand(player1, "Reckless Imp");
         harness.assertNotOnBattlefield(player1, "Reckless Imp");
@@ -65,17 +65,51 @@ class RecklessImpTest extends BaseCardTest {
     @DisplayName("Reckless Imp cannot be declared as a blocker")
     void cannotBeDeclaredAsBlocker() {
         Permanent imp = addCreatureReady(player2, new RecklessImp());
-        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new KolaghanAspirant());
         attacker.setAttacking(true);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(imp), 0))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid blocker index");
+    }
+
+    @Test
+    @DisplayName("Resolving a dashed Imp does not create an enters-the-battlefield trigger")
+    void dashDoesNotTriggerOnEntry() {
+        harness.setHand(player1, List.of(new RecklessImp()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castWithAlternateCost(player1, 0, (java.util.UUID) null);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Reckless Imp");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Dash creates exactly one return trigger at the next end step")
+    void dashCreatesOnlyOneReturnTrigger() {
+        harness.setHand(player1, List.of(new RecklessImp()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castWithAlternateCost(player1, 0, (java.util.UUID) null);
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+
+        harness.assertOnBattlefield(player1, "Reckless Imp");
+        harness.assertNotInHand(player1, "Reckless Imp");
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+        harness.assertInHand(player1, "Reckless Imp");
+        harness.assertNotOnBattlefield(player1, "Reckless Imp");
     }
 }
