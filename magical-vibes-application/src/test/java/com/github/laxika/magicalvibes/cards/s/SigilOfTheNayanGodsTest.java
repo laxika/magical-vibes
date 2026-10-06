@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,13 +14,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SigilOfTheNayanGods.class, GrizzlyBears.class, FountainOfYouth.class})
 class SigilOfTheNayanGodsTest extends BaseCardTest {
 
     @Test
     @DisplayName("Resolving attaches and grants +1/+1 per creature you control")
     void resolvesAndBoostsPerCreature() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new SigilOfTheNayanGods()));
@@ -39,11 +40,9 @@ class SigilOfTheNayanGodsTest extends BaseCardTest {
     @Test
     @DisplayName("Boost updates dynamically as the controlled creature count changes")
     void updatesDynamicallyWithCreatureCount() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(bears);
-        Permanent sigil = new Permanent(new SigilOfTheNayanGods());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent sigil = harness.addToBattlefieldAndReturn(player1, new SigilOfTheNayanGods());
         sigil.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(sigil);
 
         // Only the enchanted Bears is controlled → +1/+1.
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
@@ -62,15 +61,13 @@ class SigilOfTheNayanGodsTest extends BaseCardTest {
     @Test
     @DisplayName("Counts the aura controller's creatures, even when enchanting an opponent's creature")
     void countsAuraControllersCreatures() {
-        Permanent opponentBears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player2.getId()).add(opponentBears);
+        Permanent opponentBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        Permanent sigil = new Permanent(new SigilOfTheNayanGods());
+        Permanent sigil = harness.addToBattlefieldAndReturn(player1, new SigilOfTheNayanGods());
         sigil.setAttachedTo(opponentBears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(sigil);
 
         // player1 controls two creatures; the enchanted opponent Bears is not player1's.
         assertThat(gqs.getEffectivePower(gd, opponentBears)).isEqualTo(4);
@@ -121,5 +118,42 @@ class SigilOfTheNayanGodsTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Sigil of the Nayan Gods");
         harness.assertInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("No bonus when the Aura controller controls no creatures")
+    void noBonusWithoutControlledCreatures() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new FountainOfYouth());
+        harness.setHand(player1, List.of(new SigilOfTheNayanGods()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Sigil of the Nayan Gods");
+    }
+
+    @Test
+    @DisplayName("Cycling discards immediately and draws only on resolution")
+    void cyclingDiscardsAsCost() {
+        harness.setHand(player1, List.of(new SigilOfTheNayanGods()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertInGraveyard(player1, "Sigil of the Nayan Gods");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
     }
 }
