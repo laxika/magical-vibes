@@ -23,18 +23,14 @@ class SagesReverieTest extends BaseCardTest {
     @Test
     @DisplayName("Draws for each Aura attached to a creature, including itself")
     void drawsForEachAuraAttachedToCreature() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
-        Permanent existingAura = new Permanent(new UnholyStrength());
+        Permanent existingAura = harness.addToBattlefieldAndReturn(player1, new UnholyStrength());
         existingAura.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(existingAura);
 
-        Permanent forest = new Permanent(new Forest());
-        gd.playerBattlefields.get(player1.getId()).add(forest);
-        Permanent auraAttachedToNoncreature = new Permanent(new AbundantGrowth());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent auraAttachedToNoncreature = harness.addToBattlefieldAndReturn(player1, new AbundantGrowth());
         auraAttachedToNoncreature.setAttachedTo(forest.getId());
-        gd.playerBattlefields.get(player1.getId()).add(auraAttachedToNoncreature);
 
         harness.setHand(player1, List.of(new SagesReverie()));
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
@@ -51,28 +47,21 @@ class SagesReverieTest extends BaseCardTest {
     @Test
     @DisplayName("Boosts the enchanted creature based on the controller's attached Auras")
     void boostsBasedOnControlledAurasAttachedToCreatures() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
-        Permanent reverie = new Permanent(new SagesReverie());
+        Permanent reverie = harness.addToBattlefieldAndReturn(player1, new SagesReverie());
         reverie.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(reverie);
 
-        Permanent existingAura = new Permanent(new UnholyStrength());
+        Permanent existingAura = harness.addToBattlefieldAndReturn(player1, new UnholyStrength());
         existingAura.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(existingAura);
 
-        Permanent forest = new Permanent(new Forest());
-        gd.playerBattlefields.get(player1.getId()).add(forest);
-        Permanent auraAttachedToNoncreature = new Permanent(new AbundantGrowth());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent auraAttachedToNoncreature = harness.addToBattlefieldAndReturn(player1, new AbundantGrowth());
         auraAttachedToNoncreature.setAttachedTo(forest.getId());
-        gd.playerBattlefields.get(player1.getId()).add(auraAttachedToNoncreature);
 
-        Permanent opponentBears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player2.getId()).add(opponentBears);
-        Permanent opponentAura = new Permanent(new UnholyStrength());
+        Permanent opponentBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent opponentAura = harness.addToBattlefieldAndReturn(player2, new UnholyStrength());
         opponentAura.setAttachedTo(opponentBears.getId());
-        gd.playerBattlefields.get(player2.getId()).add(opponentAura);
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(6);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(5);
@@ -81,8 +70,7 @@ class SagesReverieTest extends BaseCardTest {
     @Test
     @DisplayName("Can target only a creature")
     void cannotTargetNonCreature() {
-        Permanent forest = new Permanent(new Forest());
-        gd.playerBattlefields.get(player1.getId()).add(forest);
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
         harness.setHand(player1, List.of(new SagesReverie()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -90,5 +78,95 @@ class SagesReverieTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, forest.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Counts controlled Auras on opposing creatures and excludes opposing Auras")
+    void countsControlledAurasRegardlessOfCreatureController() {
+        harness.setHand(player2, List.of());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent otherBears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent ownAura = harness.addToBattlefieldAndReturn(player1, new UnholyStrength());
+        ownAura.setAttachedTo(otherBears.getId());
+        Permanent opposingAura = harness.addToBattlefieldAndReturn(player2, new UnholyStrength());
+        opposingAura.setAttachedTo(bears.getId());
+
+        harness.setHand(player1, List.of(new SagesReverie()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Draw count uses the Auras still present when the trigger resolves")
+    void countsAurasAtTriggerResolution() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new UnholyStrength());
+        aura.setAttachedTo(bears.getId());
+        harness.setHand(player1, List.of(new SagesReverie()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, aura));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Draws no cards if its only qualifying Aura leaves before the trigger resolves")
+    void drawsZeroAfterReverieLeaves() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SagesReverie()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        Permanent reverie = findPermanent(player1, "Sage's Reverie");
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, reverie));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The continuous bonus updates as another creature's Aura leaves")
+    void updatesBonusWhenAuraOnAnotherCreatureLeaves() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent otherBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent reverie = harness.addToBattlefieldAndReturn(player1, new SagesReverie());
+        reverie.setAttachedTo(bears.getId());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new UnholyStrength());
+        aura.setAttachedTo(otherBears.getId());
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, aura));
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
     }
 }
