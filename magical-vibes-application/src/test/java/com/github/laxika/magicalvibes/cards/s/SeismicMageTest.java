@@ -78,6 +78,76 @@ class SeismicMageTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Can discard a nonland card, paying the cost before resolution")
+    void discardsNonlandAsActivationCost() {
+        Permanent mage = addCreatureReady(player1, new SeismicMage());
+        harness.addToBattlefield(player2, new Forest());
+        addMana();
+        harness.setHand(player1, List.of(new SeismicMage()));
+        UUID targetId = harness.getPermanentId(player2, "Forest");
+
+        harness.activateAbility(player1, 0, null, targetId);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(mage.isTapped()).isTrue();
+        harness.assertNotInHand(player1, "Seismic Mage");
+        harness.assertInGraveyard(player1, "Seismic Mage");
+        harness.assertOnBattlefield(player2, "Forest");
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Forest");
+        harness.assertOnBattlefield(player1, "Seismic Mage");
+    }
+
+    @Test
+    @DisplayName("Cannot activate while tapped")
+    void cannotActivateWhileTapped() {
+        Permanent mage = addCreatureReady(player1, new SeismicMage());
+        mage.setTapped(true);
+        harness.addToBattlefield(player2, new Forest());
+        prepareActivation();
+        UUID targetId = harness.getPermanentId(player2, "Forest");
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetId))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Mountain");
+        harness.assertOnBattlefield(player2, "Forest");
+    }
+
+    @Test
+    @DisplayName("Cannot activate while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        Permanent mage = addCreatureReady(player1, new SeismicMage());
+        mage.setSummoningSick(true);
+        harness.addToBattlefield(player2, new Forest());
+        prepareActivation();
+        UUID targetId = harness.getPermanentId(player2, "Forest");
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetId))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Mountain");
+        harness.assertOnBattlefield(player2, "Forest");
+    }
+
+    @Test
+    @DisplayName("Cannot activate without red mana")
+    void cannotActivateWithoutRedMana() {
+        addCreatureReady(player1, new SeismicMage());
+        harness.addToBattlefield(player2, new Forest());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.setHand(player1, List.of(new Mountain()));
+        UUID targetId = harness.getPermanentId(player2, "Forest");
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetId))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Mountain");
+        harness.assertOnBattlefield(player2, "Forest");
+    }
     private void prepareActivation() {
         addMana();
         harness.setHand(player1, List.of(new Mountain()));
