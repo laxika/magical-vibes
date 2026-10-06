@@ -7,7 +7,9 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ShacklesOfTreachery.class, GrizzlyBears.class, LeoninScimitar.class})
 class ShacklesOfTreacheryTest extends BaseCardTest {
 
     @Test
@@ -72,11 +75,71 @@ class ShacklesOfTreacheryTest extends BaseCardTest {
         assertThat(gd.hasPendingInteraction(PermanentChoiceContext.SelfTriggeredAbilityTarget.class)).isFalse();
     }
 
+    @Test
+    @DisplayName("Equipment detached before the damage trigger resolves is not destroyed")
+    void detachedEquipmentIsNotDestroyed() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player2, new LeoninScimitar());
+        equipment.setAttachedTo(target.getId());
+
+        castShackles(target);
+        declareAttackers(List.of(0));
+        resolveCombat();
+        harness.handlePermanentChosen(player1, equipment.getId());
+
+        equipment.setAttachedTo(null);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Leonin Scimitar");
+        harness.assertNotInGraveyard(player2, "Leonin Scimitar");
+    }
+
+    @Test
+    @DisplayName("Control, haste, and the granted damage ability expire at end of turn")
+    void temporaryEffectsExpire() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player2, new LeoninScimitar());
+        equipment.setAttachedTo(target.getId());
+
+        castShackles(target);
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(gd.isStolenUntilEndOfTurn(target.getId())).isFalse();
+
+        declareAttackers(player2, List.of(gd.playerBattlefields.get(player2.getId()).indexOf(target)));
+        resolveCombat(player2);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player2, "Leonin Scimitar");
+    }
+
+    @Test
+    @DisplayName("Can untap and grant the damage ability to a creature already controlled by the caster")
+    void canTargetOwnCreature() {
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        target.tap();
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+        equipment.setAttachedTo(target.getId());
+
+        castShackles(target);
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        declareAttackers(List.of(0));
+        resolveCombat();
+        harness.handlePermanentChosen(player1, equipment.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Leonin Scimitar");
+    }
+
     private void castShackles(Permanent target) {
         harness.setHand(player1, List.of(new ShacklesOfTreachery()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castSorcery(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, target.getId());
     }
 }
