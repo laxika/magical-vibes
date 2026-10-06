@@ -106,4 +106,55 @@ class ShamblingShellTest extends BaseCardTest {
     private void resolveDraw() {
         harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
     }
+
+    @Test
+    @DisplayName("Sacrifice is paid before the counter ability resolves, even with summoning sickness")
+    void sacrificeIsPaidImmediately() {
+        Permanent shell = harness.addToBattlefieldAndReturn(player1, new ShamblingShell());
+        shell.setSummoningSick(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Watchwolf());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Shambling Shell");
+        harness.assertInGraveyard(player1, "Shambling Shell");
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Shambling Shell can target itself but is sacrificed before resolution")
+    void canTargetItself() {
+        ShamblingShell card = new ShamblingShell();
+        Permanent shell = harness.addToBattlefieldAndReturn(player1, card);
+
+        harness.activateAbility(player1, 0, null, shell.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Shambling Shell");
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(card);
+        assertThat(shell.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Dredge returns only the selected Shell and mills exactly three cards")
+    void dredgeDoesNotReturnAnotherShellMilledWithIt() {
+        ShamblingShell selected = new ShamblingShell();
+        ShamblingShell milledShell = new ShamblingShell();
+        List<Card> milled = List.of(new Forest(), milledShell, new Watchwolf());
+        Card remaining = new Forest();
+        harness.setGraveyard(player1, List.of(selected));
+        harness.setLibrary(player1, List.of(milled.get(0), milled.get(1), milled.get(2), remaining));
+
+        resolveDraw();
+        harness.handleGraveyardCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(selected).doesNotContain(milledShell, remaining);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyElementsOf(milled);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remaining);
+        assertThat(gd.cardsDrawnThisTurn.getOrDefault(player1.getId(), 0)).isZero();
+    }
 }
