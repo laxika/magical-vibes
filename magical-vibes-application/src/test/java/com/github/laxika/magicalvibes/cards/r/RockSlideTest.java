@@ -140,4 +140,64 @@ class RockSlideTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(attacker);
         assertThat(attacker.getMarkedDamage()).isZero();
     }
+
+    @Test
+    @DisplayName("Does not redistribute damage when one target becomes illegal")
+    void keepsOriginalDivisionWhenOneTargetBecomesIllegal() {
+        Permanent first = addCreatureReady(player2, new HulkingCyclops());
+        Permanent second = addCreatureReady(player2, new HulkingCyclops());
+        first.setAttacking(true);
+        second.setAttacking(true);
+        prepareMana();
+
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.castInstantForX(player1, 0, 4, Map.of(first.getId(), 3, second.getId(), 1));
+        first.setAttacking(false);
+        harness.passBothPriorities();
+
+        assertThat(first.getMarkedDamage()).isZero();
+        assertThat(second.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Can divide damage between an attacker and an opposing blocker")
+    void dividesBetweenAttackerAndBlocker() {
+        Permanent attacker = addCreatureReady(player1, new RiverBoa());
+        Permanent blocker = addCreatureReady(player2, new RiverBoa());
+        attacker.setAttacking(true);
+        blocker.setBlocking(true);
+        prepareMana();
+
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.castInstantForX(player1, 0, 2, Map.of(attacker.getId(), 1, blocker.getId(), 1));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "River Boa");
+        harness.assertInGraveyard(player2, "River Boa");
+    }
+
+    @Test
+    @DisplayName("Rejects assigning zero damage to a target")
+    void rejectsZeroDamageAssignment() {
+        Permanent first = addCreatureReady(player2, new RiverBoa());
+        Permanent second = addCreatureReady(player2, new RiverBoa());
+        first.setAttacking(true);
+        second.setAttacking(true);
+        prepareMana();
+
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        assertThatThrownBy(() ->
+                harness.castInstantForX(player1, 0, 2, Map.of(first.getId(), 2, second.getId(), 0))
+        ).isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Rejects targeting a player")
+    void rejectsPlayerTarget() {
+        prepareMana();
+
+        assertThatThrownBy(() ->
+                harness.castInstantForX(player1, 0, 2, Map.of(player2.getId(), 2))
+        ).isInstanceOf(IllegalStateException.class);
+    }
 }
