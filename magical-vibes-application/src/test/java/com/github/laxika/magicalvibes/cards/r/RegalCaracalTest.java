@@ -1,12 +1,14 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.FinalReward;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RegalCaracal.class, GrizzlyBears.class, FinalReward.class})
 class RegalCaracalTest extends BaseCardTest {
 
     // ===== ETB: creates two Cat tokens with lifelink =====
@@ -118,7 +121,63 @@ class RegalCaracalTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, caracal, Keyword.LIFELINK)).isFalse();
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Enter trigger creates tokens even after Caracal is exiled")
+    void enterTriggerSurvivesSourceRemoval() {
+        harness.setHand(player1, List.of(new RegalCaracal(), new FinalReward()));
+        harness.addMana(player1, ManaColor.WHITE, 5);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.BLACK, 5);
+        harness.castAndResolveInstant(player1, 0, findPermanent(player1, "Regal Caracal").getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Regal Caracal");
+        assertThat(findPermanents(player1, "Cat")).hasSize(2).allSatisfy(token -> {
+            assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
+            assertThat(gqs.hasKeyword(gd, token, Keyword.LIFELINK)).isTrue();
+        });
+    }
+
+    @Test
+    @DisplayName("Tokens retain their own lifelink after Caracal leaves")
+    void tokensRetainLifelinkAfterSourceLeaves() {
+        castAndResolveCaracal();
+        harness.setHand(player1, List.of(new FinalReward()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+        harness.castAndResolveInstant(player1, 0, findPermanent(player1, "Regal Caracal").getId());
+
+        assertThat(findPermanents(player1, "Cat")).hasSize(2).allSatisfy(token -> {
+            assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
+            assertThat(gqs.hasKeyword(gd, token, Keyword.LIFELINK)).isTrue();
+            token.setSummoningSick(false);
+        });
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        declareAttackers(List.of(0, 1));
+        resolveCombat();
+
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Boosted tokens gain life once despite having printed and granted lifelink")
+    void tokenCombatGainsLifeOnce() {
+        castAndResolveCaracal();
+        findPermanents(player1, "Cat").forEach(token -> token.setSummoningSick(false));
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        declareAttackers(List.of(1, 2));
+        resolveCombat();
+
+        harness.assertLife(player1, 24);
+        harness.assertLife(player2, 16);
+    }
 
     private void castAndResolveCaracal() {
         harness.setHand(player1, List.of(new RegalCaracal()));
@@ -140,10 +199,7 @@ class RegalCaracalTest extends BaseCardTest {
     }
 
     private Permanent findCatToken(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Cat"))
-                .findFirst()
-                .orElseThrow(() -> new IllegalStateException("No Cat token found"));
+        return findPermanent(player, "Cat");
     }
 
 }
