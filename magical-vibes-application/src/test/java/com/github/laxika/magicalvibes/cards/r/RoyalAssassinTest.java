@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -107,7 +106,7 @@ class RoyalAssassinTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+        assertThat(gameLogContains("fizzles")).isTrue();
     }
 
     @Test
@@ -131,6 +130,36 @@ class RoyalAssassinTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
+    }
+
+    @Test
+    @DisplayName("An untapped Assassin cannot target itself before paying its tap cost")
+    void cannotTargetItselfWhileUntapped() {
+        Permanent assassin = addReadyAssassin(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, assassin.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("tapped creature");
+
+        assertThat(assassin.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Ability resolves even if the Assassin leaves the battlefield")
+    void resolvesAfterAssassinLeavesBattlefield() {
+        Permanent assassin = addReadyAssassin(player1);
+        Permanent target = addTappedBears(player2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(assassin);
+        gd.playerGraveyards.get(player1.getId()).add(assassin.getCard());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Royal Assassin");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
     }
 
     private Permanent addReadyAssassin(Player player) {
