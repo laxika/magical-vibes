@@ -83,4 +83,57 @@ class ReclusiveWightTest extends BaseCardTest {
                 .anyMatch(permanent -> permanent.getId().equals(wight.getId()));
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(wight.getCard());
     }
+
+    @Test
+    @DisplayName("Does not trigger during an opponent's upkeep")
+    void ignoresOpponentUpkeep() {
+        Permanent wight = harness.addToBattlefieldAndReturn(player1, new ReclusiveWight());
+        harness.addToBattlefield(player1, new CoralMerfolk());
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(wight);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(wight.getCard());
+    }
+
+    @Test
+    @DisplayName("A nonland permanent entering after upkeep begins does not cause a trigger")
+    void doesNotTriggerWhenConditionBecomesTrueLater() {
+        Permanent wight = harness.addToBattlefieldAndReturn(player1, new ReclusiveWight());
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).isEmpty();
+        harness.enterBattlefieldAndReturn(player1, new CoralMerfolk());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(wight);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(wight.getCard());
+    }
+
+    @Test
+    @DisplayName("Two Wights trigger, but the remaining Wight survives after the first sacrifice")
+    void remainingWightSurvivesAfterOtherWightIsSacrificed() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new ReclusiveWight());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new ReclusiveWight());
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent == first || permanent == second)
+                .hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .containsAnyOf(first.getCard(), second.getCard())
+                .hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent == first || permanent == second)
+                .hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+    }
 }
