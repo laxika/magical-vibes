@@ -34,8 +34,8 @@ class ShivanGorgeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        harness.assertLife(player2, 19);
+        harness.assertLife(player1, 20);
         assertThat(land.isTapped()).isTrue();
     }
 
@@ -66,5 +66,56 @@ class ShivanGorgeTest extends BaseCardTest {
 
         assertThat(land.isTapped()).isFalse();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Damage uses the stack and tapping for its cost does not produce mana")
+    void damageWaitsForResolutionAndConsumesMana() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new ShivanGorge());
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(land.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.stack).hasSize(1);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("A Gorge tapped for mana cannot also activate its damage ability")
+    void tappedLandCannotActivateDamageAbility() {
+        harness.addToBattlefield(player1, new ShivanGorge());
+        harness.tapPermanent(player1, 0);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("The other player's Gorge damages its opponent rather than its controller")
+    void otherControllerDamagesItsOpponent() {
+        harness.addToBattlefield(player2, new ShivanGorge());
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.activateAbility(player2, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 20);
     }
 }
