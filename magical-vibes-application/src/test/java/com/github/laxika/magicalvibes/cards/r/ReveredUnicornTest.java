@@ -64,4 +64,50 @@ class ReveredUnicornTest extends BaseCardTest {
         harness.assertInHand(player1, "Revered Unicorn");
         harness.assertLife(player1, 22);
     }
+
+    @Test
+    @DisplayName("Paying upkeep pays for every age counter including the new one")
+    void payingUpkeepWithMultipleAgeCounters() {
+        Permanent unicorn = harness.addToBattlefieldAndReturn(player1, new ReveredUnicorn());
+        unicorn.setCounterCount(CounterType.AGE, 2);
+        harness.setLife(player1, 20);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(unicorn.getCounterCount(CounterType.AGE)).isEqualTo(3);
+        harness.assertOnBattlefield(player1, "Revered Unicorn");
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Leaving with no age counters gains no life")
+    void leavingWithNoAgeCountersGainsNoLife() {
+        Permanent unicorn = harness.addToBattlefieldAndReturn(player1, new ReveredUnicorn());
+        harness.setLife(player1, 20);
+
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToHand(gd, unicorn));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Revered Unicorn");
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Cumulative upkeep does not trigger during the opponent's upkeep")
+    void opponentUpkeepDoesNotAddAgeCounter() {
+        Permanent unicorn = harness.addToBattlefieldAndReturn(player1, new ReveredUnicorn());
+        unicorn.setCounterCount(CounterType.AGE, 2);
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(unicorn.getCounterCount(CounterType.AGE)).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Revered Unicorn");
+    }
 }
