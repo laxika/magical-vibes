@@ -58,6 +58,50 @@ class RoyalTalonFighterJetTest extends BaseCardTest {
         assertThat(crew.isTapped()).isTrue();
     }
 
+    @Test
+    void castingWithZeroCreatesNoSoldiers() {
+        harness.setHand(player1, List.of(new RoyalTalonFighterJet()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castArtifact(player1, 0, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Royal Talon Fighter Jet")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(findPermanents(player1, "Soldier")).isEmpty();
+    }
+
+    @Test
+    void entryTriggerCountsCountersAtResolution() {
+        harness.setHand(player1, List.of(new RoyalTalonFighterJet()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castArtifact(player1, 0, 3);
+        harness.passBothPriorities();
+        Permanent jet = findPermanent(player1, "Royal Talon Fighter Jet");
+        jet.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Soldier")).hasSize(1);
+    }
+
+    @Test
+    void attackTriggerCountsCountersAtResolutionAndCreatesUntappedNonattackingTokens() {
+        Permanent jet = addReadyJet(player1, 4);
+        addCreatureReady(player1, new GrizzlyBears());
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        declareAttackers(List.of(0));
+        jet.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Soldier")).hasSize(2)
+                .allSatisfy(soldier -> {
+                    assertThat(soldier.isTapped()).isFalse();
+                    assertThat(soldier.isAttacking()).isFalse();
+                });
+        assertThat(findPermanents(player2, "Soldier")).isEmpty();
+    }
     private Permanent addReadyJet(Player player, int counters) {
         Permanent jet = harness.addToBattlefieldAndReturn(player, new RoyalTalonFighterJet());
         jet.setSummoningSick(false);
