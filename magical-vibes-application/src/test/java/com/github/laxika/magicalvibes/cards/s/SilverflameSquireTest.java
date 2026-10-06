@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.OnAlert;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -32,5 +33,78 @@ class SilverflameSquireTest extends BaseCardTest {
         assertThat(bear.isTapped()).isFalse();
         assertThat(harness.getGameData().findExiledCard(card.getId())).isNotNull();
         assertThat(harness.getGameData().exilePlayPermissions.get(card.getId())).isEqualTo(player1.getId());
+    }
+
+    @Test
+    void adventureCanBoostAnUntappedOpposingCreatureAndExpiresAtCleanup() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SilverflameSquire());
+        harness.setHand(player1, List.of(new SilverflameSquire()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAdventure(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getPowerModifier()).isEqualTo(2);
+        assertThat(target.getToughnessModifier()).isEqualTo(2);
+        assertThat(target.isTapped()).isFalse();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        assertThat(target.getPowerModifier()).isZero();
+        assertThat(target.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    void adventureDoesNotExileOrGrantPermissionWhenItsTargetLeaves() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SilverflameSquire());
+        SilverflameSquire card = new SilverflameSquire();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castAdventure(player1, 0, target.getId());
+
+        target.setMarkedDamage(1);
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
+        assertThat(gd.findExiledCard(card.getId())).isNull();
+        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void creatureCanBeCastFromExileAfterAdventureResolves() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SilverflameSquire());
+        SilverflameSquire card = new SilverflameSquire();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castAdventure(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castFromExile(player1, card.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anySatisfy(permanent -> assertThat(permanent.getCard().getId()).isEqualTo(card.getId()));
+        assertThat(gd.findExiledCard(card.getId())).isNull();
+        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(card);
+    }
+
+    @Test
+    void creatureCanBeCastDirectlyWithoutGoingOnAnAdventure() {
+        SilverflameSquire card = new SilverflameSquire();
+        harness.castFromHand(player1, card, "{1}{W}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Silverflame Squire");
+        harness.assertNotInGraveyard(player1, "Silverflame Squire");
+        assertThat(gd.findExiledCard(card.getId())).isNull();
     }
 }
