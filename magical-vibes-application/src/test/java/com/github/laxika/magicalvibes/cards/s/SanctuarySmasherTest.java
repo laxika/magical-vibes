@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.c.Compulsion;
+import com.github.laxika.magicalvibes.cards.h.HumbleNaturalist;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,8 +18,52 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SanctuarySmasher.class, GrizzlyBears.class, Compulsion.class})
+@CardUsed({SanctuarySmasher.class, GrizzlyBears.class, Compulsion.class, HumbleNaturalist.class})
 class SanctuarySmasherTest extends BaseCardTest {
+
+    @Test
+    void counterResolvesBeforeDrawAndGrantsFirstStrike() {
+        Permanent naturalist = harness.addToBattlefieldAndReturn(player1, new HumbleNaturalist());
+        harness.setHand(player1, List.of(new SanctuarySmasher()));
+        harness.setLibrary(player1, List.of(new HumbleNaturalist()));
+        addCyclingMana();
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.assertInGraveyard(player1, "Sanctuary Smasher");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, naturalist.getId());
+        harness.passBothPriorities();
+
+        assertThat(naturalist.getCounterCount(CounterType.FIRST_STRIKE)).isEqualTo(1);
+        assertThat(harness.getGameQueryService().hasKeyword(gd, naturalist, Keyword.FIRST_STRIKE)).isTrue();
+        harness.assertNotInHand(player1, "Humble Naturalist");
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Humble Naturalist");
+    }
+
+    @Test
+    void cyclingCannotTargetANoncreaturePermanent() {
+        Permanent compulsion = harness.addToBattlefieldAndReturn(player1, new Compulsion());
+        Permanent naturalist = harness.addToBattlefieldAndReturn(player1, new HumbleNaturalist());
+        harness.setHand(player1, List.of(new SanctuarySmasher()));
+        harness.setLibrary(player1, List.of(new HumbleNaturalist()));
+        addCyclingMana();
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, compulsion.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handlePermanentChosen(player1, naturalist.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(compulsion.getCounterCount(CounterType.FIRST_STRIKE)).isZero();
+        assertThat(naturalist.getCounterCount(CounterType.FIRST_STRIKE)).isEqualTo(1);
+        harness.assertInHand(player1, "Humble Naturalist");
+    }
 
     @Test
     @DisplayName("Cycling puts a first strike counter on a target creature you control and draws a card")
