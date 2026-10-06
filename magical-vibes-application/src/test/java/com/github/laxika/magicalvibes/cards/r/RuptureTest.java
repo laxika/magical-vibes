@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -18,7 +19,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({Rupture.class, HillGiant.class, GrizzlyBears.class, FugitiveWizard.class,
-        SuntailHawk.class, Ornithopter.class, GiantGrowth.class})
+        SuntailHawk.class, Ornithopter.class, GiantGrowth.class, Shock.class})
 class RuptureTest extends BaseCardTest {
 
     private void giveMana() {
@@ -36,8 +37,7 @@ class RuptureTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Rupture()));
         giveMana();
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
         harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Hill Giant"));
 
         harness.assertInGraveyard(player1, "Hill Giant");
@@ -59,8 +59,7 @@ class RuptureTest extends BaseCardTest {
 
         UUID hillGiantId = harness.getPermanentId(player1, "Hill Giant");
         harness.castAndResolveInstant(player1, 0, hillGiantId);
-        harness.castSorcery(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
         harness.handlePermanentChosen(player1, hillGiantId);
 
         harness.assertInGraveyard(player1, "Hill Giant");
@@ -77,8 +76,7 @@ class RuptureTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Rupture()));
         giveMana();
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
         harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Ornithopter"));
 
         harness.assertInGraveyard(player1, "Ornithopter");
@@ -94,10 +92,56 @@ class RuptureTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Rupture()));
         giveMana();
 
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player2, "Fugitive Wizard");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("A flying creature can be sacrificed, while other flyers take no damage")
+    void canSacrificeFlyingCreature() {
+        harness.addToBattlefield(player1, new SuntailHawk());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new FugitiveWizard());
+        harness.addToBattlefield(player2, new SuntailHawk());
+        harness.setHand(player1, List.of(new Rupture()));
+        giveMana();
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Suntail Hawk"));
+
+        harness.assertInGraveyard(player1, "Suntail Hawk");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Fugitive Wizard");
+        harness.assertOnBattlefield(player2, "Suntail Hawk");
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().getMarkedDamage()).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player2.getId()).getFirst().getMarkedDamage()).isZero();
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("No sacrifice is paid on casting, and losing the only creature in response prevents damage")
+    void creatureRemovedInResponseMeansNoDamage() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new FugitiveWizard());
+        harness.setHand(player1, List.of(new Rupture(), new Shock()));
+        giveMana();
+        harness.addMana(player1, ManaColor.RED, 1);
+        UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
+
         harness.castSorcery(player1, 0, 0);
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.castAndResolveInstant(player1, 0, bearsId);
+        harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Rupture");
         harness.assertOnBattlefield(player2, "Fugitive Wizard");
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 20);
