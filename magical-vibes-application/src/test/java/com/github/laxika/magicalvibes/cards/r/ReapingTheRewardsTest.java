@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.c.CityOfTraitors;
+import com.github.laxika.magicalvibes.cards.f.Forbid;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -12,7 +13,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ReapingTheRewards.class, CityOfTraitors.class, RagingGoblin.class})
+@CardUsed({ReapingTheRewards.class, CityOfTraitors.class, RagingGoblin.class, Forbid.class})
 class ReapingTheRewardsTest extends BaseCardTest {
 
     @Test
@@ -73,5 +74,61 @@ class ReapingTheRewardsTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         harness.assertInHand(player1, "Reaping the Rewards");
         harness.assertOnBattlefield(player1, "Raging Goblin");
+    }
+
+    @Test
+    @DisplayName("Buyback cannot sacrifice an opponent's land")
+    void cannotSacrificeOpponentsLand() {
+        harness.addToBattlefield(player2, new CityOfTraitors());
+        harness.setHand(player1, List.of(new ReapingTheRewards()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.castInstantWithSacrificeAndBuyback(
+                player1, 0, null, harness.getPermanentId(player2, "City of Traitors")))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Reaping the Rewards");
+        harness.assertOnBattlefield(player2, "City of Traitors");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Announcing buyback without sacrificing a land is rejected")
+    void buybackRequiresSacrificePayment() {
+        harness.setHand(player1, List.of(new ReapingTheRewards()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.castInstantWithBuyback(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Reaping the Rewards");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Countering a bought-back spell prevents life gain and return to hand without refunding the land")
+    void counteredBuybackDoesNotReturnSpellOrLand() {
+        harness.addToBattlefield(player1, new CityOfTraitors());
+        ReapingTheRewards rewards = new ReapingTheRewards();
+        harness.setHand(player1, List.of(rewards));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        int startingLife = gd.playerLifeTotals.get(player1.getId());
+
+        harness.castInstantWithSacrificeAndBuyback(
+                player1, 0, null, harness.getPermanentId(player1, "City of Traitors"));
+        harness.assertInGraveyard(player1, "City of Traitors");
+
+        harness.setHand(player2, List.of(new Forbid()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castInstant(player2, 0, rewards.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, startingLife);
+        harness.assertInGraveyard(player1, "Reaping the Rewards");
+        harness.assertNotInHand(player1, "Reaping the Rewards");
+        harness.assertInGraveyard(player1, "City of Traitors");
+        harness.assertNotOnBattlefield(player1, "City of Traitors");
+        assertThat(gd.stack).isEmpty();
     }
 }
