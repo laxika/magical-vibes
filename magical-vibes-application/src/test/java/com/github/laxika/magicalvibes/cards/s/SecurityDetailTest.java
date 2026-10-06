@@ -83,6 +83,51 @@ class SecurityDetailTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The once-per-turn limit applies before the first activation resolves")
+    void cannotActivateAgainInResponse() {
+        Permanent detail = harness.addToBattlefieldAndReturn(player1, new SecurityDetail());
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(detail), null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, gd.playerBattlefields.get(player1.getId()).indexOf(detail), null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("only once each turn");
+
+        harness.passBothPriorities();
+        assertThat(findPermanents(player1, "Soldier")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A creature entering after activation does not prevent token creation")
+    void creatureRestrictionIsNotRecheckedOnResolution() {
+        Permanent detail = harness.addToBattlefieldAndReturn(player1, new SecurityDetail());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(detail), null, null);
+        harness.addToBattlefield(player1, new AlabasterWall());
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Soldier")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Each copy may activate once before either token is created")
+    void separateCopiesHaveIndependentActivationLimits() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new SecurityDetail());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new SecurityDetail());
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(first), null, null);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(second), null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Soldier")).hasSize(2);
+    }
+
+    @Test
     @DisplayName("Can be activated again on the next turn")
     void canActivateAgainOnNextTurn() {
         harness.forceActivePlayer(player1);
