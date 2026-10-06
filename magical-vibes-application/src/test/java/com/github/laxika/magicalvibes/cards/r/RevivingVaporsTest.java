@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({RevivingVapors.class, Absorb.class, AncientSpring.class, Opt.class, QuirionElves.class})
 class RevivingVaporsTest extends BaseCardTest {
@@ -99,6 +100,69 @@ class RevivingVaporsTest extends BaseCardTest {
         castRevivingVapors();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("With two cards in the library, choose one and put the other in the graveyard")
+    void twoCardLibrary() {
+        Card remaining = new Opt();
+        Card chosen = new Absorb();
+        harness.setLibrary(player1, List.of(remaining, chosen));
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        castRevivingVapors();
+
+        harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(chosen);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(remaining);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 3);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Only the top three cards are available and deeper cards remain in order")
+    void leavesDeeperCardsInLibrary() {
+        Card first = new Opt();
+        Card chosen = new QuirionElves();
+        Card third = new AncientSpring();
+        Card fourth = new Absorb();
+        Card fifth = new Opt();
+        harness.setLibrary(player1, List.of(first, chosen, third, fourth, fifth));
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        int opponentLifeBefore = gd.playerLifeTotals.get(player2.getId());
+        castRevivingVapors();
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(fourth.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(chosen);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(first, third).doesNotContain(fourth, fifth);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(fourth, fifth);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 2);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(opponentLifeBefore);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The controller must choose exactly one revealed card")
+    void requiresExactlyOneCard() {
+        Card first = new Opt();
+        Card chosen = new QuirionElves();
+        Card third = new Absorb();
+        harness.setLibrary(player1, List.of(first, chosen, third));
+        castRevivingVapors();
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(first.getId(), chosen.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(chosen);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(first, third);
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
