@@ -42,7 +42,6 @@ class RankOfficerTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNotNull();
 
         harness.handleCardChosen(player1, 0);
-        harness.passBothPriorities();
 
         Permanent zombie = findPermanent(player1, "Zombie");
         assertThat(zombie.getCard().getSubtypes()).containsExactly(CardSubtype.ZOMBIE);
@@ -76,8 +75,7 @@ class RankOfficerTest extends BaseCardTest {
     void exilingCreatureCardDrainsEachOpponent() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        Permanent officer = harness.addToBattlefieldAndReturn(player1, new RankOfficer());
-        officer.setSummoningSick(false);
+        Permanent officer = addCreatureReady(player1, new RankOfficer());
         GrizzlyBears creature = new GrizzlyBears();
         harness.setGraveyard(player1, List.of(creature));
         harness.setLife(player1, 20);
@@ -97,8 +95,7 @@ class RankOfficerTest extends BaseCardTest {
     @Test
     @DisplayName("The activated ability requires a creature card in the graveyard")
     void activatedAbilityRequiresCreatureCardInGraveyard() {
-        Permanent officer = harness.addToBattlefieldAndReturn(player1, new RankOfficer());
-        officer.setSummoningSick(false);
+        Permanent officer = addCreatureReady(player1, new RankOfficer());
         Card land = new Forest();
         harness.setGraveyard(player1, List.of(land));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -106,5 +103,75 @@ class RankOfficerTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(
                 player1, gd.playerBattlefields.get(player1.getId()).indexOf(officer), null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("An empty hand cannot produce a Zombie")
+    void emptyHandCannotProduceZombie() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new RankOfficer()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        harness.assertNotOnBattlefield(player1, "Zombie");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Exiling and tapping are costs paid before life loss resolves")
+    void activationPaysCostsBeforeResolution() {
+        Permanent officer = addCreatureReady(player1, new RankOfficer());
+        GrizzlyBears creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleGraveyardCardChosen(player1, 0);
+
+        assertThat(officer.isTapped()).isTrue();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(creature);
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Summoning sickness prevents paying the tap cost")
+    void summoningSicknessPreventsActivation() {
+        Permanent officer = harness.addToBattlefieldAndReturn(player1, new RankOfficer());
+        officer.setSummoningSick(true);
+        GrizzlyBears creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(creature);
+        assertThat(officer.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A creature in an opponent's graveyard cannot pay the exile cost")
+    void opponentGraveyardCannotPayCost() {
+        addCreatureReady(player1, new RankOfficer());
+        GrizzlyBears creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of(creature));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(creature);
     }
 }
