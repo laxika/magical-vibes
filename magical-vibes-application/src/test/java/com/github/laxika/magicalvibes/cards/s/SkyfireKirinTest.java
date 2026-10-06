@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({SkyfireKirin.class, IntoTheFray.class, SakuraTribeScout.class,
         ArabaMothrider.class, GhostLitRedeemer.class})
@@ -26,7 +27,8 @@ class SkyfireKirinTest extends BaseCardTest {
     void gainsControlOfExactManaValueCreature() {
         Permanent scout = prepareArcaneCast();
 
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.PermanentChoice.class);
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice.validPermanentIds()).contains(scout.getId());
@@ -35,13 +37,15 @@ class SkyfireKirinTest extends BaseCardTest {
 
         harness.handlePermanentChosen(player1, scout.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Sakura-Tribe Scout");
         harness.assertNotOnBattlefield(player2, "Sakura-Tribe Scout");
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        harness.assertOnBattlefield(player1, "Sakura-Tribe Scout");
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         harness.assertOnBattlefield(player2, "Sakura-Tribe Scout");
     }
@@ -49,8 +53,10 @@ class SkyfireKirinTest extends BaseCardTest {
     @Test
     @DisplayName("Declining the may ability leaves the creature under its owner's control")
     void decliningLeavesCreatureAlone() {
-        prepareArcaneCast();
+        Permanent scout = prepareArcaneCast();
 
+        harness.handlePermanentChosen(player1, scout.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         harness.assertOnBattlefield(player2, "Sakura-Tribe Scout");
@@ -66,14 +72,16 @@ class SkyfireKirinTest extends BaseCardTest {
         harness.clearPriorityPassed();
 
         harness.castFromHand(player1, new GhostLitRedeemer(), "{W}");
-        harness.passBothPriorities();
 
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.PermanentChoice.class);
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice.validPermanentIds()).containsExactly(scout.getId());
 
         harness.handlePermanentChosen(player1, scout.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Sakura-Tribe Scout");
@@ -112,6 +120,51 @@ class SkyfireKirinTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(scout);
     }
 
+    @Test
+    @DisplayName("Gaining control does not untap the creature or let it use a tap ability immediately")
+    void stolenCreatureRemainsTappedAndCannotUseTapAbility() {
+        Permanent scout = prepareArcaneCast();
+        scout.setTapped(true);
+
+        harness.handlePermanentChosen(player1, scout.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Sakura-Tribe Scout");
+        assertThat(scout.isTapped()).isTrue();
+        scout.setTapped(false);
+        harness.ensurePriority(player1);
+        assertThatThrownBy(() -> harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(scout), null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+    }
+
+    @Test
+    @DisplayName("The ability may target a creature its controller already controls")
+    void canTargetOwnCreature() {
+        harness.addToBattlefield(player1, new SkyfireKirin());
+        Permanent scout = addCreatureReady(player1, new SakuraTribeScout());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castFromHand(player1, new GhostLitRedeemer(), "{W}");
+
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.PermanentChoice.class);
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validPermanentIds()).containsExactly(scout.getId());
+        harness.handlePermanentChosen(player1, scout.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Sakura-Tribe Scout");
+    }
+
     private Permanent prepareArcaneCast() {
         harness.addToBattlefield(player1, new SkyfireKirin());
         Permanent scout = addCreatureReady(player2, new SakuraTribeScout());
@@ -123,7 +176,6 @@ class SkyfireKirinTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castInstant(player1, 0, scout.getId());
-        harness.passBothPriorities();
         return scout;
     }
 }
