@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.c.CityOfSolitude;
 import com.github.laxika.magicalvibes.cards.q.Quicksand;
 import com.github.laxika.magicalvibes.cards.t.TitaniasSong;
 import com.github.laxika.magicalvibes.cards.w.Warthog;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -25,10 +24,10 @@ class SandsOfTimeTest extends BaseCardTest {
     @Test
     @DisplayName("Tapped non-A/C/L permanents stay tapped through the skipped untap step")
     void skipsUntapStep() {
-        addReady(player1, new SandsOfTime());
+        addCreatureReady(player1, new SandsOfTime());
         // Enchantments are not flipped by the upkeep ability — so a tapped enchantment staying
         // tapped proves the untap step itself was skipped (advanceToNextTurn auto-resolves upkeep).
-        Permanent cityOfSolitude = addReady(player1, new CityOfSolitude());
+        Permanent cityOfSolitude = addCreatureReady(player1, new CityOfSolitude());
         cityOfSolitude.tap();
 
         advanceToNextTurn(player2);
@@ -39,8 +38,8 @@ class SandsOfTimeTest extends BaseCardTest {
     @Test
     @DisplayName("Skipping the untap step prevents phasing")
     void skipPreventsPhasing() {
-        addReady(player1, new SandsOfTime());
-        Permanent keeper = addReady(player1, new Breezekeeper());
+        addCreatureReady(player1, new SandsOfTime());
+        Permanent keeper = addCreatureReady(player1, new Breezekeeper());
 
         advanceToNextTurn(player2);
 
@@ -51,9 +50,9 @@ class SandsOfTimeTest extends BaseCardTest {
     @Test
     @DisplayName("Losing Sands of Time's abilities stops its untap-step effect")
     void losingAbilitiesStopsUntapStepEffect() {
-        addReady(player1, new SandsOfTime());
-        addReady(player1, new TitaniasSong());
-        Permanent cityOfSolitude = addReady(player1, new CityOfSolitude());
+        addCreatureReady(player1, new SandsOfTime());
+        addCreatureReady(player1, new TitaniasSong());
+        Permanent cityOfSolitude = addCreatureReady(player1, new CityOfSolitude());
         cityOfSolitude.tap();
 
         advanceToNextTurn(player2);
@@ -64,9 +63,9 @@ class SandsOfTimeTest extends BaseCardTest {
     @Test
     @DisplayName("Losing Sands of Time's abilities stops its upkeep trigger")
     void losingAbilitiesStopsUpkeepTrigger() {
-        addReady(player1, new SandsOfTime());
-        addReady(player1, new TitaniasSong());
-        Permanent warthog = addReady(player1, new Warthog());
+        addCreatureReady(player1, new SandsOfTime());
+        addCreatureReady(player1, new TitaniasSong());
+        Permanent warthog = addCreatureReady(player1, new Warthog());
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -77,12 +76,12 @@ class SandsOfTimeTest extends BaseCardTest {
     @Test
     @DisplayName("Upkeep simultaneously flips tap states of artifacts, creatures, and lands")
     void upkeepFlipsTapStates() {
-        Permanent sands = addReady(player1, new SandsOfTime());
-        Permanent tappedWarthog = addReady(player1, new Warthog());
-        Permanent untappedWarthog = addReady(player1, new Warthog());
-        Permanent tappedQuicksand = addReady(player1, new Quicksand());
-        Permanent untappedQuicksand = addReady(player1, new Quicksand());
-        Permanent cityOfSolitude = addReady(player1, new CityOfSolitude());
+        Permanent sands = addCreatureReady(player1, new SandsOfTime());
+        Permanent tappedWarthog = addCreatureReady(player1, new Warthog());
+        Permanent untappedWarthog = addCreatureReady(player1, new Warthog());
+        Permanent tappedQuicksand = addCreatureReady(player1, new Quicksand());
+        Permanent untappedQuicksand = addCreatureReady(player1, new Quicksand());
+        Permanent cityOfSolitude = addCreatureReady(player1, new CityOfSolitude());
         tappedWarthog.tap();
         tappedQuicksand.tap();
 
@@ -102,9 +101,9 @@ class SandsOfTimeTest extends BaseCardTest {
     @Test
     @DisplayName("Opponent's upkeep flips only that player's matching permanents")
     void flipsOnlyActivePlayersPermanents() {
-        addReady(player1, new SandsOfTime());
-        Permanent ownWarthog = addReady(player1, new Warthog());
-        Permanent opponentWarthog = addReady(player2, new Warthog());
+        addCreatureReady(player1, new SandsOfTime());
+        Permanent ownWarthog = addCreatureReady(player1, new Warthog());
+        Permanent opponentWarthog = addCreatureReady(player2, new Warthog());
         ownWarthog.tap();
 
         advanceToUpkeep(player2);
@@ -117,9 +116,9 @@ class SandsOfTimeTest extends BaseCardTest {
     @Test
     @DisplayName("Still skips untap and flips while Sands of Time itself is tapped")
     void worksWhileTapped() {
-        Permanent sands = addReady(player1, new SandsOfTime());
-        Permanent cityOfSolitude = addReady(player1, new CityOfSolitude());
-        Permanent warthog = addReady(player1, new Warthog());
+        Permanent sands = addCreatureReady(player1, new SandsOfTime());
+        Permanent cityOfSolitude = addCreatureReady(player1, new CityOfSolitude());
+        Permanent warthog = addCreatureReady(player1, new Warthog());
         sands.tap();
         cityOfSolitude.tap();
         warthog.tap();
@@ -130,10 +129,49 @@ class SandsOfTimeTest extends BaseCardTest {
         assertThat(sands.isTapped()).isFalse();
     }
 
-    private Permanent addReady(Player player, Card card) {
-        Permanent perm = harness.addToBattlefieldAndReturn(player, card);
-        perm.setSummoningSick(false);
-        return perm;
+    @Test
+    @DisplayName("Upkeep uses tap states at resolution rather than when the ability triggers")
+    void usesTapStatesAtResolution() {
+        addCreatureReady(player1, new SandsOfTime());
+        Permanent warthog = addCreatureReady(player1, new Warthog());
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        warthog.tap();
+        harness.passBothPriorities();
+
+        assertThat(warthog.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An upkeep trigger still resolves after Sands of Time leaves the battlefield")
+    void triggerSurvivesSourceRemoval() {
+        Permanent sands = addCreatureReady(player1, new SandsOfTime());
+        Permanent warthog = addCreatureReady(player1, new Warthog());
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(sands);
+        gd.playerGraveyards.get(player1.getId()).add(sands.getCard());
+        harness.passBothPriorities();
+
+        assertThat(warthog.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Two copies each trigger and flip permanents back to their original states")
+    void multipleCopiesFlipTwice() {
+        Permanent firstSands = addCreatureReady(player1, new SandsOfTime());
+        Permanent secondSands = addCreatureReady(player2, new SandsOfTime());
+        Permanent warthog = addCreatureReady(player1, new Warthog());
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(2);
+        resolveAllTriggers();
+
+        assertThat(firstSands.isTapped()).isFalse();
+        assertThat(secondSands.isTapped()).isFalse();
+        assertThat(warthog.isTapped()).isFalse();
     }
 
     private void advanceToNextTurn(Player currentActivePlayer) {
