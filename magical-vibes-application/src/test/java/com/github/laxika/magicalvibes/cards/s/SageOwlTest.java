@@ -111,17 +111,51 @@ class SageOwlTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Library with exactly 1 card skips reorder prompt")
-    void libraryWithOneCardSkipsReorder() {
+    @DisplayName("Library with exactly 1 card lets its controller look and return it")
+    void libraryWithOneCardLooksAndReturnsCard() {
         Card onlyCard = new GrizzlyBears();
         harness.setLibrary(player1, List.of(onlyCard));
 
         harness.castFromHand(player1, new SageOwl(), "{1}{U}");
         resolveAllTriggers();
 
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards())
+                .containsExactly(onlyCard);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0)));
+
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(onlyCard);
-        assertThat(gameLogContains("looks at the top card")).isTrue();
+    }
+
+    @Test
+    @DisplayName("An opponent's Sage Owl reorders only that opponent's library")
+    void opponentControllerReordersOwnLibrary() {
+        Card ownCard = new GrizzlyBears();
+        Card first = new GrizzlyBears();
+        Card second = new GrizzlyBears();
+        Card third = new GrizzlyBears();
+        Card fourth = new GrizzlyBears();
+        Card untouched = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(ownCard));
+        harness.setLibrary(player2, List.of(first, second, third, fourth, untouched));
+
+        harness.enterBattlefieldAndReturn(player2, new SageOwl());
+        resolveAllTriggers();
+
+        PendingInteraction.LibraryReorder interaction =
+                gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class);
+        assertThat(interaction.playerId()).isEqualTo(player2.getId());
+        assertThat(interaction.cards()).containsExactly(first, second, third, fourth);
+        assertThatThrownBy(() -> gs.handleInteractionAnswer(
+                gd, player1, new InteractionAnswer.CardOrder(List.of(2, 0, 3, 1))))
+                .isInstanceOf(IllegalStateException.class);
+
+        gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.CardOrder(List.of(2, 0, 3, 1)));
+
+        assertThat(gd.playerDecks.get(player2.getId()))
+                .containsExactly(third, first, fourth, second, untouched);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(ownCard);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test
