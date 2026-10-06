@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.b.BoundByMoonsilver;
 import com.github.laxika.magicalvibes.cards.j.JiwariTheEarthAflame;
 import com.github.laxika.magicalvibes.cards.k.KitsuneLoreweaver;
 import com.github.laxika.magicalvibes.cards.m.MinamoScrollkeeper;
@@ -16,7 +17,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({RuneTailKitsuneAscendant.class, RuneTailsEssence.class,
-        JiwariTheEarthAflame.class, KitsuneLoreweaver.class, MinamoScrollkeeper.class})
+        JiwariTheEarthAflame.class, KitsuneLoreweaver.class, MinamoScrollkeeper.class,
+        BoundByMoonsilver.class})
 class RuneTailKitsuneAscendantTest extends BaseCardTest {
 
     @Test
@@ -98,6 +100,82 @@ class RuneTailKitsuneAscendantTest extends BaseCardTest {
         resolveCombat(player2);
 
         assertThat(blocker.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @CardUsed({BoundByMoonsilver.class})
+    @DisplayName("A restriction on transforming does not prevent Rune-Tail from flipping")
+    void flipsWhileEnchantedByBoundByMoonsilver() {
+        Permanent runeTail = harness.addToBattlefieldAndReturn(player1, new RuneTailKitsuneAscendant());
+        harness.setHand(player1, List.of(new BoundByMoonsilver()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castEnchantment(player1, 0, runeTail.getId());
+        harness.passBothPriorities();
+
+        harness.setLife(player1, 30);
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+
+        assertThat(runeTail.isTransformed()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The flipped Essence continues preventing damage below 30 life")
+    void essenceStillPreventsDamageBelowThirtyLife() {
+        Permanent runeTail = transformRuneTail();
+        harness.setLife(player1, 10);
+        Permanent creature = addCreatureReady(player1, new MinamoScrollkeeper());
+        Permanent jiwari = addCreatureReady(player2, new JiwariTheEarthAflame());
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player2,
+                gd.playerBattlefields.get(player2.getId()).indexOf(jiwari), 2, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(runeTail.isTransformed()).isTrue();
+        assertThat(creature.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("The Essence does not prevent damage to opposing creatures")
+    void essenceDoesNotProtectOpposingCreatures() {
+        transformRuneTail();
+        Permanent creature = addCreatureReady(player2, new MinamoScrollkeeper());
+        Permanent jiwari = addCreatureReady(player1, new JiwariTheEarthAflame());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(jiwari), 2, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(creature.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The Essence does not prevent combat damage to its controller")
+    void essenceDoesNotProtectItsController() {
+        transformRuneTail();
+        addCreatureReady(player2, new KitsuneLoreweaver());
+
+        declareAttackers(player2, List.of(0));
+        resolveCombat(player2);
+
+        harness.assertLife(player1, 28);
+    }
+
+    @Test
+    @DisplayName("A state trigger does not trigger again while already on the stack")
+    void onlyOneFlipTriggerIsPending() {
+        harness.addToBattlefield(player1, new RuneTailKitsuneAscendant());
+        harness.setLife(player1, 30);
+
+        harness.runStateBasedActions();
+        harness.runStateBasedActions();
+
+        assertThat(gd.stack).hasSize(1);
     }
 
     private Permanent transformRuneTail() {
