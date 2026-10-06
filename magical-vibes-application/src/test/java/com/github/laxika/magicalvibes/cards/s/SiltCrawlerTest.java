@@ -38,9 +38,30 @@ class SiltCrawlerTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Silt Crawler");
     }
 
+    @Test
+    @DisplayName("Lands tap when the enter trigger resolves, including lands added in response")
+    void tapsLandsAtTriggerResolution() {
+        Permanent originalLand = harness.addToBattlefieldAndReturn(player1, new RhysticCave());
+        Permanent alreadyTappedLand = harness.addToBattlefieldAndReturn(player1, new RhysticCave());
+        alreadyTappedLand.setTapped(true);
+        harness.castFromHand(player1, new SiltCrawler(), "{2}{G}");
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Silt Crawler");
+        assertThat(originalLand.isTapped()).isFalse();
+        assertThat(gd.stack).hasSize(1);
+        Permanent addedLand = harness.addToBattlefieldAndReturn(player1, new RhysticCave());
+
+        resolveAllTriggers();
+
+        assertThat(originalLand.isTapped()).isTrue();
+        assertThat(alreadyTappedLand.isTapped()).isTrue();
+        assertThat(addedLand.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
     private void castAndResolve() {
         harness.castFromHand(player1, new SiltCrawler(), "{2}{G}");
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 }
