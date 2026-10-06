@@ -116,6 +116,36 @@ class ShivanDragonTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Each activation spends red mana immediately and boosts only on resolution")
+    void stackedActivationsPaySeparatelyAndResolveSeparately() {
+        Permanent dragon = addCreatureReady(player1, new ShivanDragon());
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(dragon.getEffectivePower()).isEqualTo(5);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.stack).hasSize(2);
+        assertThat(dragon.getEffectivePower()).isEqualTo(5);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(dragon.getEffectivePower()).isEqualTo(6);
+        assertThat(dragon.getEffectiveToughness()).isEqualTo(5);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(dragon.getEffectivePower()).isEqualTo(7);
+        assertThat(dragon.getEffectiveToughness()).isEqualTo(5);
+    }
+
+    @Test
     @DisplayName("Boost resets at end of turn cleanup")
     void boostResetsAtEndOfTurn() {
         Permanent dragon = addCreatureReady(player1, new ShivanDragon());
