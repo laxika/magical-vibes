@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ScepterOfInsight.class, Forest.class, GrizzlyBears.class})
 class ScepterOfInsightTest extends BaseCardTest {
 
     @Test
@@ -21,7 +23,7 @@ class ScepterOfInsightTest extends BaseCardTest {
     void activatingTapsAndConsumesMana() {
         Permanent scepter = addReadyScepter(player1);
         addAbilityMana(player1);
-        setDeck(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new Forest()));
 
         assertThat(scepter.isTapped()).isFalse();
 
@@ -38,7 +40,7 @@ class ScepterOfInsightTest extends BaseCardTest {
         addAbilityMana(player1);
         harness.setHand(player1, List.of(new GrizzlyBears()));
         harness.setHand(player2, List.of(new GrizzlyBears()));
-        setDeck(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new Forest()));
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -66,7 +68,7 @@ class ScepterOfInsightTest extends BaseCardTest {
         addReadyScepter(player1);
         addAbilityMana(player1);
         addAbilityMana(player1);
-        setDeck(player1, List.of(new Forest(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Forest(), new GrizzlyBears()));
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -75,11 +77,65 @@ class ScepterOfInsightTest extends BaseCardTest {
                 .hasMessageContaining("already tapped");
     }
 
+    @Test
+    @DisplayName("A newly entered Scepter can activate immediately, drawing only on resolution")
+    void canActivateOnTurnItEnters() {
+        Permanent scepter = harness.addToBattlefieldAndReturn(player1, new ScepterOfInsight());
+        addAbilityMana(player1);
+        Forest drawnCard = new Forest();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(drawnCard));
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(scepter.isTapped()).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(drawnCard);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The ability resolves after Scepter leaves the battlefield")
+    void drawsAfterSourceLeavesBattlefield() {
+        Permanent scepter = addReadyScepter(player1);
+        addAbilityMana(player1);
+        Forest drawnCard = new Forest();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(drawnCard));
+
+        harness.activateAbility(player1, 0, null, null);
+        gd.playerBattlefields.get(player1.getId()).remove(scepter);
+        harness.setGraveyard(player1, List.of(scepter.getCard()));
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+    }
+
+    @Test
+    @DisplayName("Blue mana alone does not pay the generic activation cost")
+    void cannotActivateWithoutEnoughTotalMana() {
+        Permanent scepter = addReadyScepter(player1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        assertThat(scepter.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addReadyScepter(Player player) {
-        ScepterOfInsight card = new ScepterOfInsight();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new ScepterOfInsight());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
@@ -88,8 +144,5 @@ class ScepterOfInsightTest extends BaseCardTest {
         harness.addMana(player, ManaColor.COLORLESS, 3);
     }
 
-    private void setDeck(Player player, List<? extends com.github.laxika.magicalvibes.model.Card> cards) {
-        gd.playerDecks.get(player.getId()).clear();
-        gd.playerDecks.get(player.getId()).addAll(cards);
-    }
+
 }
