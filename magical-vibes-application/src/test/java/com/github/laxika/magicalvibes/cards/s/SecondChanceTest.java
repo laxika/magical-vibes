@@ -61,4 +61,48 @@ class SecondChanceTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Second Chance");
         assertThat(gd.extraTurns).isEmpty();
     }
+
+    @Test
+    void losingLifeAfterUpkeepBeginsDoesNotCreateTrigger() {
+        harness.addToBattlefield(player1, new SecondChance());
+        harness.setLife(player1, 6);
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).isEmpty();
+        harness.setLife(player1, 5);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Second Chance");
+        assertThat(gd.extraTurns).isEmpty();
+    }
+
+    @Test
+    void eachCopySacrificesItselfAndGrantsAnExtraTurn() {
+        harness.addToBattlefield(player1, new SecondChance());
+        harness.addToBattlefield(player1, new SecondChance());
+        harness.setLife(player1, 4);
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Second Chance");
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        assertThat(gd.extraTurns).containsExactly(player1.getId(), player1.getId());
+    }
+
+    @Test
+    void usesItsControllersLifeAndGrantsThatControllerTheTurn() {
+        harness.addToBattlefield(player2, new SecondChance());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 1);
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Second Chance");
+        harness.assertInGraveyard(player2, "Second Chance");
+        assertThat(gd.extraTurns).containsExactly(player2.getId());
+    }
 }
