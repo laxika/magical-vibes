@@ -2,26 +2,28 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.t.Terminate;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SanityGnawers.class, GrizzlyBears.class, GiantGrowth.class, Terminate.class})
 class SanityGnawersTest extends BaseCardTest {
 
     /** Casts Sanity Gnawers from player1's hand at {@code targetPlayerId} during player1's main phase. */
     private void castSanityGnawers(UUID targetPlayerId) {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, new ArrayList<>(List.of(new SanityGnawers())));
+        harness.setHand(player1, List.of(new SanityGnawers()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -31,7 +33,7 @@ class SanityGnawersTest extends BaseCardTest {
     @Test
     @DisplayName("ETB makes the targeted opponent discard a card at random")
     void etbTargetedOpponentDiscardsAtRandom() {
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears(), new GiantGrowth())));
+        harness.setHand(player2, List.of(new GrizzlyBears(), new GiantGrowth()));
 
         castSanityGnawers(player2.getId());
         harness.passBothPriorities(); // resolve creature spell — ETB trigger on stack
@@ -46,8 +48,8 @@ class SanityGnawersTest extends BaseCardTest {
     @DisplayName("Can target its own controller (any player is a legal target)")
     void canTargetController() {
         // player1's hand after casting Sanity Gnawers holds these two cards; one is discarded at random.
-        harness.setHand(player1, new ArrayList<>(List.of(
-                new SanityGnawers(), new GrizzlyBears(), new GiantGrowth())));
+        harness.setHand(player1, List.of(
+                new SanityGnawers(), new GrizzlyBears(), new GiantGrowth()));
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -65,7 +67,7 @@ class SanityGnawersTest extends BaseCardTest {
     @Test
     @DisplayName("ETB does nothing when the targeted player has an empty hand")
     void emptyHandDiscardsNothing() {
-        harness.setHand(player2, new ArrayList<>());
+        harness.setHand(player2, List.of());
 
         castSanityGnawers(player2.getId());
         harness.passBothPriorities(); // resolve creature spell — ETB trigger on stack
@@ -73,5 +75,42 @@ class SanityGnawersTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A one-card hand is discarded without opening a choice")
+    void onlyCardIsDiscardedWithoutChoice() {
+        SanityGnawers discarded = new SanityGnawers();
+        harness.setHand(player2, List.of(discarded));
+
+        castSanityGnawers(player2.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(discarded);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(discarded);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The entry trigger still discards after Sanity Gnawers is destroyed")
+    void triggerResolvesAfterSourceIsDestroyed() {
+        SanityGnawers discarded = new SanityGnawers();
+        harness.setHand(player2, List.of(discarded));
+        castSanityGnawers(player2.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Terminate()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Sanity Gnawers"));
+        harness.assertNotOnBattlefield(player1, "Sanity Gnawers");
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(discarded);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(discarded);
     }
 }
