@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -18,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({ShatteredWings.class, FountainOfYouth.class, AngelicChorus.class, AirElemental.class,
-        GrizzlyBears.class})
+        GrizzlyBears.class, Unsummon.class})
 class ShatteredWingsTest extends BaseCardTest {
 
     @Test
@@ -74,10 +75,72 @@ class ShatteredWingsTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(topCard);
     }
 
-    private void castAt(Permanent target) {
+    @Test
+    @DisplayName("May keep the surveilled card on top")
+    void mayKeepSurveilledCard() {
+        Card topCard = new GrizzlyBears();
+        Card nextCard = new AirElemental();
+        harness.setLibrary(player1, List.of(topCard, nextCard));
+
+        castAt(harness.addToBattlefieldAndReturn(player2, new FountainOfYouth()));
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard, nextCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(topCard, nextCard);
+        harness.assertInGraveyard(player1, "Shattered Wings");
+        harness.assertInGraveyard(player2, "Fountain of Youth");
+    }
+
+    @Test
+    @DisplayName("Still destroys its target with an empty library")
+    void destroysTargetWithEmptyLibrary() {
+        harness.setLibrary(player1, List.of());
+
+        castAt(harness.addToBattlefieldAndReturn(player2, new FountainOfYouth()));
+
+        harness.assertInGraveyard(player2, "Fountain of Youth");
+        harness.assertInGraveyard(player1, "Shattered Wings");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Can destroy its controller's artifact")
+    void destroysOwnArtifact() {
+        harness.setLibrary(player1, List.of());
+
+        castAt(harness.addToBattlefieldAndReturn(player1, new FountainOfYouth()));
+
+        harness.assertInGraveyard(player1, "Fountain of Youth");
+        harness.assertNotOnBattlefield(player1, "Fountain of Youth");
+    }
+
+    @Test
+    @DisplayName("Does not surveil when its only target leaves before resolution")
+    void doesNotSurveilWhenTargetLeaves() {
+        Card topCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(topCard));
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
         harness.setHand(player1, List.of(new ShatteredWings()));
         harness.addMana(player1, ManaColor.GREEN, 3);
         harness.castSorcery(player1, 0, target.getId());
+
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, target.getId());
         harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Air Elemental");
+        harness.assertInGraveyard(player1, "Shattered Wings");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(topCard);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    private void castAt(Permanent target) {
+        harness.setHand(player1, List.of(new ShatteredWings()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.castAndResolveSorcery(player1, 0, target.getId());
     }
 }
