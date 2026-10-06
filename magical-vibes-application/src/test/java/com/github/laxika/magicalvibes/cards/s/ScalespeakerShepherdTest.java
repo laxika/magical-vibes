@@ -45,11 +45,18 @@ class ScalespeakerShepherdTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.cards()).hasSize(3);
+        assertThat(choice.cards()).extracting(Card::getName).doesNotHaveDuplicates()
+                .allMatch(List.of("Ancient Imperiosaur", "Burning Sun's Avatar", "Carnage Tyrant",
+                        "Charging Monstrosaur", "Etali, Primal Conqueror", "Ghalta, Primal Hunger",
+                        "Gishath, Sun's Avatar", "Quartzwood Crasher", "Regisaur Alpha",
+                        "Ripjaw Raptor", "Shifting Ceratops", "Territorial Allosaurus",
+                        "Tranquil Frillback", "Verdant Sun's Avatar", "Zacama, Primal Calamity")::contains);
 
         Card drafted = choice.cards().getFirst();
+        int handSize = gd.playerHands.get(player1.getId()).size();
         harness.handleMultipleCardsChosen(player1, List.of(drafted.getId()));
 
-        assertThat(gd.playerHands.get(player1.getId())).contains(drafted);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSize + 1).contains(drafted);
     }
 
     @Test
@@ -69,6 +76,41 @@ class ScalespeakerShepherdTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ScalespeakerShepherd());
         harness.setHand(player1, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void multipleShepherdsStackTheirReductions() {
+        harness.addToBattlefield(player1, new ScalespeakerShepherd());
+        harness.addToBattlefield(player1, new ScalespeakerShepherd());
+        harness.setHand(player1, List.of(new FrenziedRaptor()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    void reductionsCannotPayTheColoredManaRequirement() {
+        harness.addToBattlefield(player1, new ScalespeakerShepherd());
+        harness.addToBattlefield(player1, new ScalespeakerShepherd());
+        harness.addToBattlefield(player1, new ScalespeakerShepherd());
+        harness.setHand(player1, List.of(new FrenziedRaptor()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void opponentsShepherdDoesNotReduceYourDinosaurSpells() {
+        harness.addToBattlefield(player2, new ScalespeakerShepherd());
+        harness.setHand(player1, List.of(new FrenziedRaptor()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
