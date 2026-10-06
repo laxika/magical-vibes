@@ -63,7 +63,6 @@ class SawInHalfTestMarRegression extends BaseCardTest {
         harness.setHand(player1, List.of(new SawInHalf()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 }
