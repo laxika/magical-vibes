@@ -61,11 +61,78 @@ class ShinewendTest extends BaseCardTest {
     void cannotActivateWithoutCounter() {
         Permanent shinewend = harness.enterBattlefieldAndReturn(player1, new Shinewend());
         shinewend.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new Bitterblossom());
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, enchantment.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough counters");
+    }
+
+    @Test
+    @DisplayName("Casting Shinewend applies its entry counter before state-based actions")
+    void survivesEnteringAfterBeingCast() {
+        harness.castFromHand(player1, new Shinewend(), "{1}{W}");
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Shinewend");
+        harness.assertNotInGraveyard(player1, "Shinewend");
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst()
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Ability resolves after Shinewend dies from removing its last counter")
+    void abilityResolvesAfterSourceDies() {
+        harness.enterBattlefieldAndReturn(player1, new Shinewend());
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new Bitterblossom());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, enchantment.getId());
+        harness.runStateBasedActions();
+
+        harness.assertInGraveyard(player1, "Shinewend");
+        harness.assertNotOnBattlefield(player1, "Shinewend");
+        harness.assertOnBattlefield(player2, "Bitterblossom");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Bitterblossom");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can destroy its controller's enchantment while tapped")
+    void destroysOwnEnchantmentWhileTapped() {
+        Permanent shinewend = harness.enterBattlefieldAndReturn(player1, new Shinewend());
+        shinewend.tap();
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player1, new Bitterblossom());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, enchantment.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Bitterblossom");
+    }
+
+    @Test
+    @DisplayName("Cannot activate without white mana and does not remove the counter")
+    void cannotActivateWithoutWhiteMana() {
+        Permanent shinewend = harness.enterBattlefieldAndReturn(player1, new Shinewend());
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new Bitterblossom());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, enchantment.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(shinewend.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Bitterblossom");
+        assertThat(gd.stack).isEmpty();
     }
 }
