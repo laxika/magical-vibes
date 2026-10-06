@@ -94,4 +94,84 @@ class RixMaadiDungeonPalaceTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    void discardsHappenTogetherAfterBothPlayersChoose() {
+        harness.addToBattlefield(player1, new RixMaadiDungeonPalace());
+        harness.setHand(player1, List.of(new GhostQuarter(), new RakdosCarnarium()));
+        harness.setHand(player2, List.of(new GhostQuarter(), new RakdosCarnarium()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.assertNotInGraveyard(player1, "Rakdos Carnarium");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+
+        harness.handleCardChosen(player2, 0);
+
+        harness.assertInGraveyard(player1, "Rakdos Carnarium");
+        harness.assertInGraveyard(player2, "Ghost Quarter");
+        harness.assertInHand(player1, "Ghost Quarter");
+        harness.assertInHand(player2, "Rakdos Carnarium");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void emptyControllerHandDoesNotPreventOpponentDiscard() {
+        harness.addToBattlefield(player1, new RixMaadiDungeonPalace());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new GhostQuarter()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleCardChosen(player2, 0);
+
+        harness.assertInGraveyard(player2, "Ghost Quarter");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void discardAbilityCannotBeActivatedOutsideMainPhase() {
+        Permanent palace = harness.addToBattlefieldAndReturn(player1, new RixMaadiDungeonPalace());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(palace.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void discardAbilityCannotBeActivatedWithNonemptyStack() {
+        harness.addToBattlefield(player1, new RixMaadiDungeonPalace());
+        Permanent secondPalace = harness.addToBattlefieldAndReturn(player1, new RixMaadiDungeonPalace());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(secondPalace.isTapped()).isFalse();
+        assertThat(gd.stack).hasSize(1);
+    }
 }
