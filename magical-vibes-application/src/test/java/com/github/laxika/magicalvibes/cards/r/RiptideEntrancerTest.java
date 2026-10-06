@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.MistformWall;
+import com.github.laxika.magicalvibes.cards.s.Smother;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -11,10 +13,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RiptideEntrancer.class, MistformWall.class, Island.class})
+@CardUsed({RiptideEntrancer.class, MistformWall.class, Island.class, Smother.class})
 class RiptideEntrancerTest extends BaseCardTest {
 
     @Test
@@ -23,7 +26,7 @@ class RiptideEntrancerTest extends BaseCardTest {
         Permanent attacker = addAttacker();
         Permanent target = addCreatureReady(player2, new MistformWall());
 
-        resolveCombatUnblocked();
+        resolveCombat();
 
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
@@ -47,7 +50,7 @@ class RiptideEntrancerTest extends BaseCardTest {
         Permanent land = harness.addToBattlefieldAndReturn(player2, new Island());
         Permanent ownCreature = addCreatureReady(player1, new MistformWall());
 
-        resolveCombatUnblocked();
+        resolveCombat();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .containsExactly(target.getId())
@@ -60,7 +63,7 @@ class RiptideEntrancerTest extends BaseCardTest {
         addAttacker();
         Permanent target = addCreatureReady(player2, new MistformWall());
 
-        resolveCombatUnblocked();
+        resolveCombat();
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
@@ -91,7 +94,7 @@ class RiptideEntrancerTest extends BaseCardTest {
         Permanent attacker = addAttacker();
         harness.addToBattlefieldAndReturn(player2, new Island());
 
-        resolveCombatUnblocked();
+        resolveCombat();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -107,9 +110,7 @@ class RiptideEntrancerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castCreatureWithMorph(player1, 0);
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent entrancer = findPermanent(player1, "Riptide Entrancer");
         assertThat(entrancer.isFaceDown()).isTrue();
@@ -121,16 +122,89 @@ class RiptideEntrancerTest extends BaseCardTest {
         assertThat(entrancer.isFaceDown()).isFalse();
     }
 
+    @Test
+    @DisplayName("A face-down Entrancer deals combat damage without triggering its printed ability")
+    void faceDownCombatDoesNotTrigger() {
+        Permanent attacker = addAttacker();
+        attacker.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        Permanent target = addCreatureReady(player2, new MistformWall());
+
+        resolveCombat();
+
+        harness.assertLife(player2, 18);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+    }
+
+    @Test
+    @DisplayName("Turning Entrancer face up before combat damage enables its triggered ability")
+    void turningFaceUpBeforeDamageEnablesTrigger() {
+        Permanent attacker = addAttacker();
+        attacker.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        Permanent target = addCreatureReady(player2, new MistformWall());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of());
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(attacker));
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInGraveyard(player1, "Riptide Entrancer");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+    }
+
+    @Test
+    @DisplayName("Removing Entrancer in response prevents gaining control because it cannot be sacrificed")
+    void removedSourceCannotPaySacrifice() {
+        Permanent attacker = addAttacker();
+        Permanent target = addCreatureReady(player2, new MistformWall());
+        harness.setHand(player2, List.of(new Smother()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        resolveCombat();
+        harness.handlePermanentChosen(player1, target.getId());
+
+        harness.castAndResolveInstant(player2, 0, attacker.getId());
+        harness.passBothPriorities();
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        harness.assertInGraveyard(player1, "Riptide Entrancer");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        assertThat(gd.controlEffectsFor(target.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Removing the target in response prevents resolving the ability and sacrificing Entrancer")
+    void illegalTargetPreventsSacrifice() {
+        Permanent attacker = addAttacker();
+        Permanent target = addCreatureReady(player2, new MistformWall());
+        harness.setHand(player2, List.of(new Smother()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        resolveCombat();
+        harness.handlePermanentChosen(player1, target.getId());
+
+        harness.castAndResolveInstant(player2, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
+        harness.assertNotInGraveyard(player1, "Riptide Entrancer");
+        harness.assertInGraveyard(player2, "Mistform Wall");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addAttacker() {
         Permanent attacker = addCreatureReady(player1, new RiptideEntrancer());
         attacker.setAttacking(true);
         attacker.setAttackTarget(player2.getId());
         return attacker;
-    }
-
-    private void resolveCombatUnblocked() {
-        prepareDeclareBlockers();
-        gs.declareBlockers(gd, player2, List.of());
-        harness.passBothPriorities();
     }
 }
