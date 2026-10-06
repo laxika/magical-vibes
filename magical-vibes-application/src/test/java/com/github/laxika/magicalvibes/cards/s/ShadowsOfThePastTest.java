@@ -4,9 +4,11 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -17,10 +19,12 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ShadowsOfThePast.class, Forest.class, GrizzlyBears.class, WrathOfGod.class})
 class ShadowsOfThePastTest extends BaseCardTest {
 
     @Nested
     @DisplayName("Creature death trigger")
+    @CardUsed({ShadowsOfThePast.class, Forest.class, GrizzlyBears.class, WrathOfGod.class})
     class DeathTrigger {
 
         @Test
@@ -34,8 +38,7 @@ class ShadowsOfThePastTest extends BaseCardTest {
             harness.addMana(player2, ManaColor.WHITE, 4);
             harness.forceActivePlayer(player2);
 
-            harness.getGameService().playCard(gd, player2, 0, 0, null, null);
-            harness.passBothPriorities(); // Wrath resolves, bear dies, trigger goes on stack
+            harness.castAndResolveSorcery(player2, 0, 0);
 
             assertThat(gd.stack).isNotEmpty();
             harness.passBothPriorities(); // trigger resolves into the scry
@@ -55,16 +58,93 @@ class ShadowsOfThePastTest extends BaseCardTest {
             harness.addMana(player2, ManaColor.WHITE, 4);
             harness.forceActivePlayer(player2);
 
-            harness.getGameService().playCard(gd, player2, 0, 0, null, null);
-            harness.passBothPriorities();
+            harness.castAndResolveSorcery(player2, 0, 0);
             harness.passBothPriorities();
 
             assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.Scry.class);
+        }
+
+        @Test
+        void canKeepScriedCardOnTop() {
+            Card top = new Forest();
+            Card next = new Forest();
+            harness.setLibrary(player1, List.of(top, next));
+            resolveSingleDeathTrigger();
+
+            gs.handleInteractionAnswer(gd, player1,
+                    new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+
+            assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top, next);
+            assertThat(gd.interaction.activeInteraction()).isNull();
+        }
+
+        @Test
+        void canPutScriedCardOnBottom() {
+            Card top = new Forest();
+            Card next = new Forest();
+            harness.setLibrary(player1, List.of(top, next));
+            resolveSingleDeathTrigger();
+
+            gs.handleInteractionAnswer(gd, player1,
+                    new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+
+            assertThat(gd.playerDecks.get(player1.getId())).containsExactly(next, top);
+            assertThat(gd.interaction.activeInteraction()).isNull();
+        }
+
+        @Test
+        void simultaneousDeathsProduceSeparateScryChoices() {
+            harness.addToBattlefield(player1, new ShadowsOfThePast());
+            harness.addToBattlefield(player1, new GrizzlyBears());
+            harness.addToBattlefield(player2, new GrizzlyBears());
+            Card first = new Forest();
+            Card second = new Forest();
+            harness.setLibrary(player1, List.of(first, second));
+            harness.setHand(player2, List.of(new WrathOfGod()));
+            harness.addMana(player2, ManaColor.WHITE, 4);
+            harness.forceActivePlayer(player2);
+
+            harness.castAndResolveSorcery(player2, 0, 0);
+            assertThat(gd.stack).hasSize(2);
+            harness.passBothPriorities();
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
+                    .containsExactly(first);
+            gs.handleInteractionAnswer(gd, player1,
+                    new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+
+            harness.passBothPriorities();
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
+                    .containsExactly(second);
+            gs.handleInteractionAnswer(gd, player1,
+                    new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+            assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second, first);
+            assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
+        void deathWithEmptyLibraryFinishesWithoutAChoice() {
+            harness.setLibrary(player1, List.of());
+            resolveSingleDeathTrigger();
+
+            assertThat(gd.stack).isEmpty();
+            assertThat(gd.interaction.activeInteraction()).isNull();
+            assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        }
+
+        private void resolveSingleDeathTrigger() {
+            harness.addToBattlefield(player1, new ShadowsOfThePast());
+            harness.addToBattlefield(player2, new GrizzlyBears());
+            harness.setHand(player2, List.of(new WrathOfGod()));
+            harness.addMana(player2, ManaColor.WHITE, 4);
+            harness.forceActivePlayer(player2);
+            harness.castAndResolveSorcery(player2, 0, 0);
+            harness.passBothPriorities();
         }
     }
 
     @Nested
     @DisplayName("Drain ability")
+    @CardUsed({ShadowsOfThePast.class, GrizzlyBears.class, Forest.class})
     class DrainAbility {
 
         @Test
@@ -94,6 +174,55 @@ class ShadowsOfThePastTest extends BaseCardTest {
 
             assertThat(gd.getLife(player2.getId())).isEqualTo(theirLife - 2);
             assertThat(gd.getLife(player1.getId())).isEqualTo(myLife + 2);
+        }
+
+        @Test
+        void noncreatureCardsAndOpponentsGraveyardDoNotMeetTheRestriction() {
+            harness.addToBattlefield(player1, new ShadowsOfThePast());
+            List<Card> ownGraveyard = creatureCards(3);
+            ownGraveyard.add(new Forest());
+            harness.setGraveyard(player1, ownGraveyard);
+            harness.setGraveyard(player2, creatureCards(4));
+            harness.addMana(player1, ManaColor.BLACK, 5);
+
+            assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("creature cards in your graveyard");
+            assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
+        void graveyardRestrictionIsNotRecheckedOnResolution() {
+            harness.addToBattlefield(player1, new ShadowsOfThePast());
+            harness.setGraveyard(player1, creatureCards(4));
+            harness.addMana(player1, ManaColor.BLACK, 5);
+            int myLife = gd.getLife(player1.getId());
+            int theirLife = gd.getLife(player2.getId());
+
+            harness.activateAbility(player1, 0, 0, null);
+            harness.setGraveyard(player1, List.of());
+            harness.passBothPriorities();
+
+            harness.assertLife(player1, myLife + 2);
+            harness.assertLife(player2, theirLife - 2);
+        }
+
+        @Test
+        void canActivateTwiceDuringOpponentsTurn() {
+            harness.addToBattlefield(player1, new ShadowsOfThePast());
+            harness.setGraveyard(player1, creatureCards(5));
+            harness.addMana(player1, ManaColor.BLACK, 10);
+            harness.forceActivePlayer(player2);
+            int myLife = gd.getLife(player1.getId());
+            int theirLife = gd.getLife(player2.getId());
+
+            harness.activateAbility(player1, 0, 0, null);
+            harness.passBothPriorities();
+            harness.activateAbility(player1, 0, 0, null);
+            harness.passBothPriorities();
+
+            harness.assertLife(player1, myLife + 4);
+            harness.assertLife(player2, theirLife - 4);
         }
 
         private List<Card> creatureCards(int count) {
