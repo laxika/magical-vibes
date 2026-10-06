@@ -65,6 +65,45 @@ class SamiShipsEngineerTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Robot")).isEmpty();
     }
 
+    @Test
+    @DisplayName("Does not trigger during the opponent's end step")
+    void doesNotTriggerDuringOpponentsEndStep() {
+        harness.addToBattlefield(player1, new SamiShipsEngineer());
+        addTappedCreature(player1);
+        addTappedCreature(player1);
+
+        advanceToEndStep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanents(player1, "Robot")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Tapped Sami counts toward the two tapped creatures")
+    void countsTappedSami() {
+        Permanent sami = harness.addToBattlefieldAndReturn(player1, new SamiShipsEngineer());
+        sami.tap();
+        addTappedCreature(player1);
+
+        advanceToEndStep(player1);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Robot")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Creates only one Robot with more than two tapped creatures")
+    void createsOnlyOneTokenWithThreeTappedCreatures() {
+        harness.addToBattlefield(player1, new SamiShipsEngineer());
+        addTappedCreature(player1);
+        addTappedCreature(player1);
+        addTappedCreature(player1);
+
+        advanceToEndStep(player1);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Robot")).hasSize(1);
+    }
     private Permanent addTappedCreature(Player player) {
         Permanent creature = harness.addToBattlefieldAndReturn(player, new GrizzlyBears());
         creature.tap();
@@ -74,7 +113,6 @@ class SamiShipsEngineerTest extends BaseCardTest {
     private void advanceToEndStep(Player player) {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player, TurnStep.END_STEP);
     }
 }
