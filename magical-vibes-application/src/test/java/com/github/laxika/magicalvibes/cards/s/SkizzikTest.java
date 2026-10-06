@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.h.HoodedKavu;
+import com.github.laxika.magicalvibes.cards.c.CabalEvangel;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -17,7 +17,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Skizzik.class, HoodedKavu.class})
+@CardUsed({Skizzik.class, CabalEvangel.class})
 class SkizzikTest extends BaseCardTest {
 
     @Test
@@ -40,7 +40,7 @@ class SkizzikTest extends BaseCardTest {
     @DisplayName("Skizzik's trample deals excess combat damage through a blocker")
     void trampleDealsExcessCombatDamage() {
         harness.setLife(player2, 20);
-        Permanent blocker = addCreatureReady(player2, new HoodedKavu());
+        Permanent blocker = addCreatureReady(player2, new CabalEvangel());
         harness.setHand(player1, List.of(new Skizzik()));
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -48,8 +48,7 @@ class SkizzikTest extends BaseCardTest {
         harness.castKickedCreature(player1, 0);
         harness.passBothPriorities();
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
 
@@ -62,8 +61,6 @@ class SkizzikTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(permanent -> permanent.getId().equals(blocker.getId()));
     }
-
-    // ===== Cast without kicker =====
 
     @Test
     @DisplayName("Cast without kicker — sacrificed at end step")
@@ -97,8 +94,6 @@ class SkizzikTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Skizzik");
     }
 
-    // ===== Cast with kicker =====
-
     @Test
     @DisplayName("Cast with kicker — stays on battlefield at end step")
     void castWithKickerStaysOnBattlefield() {
@@ -122,5 +117,66 @@ class SkizzikTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Skizzik");
         // Should not be in graveyard
         harness.assertNotInGraveyard(player1, "Skizzik");
+    }
+
+    @Test
+    @DisplayName("Skizzik put directly onto the battlefield is sacrificed on an opponent's end step")
+    void uncastSkizzikSacrificedOnOpponentEndStep() {
+        harness.addToBattlefield(player1, new Skizzik());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_STEP);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.assertOnBattlefield(player1, "Skizzik");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Skizzik");
+        harness.assertInGraveyard(player1, "Skizzik");
+    }
+
+    @Test
+    @DisplayName("Kicked Skizzik survives an opponent's end step too")
+    void kickedSkizzikSurvivesOpponentEndStep() {
+        harness.setHand(player1, List.of(new Skizzik()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castKickedCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_STEP);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Skizzik");
+        harness.assertNotInGraveyard(player1, "Skizzik");
+    }
+
+    @Test
+    @DisplayName("Kicker is tracked separately for two copies of Skizzik")
+    void onlyUnkickedCopyIsSacrificed() {
+        harness.setHand(player1, List.of(new Skizzik(), new Skizzik()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castKickedCreature(player1, 0);
+        harness.passBothPriorities();
+        Permanent kicked = findPermanent(player1, "Skizzik");
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_STEP);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Skizzik")).containsExactly(kicked);
+        harness.assertInGraveyard(player1, "Skizzik");
     }
 }
