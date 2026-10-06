@@ -96,6 +96,59 @@ class RhysticDelugeTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("You can target your own creature and pay with colored mana")
+    void ownCreatureControllerCanPayWithColoredMana() {
+        addDeluge();
+        Permanent target = addCreatureReady(player1, new PygmyRazorback());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        activate(target);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
+    @DisplayName("A target that leaves before resolution is not offered payment")
+    void departedTargetDoesNotOfferPayment() {
+        addDeluge();
+        Permanent target = addCreatureReady(player2, new PygmyRazorback());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerGraveyards.get(player2.getId()).add(target.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The ability still taps its target after Rhystic Deluge leaves")
+    void abilityResolvesAfterSourceLeaves() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new RhysticDeluge());
+        Permanent target = addCreatureReady(player2, new PygmyRazorback());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        gd.playerGraveyards.get(player1.getId()).add(source.getCard());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(target.isTapped()).isTrue();
+    }
+
     private void addDeluge() {
         harness.addToBattlefield(player1, new RhysticDeluge());
     }
