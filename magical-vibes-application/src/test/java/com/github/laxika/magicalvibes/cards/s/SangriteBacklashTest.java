@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,13 +15,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SangriteBacklash.class, GrizzlyBears.class, SerraAngel.class, FountainOfYouth.class})
 class SangriteBacklashTest extends BaseCardTest {
 
     @Test
     @DisplayName("Casting Sangrite Backlash targeting a creature puts it on the stack")
     void castingPutsOnStack() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new SangriteBacklash()));
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -36,8 +37,7 @@ class SangriteBacklashTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Sangrite Backlash attaches it to target creature")
     void resolvingAttachesToTarget() {
-        Permanent serra = new Permanent(new SerraAngel());
-        gd.playerBattlefields.get(player1.getId()).add(serra);
+        Permanent serra = harness.addToBattlefieldAndReturn(player1, new SerraAngel());
 
         harness.setHand(player1, List.of(new SangriteBacklash()));
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -55,8 +55,7 @@ class SangriteBacklashTest extends BaseCardTest {
     @Test
     @DisplayName("Enchanted creature gets +3/-3")
     void enchantedCreatureGetsBoostAndDebuff() {
-        Permanent serra = new Permanent(new SerraAngel());
-        gd.playerBattlefields.get(player1.getId()).add(serra);
+        Permanent serra = harness.addToBattlefieldAndReturn(player1, new SerraAngel());
 
         Permanent aura = new Permanent(new SangriteBacklash());
         aura.setAttachedTo(serra.getId());
@@ -69,8 +68,7 @@ class SangriteBacklashTest extends BaseCardTest {
     @Test
     @DisplayName("Creature returns to base stats when Sangrite Backlash is removed")
     void effectsStopWhenRemoved() {
-        Permanent serra = new Permanent(new SerraAngel());
-        gd.playerBattlefields.get(player1.getId()).add(serra);
+        Permanent serra = harness.addToBattlefieldAndReturn(player1, new SerraAngel());
 
         Permanent aura = new Permanent(new SangriteBacklash());
         aura.setAttachedTo(serra.getId());
@@ -88,8 +86,7 @@ class SangriteBacklashTest extends BaseCardTest {
     @Test
     @DisplayName("Sangrite Backlash fizzles if target creature is removed before resolution")
     void fizzlesIfTargetRemoved() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new SangriteBacklash()));
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -117,5 +114,43 @@ class SangriteBacklashTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Sangrite Backlash can enchant an opponent's creature using green hybrid mana")
+    void enchantsOpponentCreatureWithGreenMana() {
+        Permanent serra = harness.addToBattlefieldAndReturn(player2, new SerraAngel());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SangriteBacklash()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castEnchantment(player1, 0, serra.getId());
+        harness.passBothPriorities();
+
+        Permanent aura = findPermanent(player1, "Sangrite Backlash");
+        assertThat(aura.getAttachedTo()).isEqualTo(serra.getId());
+        assertThat(gqs.getEffectivePower(gd, serra)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, serra)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Lethal toughness reduction sends the creature and its Aura to their owners' graveyards")
+    void lethalToughnessReductionRemovesCreatureAndAura() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SangriteBacklash()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Sangrite Backlash");
+        harness.assertInGraveyard(player1, "Sangrite Backlash");
+        assertThat(gd.stack).isEmpty();
     }
 }
