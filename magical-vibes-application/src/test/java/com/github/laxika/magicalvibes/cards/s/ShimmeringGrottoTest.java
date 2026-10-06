@@ -5,47 +5,23 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ShimmeringGrotto.class})
 class ShimmeringGrottoTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Shimmering Grotto has two activated abilities")
-    void hasCorrectProperties() {
-        ShimmeringGrotto card = new ShimmeringGrotto();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-    }
-
-    
-
-    @Test
-    @DisplayName("Second ability costs {1} and taps to add one mana of any color")
-    void secondAbilityProperties() {
-        ShimmeringGrotto card = new ShimmeringGrotto();
-
-        var ability = card.getActivatedAbilities().get(1);
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isEqualTo("{1}");
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(AwardAnyColorManaEffect.class);
-    }
-
-    // ===== Tapping for colorless mana =====
 
     @Test
     @DisplayName("Tapping for colorless adds {C} immediately (mana ability)")
     void tapForColorlessAddsMana() {
-        Permanent grotto = addReadyGrotto(player1);
+        Permanent grotto = harness.addToBattlefieldAndReturn(player1, new ShimmeringGrotto());
 
         harness.activateAbility(player1, 0, 0, null, null);
 
@@ -56,12 +32,10 @@ class ShimmeringGrottoTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
-    // ===== Tapping for any color mana =====
-
     @Test
     @DisplayName("Activating second ability with {1} cost prompts for color choice")
     void secondAbilityPromptsForColorChoice() {
-        addReadyGrotto(player1);
+        harness.addToBattlefield(player1, new ShimmeringGrotto());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, 1, null, null);
@@ -74,24 +48,28 @@ class ShimmeringGrottoTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
-    @Test
-    @DisplayName("Choosing a color adds that mana to pool")
-    void choosingColorAddsMana() {
-        addReadyGrotto(player1);
+    @ParameterizedTest
+    @EnumSource(value = ManaColor.class, names = {"WHITE", "BLUE", "BLACK", "RED", "GREEN"})
+    @DisplayName("Choosing any of the five colors adds exactly one mana and taps the land")
+    void choosingColorAddsMana(ManaColor color) {
+        Permanent grotto = harness.addToBattlefieldAndReturn(player1, new ShimmeringGrotto());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, 1, null, null);
-        harness.handleListChoice(player1, "RED");
+        harness.handleListChoice(player1, color.name());
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(color)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(1);
+        assertThat(grotto.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test
     @DisplayName("Second ability spends {1} from the mana pool")
     void secondAbilitySpendsMana() {
-        addReadyGrotto(player1);
+        harness.addToBattlefield(player1, new ShimmeringGrotto());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, 1, null, null);
@@ -101,12 +79,10 @@ class ShimmeringGrottoTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
     }
 
-    // ===== Validation =====
-
     @Test
     @DisplayName("Cannot activate ability when already tapped")
     void cannotActivateWhenTapped() {
-        Permanent grotto = addReadyGrotto(player1);
+        Permanent grotto = harness.addToBattlefieldAndReturn(player1, new ShimmeringGrotto());
         grotto.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
@@ -117,20 +93,41 @@ class ShimmeringGrottoTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate second ability without enough mana")
     void cannotActivateSecondAbilityWithoutMana() {
-        addReadyGrotto(player1);
+        Permanent grotto = harness.addToBattlefieldAndReturn(player1, new ShimmeringGrotto());
 
         // No mana in pool — activation should fail
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
+        assertThat(grotto.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Tapped Grotto cannot filter mana and does not spend the attempted cost")
+    void cannotFilterManaWhenTapped() {
+        Permanent grotto = harness.addToBattlefieldAndReturn(player1, new ShimmeringGrotto());
+        grotto.tap();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-    private Permanent addReadyGrotto(Player player) {
-        ShimmeringGrotto card = new ShimmeringGrotto();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Grotto cannot use its own colorless mana to filter while it remains tapped")
+    void cannotPayFilterCostByTappingSameGrotto() {
+        harness.addToBattlefield(player1, new ShimmeringGrotto());
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
     }
 }
