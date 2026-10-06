@@ -1,8 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.q.QueensBaySoldier;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -10,6 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,27 +19,22 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RuthlessKnave.class, QueensBaySoldier.class, RaptorCompanion.class})
 class RuthlessKnaveTest extends BaseCardTest {
 
-    // =====================================================
-    // Card properties
-    // =====================================================
-    // Ability 0: Sacrifice a creature, create two Treasures
-    // =====================================================
-
     @Test
-    @DisplayName("Auto-sacrifices when only one other creature available and creates two Treasures")
-    void autoSacrificesOnlyCreatureAndCreatesTreasures() {
+    @DisplayName("Sacrifices a chosen creature and creates two Treasures")
+    void sacrificesChosenCreatureAndCreatesTreasures() {
         harness.addToBattlefield(player1, new RuthlessKnave());
-        harness.addToBattlefield(player1, new LlanowarElves());
+        harness.addToBattlefield(player1, new QueensBaySoldier());
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        // Knave is excluded as source, so Llanowar Elves is the only valid target — auto-sacrifice
         harness.activateAbility(player1, 0, 0, null, null);
+        harness.handlePermanentChosen(player1, findPermanent(player1, "Queen's Bay Soldier").getId());
 
-        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
-        harness.assertInGraveyard(player1, "Llanowar Elves");
+        harness.assertNotOnBattlefield(player1, "Queen's Bay Soldier");
+        harness.assertInGraveyard(player1, "Queen's Bay Soldier");
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
@@ -58,8 +53,8 @@ class RuthlessKnaveTest extends BaseCardTest {
     @DisplayName("Prompts for creature choice when multiple other creatures available")
     void promptsForCreatureChoiceWhenMultipleAvailable() {
         harness.addToBattlefield(player1, new RuthlessKnave());
-        harness.addToBattlefield(player1, new LlanowarElves());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new QueensBaySoldier());
+        harness.addToBattlefield(player1, new RaptorCompanion());
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
@@ -72,32 +67,29 @@ class RuthlessKnaveTest extends BaseCardTest {
     @DisplayName("Choosing a creature to sacrifice puts ability on stack")
     void choosingCreaturePutsAbilityOnStack() {
         harness.addToBattlefield(player1, new RuthlessKnave());
-        harness.addToBattlefield(player1, new LlanowarElves());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent soldier = harness.addToBattlefieldAndReturn(player1, new QueensBaySoldier());
+        harness.addToBattlefield(player1, new RaptorCompanion());
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        UUID elvesId = findPermanent(player1, "Llanowar Elves").getId();
-
         harness.activateAbility(player1, 0, 0, null, null);
-        harness.handlePermanentChosen(player1, elvesId);
+        harness.handlePermanentChosen(player1, soldier.getId());
 
         assertThat(gd.stack).hasSize(1);
-        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
-        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Queen's Bay Soldier");
+        harness.assertOnBattlefield(player1, "Raptor Companion");
     }
 
     @Test
     @DisplayName("Mana is consumed when activating treasure ability")
     void manaIsConsumedForTreasureAbility() {
         harness.addToBattlefield(player1, new RuthlessKnave());
-        harness.addToBattlefield(player1, new LlanowarElves());
+        harness.addToBattlefield(player1, new QueensBaySoldier());
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.activateAbility(player1, 0, 0, null, null);
 
-        // 4 total - 3 ({2}{B}) = 1 remaining
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
     }
 
@@ -105,7 +97,7 @@ class RuthlessKnaveTest extends BaseCardTest {
     @DisplayName("Cannot activate treasure ability without enough mana")
     void cannotActivateTreasureAbilityWithoutEnoughMana() {
         harness.addToBattlefield(player1, new RuthlessKnave());
-        harness.addToBattlefield(player1, new LlanowarElves());
+        harness.addToBattlefield(player1, new QueensBaySoldier());
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
@@ -114,44 +106,45 @@ class RuthlessKnaveTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Cannot activate treasure ability when Knave is the only creature")
-    void cannotActivateTreasureAbilityWhenKnaveIsOnlyCreature() {
+    @DisplayName("Can sacrifice Knave itself when it is the only creature")
+    void canSacrificeKnaveWhenItIsOnlyCreature() {
         harness.addToBattlefield(player1, new RuthlessKnave());
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        // Knave is excluded as source, so there are no valid sacrifice targets
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Sacrifice a creature");
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Ruthless Knave");
+        harness.assertInGraveyard(player1, "Ruthless Knave");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(countPermanents(player1, "Treasure")).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Treasure")).isEqualTo(2);
     }
 
     @Test
     @DisplayName("Can activate treasure ability multiple times with enough resources")
     void canActivateTreasureAbilityMultipleTimes() {
         harness.addToBattlefield(player1, new RuthlessKnave());
-        harness.addToBattlefield(player1, new LlanowarElves());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new QueensBaySoldier());
+        harness.addToBattlefield(player1, new RaptorCompanion());
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
-        // First activation — 2 valid targets, prompts for choice
-        UUID elvesId = findPermanent(player1, "Llanowar Elves").getId();
+        UUID soldierId = findPermanent(player1, "Queen's Bay Soldier").getId();
         harness.activateAbility(player1, 0, 0, null, null);
-        harness.handlePermanentChosen(player1, elvesId);
+        harness.handlePermanentChosen(player1, soldierId);
         harness.passBothPriorities();
 
-        // Second activation — only Grizzly Bears left, auto-sacrifice
         harness.activateAbility(player1, 0, 0, null, null);
+        harness.handlePermanentChosen(player1, findPermanent(player1, "Raptor Companion").getId());
         harness.passBothPriorities();
 
         long treasureCount = countPermanents(player1, "Treasure");
         assertThat(treasureCount).isEqualTo(4);
     }
-
-    // =====================================================
-    // Ability 1: Sacrifice three Treasures, draw a card
-    // =====================================================
 
     @Test
     @DisplayName("Auto-sacrifices when exactly 3 Treasures available")
@@ -203,14 +196,10 @@ class RuthlessKnaveTest extends BaseCardTest {
     @DisplayName("Completing three sacrifice choices puts ability on stack")
     void completingThreeSacrificesPutsAbilityOnStack() {
         harness.addToBattlefield(player1, new RuthlessKnave());
+        UUID t1Id = harness.addToBattlefieldAndReturn(player1, createTreasureToken()).getId();
+        UUID t2Id = harness.addToBattlefieldAndReturn(player1, createTreasureToken()).getId();
+        UUID t3Id = harness.addToBattlefieldAndReturn(player1, createTreasureToken()).getId();
         harness.addToBattlefield(player1, createTreasureToken());
-        harness.addToBattlefield(player1, createTreasureToken());
-        harness.addToBattlefield(player1, createTreasureToken());
-        harness.addToBattlefield(player1, createTreasureToken());
-
-        UUID t1Id = gd.playerBattlefields.get(player1.getId()).get(1).getId();
-        UUID t2Id = gd.playerBattlefields.get(player1.getId()).get(2).getId();
-        UUID t3Id = gd.playerBattlefields.get(player1.getId()).get(3).getId();
 
         harness.activateAbility(player1, 0, 1, null, null);
 
@@ -258,28 +247,23 @@ class RuthlessKnaveTest extends BaseCardTest {
         harness.addToBattlefield(player1, createTreasureToken());
         harness.addToBattlefield(player1, createTreasureToken());
 
-        // No mana added — should still work
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
     }
 
-    // =====================================================
-    // Integration: both abilities together
-    // =====================================================
-
     @Test
     @DisplayName("Can sacrifice a creature to create Treasures then sacrifice Treasures to draw")
     void canCreateTreasuresThenSacrificeThemToDraw() {
         harness.addToBattlefield(player1, new RuthlessKnave());
-        harness.addToBattlefield(player1, new LlanowarElves());
+        harness.addToBattlefield(player1, new QueensBaySoldier());
         harness.addToBattlefield(player1, createTreasureToken());
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        // Sacrifice Llanowar Elves (only valid creature) to create 2 Treasures → 3 total
         harness.activateAbility(player1, 0, 0, null, null);
+        harness.handlePermanentChosen(player1, findPermanent(player1, "Queen's Bay Soldier").getId());
         harness.passBothPriorities();
 
         long treasureCount = countPermanents(player1, "Treasure");
@@ -287,7 +271,6 @@ class RuthlessKnaveTest extends BaseCardTest {
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
-        // Sacrifice 3 Treasures to draw a card (exactly 3 = auto-sacrifice)
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
@@ -295,9 +278,59 @@ class RuthlessKnaveTest extends BaseCardTest {
         assertThat(countPermanents(player1, "Treasure")).isZero();
     }
 
-    // =====================================================
-    // Helpers
-    // =====================================================
+    @Test
+    @DisplayName("Can choose Knave itself even when another creature is available")
+    void canChooseKnaveWithAnotherCreatureAvailable() {
+        Permanent knave = harness.addToBattlefieldAndReturn(player1, new RuthlessKnave());
+        harness.addToBattlefield(player1, new QueensBaySoldier());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handlePermanentChosen(player1, knave.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Ruthless Knave");
+        harness.assertOnBattlefield(player1, "Queen's Bay Soldier");
+        assertThat(countPermanents(player1, "Treasure")).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Opponent's Treasures cannot pay the draw ability's cost")
+    void cannotSacrificeOpponentsTreasures() {
+        harness.addToBattlefield(player1, new RuthlessKnave());
+        harness.addToBattlefield(player1, createTreasureToken());
+        harness.addToBattlefield(player1, createTreasureToken());
+        harness.addToBattlefield(player2, createTreasureToken());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough permanents to sacrifice");
+
+        assertThat(countPermanents(player1, "Treasure")).isEqualTo(2);
+        assertThat(countPermanents(player2, "Treasure")).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Tapped Treasures can be sacrificed to draw")
+    void canSacrificeTappedTreasures() {
+        harness.addToBattlefield(player1, new RuthlessKnave());
+        for (int i = 0; i < 3; i++) {
+            harness.addToBattlefieldAndReturn(player1, createTreasureToken()).setTapped(true);
+        }
+        harness.setLibrary(player1, List.of(new QueensBaySoldier()));
+        harness.setHand(player1, List.of());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        assertThat(countPermanents(player1, "Treasure")).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Queen's Bay Soldier");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
 
     private Card createTreasureToken() {
         Card card = new Card();
