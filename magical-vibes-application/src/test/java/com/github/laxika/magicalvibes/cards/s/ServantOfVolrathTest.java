@@ -97,6 +97,53 @@ class ServantOfVolrathTest extends BaseCardTest {
                 () -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, servant));
     }
 
+    @Test
+    @DisplayName("Exiling this creature also triggers the sacrifice")
+    void exileTriggersSacrifice() {
+        harness.addToBattlefield(player1, new ServantOfVolrath());
+        harness.addToBattlefield(player1, new LowlandGiant());
+
+        Permanent servant = findPermanent(player1, "Servant of Volrath");
+        harness.inMutationScope(
+                () -> harness.getPermanentRemovalService().removePermanentToExile(gd, servant));
+        resolveTrigger();
+
+        harness.assertNotOnBattlefield(player1, "Servant of Volrath");
+        harness.assertNotInGraveyard(player1, "Servant of Volrath");
+        harness.assertNotOnBattlefield(player1, "Lowland Giant");
+        harness.assertInGraveyard(player1, "Lowland Giant");
+    }
+
+    @Test
+    @DisplayName("A creature entering after the trigger is created can be sacrificed")
+    void creatureEnteringBeforeResolutionIsSacrificed() {
+        harness.addToBattlefield(player1, new ServantOfVolrath());
+
+        destroyServant();
+        harness.addToBattlefield(player1, new LowlandGiant());
+        resolveTrigger();
+
+        harness.assertNotOnBattlefield(player1, "Lowland Giant");
+        harness.assertInGraveyard(player1, "Lowland Giant");
+    }
+
+    @Test
+    @DisplayName("A Servant controlled by the opponent makes that opponent sacrifice")
+    void opponentsServantMakesOpponentSacrifice() {
+        harness.addToBattlefield(player2, new ServantOfVolrath());
+        harness.addToBattlefield(player2, new LowlandGiant());
+        harness.addToBattlefield(player1, new LowlandGiant());
+
+        Permanent servant = findPermanent(player2, "Servant of Volrath");
+        harness.inMutationScope(
+                () -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, servant));
+        resolveTrigger();
+
+        harness.assertOnBattlefield(player1, "Lowland Giant");
+        harness.assertNotOnBattlefield(player2, "Lowland Giant");
+        harness.assertInGraveyard(player2, "Lowland Giant");
+    }
+
     private void resolveTrigger() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
