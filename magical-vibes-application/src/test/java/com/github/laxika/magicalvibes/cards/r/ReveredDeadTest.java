@@ -17,6 +17,38 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ReveredDeadTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Regeneration can be activated while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent dead = harness.addToBattlefieldAndReturn(player1, new ReveredDead());
+        dead.setSummoningSick(true);
+        dead.tap();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(dead.getRegenerationShield()).isEqualTo(1);
+        assertThat(dead.isTapped()).isTrue();
+        harness.assertOnBattlefield(player1, "Revered Dead");
+    }
+
+    @Test
+    @DisplayName("Multiple activations create separate shields without tapping the creature")
+    void multipleActivationsCreateSeparateShields() {
+        Permanent dead = addCreatureReady(player1, new ReveredDead());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(dead.getRegenerationShield()).isEqualTo(2);
+        assertThat(dead.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+    }
+
+    @Test
     @DisplayName("Paying white grants a regeneration shield")
     void whiteActivationGrantsRegenerationShield() {
         Permanent dead = addCreatureReady(player1, new ReveredDead());
