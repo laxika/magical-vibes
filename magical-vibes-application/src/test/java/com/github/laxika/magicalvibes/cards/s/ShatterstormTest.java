@@ -57,8 +57,7 @@ class ShatterstormTest extends BaseCardTest {
     @Test
     @DisplayName("Artifacts destroyed by Shatterstorm cannot be regenerated")
     void ignoresRegenerationShields() {
-        harness.addToBattlefield(player1, new Ornithopter());
-        Permanent ornithopter = findPermanent(player1, "Ornithopter");
+        Permanent ornithopter = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
         ornithopter.setRegenerationShield(2);
 
         harness.forceActivePlayer(player2);
@@ -81,6 +80,41 @@ class ShatterstormTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Ornithopter");
+    }
+
+    @Test
+    @DisplayName("Shatterstorm resolves when there are no artifacts")
+    void resolvesWithoutArtifacts() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.castFromHand(player1, new Shatterstorm(), "{2}{R}{R}");
+        harness.passBothPriorities();
+
+        assertThat(harness.getGameData().stack).isEmpty();
+        harness.assertInGraveyard(player1, "Shatterstorm");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Shatterstorm destroys untargetable artifacts while sparing indestructible artifacts")
+    void destroysUntargetableArtifactsOnMixedBattlefield() {
+        Permanent mine = harness.addToBattlefieldAndReturn(player1, new HowlingMine());
+        mine.getGrantedKeywords().add(Keyword.SHROUD);
+        Permanent vulnerable = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
+        vulnerable.getGrantedKeywords().add(Keyword.HEXPROOF);
+        Permanent survivor = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
+        survivor.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        harness.castFromHand(player1, new Shatterstorm(), "{2}{R}{R}");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Howling Mine");
+        harness.assertInGraveyard(player1, "Howling Mine");
+        harness.assertNotOnBattlefield(player2, "Ornithopter");
+        harness.assertInGraveyard(player2, "Ornithopter");
+        harness.assertOnBattlefield(player1, "Ornithopter");
+        harness.assertNotInGraveyard(player1, "Ornithopter");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 }
 
