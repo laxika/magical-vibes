@@ -21,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class ReleaseToMemoryTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Exiles the opponent's creature cards and creates a colorless Spirit for each")
+    @DisplayName("Exiles the opponent's entire graveyard and creates a colorless Spirit for each creature")
     void exilesCreaturesAndCreatesSpirits() {
         Card creatureOne = new GrizzlyBears();
         Card creatureTwo = new GrizzlyBears();
@@ -30,13 +30,12 @@ class ReleaseToMemoryTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ReleaseToMemory()));
         addMana();
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .extracting(Card::getId)
-                .containsExactlyInAnyOrder(creatureOne.getId(), creatureTwo.getId());
-        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(nonCreature);
+                .containsExactlyInAnyOrder(creatureOne.getId(), nonCreature.getId(), creatureTwo.getId());
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
 
         List<Permanent> tokens = findPermanents(player1, "Spirit");
         assertThat(tokens).hasSize(2);
@@ -58,11 +57,10 @@ class ReleaseToMemoryTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ReleaseToMemory()));
         addMana();
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
-        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
-        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(nonCreature);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(nonCreature);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
         assertThat(findPermanents(player1, "Spirit")).isEmpty();
     }
 
@@ -76,6 +74,47 @@ class ReleaseToMemoryTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be an opponent");
+    }
+
+    @Test
+    @DisplayName("An empty opponent graveyard is a legal target and creates no Spirits")
+    void emptyGraveyardIsLegalTarget() {
+        harness.setGraveyard(player2, List.of());
+        harness.setHand(player1, List.of(new ReleaseToMemory()));
+        addMana();
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(findPermanents(player1, "Spirit")).isEmpty();
+        harness.assertInGraveyard(player1, "Release to Memory");
+    }
+
+    @Test
+    @DisplayName("Counts creatures in the opponent's graveyard at resolution and leaves other zones alone")
+    void countsCreaturesAtResolution() {
+        Card removedCreature = new GrizzlyBears();
+        Card arrivingCreature = new GrizzlyBears();
+        Card ownCreature = new GrizzlyBears();
+        Card previouslyExiledCreature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(ownCreature));
+        harness.setGraveyard(player2, List.of(removedCreature));
+        harness.setExile(player2, List.of(previouslyExiledCreature));
+        harness.setHand(player1, List.of(new ReleaseToMemory()));
+        addMana();
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.setGraveyard(player2, List.of(arrivingCreature));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .containsExactlyInAnyOrder(previouslyExiledCreature, arrivingCreature);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(ownCreature);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(findPermanents(player1, "Spirit")).hasSize(1);
+        assertThat(findPermanents(player2, "Spirit")).isEmpty();
     }
 
     private void addMana() {
