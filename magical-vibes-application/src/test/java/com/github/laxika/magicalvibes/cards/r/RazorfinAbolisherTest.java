@@ -17,8 +17,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({RazorfinAbolisher.class, DuskdaleWurm.class, FloodedGrove.class})
 class RazorfinAbolisherTest extends BaseCardTest {
 
-    // ===== Resolving =====
-
     @Test
     @DisplayName("Ability returns target creature with a counter to its owner's hand")
     void abilityReturnsCreatureWithCounter() {
@@ -34,8 +32,6 @@ class RazorfinAbolisherTest extends BaseCardTest {
         harness.assertInHand(player2, "Duskdale Wurm");
     }
 
-    // ===== Illegal targets =====
-
     @Test
     @DisplayName("Ability cannot target a creature without a counter")
     void cannotTargetCreatureWithoutCounter() {
@@ -46,8 +42,6 @@ class RazorfinAbolisherTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
-
-    // ===== Cannot activate =====
 
     @Test
     @DisplayName("Cannot activate ability when already tapped")
@@ -103,6 +97,107 @@ class RazorfinAbolisherTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Duskdale Wurm");
         harness.assertNotInHand(player2, "Duskdale Wurm");
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Abolisher cannot pay the tap cost")
+    void cannotActivateWhileSummoningSick() {
+        Permanent abolisher = harness.addToBattlefieldAndReturn(player1, new RazorfinAbolisher());
+        abolisher.setSummoningSick(true);
+        Permanent target = addCreatureWithCounter(player2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(abolisher.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The ability requires blue mana even when enough generic mana is available")
+    void cannotActivateWithoutBlueMana() {
+        Permanent abolisher = addReadyAbolisher(player1);
+        Permanent target = addCreatureWithCounter(player2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(abolisher.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The ability requires two mana")
+    void cannotActivateWithOnlyOneBlueMana() {
+        Permanent abolisher = addReadyAbolisher(player1);
+        Permanent target = addCreatureWithCounter(player2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(abolisher.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Abolisher can return itself when it has a counter")
+    void canReturnItself() {
+        Permanent abolisher = addReadyAbolisher(player1);
+        abolisher.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, abolisher.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Razorfin Abolisher");
+        harness.assertInHand(player1, "Razorfin Abolisher");
+    }
+
+    @Test
+    @DisplayName("The activated ability resolves after Abolisher leaves the battlefield")
+    void resolvesAfterSourceLeaves() {
+        Permanent abolisher = addReadyAbolisher(player1);
+        Permanent target = addCreatureWithCounter(player2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(abolisher);
+        gd.addCardToHand(player1.getId(), abolisher.getCard());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Duskdale Wurm");
+        harness.assertInHand(player2, "Duskdale Wurm");
+    }
+
+    @Test
+    @DisplayName("A controlled creature returns to its owner rather than its controller")
+    void returnsCreatureToOwner() {
+        addReadyAbolisher(player1);
+        Permanent target = addCreatureWithCounter(player1);
+        target.getCard().setOwnerId(player2.getId());
+        gd.stolenCreatures.put(target.getId(), player2.getId());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Duskdale Wurm");
+        harness.assertInHand(player2, "Duskdale Wurm");
+        harness.assertNotInHand(player1, "Duskdale Wurm");
+    }
+
+    @Test
+    @DisplayName("The target remains legal if its original counter is replaced by another type")
+    void returnsCreatureWithDifferentCounterAtResolution() {
+        addReadyAbolisher(player1);
+        Permanent target = addCreatureWithCounter(player2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+        target.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Duskdale Wurm");
+        harness.assertInHand(player2, "Duskdale Wurm");
     }
 
     private Permanent addReadyAbolisher(Player player) {
