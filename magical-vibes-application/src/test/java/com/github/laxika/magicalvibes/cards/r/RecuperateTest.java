@@ -49,6 +49,22 @@ class RecuperateTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Prevention mode can protect an opponent's creature without gaining life")
+    void preventionModeCanProtectOpponentsCreature() {
+        Permanent creature = addCreatureReady(player2, new ElvishAberration());
+        harness.setLife(player1, 10);
+        cast(1, creature.getId());
+
+        harness.setHand(player1, List.of(new Carbonize()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        assertThat(creature.getMarkedDamage()).isZero();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(10);
+    }
+
+    @Test
     @DisplayName("Prevention mode expires at the end of the turn")
     void preventionModeExpiresAtEndOfTurn() {
         Permanent creature = addCreatureReady(player1, new ElvishAberration());
