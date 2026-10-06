@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HowlingMine;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -20,7 +22,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Skybreen.class, Forest.class, GrizzlyBears.class, Shock.class})
+@CardUsed({Skybreen.class, Forest.class, GrizzlyBears.class, Shock.class, Ornithopter.class,
+        HowlingMine.class})
 class SkybreenTest extends BaseCardTest {
 
     private PlanechaseService planar;
@@ -74,8 +77,7 @@ class SkybreenTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(18);
 
@@ -100,5 +102,129 @@ class SkybreenTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(17);
+    }
+
+    @Test
+    void emptyLibrariesDoNotRestrictCasting() {
+        harness.setLibrary(player1, List.of());
+        harness.setLibrary(player2, List.of());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    void restrictionTracksChangesToLibraryTopCards() {
+        harness.setLibrary(player1, List.of());
+        harness.setLibrary(player2, List.of(new Shock()));
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.setLibrary(player2, List.of(new Forest()));
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    void creatureTypeOfArtifactCreatureOnTopPreventsCreatureSpells() {
+        harness.setLibrary(player1, List.of(new Ornithopter()));
+        harness.setLibrary(player2, List.of());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void artifactCreatureSpellIsBlockedByCreatureCardOnTop() {
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new Ornithopter()));
+
+        assertThatThrownBy(() -> harness.castArtifact(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void leavingSkybreenRemovesCastingRestrictionAndPublicRevelation() {
+        harness.setLibrary(player1, List.of(new Shock()));
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.addMana(player1, ManaColor.RED, 1);
+        gd.planechase.faceUp.clear();
+        harness.clearMessages();
+
+        harness.publishState();
+
+        assertThat(harness.getConn1().getSentMessages()).noneMatch(message ->
+                message.contains("Grizzly Bears") || message.contains("\"name\":\"Shock\""));
+        assertThat(harness.getConn2().getSentMessages()).noneMatch(message ->
+                message.contains("Grizzly Bears") || message.contains("\"name\":\"Shock\""));
+
+        harness.setHand(player1, List.of(new Shock()));
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    void artifactTypeOfArtifactCreatureOnTopPreventsNoncreatureArtifacts() {
+        harness.setLibrary(player1, List.of(new Ornithopter()));
+        harness.setLibrary(player2, List.of(new Forest()));
+        harness.setHand(player1, List.of(new HowlingMine()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castArtifact(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void artifactCreatureSpellIsBlockedByNoncreatureArtifactOnTop() {
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setLibrary(player2, List.of(new HowlingMine()));
+        harness.setHand(player1, List.of(new Ornithopter()));
+
+        assertThatThrownBy(() -> harness.castArtifact(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void chaosUsesHandSizeAtResolutionAfterTargetCastsInResponse() {
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setLibrary(player2, List.of(new Forest()));
+        harness.setHand(player2, List.of(new Forest(), new GrizzlyBears(), new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.inMutationScope(() -> triggers.processNextSpellTargetTrigger(gd));
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 2, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    void chaosCanTargetControllerWithAnEmptyHand() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new Forest(), new GrizzlyBears()));
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.inMutationScope(() -> triggers.processNextSpellTargetTrigger(gd));
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
     }
 }
