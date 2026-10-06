@@ -1,13 +1,16 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,6 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SenTriplets.class, Shock.class, ProdigalPyromancer.class, Forest.class})
 class SenTripletsTest extends BaseCardTest {
 
     /** Resolve Sen Triplets' upkeep trigger with {@code target} chosen; play1 controls Sen. */
@@ -26,8 +30,6 @@ class SenTripletsTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities(); // resolve the upkeep trigger
     }
-
-    // ===== Upkeep trigger targeting =====
 
     @Test
     @DisplayName("Upkeep trigger only offers opponents as valid targets")
@@ -53,8 +55,6 @@ class SenTripletsTest extends BaseCardTest {
         assertThat(gd.senControlledPlayerId).isNull();
         assertThat(gd.playersSilencedThisTurn).isEmpty();
     }
-
-    // ===== Resolution locks the chosen opponent =====
 
     @Test
     @DisplayName("Resolving the trigger silences the opponent, blocks their abilities, and opens the sen window")
@@ -107,8 +107,6 @@ class SenTripletsTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
     }
 
-    // ===== End of turn cleanup =====
-
     @Test
     @DisplayName("The lock and sen window are cleared at end of turn")
     void locksClearedAtEndOfTurn() {
@@ -123,5 +121,52 @@ class SenTripletsTest extends BaseCardTest {
         assertThat(gd.playersCantActivateAbilitiesThisTurn).isEmpty();
         assertThat(gd.senControllerPlayerId).isNull();
         assertThat(gd.senControlledPlayerId).isNull();
+    }
+
+    @Test
+    void controllerCanCastSpellFromOpponentsHand() {
+        harness.setHand(player1, List.of());
+        Shock shock = new Shock();
+        harness.setHand(player2, List.of(shock));
+        lockOpponent(player2);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
+        assertThat(gd.playerHands.get(player2.getId())).doesNotContain(shock);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 18);
+        harness.assertInGraveyard(player2, "Shock");
+    }
+
+    @Test
+    void controllerCanPlayLandFromOpponentsHand() {
+        harness.setHand(player1, List.of());
+        Forest forest = new Forest();
+        harness.setHand(player2, List.of(forest));
+        lockOpponent(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.playLand(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Forest");
+        assertThat(gd.playerHands.get(player2.getId())).doesNotContain(forest);
+    }
+
+    @Test
+    void newlyDrawnCardsRemainRevealedAfterSourceLeaves() {
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(new Shock()));
+        lockOpponent(player2);
+        gd.playerBattlefields.get(player1.getId()).clear();
+
+        harness.getDrawService().resolveDrawCard(gd, player2.getId());
+        harness.clearMessages();
+        harness.publishState();
+
+        assertThat(harness.getConn1().getMessagesContaining("\"opponentHand\""))
+                .anyMatch(message -> message.contains("Shock"));
     }
 }
