@@ -90,6 +90,40 @@ class ShriekingGrotesqueTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Shrieking Grotesque");
     }
 
+    @Test
+    @DisplayName("Does not trigger when it enters without being cast, even with black mana available")
+    void doesNotTriggerWhenPutOntoBattlefield() {
+        harness.setHand(player2, List.of(new ShriekingGrotesque()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.enterBattlefieldAndReturn(player1, new ShriekingGrotesque());
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Shrieking Grotesque");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The target player chooses exactly one card to discard")
+    void targetPlayerChoosesOneCardFromMultipleCards() {
+        ShriekingGrotesque keptCard = new ShriekingGrotesque();
+        ShriekingGrotesque discardedCard = new ShriekingGrotesque();
+        harness.setHand(player2, List.of(keptCard, discardedCard));
+        castShriekingGrotesque(player2.getId(), ManaColor.BLACK, 2);
+
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player2, 1);
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(keptCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(discardedCard);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void castShriekingGrotesque(java.util.UUID targetPlayerId, ManaColor manaColor, int amount) {
         harness.setHand(player1, List.of(new ShriekingGrotesque()));
         if (manaColor == ManaColor.BLACK) {
