@@ -20,8 +20,7 @@ class RescindTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Rescind()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
-        harness.castInstant(player1, 0, harness.getPermanentId(player2, "Island"));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Island"));
 
         harness.assertNotOnBattlefield(player2, "Island");
         harness.assertInHand(player2, "Island");
@@ -36,8 +35,7 @@ class RescindTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Rescind()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
-        harness.castInstant(player1, 0, stolenIsland.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, stolenIsland.getId());
 
         harness.assertNotOnBattlefield(player2, "Island");
         harness.assertInHand(player1, "Island");
@@ -56,5 +54,37 @@ class RescindTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Rescind");
         harness.assertInHand(player1, "Island");
+    }
+
+    @Test
+    @DisplayName("Cycling discards immediately and draws only when the ability resolves")
+    void cyclingDiscardsBeforeDrawing() {
+        harness.setHand(player1, List.of(new Rescind()));
+        harness.setLibrary(player1, List.of(new Island()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertNotInHand(player1, "Rescind");
+        harness.assertInGraveyard(player1, "Rescind");
+        harness.assertNotInHand(player1, "Island");
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Island");
+    }
+
+    @Test
+    @DisplayName("Can return a permanent controlled by the caster")
+    void returnsOwnPermanent() {
+        harness.addToBattlefield(player1, new Island());
+        harness.setHand(player1, List.of(new Rescind()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Island"));
+
+        harness.assertNotOnBattlefield(player1, "Island");
+        harness.assertInHand(player1, "Island");
+        harness.assertInGraveyard(player1, "Rescind");
     }
 }
