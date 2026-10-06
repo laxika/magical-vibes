@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.i.InfernalDarkness;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
@@ -17,7 +18,8 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(RealityTwist.class)
+@CardUsed({RealityTwist.class, Plains.class, Swamp.class, Mountain.class, Forest.class,
+        Island.class, VolcanicIsland.class, InfernalDarkness.class})
 class RealityTwistTest extends BaseCardTest {
 
     @Test
@@ -119,4 +121,53 @@ class RealityTwistTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(realityTwist);
         harness.assertInGraveyard(player1, "Reality Twist");
     }
+
+    @Test
+    @DisplayName("The land controller chooses the outcome of competing mana replacements")
+    void controllerChoosesBetweenRealityTwistAndInfernalDarkness() {
+        harness.addToBattlefield(player1, new Mountain());
+        harness.addToBattlefield(player2, new RealityTwist());
+        harness.addToBattlefield(player2, new InfernalDarkness());
+
+        harness.tapPermanent(player1, 0);
+
+        PendingInteraction.ColorChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.options()).containsExactlyInAnyOrder("WHITE", "BLACK");
+        harness.handleListChoice(player1, "WHITE");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+    }
+
+    @Test
+    @DisplayName("Mana replacement ends when Reality Twist is sacrificed")
+    void manaReplacementEndsAfterUnpaidUpkeep() {
+        harness.addToBattlefield(player1, new RealityTwist());
+        harness.addToBattlefield(player1, new Forest());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.assertInGraveyard(player1, "Reality Twist");
+
+        harness.tapPermanent(player1, 0);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+    }
+
+    @Test
+    @DisplayName("Another player's upkeep does not age Reality Twist")
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        Permanent realityTwist = harness.addToBattlefieldAndReturn(player1, new RealityTwist());
+
+        advanceToUpkeep(player2);
+
+        assertThat(realityTwist.getCounterCount(CounterType.AGE)).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
 }
