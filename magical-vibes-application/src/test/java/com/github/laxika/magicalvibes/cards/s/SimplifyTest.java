@@ -35,8 +35,8 @@ class SimplifyTest extends BaseCardTest {
     @DisplayName("Each player chooses which enchantment to sacrifice")
     void eachPlayerChoosesEnchantmentToSacrifice() {
         Permanent player1First = harness.addToBattlefieldAndReturn(player1, new GroundSeal());
-        Permanent player1Second = harness.addToBattlefieldAndReturn(player1, new GroundSeal());
-        Permanent player2First = harness.addToBattlefieldAndReturn(player2, new GroundSeal());
+        harness.addToBattlefield(player1, new GroundSeal());
+        harness.addToBattlefield(player2, new GroundSeal());
         Permanent player2Second = harness.addToBattlefieldAndReturn(player2, new GroundSeal());
 
         castSimplify();
@@ -101,6 +101,62 @@ class SimplifyTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Forest");
         harness.assertOnBattlefield(player2, "Forest");
+    }
+
+    @Test
+    @DisplayName("Opponent still sacrifices when the caster controls no enchantments")
+    void opponentSacrificesWhenCasterHasNoEnchantments() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new GroundSeal());
+
+        castSimplify();
+
+        harness.assertOnBattlefield(player1, "Forest");
+        harness.assertNotOnBattlefield(player2, "Ground Seal");
+        harness.assertInGraveyard(player2, "Ground Seal");
+        harness.assertInGraveyard(player1, "Simplify");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Caster still chooses a sacrifice when the opponent has no enchantments")
+    void casterChoosesWhenOpponentHasNoEnchantments() {
+        Permanent chosen = harness.addToBattlefieldAndReturn(player1, new GroundSeal());
+        Permanent kept = harness.addToBattlefieldAndReturn(player1, new GroundSeal());
+        harness.addToBattlefield(player2, new Forest());
+
+        castSimplify();
+        harness.handleMultiplePermanentsChosen(player1, List.of(chosen.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(kept);
+        harness.assertInGraveyard(player1, "Ground Seal");
+        harness.assertOnBattlefield(player2, "Forest");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A forced single sacrifice waits until the other player chooses")
+    void singleEnchantmentWaitsForOtherPlayersChoice() {
+        Permanent forced = harness.addToBattlefieldAndReturn(player1, new GroundSeal());
+        Permanent chosen = harness.addToBattlefieldAndReturn(player2, new GroundSeal());
+        Permanent kept = harness.addToBattlefieldAndReturn(player2, new GroundSeal());
+
+        castSimplify();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(forced);
+        harness.assertNotInGraveyard(player1, "Ground Seal");
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+
+        harness.handleMultiplePermanentsChosen(player2, List.of(chosen.getId()));
+
+        harness.assertNotOnBattlefield(player1, "Ground Seal");
+        harness.assertInGraveyard(player1, "Ground Seal");
+        harness.assertInGraveyard(player2, "Ground Seal");
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(kept);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     private void castSimplify() {
