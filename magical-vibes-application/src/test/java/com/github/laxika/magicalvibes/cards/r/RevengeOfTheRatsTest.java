@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RevengeOfTheRats.class, GrizzlyBears.class, LlanowarElves.class, Shock.class})
 class RevengeOfTheRatsTest extends BaseCardTest {
 
     @Test
@@ -21,10 +23,7 @@ class RevengeOfTheRatsTest extends BaseCardTest {
     void createsTappedRatsForCreatureCardsInControllerGraveyard() {
         harness.setGraveyard(player1, List.of(new GrizzlyBears(), new LlanowarElves(), new Shock()));
         harness.setGraveyard(player2, List.of(new GrizzlyBears()));
-        harness.setHand(player1, List.of(new RevengeOfTheRats()));
-        addMana();
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new RevengeOfTheRats(), "{2}{B}{B}");
         harness.passBothPriorities();
 
         List<Permanent> rats = ratTokens();
@@ -52,6 +51,44 @@ class RevengeOfTheRatsTest extends BaseCardTest {
                 .anyMatch(card -> card.getName().equals("Revenge of the Rats"));
     }
 
+    @Test
+    @DisplayName("Creates no Rats when only the opponent has creature cards in their graveyard")
+    void noCreatureCardsInControllerGraveyardCreatesNoRats() {
+        harness.setGraveyard(player1, List.of(new Shock()));
+        harness.setGraveyard(player2, List.of(new GrizzlyBears(), new LlanowarElves()));
+        harness.castFromHand(player1, new RevengeOfTheRats(), "{2}{B}{B}");
+        harness.passBothPriorities();
+
+        assertThat(ratTokens()).isEmpty();
+        harness.assertInGraveyard(player1, "Revenge of the Rats");
+    }
+
+    @Test
+    @DisplayName("Counts creature cards at resolution rather than when cast")
+    void countsGraveyardAtResolution() {
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.castFromHand(player1, new RevengeOfTheRats(), "{2}{B}{B}");
+        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new LlanowarElves(), new Shock()));
+        harness.passBothPriorities();
+
+        assertThat(ratTokens()).hasSize(2).allSatisfy(rat -> assertThat(rat.isTapped()).isTrue());
+        harness.assertInGraveyard(player1, "Revenge of the Rats");
+    }
+
+    @Test
+    @DisplayName("Flashback with no creature cards creates no Rats and still exiles the spell")
+    void flashbackWithEmptyCreatureCountStillExilesSpell() {
+        harness.setGraveyard(player1, List.of(new RevengeOfTheRats()));
+        addMana();
+
+        harness.castFlashback(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(ratTokens()).isEmpty();
+        harness.assertNotInGraveyard(player1, "Revenge of the Rats");
+        assertThat(harness.getGameData().getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getName().equals("Revenge of the Rats"));
+    }
     private void addMana() {
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
