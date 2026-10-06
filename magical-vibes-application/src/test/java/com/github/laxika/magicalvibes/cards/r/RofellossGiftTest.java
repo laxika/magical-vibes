@@ -31,8 +31,7 @@ class RofellossGiftTest extends BaseCardTest {
         harness.setHand(player1, List.of(new RofellossGift(), greenCard, nonGreenCard));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         PendingInteraction.RevealAnyNumberOfCardsFromHandChoice reveal =
                 gd.interaction.activeInteraction(PendingInteraction.RevealAnyNumberOfCardsFromHandChoice.class);
@@ -63,8 +62,7 @@ class RofellossGiftTest extends BaseCardTest {
         harness.setHand(player1, List.of(new RofellossGift(), firstGreenCard, secondGreenCard));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
         harness.handleMultipleCardsChosen(player1, List.of(firstGreenCard.getId(), secondGreenCard.getId()));
 
         harness.assertInHand(player1, enchantment.getName());
@@ -80,8 +78,7 @@ class RofellossGiftTest extends BaseCardTest {
         harness.setHand(player1, List.of(new RofellossGift(), new HulkingOgre()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         harness.assertInGraveyard(player1, enchantment.getName());
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
@@ -101,8 +98,7 @@ class RofellossGiftTest extends BaseCardTest {
         harness.setHand(player1, List.of(new RofellossGift(), firstGreenCard, secondGreenCard, nonGreenCard));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         PendingInteraction.RevealAnyNumberOfCardsFromHandChoice reveal =
                 gd.interaction.activeInteraction(PendingInteraction.RevealAnyNumberOfCardsFromHandChoice.class);
@@ -133,8 +129,7 @@ class RofellossGiftTest extends BaseCardTest {
         harness.setHand(player1, List.of(new RofellossGift(), greenCard));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         PendingInteraction.RevealAnyNumberOfCardsFromHandChoice reveal =
                 gd.interaction.activeInteraction(PendingInteraction.RevealAnyNumberOfCardsFromHandChoice.class);
@@ -144,6 +139,50 @@ class RofellossGiftTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of());
 
         harness.assertInGraveyard(player1, enchantment.getName());
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Returns two enchantments without returning nonenchantments or consuming revealed cards")
+    void returnsTwoEnchantmentsForTwoRevealedCards() {
+        Card firstGreenCard = new AncientSilverback();
+        Card secondGreenCard = new Compost();
+        Card firstEnchantment = new Compost();
+        Card secondEnchantment = new AetherSting();
+        Card nonEnchantment = new HulkingOgre();
+
+        harness.setGraveyard(player1, List.of(firstEnchantment, secondEnchantment, nonEnchantment));
+        harness.setHand(player1, List.of(new RofellossGift(), firstGreenCard, secondGreenCard));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(firstGreenCard.getId(), secondGreenCard.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .contains(firstGreenCard, secondGreenCard, firstEnchantment, secondEnchantment);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(nonEnchantment);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Cannot return enchantments from an opponent's graveyard")
+    void ignoresOpponentsGraveyard() {
+        Card greenCard = new AncientSilverback();
+        Card nonEnchantment = new HulkingOgre();
+        Card opposingEnchantment = new Compost();
+
+        harness.setGraveyard(player1, List.of(nonEnchantment));
+        harness.setGraveyard(player2, List.of(opposingEnchantment));
+        harness.setHand(player1, List.of(new RofellossGift(), greenCard));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(greenCard.getId()));
+
+        harness.assertInHand(player1, greenCard.getName());
+        harness.assertInGraveyard(player1, nonEnchantment.getName());
+        harness.assertInGraveyard(player2, opposingEnchantment.getName());
+        harness.assertNotInHand(player1, opposingEnchantment.getName());
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 }
