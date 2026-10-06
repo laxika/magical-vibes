@@ -71,11 +71,61 @@ class RhovanionRampagerTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
         harness.forceActivePlayer(player2);
 
-        harness.castInstant(player2, 0, rampager.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, rampager.getId());
+        resolveAllTriggers();
 
         Permanent army = findPermanent(player1, "Goblin Army");
         assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    void cannotSacrificeItselfOrAnOpponentsCreature() {
+        Permanent rampager = addCreatureReady(player1, new RhovanionRampager());
+        Permanent opponent = addCreatureReady(player2, new RhovanionRampager());
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(rampager.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(rampager);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponent);
+    }
+
+    @Test
+    void sacrificingAnotherRampagerUsesItsModifiedPowerForBothAbilities() {
+        Permanent attacker = addCreatureReady(player1, new RhovanionRampager());
+        Permanent sacrifice = addCreatureReady(player1, new RhovanionRampager());
+        sacrifice.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(sacrifice.getCard());
+        assertThat(findPermanent(player1, "Goblin Army")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
+    }
+
+    @Test
+    void subsequentDeathAddsCountersToExistingArmy() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new RhovanionRampager());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new RhovanionRampager());
+        harness.setHand(player2, List.of(new Shock(), new Shock()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.forceActivePlayer(player2);
+
+        harness.castAndResolveInstant(player2, 0, first.getId());
+        resolveAllTriggers();
+        Permanent army = findPermanent(player1, "Goblin Army");
+
+        harness.castAndResolveInstant(player2, 0, second.getId());
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Goblin Army")).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(army);
+        assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);
     }
 }
