@@ -123,4 +123,86 @@ class SamiteAlchemistTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player1.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("A protected creature changing controllers can untap during the opponent's untap step")
+    void restrictionAppliesOnlyDuringAbilityControllersNextUntap() {
+        addAlchemistReady();
+        harness.addToBattlefield(player1, new DwarvenTrader());
+        Permanent trader = findPermanent(player1, "Dwarven Trader");
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.activateAbility(player1, 0, null, trader.getId());
+        harness.passBothPriorities();
+
+        // Model a control change after resolution, preserving the same permanent and its effects.
+        gd.playerBattlefields.get(player1.getId()).remove(trader);
+        gd.playerBattlefields.get(player2.getId()).add(trader);
+        advanceToUpkeep(player2);
+
+        assertThat(trader.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The creature untaps normally after the one restricted untap step")
+    void untapsOnFollowingUntapStep() {
+        addAlchemistReady();
+        harness.addToBattlefield(player1, new DwarvenTrader());
+        Permanent trader = findPermanent(player1, "Dwarven Trader");
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.activateAbility(player1, 0, null, trader.getId());
+        harness.passBothPriorities();
+
+        advanceToUpkeep(player1);
+        assertThat(trader.isTapped()).isTrue();
+        advanceToUpkeep(player1);
+        assertThat(trader.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Cannot pay the tap cost while already tapped")
+    void cannotActivateWhileTapped() {
+        addAlchemistReady();
+        Permanent alchemist = findPermanent(player1, "Samite Alchemist");
+        alchemist.setTapped(true);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, alchemist.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot pay the tap cost with summoning sickness")
+    void cannotActivateWithSummoningSickness() {
+        harness.addToBattlefield(player1, new SamiteAlchemist());
+        UUID alchemistId = harness.getPermanentId(player1, "Samite Alchemist");
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, alchemistId))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The shield prevents only four damage across successive sources")
+    void shieldIsConsumedAcrossDamageEvents() {
+        addAlchemistReady();
+        Permanent alchemist = findPermanent(player1, "Samite Alchemist");
+        for (int i = 0; i < 5; i++) {
+            addCreatureReady(player1, new AnabaShaman());
+        }
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.RED, 5);
+        harness.activateAbility(player1, 0, null, alchemist.getId());
+        harness.passBothPriorities();
+
+        for (int i = 1; i <= 4; i++) {
+            harness.activateAbility(player1, i, null, alchemist.getId());
+            harness.passBothPriorities();
+            assertThat(alchemist.getMarkedDamage()).isZero();
+        }
+        harness.activateAbility(player1, 5, null, alchemist.getId());
+        harness.passBothPriorities();
+
+        assertThat(alchemist.getMarkedDamage()).isEqualTo(1);
+        assertThat(alchemist.getDamagePreventionShield()).isZero();
+    }
 }
