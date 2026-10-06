@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.FaerieTauntings;
 import com.github.laxika.magicalvibes.cards.g.GoldmeadowStalwart;
+import com.github.laxika.magicalvibes.cards.p.Peppersmoke;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,8 +14,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ScionOfOona.class, SpellstutterSprite.class, GoldmeadowStalwart.class, FaerieTauntings.class})
+@CardUsed({ScionOfOona.class, SpellstutterSprite.class, GoldmeadowStalwart.class, FaerieTauntings.class, Peppersmoke.class})
 class ScionOfOonaTest extends BaseCardTest {
 
     @Test
@@ -150,5 +152,50 @@ class ScionOfOonaTest extends BaseCardTest {
         Permanent faerieTauntings = findPermanent(player1, "Faerie Tauntings");
 
         assertThat(gqs.hasKeyword(gd, faerieTauntings, Keyword.SHROUD)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Flashing in Scion on an opponent's turn makes a targeted Faerie an illegal target")
+    void flashProtectsFaerieFromSpellAlreadyOnStack() {
+        harness.forceActivePlayer(player2);
+        Permanent sprite = harness.addToBattlefieldAndReturn(player1, new SpellstutterSprite());
+        harness.setHand(player2, List.of(new Peppersmoke()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.castInstant(player2, 0, sprite.getId());
+
+        harness.setHand(player1, List.of(new ScionOfOona()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Scion of Oona");
+        harness.assertOnBattlefield(player1, "Spellstutter Sprite");
+        harness.assertInGraveyard(player2, "Peppersmoke");
+        assertThat(gqs.getEffectivePower(gd, sprite)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, sprite)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Opponent's noncreature Faeries do not gain shroud")
+    void doesNotGrantShroudToOpponentFaeriePermanents() {
+        harness.addToBattlefield(player1, new ScionOfOona());
+        Permanent tauntings = harness.addToBattlefieldAndReturn(player2, new FaerieTauntings());
+
+        assertThat(gqs.hasKeyword(gd, tauntings, Keyword.SHROUD)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Shroud prevents the Faerie's controller from targeting it too")
+    void shroudPreventsControllerTargeting() {
+        harness.addToBattlefield(player1, new ScionOfOona());
+        Permanent sprite = harness.addToBattlefieldAndReturn(player1, new SpellstutterSprite());
+        harness.setHand(player1, List.of(new Peppersmoke()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, sprite.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("shroud");
     }
 }
