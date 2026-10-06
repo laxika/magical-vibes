@@ -57,4 +57,47 @@ class RibbonsOfTheReikaiTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(5);
     }
+
+    @Test
+    @DisplayName("Counts only Spirits on a mixed battlefield")
+    void ignoresNonSpiritsAlongsideSpirits() {
+        harness.addToBattlefield(player1, new TeardropKami());
+        harness.addToBattlefield(player1, new NinjaOfTheDeepHours());
+        harness.addToBattlefield(player1, new NinjaOfTheDeepHours());
+
+        castRibbons();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(5);
+    }
+
+    @Test
+    @DisplayName("Spirit cards in the graveyard and library do not count")
+    void ignoresSpiritCardsOutsideBattlefield() {
+        harness.setGraveyard(player1, List.of(new TeardropKami()));
+        harness.setLibrary(player1, List.of(new TeardropKami(), new TeardropKami()));
+
+        harness.castFromHand(player1, new RibbonsOfTheReikai(), "{4}{U}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Counts Spirits at resolution after a Spirit is sacrificed in response")
+    void countsSpiritsAtResolution() {
+        var spirit = harness.addToBattlefieldAndReturn(player1, new TeardropKami());
+        harness.addToBattlefield(player1, new TeardropKami());
+        harness.setLibrary(player1, List.of(new NinjaOfTheDeepHours(), new NinjaOfTheDeepHours()));
+        harness.castFromHand(player1, new RibbonsOfTheReikai(), "{4}{U}");
+
+        harness.activateAbility(player1, 0, null, spirit.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Teardrop Kami");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
 }
