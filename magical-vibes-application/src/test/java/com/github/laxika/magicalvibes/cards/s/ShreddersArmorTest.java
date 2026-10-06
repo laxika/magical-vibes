@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -31,10 +32,8 @@ class ShreddersArmorTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        Permanent armor = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard() == armorCard)
-                .findFirst()
-                .orElseThrow();
+        Permanent armor = findPermanent(player1, "Shredder's Armor");
+
         assertThat(armor.getAttachedTo()).isEqualTo(creature.getId());
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
@@ -92,5 +91,95 @@ class ShreddersArmorTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("only once each turn");
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(secondSacrifice);
+    }
+    @Test
+    @DisplayName("The equip target can itself be sacrificed, leaving the Armor unattached")
+    void canSacrificeEquipTarget() {
+        Permanent armor = harness.addToBattlefieldAndReturn(player1, new ShreddersArmor());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(armor.getAttachedTo()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(armor).doesNotContain(target);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(target.getCard());
+        Permanent nextTarget = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, nextTarget.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("only once each turn");
+    }
+
+    @Test
+    @DisplayName("Another Equipment can pay the equip sacrifice cost")
+    void canSacrificeAnotherEquipment() {
+        Permanent armor = harness.addToBattlefieldAndReturn(player1, new ShreddersArmor());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent otherArmor = harness.addToBattlefieldAndReturn(player1, new ShreddersArmor());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.handlePermanentChosen(player1, otherArmor.getId());
+        harness.passBothPriorities();
+
+        assertThat(armor.getAttachedTo()).isEqualTo(target.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(otherArmor);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(otherArmor.getCard());
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Equip cannot be activated during combat")
+    void equipRequiresSorceryTiming() {
+        Permanent armor = harness.addToBattlefieldAndReturn(player1, new ShreddersArmor());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(armor.getAttachedTo()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(sacrifice);
+    }
+
+    @Test
+    @DisplayName("Armor can be cast without a creature to attach to")
+    void canEnterWithoutCreatures() {
+        harness.setHand(player1, List.of(new ShreddersArmor()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Shredder's Armor").getAttachedTo()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Equip is available next turn and moves the bonus to the new creature")
+    void canEquipAgainNextTurn() {
+        Permanent armor = harness.addToBattlefieldAndReturn(player1, new ShreddersArmor());
+        Permanent firstTarget = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent firstSacrifice = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent secondTarget = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent secondSacrifice = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, null, firstTarget.getId());
+        harness.handlePermanentChosen(player1, firstSacrifice.getId());
+        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.activateAbility(player1, 0, null, secondTarget.getId());
+        harness.handlePermanentChosen(player1, secondSacrifice.getId());
+        harness.passBothPriorities();
+
+        assertThat(armor.getAttachedTo()).isEqualTo(secondTarget.getId());
+        assertThat(gqs.getEffectivePower(gd, firstTarget)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, firstTarget)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, secondTarget)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, secondTarget)).isEqualTo(3);
     }
 }
