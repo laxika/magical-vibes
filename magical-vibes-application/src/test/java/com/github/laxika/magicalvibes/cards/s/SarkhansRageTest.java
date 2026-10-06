@@ -37,11 +37,71 @@ class SarkhansRageTest extends BaseCardTest {
         assertThat(gd.getLife(player2.getId())).isEqualTo(20);
     }
 
+    @Test
+    void targetingYourselfDealsBothDamageAmountsWithoutDragon() {
+        castAt(player1.getId());
+        harness.assertLife(player1, 13);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void opponentsDragonDoesNotPreventControllerDamage() {
+        harness.addToBattlefield(player2, new ShivanDragon());
+        castAt(player2.getId());
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 15);
+    }
+
+    @Test
+    void dragonEnteringBeforeResolutionPreventsControllerDamage() {
+        prepareCast();
+        harness.castInstant(player1, 0, player2.getId());
+        harness.addToBattlefield(player1, new ShivanDragon());
+        harness.passBothPriorities();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 15);
+    }
+
+    @Test
+    void dragonLeavingBeforeResolutionAllowsControllerDamage() {
+        harness.addToBattlefield(player1, new ShivanDragon());
+        prepareCast();
+        harness.castInstant(player1, 0, player2.getId());
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.passBothPriorities();
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 15);
+    }
+
+    @Test
+    void illegalSoleTargetPreventsControllerDamageToo() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ColossalDreadmaw());
+        prepareCast();
+        harness.castInstant(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).clear();
+        harness.passBothPriorities();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Sarkhan's Rage");
+    }
+
+    @Test
+    void lethalDamageToYourOnlyDragonDoesNotCauseControllerDamage() {
+        Permanent dragon = harness.addToBattlefieldAndReturn(player1, new ShivanDragon());
+        castAt(dragon.getId());
+        harness.assertLife(player1, 20);
+        harness.assertInGraveyard(player1, "Shivan Dragon");
+        harness.assertNotOnBattlefield(player1, "Shivan Dragon");
+    }
+
     private void castAt(java.util.UUID targetId) {
+        prepareCast();
+        harness.castAndResolveInstant(player1, 0, targetId);
+    }
+
+    private void prepareCast() {
         harness.setHand(player1, List.of(new SarkhansRage()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
     }
 }
