@@ -37,6 +37,45 @@ class SkulltapTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Sacrifice is paid before resolution and no cards are drawn until resolution")
+    void paysSacrificeBeforeDrawing() {
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new ScornfulEgotist());
+        harness.setHand(player1, List.of(new Skulltap()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        int libraryBefore = gd.playerDecks.get(player1.getId()).size();
+
+        harness.castSorceryWithSacrifice(player1, 0, sacrifice.getId());
+
+        harness.assertNotOnBattlefield(player1, "Scornful Egotist");
+        harness.assertInGraveyard(player1, "Scornful Egotist");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(libraryBefore);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        harness.assertInGraveyard(player1, "Skulltap");
+    }
+
+    @Test
+    @DisplayName("A tapped creature can be sacrificed")
+    void canSacrificeTappedCreature() {
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new ScornfulEgotist());
+        sacrifice.setTapped(true);
+        harness.setHand(player1, List.of(new Skulltap()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castSorceryWithSacrifice(player1, 0, sacrifice.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Scornful Egotist");
+        harness.assertInGraveyard(player1, "Scornful Egotist");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
     @DisplayName("Cannot cast without a creature to sacrifice")
     void cannotCastWithoutCreatureToSacrifice() {
         harness.setHand(player1, List.of(new Skulltap()));
