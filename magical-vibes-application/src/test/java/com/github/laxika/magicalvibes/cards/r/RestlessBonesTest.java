@@ -82,4 +82,50 @@ class RestlessBonesTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
+
+    @Test
+    @DisplayName("Restless Bones can grant swampwalk to itself")
+    void canGrantSwampwalkToItself() {
+        Permanent bones = addCreatureReady(player1, new RestlessBones());
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.activateAbility(player1, 0, 0, null, bones.getId());
+        harness.passBothPriorities();
+
+        assertThat(bones.isTapped()).isTrue();
+        assertThat(gqs.hasKeyword(gd, bones, Keyword.SWAMPWALK)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Regeneration can be activated while tapped and summoning sick")
+    void canRegenerateWhileTappedAndSummoningSick() {
+        Permanent bones = harness.addToBattlefieldAndReturn(player1, new RestlessBones());
+        bones.setSummoningSick(true);
+        bones.setTapped(true);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(bones.getRegenerationShield()).isEqualTo(1);
+        assertThat(bones.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Creating a regeneration shield does not tap the creature or remove it from combat")
+    void regenerationShieldDoesNotImmediatelyRegenerate() {
+        Permanent bones = addCreatureReady(player1, new RestlessBones());
+        Permanent attacker = addCreatureReady(player2, new Gristleback());
+        attacker.setAttacking(true);
+        bones.setBlocking(true);
+        bones.addBlockingTarget(0);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(bones.getRegenerationShield()).isEqualTo(1);
+        assertThat(bones.isTapped()).isFalse();
+        assertThat(bones.isBlocking()).isTrue();
+    }
 }
