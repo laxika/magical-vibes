@@ -56,4 +56,43 @@ class SierraNukasBiggestFanTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
         assertThat(countPermanents(player1, "Food")).isZero();
     }
+
+    @Test
+    void sierraDealingCombatDamageTriggersHerOwnChallenge() {
+        Permanent sierra = addCreatureReady(player1, new SierraNukasBiggestFan());
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        assertThat(sierra.getCounterCount(CounterType.QUEST)).isOne();
+        assertThat(countPermanents(player1, "Food")).isOne();
+    }
+
+    @Test
+    void foodTriggerUsesQuestCountersAtResolutionAndExcludesOpponentCreatures() {
+        Permanent sierra = addCreatureReady(player1, new SierraNukasBiggestFan());
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent food = findPermanent(player1, "Food");
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(food), null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .contains(sierra.getId())
+                .doesNotContain(opponentCreature.getId());
+        harness.handlePermanentChosen(player1, sierra.getId());
+        sierra.setCounterCount(CounterType.QUEST, 3);
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, sierra)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, sierra)).isEqualTo(7);
+        harness.assertLife(player1, 23);
+        assertThat(countPermanents(player1, "Food")).isZero();
+    }
 }
