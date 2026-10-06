@@ -20,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({RighteousWar.class, DarkPrivilege.class, SunClasp.class, LongbowArcher.class,
-        FallenAskari.class, Warthog.class})
+        FallenAskari.class, Warthog.class, Opalescence.class})
 class RighteousWarTest extends BaseCardTest {
 
     private void addRighteousWar() {
@@ -134,7 +134,6 @@ class RighteousWarTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(Opalescence.class)
     @DisplayName("Animated Righteous War grants protection to itself")
     void animatedRighteousWarGrantsProtectionToItself() {
         harness.addToBattlefield(player1, new Opalescence());
@@ -143,5 +142,67 @@ class RighteousWarTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, war)).isTrue();
         assertThat(gqs.hasProtectionFrom(gd, war, CardColor.BLACK)).isTrue();
         assertThat(gqs.hasProtectionFrom(gd, war, CardColor.WHITE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Righteous War does not grant protection to itself while it is not a creature")
+    void noncreatureRighteousWarHasNoProtection() {
+        Permanent war = harness.addToBattlefieldAndReturn(player1, new RighteousWar());
+
+        assertThat(gqs.hasProtectionFrom(gd, war, CardColor.BLACK)).isFalse();
+        assertThat(gqs.hasProtectionFrom(gd, war, CardColor.WHITE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Black creature remains targetable by a black Aura")
+    void blackCreatureNotProtectedFromBlack() {
+        addRighteousWar();
+        Permanent black = addCreatureReady(player1, new FallenAskari());
+        harness.setHand(player1, List.of(new DarkPrivilege()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castEnchantment(player1, 0, black.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Dark Privilege");
+    }
+
+    @Test
+    @DisplayName("An existing black Aura falls off a white creature when Righteous War resolves")
+    void existingBlackAuraFallsOffWhiteCreature() {
+        Permanent white = addCreatureReady(player1, new LongbowArcher());
+        harness.setHand(player1, List.of(new DarkPrivilege()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castEnchantment(player1, 0, white.getId());
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Dark Privilege");
+
+        harness.castFromHand(player1, new RighteousWar(), "{1}{W}{B}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Longbow Archer");
+        harness.assertNotOnBattlefield(player1, "Dark Privilege");
+        harness.assertInGraveyard(player1, "Dark Privilege");
+    }
+
+    @Test
+    @DisplayName("An existing white Aura falls off a black creature when Righteous War resolves")
+    void existingWhiteAuraFallsOffBlackCreature() {
+        Permanent black = addCreatureReady(player1, new FallenAskari());
+        harness.setHand(player1, List.of(new SunClasp()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castEnchantment(player1, 0, black.getId());
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Sun Clasp");
+
+        harness.castFromHand(player1, new RighteousWar(), "{1}{W}{B}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Fallen Askari");
+        harness.assertNotOnBattlefield(player1, "Sun Clasp");
+        harness.assertInGraveyard(player1, "Sun Clasp");
     }
 }
