@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -21,9 +22,9 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RevelInRiches.class, GrizzlyBears.class, Shock.class})
 class RevelInRichesTest extends BaseCardTest {
 
-    // ===== Death trigger: create Treasure =====
 
     @Test
     @DisplayName("Creates a Treasure token when an opponent's creature dies")
@@ -37,9 +38,7 @@ class RevelInRichesTest extends BaseCardTest {
 
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
         harness.castInstant(player1, 0, bearsId);
-        harness.passBothPriorities(); // Resolve Shock → bears die → death trigger
-
-        harness.passBothPriorities(); // Resolve death trigger (CreateTokenEffect)
+        resolveAllTriggers();
 
         // Treasure token on player1's battlefield
         List<Permanent> treasures = findPermanents(player1, "Treasure");
@@ -84,20 +83,17 @@ class RevelInRichesTest extends BaseCardTest {
 
         UUID bears1Id = findPermanent(player2, "Grizzly Bears").getId();
         harness.castInstant(player1, 0, bears1Id);
-        harness.passBothPriorities(); // Resolve first Shock → first bears die → death trigger
-        harness.passBothPriorities(); // Resolve death trigger
+        resolveAllTriggers();
 
         UUID bears2Id = findPermanent(player2, "Grizzly Bears").getId();
         harness.castInstant(player1, 0, bears2Id);
-        harness.passBothPriorities(); // Resolve second Shock → second bears die → death trigger
-        harness.passBothPriorities(); // Resolve death trigger
+        resolveAllTriggers();
 
         // Two Treasure tokens on player1's battlefield
         long treasureCount = countPermanents(player1, "Treasure");
         assertThat(treasureCount).isEqualTo(2);
     }
 
-    // ===== Upkeep trigger: win condition =====
 
     @Test
     @DisplayName("Wins the game at upkeep with exactly 10 Treasures")
@@ -187,7 +183,6 @@ class RevelInRichesTest extends BaseCardTest {
         assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
     }
 
-    // ===== Death trigger + win condition interaction =====
 
     @Test
     @DisplayName("Death trigger Treasure creation can eventually lead to win condition")
@@ -202,8 +197,7 @@ class RevelInRichesTest extends BaseCardTest {
 
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
         harness.castInstant(player1, 0, bearsId);
-        harness.passBothPriorities(); // Resolve Shock → bears die → death trigger
-        harness.passBothPriorities(); // Resolve death trigger → 10th Treasure created
+        resolveAllTriggers();
 
         // Now advance to upkeep — should trigger win condition
         advanceToUpkeep(player1);
@@ -213,7 +207,64 @@ class RevelInRichesTest extends BaseCardTest {
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
     }
 
-    // ===== Helpers =====
+
+    @Test
+    @DisplayName("Opponent's Treasures do not count toward the win condition")
+    void opponentsTreasuresDoNotCount() {
+        harness.addToBattlefield(player1, new RevelInRiches());
+        addTreasureTokens(player1, 9);
+        addTreasureTokens(player2, 10);
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    @DisplayName("Losing just one of ten Treasures prevents the upkeep win")
+    void losingOneTreasurePreventsWin() {
+        harness.addToBattlefield(player1, new RevelInRiches());
+        addTreasureTokens(player1, 10);
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+
+        gd.playerBattlefields.get(player1.getId()).remove(findPermanent(player1, "Treasure"));
+        harness.passBothPriorities();
+
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    @DisplayName("Removing Revel in Riches does not stop its pending upkeep ability")
+    void pendingWinSurvivesSourceRemoval() {
+        harness.addToBattlefield(player1, new RevelInRiches());
+        addTreasureTokens(player1, 10);
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+
+        gd.playerBattlefields.get(player1.getId()).remove(findPermanent(player1, "Revel in Riches"));
+        harness.passBothPriorities();
+
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    @DisplayName("A token copy of an opponent's creature dying creates a Treasure")
+    void tokenCreatureDeathCreatesTreasure() {
+        harness.addToBattlefield(player1, new RevelInRiches());
+        Card tokenCopy = new GrizzlyBears();
+        tokenCopy.setToken(true);
+        harness.addToBattlefield(player2, tokenCopy);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, harness.getPermanentId(player2, "Grizzly Bears"));
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Treasure")).isEqualTo(1);
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+    }
 
     private void addTreasureTokens(Player player, int count) {
         for (int i = 0; i < count; i++) {
