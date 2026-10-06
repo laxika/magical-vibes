@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.p.PillarOfFlame;
+import com.github.laxika.magicalvibes.cards.t.ThrabenValiant;
+import com.github.laxika.magicalvibes.cards.z.ZealousConscripts;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -10,6 +13,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +22,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RidersOfGavony.class})
 class RidersOfGavonyTest extends BaseCardTest {
 
     private static Card creature(String name, int power, int toughness, CardColor color, CardSubtype... subtypes) {
@@ -33,10 +38,9 @@ class RidersOfGavonyTest extends BaseCardTest {
     }
 
     private Permanent addRiders(com.github.laxika.magicalvibes.model.Player controller, CardSubtype chosen) {
-        Permanent riders = new Permanent(new RidersOfGavony());
+        Permanent riders = harness.addToBattlefieldAndReturn(controller, new RidersOfGavony());
         riders.setSummoningSick(false);
         riders.setChosenSubtype(chosen);
-        gd.playerBattlefields.get(controller.getId()).add(riders);
         return riders;
     }
 
@@ -61,16 +65,14 @@ class RidersOfGavonyTest extends BaseCardTest {
     @Test
     @DisplayName("A Human you control takes no combat damage from a creature of the chosen type")
     void humanIsProtectedFromChosenTypeDamage() {
-        Permanent attacker = new Permanent(creature("Goblin Brute", 3, 3, CardColor.RED, CardSubtype.GOBLIN));
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, creature("Goblin Brute", 3, 3, CardColor.RED, CardSubtype.GOBLIN));
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(creature("Village Militia", 1, 1, CardColor.WHITE, CardSubtype.HUMAN));
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, creature("Village Militia", 1, 1, CardColor.WHITE, CardSubtype.HUMAN));
         blocker.setSummoningSick(false);
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
 
         addRiders(player2, CardSubtype.GOBLIN);
 
@@ -85,12 +87,11 @@ class RidersOfGavonyTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Riders of Gavony protects itself — it is a Human creature you control")
+    @DisplayName("Riders of Gavony protects itself â€” it is a Human creature you control")
     void ridersProtectsItself() {
-        Permanent attacker = new Permanent(creature("Goblin Brute", 3, 3, CardColor.RED, CardSubtype.GOBLIN));
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, creature("Goblin Brute", 3, 3, CardColor.RED, CardSubtype.GOBLIN));
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
         Permanent riders = addRiders(player2, CardSubtype.GOBLIN);
         riders.setBlocking(true);
@@ -109,16 +110,14 @@ class RidersOfGavonyTest extends BaseCardTest {
     @Test
     @DisplayName("A non-Human creature you control is not protected")
     void nonHumanIsNotProtected() {
-        Permanent attacker = new Permanent(creature("Goblin Brute", 3, 3, CardColor.RED, CardSubtype.GOBLIN));
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, creature("Goblin Brute", 3, 3, CardColor.RED, CardSubtype.GOBLIN));
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(creature("Llanowar Elves", 1, 1, CardColor.GREEN, CardSubtype.ELF));
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, creature("Llanowar Elves", 1, 1, CardColor.GREEN, CardSubtype.ELF));
         blocker.setSummoningSick(false);
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
 
         addRiders(player2, CardSubtype.GOBLIN);
 
@@ -133,16 +132,14 @@ class RidersOfGavonyTest extends BaseCardTest {
     @Test
     @DisplayName("Creatures of other types still damage your Humans")
     void otherTypesAreNotProtectedAgainst() {
-        Permanent attacker = new Permanent(creature("Elvish Brute", 3, 3, CardColor.GREEN, CardSubtype.ELF));
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, creature("Elvish Brute", 3, 3, CardColor.GREEN, CardSubtype.ELF));
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(creature("Village Militia", 1, 1, CardColor.WHITE, CardSubtype.HUMAN));
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, creature("Village Militia", 1, 1, CardColor.WHITE, CardSubtype.HUMAN));
         blocker.setSummoningSick(false);
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
 
         addRiders(player2, CardSubtype.GOBLIN);
 
@@ -157,16 +154,14 @@ class RidersOfGavonyTest extends BaseCardTest {
     @Test
     @DisplayName("A creature of the chosen type can't block your attacking Human")
     void chosenTypeCannotBlockYourHuman() {
-        Permanent attacker = new Permanent(creature("Village Militia", 2, 2, CardColor.WHITE, CardSubtype.HUMAN));
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, creature("Village Militia", 2, 2, CardColor.WHITE, CardSubtype.HUMAN));
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
         addRiders(player1, CardSubtype.GOBLIN);
 
-        Permanent blocker = new Permanent(creature("Goblin Brute", 3, 3, CardColor.RED, CardSubtype.GOBLIN));
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, creature("Goblin Brute", 3, 3, CardColor.RED, CardSubtype.GOBLIN));
         blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -181,16 +176,14 @@ class RidersOfGavonyTest extends BaseCardTest {
     @Test
     @DisplayName("Humans an opponent controls are not protected")
     void opponentHumansAreNotProtected() {
-        Permanent attacker = new Permanent(creature("Goblin Brute", 3, 3, CardColor.RED, CardSubtype.GOBLIN));
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, creature("Goblin Brute", 3, 3, CardColor.RED, CardSubtype.GOBLIN));
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(creature("Village Militia", 1, 1, CardColor.WHITE, CardSubtype.HUMAN));
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, creature("Village Militia", 1, 1, CardColor.WHITE, CardSubtype.HUMAN));
         blocker.setSummoningSick(false);
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
 
         addRiders(player1, CardSubtype.GOBLIN);
 
@@ -200,5 +193,66 @@ class RidersOfGavonyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player2, "Village Militia");
+    }
+
+    @Test
+    @CardUsed({ThrabenValiant.class, PillarOfFlame.class})
+    @DisplayName("Protection from creatures does not prevent damage from a noncreature spell")
+    void noncreatureSpellStillDamagesHuman() {
+        addRiders(player2, CardSubtype.HUMAN);
+        Permanent human = harness.addToBattlefieldAndReturn(player2, new ThrabenValiant());
+        harness.setHand(player1, List.of(new PillarOfFlame()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveSorcery(player1, 0, human.getId());
+
+        harness.assertNotOnBattlefield(player2, "Thraben Valiant");
+        harness.assertNotInGraveyard(player2, "Thraben Valiant");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(card -> card.getName().equals("Thraben Valiant"));
+    }
+
+    @Test
+    @CardUsed({ThrabenValiant.class, ZealousConscripts.class})
+    @DisplayName("Protection still stops a creature's triggered ability after its source leaves")
+    void protectionStopsTriggerAfterSourceLeaves() {
+        Permanent human = harness.addToBattlefieldAndReturn(player2, new ThrabenValiant());
+        harness.setHand(player1, List.of(new ZealousConscripts()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castCreature(player1, 0, human.getId());
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+
+        Permanent conscripts = findPermanent(player1, "Zealous Conscripts");
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, conscripts));
+        addRiders(player2, CardSubtype.HUMAN);
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Thraben Valiant");
+        harness.assertNotOnBattlefield(player1, "Thraben Valiant");
+    }
+
+    @Test
+    @CardUsed({ThrabenValiant.class, ZealousConscripts.class})
+    @DisplayName("Removing Riders before resolution removes its protection")
+    void protectionEndsWhenRidersLeaves() {
+        Permanent human = harness.addToBattlefieldAndReturn(player2, new ThrabenValiant());
+        harness.setHand(player1, List.of(new ZealousConscripts()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castCreature(player1, 0, human.getId());
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+        Permanent riders = addRiders(player2, CardSubtype.HUMAN);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, riders));
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Thraben Valiant");
+        harness.assertNotOnBattlefield(player2, "Thraben Valiant");
     }
 }
