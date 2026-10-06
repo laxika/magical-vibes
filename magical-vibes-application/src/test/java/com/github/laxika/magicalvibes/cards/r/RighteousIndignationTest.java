@@ -117,4 +117,63 @@ class RighteousIndignationTest extends BaseCardTest {
         assertThat(blocker.getPowerModifier()).isZero();
         assertThat(blocker.getToughnessModifier()).isZero();
     }
+
+    @Test
+    @DisplayName("Each creature blocking the same black attacker gets its own boost")
+    void multipleBlockersEachGetBoosted() {
+        Permanent attacker = addCreatureReady(player1, new CateranBrute());
+        attacker.setAttacking(true);
+        Permanent firstBlocker = addCreatureReady(player2, new FreshVolunteers());
+        Permanent secondBlocker = addCreatureReady(player2, new FreshVolunteers());
+        harness.addToBattlefield(player1, new RighteousIndignation());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0)));
+        resolveAllTriggers();
+
+        assertThat(firstBlocker.getPowerModifier()).isEqualTo(1);
+        assertThat(firstBlocker.getToughnessModifier()).isEqualTo(1);
+        assertThat(secondBlocker.getPowerModifier()).isEqualTo(1);
+        assertThat(secondBlocker.getToughnessModifier()).isEqualTo(1);
+        assertThat(attacker.getPowerModifier()).isZero();
+        assertThat(attacker.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Enchantments controlled by either player independently boost the blocker")
+    void multipleEnchantmentsTriggerRegardlessOfController() {
+        Permanent attacker = addCreatureReady(player1, new CateranBrute());
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new FreshVolunteers());
+        harness.addToBattlefield(player1, new RighteousIndignation());
+        harness.addToBattlefield(player2, new RighteousIndignation());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveAllTriggers();
+
+        assertThat(blocker.getPowerModifier()).isEqualTo(2);
+        assertThat(blocker.getToughnessModifier()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A pending block trigger still resolves after its enchantment leaves")
+    void triggerResolvesAfterEnchantmentLeavesBattlefield() {
+        Permanent attacker = addCreatureReady(player1, new CateranBrute());
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new FreshVolunteers());
+        harness.addToBattlefield(player1, new RighteousIndignation());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(
+                findPermanent(player1, "Righteous Indignation"));
+        resolveAllTriggers();
+
+        assertThat(blocker.getPowerModifier()).isEqualTo(1);
+        assertThat(blocker.getToughnessModifier()).isEqualTo(1);
+    }
 }
