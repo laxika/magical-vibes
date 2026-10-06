@@ -51,4 +51,51 @@ class SkitteringMonstrosityTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(monstrosity);
     }
+
+    @Test
+    void doesNotTriggerOnItsOwnCast() {
+        harness.castFromHand(player1, new SkitteringMonstrosity(), "{3}{B}{B}");
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Skittering Monstrosity");
+        harness.assertNotInGraveyard(player1, "Skittering Monstrosity");
+    }
+
+    @Test
+    void sacrificesBeforeTheCreatureSpellResolves() {
+        harness.addToBattlefield(player1, new SkitteringMonstrosity());
+        harness.castFromHand(player1, new AshcoatBear(), "{1}{G}");
+
+        harness.assertOnBattlefield(player1, "Skittering Monstrosity");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Skittering Monstrosity");
+        harness.assertInGraveyard(player1, "Skittering Monstrosity");
+        harness.assertNotOnBattlefield(player1, "Ashcoat Bear");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Ashcoat Bear");
+    }
+
+    @Test
+    void eachMonstrositySacrificesItselfForTheSameCreatureSpell() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new SkitteringMonstrosity());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new SkitteringMonstrosity());
+        harness.castFromHand(player1, new AshcoatBear(), "{1}{G}");
+
+        assertThat(gd.stack).hasSize(3);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(first, second);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .contains(first.getCard(), second.getCard());
+        harness.assertNotOnBattlefield(player1, "Ashcoat Bear");
+
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Ashcoat Bear");
+    }
 }
