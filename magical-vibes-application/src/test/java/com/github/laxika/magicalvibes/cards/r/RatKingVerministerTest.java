@@ -91,6 +91,85 @@ class RatKingVerministerTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Rat")).hasSize(3);
     }
 
+    @Test
+    void opponentsPermanentLeavingDoesNotEnableDisappear() {
+        harness.addToBattlefield(player1, new RatKingVerminister());
+        Permanent leaving = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, leaving));
+
+        advanceToEndStep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanents(player1, "Rat")).isEmpty();
+        assertThat(findPermanent(player1, "Rat King, Verminister")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void disappearDoesNotTriggerDuringOpponentsEndStep() {
+        harness.addToBattlefield(player1, new RatKingVerminister());
+        Permanent leaving = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, leaving));
+
+        advanceToEndStep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanents(player1, "Rat")).isEmpty();
+    }
+
+    @Test
+    void disappearStillCreatesRatWhenRatKingLeavesBeforeResolution() {
+        Permanent ratKing = harness.addToBattlefieldAndReturn(player1, new RatKingVerminister());
+        Permanent leaving = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, leaving));
+        advanceToEndStep(player1);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, ratKing));
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Rat")).hasSize(1);
+        harness.assertNotOnBattlefield(player1, "Rat King, Verminister");
+    }
+
+    @Test
+    void illegalGraveyardTargetPreventsReturningOtherSameNameCards() {
+        addReadyRatKing();
+        addRatTokens(3);
+        Card target = new GrizzlyBears();
+        Card sameName = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(target, sameName));
+        harness.activateAbility(player1, 0, null, target.getId(), Zone.GRAVEYARD);
+        for (Permanent rat : findPermanents(player1, "Rat")) {
+            harness.handlePermanentChosen(player1, rat.getId());
+        }
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removeCardFromGraveyardByIdForExile(gd, target.getId()));
+        harness.setExile(player1, List.of(target));
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(sameName);
+    }
+
+    @Test
+    void ratKingCanBeSacrificedAsOneOfTheThreeRats() {
+        Permanent ratKing = addReadyRatKing();
+        addRatTokens(2);
+        Card target = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(target));
+        harness.activateAbility(player1, 0, null, target.getId(), Zone.GRAVEYARD);
+        harness.handlePermanentChosen(player1, ratKing.getId());
+        for (Permanent rat : findPermanents(player1, "Rat")) {
+            harness.handlePermanentChosen(player1, rat.getId());
+        }
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Rat King, Verminister");
+        harness.assertInGraveyard(player1, "Rat King, Verminister");
+        assertThat(findPermanent(player1, "Grizzly Bears").isTapped()).isTrue();
+        assertThat(findPermanents(player1, "Rat")).isEmpty();
+    }
     private Permanent addReadyRatKing() {
         Permanent ratKing = addCreatureReady(player1, new RatKingVerminister());
         harness.forceActivePlayer(player1);
@@ -130,7 +209,6 @@ class RatKingVerministerTest extends BaseCardTest {
     private void advanceToEndStep(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.END_STEP);
     }
 }
