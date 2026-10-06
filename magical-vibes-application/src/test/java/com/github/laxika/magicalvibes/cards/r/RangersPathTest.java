@@ -1,18 +1,18 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.e.ElvishVisionary;
+import com.github.laxika.magicalvibes.cards.t.TempleGarden;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,6 +20,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RangersPath.class, Forest.class, Island.class, Plains.class, ElvishVisionary.class, TempleGarden.class})
 class RangersPathTest extends BaseCardTest {
 
     @Test
@@ -48,9 +49,9 @@ class RangersPathTest extends BaseCardTest {
         harness.passBothPriorities();
         GameData gd = harness.getGameData();
 
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNotNull();
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()
@@ -66,11 +67,87 @@ class RangersPathTest extends BaseCardTest {
         harness.passBothPriorities();
         GameData gd = harness.getGameData();
 
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+        harness.handleCardChosen(player1, -1);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getCard().hasType(CardType.LAND) && p.isTapped());
+    }
+
+
+    @Test
+    @DisplayName("May find one Forest even when a second is available")
+    void mayFindOnlyOneForest() {
+        setupAndCast();
+        setupLibrary();
+        harness.passBothPriorities();
+
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, -1);
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1)
+                .allSatisfy(p -> assertThat(p.isTapped()).isTrue());
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(4);
+    }
+
+    @Test
+    @DisplayName("Finishes with one tapped Forest when only one is available")
+    void findsOnlyAvailableForest() {
+        setupAndCast();
+        harness.setLibrary(player1, List.of(new Forest(), new Island()));
+        harness.passBothPriorities();
+
+        harness.handleCardChosen(player1, 0);
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1)
+                .allSatisfy(p -> assertThat(p.isTapped()).isTrue());
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Resolves without a choice when the library contains no Forests")
+    void noMatchingForests() {
+        setupAndCast();
+        harness.setLibrary(player1, List.of(new Island(), new ElvishVisionary()));
+        harness.passBothPriorities();
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Resolves with an empty library")
+    void emptyLibrary() {
+        setupAndCast();
+        harness.setLibrary(player1, List.of());
+        harness.passBothPriorities();
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Offers nonbasic Forest cards as well as basic Forests")
+    void offersNonbasicForests() {
+        setupAndCast();
+        TempleGarden garden = new TempleGarden();
+        Forest forest = new Forest();
+        harness.setLibrary(player1, List.of(new Island(), garden, forest));
+        harness.passBothPriorities();
+
+        PendingInteraction.LibrarySearch search = harness.getGameData().interaction
+                .activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search).isNotNull();
+        assertThat(search.params().cards()).containsExactly(garden, forest);
     }
 
     private void setupAndCast() {
@@ -80,8 +157,6 @@ class RangersPathTest extends BaseCardTest {
     }
 
     private void setupLibrary() {
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new Plains(), new Forest(), new Forest(), new Island(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Plains(), new Forest(), new Forest(), new Island(), new ElvishVisionary()));
     }
 }
