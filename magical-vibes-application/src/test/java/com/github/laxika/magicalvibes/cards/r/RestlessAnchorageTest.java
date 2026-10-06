@@ -88,7 +88,7 @@ class RestlessAnchorageTest extends BaseCardTest {
     @Test
     @DisplayName("Attacking with Restless Anchorage creates a Map token")
     void attackingCreatesMapToken() {
-        Permanent anchorage = addAnchorageReady(player1);
+        addAnchorageReady(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -101,10 +101,49 @@ class RestlessAnchorageTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Map")).hasSize(1);
     }
 
+    @Test
+    @DisplayName("Repeated animation still creates only one Map when the land attacks")
+    void repeatedAnimationCreatesOnlyOneMap() {
+        addAnchorageReady(player1);
+        for (int i = 0; i < 2; i++) {
+            harness.addMana(player1, ManaColor.COLORLESS, 1);
+            harness.addMana(player1, ManaColor.WHITE, 1);
+            harness.addMana(player1, ManaColor.BLUE, 1);
+            harness.activateAbility(player1, 0, 2, null, null);
+            harness.passBothPriorities();
+        }
+
+        assertThat(findPermanents(player1, "Map")).isEmpty();
+        declareAttackers(List.of(0));
+        assertThat(findPermanents(player1, "Map")).isEmpty();
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Map")).hasSize(1);
+        assertThat(findPermanents(player2, "Map")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The attack trigger creates a Map even if Restless Anchorage leaves the battlefield")
+    void attackTriggerSurvivesSourceLeaving() {
+        Permanent anchorage = addAnchorageReady(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+
+        declareAttackers(List.of(0));
+        gd.playerBattlefields.get(player1.getId()).remove(anchorage);
+        gd.playerGraveyards.get(player1.getId()).add(anchorage.getCard());
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Map")).hasSize(1);
+        assertThat(findPermanents(player2, "Map")).isEmpty();
+    }
+
     private Permanent addAnchorageReady(Player player) {
-        Permanent permanent = new Permanent(new RestlessAnchorage());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new RestlessAnchorage());
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 }
