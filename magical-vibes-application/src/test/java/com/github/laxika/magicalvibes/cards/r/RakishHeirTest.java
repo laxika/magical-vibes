@@ -3,39 +3,36 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.b.BloodcrazedNeonate;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({RakishHeir.class, BloodcrazedNeonate.class, GrizzlyBears.class, SerraAngel.class})
 class RakishHeirTest extends BaseCardTest {
 
     private Permanent addReadyRakishHeir() {
-        Permanent perm = new Permanent(new RakishHeir());
+        Permanent perm = harness.addToBattlefieldAndReturn(player1, new RakishHeir());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(perm);
         return perm;
     }
 
     private Permanent addReadyVampire() {
-        Permanent perm = new Permanent(new BloodcrazedNeonate());
+        Permanent perm = harness.addToBattlefieldAndReturn(player1, new BloodcrazedNeonate());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(perm);
         return perm;
     }
 
     private Permanent addReadyNonVampire() {
-        Permanent perm = new Permanent(new GrizzlyBears());
+        Permanent perm = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(perm);
         return perm;
     }
-
-    // ===== Trigger: Vampire deals combat damage to a player =====
 
     @Test
     @DisplayName("Another attacking Vampire gets a +1/+1 counter when dealing combat damage")
@@ -128,18 +125,17 @@ class RakishHeirTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("No counter when Vampire is blocked and killed before damage")
+    @DisplayName("No counter when Vampire deals combat damage only to its blocker")
     void noCounterWhenVampireBlockedAndKilled() {
         addReadyRakishHeir();
         Permanent vampire = addReadyVampire();
         vampire.setAttacking(true);
 
         // 4/4 blocker kills the 2/1 Neonate (index 1 on attacker's battlefield)
-        Permanent blocker = new Permanent(new SerraAngel());
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new SerraAngel());
         blocker.setSummoningSick(false);
         blocker.setBlocking(true);
         blocker.addBlockingTarget(1);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -148,5 +144,46 @@ class RakishHeirTest extends BaseCardTest {
 
         // Vampire should be dead — no combat damage to player means no trigger
         harness.assertInGraveyard(player1, "Bloodcrazed Neonate");
+    }
+
+    @Test
+    @DisplayName("Each Vampire dealing damage simultaneously gets its own counter")
+    void simultaneousVampiresEachGetCounter() {
+        Permanent heir = addReadyRakishHeir();
+        Permanent first = addReadyVampire();
+        Permanent second = addReadyVampire();
+        first.setAttacking(true);
+        second.setAttacking(true);
+        harness.setLife(player2, 20);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
+        for (int i = 0; i < 4; i++) {
+            harness.passBothPriorities();
+        }
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(heir.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("An opposing Vampire does not receive a counter from Rakish Heir")
+    void opposingVampireDoesNotTriggerHeir() {
+        Permanent heir = addReadyRakishHeir();
+        Permanent vampire = harness.addToBattlefieldAndReturn(player2, new BloodcrazedNeonate());
+        vampire.setSummoningSick(false);
+        vampire.setAttacking(true);
+        harness.setLife(player1, 20);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+        assertThat(vampire.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(heir.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
     }
 }
