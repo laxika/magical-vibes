@@ -1,15 +1,18 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RaphsBravado.class, GrizzlyBears.class})
+@CardUsed({RaphsBravado.class, GrizzlyBears.class, Opalescence.class})
 class RaphsBravadoTest extends BaseCardTest {
 
     @Test
@@ -57,5 +60,54 @@ class RaphsBravadoTest extends BaseCardTest {
         Permanent creature = addCreatureReady(controller, new GrizzlyBears());
         creature.setAttacking(true);
         return creature;
+    }
+
+    @Test
+    void unblockedAttackerDealsBoostedCombatDamage() {
+        harness.addToBattlefield(player1, new RaphsBravado());
+        addCreatureReady(player1, new GrizzlyBears());
+        harness.setLife(player2, 20);
+
+        declareAttackers(List.of(1));
+        resolveCombat();
+
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    void multipleCopiesStackTheirBonuses() {
+        harness.addToBattlefield(player1, new RaphsBravado());
+        harness.addToBattlefield(player1, new RaphsBravado());
+        Permanent attacker = addAttackingBears(player1);
+        harness.forceActivePlayer(player1);
+
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
+    }
+
+    @Test
+    void bonusTracksWhetherCreatureIsAttacking() {
+        harness.addToBattlefield(player1, new RaphsBravado());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        harness.forceActivePlayer(player1);
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        creature.setAttacking(true);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        creature.setAttacking(false);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+    }
+
+    @Test
+    void animatedBravadoReceivesItsOwnAttackingBonus() {
+        harness.addToBattlefield(player1, new Opalescence());
+        Permanent bravado = harness.addToBattlefieldAndReturn(player1, new RaphsBravado());
+        harness.forceActivePlayer(player1);
+
+        assertThat(gqs.getEffectivePower(gd, bravado)).isEqualTo(2);
+        bravado.setAttacking(true);
+
+        assertThat(gqs.getEffectivePower(gd, bravado)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bravado)).isEqualTo(2);
     }
 }
