@@ -84,6 +84,52 @@ class SeverancePriestTest extends BaseCardTest {
                 .hasMessageContaining("Target must be an opponent");
     }
 
+    @Test
+    @DisplayName("The controller may decline to exile a legal nonland card")
+    void mayDeclineToExile() {
+        Card card = new SeverancePriest();
+        castAndResolveEtb(List.of(card));
+
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(card);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+
+        destroyPriest();
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(permanent -> permanent.getCard().getName().equals("Spirit"));
+    }
+
+    @Test
+    @DisplayName("An empty hand creates no choice and no Spirit when the Priest leaves")
+    void emptyHandCreatesNoToken() {
+        castAndResolveEtb(List.of());
+        assertThat(gd.interaction.activeInteraction()).isNull();
+
+        destroyPriest();
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(permanent -> permanent.getCard().getName().equals("Spirit"));
+    }
+
+    @Test
+    @DisplayName("A noncreature card can be exiled and stays exiled after the Spirit is created")
+    void exiledInstantDeterminesTokenSizeAndRemainsExiled() {
+        Card card = new Murder();
+        castAndResolveEtb(List.of(card));
+        harness.handleCardChosen(player1, 0);
+
+        destroyPriest();
+
+        Permanent spirit = findPermanent(player2, "Spirit");
+        assertThat(spirit.getCard().getPower()).isEqualTo(3);
+        assertThat(spirit.getCard().getToughness()).isEqualTo(3);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(card);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
+
     private void castAndResolveEtb(List<Card> targetHand) {
         harness.setHand(player1, List.of(new SeverancePriest()));
         harness.setHand(player2, targetHand);
@@ -102,8 +148,7 @@ class SeverancePriestTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player1, List.of(new Murder()));
         harness.addMana(player1, ManaColor.BLACK, 3);
-        harness.castInstant(player1, 0, harness.getPermanentId(player1, "Severance Priest"));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Severance Priest"));
         harness.passBothPriorities();
     }
 
