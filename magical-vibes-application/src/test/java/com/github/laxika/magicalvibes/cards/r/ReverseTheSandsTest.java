@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.a.AjanisPridemate;
+import com.github.laxika.magicalvibes.cards.e.EverybodyLives;
 import com.github.laxika.magicalvibes.cards.l.LeylineOfPunishment;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -11,7 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ReverseTheSands.class, LeylineOfPunishment.class, AjanisPridemate.class})
+@CardUsed({ReverseTheSands.class, LeylineOfPunishment.class, AjanisPridemate.class, EverybodyLives.class})
 class ReverseTheSandsTest extends BaseCardTest {
 
     @Test
@@ -93,6 +94,62 @@ class ReverseTheSandsTest extends BaseCardTest {
 
         harness.assertLife(player1, 5);
         harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("does not offer a redistribution that requires prohibited life loss")
+    void omitsImpossibleLifeLoss() {
+        harness.setLife(player1, 5);
+        harness.setLife(player2, 20);
+        harness.castFromHand(player1, new EverybodyLives(), "{1}{W}");
+        harness.passBothPriorities();
+        castReverseTheSands();
+
+        harness.passBothPriorities();
+
+        PendingInteraction.ColorChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.options()).containsExactly("No change");
+        harness.handleListChoice(player1, "No change");
+
+        harness.assertLife(player1, 5);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("equal life totals do not cause life gain")
+    void equalLifeTotalsDoNotTriggerLifeGain() {
+        addCreatureReady(player1, new AjanisPridemate());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        castReverseTheSands();
+
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "No change");
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(findPermanent(player1, "Ajani's Pridemate")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("redistribution can give the opponent the higher total and trigger their life gain ability")
+    void opponentGainsLifeFromRedistribution() {
+        addCreatureReady(player2, new AjanisPridemate());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 5);
+        castReverseTheSands();
+
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "Alice: 5; Bob: 20");
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 5);
+        harness.assertLife(player2, 20);
+        assertThat(findPermanent(player2, "Ajani's Pridemate")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     private void castReverseTheSands() {
