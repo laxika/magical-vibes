@@ -26,8 +26,7 @@ class RedRoomRecruitTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent recruit = findPermanent(player1, "Red Room Recruit");
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
@@ -45,14 +44,58 @@ class RedRoomRecruitTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent recruit = findPermanent(player1, "Red Room Recruit");
         discardByName("Mountain");
 
         assertThat(recruit.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName).containsExactly("Grizzly Bears");
+    }
+
+    @Test
+    void canDiscardNonlandAlreadyInHandInsteadOfDrawnLand() {
+        RedRoomRecruit discardedRecruit = new RedRoomRecruit();
+        harness.setHand(player1, List.of(new RedRoomRecruit(), discardedRecruit));
+        harness.setLibrary(player1, List.of(new Mountain()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        Permanent recruit = findPermanent(player1, "Red Room Recruit");
+        assertThat(recruit.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName)
+                .containsExactly("Red Room Recruit", "Mountain");
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(recruit.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName)
+                .containsExactly("Mountain");
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(discardedRecruit);
+    }
+
+    @Test
+    void onlyEnteringRecruitGetsConniveCounter() {
+        Permanent existingRecruit = harness.addToBattlefieldAndReturn(player1, new RedRoomRecruit());
+        RedRoomRecruit enteringCard = new RedRoomRecruit();
+        harness.setHand(player1, List.of(enteringCard, new Mountain()));
+        harness.setLibrary(player1, List.of(new RedRoomRecruit()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        discardByName("Red Room Recruit");
+
+        Permanent enteringRecruit = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> !permanent.getId().equals(existingRecruit.getId()))
+                .findFirst().orElseThrow();
+        assertThat(enteringRecruit.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(existingRecruit.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName)
+                .containsExactly("Mountain");
     }
 
     private void discardByName(String cardName) {
