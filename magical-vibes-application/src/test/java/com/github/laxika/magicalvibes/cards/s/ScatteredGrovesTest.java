@@ -2,17 +2,18 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ScatteredGroves.class, GrizzlyBears.class})
 class ScatteredGrovesTest extends BaseCardTest {
 
     @Test
@@ -30,7 +31,7 @@ class ScatteredGrovesTest extends BaseCardTest {
     @Test
     @DisplayName("Tapping for green mana produces one green")
     void tappingProducesGreenMana() {
-        addGrovesReady(player1);
+        addCreatureReady(player1, new ScatteredGroves());
 
         harness.activateAbility(player1, 0, 0, null, null);
 
@@ -41,7 +42,7 @@ class ScatteredGrovesTest extends BaseCardTest {
     @Test
     @DisplayName("Tapping for white mana produces one white")
     void tappingProducesWhiteMana() {
-        addGrovesReady(player1);
+        addCreatureReady(player1, new ScatteredGroves());
 
         harness.activateAbility(player1, 0, 1, null, null);
 
@@ -64,10 +65,59 @@ class ScatteredGrovesTest extends BaseCardTest {
         harness.assertInHand(player1, "Grizzly Bears");
     }
 
-    private Permanent addGrovesReady(Player player) {
-        Permanent perm = new Permanent(new ScatteredGroves());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    @Test
+    @DisplayName("Cycling pays generic mana and discards before the draw resolves")
+    void cyclingPaysCostsBeforeResolution() {
+        ScatteredGroves groves = new ScatteredGroves();
+        ScatteredGroves drawnCard = new ScatteredGroves();
+        harness.setHand(player1, List.of(groves));
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(groves);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cycling cannot be activated with only one mana")
+    void cyclingRequiresTwoMana() {
+        ScatteredGroves groves = new ScatteredGroves();
+        harness.setHand(player1, List.of(groves));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(groves);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped Groves cannot produce another color of mana")
+    void cannotTapAgainForMana() {
+        addCreatureReady(player1, new ScatteredGroves());
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(gd.stack).isEmpty();
     }
 }
