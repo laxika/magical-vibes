@@ -58,12 +58,68 @@ class RisingPopulaceTest extends BaseCardTest {
         assertThat(populace.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
+    @Test
+    void doesNotTriggerForItsOwnDeath() {
+        harness.addToBattlefield(player1, new RisingPopulace());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Rising Populace"));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void doesNotTriggerWhenOpponentsPlaneswalkerDies() {
+        Permanent populace = harness.addToBattlefieldAndReturn(player1, new RisingPopulace());
+        Permanent ajani = harness.addToBattlefieldAndReturn(player2, new AjaniGoldmane());
+        ajani.setCounterCount(CounterType.LOYALTY, 0);
+
+        harness.runStateBasedActions();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(populace.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void doesNotTriggerWhileItsAbilitiesAreLost() {
+        Permanent populace = harness.addToBattlefieldAndReturn(player1, new RisingPopulace());
+        populace.setLosesAllAbilitiesUntilEndOfTurn(true);
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Grizzly Bears"));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(populace.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void simultaneousDeathsTriggerEachPopulaceForTheOther() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new RisingPopulace());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new RisingPopulace());
+        first.setMarkedDamage(2);
+        second.setMarkedDamage(2);
+
+        harness.runStateBasedActions();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.stack).extracting(entry -> entry.getSourcePermanentId())
+                .containsExactlyInAnyOrder(first.getId(), second.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(gd.stack).isEmpty();
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
     private void killWithShock(Player caster, Player targetPlayer,
                                String targetName) {
         harness.setHand(caster, List.of(new Shock()));
         harness.addMana(caster, ManaColor.RED, 1);
-        harness.castInstant(caster, 0, harness.getPermanentId(targetPlayer, targetName));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(caster, 0, harness.getPermanentId(targetPlayer, targetName));
         harness.passBothPriorities();
     }
 }
