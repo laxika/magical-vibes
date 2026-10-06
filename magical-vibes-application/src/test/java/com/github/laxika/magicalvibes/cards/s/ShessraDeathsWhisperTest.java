@@ -122,6 +122,59 @@ class ShessraDeathsWhisperTest extends BaseCardTest {
                 .isNull();
     }
 
+    @Test
+    @DisplayName("A creature dying before Shessra enters still enables the end-step ability")
+    void creatureDeathBeforeShessraEntersCounts() {
+        Permanent dyingCreature = addCreatureReady(player1, new GrizzlyBears());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, dyingCreature));
+        harness.addToBattlefield(player1, new ShessraDeathsWhisper());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setLife(player1, 20);
+        int handSize = gd.playerHands.get(player1.getId()).size();
+
+        advanceToEndStep(player1);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, 18);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSize + 1);
+    }
+
+    @Test
+    @DisplayName("A creature death does not trigger Shessra on the opponent's end step")
+    void doesNotTriggerOnOpponentsEndStep() {
+        harness.addToBattlefield(player1, new ShessraDeathsWhisper());
+        Permanent dyingCreature = addCreatureReady(player2, new GrizzlyBears());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, dyingCreature));
+
+        advanceToEndStep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class))
+                .isNull();
+    }
+
+    @Test
+    @DisplayName("Accepting with only 1 life cannot pay the cost or draw a card")
+    void cannotPayWithInsufficientLife() {
+        harness.addToBattlefield(player1, new ShessraDeathsWhisper());
+        Permanent dyingCreature = addCreatureReady(player2, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setLife(player1, 1);
+        int handSize = gd.playerHands.get(player1.getId()).size();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, dyingCreature));
+
+        advanceToEndStep(player1);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, 1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSize);
+    }
+
     private void castShessraTargeting(Permanent target) {
         harness.setHand(player1, List.of(new ShessraDeathsWhisper()));
         addManaForShessra();
