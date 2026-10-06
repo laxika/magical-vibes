@@ -93,6 +93,43 @@ class SerraAdvocateTest extends BaseCardTest {
         assertThat(attacker.getToughnessModifier()).isEqualTo(0);
     }
 
+    @Test
+    @DisplayName("Cannot activate while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        Permanent attacker = addSerraAdvocateAndCombatCreature(true, false, player1);
+        Permanent advocate = findPermanent(player1, "Serra Advocate");
+        advocate.setSummoningSick(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(advocate.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate while tapped")
+    void cannotActivateWhileTapped() {
+        Permanent attacker = addSerraAdvocateAndCombatCreature(true, false, player1);
+        findPermanent(player1, "Serra Advocate").setTapped(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not boost a creature that stops blocking before resolution")
+    void doesNotBoostCreatureThatStopsBlockingBeforeResolution() {
+        Permanent blocker = addSerraAdvocateAndCombatCreature(false, true, player2);
+
+        harness.activateAbility(player1, 0, null, blocker.getId());
+        blocker.setBlocking(false);
+        harness.passBothPriorities();
+
+        assertThat(blocker.getPowerModifier()).isEqualTo(0);
+        assertThat(blocker.getToughnessModifier()).isEqualTo(0);
+    }
+
     private void addSerraAdvocate() {
         addCreatureReady(player1, new SerraAdvocate());
     }
