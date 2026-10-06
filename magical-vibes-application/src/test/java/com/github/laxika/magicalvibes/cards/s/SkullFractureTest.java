@@ -83,4 +83,52 @@ class SkullFractureTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getName().equals("Skull Fracture"));
     }
+
+    @Test
+    @DisplayName("A normally resolved Skull Fracture can be cast again with flashback")
+    void normalCastThenFlashbackDiscardsTwice() {
+        SkullFracture spell = new SkullFracture();
+        harness.setHand(player1, List.of(spell));
+        harness.setHand(player2, List.of(new SkullFracture(), new Peek()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleCardChosen(player2, 1);
+
+        harness.assertInGraveyard(player1, "Skull Fracture");
+        harness.assertInGraveyard(player2, "Peek");
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castAndResolveFlashback(player1, 0, player2.getId());
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player2, "Skull Fracture");
+        harness.assertNotInGraveyard(player1, "Skull Fracture");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(spell);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Flashback against an empty hand still exiles Skull Fracture")
+    void flashbackAgainstEmptyHandStillExiles() {
+        SkullFracture spell = new SkullFracture();
+        harness.setGraveyard(player1, List.of(spell));
+        harness.setHand(player2, List.of());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castAndResolveFlashback(player1, 0, player2.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        harness.assertNotInGraveyard(player1, "Skull Fracture");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(spell);
+    }
 }
