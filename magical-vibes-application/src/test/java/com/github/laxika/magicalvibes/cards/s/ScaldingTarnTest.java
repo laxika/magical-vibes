@@ -5,18 +5,20 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ScaldingTarn.class, Island.class, Mountain.class, Forest.class, Plains.class, GrizzlyBears.class})
 class ScaldingTarnTest extends BaseCardTest {
 
     @Test
@@ -86,8 +88,53 @@ class ScaldingTarnTest extends BaseCardTest {
     }
 
     private void setupLibrary() {
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new Island(), new Mountain(), new Forest(), new Plains(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Island(), new Mountain(), new Forest(), new Plains(), new GrizzlyBears()));
+    }
+
+    @Test
+    void tappedTarnCannotBeActivated() {
+        harness.addToBattlefieldAndReturn(player1, new ScaldingTarn()).setTapped(true);
+        int lifeBefore = gd.getLife(player1.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertLife(player1, lifeBefore);
+        harness.assertOnBattlefield(player1, "Scalding Tarn");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void searchWithNoMatchingCardsFinishesWithoutPuttingCardsOntoBattlefield() {
+        harness.addToBattlefield(player1, new ScaldingTarn());
+        Forest forest = new Forest();
+        Plains plains = new Plains();
+        harness.setLibrary(player1, List.of(forest, plains));
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(forest, plains);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void mountainCanBeChosenAndLeavesLibrary() {
+        activateSearch();
+        harness.passBothPriorities();
+        PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        int mountainIndex = java.util.stream.IntStream.range(0, search.params().cards().size())
+                .filter(index -> search.params().cards().get(index).getName().equals("Mountain"))
+                .findFirst().orElseThrow();
+
+        harness.handleCardChosen(player1, mountainIndex);
+
+        assertThat(findPermanent(player1, "Mountain").isTapped()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(4)
+                .noneMatch(card -> card.getName().equals("Mountain"));
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }
