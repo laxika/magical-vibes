@@ -71,10 +71,71 @@ class SacredWhiteDeerTest extends BaseCardTest {
     }
 
     private Permanent addReadyPlaneswalker(Player player, Card card, int loyalty) {
-        Permanent planeswalker = new Permanent(card);
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player, card);
         planeswalker.setCounterCount(CounterType.LOYALTY, loyalty);
         planeswalker.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(planeswalker);
         return planeswalker;
+    }
+
+    @Test
+    void cannotActivateWithoutYanggu() {
+        Permanent deer = addReadyDeer(player1);
+        addMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(deer.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotActivateWhileSummoningSick() {
+        Permanent deer = addReadyDeer(player1);
+        deer.setSummoningSick(true);
+        addReadyPlaneswalker(player1, new JiangYanggu(), 4);
+        addMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotActivateWhileTapped() {
+        Permanent deer = addReadyDeer(player1);
+        deer.setTapped(true);
+        addReadyPlaneswalker(player1, new JiangYanggu(), 4);
+        addMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotPayGreenRequirementWithOnlyColorlessMana() {
+        Permanent deer = addReadyDeer(player1);
+        addReadyPlaneswalker(player1, new JiangYanggu(), 4);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(deer.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void gainsLifeEvenIfYangguLeavesBeforeResolution() {
+        addReadyDeer(player1);
+        Permanent yanggu = addReadyPlaneswalker(player1, new JiangYanggu(), 4);
+        harness.setLife(player1, 10);
+        addMana();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        gd.playerBattlefields.get(player1.getId()).remove(yanggu);
+        gd.playerGraveyards.get(player1.getId()).add(yanggu.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(14);
     }
 }
