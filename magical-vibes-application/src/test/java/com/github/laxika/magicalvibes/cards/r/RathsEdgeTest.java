@@ -97,4 +97,57 @@ class RathsEdgeTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Rath's Edge");
         harness.assertInGraveyard(player1, "Kor Haven");
     }
+
+    @Test
+    @DisplayName("Mana and sacrifice costs are paid before damage resolves")
+    void costsArePaidBeforeDamageResolves() {
+        harness.addToBattlefield(player1, new RathsEdge());
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, 1, null, player2.getId());
+
+        harness.assertInGraveyard(player1, "Rath's Edge");
+        harness.assertNotOnBattlefield(player1, "Rath's Edge");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gd.stack).hasSize(1);
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Three mana cannot pay the damage ability's four-mana cost")
+    void cannotActivateWithInsufficientMana() {
+        var edge = harness.addToBattlefieldAndReturn(player1, new RathsEdge());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(edge.isTapped()).isFalse();
+        harness.assertOnBattlefield(player1, "Rath's Edge");
+        harness.assertNotInGraveyard(player1, "Rath's Edge");
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("A Rath's Edge tapped for mana cannot activate its damage ability")
+    void cannotActivateDamageAbilityAfterTappingForMana() {
+        var edge = harness.addToBattlefieldAndReturn(player1, new RathsEdge());
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThat(edge.isTapped()).isTrue();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Rath's Edge");
+        harness.assertNotInGraveyard(player1, "Rath's Edge");
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player2, 20);
+    }
 }
