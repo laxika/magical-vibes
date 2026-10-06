@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.b.BorosRecruit;
+import com.github.laxika.magicalvibes.cards.c.CourierHawk;
 import com.github.laxika.magicalvibes.cards.d.DimirInfiltrator;
 import com.github.laxika.magicalvibes.cards.j.Junktroller;
+import com.github.laxika.magicalvibes.cards.l.LastGasp;
 import com.github.laxika.magicalvibes.cards.v.ViashinoSlasher;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -19,7 +21,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({RallyTheRighteous.class, BorosRecruit.class, DimirInfiltrator.class,
-        ViashinoSlasher.class, Junktroller.class})
+        ViashinoSlasher.class, Junktroller.class, CourierHawk.class, LastGasp.class})
 class RallyTheRighteousTest extends BaseCardTest {
 
     @Test
@@ -78,12 +80,79 @@ class RallyTheRighteousTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, matchingCreature)).isEqualTo(1);
     }
 
-    private void castRally(Permanent target) {
+    @Test
+    @DisplayName("A multicolor target affects either color and boosts each creature only once")
+    void multicolorTargetAffectsEitherColorOnlyOnce() {
+        Permanent target = addTappedCreature(player2, new BorosRecruit());
+        Permanent bothColors = addTappedCreature(player1, new BorosRecruit());
+        Permanent redCreature = addTappedCreature(player1, new ViashinoSlasher());
+        Permanent whiteCreature = addTappedCreature(player2, new CourierHawk());
+        Permanent unrelatedCreature = addTappedCreature(player2, new DimirInfiltrator());
+
+        castRally(target);
+
+        for (Permanent affected : List.of(target, bothColors, redCreature, whiteCreature)) {
+            assertThat(affected.isTapped()).isFalse();
+            assertThat(gqs.getEffectivePower(gd, affected)).isEqualTo(3);
+        }
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, whiteCreature)).isEqualTo(2);
+        assertThat(unrelatedCreature.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, unrelatedCreature)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Already untapped creatures still receive the boost")
+    void alreadyUntappedCreaturesReceiveBoost() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new ViashinoSlasher());
+        Permanent matchingCreature = harness.addToBattlefieldAndReturn(player2, new BorosRecruit());
+
+        castRally(target);
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(matchingCreature.isTapped()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, matchingCreature)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Creatures entering after resolution do not receive the boost")
+    void laterCreaturesDoNotReceiveBoost() {
+        Permanent target = addTappedCreature(player1, new ViashinoSlasher());
+
+        castRally(target);
+        Permanent laterCreature = harness.addToBattlefieldAndReturn(player2, new BorosRecruit());
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, laterCreature)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("An illegal target prevents both the untap and the boost")
+    void removedTargetPreventsAllEffects() {
+        Permanent target = addTappedCreature(player1, new ViashinoSlasher());
+        Permanent matchingCreature = addTappedCreature(player2, new BorosRecruit());
         harness.setHand(player1, List.of(new RallyTheRighteous()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.castInstant(player1, 0, target.getId());
+
+        harness.setHand(player2, List.of(new LastGasp()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.castAndResolveInstant(player2, 0, target.getId());
+        harness.assertInGraveyard(player1, "Viashino Slasher");
         harness.passBothPriorities();
+
+        assertThat(matchingCreature.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, matchingCreature)).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Rally the Righteous");
+    }
+
+    private void castRally(Permanent target) {
+        harness.setHand(player1, List.of(new RallyTheRighteous()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 
     private Permanent addTappedCreature(Player player, Card card) {
