@@ -20,6 +20,56 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class ShinenOfFurysFireTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Shinen can attack on the turn it is cast")
+    void canAttackOnTurnItIsCast() {
+        harness.setHand(player1, List.of(new ShinenOfFurysFire()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent shinen = findPermanent(player1, "Shinen of Fury's Fire");
+        declareAttackers(List.of(0));
+
+        assertThat(shinen.isAttacking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Channel pays its costs before granting haste on resolution")
+    void channelPaysCostsBeforeResolution() {
+        harness.setHand(player1, List.of(new ShinenOfFurysFire()));
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateHandAbility(player1, 0, bears.getId());
+
+        harness.assertNotInHand(player1, "Shinen of Fury's Fire");
+        harness.assertInGraveyard(player1, "Shinen of Fury's Fire");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Channel lets a summoning-sick creature attack")
+    void channelLetsNewCreatureAttack() {
+        harness.setHand(player1, List.of(new GrizzlyBears(), new ShinenOfFurysFire()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateHandAbility(player1, 0, bears.getId());
+        harness.passBothPriorities();
+        declareAttackers(List.of(0));
+
+        assertThat(bears.isAttacking()).isTrue();
+    }
+
+    @Test
     @DisplayName("Channel gives target creature haste until end of turn")
     void channelGivesHaste() {
         harness.setHand(player1, List.of(new ShinenOfFurysFire()));
