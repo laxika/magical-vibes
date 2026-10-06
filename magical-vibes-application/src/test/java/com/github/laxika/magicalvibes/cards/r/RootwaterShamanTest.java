@@ -20,6 +20,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RootwaterShaman.class, CursedLand.class, Forest.class, GrizzlyBears.class,
+        Humility.class, LeafcrownDryad.class, Wanderlust.class})
 class RootwaterShamanTest extends BaseCardTest {
 
     @Test
@@ -56,7 +58,7 @@ class RootwaterShamanTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Wanderlust()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
-        harness.getGameService().passPriority(harness.getGameData(), player2);
+        harness.passPriority(player2);
         harness.castEnchantment(player1, 0, host.getId());
 
         assertThat(harness.getGameData().stack).hasSize(1);
@@ -130,7 +132,7 @@ class RootwaterShamanTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Wanderlust()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
-        harness.getGameService().passPriority(harness.getGameData(), player2);
+        harness.passPriority(player2);
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, host.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -151,7 +153,7 @@ class RootwaterShamanTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Wanderlust()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
-        harness.getGameService().passPriority(harness.getGameData(), player2);
+        harness.passPriority(player2);
         harness.castEnchantment(player1, 0, host.getId());
 
         assertThat(harness.getGameData().stack).hasSize(1);
@@ -171,7 +173,7 @@ class RootwaterShamanTest extends BaseCardTest {
         harness.setHand(player1, List.of(new LeafcrownDryad()));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
-        harness.getGameService().passPriority(harness.getGameData(), player2);
+        harness.passPriority(player2);
         harness.castWithAlternateCost(player1, 0, host.getId());
 
         assertThat(harness.getGameData().stack).hasSize(1);
@@ -190,10 +192,52 @@ class RootwaterShamanTest extends BaseCardTest {
         harness.setHand(player1, List.of(new LeafcrownDryad()));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
-        harness.getGameService().passPriority(harness.getGameData(), player2);
+        harness.passPriority(player2);
 
         assertThatThrownBy(() -> harness.castWithAlternateCost(player1, 0, host.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @CardUsed({RootwaterShaman.class, LeafcrownDryad.class})
+    @DisplayName("Rootwater Shaman does not allow a bestow card to be cast as a creature at instant speed")
+    void bestowCreatureDoesNotGetFlash() {
+        harness.addToBattlefield(player1, new RootwaterShaman());
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new LeafcrownDryad()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @CardUsed({RootwaterShaman.class, GrizzlyBears.class, Wanderlust.class})
+    @DisplayName("Enchant creature Auras can be cast in response to another spell and attach on resolution")
+    void enchantCreatureAuraCanRespondToAnotherSpell() {
+        harness.addToBattlefield(player1, new RootwaterShaman());
+        Permanent host = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new Wanderlust(), new Wanderlust()));
+        harness.addMana(player1, ManaColor.GREEN, 6);
+
+        harness.castEnchantment(player1, 0, host.getId());
+        harness.castEnchantment(player1, 0, host.getId());
+
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(findPermanent(player1, "Wanderlust").getAttachedTo()).isEqualTo(host.getId());
+        harness.passBothPriorities();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard() instanceof Wanderlust)
+                .hasSize(2)
+                .allSatisfy(permanent -> assertThat(permanent.getAttachedTo()).isEqualTo(host.getId()));
     }
 }
