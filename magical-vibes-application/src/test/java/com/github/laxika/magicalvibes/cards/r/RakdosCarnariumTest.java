@@ -75,6 +75,44 @@ class RakdosCarnariumTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Returns a controlled land to its owner rather than its controller")
+    void returnsLandToItsOwner() {
+        RixMaadiDungeonPalace borrowedLand = new RixMaadiDungeonPalace();
+        borrowedLand.setOwnerId(player2.getId());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, borrowedLand);
+        harness.setHand(player1, List.of(new RakdosCarnarium()));
+
+        harness.playLand(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, land.getId());
+
+        harness.assertInHand(player2, "Rix Maadi, Dungeon Palace");
+        harness.assertNotInHand(player1, "Rix Maadi, Dungeon Palace");
+        harness.assertNotOnBattlefield(player1, "Rix Maadi, Dungeon Palace");
+        harness.assertOnBattlefield(player1, "Rakdos Carnarium");
+    }
+
+    @Test
+    @DisplayName("Mana resolves immediately while the return-land trigger is on the stack")
+    void manaAbilityResolvesWithReturnTriggerPending() {
+        Permanent carnarium = harness.enterBattlefieldAndReturn(player1, new RakdosCarnarium());
+        carnarium.setTapped(false);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(carnarium.isTapped()).isTrue();
+
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, carnarium.getId());
+        harness.assertInHand(player1, "Rakdos Carnarium");
+        harness.assertNotOnBattlefield(player1, "Rakdos Carnarium");
+    }
+
+    @Test
     @DisplayName("Tapping adds one black and one red mana")
     void manaAbilityAddsBlackAndRed() {
         Permanent carnarium = harness.addToBattlefieldAndReturn(player1, new RakdosCarnarium());
