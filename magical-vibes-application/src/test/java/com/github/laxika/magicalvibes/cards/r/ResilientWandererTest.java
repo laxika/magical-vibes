@@ -126,4 +126,69 @@ class ResilientWandererTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Repeated activations retain protection from both chosen colors")
+    void repeatedActivationsAccumulateProtection() {
+        Permanent wanderer = addCreatureReady(player1, new ResilientWanderer());
+        harness.setHand(player1, List.of(new DwarvenGrunt(), new FlameBurst()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.assertInGraveyard(player1, "Dwarven Grunt");
+        assertThat(wanderer.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "WHITE");
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(wanderer.getProtectionFromColorsUntilEndOfTurn())
+                .containsExactlyInAnyOrder(CardColor.WHITE, CardColor.GREEN);
+        harness.assertInGraveyard(player1, "Flame Burst");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Protection gained in response makes an already-targeting red spell illegal")
+    void protectionInvalidatesSpellAlreadyOnStack() {
+        Permanent wanderer = addCreatureReady(player1, new ResilientWanderer());
+        harness.setHand(player1, List.of(new DwarvenGrunt()));
+        harness.setHand(player2, List.of(new FlameBurst()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castInstant(player2, 0, wanderer.getId());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "RED");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Resilient Wanderer");
+        assertThat(wanderer.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player2, "Flame Burst");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped creature with summoning sickness can activate the discard ability")
+    void canActivateWhileTappedAndSummoningSick() {
+        harness.addToBattlefield(player1, new ResilientWanderer());
+        Permanent wanderer = findPermanent(player1, "Resilient Wanderer");
+        wanderer.setSummoningSick(true);
+        wanderer.setTapped(true);
+        harness.setHand(player1, List.of(new DwarvenGrunt()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "BLACK");
+
+        assertThat(wanderer.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.BLACK);
+        assertThat(wanderer.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Dwarven Grunt");
+    }
 }
