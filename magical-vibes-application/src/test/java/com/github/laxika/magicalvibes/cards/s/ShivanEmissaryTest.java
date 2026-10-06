@@ -110,6 +110,40 @@ class ShivanEmissaryTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Rogue Kavu");
     }
 
+    @Test
+    void kickedCanDestroyItselfWhenOtherCreaturesAreBlack() {
+        harness.addToBattlefield(player2, new ShivanZombie());
+        harness.setHand(player1, List.of(new ShivanEmissary()));
+        addKickedMana();
+
+        harness.castKickedCreature(player1, 0);
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice targetChoice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(targetChoice).isNotNull();
+        assertThat(targetChoice.validIds())
+                .containsExactly(harness.getPermanentId(player1, "Shivan Emissary"));
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Shivan Emissary"));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Shivan Emissary");
+        harness.assertInGraveyard(player1, "Shivan Emissary");
+        harness.assertOnBattlefield(player2, "Shivan Zombie");
+    }
+
+    @Test
+    void enteringWithoutBeingCastDoesNotDestroy() {
+        harness.addToBattlefield(player2, new RogueKavu());
+
+        harness.enterBattlefieldAndReturn(player1, new ShivanEmissary());
+
+        harness.assertOnBattlefield(player1, "Shivan Emissary");
+        harness.assertOnBattlefield(player2, "Rogue Kavu");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+    }
+
     private void chooseTarget(Permanent target) {
         PendingInteraction.PermanentChoice targetChoice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
