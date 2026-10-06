@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -40,10 +41,56 @@ class RedTigerMechanTest extends BaseCardTest {
         harness.castCreatureWithAlternateCost(player1, 0, List.of());
         harness.passBothPriorities();
 
-        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_STEP);
+        harness.assertOnBattlefield(player1, "Red Tiger Mechan");
+        assertThat(gd.findExiledCard(mechan.getId())).isNull();
+        assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
         assertThat(gd.findExiledCard(mechan.getId())).isNotNull();
+        harness.assertNotOnBattlefield(player1, "Red Tiger Mechan");
+    }
+
+    @Test
+    void normalCastHasHasteAndDoesNotExileAtEndStep() {
+        RedTigerMechan mechan = new RedTigerMechan();
+        harness.setHand(player1, List.of(mechan));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        declareAttackers(List.of(0));
+        harness.assertLife(player2, 17);
+        harness.passUntil(TurnStep.END_STEP);
+
+        harness.assertOnBattlefield(player1, "Red Tiger Mechan");
+        assertThat(gd.findExiledCard(mechan.getId())).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void warpedCardCanBeCastOnALaterTurnWithoutBeingExiledAgain() {
+        RedTigerMechan mechan = new RedTigerMechan();
+        harness.setHand(player1, List.of(mechan));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castCreatureWithAlternateCost(player1, 0, List.of());
+        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
+        harness.passBothPriorities();
+        assertThat(gd.findExiledCard(mechan.getId())).isNotNull();
+
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castFromExile(player1, mechan.getId());
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Red Tiger Mechan");
+        assertThat(gd.findExiledCard(mechan.getId())).isNull();
+        harness.passUntil(TurnStep.END_STEP);
+
+        harness.assertOnBattlefield(player1, "Red Tiger Mechan");
+        assertThat(gd.stack).isEmpty();
     }
 }
