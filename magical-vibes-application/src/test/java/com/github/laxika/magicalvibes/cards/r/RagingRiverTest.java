@@ -83,4 +83,77 @@ class RagingRiverTest extends BaseCardTest {
         assertThat(bls.canBlockAttacker(gd, left, secondAttacker, defenderBattlefield)).isFalse();
         assertThat(bls.canBlockAttacker(gd, right, secondAttacker, defenderBattlefield)).isTrue();
     }
+
+    @Test
+    @DisplayName("a defender may leave the left pile empty")
+    void allowsEmptyLeftPile() {
+        harness.addToBattlefield(player1, new RagingRiver());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent ground = addCreatureReady(player2, new GrizzlyBears());
+        Permanent flyer = addCreatureReady(player2, new SerraAngel());
+
+        resolveRagingRiver(attacker);
+        harness.handleMultiplePermanentsChosen(player2, List.of());
+        harness.handleMayAbilityChosen(player1, true);
+
+        List<Permanent> defenderBattlefield = gd.playerBattlefields.get(player2.getId());
+        assertThat(bls.canBlockAttacker(gd, ground, attacker, defenderBattlefield)).isFalse();
+        assertThat(bls.canBlockAttacker(gd, flyer, attacker, defenderBattlefield)).isTrue();
+    }
+
+    @Test
+    @DisplayName("creatures entering after resolution are not added to either pile")
+    void excludesNewGroundBlockers() {
+        harness.addToBattlefield(player1, new RagingRiver());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent ground = addCreatureReady(player2, new GrizzlyBears());
+
+        resolveRagingRiver(attacker);
+        harness.handleMultiplePermanentsChosen(player2, List.of(ground.getId()));
+        harness.handleMayAbilityChosen(player1, true);
+        Permanent newcomer = addCreatureReady(player2, new GrizzlyBears());
+
+        List<Permanent> defenderBattlefield = gd.playerBattlefields.get(player2.getId());
+        assertThat(bls.canBlockAttacker(gd, ground, attacker, defenderBattlefield)).isTrue();
+        assertThat(bls.canBlockAttacker(gd, newcomer, attacker, defenderBattlefield)).isFalse();
+    }
+
+    @Test
+    @DisplayName("left or right is still chosen when the defender has only flyers")
+    void handlesNoGroundCreatures() {
+        harness.addToBattlefield(player1, new RagingRiver());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent flyer = addCreatureReady(player2, new SerraAngel());
+
+        resolveRagingRiver(attacker);
+        harness.handleMayAbilityChosen(player1, false);
+        Permanent newcomer = addCreatureReady(player2, new GrizzlyBears());
+
+        List<Permanent> defenderBattlefield = gd.playerBattlefields.get(player2.getId());
+        assertThat(bls.canBlockAttacker(gd, flyer, attacker, defenderBattlefield)).isTrue();
+        assertThat(bls.canBlockAttacker(gd, newcomer, attacker, defenderBattlefield)).isFalse();
+    }
+
+    @Test
+    @DisplayName("blockers must satisfy the chosen piles of both Raging Rivers")
+    void combinesMultipleRiverRestrictions() {
+        harness.addToBattlefield(player1, new RagingRiver());
+        harness.addToBattlefield(player1, new RagingRiver());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent firstGround = addCreatureReady(player2, new GrizzlyBears());
+        Permanent secondGround = addCreatureReady(player2, new GrizzlyBears());
+        Permanent flyer = addCreatureReady(player2, new SerraAngel());
+
+        resolveRagingRiver(attacker);
+        harness.handleMultiplePermanentsChosen(player2, List.of(firstGround.getId()));
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player2, List.of(secondGround.getId()));
+        harness.handleMayAbilityChosen(player1, true);
+
+        List<Permanent> defenderBattlefield = gd.playerBattlefields.get(player2.getId());
+        assertThat(bls.canBlockAttacker(gd, firstGround, attacker, defenderBattlefield)).isFalse();
+        assertThat(bls.canBlockAttacker(gd, secondGround, attacker, defenderBattlefield)).isFalse();
+        assertThat(bls.canBlockAttacker(gd, flyer, attacker, defenderBattlefield)).isTrue();
+    }
 }
