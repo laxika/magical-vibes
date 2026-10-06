@@ -14,7 +14,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -105,10 +104,84 @@ class RelicAmuletTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void opponentCastingInstantDoesNotAddChargeCounter() {
+        Permanent amulet = addReadyAmulet(player1);
+        harness.setHand(player2, List.of(new LightningBolt()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(amulet.getCounterCount(CounterType.CHARGE)).isZero();
+    }
+
+    @Test
+    void canActivateWithoutChargeCountersAndDealsNoDamage() {
+        Permanent amulet = addReadyAmulet(player1);
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, indexOf(player1, amulet), null, bears.getId());
+        assertThat(amulet.isTapped()).isTrue();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(bears);
+        assertThat(bears.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void countersAddedAfterActivationDoNotChangeDamage() {
+        Permanent amulet = addReadyAmulet(player1);
+        amulet.setCounterCount(CounterType.CHARGE, 1);
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, indexOf(player1, amulet), null, bears.getId());
+
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        assertThat(amulet.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(bears);
+        assertThat(bears.getMarkedDamage()).isEqualTo(1);
+        assertThat(amulet.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+    }
+
+    @Test
+    void damageStillResolvesWhenAmuletLeavesBattlefield() {
+        Permanent amulet = addReadyAmulet(player1);
+        amulet.setCounterCount(CounterType.CHARGE, 2);
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, indexOf(player1, amulet), null, bears.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(amulet);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void tappedAmuletCannotActivate() {
+        Permanent amulet = addReadyAmulet(player1);
+        amulet.setCounterCount(CounterType.CHARGE, 2);
+        amulet.tap();
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, indexOf(player1, amulet), null, bears.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(amulet.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
+    }
+
     private Permanent addReadyAmulet(Player player) {
-        Permanent amulet = new Permanent(new RelicAmulet());
+        Permanent amulet = harness.addToBattlefieldAndReturn(player, new RelicAmulet());
         amulet.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(amulet);
         return amulet;
     }
 
