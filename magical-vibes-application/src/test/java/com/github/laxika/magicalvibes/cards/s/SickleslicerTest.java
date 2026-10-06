@@ -1,49 +1,46 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
+import com.github.laxika.magicalvibes.cards.p.PorcelainLegionnaire;
+import com.github.laxika.magicalvibes.cards.b.BeastWithin;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.EquipEffect;
-import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Sickleslicer.class, PorcelainLegionnaire.class, BeastWithin.class})
 class SickleslicerTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    
-
-    
-
     @Test
-    @DisplayName("Sickleslicer has equip {4} ability")
-    void hasEquipAbility() {
-        Sickleslicer card = new Sickleslicer();
+    @DisplayName("Equip requires four mana and does not tap Sickleslicer")
+    void equipRequiresFourMana() {
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new Sickleslicer());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new PorcelainLegionnaire());
+        harness.addMana(player1, ManaColor.WHITE, 3);
 
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{4}");
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getTargetFilter())
-                .isInstanceOf(ControlledPermanentPredicateTargetFilter.class);
-        assertThat(card.getActivatedAbilities().get(0).getTimingRestriction())
-                .isEqualTo(ActivationTimingRestriction.SORCERY_SPEED);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(EquipEffect.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        assertThat(equipment.getAttachedTo()).isNull();
+
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(equipment.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(equipment.isTapped()).isFalse();
     }
-
-    // ===== Living weapon ETB =====
 
     @Test
     @DisplayName("Casting Sickleslicer triggers living weapon ETB on the stack")
@@ -71,14 +68,8 @@ class SickleslicerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
-
-        Permanent sickleslicer = battlefield.stream()
-                .filter(p -> p.getCard().getName().equals("Sickleslicer"))
-                .findFirst().orElseThrow();
-        Permanent germ = battlefield.stream()
-                .filter(p -> p.getCard().getName().equals("Phyrexian Germ"))
-                .findFirst().orElseThrow();
+        Permanent sickleslicer = findPermanent(player1, "Sickleslicer");
+        Permanent germ = findPermanent(player1, "Phyrexian Germ");
 
         assertThat(sickleslicer.getAttachedTo()).isEqualTo(germ.getId());
     }
@@ -99,11 +90,10 @@ class SickleslicerTest extends BaseCardTest {
         assertThat(germ.getCard().getPower()).isEqualTo(0);
         assertThat(germ.getCard().getToughness()).isEqualTo(0);
         assertThat(germ.getCard().isToken()).isTrue();
+        assertThat(germ.getCard().getColor()).isEqualTo(CardColor.BLACK);
         assertThat(germ.getCard().getSubtypes())
                 .containsExactlyInAnyOrder(CardSubtype.PHYREXIAN, CardSubtype.GERM);
     }
-
-    // ===== Germ gets equipment bonuses =====
 
     @Test
     @DisplayName("Germ token gets +2/+2 from Sickleslicer")
@@ -122,8 +112,6 @@ class SickleslicerTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, germ)).isEqualTo(2);
     }
 
-    // ===== Equip to another creature =====
-
     @Test
     @DisplayName("Equipping Sickleslicer to another creature moves it from the Germ")
     void equipToAnotherCreature() {
@@ -135,25 +123,21 @@ class SickleslicerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Add a creature to equip to
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new PorcelainLegionnaire());
 
-        // Equip to bears
+        // Equip to the creature
         harness.addMana(player1, ManaColor.WHITE, 4);
-        harness.activateAbility(player1, 0, null, bears.getId());
+        harness.activateAbility(player1, 0, null, creature.getId());
         harness.passBothPriorities();
 
         Permanent sickleslicer = findPermanent(player1, "Sickleslicer");
 
-        assertThat(sickleslicer.getAttachedTo()).isEqualTo(bears.getId());
+        assertThat(sickleslicer.getAttachedTo()).isEqualTo(creature.getId());
 
-        // Bears should get +2/+2
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);  // 2 + 2
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);  // 2 + 2
+        // The creature gets +2/+2
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
     }
-
-    // ===== Germ dies when equipment is moved =====
 
     @Test
     @DisplayName("Germ token dies (0 toughness) when Sickleslicer is moved to another creature")
@@ -165,16 +149,125 @@ class SickleslicerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new PorcelainLegionnaire());
 
-        // Equip to bears — this moves the equipment, Germ becomes 0/0 and dies
+        // Equip to the creature — this moves the equipment, Germ becomes 0/0 and dies
         harness.addMana(player1, ManaColor.WHITE, 4);
-        harness.activateAbility(player1, 0, null, bears.getId());
+        harness.activateAbility(player1, 0, null, creature.getId());
         harness.passBothPriorities();
 
         // Germ should be dead (0 toughness, state-based action)
+        harness.assertNotOnBattlefield(player1, "Phyrexian Germ");
+    }
+
+    @Test
+    @DisplayName("Equip cannot target an opponent's creature")
+    void equipCannotTargetOpponentsCreature() {
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new Sickleslicer());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new PorcelainLegionnaire());
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(equipment.getAttachedTo()).isNull();
+    }
+
+    @Test
+    @DisplayName("Equip requires an empty stack")
+    void equipRequiresEmptyStack() {
+        harness.setHand(player1, List.of(new Sickleslicer()));
+        harness.addMana(player1, ManaColor.WHITE, 7);
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new PorcelainLegionnaire());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(findPermanent(player1, "Sickleslicer").getAttachedTo())
+                .isEqualTo(findPermanent(player1, "Phyrexian Germ").getId());
+    }
+
+    @Test
+    @DisplayName("Equip cannot be activated on an opponent's turn")
+    void equipRequiresControllersTurn() {
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new Sickleslicer());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new PorcelainLegionnaire());
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.forceActivePlayer(player2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(equipment.getAttachedTo()).isNull();
+    }
+
+    @Test
+    @DisplayName("Equip does not detach from the Germ when its target is destroyed in response")
+    void equipTargetRemovedInResponse() {
+        harness.setHand(player1, List.of(new Sickleslicer()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        Permanent equipment = findPermanent(player1, "Sickleslicer");
+        Permanent germ = findPermanent(player1, "Phyrexian Germ");
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new PorcelainLegionnaire());
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.setHand(player2, List.of(new BeastWithin()));
+        harness.addMana(player2, ManaColor.GREEN, 3);
+
+        harness.castAndResolveInstant(player2, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(equipment.getAttachedTo()).isEqualTo(germ.getId());
+        harness.assertOnBattlefield(player1, "Phyrexian Germ");
+        assertThat(gqs.getEffectivePower(gd, germ)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, germ)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Living weapon still resolves after Sickleslicer is destroyed")
+    void equipmentRemovedBeforeLivingWeaponResolves() {
+        harness.setHand(player1, List.of(new Sickleslicer()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        Permanent equipment = findPermanent(player1, "Sickleslicer");
+        harness.setHand(player2, List.of(new BeastWithin()));
+        harness.addMana(player2, ManaColor.GREEN, 3);
+
+        harness.castAndResolveInstant(player2, 0, equipment.getId());
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Sickleslicer");
+        harness.assertNotOnBattlefield(player1, "Phyrexian Germ");
+        harness.assertNotOnBattlefield(player2, "Phyrexian Germ");
+    }
+
+    @Test
+    @DisplayName("Destroying Sickleslicer removes its bonus and the Germ dies")
+    void equipmentDestroyedAfterLivingWeaponResolves() {
+        harness.setHand(player1, List.of(new Sickleslicer()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        Permanent equipment = findPermanent(player1, "Sickleslicer");
+        harness.setHand(player2, List.of(new BeastWithin()));
+        harness.addMana(player2, ManaColor.GREEN, 3);
+
+        harness.castAndResolveInstant(player2, 0, equipment.getId());
+
+        harness.assertInGraveyard(player1, "Sickleslicer");
         harness.assertNotOnBattlefield(player1, "Phyrexian Germ");
     }
 }
