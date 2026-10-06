@@ -84,6 +84,46 @@ class SlashingTigerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Blocking another creature does not trigger Slashing Tiger")
+    void blockingDoesNotGrantBoost() {
+        Permanent attacker = addCreatureReady(player1, new ShuFootSoldiers());
+        attacker.setAttacking(true);
+        Permanent tiger = addCreatureReady(player2, new SlashingTiger());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(tiger.getPowerModifier()).isZero();
+        assertThat(tiger.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Only the blocked Slashing Tiger gets the boost")
+    void boostAppliesOnlyToBlockedTiger() {
+        Permanent blockedTiger = addCreatureReady(player1, new SlashingTiger());
+        Permanent unblockedTiger = addCreatureReady(player1, new SlashingTiger());
+        blockedTiger.setAttacking(true);
+        unblockedTiger.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new ShuFootSoldiers());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(blockedTiger.getPowerModifier()).isZero();
+        assertThat(blockedTiger.getToughnessModifier()).isZero();
+        resolveAllTriggers();
+
+        assertThat(blockedTiger.getPowerModifier()).isEqualTo(2);
+        assertThat(blockedTiger.getToughnessModifier()).isEqualTo(2);
+        assertThat(unblockedTiger.getPowerModifier()).isZero();
+        assertThat(unblockedTiger.getToughnessModifier()).isZero();
+        assertThat(blocker.getPowerModifier()).isZero();
+        assertThat(blocker.getToughnessModifier()).isZero();
+    }
+
+    @Test
     @DisplayName("The blocked boost expires at the end of the turn")
     void blockedBoostExpiresAtEndOfTurn() {
         Permanent tiger = addCreatureReady(player1, new SlashingTiger());
