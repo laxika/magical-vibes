@@ -49,10 +49,53 @@ class ServantOfTheScaleTest extends BaseCardTest {
         assertThat(ally.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
     }
 
+    @Test
+    @DisplayName("Enters with its counter even when not cast")
+    void entersWithoutCastingWithCounter() {
+        Permanent servant = harness.enterBattlefieldAndReturn(player1, new ServantOfTheScale());
+
+        harness.runStateBasedActions();
+
+        assertThat(servant.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Servant of the Scale");
+    }
+
+    @Test
+    @DisplayName("Death trigger adds only the source's +1/+1 counters to existing counters")
+    void deathTriggerAddsCountersAndIgnoresOtherCounterTypes() {
+        Permanent servant = castServant();
+        servant.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        servant.setCounterCount(CounterType.CHARGE, 4);
+        servant.tap();
+        Permanent ally = harness.enterBattlefieldAndReturn(player1, new ServantOfTheScale());
+
+        destroyServant(servant);
+        harness.handlePermanentChosen(player1, ally.getId());
+        harness.passBothPriorities();
+
+        assertThat(ally.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+        assertThat(ally.getCounterCount(CounterType.CHARGE)).isZero();
+        harness.assertInGraveyard(player1, "Servant of the Scale");
+    }
+
+    @Test
+    @DisplayName("Death trigger cannot target an opposing creature when no friendly creature remains")
+    void deathWithNoControlledCreatureHasNoLegalTarget() {
+        Permanent servant = castServant();
+        servant.tap();
+        Permanent opponent = addCreatureReady(player2, new HillGiant());
+
+        destroyServant(servant);
+
+        harness.assertInGraveyard(player1, "Servant of the Scale");
+        harness.assertNotOnBattlefield(player1, "Servant of the Scale");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(opponent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
     private Permanent castServant() {
-        harness.setHand(player1, List.of(new ServantOfTheScale()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new ServantOfTheScale(), "{G}");
         harness.passBothPriorities();
         return findPermanent(player1, "Servant of the Scale");
     }
@@ -64,7 +107,6 @@ class ServantOfTheScaleTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLACK, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 3);
 
-        gs.playCard(gd, player2, 0, 0, servant.getId(), null);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player2, 0, servant.getId());
     }
 }
