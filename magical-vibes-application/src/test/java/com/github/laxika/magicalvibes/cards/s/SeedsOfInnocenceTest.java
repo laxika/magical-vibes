@@ -6,14 +6,12 @@ import com.github.laxika.magicalvibes.cards.l.LionsEyeDiamond;
 import com.github.laxika.magicalvibes.cards.m.MarbleDiamond;
 import com.github.laxika.magicalvibes.cards.n.NobleElephant;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -65,8 +63,8 @@ class SeedsOfInnocenceTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("An indestructible artifact survives and grants its controller no life")
-    void indestructibleArtifactSurvivesAndGrantsNoLife() {
+    @DisplayName("An indestructible artifact survives but still grants its controller life")
+    void indestructibleArtifactSurvivesAndStillGrantsLife() {
         CrystalGolem indestructibleCard = new CrystalGolem();
         indestructibleCard.setKeywords(Set.of(Keyword.INDESTRUCTIBLE));
         Permanent indestructibleArtifact = harness.addToBattlefieldAndReturn(player2, indestructibleCard);
@@ -75,7 +73,24 @@ class SeedsOfInnocenceTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .containsExactly(indestructibleArtifact);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(life2);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(life2 + 4);
+    }
+
+    @Test
+    @DisplayName("Life gain includes both destroyed artifacts and surviving indestructible artifacts")
+    void lifeGainIncludesSurvivingAndDestroyedArtifacts() {
+        CrystalGolem indestructibleCard = new CrystalGolem();
+        indestructibleCard.setKeywords(Set.of(Keyword.INDESTRUCTIBLE));
+        Permanent survivor = harness.addToBattlefieldAndReturn(player2, indestructibleCard);
+        Permanent destroyed = harness.addToBattlefieldAndReturn(player2, new MarbleDiamond());
+        int life2 = gd.playerLifeTotals.get(player2.getId());
+
+        castSeedsOfInnocence();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(survivor);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(destroyed.getCard());
+        assertThat(gd.playerGraveyards.get(player2.getId())).doesNotContain(survivor.getCard());
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(life2 + 6);
     }
 
     @Test
@@ -105,8 +120,7 @@ class SeedsOfInnocenceTest extends BaseCardTest {
     }
 
     private void castSeedsOfInnocence() {
-        harness.setHand(player1, List.of(new SeedsOfInnocence()));
-        harness.addMana(player1, ManaColor.GREEN, 3);
-        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new SeedsOfInnocence(), "{1}{G}{G}");
+        harness.passBothPriorities();
     }
 }
