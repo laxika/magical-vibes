@@ -84,6 +84,42 @@ class SearingSpearAskariTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("One red mana alone cannot pay the activation cost")
+    void requiresGenericManaAsWellAsRed() {
+        addCreatureReady(player1, new SearingSpearAskari());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Two creatures can block menace, and flanking affects only the blocker without flanking")
+    void twoBlockersWithMixedFlankingCanBlockMenace() {
+        addCreatureReady(player1, new SearingSpearAskari());
+        Permanent scouts = addCreatureReady(player2, new FemerefScouts());
+        Permanent herder = addCreatureReady(player2, new MtendaHerder());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+
+        assertThat(scouts.getEffectivePower()).isZero();
+        assertThat(scouts.getEffectiveToughness()).isEqualTo(3);
+        assertThat(herder.getEffectivePower()).isEqualTo(1);
+        assertThat(herder.getEffectiveToughness()).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("Flanking gives a non-flanking blocker -1/-1 until end of turn")
     void flankingShrinksNonFlankingBlocker() {
         Permanent askari = addCreatureReady(player1, new SearingSpearAskari());
