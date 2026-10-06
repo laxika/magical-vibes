@@ -33,8 +33,7 @@ class ReprieveTestMarRegression extends BaseCardTest {
         UUID shockId = harness.getGameData().stack.getFirst().getCard().getId();
 
         harness.forceActivePlayer(player1);
-        harness.castInstant(player1, 0, shockId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, shockId);
 
         assertThat(harness.getGameData().stack).isEmpty();
         harness.assertInHand(player2, "Shock");
@@ -46,8 +45,7 @@ class ReprieveTestMarRegression extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a permanent")
     void cannotTargetPermanent() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID bearsId = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()).getId();
         harness.setHand(player1, List.of(new Reprieve()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);

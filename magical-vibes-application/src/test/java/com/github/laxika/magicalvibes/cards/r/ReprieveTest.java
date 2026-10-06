@@ -28,16 +28,13 @@ class ReprieveTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new Forest()));
 
         GrizzlyBears bears = new GrizzlyBears();
-        harness.setHand(player1, List.of(bears));
-        harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.setHand(player2, List.of(new Reprieve()));
         harness.addMana(player2, ManaColor.WHITE, 2);
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, bears, "{1}{G}");
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, bears.getId());
 
         harness.assertInHand(player1, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Reprieve");
@@ -63,8 +60,7 @@ class ReprieveTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, harness.getPermanentId(player2, "Savannah Lions"));
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, combust.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, combust.getId());
         harness.passBothPriorities();
 
         harness.assertInHand(player1, "Combust");
@@ -87,6 +83,45 @@ class ReprieveTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not draw when another Reprieve removes its target")
+    void doesNotDrawWhenTargetLeavesStack() {
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.castFromHand(player1, bears, "{1}{G}");
+        Reprieve first = new Reprieve();
+        harness.setHand(player2, List.of(first, new Reprieve()));
+        Forest drawnCard = new Forest();
+        Island remainingCard = new Island();
+        harness.setLibrary(player2, List.of(drawnCard, remainingCard));
+        harness.addMana(player2, ManaColor.WHITE, 4);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, bears.getId());
+        harness.castAndResolveInstant(player2, 0, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(drawnCard);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(remainingCard);
+        harness.assertInHand(player1, "Grizzly Bears");
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(first);
+    }
+
+    @Test
+    @DisplayName("Can return a spell controlled by the Reprieve caster")
+    void returnsOwnSpellAndDraws() {
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.castFromHand(player1, bears, "{1}{G}");
+        harness.setHand(player1, List.of(new Reprieve()));
+        Forest drawnCard = new Forest();
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(bears, drawnCard);
+        harness.assertInGraveyard(player1, "Reprieve");
+    }
+
+    @Test
     void returnsTargetSpellToItsOwnersHandAndDrawsACard() {
         JhovallRider rider = new JhovallRider();
         harness.castFromHand(player1, rider, "{4}{W}");
@@ -99,8 +134,7 @@ class ReprieveTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 1);
 
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, rider.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, rider.getId());
 
         harness.assertInHand(player1, "Jhovall Rider");
         harness.assertInHand(player2, "Island");
