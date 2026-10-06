@@ -177,6 +177,35 @@ class SandSilosTest extends BaseCardTest {
         harness.passUntil(player1, TurnStep.UNTAP);
     }
 
+    @Test
+    @DisplayName("The mana ability resolves immediately while an upkeep trigger is pending")
+    void manaAbilityDoesNotUseTheStack() {
+        Permanent storingSilos = harness.addToBattlefieldAndReturn(player1, new SandSilos());
+        storingSilos.tap();
+
+        beginPlayer1UntapChoice();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passUntil(player1, TurnStep.UPKEEP);
+        assertThat(gd.stack).hasSize(1);
+        var upkeepTrigger = gd.stack.getFirst();
+
+        Permanent spendingSilos = addSilosWithCounters(2);
+        harness.withAutoStop(TurnStep.UPKEEP, () -> {
+            harness.activateAbility(player1, 1, 0, null, null);
+            harness.handleListChoice(player1, "2");
+        });
+
+        assertThat(blueMana()).isEqualTo(2);
+        assertThat(spendingSilos.isTapped()).isTrue();
+        assertThat(spendingSilos.getCounterCount(CounterType.STORAGE)).isZero();
+        assertThat(gd.stack).containsExactly(upkeepTrigger);
+        assertThat(storingSilos.getCounterCount(CounterType.STORAGE)).isZero();
+
+        resolveAllTriggers();
+
+        assertThat(storingSilos.getCounterCount(CounterType.STORAGE)).isEqualTo(1);
+    }
+
     private Permanent addSilosWithCounters(int counters) {
         Permanent silos = harness.addToBattlefieldAndReturn(player1, new SandSilos());
         silos.setSummoningSick(false);
