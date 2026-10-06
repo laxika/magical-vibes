@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.b.BroodingSaurian;
+import com.github.laxika.magicalvibes.cards.a.AdarkarValkyrie;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -15,7 +16,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Skred.class, SnowCoveredMountain.class, BroodingSaurian.class})
+@CardUsed({Skred.class, SnowCoveredMountain.class, BroodingSaurian.class, AdarkarValkyrie.class})
 class SkredTest extends BaseCardTest {
 
     @Test
@@ -80,6 +81,42 @@ class SkredTest extends BaseCardTest {
 
         UUID targetId = harness.getPermanentId(player2, "Snow-Covered Mountain");
         assertThatThrownBy(() -> harness.castInstant(player1, 0, targetId))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Skred counts snow creatures and tapped snow lands and can target its controller's creature")
+    void countsSnowCreaturesAndTappedLands() {
+        addSnowPermanent(player1).setTapped(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AdarkarValkyrie());
+
+        castSkred(target.getId());
+
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Adarkar Valkyrie");
+    }
+
+    @Test
+    @DisplayName("Skred destroys a creature when its damage is lethal")
+    void lethalDamageDestroysCreature() {
+        for (int i = 0; i < 4; i++) {
+            addSnowPermanent(player1);
+        }
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BroodingSaurian());
+
+        castSkred(target.getId());
+
+        harness.assertNotOnBattlefield(player2, "Brooding Saurian");
+        harness.assertInGraveyard(player2, "Brooding Saurian");
+    }
+
+    @Test
+    @DisplayName("Skred cannot target a player")
+    void cannotTargetPlayer() {
+        harness.setHand(player1, List.of(new Skred()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
