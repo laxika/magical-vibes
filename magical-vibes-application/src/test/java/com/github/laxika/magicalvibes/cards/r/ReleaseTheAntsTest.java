@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
 import com.github.laxika.magicalvibes.cards.m.MurmuringBosk;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -39,6 +41,11 @@ class ReleaseTheAntsTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new ElvishWarrior(), new MurmuringBosk(), new MurmuringBosk()));
     }
 
+    private void keepBothRevealedCardsOnTop() {
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+        gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+    }
+
     @Test
     @DisplayName("Deals 1 damage to a target player")
     void deals1DamageToPlayer() {
@@ -47,6 +54,8 @@ class ReleaseTheAntsTest extends BaseCardTest {
         prepare();
 
         harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        keepBothRevealedCardsOnTop();
 
         harness.assertLife(player2, 19);
     }
@@ -61,6 +70,8 @@ class ReleaseTheAntsTest extends BaseCardTest {
         UUID targetId = harness.getPermanentId(player2, "Elvish Warrior");
         harness.castAndResolveInstant(player1, 0, targetId);
 
+        keepBothRevealedCardsOnTop();
+
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(p -> p.getId().equals(targetId) && p.getMarkedDamage() == 1);
     }
@@ -72,6 +83,8 @@ class ReleaseTheAntsTest extends BaseCardTest {
         prepare();
 
         harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        keepBothRevealedCardsOnTop();
 
         harness.assertInHand(player1, "Release the Ants");
         harness.assertNotInGraveyard(player1, "Release the Ants");
@@ -85,6 +98,8 @@ class ReleaseTheAntsTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
+        keepBothRevealedCardsOnTop();
+
         harness.assertInGraveyard(player1, "Release the Ants");
         harness.assertNotInHand(player1, "Release the Ants");
     }
@@ -97,7 +112,77 @@ class ReleaseTheAntsTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
+        keepBothRevealedCardsOnTop();
+
         harness.assertInGraveyard(player1, "Release the Ants");
         harness.assertNotInHand(player1, "Release the Ants");
+    }
+
+    @Test
+    @DisplayName("The active opponent chooses placement before the nonactive caster")
+    void activeOpponentChoosesFirst() {
+        stackClashWinForCaster();
+        prepare();
+        harness.forceActivePlayer(player2);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).playerId())
+                .isEqualTo(player2.getId());
+        gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+        harness.assertLife(player2, 19);
+        harness.assertInHand(player1, "Release the Ants");
+    }
+
+    @Test
+    @DisplayName("Bottoming the winning card does not change the clash result")
+    void bottomingWinningCardStillReturnsSpell() {
+        ElvishWarrior revealed = new ElvishWarrior();
+        MurmuringBosk next = new MurmuringBosk();
+        harness.setLibrary(player1, List.of(revealed, next));
+        harness.setLibrary(player2, List.of(new MurmuringBosk()));
+        prepare();
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+        gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(next, revealed);
+        harness.assertInHand(player1, "Release the Ants");
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("An illegal sole target prevents damage, clash, and return to hand")
+    void illegalTargetPreventsClash() {
+        var target = harness.addToBattlefieldAndReturn(player2, new ElvishWarrior());
+        ElvishWarrior top = new ElvishWarrior();
+        harness.setLibrary(player1, List.of(top));
+        harness.setLibrary(player2, List.of(new MurmuringBosk()));
+        prepare();
+        harness.castInstant(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top);
+        harness.assertInGraveyard(player1, "Release the Ants");
+        harness.assertNotInHand(player1, "Release the Ants");
+    }
+
+    @Test
+    @DisplayName("Revealing a land wins against an opponent with an empty library")
+    void revealedLandWinsAgainstEmptyLibrary() {
+        harness.setLibrary(player1, List.of(new MurmuringBosk()));
+        harness.setLibrary(player2, List.of());
+        prepare();
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+
+        harness.assertInHand(player1, "Release the Ants");
+        harness.assertLife(player2, 19);
     }
 }
