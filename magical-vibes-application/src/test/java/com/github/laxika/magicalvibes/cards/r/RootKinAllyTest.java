@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -103,6 +105,66 @@ class RootKinAllyTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(player1, ally), null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Convoke pays both green and generic mana with summoning-sick creatures")
+    void convokePaysEntireCostWithCreatures() {
+        Permanent firstGreen = harness.addToBattlefieldAndReturn(player1, new RootKinAlly());
+        Permanent secondGreen = harness.addToBattlefieldAndReturn(player1, new RootKinAlly());
+        Permanent firstRecruit = harness.addToBattlefieldAndReturn(player1, new BorosRecruit());
+        Permanent secondRecruit = harness.addToBattlefieldAndReturn(player1, new BorosRecruit());
+        Permanent thirdRecruit = harness.addToBattlefieldAndReturn(player1, new BorosRecruit());
+        Permanent fourthRecruit = harness.addToBattlefieldAndReturn(player1, new BorosRecruit());
+        List<Permanent> contributors = List.of(firstGreen, secondGreen, firstRecruit,
+                secondRecruit, thirdRecruit, fourthRecruit);
+        harness.setHand(player1, List.of(new RootKinAlly()));
+
+        gs.playCard(gd, player1, 0, 0, null, null, List.of(),
+                contributors.stream().map(Permanent::getId).toList());
+
+        assertThat(contributors).allMatch(Permanent::isTapped);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Root-Kin Ally")).isEqualTo(3);
+        harness.assertNotInHand(player1, "Root-Kin Ally");
+    }
+
+    @Test
+    @DisplayName("Summoning-sick creatures can pay the ability's tap cost")
+    void summoningSickCreaturesCanPayCost() {
+        Permanent ally = harness.addToBattlefieldAndReturn(player1, new RootKinAlly());
+        Permanent recruit = harness.addToBattlefieldAndReturn(player1, new BorosRecruit());
+
+        harness.activateAbility(player1, indexOf(player1, ally), null, null);
+
+        assertThat(ally.isTapped()).isTrue();
+        assertThat(recruit.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, ally)).isEqualTo(3);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, ally)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, ally)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("A tapped Root-Kin Ally can activate again and the boosts accumulate")
+    void tappedAllyCanActivateAgain() {
+        Permanent ally = addCreatureReady(player1, new RootKinAlly());
+        addCreatureReady(player1, new BorosRecruit());
+        harness.activateAbility(player1, indexOf(player1, ally), null, null);
+        harness.passBothPriorities();
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new BorosRecruit());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new BorosRecruit());
+
+        harness.activateAbility(player1, indexOf(player1, ally), null, null);
+        harness.passBothPriorities();
+
+        assertThat(ally.isTapped()).isTrue();
+        assertThat(first.isTapped()).isTrue();
+        assertThat(second.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, ally)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, ally)).isEqualTo(7);
     }
 
     private int indexOf(Player player, Permanent permanent) {
