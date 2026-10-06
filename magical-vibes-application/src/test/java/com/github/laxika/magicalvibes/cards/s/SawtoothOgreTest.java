@@ -20,11 +20,10 @@ class SawtoothOgreTest extends BaseCardTest {
     @Test
     @DisplayName("When Sawtooth Ogre becomes blocked, the blocker is dealt 1 damage at end of combat")
     void becomesBlockedDamagesBlocker() {
-        Permanent ogre = addCreatureReady(player1, new SawtoothOgre());
-        ogre.setAttacking(true);
+        addCreatureReady(player1, new SawtoothOgre());
         Permanent blocker = addCreatureReady(player2, new StripedBears());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities(); // resolve the becomes-blocked trigger
 
@@ -42,10 +41,9 @@ class SawtoothOgreTest extends BaseCardTest {
     @DisplayName("When Sawtooth Ogre blocks, the attacker is dealt 1 damage at end of combat")
     void blocksDamagesAttacker() {
         Permanent attacker = addCreatureReady(player1, new StripedBears());
-        attacker.setAttacking(true);
         addCreatureReady(player2, new SawtoothOgre());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities(); // resolve the block trigger
 
@@ -60,12 +58,11 @@ class SawtoothOgreTest extends BaseCardTest {
     @Test
     @DisplayName("Each blocker is dealt 1 damage when Sawtooth Ogre is blocked by two creatures")
     void damagesEachBlocker() {
-        Permanent ogre = addCreatureReady(player1, new SawtoothOgre());
-        ogre.setAttacking(true);
+        addCreatureReady(player1, new SawtoothOgre());
         Permanent firstBlocker = addCreatureReady(player2, new StripedBears());
         Permanent secondBlocker = addCreatureReady(player2, new StripedBears());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
         resolveAllTriggers();
@@ -95,18 +92,57 @@ class SawtoothOgreTest extends BaseCardTest {
     @Test
     @DisplayName("The delayed damage still resolves if Sawtooth Ogre leaves during combat")
     void delayedDamageSurvivesSourceLeaving() {
-        Permanent ogre = addCreatureReady(player1, new SawtoothOgre());
-        ogre.setAttacking(true);
+        addCreatureReady(player1, new SawtoothOgre());
         Permanent blocker = addCreatureReady(player2, new TolarianSerpent());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities(); // resolve the becomes-blocked trigger
 
         harness.passUntil(TurnStep.END_OF_COMBAT);
 
         harness.assertInGraveyard(player1, "Sawtooth Ogre");
+        assertThat(blocker.getMarkedDamage()).isEqualTo(3);
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+
         assertThat(blocker.getMarkedDamage()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Delayed damage uses the stack and allows responses at end of combat")
+    void delayedDamageAllowsResponsesAtEndOfCombat() {
+        Permanent attacker = addCreatureReady(player1, new TolarianSerpent());
+        addCreatureReady(player2, new SawtoothOgre());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveAllTriggers();
+
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+
+        harness.assertInGraveyard(player2, "Sawtooth Ogre");
+        assertThat(attacker.getMarkedDamage()).isEqualTo(3);
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+
+        assertThat(attacker.getMarkedDamage()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("An unblocked attack does not create delayed damage")
+    void unblockedAttackDoesNotCreateDelayedDamage() {
+        addCreatureReady(player1, new SawtoothOgre());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+
+        harness.assertLife(player2, 17);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.hasDelayedAction(DealDamageToPermanentAtEndOfCombat.class)).isFalse();
     }
 
     private void leaveEndOfCombat() {
