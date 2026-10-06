@@ -22,8 +22,7 @@ class RishadanFootpadTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 2);
         castRishadanFootpad();
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player2.getId());
@@ -39,25 +38,25 @@ class RishadanFootpadTest extends BaseCardTest {
         harness.addToBattlefield(player2, new FreshVolunteers());
         castRishadanFootpad();
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player2, false);
 
         harness.assertInGraveyard(player2, "Fresh Volunteers");
     }
 
     @Test
-    @DisplayName("An opponent with no permanents does not need to pay")
-    void opponentWithNoPermanentsDoesNotNeedToPay() {
+    @DisplayName("An opponent with no permanents may still pay {2}")
+    void opponentWithNoPermanentsMayStillPay() {
         harness.addMana(player2, ManaColor.COLORLESS, 2);
         castRishadanFootpad();
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player2, true);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
     }
 
     @Test
@@ -67,8 +66,7 @@ class RishadanFootpadTest extends BaseCardTest {
         Permanent second = harness.addToBattlefieldAndReturn(player2, new FreshVolunteers());
         castRishadanFootpad();
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player2, false);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).playerId())
@@ -76,6 +74,22 @@ class RishadanFootpadTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player2, List.of(second.getId()));
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(first).doesNotContain(second);
+    }
+
+    @Test
+    @DisplayName("Generic payment can use colored mana")
+    void opponentCanPayWithColoredMana() {
+        harness.addToBattlefield(player2, new FreshVolunteers());
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        castRishadanFootpad();
+
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertOnBattlefield(player2, "Fresh Volunteers");
+        harness.assertOnBattlefield(player1, "Rishadan Footpad");
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
     }
 
     private void castRishadanFootpad() {
