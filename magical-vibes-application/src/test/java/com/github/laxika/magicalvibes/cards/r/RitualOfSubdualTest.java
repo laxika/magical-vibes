@@ -168,4 +168,36 @@ class RitualOfSubdualTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(ritual);
         harness.assertInGraveyard(player1, "Ritual of Subdual");
     }
+
+    @Test
+    @DisplayName("Lands produce their normal mana after Ritual of Subdual is sacrificed")
+    void replacementEndsAfterSacrifice() {
+        harness.addToBattlefield(player1, new RitualOfSubdual());
+        harness.addToBattlefield(player1, new Forest());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.tapPermanent(player1, 0);
+
+        harness.assertInGraveyard(player1, "Ritual of Subdual");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    @DisplayName("Insufficient mana for the entire cumulative upkeep sacrifices the enchantment")
+    void cannotPayOnlyPartOfCumulativeUpkeep() {
+        Permanent ritual = harness.addToBattlefieldAndReturn(player1, new RitualOfSubdual());
+        ritual.setCounterCount(CounterType.AGE, 1);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInGraveyard(player1, "Ritual of Subdual");
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(ritual);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+    }
 }
