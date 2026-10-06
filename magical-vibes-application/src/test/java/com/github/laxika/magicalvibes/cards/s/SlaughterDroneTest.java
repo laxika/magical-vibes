@@ -41,6 +41,37 @@ class SlaughterDroneTest extends BaseCardTest {
     }
 
     @Test
+    void deathtouchIsGrantedOnlyAfterAbilityResolves() {
+        Permanent drone = harness.addToBattlefieldAndReturn(player1, new SlaughterDrone());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gqs.hasKeyword(gd, drone, Keyword.DEATHTOUCH)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, drone, Keyword.DEATHTOUCH)).isTrue();
+    }
+
+    @Test
+    void tappedDroneCanActivateWithoutGrantingDeathtouchToOtherCreatures() {
+        Permanent drone = harness.addToBattlefieldAndReturn(player1, new SlaughterDrone());
+        Permanent otherDrone = harness.addToBattlefieldAndReturn(player1, new SlaughterDrone());
+        Permanent opposingDrone = harness.addToBattlefieldAndReturn(player2, new SlaughterDrone());
+        drone.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, drone, Keyword.DEATHTOUCH)).isTrue();
+        assertThat(drone.isTapped()).isTrue();
+        assertThat(gqs.hasKeyword(gd, otherDrone, Keyword.DEATHTOUCH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opposingDrone, Keyword.DEATHTOUCH)).isFalse();
+    }
+
+    @Test
     void cannotActivateAbilityWithOnlyColoredMana() {
         harness.addToBattlefieldAndReturn(player1, new SlaughterDrone());
         harness.addMana(player1, ManaColor.BLUE, 1);
