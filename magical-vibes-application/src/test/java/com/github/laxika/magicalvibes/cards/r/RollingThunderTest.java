@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.Map;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({RollingThunder.class, MoggConscripts.class})
@@ -103,5 +104,37 @@ class RollingThunderTest extends BaseCardTest {
         assertThatThrownBy(() ->
                 harness.castSorceryForX(player1, 0, 3, Map.of(player2.getId(), 2))
         ).isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("With X = 0, cannot choose a target even with zero damage assigned")
+    void zeroXCannotHaveTargets() {
+        harness.setHand(player1, List.of(new RollingThunder()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        assertThatThrownBy(() ->
+                harness.castSorceryForX(player1, 0, 0, Map.of(player2.getId(), 0))
+        ).isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can divide damage among creatures of both players and its controller")
+    void dividesDamageAmongThreeTargetsIncludingOwnPermanentsAndController() {
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new MoggConscripts());
+        Permanent opposing = harness.addToBattlefieldAndReturn(player2, new MoggConscripts());
+        harness.setHand(player1, List.of(new RollingThunder()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castSorceryForX(player1, 0, 3,
+                Map.of(own.getId(), 1, opposing.getId(), 1, player1.getId(), 1));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Mogg Conscripts");
+        harness.assertOnBattlefield(player2, "Mogg Conscripts");
+        assertThat(own.getMarkedDamage()).isEqualTo(1);
+        assertThat(opposing.getMarkedDamage()).isEqualTo(1);
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Rolling Thunder");
     }
 }
