@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DoublingSeason;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RelentlessXATM092.class, GrizzlyBears.class})
+@CardUsed({RelentlessXATM092.class, DoublingSeason.class})
 class RelentlessXATM092Test extends BaseCardTest {
 
     @Test
@@ -56,7 +56,7 @@ class RelentlessXATM092Test extends BaseCardTest {
     void cannotBeBlockedByFewerThanThree() {
         addRelentlessAttacking();
         addBlockers(3);
-        beginBlockerDeclaration();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
@@ -70,7 +70,7 @@ class RelentlessXATM092Test extends BaseCardTest {
     void canBeBlockedByThree() {
         addRelentlessAttacking();
         addBlockers(3);
-        beginBlockerDeclaration();
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
@@ -81,10 +81,7 @@ class RelentlessXATM092Test extends BaseCardTest {
     }
 
     private Permanent addRelentlessReady(Player player) {
-        Permanent relentless = new Permanent(new RelentlessXATM092());
-        relentless.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(relentless);
-        return relentless;
+        return addCreatureReady(player, new RelentlessXATM092());
     }
 
     private void addRelentlessAttacking() {
@@ -94,14 +91,82 @@ class RelentlessXATM092Test extends BaseCardTest {
 
     private void addBlockers(int count) {
         for (int i = 0; i < count; i++) {
-            addCreatureReady(player2, new GrizzlyBears());
+            addCreatureReady(player2, new RelentlessXATM092());
         }
     }
 
-    private void beginBlockerDeclaration() {
+    @Test
+    void returnsOnlyTheActivatingCopy() {
+        RelentlessXATM092 first = new RelentlessXATM092();
+        RelentlessXATM092 second = new RelentlessXATM092();
+        RelentlessXATM092 opposing = new RelentlessXATM092();
+        harness.setGraveyard(player1, List.of(first, second));
+        harness.setGraveyard(player2, List.of(opposing));
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+
+        harness.activateGraveyardAbility(player1, 0);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(second);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opposing);
+        assertThat(findPermanent(player1, "Relentless X-ATM092").getCard().getId()).isEqualTo(first.getId());
+    }
+
+    @Test
+    void cannotActivateWithOnlySevenMana() {
+        harness.setGraveyard(player1, List.of(new RelentlessXATM092()));
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Relentless X-ATM092");
+    }
+
+    @Test
+    void canReturnDuringOpponentsTurn() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setGraveyard(player1, List.of(new RelentlessXATM092()));
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent relentless = findPermanent(player1, "Relentless X-ATM092");
+        assertThat(relentless.isTapped()).isTrue();
+        assertThat(relentless.getCounterCount(CounterType.FINALITY)).isEqualTo(1);
+    }
+
+    @Test
+    void multipleActivationsDoNotAddExtraFinalityCounters() {
+        harness.setGraveyard(player1, List.of(new RelentlessXATM092()));
+        harness.addMana(player1, ManaColor.COLORLESS, 16);
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Relentless X-ATM092")).isEqualTo(1);
+        assertThat(findPermanent(player1, "Relentless X-ATM092").getCounterCount(CounterType.FINALITY))
+                .isEqualTo(1);
+    }
+
+    @Test
+    @CardUsed({RelentlessXATM092.class, DoublingSeason.class})
+    void doublingSeasonDoublesTheFinalityCounter() {
         harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addToBattlefield(player1, new DoublingSeason());
+        harness.setGraveyard(player1, List.of(new RelentlessXATM092()));
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Relentless X-ATM092").getCounterCount(CounterType.FINALITY))
+                .isEqualTo(2);
     }
 }
