@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.d.DwarvenHammer;
-import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
+import com.github.laxika.magicalvibes.cards.e.EnormousEnergyBlade;
+import com.github.laxika.magicalvibes.cards.g.GoldveinPick;
 import com.github.laxika.magicalvibes.cards.t.TheOmenkeel;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -9,12 +10,14 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RecklessCrew.class, DwarvenHammer.class, GoldveinPick.class, TheOmenkeel.class})
 class RecklessCrewTest extends BaseCardTest {
 
     @Test
@@ -30,7 +33,7 @@ class RecklessCrewTest extends BaseCardTest {
     @Test
     void createsOneTokenPerVehicleOrEquipmentAndAttachesDistinctEquipment() {
         Permanent hammer = harness.addToBattlefieldAndReturn(player1, new DwarvenHammer());
-        Permanent scimitar = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+        Permanent pick = harness.addToBattlefieldAndReturn(player1, new GoldveinPick());
         harness.addToBattlefield(player1, new TheOmenkeel());
 
         castRecklessCrew();
@@ -47,10 +50,10 @@ class RecklessCrewTest extends BaseCardTest {
 
         harness.handlePermanentChosen(player1, hammer.getId());
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, scimitar.getId());
+        harness.handlePermanentChosen(player1, pick.getId());
 
         assertThat(hammer.getAttachedTo()).isEqualTo(tokens.get(0).getId());
-        assertThat(scimitar.getAttachedTo()).isEqualTo(tokens.get(1).getId());
+        assertThat(pick.getAttachedTo()).isEqualTo(tokens.get(1).getId());
     }
 
     @Test
@@ -69,11 +72,89 @@ class RecklessCrewTest extends BaseCardTest {
         assertThat(hammer.getAttachedTo()).isEqualTo(tokens.get(1).getId());
     }
 
+    @Test
+    void createsNoTokensWhenOnlyOpponentControlsVehiclesAndEquipment() {
+        harness.addToBattlefield(player2, new TheOmenkeel());
+        harness.addToBattlefield(player2, new DwarvenHammer());
+
+        castRecklessCrew();
+
+        assertThat(findPermanents(player1, "Dwarf Berserker")).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Reckless Crew");
+    }
+
+    @Test
+    void mayDeclineEveryAttachment() {
+        Permanent hammer = harness.addToBattlefieldAndReturn(player1, new DwarvenHammer());
+        harness.addToBattlefield(player1, new TheOmenkeel());
+
+        castRecklessCrew();
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
+
+        assertThat(findPermanents(player1, "Dwarf Berserker")).hasSize(2);
+        assertThat(hammer.getAttachedTo()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void attachmentsWaitUntilAllChoicesAreMade() {
+        Permanent hammer = harness.addToBattlefieldAndReturn(player1, new DwarvenHammer());
+        Permanent pick = harness.addToBattlefieldAndReturn(player1, new GoldveinPick());
+
+        castRecklessCrew();
+        List<Permanent> tokens = findPermanents(player1, "Dwarf Berserker");
+        assertThat(tokens).hasSize(2);
+        harness.handlePermanentChosen(player1, hammer.getId());
+
+        assertThat(hammer.getAttachedTo()).isNull();
+        assertThat(pick.getAttachedTo()).isNull();
+
+        harness.handlePermanentChosen(player1, pick.getId());
+
+        assertThat(hammer.getAttachedTo()).isEqualTo(tokens.get(0).getId());
+        assertThat(pick.getAttachedTo()).isEqualTo(tokens.get(1).getId());
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void movesAlreadyAttachedEquipmentToANewTokenWithoutPayingEquipCost() {
+        Permanent hammer = harness.addToBattlefieldAndReturn(player1, new DwarvenHammer());
+        Permanent oldHost = harness.addToBattlefieldAndReturn(player1, new TheOmenkeel());
+        oldHost.setAnimatedUntilEndOfTurn(true);
+        oldHost.setAnimatedPower(3);
+        oldHost.setAnimatedToughness(3);
+        hammer.setAttachedTo(oldHost.getId());
+
+        castRecklessCrew();
+        List<Permanent> tokens = findPermanents(player1, "Dwarf Berserker");
+        assertThat(tokens).hasSize(2);
+        harness.handlePermanentChosen(player1, hammer.getId());
+
+        assertThat(hammer.getAttachedTo()).isEqualTo(tokens.get(0).getId());
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @CardUsed({EnormousEnergyBlade.class})
+    void attachingEquipmentTriggersItsBecomesAttachedAbility() {
+        Permanent blade = harness.addToBattlefieldAndReturn(player1, new EnormousEnergyBlade());
+
+        castRecklessCrew();
+        Permanent token = findPermanent(player1, "Dwarf Berserker");
+        harness.handlePermanentChosen(player1, blade.getId());
+
+        assertThat(blade.getAttachedTo()).isEqualTo(token.getId());
+        harness.passBothPriorities();
+
+        assertThat(token.isTapped()).isTrue();
+    }
+
     private void castRecklessCrew() {
         harness.setHand(player1, List.of(new RecklessCrew()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
     }
 }
