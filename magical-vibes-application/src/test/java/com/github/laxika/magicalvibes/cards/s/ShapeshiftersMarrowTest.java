@@ -85,4 +85,47 @@ class ShapeshiftersMarrowTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
         assertThat(gqs.isCreature(gd, marrow)).isFalse();
     }
+
+    @Test
+    @DisplayName("Still puts the revealed creature into the graveyard after the source leaves")
+    void resolvesAfterSourceLeavesBattlefield() {
+        Permanent marrow = harness.addToBattlefieldAndReturn(player1, new ShapeshiftersMarrow());
+        Card creature = new FomoriNomad();
+        Card nextCard = new QuietDisrepair();
+        harness.setLibrary(player2, List.of(creature, nextCard));
+
+        advanceToUpkeep(player2);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToHand(gd, marrow));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(creature);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(nextCard);
+        harness.assertInHand(player1, "Shapeshifter's Marrow");
+        harness.assertNotOnBattlefield(player1, "Fomori Nomad");
+    }
+
+    @Test
+    @DisplayName("Each pending trigger reveals the top card at its own resolution")
+    void multipleMarrowsRevealSuccessiveTopCards() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new ShapeshiftersMarrow());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new ShapeshiftersMarrow());
+        Card creature = new FomoriNomad();
+        Card noncreature = new QuietDisrepair();
+        harness.setLibrary(player2, List.of(creature, noncreature));
+
+        advanceToUpkeep(player2);
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(creature);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(noncreature);
+        assertThat(List.of(first, second).stream().filter(p -> gqs.isCreature(gd, p)).count())
+                .isEqualTo(1);
+
+        advanceToUpkeep(player2);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+    }
 }
