@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -12,7 +11,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ShaoJun.class, Spellbook.class, GrizzlyBears.class})
+@CardUsed({ShaoJun.class, Spellbook.class})
 class ShaoJunTest extends BaseCardTest {
 
     @Test
@@ -75,5 +74,86 @@ class ShaoJunTest extends BaseCardTest {
                 player1, gd.playerBattlefields.get(player1.getId()).indexOf(shaoJun), null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough untapped permanents to tap");
+    }
+
+    @Test
+    @DisplayName("Leap Strike updates when the active player changes")
+    void leapStrikeTracksTurnChanges() {
+        Permanent shaoJun = addCreatureReady(player1, new ShaoJun());
+
+        harness.forceActivePlayer(player1);
+        assertThat(gqs.hasKeyword(gd, shaoJun, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, shaoJun, Keyword.FIRST_STRIKE)).isTrue();
+
+        harness.forceActivePlayer(player2);
+        assertThat(gqs.hasKeyword(gd, shaoJun, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, shaoJun, Keyword.FIRST_STRIKE)).isFalse();
+
+        harness.forceActivePlayer(player1);
+        assertThat(gqs.hasKeyword(gd, shaoJun, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, shaoJun, Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Shao Jun can use Rope Dart during an opponent's turn")
+    void ropeDartDoesNotRequireReadySourceOrOwnTurn() {
+        Permanent shaoJun = harness.addToBattlefieldAndReturn(player1, new ShaoJun());
+        shaoJun.tap();
+        Permanent firstArtifact = harness.addToBattlefieldAndReturn(player1, new Spellbook());
+        Permanent secondArtifact = harness.addToBattlefieldAndReturn(player1, new Spellbook());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        int controllerLife = gd.getLife(player1.getId());
+        int opponentLife = gd.getLife(player2.getId());
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(shaoJun), null, null);
+
+        assertThat(firstArtifact.isTapped()).isTrue();
+        assertThat(secondArtifact.isTapped()).isTrue();
+        harness.assertLife(player2, opponentLife);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, controllerLife);
+        harness.assertLife(player2, opponentLife - 1);
+        assertThat(shaoJun.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A tapped artifact cannot pay Rope Dart's cost")
+    void ropeDartCannotCountTappedArtifacts() {
+        Permanent shaoJun = addCreatureReady(player1, new ShaoJun());
+        Permanent untappedArtifact = harness.addToBattlefieldAndReturn(player1, new Spellbook());
+        Permanent tappedArtifact = harness.addToBattlefieldAndReturn(player1, new Spellbook());
+        tappedArtifact.tap();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, gd.playerBattlefields.get(player1.getId()).indexOf(shaoJun), null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough untapped permanents to tap");
+
+        assertThat(untappedArtifact.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opponent's artifacts cannot pay Rope Dart's cost")
+    void ropeDartCannotCountOpponentsArtifacts() {
+        Permanent shaoJun = addCreatureReady(player1, new ShaoJun());
+        Permanent ownArtifact = harness.addToBattlefieldAndReturn(player1, new Spellbook());
+        Permanent opponentArtifact = harness.addToBattlefieldAndReturn(player2, new Spellbook());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, gd.playerBattlefields.get(player1.getId()).indexOf(shaoJun), null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough untapped permanents to tap");
+
+        assertThat(ownArtifact.isTapped()).isFalse();
+        assertThat(opponentArtifact.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 }
