@@ -1,12 +1,14 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.q.QueensBaySoldier;
+import com.github.laxika.magicalvibes.cards.u.UnfriendlyFire;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,9 +16,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RegisaurAlpha.class, RaptorCompanion.class, QueensBaySoldier.class, UnfriendlyFire.class})
 class RegisaurAlphaTest extends BaseCardTest {
-
-    // ===== ETB: creates a 3/3 green Dinosaur token with trample =====
 
     @Test
     @DisplayName("ETB creates a 3/3 green Dinosaur token with trample")
@@ -25,9 +26,12 @@ class RegisaurAlphaTest extends BaseCardTest {
 
         List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
         assertThat(battlefield).hasSize(2); // Alpha + 1 token
-        assertThat(countDinosaurTokens(player1)).isEqualTo(1);
+        assertThat(countPermanents(player1, "Dinosaur")).isEqualTo(1);
 
-        Permanent token = findDinosaurToken(player1);
+        Permanent token = findPermanent(player1, "Dinosaur");
+        assertThat(token.getCard().isToken()).isTrue();
+        assertThat(gqs.getEffectiveColors(gd, token)).containsExactly(CardColor.GREEN);
+        assertThat(token.isTapped()).isFalse();
         assertThat(token.getCard().getSubtypes()).contains(CardSubtype.DINOSAUR);
         assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(3);
@@ -39,11 +43,9 @@ class RegisaurAlphaTest extends BaseCardTest {
     void tokenHasHasteFromStaticAbility() {
         castAndResolveAlpha();
 
-        Permanent token = findDinosaurToken(player1);
+        Permanent token = findPermanent(player1, "Dinosaur");
         assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
     }
-
-    // ===== Static effect: grants haste to other Dinosaurs you control =====
 
     @Test
     @DisplayName("Other Dinosaurs you control have haste")
@@ -69,10 +71,10 @@ class RegisaurAlphaTest extends BaseCardTest {
     @DisplayName("Does not grant haste to non-Dinosaur creatures")
     void doesNotGrantHasteToNonDinosaurs() {
         harness.addToBattlefield(player1, new RegisaurAlpha());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new QueensBaySoldier());
 
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
-        assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isFalse();
+        Permanent soldier = findPermanent(player1, "Queen's Bay Soldier");
+        assertThat(gqs.hasKeyword(gd, soldier, Keyword.HASTE)).isFalse();
     }
 
     @Test
@@ -97,8 +99,6 @@ class RegisaurAlphaTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, raptor)).isEqualTo(1);
     }
 
-    // ===== Haste removed when Regisaur Alpha leaves =====
-
     @Test
     @DisplayName("Haste is removed when Regisaur Alpha leaves the battlefield")
     void hasteRemovedWhenAlphaLeaves() {
@@ -114,8 +114,6 @@ class RegisaurAlphaTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, raptor, Keyword.HASTE)).isFalse();
     }
 
-    // ===== Two Regisaur Alphas =====
-
     @Test
     @DisplayName("Two Regisaur Alphas grant haste to each other")
     void twoAlphasGrantHasteToEachOther() {
@@ -130,29 +128,54 @@ class RegisaurAlphaTest extends BaseCardTest {
         }
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("ETB still creates a token after Alpha is destroyed in response")
+    void tokenCreatedAfterAlphaLeavesBeforeTriggerResolves() {
+        harness.setHand(player1, List.of(new RegisaurAlpha()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Regisaur Alpha");
+        assertThat(countPermanents(player1, "Dinosaur")).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.setHand(player1, List.of(new UnfriendlyFire()));
+        harness.addMana(player1, ManaColor.RED, 5);
+        harness.castAndResolveInstant(player1, 0,
+                findPermanent(player1, "Regisaur Alpha").getId());
+        harness.assertNotOnBattlefield(player1, "Regisaur Alpha");
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Dinosaur")).isEqualTo(1);
+        Permanent token = findPermanent(player1, "Dinosaur");
+        assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("The new Dinosaur token can attack immediately with Alpha's haste")
+    void tokenCanAttackTheTurnItEnters() {
+        castAndResolveAlpha();
+
+        Permanent token = findPermanent(player1, "Dinosaur");
+        assertThat(token.isSummoningSick()).isTrue();
+        int tokenIndex = gd.playerBattlefields.get(player1.getId()).indexOf(token);
+        declareAttackers(List.of(tokenIndex));
+        resolveCombat();
+
+        harness.assertLife(player2, 17);
+    }
 
     private void castAndResolveAlpha() {
         harness.setHand(player1, List.of(new RegisaurAlpha()));
         harness.addMana(player1, ManaColor.RED, 3);
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve ETB trigger
-    }
-
-    private int countDinosaurTokens(Player player) {
-        return (int) gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Dinosaur"))
-                .filter(p -> p.getCard().getSubtypes().contains(CardSubtype.DINOSAUR))
-                .count();
-    }
-
-    private Permanent findDinosaurToken(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Dinosaur"))
-                .findFirst()
-                .orElseThrow(() -> new IllegalStateException("No Dinosaur token found"));
+        resolveAllTriggers();
     }
 
 }
