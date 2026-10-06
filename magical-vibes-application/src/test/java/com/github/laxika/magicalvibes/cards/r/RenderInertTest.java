@@ -58,6 +58,64 @@ class RenderInertTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void mayRemoveZeroCountersAndStillDraw() {
+        Permanent target = addTargetWithCounters(2, 2);
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+
+        cast(target);
+        harness.assertNotInHand(player1, "Grizzly Bears");
+        harness.handleListChoice(player1, "Done");
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(target.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
+        harness.assertInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void drawsWhenTargetHasNoCounters() {
+        Permanent target = addTargetWithCounters(0, 0);
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+
+        cast(target);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Render Inert");
+    }
+
+    @Test
+    void stopsChoosingWhenAllAvailableCountersHaveBeenRemoved() {
+        Permanent target = addTargetWithCounters(0, 2);
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+
+        cast(target);
+        harness.handleListChoice(player1, "charge counters");
+        harness.assertNotInHand(player1, "Grizzly Bears");
+        harness.handleListChoice(player1, "charge counters");
+
+        assertThat(target.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Render Inert");
+    }
+
+    @Test
+    void doesNotDrawWhenTargetLeavesBeforeResolution() {
+        Permanent target = addTargetWithCounters(0, 2);
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new RenderInert()));
+        addMana();
+        harness.castSorcery(player1, 0, target.getId());
+        gd.battlefield.get(player2.getId()).remove(target);
+
+        harness.passBothPriorities();
+
+        harness.assertNotInHand(player1, "Grizzly Bears");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Render Inert");
+    }
+
     private Permanent addTargetWithCounters(int plusOneCounters, int chargeCounters) {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, plusOneCounters);
@@ -68,8 +126,7 @@ class RenderInertTest extends BaseCardTest {
     private void cast(Permanent target) {
         harness.setHand(player1, List.of(new RenderInert()));
         addMana();
-        harness.castSorcery(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, target.getId());
     }
 
     private void addMana() {
