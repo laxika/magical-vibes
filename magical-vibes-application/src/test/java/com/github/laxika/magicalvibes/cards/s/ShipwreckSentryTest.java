@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.c.ChromaticStar;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -67,6 +68,46 @@ class ShipwreckSentryTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+        assertThat(sentry.isAttacking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An artifact that entered before Sentry still grants permission to attack")
+    void artifactEnteringBeforeSentryCounts() {
+        harness.enterBattlefieldAndReturn(player1, new ChromaticStar());
+        Permanent sentry = addCreatureReady(player1, new ShipwreckSentry());
+
+        declareAttackersAndPrepareBlockers(List.of(1));
+
+        assertThat(sentry.isAttacking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An artifact leaving the battlefield does not revoke permission to attack")
+    void artifactLeavingStillCounts() {
+        Permanent sentry = addCreatureReady(player1, new ShipwreckSentry());
+        Permanent artifact = harness.enterBattlefieldAndReturn(player1, new ChromaticStar());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToHand(gd, artifact));
+        harness.assertNotOnBattlefield(player1, "Chromatic Star");
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThat(sentry.isAttacking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An artifact entering on a previous turn does not grant permission to attack")
+    void previousTurnArtifactDoesNotCount() {
+        Permanent sentry = addCreatureReady(player1, new ShipwreckSentry());
+        harness.enterBattlefieldAndReturn(player1, new ChromaticStar());
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
 
         assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
