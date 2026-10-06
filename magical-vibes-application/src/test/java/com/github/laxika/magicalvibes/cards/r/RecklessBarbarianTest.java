@@ -21,4 +21,35 @@ class RecklessBarbarianTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(2);
         harness.assertInGraveyard(player1, "Reckless Barbarian");
     }
+
+    @Test
+    @DisplayName("A tapped summoning-sick Barbarian can be sacrificed without using the stack")
+    void tappedSummoningSickCreatureCanProduceManaImmediately() {
+        var barbarian = harness.addToBattlefieldAndReturn(player1, new RecklessBarbarian());
+        barbarian.setTapped(true);
+        barbarian.setSummoningSick(true);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Reckless Barbarian");
+        harness.assertInGraveyard(player1, "Reckless Barbarian");
+    }
+
+    @Test
+    @DisplayName("The activating player receives the mana and sacrifices only their Barbarian")
+    void manaGoesToActivatingPlayer() {
+        harness.addToBattlefield(player1, new RecklessBarbarian());
+        harness.addToBattlefield(player2, new RecklessBarbarian());
+
+        harness.activateAbility(player2, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.RED)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Reckless Barbarian");
+        harness.assertNotOnBattlefield(player2, "Reckless Barbarian");
+        harness.assertInGraveyard(player2, "Reckless Barbarian");
+    }
 }
