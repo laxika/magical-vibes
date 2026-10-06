@@ -64,14 +64,86 @@ class RapaciousGuestTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.castInstant(player2, 0, guest.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, guest.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
         harness.assertLife(player2, 17);
+    }
+
+    @Test
+    void otherCreatureCombatDamageTriggersNonattackingGuest() {
+        harness.addToBattlefield(player1, new RapaciousGuest());
+        addCreatureReady(player1, new RapaciousGuest());
+
+        declareAttackers(List.of(1));
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Food")).isEqualTo(2);
+    }
+
+    @Test
+    void opponentSacrificingFoodDoesNotPutCounterOnGuest() {
+        Permanent guest = addCreatureReady(player1, new RapaciousGuest());
+        Permanent food = harness.addToBattlefieldAndReturn(player2, new Food());
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.activateAbility(player2, battlefieldIndex(player2, food), 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(guest.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(countPermanents(player2, "Food")).isZero();
+    }
+
+    @Test
+    void eachFoodSacrificePutsCounterOnEveryGuest() {
+        Permanent first = addCreatureReady(player1, new RapaciousGuest());
+        Permanent second = addCreatureReady(player1, new RapaciousGuest());
+        Permanent firstFood = harness.addToBattlefieldAndReturn(player1, new Food());
+        Permanent secondFood = harness.addToBattlefieldAndReturn(player1, new Food());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, battlefieldIndex(player1, firstFood), 0, null, null);
+        resolveAllTriggers();
+        harness.activateAbility(player1, battlefieldIndex(player1, secondFood), 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void destroyingFoodDoesNotCountAsSacrificingIt() {
+        Permanent guest = addCreatureReady(player1, new RapaciousGuest());
+        Permanent food = harness.addToBattlefieldAndReturn(player1, new Food());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().destroyPermanentToGraveyard(gd, food));
+        resolveAllTriggers();
+
+        assertThat(guest.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(countPermanents(player1, "Food")).isZero();
+    }
+
+    @Test
+    void returningGuestToHandUsesLastKnownPower() {
+        Permanent guest = addCreatureReady(player1, new RapaciousGuest());
+        guest.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.setLife(player2, 20);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, guest));
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, player2.getId());
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 16);
+        harness.assertNotOnBattlefield(player1, "Rapacious Guest");
     }
 
     private int battlefieldIndex(com.github.laxika.magicalvibes.model.Player player, Permanent permanent) {
