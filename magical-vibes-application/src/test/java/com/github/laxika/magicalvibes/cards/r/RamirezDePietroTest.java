@@ -25,4 +25,33 @@ class RamirezDePietroTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Ramirez DePietro");
         harness.assertInGraveyard(player2, "Beasts of Bogardan");
     }
+
+    @Test
+    @DisplayName("First strike kills an attacker before it damages Ramirez")
+    void firstStrikeWorksWhileBlocking() {
+        Permanent attacker = addCreatureReady(player1, new BeastsOfBogardan());
+        attacker.setAttacking(true);
+
+        Permanent ramirez = addCreatureReady(player2, new RamirezDePietro());
+        ramirez.setBlocking(true);
+        ramirez.addBlockingTarget(0);
+
+        resolveCombat();
+
+        harness.assertInGraveyard(player1, "Beasts of Bogardan");
+        harness.assertOnBattlefield(player2, "Ramirez DePietro");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("An unblocked first striker deals damage only once")
+    void unblockedFirstStrikerDoesNotDealRegularCombatDamage() {
+        Permanent ramirez = addCreatureReady(player1, new RamirezDePietro());
+        ramirez.setAttacking(true);
+
+        resolveCombat();
+
+        harness.assertLife(player2, 16);
+        harness.assertOnBattlefield(player1, "Ramirez DePietro");
+    }
 }
