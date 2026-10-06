@@ -161,6 +161,59 @@ class ScavengerFolkTest extends BaseCardTest {
         assertThat(gameLogContains("fizzles")).isTrue();
     }
 
+    @Test
+    @DisplayName("Pays exactly one green mana when activated")
+    void paysOneGreenMana() {
+        addReadyFolk(player1);
+        Permanent target = addReadyArtifact(player2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Scavenger Folk");
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Sisay's Ring");
+    }
+
+    @Test
+    @DisplayName("Colorless mana cannot pay the green activation cost")
+    void cannotActivateWithOnlyColorlessMana() {
+        Permanent folk = addReadyFolk(player1);
+        Permanent target = addReadyArtifact(player2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(folk.isTapped()).isFalse();
+        harness.assertOnBattlefield(player1, "Scavenger Folk");
+        harness.assertNotInGraveyard(player1, "Scavenger Folk");
+        harness.assertOnBattlefield(player2, "Sisay's Ring");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An illegal target does not consume mana, tap, or sacrifice Scavenger Folk")
+    void illegalTargetDoesNotPayCosts() {
+        Permanent folk = addReadyFolk(player1);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(folk.isTapped()).isFalse();
+        harness.assertOnBattlefield(player1, "Scavenger Folk");
+        harness.assertNotInGraveyard(player1, "Scavenger Folk");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addReadyFolk(Player player) {
         return addCreatureReady(player, new ScavengerFolk());
     }
