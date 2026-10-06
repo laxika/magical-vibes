@@ -14,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(RoughRhinoCavalry.class)
+@CardUsed({RoughRhinoCavalry.class})
 class RoughRhinoCavalryTest extends BaseCardTest {
 
     @Test
@@ -47,6 +47,7 @@ class RoughRhinoCavalryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, rhino, Keyword.TRAMPLE)).isFalse();
+        assertThat(rhino.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
     @Test
@@ -60,6 +61,62 @@ class RoughRhinoCavalryTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("only once");
+    }
+
+    @Test
+    void exhaustCannotBeActivatedAgainWhileItsFirstActivationIsOnTheStack() {
+        Permanent rhino = addReadyRhino();
+        harness.addMana(player1, ManaColor.COLORLESS, 16);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(rhino.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.hasKeyword(gd, rhino, Keyword.TRAMPLE)).isFalse();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("only once");
+
+        harness.passBothPriorities();
+
+        assertThat(rhino.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, rhino, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    void separateCopiesCanEachActivateExhaust() {
+        Permanent first = addReadyRhino();
+        Permanent second = addReadyRhino();
+        harness.addMana(player1, ManaColor.COLORLESS, 16);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.TRAMPLE)).isFalse();
+
+        harness.activateAbility(player1, 1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, first, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    void exhaustCanBeActivatedWhileTappedAndSummoningSick() {
+        Permanent rhino = harness.addToBattlefieldAndReturn(player1, new RoughRhinoCavalry());
+        rhino.setSummoningSick(true);
+        rhino.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(rhino.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, rhino, Keyword.TRAMPLE)).isTrue();
+        assertThat(rhino.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
     }
 
     private Permanent addReadyRhino() {
