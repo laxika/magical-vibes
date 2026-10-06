@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.n.NyxbornSeaguard;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ShoalKraken.class, GloriousAnthem.class, GrizzlyBears.class})
+@CardUsed({ShoalKraken.class, GloriousAnthem.class, GrizzlyBears.class, NyxbornSeaguard.class})
 class ShoalKrakenTest extends BaseCardTest {
 
     @Test
@@ -24,8 +25,7 @@ class ShoalKrakenTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castEnchantment(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
@@ -44,8 +44,7 @@ class ShoalKrakenTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castEnchantment(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.handleMayAbilityChosen(player1, false);
 
@@ -64,6 +63,62 @@ class ShoalKrakenTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void enchantmentCreatureEntryTriggersAndAllowsDiscardingAnExistingCard() {
+        ShoalKraken existingCard = new ShoalKraken();
+        ShoalKraken drawnCard = new ShoalKraken();
+        harness.addToBattlefield(player1, new ShoalKraken());
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.setHand(player1, List.of(new NyxbornSeaguard(), existingCard));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(existingCard, drawnCard);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(existingCard);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void opponentEnchantmentEntryDoesNotTrigger() {
+        harness.addToBattlefield(player1, new ShoalKraken());
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new NyxbornSeaguard()));
+        harness.addMana(player2, ManaColor.BLUE, 4);
+
+        harness.castCreature(player2, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void decliningWithCardsInHandLeavesThemUntouched() {
+        ShoalKraken existingCard = new ShoalKraken();
+        ShoalKraken libraryCard = new ShoalKraken();
+        harness.addToBattlefield(player1, new ShoalKraken());
+        harness.setLibrary(player1, List.of(libraryCard));
+        harness.setHand(player1, List.of(new NyxbornSeaguard(), existingCard));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(existingCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.stack).isEmpty();
     }
 }
