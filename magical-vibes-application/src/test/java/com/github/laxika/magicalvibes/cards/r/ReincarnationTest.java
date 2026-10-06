@@ -160,4 +160,60 @@ class ReincarnationTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, karakasId))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Does not register a delayed trigger if the target dies before resolution")
+    void targetDiesBeforeResolution() {
+        harness.addToBattlefield(player2, new AzureDrake());
+        harness.setGraveyard(player2, List.of(new KoboldsOfKherKeep()));
+        harness.setHand(player1, List.of(new Reincarnation(), new ActiveVolcano()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        UUID targetId = harness.getPermanentId(player2, "Azure Drake");
+        harness.castInstant(player1, 0, targetId);
+        harness.castInstant(player1, 0, 0, targetId);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Azure Drake");
+        harness.assertNotOnBattlefield(player2, "Kobolds of Kher Keep");
+        harness.assertInGraveyard(player2, "Azure Drake");
+        harness.assertInGraveyard(player2, "Kobolds of Kher Keep");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Two resolved Reincarnations create independent triggers for the same death")
+    void multipleRegistrationsReturnTwoCreatures() {
+        harness.addToBattlefield(player2, new AzureDrake());
+        harness.setGraveyard(player2, List.of(new KoboldsOfKherKeep()));
+        harness.setHand(player1, List.of(new Reincarnation(), new Reincarnation(), new ActiveVolcano()));
+        harness.addMana(player1, ManaColor.GREEN, 6);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        UUID targetId = harness.getPermanentId(player2, "Azure Drake");
+        harness.castInstant(player1, 0, targetId);
+        resolveAllTriggers();
+        harness.castInstant(player1, 0, targetId);
+        resolveAllTriggers();
+        harness.castInstant(player1, 0, 0, targetId);
+        resolveAllTriggers();
+
+        PendingInteraction.GraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.cardPool()).hasSize(2);
+        int drakeIndex = java.util.stream.IntStream.range(0, choice.cardPool().size())
+                .filter(i -> choice.cardPool().get(i).getName().equals("Azure Drake"))
+                .findFirst().orElseThrow();
+        harness.handleGraveyardCardChosen(player1, drakeIndex);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player2, "Azure Drake");
+        harness.assertOnBattlefield(player2, "Kobolds of Kher Keep");
+        harness.assertNotInGraveyard(player2, "Azure Drake");
+        harness.assertNotInGraveyard(player2, "Kobolds of Kher Keep");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
 }
