@@ -12,20 +12,20 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(RhysticCave.class)
+@CardUsed({RhysticCave.class})
 class RhysticCaveTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Puts the ability on the stack before choosing a color")
-    void abilityWaitsOnStackForResolution() {
+    @DisplayName("Resolves immediately without using the stack")
+    void abilityResolvesWithoutUsingTheStack() {
         Permanent cave = addReadyCave();
 
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(cave), null, null);
 
-        assertThat(gd.stack).hasSize(1);
-        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(cave.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
 
-        harness.passBothPriorities();
         harness.handleListChoice(player1, "GREEN");
         harness.handleMayAbilityChosen(player1, false);
         harness.handleMayAbilityChosen(player2, false);
@@ -102,6 +102,30 @@ class RhysticCaveTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("A prevented activation does not reuse its color for the next activation")
+    void preventedActivationClearsChosenColor() {
+        Permanent firstCave = addReadyCave();
+        Permanent secondCave = harness.addToBattlefieldAndReturn(player1, new RhysticCave());
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        activate(firstCave);
+        harness.handleListChoice(player1, "RED");
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player2, true);
+
+        activate(secondCave);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player1, "BLACK");
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(firstCave.isTapped()).isTrue();
+        assertThat(secondCave.isTapped()).isTrue();
+    }
+
     private Permanent addReadyCave() {
         return addReadyCave(player1);
     }
@@ -116,6 +140,5 @@ class RhysticCaveTest extends BaseCardTest {
 
     private void activate(Permanent cave) {
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(cave), null, null);
-        harness.passBothPriorities();
     }
 }
