@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -7,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,9 +17,8 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RakkaMar.class})
 class RakkaMarTest extends BaseCardTest {
-
-    // ===== Token creation via activated ability =====
 
     @Test
     @DisplayName("Activating ability puts token creation on the stack")
@@ -59,8 +61,6 @@ class RakkaMarTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, token(player1), Keyword.HASTE)).isTrue();
     }
 
-    // ===== Cost: tap =====
-
     @Test
     @DisplayName("Activating the ability taps Rakka Mar")
     void activatingTapsSource() {
@@ -85,8 +85,6 @@ class RakkaMarTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Cost: mana =====
-
     @Test
     @DisplayName("Cannot activate ability without enough mana")
     void cannotActivateWithoutMana() {
@@ -97,13 +95,55 @@ class RakkaMarTest extends BaseCardTest {
                 .hasMessageContaining("Not enough mana");
     }
 
-    // ===== Helper methods =====
+    @Test
+    @DisplayName("Haste allows Rakka Mar to activate immediately after entering")
+    void canActivateImmediatelyAfterEntering() {
+        Permanent rakka = harness.enterBattlefieldAndReturn(player1, new RakkaMar());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(rakka.isTapped()).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+        assertThat(token(player1).getCard().isToken()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Creates exactly one untapped red Elemental without consuming Rakka Mar")
+    void createsOneUntappedRedElemental() {
+        Permanent rakka = addRakkaMarReady(player1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2).contains(rakka);
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        Permanent elemental = token(player1);
+        assertThat(elemental.getCard().isToken()).isTrue();
+        assertThat(elemental.getCard().getColor()).isEqualTo(CardColor.RED);
+        assertThat(elemental.getCard().getSubtypes()).containsExactly(CardSubtype.ELEMENTAL);
+        assertThat(elemental.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Second player creates the token under their control during the opponent's turn")
+    void secondPlayerCreatesTokenDuringOpponentsTurn() {
+        addRakkaMarReady(player2);
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(2);
+        assertThat(token(player2).getCard().isToken()).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+    }
 
     private Permanent addRakkaMarReady(Player player) {
-        RakkaMar card = new RakkaMar();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new RakkaMar());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
