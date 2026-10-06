@@ -70,21 +70,38 @@ class RavagingHordeTest extends BaseCardTest {
     @Test
     @DisplayName("Can cast without a target when no land exists")
     void canCastWithoutTargetWhenNoLandExists() {
-        castRavagingHorde(null);
+        harness.castFromHand(player1, new RavagingHorde(), "{3}{R}{R}");
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Ravaging Horde");
     }
 
+    @Test
+    @DisplayName("ETB still destroys the land after Ravaging Horde leaves the battlefield")
+    void etbResolvesAfterSourceLeavesBattlefield() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Mountain());
+        castRavagingHorde(land.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        harness.assertOnBattlefield(player1, "Ravaging Horde");
+        Permanent horde = findPermanent(player1, "Ravaging Horde");
+        gd.playerBattlefields.get(player1.getId()).remove(horde);
+        gd.playerGraveyards.get(player1.getId()).add(horde.getCard());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Mountain");
+        harness.assertInGraveyard(player2, "Mountain");
+        harness.assertNotOnBattlefield(player1, "Ravaging Horde");
+        harness.assertInGraveyard(player1, "Ravaging Horde");
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void castRavagingHorde(UUID targetId) {
         harness.setHand(player1, List.of(new RavagingHorde()));
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
-        if (targetId == null) {
-            harness.castCreature(player1, 0);
-        } else {
-            harness.castCreature(player1, 0, 0, targetId);
-        }
+        harness.castCreature(player1, 0, 0, targetId);
     }
 }
