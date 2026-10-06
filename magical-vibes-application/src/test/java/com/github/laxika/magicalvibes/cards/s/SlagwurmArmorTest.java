@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.y.YotianSoldier;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -101,5 +102,88 @@ class SlagwurmArmorTest extends BaseCardTest {
         Permanent perm = harness.addToBattlefieldAndReturn(player, new SlagwurmArmor());
         perm.setSummoningSick(false);
         return perm;
+    }
+
+    @Test
+    void entersUnattachedAndCanEquipImmediately() {
+        Permanent creature = addCreatureReady(player1, new YotianSoldier());
+        harness.castFromHand(player1, new SlagwurmArmor(), "{1}");
+        harness.passBothPriorities();
+        Permanent armor = findPermanent(player1, "Slagwurm Armor");
+
+        assertThat(armor.getAttachedTo()).isNull();
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 1, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(armor.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(10);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void cannotEquipWithInsufficientMana() {
+        Permanent armor = addSlagwurmArmorReady(player1);
+        Permanent creature = addCreatureReady(player1, new YotianSoldier());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        assertThat(armor.getAttachedTo()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+    }
+
+    @Test
+    void cannotEquipDuringCombat() {
+        addSlagwurmArmorReady(player1);
+        Permanent creature = addCreatureReady(player1, new YotianSoldier());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery speed");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
+    }
+
+    @Test
+    void cannotEquipWhileAnotherEquipIsOnStack() {
+        addSlagwurmArmorReady(player1);
+        Permanent creature = addCreatureReady(player1, new YotianSoldier());
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.activateAbility(player1, 0, null, creature.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("stack is empty");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
+        harness.passBothPriorities();
+    }
+
+    @Test
+    void failedReEquipKeepsOriginalAttachment() {
+        Permanent original = addCreatureReady(player1, new YotianSoldier());
+        Permanent target = addCreatureReady(player1, new YotianSoldier());
+        Permanent armor = addSlagwurmArmorReady(player1);
+        armor.setAttachedTo(original.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 2, null, target.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+        gd.playerGraveyards.get(player1.getId()).add(target.getCard());
+        harness.passBothPriorities();
+
+        assertThat(armor.getAttachedTo()).isEqualTo(original.getId());
+        assertThat(gqs.getEffectiveToughness(gd, original)).isEqualTo(10);
+        harness.assertOnBattlefield(player1, "Slagwurm Armor");
+        assertThat(gd.stack).isEmpty();
     }
 }
