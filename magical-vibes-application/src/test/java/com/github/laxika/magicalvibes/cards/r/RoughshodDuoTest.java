@@ -46,8 +46,7 @@ class RoughshodDuoTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 3);
 
         for (int i = 0; i < 3; i++) {
-            harness.castInstant(player1, 0, player2.getId());
-            harness.passBothPriorities();
+            harness.castAndResolveInstant(player1, 0, player2.getId());
         }
 
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -78,12 +77,71 @@ class RoughshodDuoTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Expend counts mana spent, not the number of spells cast")
+    void triggersAfterTwoTwoManaSpells() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addToBattlefield(player1, new RoughshodDuo());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Spending a fifth mana does not trigger expend 4 again")
+    void doesNotTriggerAgainAfterThreshold() {
+        harness.addToBattlefield(player1, new RoughshodDuo());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        castFourShocks();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, player2.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Opponents spending four mana do not trigger Roughshod Duo")
+    void doesNotTriggerForOpponentSpells() {
+        harness.addToBattlefield(player1, new RoughshodDuo());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player2, List.of(new Shock(), new Shock(), new Shock(), new Shock()));
+        harness.addMana(player2, ManaColor.RED, 4);
+
+        for (int i = 0; i < 4; i++) {
+            harness.castAndResolveInstant(player2, 0, player1.getId());
+        }
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isFalse();
     }
 
@@ -94,9 +152,10 @@ class RoughshodDuoTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 4);
 
         for (int i = 0; i < 4; i++) {
-            harness.castInstant(player1, 0, player2.getId());
             if (i < 3) {
-                harness.passBothPriorities();
+                harness.castAndResolveInstant(player1, 0, player2.getId());
+            } else {
+                harness.castInstant(player1, 0, player2.getId());
             }
         }
     }
