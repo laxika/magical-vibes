@@ -12,8 +12,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(SerpentsPass.class)
+@CardUsed({SerpentsPass.class})
 class SerpentsPassTest extends BaseCardTest {
 
     @Test
@@ -66,6 +67,76 @@ class SerpentsPassTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore + 1);
     }
 
+    @Test
+    @DisplayName("Tapped Serpent's Pass cannot activate either ability")
+    void tappedPassCannotActivate() {
+        playPass();
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Serpent's Pass");
+        harness.assertNotInGraveyard(player1, "Serpent's Pass");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(4);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Drawing requires all four mana before the land is sacrificed")
+    void insufficientManaDoesNotSacrifice() {
+        Permanent pass = addReadyPass(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(pass.isTapped()).isFalse();
+        harness.assertOnBattlefield(player1, "Serpent's Pass");
+        harness.assertNotInGraveyard(player1, "Serpent's Pass");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A newly controlled noncreature land can produce mana without using the stack")
+    void newlyControlledLandProducesManaImmediately() {
+        harness.addToBattlefield(player1, new SerpentsPass());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "BLUE");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Drawing spends four mana and draws the top card after sacrificing the land")
+    void drawSpendsManaAndResolvesWithoutSource() {
+        addReadyPass(player1);
+        SerpentsPass topCard = new SerpentsPass();
+        harness.setLibrary(player1, List.of(topCard, new SerpentsPass()));
+        harness.setHand(player1, List.of());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+        harness.assertInGraveyard(player1, "Serpent's Pass");
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(topCard);
+        harness.assertNotOnBattlefield(player1, "Serpent's Pass");
+    }
     private void playPass() {
         harness.setHand(player1, List.of(new SerpentsPass()));
         harness.forceActivePlayer(player1);
@@ -75,9 +146,9 @@ class SerpentsPassTest extends BaseCardTest {
     }
 
     private Permanent addReadyPass(Player player) {
-        Permanent pass = new Permanent(new SerpentsPass());
+        Permanent pass = harness.addToBattlefieldAndReturn(player, new SerpentsPass());
         pass.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(pass);
+
         return pass;
     }
 }
