@@ -46,6 +46,60 @@ class RelentlessHunterTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, hunter, Keyword.TRAMPLE)).isFalse();
     }
 
+    @Test
+    @DisplayName("Repeated activations stack their boosts until end of turn")
+    void repeatedActivationsStack() {
+        Permanent hunter = addReadyHunter(player1);
+        addActivationMana(player1);
+        addActivationMana(player1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, hunter)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, hunter)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, hunter, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Hunter can activate its ability")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent hunter = addReadyHunter(player1);
+        hunter.setSummoningSick(true);
+        hunter.setTapped(true);
+        addActivationMana(player1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, hunter)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, hunter)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, hunter, Keyword.TRAMPLE)).isTrue();
+        assertThat(hunter.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The ability affects only its source, including among Hunters with the same name")
+    void affectsOnlyActivatingHunter() {
+        Permanent hunter = addReadyHunter(player1);
+        Permanent otherHunter = harness.addToBattlefieldAndReturn(player1, new RelentlessHunter());
+        Permanent opposingHunter = harness.addToBattlefieldAndReturn(player2, new RelentlessHunter());
+        addActivationMana(player1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, hunter)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, hunter)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, hunter, Keyword.TRAMPLE)).isTrue();
+        for (Permanent unaffected : new Permanent[]{otherHunter, opposingHunter}) {
+            assertThat(gqs.getEffectivePower(gd, unaffected)).isEqualTo(3);
+            assertThat(gqs.getEffectiveToughness(gd, unaffected)).isEqualTo(3);
+            assertThat(gqs.hasKeyword(gd, unaffected, Keyword.TRAMPLE)).isFalse();
+        }
+    }
+
     private void addActivationMana(Player player) {
         harness.addMana(player, ManaColor.RED, 1);
         harness.addMana(player, ManaColor.GREEN, 1);
@@ -53,9 +107,7 @@ class RelentlessHunterTest extends BaseCardTest {
     }
 
     private Permanent addReadyHunter(Player player) {
-        Permanent hunter = new Permanent(new RelentlessHunter());
-        hunter.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(hunter);
+        Permanent hunter = addCreatureReady(player, new RelentlessHunter());
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return hunter;
