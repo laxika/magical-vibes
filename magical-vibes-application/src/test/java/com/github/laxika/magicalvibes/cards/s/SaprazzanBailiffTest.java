@@ -93,6 +93,57 @@ class SaprazzanBailiffTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(bailiff.getCard());
     }
 
+    @Test
+    @DisplayName("Leaving returns newly buried cards but does not return cards exiled on entry")
+    void leavesReturningOnlyCardsCurrentlyInGraveyards() {
+        Card exiledArtifact = new DarksteelRelic();
+        Card exiledEnchantment = new ForcedWorship();
+        harness.setGraveyard(player1, List.of(exiledArtifact));
+        harness.setGraveyard(player2, List.of(exiledEnchantment));
+        castBailiff();
+
+        Card newArtifact = new DarksteelRelic();
+        Card newEnchantment = new ForcedWorship();
+        harness.setGraveyard(player1, List.of(newArtifact));
+        harness.setGraveyard(player2, List.of(newEnchantment));
+        Permanent bailiff = gd.playerBattlefields.get(player1.getId()).getFirst();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, bailiff));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(newArtifact).doesNotContain(exiledArtifact);
+        assertThat(gd.playerHands.get(player2.getId())).contains(newEnchantment).doesNotContain(exiledEnchantment);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(exiledArtifact);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(exiledEnchantment);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(bailiff.getCard());
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Leaving before the entry trigger resolves returns cards first and entry still exiles later cards")
+    void leavesBeforeEntryTriggerResolves() {
+        Card artifact = new DarksteelRelic();
+        Card enchantment = new ForcedWorship();
+        harness.setGraveyard(player1, List.of(artifact));
+        harness.setGraveyard(player2, List.of(enchantment));
+        harness.castFromHand(player1, new SaprazzanBailiff(), "{3}{U}{U}");
+        harness.passBothPriorities();
+
+        Permanent bailiff = gd.playerBattlefields.get(player1.getId()).getFirst();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, bailiff));
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).contains(artifact);
+        assertThat(gd.playerHands.get(player2.getId())).contains(enchantment);
+
+        Card laterArtifact = new DarksteelRelic();
+        harness.setGraveyard(player2, List.of(laterArtifact));
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(laterArtifact);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).contains(artifact);
+        assertThat(gd.playerHands.get(player2.getId())).contains(enchantment).doesNotContain(laterArtifact);
+    }
+
     private void castBailiff() {
         harness.castFromHand(player1, new SaprazzanBailiff(), "{3}{U}{U}");
         harness.passBothPriorities();
