@@ -1,12 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.t.TectonicEdge;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,17 +13,17 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ScribNibblers.class, TectonicEdge.class})
 class ScribNibblersTest extends BaseCardTest {
 
     @Test
     @DisplayName("Tapping Scrib Nibblers exiles a land and gains 1 life")
     void exilesLandAndGainsLife() {
         addReadyScribNibblers();
-        Card land = new Forest();
-        Card remaining = new GrizzlyBears();
+        Card land = new TectonicEdge();
+        Card remaining = new ScribNibblers();
         harness.setLibrary(player2, List.of(land, remaining));
         harness.setLife(player1, 20);
-        harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
@@ -38,10 +37,9 @@ class ScribNibblersTest extends BaseCardTest {
     @DisplayName("Tapping Scrib Nibblers exiles a nonland without gaining life")
     void exilesNonlandWithoutGainingLife() {
         addReadyScribNibblers();
-        Card nonland = new GrizzlyBears();
+        Card nonland = new ScribNibblers();
         harness.setLibrary(player2, List.of(nonland));
         harness.setLife(player1, 20);
-        harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
@@ -56,7 +54,7 @@ class ScribNibblersTest extends BaseCardTest {
     void landfallMayUntap() {
         Permanent scribNibblers = addReadyScribNibblers();
         scribNibblers.tap();
-        harness.setHand(player1, List.of(new Forest()));
+        harness.setHand(player1, List.of(new TectonicEdge()));
 
         harness.playLand(player1, 0);
         harness.passBothPriorities();
@@ -74,13 +72,58 @@ class ScribNibblersTest extends BaseCardTest {
     void decliningLandfallLeavesItTapped() {
         Permanent scribNibblers = addReadyScribNibblers();
         scribNibblers.tap();
-        harness.setHand(player1, List.of(new Forest()));
+        harness.setHand(player1, List.of(new TectonicEdge()));
 
         harness.playLand(player1, 0);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(scribNibblers.isTapped()).isTrue();
+    }
+
+    @Test
+    void canTargetOwnLibraryWithoutMana() {
+        Permanent nibblers = addReadyScribNibblers();
+        Card land = new TectonicEdge();
+        harness.setLibrary(player1, List.of(land));
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        assertThat(nibblers.isTapped()).isTrue();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(land);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 21);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(land);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void emptyLibraryDoesNotGainLife() {
+        Permanent nibblers = addReadyScribNibblers();
+        harness.setLibrary(player2, List.of());
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        assertThat(nibblers.isTapped()).isTrue();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void opposingLandDoesNotTriggerUntap() {
+        Permanent nibblers = addReadyScribNibblers();
+        nibblers.tap();
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new TectonicEdge()));
+
+        harness.playLand(player2, 0);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(nibblers.isTapped()).isTrue();
     }
 
     private Permanent addReadyScribNibblers() {
