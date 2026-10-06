@@ -48,4 +48,55 @@ class SifsSpearmasterTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("opponent");
     }
+
+    @Test
+    @DisplayName("Determines power when the ability resolves")
+    void usesPowerAtResolution() {
+        Permanent spearmaster = addCreatureReady(player1, new SifsSpearmaster());
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        spearmaster.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    @DisplayName("Zero power deals no damage but still pays the tap cost")
+    void zeroPowerDealsNoDamage() {
+        Permanent spearmaster = addCreatureReady(player1, new SifsSpearmaster());
+        spearmaster.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20);
+        assertThat(spearmaster.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Cannot activate while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        Permanent spearmaster = addCreatureReady(player1, new SifsSpearmaster());
+        spearmaster.setSummoningSick(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(spearmaster.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Cannot activate again without untapping")
+    void cannotActivateWhileTapped() {
+        addCreatureReady(player1, new SifsSpearmaster());
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("tapped");
+    }
 }
