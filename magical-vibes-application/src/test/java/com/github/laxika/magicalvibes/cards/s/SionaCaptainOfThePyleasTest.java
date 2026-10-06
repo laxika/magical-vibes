@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HolyStrength;
+import com.github.laxika.magicalvibes.cards.n.NyxbornCourser;
+import com.github.laxika.magicalvibes.cards.i.Ichthyomorphosis;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -19,28 +19,23 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SionaCaptainOfThePyleas.class, HolyStrength.class, GrizzlyBears.class})
+@CardUsed({SionaCaptainOfThePyleas.class, SentinelsEyes.class, NyxbornCourser.class,
+        Ichthyomorphosis.class})
 class SionaCaptainOfThePyleasTest extends BaseCardTest {
 
     @Test
     @DisplayName("Siona may put an Aura from the top seven cards into its controller's hand")
     void entersAndOffersAuraFromTopSeven() {
-        Card aura = new HolyStrength();
-        Card creature1 = new GrizzlyBears();
-        Card creature2 = new GrizzlyBears();
-        Card creature3 = new GrizzlyBears();
-        Card creature4 = new GrizzlyBears();
-        Card creature5 = new GrizzlyBears();
-        Card creature6 = new GrizzlyBears();
+        Card aura = new SentinelsEyes();
+        Card creature1 = new NyxbornCourser();
+        Card creature2 = new NyxbornCourser();
+        Card creature3 = new NyxbornCourser();
+        Card creature4 = new NyxbornCourser();
+        Card creature5 = new NyxbornCourser();
+        Card creature6 = new NyxbornCourser();
         harness.setLibrary(player1, List.of(aura, creature1, creature2, creature3, creature4, creature5, creature6));
-        harness.setHand(player1, List.of(new SionaCaptainOfThePyleas()));
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.WHITE, 1);
-
-        harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.castFromHand(player1, new SionaCaptainOfThePyleas(), "{1}{G}{W}");
+        resolveAllTriggers();
 
         PendingInteraction.LibraryRevealChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);
@@ -63,7 +58,7 @@ class SionaCaptainOfThePyleasTest extends BaseCardTest {
     void alliedAuraAttachmentCreatesSoldier() {
         Permanent siona = addCreatureReady(player1, new SionaCaptainOfThePyleas());
 
-        enchantWithHolyStrength(player1, siona);
+        enchantWithSentinelsEyes(player1, siona);
 
         List<Permanent> tokens = findPermanents(player1, "Human Soldier");
         assertThat(tokens).hasSize(1);
@@ -80,7 +75,7 @@ class SionaCaptainOfThePyleasTest extends BaseCardTest {
     void opponentsAuraDoesNotCreateSoldier() {
         Permanent siona = addCreatureReady(player1, new SionaCaptainOfThePyleas());
 
-        enchantWithHolyStrength(player2, siona);
+        enchantWithSentinelsEyes(player2, siona);
 
         assertThat(findPermanents(player1, "Human Soldier")).isEmpty();
         assertThat(findPermanents(player2, "Human Soldier")).isEmpty();
@@ -90,22 +85,114 @@ class SionaCaptainOfThePyleasTest extends BaseCardTest {
     @DisplayName("An Aura you control attaching to an opponent's creature does not create a token")
     void auraOnOpponentsCreatureDoesNotCreateSoldier() {
         addCreatureReady(player1, new SionaCaptainOfThePyleas());
-        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player2, new NyxbornCourser());
 
-        enchantWithHolyStrength(player1, bears);
+        enchantWithSentinelsEyes(player1, bears);
 
         assertThat(findPermanents(player1, "Human Soldier")).isEmpty();
     }
 
-    private void enchantWithHolyStrength(Player controller, Permanent target) {
+    @Test
+    void mayDeclineAuraFromShortLibrary() {
+        Card aura = new SentinelsEyes();
+        Card creature = new NyxbornCourser();
+        harness.setLibrary(player1, List.of(aura, creature));
+
+        harness.castFromHand(player1, new SionaCaptainOfThePyleas(), "{1}{G}{W}");
+        resolveAllTriggers();
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(aura, creature);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void mayChooseAuraFromShortLibrary() {
+        Card aura = new SentinelsEyes();
+        harness.setLibrary(player1, List.of(aura));
+
+        harness.castFromHand(player1, new SionaCaptainOfThePyleas(), "{1}{G}{W}");
+        resolveAllTriggers();
+        harness.handleMultipleCardsChosen(player1, List.of(aura.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(aura);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void noAuraInTopSevenLeavesEighthCardOnTop() {
+        List<Card> topSeven = List.of(new NyxbornCourser(), new NyxbornCourser(),
+                new NyxbornCourser(), new NyxbornCourser(), new NyxbornCourser(),
+                new NyxbornCourser(), new NyxbornCourser());
+        Card eighthCard = new SentinelsEyes();
+        java.util.ArrayList<Card> library = new java.util.ArrayList<>(topSeven);
+        library.add(eighthCard);
+        harness.setLibrary(player1, library);
+
+        harness.castFromHand(player1, new SionaCaptainOfThePyleas(), "{1}{G}{W}");
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(eighthCard);
+        assertThat(gd.playerDecks.get(player1.getId()).subList(1, 8))
+                .containsExactlyInAnyOrderElementsOf(topSeven);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void emptyLibraryDoesNotRequireChoice() {
+        harness.setLibrary(player1, List.of());
+
+        harness.castFromHand(player1, new SionaCaptainOfThePyleas(), "{1}{G}{W}");
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void eachAuraAttachedToAnotherAlliedCreatureCreatesSoldier() {
+        addCreatureReady(player1, new SionaCaptainOfThePyleas());
+        Permanent creature = addCreatureReady(player1, new NyxbornCourser());
+
+        enchantWithSentinelsEyes(player1, creature);
+        assertThat(findPermanents(player1, "Human Soldier")).hasSize(1);
+
+        enchantWithSentinelsEyes(player1, creature);
+        assertThat(findPermanents(player1, "Human Soldier")).hasSize(2);
+    }
+
+    @Test
+    void sionaWithNoAbilitiesDoesNotCreateSoldier() {
+        Permanent siona = addCreatureReady(player1, new SionaCaptainOfThePyleas());
+        Permanent creature = addCreatureReady(player1, new NyxbornCourser());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Ichthyomorphosis()));
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.castEnchantment(player2, 0, siona.getId());
+        resolveAllTriggers();
+        harness.assertOnBattlefield(player2, "Ichthyomorphosis");
+
+        enchantWithSentinelsEyes(player1, creature);
+
+        assertThat(findPermanents(player1, "Human Soldier")).isEmpty();
+    }
+
+    private void enchantWithSentinelsEyes(Player controller, Permanent target) {
         harness.forceActivePlayer(controller);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(controller, List.of(new HolyStrength()));
+        harness.setHand(controller, List.of(new SentinelsEyes()));
         harness.addMana(controller, ManaColor.WHITE, 1);
 
         harness.castEnchantment(controller, 0, target.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 }
