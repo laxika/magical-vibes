@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({ShrapnelBlast.class, AlphaMyr.class, AncientDen.class, LeoninDenGuard.class})
@@ -94,5 +95,65 @@ class ShrapnelBlastTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Alpha Myr");
         harness.assertOnBattlefield(player1, "Ancient Den");
         harness.assertInHand(player1, "Shrapnel Blast");
+    }
+
+    @Test
+    @DisplayName("An artifact land can pay the sacrifice cost, before damage resolves")
+    void sacrificesArtifactLandAsCastingCost() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new AncientDen());
+        artifact.tap();
+        harness.setHand(player1, List.of(new ShrapnelBlast()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castInstantWithSacrifice(player1, 0, player2.getId(), artifact.getId());
+
+        harness.assertNotOnBattlefield(player1, "Ancient Den");
+        harness.assertInGraveyard(player1, "Ancient Den");
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 15);
+        harness.assertInGraveyard(player1, "Shrapnel Blast");
+    }
+
+    @Test
+    @DisplayName("Cannot sacrifice an opponent's artifact")
+    void cannotSacrificeOpponentsArtifact() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new AlphaMyr());
+        harness.setHand(player1, List.of(new ShrapnelBlast()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castInstantWithSacrifice(player1, 0, player2.getId(), artifact.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player2, "Alpha Myr");
+        harness.assertInHand(player1, "Shrapnel Blast");
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can target the artifact creature sacrificed as the cost, then fails to resolve")
+    void canTargetSacrificedArtifactCreature() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new AlphaMyr());
+        harness.setHand(player1, List.of(new ShrapnelBlast()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castInstantWithSacrifice(player1, 0, artifact.getId(), artifact.getId());
+
+        harness.assertInGraveyard(player1, "Alpha Myr");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Shrapnel Blast");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
     }
 }
