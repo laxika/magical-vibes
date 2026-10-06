@@ -64,4 +64,40 @@ class RatcatcherTraineeTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard().getId().equals(card.getId()));
     }
+
+    @Test
+    void castingCreatureDirectlyDoesNotCreateRatsOrExileTheCard() {
+        RatcatcherTrainee card = new RatcatcherTrainee();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Ratcatcher Trainee");
+        assertThat(countPermanents(player1, "Rat")).isZero();
+        assertThat(gd.findExiledCard(card.getId())).isNull();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Ratcatcher Trainee"),
+                Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
+    void adventureCanBeCastDuringOpponentsTurnAndCreatesRatsForItsCaster() {
+        RatcatcherTrainee card = new RatcatcherTrainee();
+        harness.setHand(player1, List.of(card));
+        harness.forceActivePlayer(player2);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAdventure(player1, 0, List.of());
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Rat")).isEqualTo(2);
+        assertThat(countPermanents(player2, "Rat")).isZero();
+        assertThat(findPermanents(player1, "Rat"))
+                .allMatch(rat -> !bls.canBlock(gd, rat));
+        assertThat(gd.findExiledCard(card.getId())).isNotNull();
+        harness.assertNotInGraveyard(player1, "Ratcatcher Trainee");
+    }
 }
