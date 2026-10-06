@@ -17,7 +17,44 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({GrizzlyBears.class, SamiteHealer.class, Scalpelexis.class, SerraAngel.class, SkyhunterProwler.class, SteadfastGuard.class, SuntailHawk.class})
 class ScalpelexisTest extends BaseCardTest {
 
-    // ===== Combat damage trigger =====
+    @Test
+    @DisplayName("Names shared between batches do not cause another repeat")
+    void duplicateNamesAreCheckedOnlyWithinEachBatch() {
+        Permanent scalpelexis = addCreatureReady(player1, new Scalpelexis());
+        scalpelexis.setAttacking(true);
+        Card remaining = new SkyhunterProwler();
+        harness.setLibrary(player2, List.of(
+                new GrizzlyBears(), new GrizzlyBears(), new SerraAngel(), new SuntailHawk(),
+                new GrizzlyBears(), new SerraAngel(), new SuntailHawk(), new SamiteHealer(),
+                remaining));
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).hasSize(8);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(remaining);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Combat damage trigger resolves after Scalpelexis leaves the battlefield")
+    void triggerSurvivesSourceLeavingBattlefield() {
+        Permanent scalpelexis = addCreatureReady(player1, new Scalpelexis());
+        scalpelexis.setAttacking(true);
+        harness.setLibrary(player2, List.of(
+                new GrizzlyBears(), new SerraAngel(), new SuntailHawk(), new SamiteHealer()));
+
+        resolveCombat();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(scalpelexis);
+        gd.playerGraveyards.get(player1.getId()).add(scalpelexis.getCard());
+        resolveAllTriggers();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).hasSize(4);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+    }
 
     @Test
     @DisplayName("Dealing combat damage exiles top four cards when all names are unique")
@@ -34,6 +71,7 @@ class ScalpelexisTest extends BaseCardTest {
         ));
 
         resolveCombat();
+        resolveAllTriggers();
 
         GameData gd = harness.getGameData();
         assertThat(gd.getPlayerExiledCards(player2.getId())).hasSize(4);
@@ -61,6 +99,7 @@ class ScalpelexisTest extends BaseCardTest {
         ));
 
         resolveCombat();
+        resolveAllTriggers();
 
         GameData gd = harness.getGameData();
         assertThat(gd.getPlayerExiledCards(player2.getId())).hasSize(8);
@@ -93,6 +132,7 @@ class ScalpelexisTest extends BaseCardTest {
         ));
 
         resolveCombat();
+        resolveAllTriggers();
 
         GameData gd = harness.getGameData();
         assertThat(gd.getPlayerExiledCards(player2.getId())).hasSize(12);
@@ -116,6 +156,7 @@ class ScalpelexisTest extends BaseCardTest {
         ));
 
         resolveCombat();
+        resolveAllTriggers();
 
         GameData gd = harness.getGameData();
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
@@ -134,6 +175,7 @@ class ScalpelexisTest extends BaseCardTest {
         ));
 
         resolveCombat();
+        resolveAllTriggers();
 
         GameData gd = harness.getGameData();
         assertThat(gd.getPlayerExiledCards(player2.getId())).hasSize(2);
@@ -149,6 +191,7 @@ class ScalpelexisTest extends BaseCardTest {
         harness.setLibrary(player2, List.of());
 
         resolveCombat();
+        resolveAllTriggers();
 
         GameData gd = harness.getGameData();
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
@@ -173,6 +216,7 @@ class ScalpelexisTest extends BaseCardTest {
         ));
 
         resolveCombat();
+        resolveAllTriggers();
 
         GameData gd = harness.getGameData();
         assertThat(gd.getPlayerExiledCards(player2.getId())).hasSize(6);
@@ -194,6 +238,7 @@ class ScalpelexisTest extends BaseCardTest {
         ));
 
         resolveCombat();
+        resolveAllTriggers();
 
         GameData gd = harness.getGameData();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
@@ -214,6 +259,7 @@ class ScalpelexisTest extends BaseCardTest {
         ));
 
         resolveCombat();
+        resolveAllTriggers();
 
         GameData gd = harness.getGameData();
         List<Card> exiledCards = gd.getPlayerExiledCards(player2.getId());
@@ -235,6 +281,7 @@ class ScalpelexisTest extends BaseCardTest {
         ));
 
         resolveCombat();
+        resolveAllTriggers();
 
         GameData gd = harness.getGameData();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("Grizzly Bears") && log.contains("Serra Angel"));
@@ -253,6 +300,7 @@ class ScalpelexisTest extends BaseCardTest {
         ));
 
         resolveCombat();
+        resolveAllTriggers();
 
         GameData gd = harness.getGameData();
         assertThat(gd.getPlayerExiledCards(player2.getId())).hasSize(2);
