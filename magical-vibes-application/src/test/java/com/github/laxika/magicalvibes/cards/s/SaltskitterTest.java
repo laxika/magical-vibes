@@ -33,6 +33,7 @@ class SaltskitterTest extends BaseCardTest {
                 .anyMatch(card -> card.getId().equals(saltskitter.getCard().getId()));
 
         harness.passUntil(player2, TurnStep.END_STEP);
+        harness.passBothPriorities();
 
         Permanent returned = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().getId().equals(saltskitter.getCard().getId()))
@@ -92,10 +93,60 @@ class SaltskitterTest extends BaseCardTest {
                 .noneMatch(exiled -> exiled.getId().equals(card.getId()));
 
         harness.passUntil(player2, TurnStep.END_STEP);
+        harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard().getId().equals(card.getId()));
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(permanent -> permanent.getCard().getId().equals(card.getId()));
+    }
+
+    @Test
+    @DisplayName("A creature entering during the end step delays the return until the following end step")
+    void entryDuringEndStepWaitsForFollowingEndStep() {
+        Permanent saltskitter = harness.addToBattlefieldAndReturn(player1, new Saltskitter());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.enterBattlefieldAndReturn(player1, new FomoriNomad());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(saltskitter);
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(saltskitter);
+
+        harness.passUntil(player2, TurnStep.END_STEP);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(saltskitter);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(saltskitter.getCard().getId()));
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .noneMatch(card -> card.getId().equals(saltskitter.getCard().getId()));
+    }
+
+    @Test
+    @DisplayName("Multiple queued entry triggers exile the source only once")
+    void multipleQueuedTriggersReturnOnlyOnePermanent() {
+        Permanent saltskitter = harness.addToBattlefieldAndReturn(player1, new Saltskitter());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.enterBattlefieldAndReturn(player1, new FomoriNomad());
+        harness.enterBattlefieldAndReturn(player2, new FomoriNomad());
+
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(saltskitter);
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .filteredOn(card -> card.getId().equals(saltskitter.getCard().getId())).hasSize(1);
+
+        harness.passUntil(player1, TurnStep.END_STEP);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().getId().equals(saltskitter.getCard().getId()))
+                .hasSize(1);
+        assertThat(gd.stack).isEmpty();
     }
 }
