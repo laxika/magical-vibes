@@ -64,4 +64,73 @@ class SchemaThiefTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
     }
+
+    @Test
+    @DisplayName("Copying a tapped artifact creates an untapped token")
+    void tappedStatusIsNotCopied() {
+        Permanent thief = addCreatureReady(player1, new SchemaThief());
+        thief.setAttacking(true);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new HowlingMine());
+        artifact.setTapped(true);
+
+        resolveCombat();
+        harness.handlePermanentChosen(player1, artifact.getId());
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Howling Mine")).hasSize(1);
+        assertThat(findPermanent(player1, "Howling Mine").isTapped()).isFalse();
+        assertThat(artifact.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The copy ability resolves even if Schema Thief leaves the battlefield")
+    void sourceLeavingDoesNotStopCopy() {
+        Permanent thief = addCreatureReady(player1, new SchemaThief());
+        thief.setAttacking(true);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new HowlingMine());
+
+        resolveCombat();
+        harness.handlePermanentChosen(player1, artifact.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(thief);
+        gd.playerGraveyards.get(player1.getId()).add(thief.getCard());
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Howling Mine")).hasSize(1);
+        assertThat(findPermanent(player1, "Howling Mine").getCard().isToken()).isTrue();
+    }
+
+    @Test
+    @DisplayName("No token is created if the targeted artifact leaves before resolution")
+    void targetLeavingStopsCopy() {
+        Permanent thief = addCreatureReady(player1, new SchemaThief());
+        thief.setAttacking(true);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new HowlingMine());
+
+        resolveCombat();
+        harness.handlePermanentChosen(player1, artifact.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(artifact);
+        gd.playerGraveyards.get(player2.getId()).add(artifact.getCard());
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Howling Mine")).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The targeted artifact must still be controlled by the damaged player at resolution")
+    void targetChangingControllerStopsCopy() {
+        Permanent thief = addCreatureReady(player1, new SchemaThief());
+        thief.setAttacking(true);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new HowlingMine());
+
+        resolveCombat();
+        harness.handlePermanentChosen(player1, artifact.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(artifact);
+        gd.playerBattlefields.get(player1.getId()).add(artifact);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Howling Mine")).containsExactly(artifact);
+        assertThat(artifact.getCard().isToken()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
 }
