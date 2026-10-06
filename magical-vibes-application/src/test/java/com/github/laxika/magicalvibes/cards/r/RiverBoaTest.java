@@ -15,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RiverBoa.class, GrizzlyBears.class})
+@CardUsed({RiverBoa.class, GrizzlyBears.class, Island.class})
 class RiverBoaTest extends BaseCardTest {
 
     @Test
@@ -99,6 +99,77 @@ class RiverBoaTest extends BaseCardTest {
     @Test
     @DisplayName("Islandwalk does not prevent blocking when the defender controls no Island")
     void islandwalkAllowsBlockingWithoutIsland() {
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new RiverBoa());
+        attacker.setAttacking(true);
+
+        prepareDeclareBlockers(player1);
+
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Creating a regeneration shield does not tap River Boa")
+    void creatingShieldDoesNotTapCreature() {
+        Permanent boa = addCreatureReady(player1, new RiverBoa());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(boa.isTapped()).isFalse();
+        assertThat(boa.getRegenerationShield()).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "River Boa");
+    }
+
+    @Test
+    @DisplayName("A tapped River Boa with summoning sickness can activate regeneration")
+    void tappedSummoningSickCreatureCanRegenerate() {
+        harness.addToBattlefield(player1, new RiverBoa());
+        Permanent boa = findPermanent(player1, "River Boa");
+        boa.setSummoningSick(true);
+        boa.tap();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(boa.getRegenerationShield()).isEqualTo(1);
+        assertThat(boa.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An activated regeneration shield saves River Boa in combat")
+    void activatedShieldSavesCreatureInCombat() {
+        Permanent boa = addCreatureReady(player1, new RiverBoa());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        boa.setBlocking(true);
+        boa.addBlockingTarget(0);
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        attacker.setAttacking(true);
+
+        resolveCombat(player2);
+
+        harness.assertOnBattlefield(player1, "River Boa");
+        harness.assertNotInGraveyard(player1, "River Boa");
+        assertThat(boa.isTapped()).isTrue();
+        assertThat(boa.getMarkedDamage()).isZero();
+        assertThat(boa.getRegenerationShield()).isZero();
+        assertThat(boa.isBlocking()).isFalse();
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("An Island controlled by the attacker does not enable islandwalk")
+    void attackersIslandDoesNotPreventBlocking() {
+        harness.addToBattlefield(player1, new Island());
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         Permanent attacker = addCreatureReady(player1, new RiverBoa());
         attacker.setAttacking(true);
