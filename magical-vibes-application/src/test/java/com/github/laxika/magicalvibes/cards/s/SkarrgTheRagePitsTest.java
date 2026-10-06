@@ -58,7 +58,6 @@ class SkarrgTheRagePitsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, creature.getId());
         harness.passBothPriorities();
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
@@ -93,5 +92,65 @@ class SkarrgTheRagePitsTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, noncreature.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("The boost requires both red and green mana")
+    void cannotPayForBoostWithOnlyRedMana() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new SkarrgTheRagePits());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new IzzetChronarch());
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        assertThat(land.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Two activations stack their boosts and spend their mana")
+    void boostsFromTwoLandsAccumulate() {
+        harness.addToBattlefield(player1, new SkarrgTheRagePits());
+        harness.addToBattlefield(player1, new SkarrgTheRagePits());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new IzzetChronarch());
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, 1, null, creature.getId());
+        harness.activateAbility(player1, 1, 1, null, creature.getId());
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("The activated boost resolves even after its source leaves")
+    void boostResolvesWithoutItsSource() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new SkarrgTheRagePits());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new IzzetChronarch());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, 1, null, creature.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(land);
+        gd.playerGraveyards.get(player1.getId()).add(land.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
     }
 }
