@@ -1,8 +1,11 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.d.DayOfJudgment;
+import com.github.laxika.magicalvibes.cards.f.Fireball;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.s.Shatter;
+import com.github.laxika.magicalvibes.cards.v.ValkmiraProtectorsShield;
 import com.github.laxika.magicalvibes.cards.s.SnowCoveredPlains;
 import com.github.laxika.magicalvibes.cards.z.ZuranSpellcaster;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -19,7 +22,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({ReidaneGodOfTheWorthy.class, SnowCoveredPlains.class, DayOfJudgment.class,
-        GrizzlyBears.class, Shock.class, ZuranSpellcaster.class})
+        GrizzlyBears.class, Shock.class, ZuranSpellcaster.class, Fireball.class,
+        Shatter.class, ValkmiraProtectorsShield.class})
 class ReidaneGodOfTheWorthyTest extends BaseCardTest {
 
     @Test
@@ -65,8 +69,7 @@ class ReidaneGodOfTheWorthyTest extends BaseCardTest {
 
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
     }
@@ -78,8 +81,7 @@ class ReidaneGodOfTheWorthyTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
 
-        harness.castInstant(player2, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, bears.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(bears);
         harness.assertInGraveyard(player2, "Shock");
@@ -103,8 +105,7 @@ class ReidaneGodOfTheWorthyTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 2);
 
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
         harness.handleMayAbilityChosen(player2, true);
         harness.passBothPriorities();
 
@@ -115,6 +116,83 @@ class ReidaneGodOfTheWorthyTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
+    }
+
+    @Test
+    void opponentSpellWithChosenXReachingFourCostsTwoMore() {
+        harness.addToBattlefield(player1, new ReidaneGodOfTheWorthy());
+        harness.setHand(player2, List.of(new Fireball()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        prepareOpponentMainPhase();
+
+        assertThatThrownBy(() -> harness.castSorcery(player2, 0, 3, player1.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    void backFaceDoesNotTriggerWhenItselfIsTargeted() {
+        Permanent shield = addValkmira(player1);
+        harness.setHand(player2, List.of(new Shatter()));
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player2, 0, shield.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(shield);
+        harness.assertInGraveyard(player2, "Shatter");
+    }
+
+    @Test
+    void backFacePreventsOneDamageToControlledCreature() {
+        addValkmira(player1);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player2, 0, bears.getId());
+        harness.handleMayAbilityChosen(player2, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(bears);
+        assertThat(bears.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    void controllersHighManaValueSpellIsNotTaxed() {
+        harness.addToBattlefield(player1, new ReidaneGodOfTheWorthy());
+        harness.setHand(player1, List.of(new DayOfJudgment()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        harness.assertInGraveyard(player1, "Day of Judgment");
+        harness.assertInGraveyard(player1, "Reidane, God of the Worthy");
+    }
+
+    @Test
+    void opponentCanCastHighManaValueSpellWithTaxPaid() {
+        harness.addToBattlefield(player1, new ReidaneGodOfTheWorthy());
+        harness.setHand(player2, List.of(new DayOfJudgment()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 4);
+        prepareOpponentMainPhase();
+
+        harness.castAndResolveSorcery(player2, 0, 0);
+
+        harness.assertInGraveyard(player2, "Day of Judgment");
+        harness.assertInGraveyard(player1, "Reidane, God of the Worthy");
+    }
+
+    @Test
+    void backFaceDoesNotPreventDamageFromControllersOwnSource() {
+        addValkmira(player1);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+
+        harness.assertLife(player1, 18);
     }
 
     private Permanent addValkmira(Player player) {
