@@ -92,4 +92,107 @@ class ScarabOfTheUnseenTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a permanent you own");
     }
+
+    @Test
+    @DisplayName("A tapped Scarab cannot pay its activation cost")
+    void cannotActivateWhileTapped() {
+        Permanent scarab = harness.addToBattlefieldAndReturn(player1, new ScarabOfTheUnseen());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        scarab.setTapped(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, forest.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(scarab);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A draw scheduled before upkeep waits until the next turn's upkeep")
+    void doesNotDrawDuringSameTurnUpkeep() {
+        harness.addToBattlefield(player1, new ScarabOfTheUnseen());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.activateAbility(player1, 0, null, forest.getId());
+        harness.passBothPriorities();
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).hasSize(1);
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can target an owned permanent controlled by an opponent")
+    void canTargetOwnedPermanentUnderOpponentControl() {
+        harness.addToBattlefield(player1, new ScarabOfTheUnseen());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        gd.stolenCreatures.put(bears.getId(), player1.getId());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new HolyStrength());
+        aura.setAttachedTo(bears.getId());
+
+        harness.activateAbility(player1, 0, null, bears.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Holy Strength");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(bears).doesNotContain(aura);
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Cannot target an opponent-owned permanent even when controlling it")
+    void cannotTargetControlledButUnownedPermanent() {
+        harness.addToBattlefield(player1, new ScarabOfTheUnseen());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        gd.stolenCreatures.put(bears.getId(), player2.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a permanent you own");
+        harness.assertOnBattlefield(player1, "Scarab of the Unseen");
+    }
+
+    @Test
+    @DisplayName("Targeting itself pays the sacrifice cost but does not schedule a draw")
+    void selfTargetIsIllegalOnResolution() {
+        Permanent scarab = harness.addToBattlefieldAndReturn(player1, new ScarabOfTheUnseen());
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.activateAbility(player1, 0, null, scarab.getId());
+        harness.assertInGraveyard(player1, "Scarab of the Unseen");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+    }
+
+    @Test
+    @DisplayName("Returns a stolen Aura to its owner and leaves Auras on other permanents alone")
+    void returnsStolenAuraToOwnerOnlyFromTarget() {
+        harness.addToBattlefield(player1, new ScarabOfTheUnseen());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent stolenAura = harness.addToBattlefieldAndReturn(player1, new HolyStrength());
+        gd.stolenCreatures.put(stolenAura.getId(), player2.getId());
+        stolenAura.setAttachedTo(target.getId());
+        Permanent otherAura = harness.addToBattlefieldAndReturn(player1, new HolyStrength());
+        otherAura.setAttachedTo(other.getId());
+        int ownHandBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Holy Strength");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(ownHandBefore);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .contains(target, other, otherAura).doesNotContain(stolenAura);
+        assertThat(otherAura.getAttachedTo()).isEqualTo(other.getId());
+    }
 }
