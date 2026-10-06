@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -59,6 +60,39 @@ class RomanaIITest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()).getLast().isTapped()).isTrue();
     }
 
+    @Test
+    @DisplayName("Cannot target a nontoken permanent that entered this turn")
+    void cannotTargetNontoken() {
+        Permanent romana = addReadyRomana();
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, permanentIndex(romana), null, romana.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(romana.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Copying a token does not copy its counters or damage")
+    void copiesBaseTokenWithoutCountersOrDamage() {
+        Permanent romana = addReadyRomana();
+        Permanent original = createSoldiers().getFirst();
+        original.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        original.setMarkedDamage(1);
+
+        harness.activateAbility(player1, permanentIndex(romana), null, original.getId());
+        assertThat(romana.isTapped()).isTrue();
+        harness.passBothPriorities();
+
+        Permanent copy = gd.playerBattlefields.get(player1.getId()).getLast();
+        assertThat(copy.getId()).isNotEqualTo(original.getId());
+        assertThat(copy.isTapped()).isTrue();
+        assertThat(copy.getPlusOnePlusOneCounters()).isZero();
+        assertThat(copy.getMarkedDamage()).isZero();
+        assertThat(gqs.getEffectivePower(gd, copy)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, copy)).isEqualTo(1);
+    }
+
     private Permanent addReadyRomana() {
         Permanent romana = harness.addToBattlefieldAndReturn(player1, new RomanaII());
         romana.setSummoningSick(false);
@@ -72,8 +106,7 @@ class RomanaIITest extends BaseCardTest {
     private List<Permanent> createSoldiers() {
         harness.setHand(player1, List.of(new RaiseTheAlarm()));
         harness.addMana(player1, ManaColor.WHITE, 2);
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
         return gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken())
                 .toList();
@@ -82,8 +115,7 @@ class RomanaIITest extends BaseCardTest {
     private Permanent createOpponentToken() {
         harness.setHand(player2, List.of(new RaiseTheAlarm()));
         harness.addMana(player2, ManaColor.WHITE, 2);
-        harness.castInstant(player2, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0);
         return gd.playerBattlefields.get(player2.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken())
                 .findFirst()
