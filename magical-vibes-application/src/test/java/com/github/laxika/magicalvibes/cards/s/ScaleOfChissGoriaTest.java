@@ -114,4 +114,69 @@ class ScaleOfChissGoriaTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ARTIFACT_SPELL);
     }
+
+    @Test
+    @DisplayName("A tapped Scale cannot activate again")
+    void cannotActivateWhileTapped() {
+        Permanent scale = harness.addToBattlefieldAndReturn(player1, new ScaleOfChissGoria());
+        Permanent ornithopter = addCreatureReady(player1, new Ornithopter());
+        harness.activateAbility(player1, 0, null, ornithopter.getId());
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, ornithopter.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(scale.isTapped()).isTrue();
+        assertThat(gqs.getEffectiveToughness(gd, ornithopter)).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The ability resolves after Scale leaves the battlefield")
+    void abilityResolvesAfterSourceLeaves() {
+        Permanent scale = harness.addToBattlefieldAndReturn(player1, new ScaleOfChissGoria());
+        Permanent ornithopter = addCreatureReady(player1, new Ornithopter());
+        harness.activateAbility(player1, 0, null, ornithopter.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, scale));
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, ornithopter)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, ornithopter)).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The ability does not affect a creature that leaves and returns")
+    void returnedCreatureIsANewTarget() {
+        harness.addToBattlefield(player1, new ScaleOfChissGoria());
+        Permanent ornithopter = addCreatureReady(player1, new Ornithopter());
+        harness.activateAbility(player1, 0, null, ornithopter.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToHand(gd, ornithopter));
+        harness.setHand(player1, List.of());
+        Permanent returned = harness.addToBattlefieldAndReturn(player1, ornithopter.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectiveToughness(gd, returned)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Affinity ignores nonartifacts and counts tapped artifacts")
+    void affinityCountsTappedArtifactsButNotLands() {
+        Permanent bonesplitter = harness.addToBattlefieldAndReturn(player1, new Bonesplitter());
+        bonesplitter.setTapped(true);
+        for (int i = 0; i < 3; i++) {
+            harness.addToBattlefield(player1, new Forest());
+        }
+        harness.setHand(player1, List.of(new ScaleOfChissGoria()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castArtifact(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+    }
 }
