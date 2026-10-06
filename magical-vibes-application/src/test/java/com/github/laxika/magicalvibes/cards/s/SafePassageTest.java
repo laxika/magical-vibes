@@ -1,15 +1,18 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.b.Banefire;
+import com.github.laxika.magicalvibes.cards.c.CanyonMinotaur;
+import com.github.laxika.magicalvibes.cards.c.CrawWurm;
+import com.github.laxika.magicalvibes.cards.g.GarrukWildspeaker;
+import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,20 +21,9 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SafePassage.class, CanyonMinotaur.class, CrawWurm.class, RuneclawBear.class,
+        LightningBolt.class, GarrukWildspeaker.class, SignInBlood.class, Banefire.class})
 class SafePassageTest extends BaseCardTest {
-
-    private static Card createCreature(String name, int power, int toughness) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{1}");
-        card.setColor(CardColor.GREEN);
-        card.setPower(power);
-        card.setToughness(toughness);
-        return card;
-    }
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting Safe Passage puts it on the stack")
@@ -58,8 +50,6 @@ class SafePassageTest extends BaseCardTest {
                 .hasMessageContaining("not playable");
     }
 
-    // ===== Resolution =====
-
     @Test
     @DisplayName("Resolving Safe Passage adds controller to playersWithAllDamagePrevented")
     void resolvingAddsControllerToPrevented() {
@@ -67,8 +57,7 @@ class SafePassageTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         GameData gd = harness.getGameData();
         assertThat(gd.playersWithAllDamagePrevented).contains(player1.getId());
@@ -81,13 +70,10 @@ class SafePassageTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         harness.assertInGraveyard(player1, "Safe Passage");
     }
-
-    // ===== Prevents combat damage to player =====
 
     @Test
     @DisplayName("Prevents combat damage to controller from attacking creature")
@@ -95,10 +81,9 @@ class SafePassageTest extends BaseCardTest {
         harness.setLife(player2, 20);
         harness.getGameData().playersWithAllDamagePrevented.add(player2.getId());
 
-        Permanent attacker = new Permanent(createCreature("Bear", 3, 3));
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new CanyonMinotaur());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(attacker);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -106,27 +91,22 @@ class SafePassageTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        harness.assertLife(player2, 20);
     }
-
-    // ===== Prevents combat damage to creatures =====
 
     @Test
     @DisplayName("Prevents combat damage to controller's blocking creature")
     void preventsCombatDamageToBlockingCreature() {
         harness.getGameData().playersWithAllDamagePrevented.add(player2.getId());
 
-        Permanent attacker = new Permanent(createCreature("Big Bear", 5, 5));
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new CrawWurm());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(new GrizzlyBears());
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new RuneclawBear());
         blocker.setSummoningSick(false);
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(blocker);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -134,11 +114,9 @@ class SafePassageTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        // 5 damage to blocker is prevented, so Grizzly Bears (2/2) survives
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        // 6 damage to blocker is prevented, so Runeclaw Bear (2/2) survives
+        harness.assertOnBattlefield(player2, "Runeclaw Bear");
     }
-
-    // ===== Does not prevent damage to opponent =====
 
     @Test
     @DisplayName("Does not prevent damage to opponent player")
@@ -147,10 +125,9 @@ class SafePassageTest extends BaseCardTest {
         // Only player2 has Safe Passage protection
         harness.getGameData().playersWithAllDamagePrevented.add(player2.getId());
 
-        Permanent attacker = new Permanent(createCreature("Bear", 3, 3));
+        Permanent attacker = harness.addToBattlefieldAndReturn(player2, new CanyonMinotaur());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(attacker);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -158,12 +135,8 @@ class SafePassageTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        // Player1 doesn't have protection, takes 3 damage
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
+        harness.assertLife(player1, 17);
     }
-
-    // ===== Does not prevent damage to opponent's creatures =====
 
     @Test
     @DisplayName("Does not prevent damage to opponent's creatures")
@@ -171,16 +144,14 @@ class SafePassageTest extends BaseCardTest {
         // Only player1 has Safe Passage protection
         harness.getGameData().playersWithAllDamagePrevented.add(player1.getId());
 
-        Permanent attacker = new Permanent(createCreature("Big Bear", 5, 5));
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new CrawWurm());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(new GrizzlyBears());
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new RuneclawBear());
         blocker.setSummoningSick(false);
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(blocker);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -188,11 +159,9 @@ class SafePassageTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        // Grizzly Bears (2/2) takes 5 damage — not protected, should die
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        // Runeclaw Bear (2/2) takes 6 damage — not protected, should die
+        harness.assertNotOnBattlefield(player2, "Runeclaw Bear");
     }
-
-    // ===== Prevents spell damage to player =====
 
     @Test
     @DisplayName("Prevents spell damage to controller")
@@ -200,38 +169,30 @@ class SafePassageTest extends BaseCardTest {
         harness.setLife(player2, 20);
         harness.getGameData().playersWithAllDamagePrevented.add(player2.getId());
 
-        harness.setHand(player1, List.of(new com.github.laxika.magicalvibes.cards.s.Shock()));
+        harness.setHand(player1, List.of(new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        harness.assertLife(player2, 20);
     }
-
-    // ===== Prevents spell damage to creature =====
 
     @Test
     @DisplayName("Prevents spell damage to controller's creature")
     void preventsSpellDamageToCreature() {
         harness.getGameData().playersWithAllDamagePrevented.add(player2.getId());
 
-        Permanent creature = new Permanent(new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new RuneclawBear());
         creature.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(creature);
 
-        harness.setHand(player1, List.of(new com.github.laxika.magicalvibes.cards.s.Shock()));
+        harness.setHand(player1, List.of(new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, creature.getId());
 
-        // Grizzly Bears (2/2) takes 2 damage from Shock, but it's prevented
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        // Runeclaw Bear (2/2) takes 3 damage from Lightning Bolt, but it's prevented
+        harness.assertOnBattlefield(player2, "Runeclaw Bear");
     }
-
-    // ===== Clears at end of turn =====
 
     @Test
     @DisplayName("Prevention is cleared at end of turn")
@@ -244,5 +205,146 @@ class SafePassageTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.playersWithAllDamagePrevented).isEmpty();
+    }
+
+    @Test
+    void protectsCreaturesEnteringAfterResolutionAndRepeatedDamage() {
+        resolveSafePassage();
+        Permanent creature = harness.enterBattlefieldAndReturn(player1, new RuneclawBear());
+        harness.setHand(player2, List.of(new LightningBolt(), new LightningBolt(), new LightningBolt()));
+        harness.addMana(player2, ManaColor.RED, 3);
+
+        harness.castAndResolveInstant(player2, 0, creature.getId());
+        harness.castAndResolveInstant(player2, 0, creature.getId());
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        harness.assertOnBattlefield(player1, "Runeclaw Bear");
+        assertThat(creature.getMarkedDamage()).isZero();
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    void doesNotPreventSpellDamageToOpponentsCreatures() {
+        resolveSafePassage();
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new RuneclawBear());
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        harness.assertInGraveyard(player2, "Runeclaw Bear");
+    }
+
+    @Test
+    void doesNotProtectPlaneswalkers() {
+        Permanent garruk = harness.enterBattlefieldAndReturn(player1, new GarrukWildspeaker());
+        resolveSafePassage();
+        harness.setHand(player2, List.of(new LightningBolt()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player2, 0, garruk.getId());
+
+        harness.assertInGraveyard(player1, "Garruk Wildspeaker");
+    }
+
+    @Test
+    void doesNotPreventLifeLoss() {
+        resolveSafePassage();
+        harness.setLibrary(player1, List.of(new RuneclawBear(), new RuneclawBear()));
+        harness.setHand(player1, List.of(new SignInBlood()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    void doesNotPreventUnpreventableDamageToPlayer() {
+        resolveSafePassage();
+        harness.setHand(player1, List.of(new Banefire()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.castAndResolveSorcery(player1, 0, 5, player1.getId());
+
+        harness.assertLife(player1, 15);
+    }
+
+    @Test
+    void doesNotPreventUnpreventableDamageToCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new RuneclawBear());
+        resolveSafePassage();
+        harness.setHand(player1, List.of(new Banefire()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.castAndResolveSorcery(player1, 0, 5, creature.getId());
+
+        harness.assertInGraveyard(player1, "Runeclaw Bear");
+    }
+
+    @Test
+    void protectionExpiresBeforeNextTurnDamage() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new RuneclawBear());
+        resolveSafePassage();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new LightningBolt(), new LightningBolt()));
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        harness.castAndResolveInstant(player2, 0, creature.getId());
+
+        harness.assertLife(player1, 17);
+        harness.assertInGraveyard(player1, "Runeclaw Bear");
+    }
+
+    @Test
+    void preventsCombatDamageWithoutPreventingProtectedCreaturesDamage() {
+        Permanent attacker = addCreatureReady(player2, new CrawWurm());
+        Permanent blocker = addCreatureReady(player1, new RuneclawBear());
+        resolveSafePassage();
+        attacker.setAttacking(true);
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+
+        harness.resolveCombatDamage();
+        harness.runStateBasedActions();
+
+        harness.assertOnBattlefield(player1, "Runeclaw Bear");
+        assertThat(blocker.getMarkedDamage()).isZero();
+        assertThat(attacker.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    void canRespondToDamageSpellWithSafePassage() {
+        harness.setLife(player1, 20);
+        harness.setHand(player2, List.of(new LightningBolt()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, player1.getId());
+        harness.setHand(player1, List.of(new SafePassage()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveInstant(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertInGraveyard(player1, "Safe Passage");
+        harness.assertInGraveyard(player2, "Lightning Bolt");
+    }
+
+    private void resolveSafePassage() {
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new SafePassage()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castAndResolveInstant(player1, 0);
     }
 }
