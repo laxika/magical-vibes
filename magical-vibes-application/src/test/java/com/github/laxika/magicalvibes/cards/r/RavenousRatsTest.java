@@ -17,9 +17,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import com.github.laxika.magicalvibes.cards.k.KavuTitan;
 
-@CardUsed({RavenousRats.class, Forest.class, KavuTitan.class})
+@CardUsed({RavenousRats.class, Forest.class})
 class RavenousRatsTest extends BaseCardTest {
 
     
@@ -90,19 +89,19 @@ class RavenousRatsTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Cannot cast by targeting yourself")
+    @DisplayName("Cannot choose yourself as the ETB trigger's target")
     void cannotTargetYourself() {
-        harness.setHand(player1, List.of(new RavenousRats()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
+        castRavenousRats();
+        harness.passBothPriorities();
 
-        assertThatThrownBy(() -> harness.castCreature(player1, 0, player1.getId()))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Target must be an opponent");
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, player1.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handlePermanentChosen(player1, player2.getId());
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(player2.getId());
     }
 
     private void castRavenousRats() {
-        prepareRavenousRats();
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new RavenousRats(), "{1}{B}");
     }
 
     private void castRavenousRats(UUID targetPlayerId) {
@@ -118,9 +117,7 @@ class RavenousRatsTest extends BaseCardTest {
     @Test
     @DisplayName("ETB target is chosen after the creature enters when the spell was cast without one")
     void choosesTargetWhenEtbTriggerIsPutOnStack() {
-        harness.setHand(player1, List.of(new RavenousRats()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new RavenousRats(), "{1}{B}");
 
         harness.passBothPriorities();
 
@@ -130,5 +127,24 @@ class RavenousRatsTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(player2.getId());
+    }
+
+    @Test
+    @DisplayName("Opponent chooses exactly one card from a larger hand")
+    void opponentChoosesWhichCardToDiscard() {
+        Forest retained = new Forest();
+        RavenousRats discarded = new RavenousRats();
+        harness.setHand(player2, List.of(retained, discarded));
+        castRavenousRats();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        resolveAllTriggers();
+        harness.handleCardChosen(player2, 1);
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(retained);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(discarded);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
     }
 }
