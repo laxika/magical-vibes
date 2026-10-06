@@ -115,9 +115,85 @@ class ShuriWakandanInventorTest extends BaseCardTest {
                 .hasMessageContaining("sorcery speed");
     }
 
+    @Test
+    void doesNotReduceOpponentArtifactSpellCost() {
+        harness.addToBattlefield(player1, new ShuriWakandanInventor());
+        harness.setHand(player2, List.of(new WornPowerstone()));
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.castArtifact(player2, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void doesNothingWhenFirstTargetChangesController() {
+        Permanent shuri = addReadyShuri();
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new WornPowerstone());
+        Permanent copySource = harness.addToBattlefieldAndReturn(player1, new UrzasSylex());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbilityWithMultiTargets(player1, indexOf(shuri), 0,
+                List.of(target.getId(), copySource.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+        gd.playerBattlefields.get(player2.getId()).add(target);
+        harness.passBothPriorities();
+
+        assertThat(target.getCard().getName()).isEqualTo("Worn Powerstone");
+        assertThat(copySource.getCard().getName()).isEqualTo("Urza's Sylex");
+    }
+
+    @Test
+    void doesNothingWhenSecondTargetChangesController() {
+        Permanent shuri = addReadyShuri();
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new WornPowerstone());
+        Permanent copySource = harness.addToBattlefieldAndReturn(player1, new UrzasSylex());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbilityWithMultiTargets(player1, indexOf(shuri), 0,
+                List.of(target.getId(), copySource.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(copySource);
+        gd.playerBattlefields.get(player2.getId()).add(copySource);
+        harness.passBothPriorities();
+
+        assertThat(target.getCard().getName()).isEqualTo("Worn Powerstone");
+    }
+
+    @Test
+    void copyingDoesNotCopyTappedStateOrTriggerEntersTapped() {
+        Permanent shuri = addReadyShuri();
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new UrzasSylex());
+        Permanent copySource = harness.addToBattlefieldAndReturn(player1, new WornPowerstone());
+        copySource.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbilityWithMultiTargets(player1, indexOf(shuri), 0,
+                List.of(target.getId(), copySource.getId()));
+        harness.passBothPriorities();
+
+        assertThat(target.getCard().getName()).isEqualTo("Worn Powerstone");
+        assertThat(target.isTapped()).isFalse();
+        harness.tapPermanent(player1, indexOf(target));
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+    }
+
+    @Test
+    void rejectsNonartifactTarget() {
+        Permanent shuri = addReadyShuri();
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new WornPowerstone());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(player1, indexOf(shuri), 0,
+                List.of(artifact.getId(), creature.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("artifact you control");
+    }
+
     private Permanent addReadyShuri() {
-        Permanent shuri = harness.addToBattlefieldAndReturn(player1, new ShuriWakandanInventor());
-        shuri.setSummoningSick(false);
+        Permanent shuri = addCreatureReady(player1, new ShuriWakandanInventor());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
