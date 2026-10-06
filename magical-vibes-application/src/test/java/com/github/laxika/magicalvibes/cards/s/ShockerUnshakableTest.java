@@ -50,4 +50,97 @@ class ShockerUnshakableTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, shocker, Keyword.FIRST_STRIKE)).isFalse();
     }
+
+    @Test
+    @DisplayName("First strike updates as the active player changes")
+    void firstStrikeUpdatesWithActivePlayer() {
+        Permanent shocker = harness.addToBattlefieldAndReturn(player1, new ShockerUnshakable());
+
+        harness.forceActivePlayer(player1);
+        assertThat(gqs.hasKeyword(gd, shocker, Keyword.FIRST_STRIKE)).isTrue();
+        harness.forceActivePlayer(player2);
+        assertThat(gqs.hasKeyword(gd, shocker, Keyword.FIRST_STRIKE)).isFalse();
+        harness.forceActivePlayer(player1);
+        assertThat(gqs.hasKeyword(gd, shocker, Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Targeting your own creature damages you rather than the opponent")
+    void ownCreatureControllerTakesDamage() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, java.util.List.of(new ShockerUnshakable()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.castCreature(player1, 0, 0, target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("A surviving target receives exactly two marked damage")
+    void survivingTargetReceivesTwoDamage() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ShockerUnshakable());
+        harness.setHand(player1, java.util.List.of(new ShockerUnshakable()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.setLife(player2, 20);
+
+        harness.castCreature(player1, 0, 0, target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Shocker, Unshakable");
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("An illegal creature target prevents damage to its controller too")
+    void removedTargetPreventsAllDamage() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, java.util.List.of(new ShockerUnshakable()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.setLife(player2, 20);
+
+        harness.castCreature(player1, 0, 0, target.getId());
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+        target.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The ETB ability still deals damage after Shocker leaves the battlefield")
+    void removedSourceStillDealsDamage() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, java.util.List.of(new ShockerUnshakable()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.setLife(player2, 20);
+
+        harness.castCreature(player1, 0, 0, target.getId());
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+        Permanent source = gqs.findPermanentById(gd, harness.getPermanentId(player1, "Shocker, Unshakable"));
+        source.setMarkedDamage(5);
+        harness.runStateBasedActions();
+        harness.assertNotOnBattlefield(player1, "Shocker, Unshakable");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertLife(player2, 18);
+    }
 }
