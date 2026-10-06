@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.d.DrySpell;
+import com.github.laxika.magicalvibes.cards.q.QuestingBeast;
 import com.github.laxika.magicalvibes.cards.s.SeaTroll;
 import com.github.laxika.magicalvibes.cards.s.SpectralBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -18,7 +18,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RysorianBadger.class, SpectralBears.class, SeaTroll.class, DrySpell.class})
+@CardUsed({RysorianBadger.class, SpectralBears.class, SeaTroll.class, DrySpell.class, QuestingBeast.class})
 class RysorianBadgerTest extends BaseCardTest {
 
     private void addAttacker() {
@@ -166,11 +166,81 @@ class RysorianBadgerTest extends BaseCardTest {
         addCreatureReady(player2, new SeaTroll());
 
         addAttacker();
-        declareAttackers(List.of(0));
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactlyElementsOf(defenderCards);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("The controller may decline exiling the chosen targets when the ability resolves")
+    void mayDeclineExilingChosenTargetsAtResolution() {
+        List<Card> defenderCards = setDefenderGraveyard();
+        addAttacker();
+
+        attackUnblocked();
+        harness.handleMultipleCardsChosen(player1, List.of(defenderCards.getFirst().getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactlyElementsOf(defenderCards);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+
+        resolveCombat();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("When one of two targets leaves, the remaining target is exiled for 1 life and no combat damage")
+    void oneOfTwoTargetsLeavingStillExilesRemainingTarget() {
+        List<Card> defenderCards = setDefenderGraveyard();
+        addAttacker();
+
+        attackUnblocked();
+        harness.handleMultipleCardsChosen(player1,
+                List.of(defenderCards.get(0).getId(), defenderCards.get(1).getId()));
+        harness.setGraveyard(player2, defenderCards.subList(1, defenderCards.size()));
+        harness.setGraveyard(player1, List.of(defenderCards.getFirst()));
+        harness.passBothPriorities();
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(defenderCards.get(2));
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(defenderCards.getFirst());
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(defenderCards.get(1));
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(21);
+
+        resolveCombat();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Assigning no combat damage still applies when combat damage cannot be prevented")
+    void assignsNoCombatDamageEvenWhenDamageCannotBePrevented() {
+        List<Card> defenderCards = setDefenderGraveyard();
+        addAttacker();
+        addCreatureReady(player1, new QuestingBeast());
+
+        attackUnblocked();
+        harness.handleMultipleCardsChosen(player1, List.of(defenderCards.getFirst().getId()));
+        harness.passBothPriorities();
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(defenderCards.getFirst());
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(21);
+
+        resolveCombat();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 }
