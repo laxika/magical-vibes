@@ -28,8 +28,7 @@ class RotFarmMortipedeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Disentomb()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castSorcery(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, bears.getId());
         harness.passBothPriorities();
 
         assertThat(mortipede.getPowerModifier()).isEqualTo(1);
@@ -46,8 +45,7 @@ class RotFarmMortipedeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Recollect()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
-        harness.castSorcery(player1, 0, shock.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, shock.getId());
 
         assertThat(mortipede.getPowerModifier()).isEqualTo(0);
         assertThat(mortipede.getToughnessModifier()).isEqualTo(0);
@@ -62,8 +60,7 @@ class RotFarmMortipedeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Reminisce()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
-        harness.castSorcery(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
         harness.passBothPriorities();
 
         assertThat(mortipede.getPowerModifier()).isEqualTo(1);
@@ -80,8 +77,7 @@ class RotFarmMortipedeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Disentomb()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castSorcery(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, bears.getId());
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
@@ -92,6 +88,44 @@ class RotFarmMortipedeTest extends BaseCardTest {
         assertThat(mortipede.getToughnessModifier()).isEqualTo(0);
         assertThat(gqs.hasKeyword(gd, mortipede, Keyword.MENACE)).isFalse();
         assertThat(gqs.hasKeyword(gd, mortipede, Keyword.LIFELINK)).isFalse();
+    }
+
+    @Test
+    void doesNotTriggerWhenCreaturesLeaveOpponentsGraveyard() {
+        Permanent mortipede = addMortipede();
+        harness.setGraveyard(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player1, List.of(new Reminisce()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        assertThat(mortipede.getPowerModifier()).isZero();
+        assertThat(gqs.hasKeyword(gd, mortipede, Keyword.MENACE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, mortipede, Keyword.LIFELINK)).isFalse();
+    }
+
+    @Test
+    void separateDeparturesEachGiveAnotherPowerBoost() {
+        Permanent mortipede = addMortipede();
+        GrizzlyBears first = new GrizzlyBears();
+        GrizzlyBears second = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(first, second));
+        harness.setHand(player1, List.of(new Disentomb(), new Disentomb()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveSorcery(player1, 0, first.getId());
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, second.getId());
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(mortipede.getPowerModifier()).isEqualTo(2);
+        assertThat(mortipede.getToughnessModifier()).isZero();
+        assertThat(gqs.hasKeyword(gd, mortipede, Keyword.MENACE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, mortipede, Keyword.LIFELINK)).isTrue();
     }
 
     private Permanent addMortipede() {
