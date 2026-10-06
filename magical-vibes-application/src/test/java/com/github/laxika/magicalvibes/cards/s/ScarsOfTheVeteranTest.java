@@ -34,11 +34,10 @@ class ScarsOfTheVeteranTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving on a creature adds a 7-damage prevention-to-counters shield")
     void resolvingOnCreatureAddsShield() {
-        harness.addToBattlefield(player1, new IvoryGargoyle());
+        UUID targetId = harness.addToBattlefieldAndReturn(player1, new IvoryGargoyle()).getId();
         harness.setHand(player1, List.of(new ScarsOfTheVeteran()));
         harness.addMana(player1, ManaColor.WHITE, 5);
 
-        UUID targetId = harness.getPermanentId(player1, "Ivory Gargoyle");
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
@@ -79,11 +78,10 @@ class ScarsOfTheVeteranTest extends BaseCardTest {
     @Test
     @DisplayName("Prevented damage to a creature becomes +0/+1 counters at the next end step")
     void preventedDamageBecomesCountersAtEndStep() {
-        harness.addToBattlefield(player1, new IvoryGargoyle());
+        UUID targetId = harness.addToBattlefieldAndReturn(player1, new IvoryGargoyle()).getId();
         harness.setHand(player1, List.of(new ScarsOfTheVeteran()));
         harness.addMana(player1, ManaColor.WHITE, 5);
 
-        UUID targetId = harness.getPermanentId(player1, "Ivory Gargoyle");
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
@@ -106,7 +104,7 @@ class ScarsOfTheVeteranTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Targeting a planeswalker does not create creature counters")
+    @DisplayName("Targeting a planeswalker prevents damage without creating creature counters")
     void targetingPlaneswalkerDoesNotCreateCreatureCounters() {
         Permanent ajani = harness.addToBattlefieldAndReturn(player1, new AjaniGoldmane());
         ajani.setCounterCount(CounterType.LOYALTY, 4);
@@ -124,17 +122,16 @@ class ScarsOfTheVeteranTest extends BaseCardTest {
         advanceToEndStep(player1);
         resolveAllTriggers();
 
-        assertThat(ajani.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
+        assertThat(ajani.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
         assertThat(ajani.getCounterCount(CounterType.PLUS_ZERO_PLUS_ONE)).isZero();
     }
 
     @Test
     @DisplayName("Can be cast by exiling a white card from hand instead of paying mana")
     void castWithExileWhiteAlternateCost() {
-        harness.addToBattlefield(player1, new IvoryGargoyle());
+        UUID targetId = harness.addToBattlefieldAndReturn(player1, new IvoryGargoyle()).getId();
         harness.setHand(player1, List.of(new ScarsOfTheVeteran(), new KjeldoranEscort()));
 
-        UUID targetId = harness.getPermanentId(player1, "Ivory Gargoyle");
         harness.castInstantWithAlternateExileFromHand(player1, 0, targetId, 1);
         harness.passBothPriorities();
 
@@ -148,10 +145,9 @@ class ScarsOfTheVeteranTest extends BaseCardTest {
     @Test
     @DisplayName("Alternate cost rejects exiling a non-white card")
     void alternateCostRequiresWhiteCard() {
-        harness.addToBattlefield(player1, new IvoryGargoyle());
+        UUID targetId = harness.addToBattlefieldAndReturn(player1, new IvoryGargoyle()).getId();
         harness.setHand(player1, List.of(new ScarsOfTheVeteran(), new GuerrillaTactics()));
 
-        UUID targetId = harness.getPermanentId(player1, "Ivory Gargoyle");
         assertThatThrownBy(() -> harness.castInstantWithAlternateExileFromHand(player1, 0, targetId, 1))
                 .isInstanceOf(IllegalStateException.class);
     }
@@ -159,17 +155,72 @@ class ScarsOfTheVeteranTest extends BaseCardTest {
     @Test
     @DisplayName("Casting puts Scars of the Veteran on the stack targeting the chosen creature")
     void castingPutsItOnStack() {
-        harness.addToBattlefield(player2, new IvoryGargoyle());
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new IvoryGargoyle()).getId();
         harness.setHand(player1, List.of(new ScarsOfTheVeteran()));
         harness.addMana(player1, ManaColor.WHITE, 5);
 
-        UUID targetId = harness.getPermanentId(player2, "Ivory Gargoyle");
         harness.castInstant(player1, 0, targetId);
 
         GameData game = harness.getGameData();
         assertThat(game.stack).hasSize(1);
         StackEntry entry = game.stack.getFirst();
         assertThat(entry.getTargetId()).isEqualTo(targetId);
+    }
+
+    @Test
+    @DisplayName("An unused shield continues preventing creature damage during the end step")
+    void shieldStillPreventsDamageAfterEndStepBegins() {
+        Permanent escort = harness.addToBattlefieldAndReturn(player1, new KjeldoranEscort());
+        harness.setHand(player1, List.of(new ScarsOfTheVeteran()));
+        harness.addMana(player1, ManaColor.WHITE, 5);
+        harness.castInstant(player1, 0, escort.getId());
+        harness.passBothPriorities();
+
+        advanceToEndStep(player1);
+        resolveAllTriggers();
+
+        harness.setHand(player2, List.of(new GuerrillaTactics()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.castInstant(player2, 0, escort.getId());
+        harness.passBothPriorities();
+
+        assertThat(escort.getMarkedDamage()).isZero();
+        assertThat(escort.getCounterCount(CounterType.PLUS_ZERO_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("The shield prevents only seven damage across multiple sources")
+    void shieldExhaustionLeavesExcessDamageAndSevenCounters() {
+        Permanent escort = harness.addToBattlefieldAndReturn(player1, new KjeldoranEscort());
+        harness.setHand(player1, List.of(new ScarsOfTheVeteran()));
+        harness.addMana(player1, ManaColor.WHITE, 5);
+        harness.castInstant(player1, 0, escort.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new GuerrillaTactics(), new GuerrillaTactics(),
+                new GuerrillaTactics(), new GuerrillaTactics()));
+        harness.addMana(player2, ManaColor.RED, 8);
+        for (int i = 0; i < 4; i++) {
+            harness.castInstant(player2, 0, escort.getId());
+            harness.passBothPriorities();
+        }
+
+        assertThat(escort.getMarkedDamage()).isEqualTo(1);
+        assertThat(escort.getCounterCount(CounterType.PLUS_ZERO_PLUS_ONE)).isZero();
+
+        advanceToEndStep(player1);
+        resolveAllTriggers();
+
+        assertThat(escort.getCounterCount(CounterType.PLUS_ZERO_PLUS_ONE)).isEqualTo(7);
+    }
+
+    @Test
+    @DisplayName("The spell cannot exile itself to pay its alternate cost")
+    void alternateCostCannotExileTheSpellItself() {
+        harness.setHand(player1, List.of(new ScarsOfTheVeteran()));
+
+        assertThatThrownBy(() -> harness.castInstantWithAlternateExileFromHand(
+                player1, 0, player1.getId(), 0)).isInstanceOf(IllegalStateException.class);
     }
 
     private Permanent gargoyle(Player player) {
@@ -179,8 +230,7 @@ class ScarsOfTheVeteranTest extends BaseCardTest {
     private void advanceToEndStep(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.END_STEP);
     }
 
 }
