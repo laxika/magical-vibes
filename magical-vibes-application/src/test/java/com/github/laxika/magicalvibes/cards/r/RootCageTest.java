@@ -74,4 +74,35 @@ class RootCageTest extends BaseCardTest {
 
         assertThat(mercenary.isTapped()).isFalse();
     }
+
+    @Test
+    @DisplayName("Mercenary restriction leaves untapped Mercenaries and other creatures unaffected")
+    void mixedBattlefieldUntapsOnlyNonMercenaries() {
+        harness.addToBattlefield(player1, new RootCage());
+        Permanent tappedMercenary = addCreatureReady(player1, new MercenaryInformer());
+        tappedMercenary.tap();
+        Permanent untappedMercenary = addCreatureReady(player1, new MercenaryInformer());
+        Permanent otherCreature = addCreatureReady(player1, new MarshBoa());
+        otherCreature.tap();
+
+        advanceToUpkeep(player1);
+
+        assertThat(tappedMercenary.isTapped()).isTrue();
+        assertThat(untappedMercenary.isTapped()).isFalse();
+        assertThat(otherCreature.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Removing one Root Cage does not remove another Root Cage's restriction")
+    void remainingRootCageStillPreventsUntap() {
+        Permanent firstCage = harness.addToBattlefieldAndReturn(player1, new RootCage());
+        harness.addToBattlefield(player2, new RootCage());
+        Permanent mercenary = addCreatureReady(player1, new MercenaryInformer());
+        mercenary.tap();
+        gd.playerBattlefields.get(player1.getId()).remove(firstCage);
+
+        advanceToUpkeep(player1);
+
+        assertThat(mercenary.isTapped()).isTrue();
+    }
 }
