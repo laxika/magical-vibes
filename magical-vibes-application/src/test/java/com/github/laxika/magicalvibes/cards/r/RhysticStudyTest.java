@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.p.PygmyRazorback;
+import com.github.laxika.magicalvibes.cards.w.WintermoonMesa;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,7 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RhysticStudy.class, PygmyRazorback.class, RhysticDeluge.class})
+@CardUsed({RhysticStudy.class, PygmyRazorback.class, RhysticDeluge.class, WintermoonMesa.class})
 class RhysticStudyTest extends BaseCardTest {
 
     @Test
@@ -95,6 +97,61 @@ class RhysticStudyTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+    }
+
+    @Test
+    @DisplayName("Colored mana can pay the generic tax")
+    void opponentPaysWithColoredMana() {
+        castOpponentSpellWithoutManaToPay();
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.passBothPriorities();
+
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLUE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Each copy requires a separate payment")
+    void payingForOneCopyDoesNotPreventTheOtherDraw() {
+        harness.addToBattlefield(player1, new RhysticStudy());
+        harness.addToBattlefield(player1, new RhysticStudy());
+        prepareOpponentTurn();
+        harness.castFromHand(player2, new RhysticDeluge(), "{2}{U}");
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        assertThat(gd.stack).hasSize(3);
+
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    @DisplayName("Opponent may activate a land's mana ability to pay during resolution")
+    void opponentCanProduceManaDuringPayment() {
+        castOpponentSpellWithoutManaToPay();
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new WintermoonMesa());
+        land.setTapped(false);
+
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.tapPermanent(player2, 0);
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(land.isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isZero();
     }
 
     private void castOpponentSpellWithManaToPay() {
