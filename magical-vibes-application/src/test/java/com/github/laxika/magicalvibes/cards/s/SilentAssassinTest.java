@@ -31,9 +31,7 @@ class SilentAssassinTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Fresh Volunteers");
 
-        harness.forceStep(TurnStep.END_OF_COMBAT);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
 
         harness.assertInGraveyard(player2, "Fresh Volunteers");
     }
@@ -71,9 +69,7 @@ class SilentAssassinTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(assassin.isTapped()).isFalse();
-        harness.forceStep(TurnStep.END_OF_COMBAT);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
 
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .filteredOn(card -> card.getName().equals("Fresh Volunteers"))
@@ -96,10 +92,74 @@ class SilentAssassinTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Fresh Volunteers");
-        harness.forceStep(TurnStep.END_OF_COMBAT);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
 
         harness.assertOnBattlefield(player2, "Fresh Volunteers");
+    }
+
+    @Test
+    @DisplayName("Delayed destruction belongs to Silent Assassin and its ability controller")
+    void delayedDestructionKeepsSourceAndController() {
+        Permanent assassin = addCreatureReady(player1, new SilentAssassin());
+        Permanent blocker = addCreatureReady(player2, new FreshVolunteers());
+        blocker.setBlocking(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.activateAbility(player1, 0, null, blocker.getId());
+        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+
+        harness.assertOnBattlefield(player2, "Fresh Volunteers");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getLast().getControllerId()).isEqualTo(player1.getId());
+        assertThat(gd.stack.getLast().getSourcePermanentId()).isEqualTo(assassin.getId());
+
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Fresh Volunteers");
+    }
+
+    @Test
+    @DisplayName("Activation during end of combat waits for the next end of combat")
+    void activationDuringEndOfCombatWaitsForNextCombat() {
+        addCreatureReady(player1, new SilentAssassin());
+        Permanent blocker = addCreatureReady(player2, new FreshVolunteers());
+        blocker.setBlocking(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_OF_COMBAT);
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.activateAbility(player1, 0, null, blocker.getId());
+        harness.passBothPriorities();
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+
+        harness.assertOnBattlefield(player2, "Fresh Volunteers");
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+        harness.assertOnBattlefield(player2, "Fresh Volunteers");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Fresh Volunteers");
+    }
+
+    @Test
+    @DisplayName("Removing the creature from combat after resolution does not cancel destruction")
+    void destructionPersistsAfterCreatureStopsBlocking() {
+        addCreatureReady(player1, new SilentAssassin());
+        Permanent blocker = addCreatureReady(player2, new FreshVolunteers());
+        blocker.setBlocking(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.activateAbility(player1, 0, null, blocker.getId());
+        harness.passBothPriorities();
+        blocker.setBlocking(false);
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+
+        harness.assertInGraveyard(player2, "Fresh Volunteers");
     }
 }
