@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.c.ColossalDreadmaw;
+import com.github.laxika.magicalvibes.cards.c.CylianElf;
+import com.github.laxika.magicalvibes.cards.e.ElvishArchdruid;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
@@ -13,7 +15,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 @CardUsed({ScaledDestruction.class, GrizzlyBears.class, GiantSpider.class, SerraAngel.class,
-        ColossalDreadmaw.class})
+        ColossalDreadmaw.class, ElvishArchdruid.class, CylianElf.class})
 class ScaledDestructionTest extends BaseCardTest {
 
     @Test
@@ -60,15 +62,39 @@ class ScaledDestructionTest extends BaseCardTest {
     void allowsChoosingAllModes() {
         addAllSizes();
 
-        harness.setHand(player1, List.of(new ScaledDestruction()));
-        harness.addMana(player1, ManaColor.WHITE, 6);
-        harness.castModalSorceryWithModes(player1, 0, 1, 3, new int[]{0, 1, 2}, List.of(), List.of());
-        harness.passBothPriorities();
+        cast(0, 1, 2);
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertNotOnBattlefield(player2, "Giant Spider");
         harness.assertNotOnBattlefield(player2, "Serra Angel");
         harness.assertNotOnBattlefield(player2, "Colossal Dreadmaw");
+    }
+
+    @Test
+    @DisplayName("Choosing small and large leaves medium creatures alive")
+    void allowsChoosingTwoModes() {
+        addAllSizes();
+
+        cast(0, 2);
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Giant Spider");
+        harness.assertOnBattlefield(player2, "Serra Angel");
+        harness.assertNotOnBattlefield(player2, "Colossal Dreadmaw");
+    }
+
+    @Test
+    @DisplayName("Modes resolve in printed order and reevaluate sizes after a lord dies")
+    void reevaluatesCreatureSizesBetweenModes() {
+        harness.addToBattlefield(player1, new ElvishArchdruid());
+        harness.addToBattlefield(player1, new CylianElf());
+        harness.addToBattlefield(player2, new CylianElf());
+
+        cast(1, 0);
+
+        harness.assertNotOnBattlefield(player1, "Elvish Archdruid");
+        harness.assertOnBattlefield(player1, "Cylian Elf");
+        harness.assertNotOnBattlefield(player2, "Cylian Elf");
     }
 
     private void addAllSizes() {
@@ -78,10 +104,10 @@ class ScaledDestructionTest extends BaseCardTest {
         harness.addToBattlefield(player2, new ColossalDreadmaw());
     }
 
-    private void cast(int mode) {
+    private void cast(int... modes) {
         harness.setHand(player1, List.of(new ScaledDestruction()));
         harness.addMana(player1, ManaColor.WHITE, 6);
-        harness.castModalSorceryWithModes(player1, 0, 1, 3, new int[]{mode}, List.of(), List.of());
+        harness.castModalSorceryWithModes(player1, 0, 1, 3, modes, List.of(), List.of());
         harness.passBothPriorities();
     }
 }
