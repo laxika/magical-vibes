@@ -62,7 +62,6 @@ class RibtrussRoasterTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
 
         castRoaster();
-        harness.passBothPriorities();
         harness.handleMultiplePermanentsChosen(player1, List.of());
 
         assertThat(findPermanent(player1, "Ribtruss Roaster")
@@ -71,6 +70,85 @@ class RibtrussRoasterTest extends BaseCardTest {
         resolveControllerEndStep();
 
         assertThat(countPermanents(player1, "Pest")).isZero();
+    }
+
+    @Test
+    void enteringWithoutOtherCreaturesNeedsNoDevourChoice() {
+        castRoaster();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(findPermanent(player1, "Ribtruss Roaster")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        resolveControllerEndStep();
+        assertThat(countPermanents(player1, "Pest")).isZero();
+    }
+
+    @Test
+    void devourCanSacrificeOnlySomeControlledCreatures() {
+        Permanent chosen = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent unchosen = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        castRoaster();
+        harness.handleMultiplePermanentsChosen(player1, List.of(chosen.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(unchosen).doesNotContain(chosen);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponent);
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(findPermanent(player1, "Ribtruss Roaster")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void endStepCountsCurrentPlusOneCountersRegardlessOfDevour() {
+        Permanent roaster = harness.addToBattlefieldAndReturn(player1, new RibtrussRoaster());
+        roaster.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        roaster.setCounterCount(CounterType.CHARGE, 4);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.END_STEP);
+
+        roaster.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Pest")).isEqualTo(3);
+    }
+
+    @Test
+    void opponentEndStepDoesNotCreatePests() {
+        Permanent roaster = harness.addToBattlefieldAndReturn(player1, new RibtrussRoaster());
+        roaster.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Pest")).isZero();
+        assertThat(countPermanents(player2, "Pest")).isZero();
+    }
+
+    @Test
+    void devouringPestTokensAddsCountersAndTriggersTheirLifeGain() {
+        Permanent original = harness.addToBattlefieldAndReturn(player1, new RibtrussRoaster());
+        original.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        resolveControllerEndStep();
+        List<Permanent> pests = findPermanents(player1, "Pest");
+        harness.setLife(player1, 20);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        castRoaster();
+        harness.handleMultiplePermanentsChosen(player1, pests.stream().map(Permanent::getId).toList());
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Pest")).isZero();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
+        assertThat(findPermanents(player1, "Ribtruss Roaster"))
+                .hasSize(2)
+                .allSatisfy(roaster -> assertThat(roaster.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
+                        .isEqualTo(2));
     }
 
     private void castRoaster() {
@@ -85,7 +163,7 @@ class RibtrussRoasterTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.END_STEP);
+        resolveAllTriggers();
     }
 }
