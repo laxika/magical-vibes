@@ -2,28 +2,23 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.a.AdelizTheCinderWind;
 import com.github.laxika.magicalvibes.cards.d.DanithaCapashenParagon;
-import com.github.laxika.magicalvibes.cards.e.EmpressGalina;
+import com.github.laxika.magicalvibes.cards.d.Disfigure;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.k.KethisTheHiddenHand;
 import com.github.laxika.magicalvibes.cards.m.MoxAmber;
-import com.github.laxika.magicalvibes.cards.t.TsaboTavoc;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
-import java.util.Set;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SisayWeatherlightCaptain.class, EmpressGalina.class, TsaboTavoc.class, GrizzlyBears.class, AdelizTheCinderWind.class, DanithaCapashenParagon.class, KethisTheHiddenHand.class, MoxAmber.class, Shock.class})
+@CardUsed({SisayWeatherlightCaptain.class, GrizzlyBears.class, AdelizTheCinderWind.class,
+        DanithaCapashenParagon.class, KethisTheHiddenHand.class, MoxAmber.class, Shock.class, Disfigure.class})
 class SisayWeatherlightCaptainTest extends BaseCardTest {
 
     @Test
@@ -51,15 +46,10 @@ class SisayWeatherlightCaptainTest extends BaseCardTest {
 
         MoxAmber moxAmber = new MoxAmber();
         DanithaCapashenParagon equalManaValue = new DanithaCapashenParagon();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(
+        harness.setLibrary(player1, List.of(
                 moxAmber, equalManaValue, new GrizzlyBears(), new Shock()));
 
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.GREEN, 1);
+        addActivationMana();
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -69,9 +59,104 @@ class SisayWeatherlightCaptainTest extends BaseCardTest {
         assertThat(search).isNotNull();
         assertThat(search.params().cards()).containsExactly(moxAmber);
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         harness.assertOnBattlefield(player1, "Mox Amber");
         assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(moxAmber);
+    }
+
+    @Test
+    void ignoresOpposingLegendsNonlegendaryColorsAndColorlessLegends() {
+        Permanent sisay = harness.addToBattlefieldAndReturn(player1, new SisayWeatherlightCaptain());
+        harness.addToBattlefield(player2, new AdelizTheCinderWind());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new MoxAmber());
+
+        assertThat(gqs.getEffectivePower(gd, sisay)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, sisay)).isEqualTo(2);
+    }
+
+    @Test
+    void usesPowerAtResolutionRatherThanActivation() {
+        harness.addToBattlefield(player1, new SisayWeatherlightCaptain());
+        DanithaCapashenParagon danitha = new DanithaCapashenParagon();
+        harness.setLibrary(player1, List.of(danitha));
+        addActivationMana();
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.addToBattlefield(player1, new AdelizTheCinderWind());
+        harness.passBothPriorities();
+
+        PendingInteraction.LibrarySearch search =
+                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search).isNotNull();
+        assertThat(search.params().cards()).containsExactly(danitha);
+        harness.handleCardChosen(player1, 0);
+        harness.assertOnBattlefield(player1, "Danitha Capashen, Paragon");
+    }
+
+    @Test
+    void usesLastKnownPowerAfterSisayDiesInResponse() {
+        Permanent sisay = harness.addToBattlefieldAndReturn(player1, new SisayWeatherlightCaptain());
+        MoxAmber mox = new MoxAmber();
+        harness.setLibrary(player1, List.of(mox, new DanithaCapashenParagon()));
+        addActivationMana();
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, sisay.getId());
+        harness.assertNotOnBattlefield(player1, "Sisay, Weatherlight Captain");
+        harness.passBothPriorities();
+
+        PendingInteraction.LibrarySearch search =
+                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search).isNotNull();
+        assertThat(search.params().cards()).containsExactly(mox);
+        harness.handleCardChosen(player1, 0);
+        harness.assertOnBattlefield(player1, "Mox Amber");
+    }
+
+    @Test
+    void canFailToFindEvenWithAnEligibleLegendaryPermanent() {
+        harness.addToBattlefield(player1, new SisayWeatherlightCaptain());
+        MoxAmber mox = new MoxAmber();
+        harness.setLibrary(player1, List.of(mox));
+        addActivationMana();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.handleCardChosen(player1, -1);
+
+        harness.assertNotOnBattlefield(player1, "Mox Amber");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(mox);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void cannotFindZeroManaValueCardWhenLastKnownPowerIsZero() {
+        Permanent sisay = harness.addToBattlefieldAndReturn(player1, new SisayWeatherlightCaptain());
+        MoxAmber mox = new MoxAmber();
+        harness.setLibrary(player1, List.of(mox));
+        addActivationMana();
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.setHand(player2, List.of(new Disfigure()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.castAndResolveInstant(player2, 0, sisay.getId());
+        harness.assertNotOnBattlefield(player1, "Sisay, Weatherlight Captain");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Mox Amber");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(mox);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    private void addActivationMana() {
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
     }
 }
