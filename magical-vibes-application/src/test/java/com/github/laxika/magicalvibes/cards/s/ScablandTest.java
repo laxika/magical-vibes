@@ -108,9 +108,35 @@ class ScablandTest extends BaseCardTest {
                 .hasMessageContaining("already tapped");
     }
 
+    @Test
+    @DisplayName("Colored mana resolves immediately without using the stack")
+    void coloredManaResolvesImmediately() {
+        harness.addToBattlefield(player1, new Scabland());
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        assertThat(gd.stack).isEmpty();
+        harness.handleListChoice(player1, "WHITE");
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        harness.assertLife(player1, 19);
+    }
+
+    @Test
+    @DisplayName("Colored mana may be activated at 1 life because damage is not an activation cost")
+    void coloredManaCanBeActivatedAtOneLife() {
+        harness.addToBattlefield(player1, new Scabland());
+        harness.setLife(player1, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "RED");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        harness.assertLife(player1, 0);
+    }
+
     private Permanent addScablandReady(Player player) {
-        Permanent perm = harness.addToBattlefieldAndReturn(player, new Scabland());
-        perm.setSummoningSick(false);
-        return perm;
+        return addCreatureReady(player, new Scabland());
     }
 }
