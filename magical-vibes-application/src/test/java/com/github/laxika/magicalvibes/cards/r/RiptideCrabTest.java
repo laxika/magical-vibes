@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.u.UrzasRage;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -12,7 +13,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RiptideCrab.class, UrzasRage.class})
+@CardUsed({RiptideCrab.class, UrzasRage.class, Repulse.class})
 class RiptideCrabTest extends BaseCardTest {
 
     @Test
@@ -27,8 +28,7 @@ class RiptideCrabTest extends BaseCardTest {
 
         UUID riptideCrabId = harness.getPermanentId(player1, "Riptide Crab");
 
-        harness.castInstant(player1, 0, riptideCrabId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, riptideCrabId);
 
         harness.assertNotOnBattlefield(player1, "Riptide Crab");
         harness.assertInGraveyard(player1, "Riptide Crab");
@@ -51,8 +51,7 @@ class RiptideCrabTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 3);
 
         UUID riptideCrabId = harness.getPermanentId(player2, "Riptide Crab");
-        harness.castInstant(player1, 0, riptideCrabId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, riptideCrabId);
 
         harness.assertNotOnBattlefield(player2, "Riptide Crab");
         harness.assertInGraveyard(player2, "Riptide Crab");
@@ -61,5 +60,39 @@ class RiptideCrabTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(drawnCard);
+    }
+
+    @Test
+    @DisplayName("Attacking with vigilance does not tap Riptide Crab")
+    void attackingDoesNotTapCrab() {
+        Permanent crab = addCreatureReady(player1, new RiptideCrab());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThat(crab.isAttacking()).isTrue();
+        assertThat(crab.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Returning Riptide Crab to hand does not trigger its death ability")
+    void returningToHandDoesNotDraw() {
+        RiptideCrab crab = new RiptideCrab();
+        harness.addToBattlefield(player2, crab);
+        harness.setHand(player2, List.of());
+        UrzasRage undrawnCard = new UrzasRage();
+        harness.setLibrary(player2, List.of(undrawnCard));
+        UrzasRage spellDraw = new UrzasRage();
+        harness.setLibrary(player1, List.of(spellDraw));
+        harness.setHand(player1, List.of(new Repulse()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Riptide Crab"));
+
+        harness.assertNotOnBattlefield(player2, "Riptide Crab");
+        harness.assertNotInGraveyard(player2, "Riptide Crab");
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(crab);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(undrawnCard);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(spellDraw);
+        assertThat(gd.stack).isEmpty();
     }
 }
