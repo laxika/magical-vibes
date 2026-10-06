@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.model.GameLogEntry;
+import com.github.laxika.magicalvibes.model.GameStatus;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
@@ -134,5 +135,67 @@ class RecoverTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).contains(legalNewTarget.getId());
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).doesNotContain(currentTarget.getId());
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).doesNotContain(illegalOpponentTarget.getId());
+    }
+
+    @Test
+    @DisplayName("Recover returns only its target and draws the top library card")
+    void returnsOnlyTargetAndDrawsTopCard() {
+        Card target = new GrizzlyBears();
+        Card otherCreature = new GrizzlyBears();
+        Card drawnCard = new HolyDay();
+        harness.setGraveyard(player1, List.of(target, otherCreature));
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.setHand(player1, List.of(new Recover()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(target, drawnCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(otherCreature).doesNotContain(target);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    @DisplayName("Recover returns the creature before its controller loses for drawing from an empty library")
+    void returnsCreatureBeforeEmptyLibraryLoss() {
+        Card target = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(target));
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new Recover()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(target);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(target);
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player2.getId());
+    }
+
+    @Test
+    @DisplayName("Recover returns the new target and draws for its controller after Shunt")
+    void resolvesWithChangedTarget() {
+        Card originalTarget = new GrizzlyBears();
+        Card newTarget = new GrizzlyBears();
+        Card drawnCard = new HolyDay();
+        Recover recover = new Recover();
+        harness.setGraveyard(player1, List.of(originalTarget, newTarget));
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.setHand(player1, List.of(recover));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.setHand(player2, List.of(new Shunt()));
+        harness.addMana(player2, ManaColor.RED, 3);
+
+        harness.castSorcery(player1, 0, originalTarget.getId());
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, recover.getId());
+        harness.handlePermanentChosen(player2, newTarget.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(newTarget, drawnCard);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(originalTarget).doesNotContain(newTarget);
+        harness.assertInGraveyard(player1, "Recover");
     }
 }
