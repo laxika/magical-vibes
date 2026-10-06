@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.b.BenalishCavalry;
+import com.github.laxika.magicalvibes.cards.c.Cancel;
+import com.github.laxika.magicalvibes.cards.c.Conflagrate;
 import com.github.laxika.magicalvibes.cards.o.OrcishCannonade;
 import com.github.laxika.magicalvibes.cards.r.RiftBolt;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -11,11 +13,15 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Reiterate.class, RiftBolt.class, BenalishCavalry.class, OrcishCannonade.class})
+@CardUsed({Reiterate.class, RiftBolt.class, BenalishCavalry.class, OrcishCannonade.class,
+        Cancel.class, Conflagrate.class})
 class ReiterateTest extends BaseCardTest {
 
     @Test
@@ -26,8 +32,7 @@ class ReiterateTest extends BaseCardTest {
         addReiterateMana(false);
 
         harness.castSorcery(player1, 0, player2.getId());
-        harness.castInstant(player1, 0, riftBolt.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, riftBolt.getId());
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.stack).hasSize(2);
@@ -78,8 +83,7 @@ class ReiterateTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castInstant(player1, 0, player2.getId());
-        harness.castInstant(player1, 0, cannonade.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, cannonade.getId());
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, player1.getId());
 
@@ -92,6 +96,52 @@ class ReiterateTest extends BaseCardTest {
         harness.assertLife(player1, 12);
         harness.assertLife(player2, 18);
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Buyback does not return Reiterate when its only target is countered")
+    void buybackDoesNotReturnWithIllegalTarget() {
+        RiftBolt riftBolt = new RiftBolt();
+        harness.setHand(player1, List.of(riftBolt, new Reiterate(), new Cancel()));
+        addReiterateMana(true);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.castInstantWithBuyback(player1, 0, riftBolt.getId());
+        harness.castAndResolveInstant(player1, 0, riftBolt.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Reiterate");
+        harness.assertNotInHand(player1, "Reiterate");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("May change more than one target of a copied spell")
+    void mayChangeMultipleCopyTargets() {
+        Conflagrate conflagrate = new Conflagrate();
+        harness.setHand(player1, List.of(conflagrate, new Reiterate()));
+        harness.addToBattlefield(player1, new BenalishCavalry());
+        UUID cavalryId = harness.getPermanentId(player1, "Benalish Cavalry");
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        Map<UUID, Integer> assignments = new LinkedHashMap<>();
+        assignments.put(player1.getId(), 1);
+        assignments.put(player2.getId(), 1);
+
+        harness.castSorceryForX(player1, 0, 2, assignments);
+        harness.castAndResolveInstant(player1, 0, conflagrate.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, cavalryId);
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 19);
+        harness.assertOnBattlefield(player1, "Benalish Cavalry");
     }
 
     private void addReiterateMana(boolean buyback) {
