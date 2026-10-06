@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.a.AlloyGolem;
 import com.github.laxika.magicalvibes.cards.b.BenalishLancer;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -21,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SleepersRobe.class, Forest.class, Mountain.class, BenalishLancer.class, ShivanZombie.class})
+@CardUsed({SleepersRobe.class, Forest.class, Mountain.class, BenalishLancer.class, ShivanZombie.class, AlloyGolem.class})
 class SleepersRobeTest extends BaseCardTest {
 
     @Test
@@ -97,21 +99,19 @@ class SleepersRobeTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("The Aura's controller may draw when an enchanted opponent creature deals combat damage")
-    void mayDrawForAuraControllerWhenOpponentCreatureDealsCombatDamage() {
+    @DisplayName("No draw when enchanted opponent creature deals combat damage to the Aura's controller")
+    void noDrawWhenEnchantedCreatureDamagesAuraController() {
         Permanent creature = addAttacker(player2);
         Permanent robe = addRobeReady(player1);
         robe.setAttachedTo(creature.getId());
-        harness.setLibrary(player1, new ArrayList<>(List.of(new Forest(), new Forest())));
-        harness.setHand(player1, new ArrayList<>());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        harness.setHand(player1, List.of());
 
         resolveCombatAndTrigger(player2);
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
-
-        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
-        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
     }
 
     @Test
@@ -140,7 +140,7 @@ class SleepersRobeTest extends BaseCardTest {
         robe.setAttachedTo(creature.getId());
         harness.setLibrary(player1, new ArrayList<>(List.of(new Forest())));
 
-        Permanent blocker = addCreatureReady(player2, new BenalishLancer());
+        Permanent blocker = addCreatureReady(player2, new ShivanZombie());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
@@ -165,11 +165,39 @@ class SleepersRobeTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    @DisplayName("Fear allows an artifact creature to block")
+    void fearAllowsArtifactCreatureToBlock() {
+        Permanent creature = addAttacker(player1);
+        Permanent robe = addRobeReady(player1);
+        robe.setAttachedTo(creature.getId());
+        Permanent blocker = addCreatureReady(player2, new AlloyGolem());
+        blocker.setChosenColor(CardColor.WHITE);
+
+        prepareDeclareBlockers();
+
+        assertThatCode(() -> declareBlock(blocker, creature)).doesNotThrowAnyException();
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Casting Sleeper's Robe attaches it to the targeted creature and grants fear")
+    void castingAttachesToCreature() {
+        Permanent creature = addCreatureReady(player2, new BenalishLancer());
+        harness.setHand(player1, List.of(new SleepersRobe()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        Permanent robe = findPermanent(player1, "Sleeper's Robe");
+        assertThat(robe.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FEAR)).isTrue();
+    }
+
     private Permanent addRobeReady(Player player) {
-        Permanent perm = new Permanent(new SleepersRobe());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new SleepersRobe());
     }
 
     private Permanent addAttacker(Player player) {
