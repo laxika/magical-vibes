@@ -64,6 +64,59 @@ class SeedSparkTest extends BaseCardTest {
                 .hasMessageContaining("Target must be an artifact or enchantment");
     }
 
+    @Test
+    void createsOnlyTwoSaprolingsWhenMultipleGreenManaWasSpentOnOwnEnchantment() {
+        harness.addToBattlefield(player1, new GolgariGermination());
+        harness.setHand(player1, List.of(new SeedSpark()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        UUID targetId = harness.getPermanentId(player1, "Golgari Germination");
+        harness.castAndResolveInstant(player1, 0, targetId);
+
+        harness.assertInGraveyard(player1, "Golgari Germination");
+        harness.assertNotOnBattlefield(player1, "Golgari Germination");
+        assertThat(countPermanents(player1, "Saproling")).isEqualTo(2);
+        assertThat(countPermanents(player2, "Saproling")).isZero();
+    }
+
+    @Test
+    void greenManaAddedAfterCastingDoesNotCreateSaprolings() {
+        harness.addToBattlefield(player2, new BorosSignet());
+        harness.setHand(player1, List.of(new SeedSpark()));
+        addManaWithoutGreen();
+        UUID targetId = harness.getPermanentId(player2, "Boros Signet");
+        harness.castInstant(player1, 0, targetId);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Boros Signet");
+        assertThat(countPermanents(player1, "Saproling")).isZero();
+    }
+
+    @Test
+    void createsNoSaprolingsWhenTargetIsDestroyedInResponse() {
+        harness.addToBattlefield(player2, new BorosSignet());
+        harness.setHand(player1, List.of(new SeedSpark()));
+        addManaWithGreen();
+        UUID targetId = harness.getPermanentId(player2, "Boros Signet");
+        harness.castInstant(player1, 0, targetId);
+
+        harness.setHand(player2, List.of(new SeedSpark()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.castInstant(player2, 0, targetId);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Boros Signet");
+        harness.assertInGraveyard(player1, "Seed Spark");
+        harness.assertInGraveyard(player2, "Seed Spark");
+        assertThat(countPermanents(player1, "Saproling")).isZero();
+        assertThat(countPermanents(player2, "Saproling")).isZero();
+    }
+
     private void addManaWithGreen() {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
