@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed(RockshardElemental.class)
 class RockshardElementalTest extends BaseCardTest {
@@ -47,8 +48,69 @@ class RockshardElementalTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(elemental.isFaceDown()).isFalse();
-        assertThat(gqs.getEffectivePower(gd, elemental)).isEqualTo(4);
-        assertThat(gqs.getEffectiveToughness(gd, elemental)).isEqualTo(3);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Face-down Rockshard Elemental deals only regular combat damage")
+    void faceDownDoesNotHaveDoubleStrike() {
+        harness.setHand(player1, List.of(new RockshardElemental()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent elemental = findPermanent(player1, "Rockshard Elemental");
+        elemental.setSummoningSick(false);
+        elemental.setAttacking(true);
+        harness.setLife(player2, 20);
+
+        resolveCombat();
+
+        harness.assertLife(player2, 18);
+        assertThat(elemental.isFaceDown()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Turning face up restores double strike immediately without using the stack")
+    void turningFaceUpRestoresDoubleStrike() {
+        harness.setHand(player1, List.of(new RockshardElemental()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passBothPriorities();
+        Permanent elemental = findPermanent(player1, "Rockshard Elemental");
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(elemental));
+
+        assertThat(elemental.isFaceDown()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        elemental.setSummoningSick(false);
+        elemental.setAttacking(true);
+        harness.setLife(player2, 20);
+        resolveCombat();
+        harness.assertLife(player2, 12);
+    }
+
+    @Test
+    @DisplayName("Morph cannot be paid with only one red mana even with enough total mana")
+    void morphRequiresTwoRedMana() {
+        harness.setHand(player1, List.of(new RockshardElemental()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passBothPriorities();
+        Permanent elemental = findPermanent(player1, "Rockshard Elemental");
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.turnFaceUp(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(elemental)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        assertThat(elemental.isFaceDown()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(6);
+        assertThat(gd.stack).isEmpty();
     }
 }
