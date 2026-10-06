@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.l.LesserMasticore;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -16,13 +17,11 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SavvyTrader.class, GrizzlyBears.class, Shock.class, Island.class})
+@CardUsed({SavvyTrader.class, GrizzlyBears.class, Shock.class, Island.class, LesserMasticore.class})
 class SavvyTraderTest extends BaseCardTest {
 
     private void castSavvyTrader() {
-        harness.setHand(player1, List.of(new SavvyTrader()));
-        harness.addMana(player1, ManaColor.GREEN, 4);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SavvyTrader(), "{3}{G}");
         harness.passBothPriorities();
     }
 
@@ -71,5 +70,76 @@ class SavvyTraderTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The exiled land can be played using the normal land allowance")
+    void canPlayExiledLand() {
+        Island land = new Island();
+        harness.setGraveyard(player1, List.of(land));
+        castSavvyTrader();
+        harness.handleMultipleCardsChosen(player1, List.of(land.getId()));
+        harness.passBothPriorities();
+
+        harness.castFromExile(player1, land.getId());
+
+        harness.assertOnBattlefield(player1, "Island");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(land);
+        assertThat(gd.landsPlayedThisTurn.get(player1.getId())).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The permission survives the Trader leaving, but its cost reduction does not")
+    void permissionSurvivesSourceLeaving() {
+        GrizzlyBears permanent = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(permanent));
+        castSavvyTrader();
+        harness.handleMultipleCardsChosen(player1, List.of(permanent.getId()));
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, permanent.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(permanent);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castFromExile(player1, permanent.getId());
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Multiple Traders reduce generic mana without removing colored requirements")
+    void reductionsStackButDoNotPayColoredMana() {
+        harness.addToBattlefield(player1, new SavvyTrader());
+        SavvyTrader permanent = new SavvyTrader();
+        harness.setGraveyard(player1, List.of(permanent));
+        castSavvyTrader();
+        harness.handleMultipleCardsChosen(player1, List.of(permanent.getId()));
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, permanent.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castFromExile(player1, permanent.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("The play permission permits a permanent spell with an affordable discard cost")
+    void canCastPermanentWithDiscardAdditionalCost() {
+        LesserMasticore permanent = new LesserMasticore();
+        harness.setGraveyard(player1, List.of(permanent));
+        castSavvyTrader();
+        harness.handleMultipleCardsChosen(player1, List.of(permanent.getId()));
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new Island()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castFromExile(player1, permanent.getId());
     }
 }
