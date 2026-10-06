@@ -127,4 +127,52 @@ class SearingTouchTest extends BaseCardTest {
                 .containsExactly(searingTouch.getId());
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(4);
     }
+
+    @Test
+    @DisplayName("Buyback can be paid repeatedly, but does not carry over to a later cast")
+    void repeatedBuybackThenCastWithoutBuyback() {
+        Permanent spider = harness.addToBattlefieldAndReturn(player2, new CanopySpider());
+        SearingTouch searingTouch = new SearingTouch();
+        harness.setHand(player1, List.of(searingTouch));
+
+        for (int cast = 0; cast < 2; cast++) {
+            harness.addMana(player1, ManaColor.RED, 1);
+            harness.addMana(player1, ManaColor.COLORLESS, 4);
+            harness.castInstantWithBuyback(player1, 0, spider.getId());
+            harness.passBothPriorities();
+
+            assertThat(gd.playerHands.get(player1.getId()))
+                    .extracting(Card::getId)
+                    .containsExactly(searingTouch.getId());
+            assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+            assertThat(spider.getMarkedDamage()).isEqualTo(cast + 1);
+            assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+        }
+
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, spider.getId());
+
+        harness.assertNotOnBattlefield(player2, "Canopy Spider");
+        harness.assertInGraveyard(player2, "Canopy Spider");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(Card::getId)
+                .containsExactly(searingTouch.getId());
+    }
+
+    @Test
+    @DisplayName("The caster can target themselves and still buy the spell back")
+    void buybackWhenTargetingSelf() {
+        harness.setHand(player1, List.of(new SearingTouch()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castInstantWithBuyback(player1, 0, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 20);
+        harness.assertInHand(player1, "Searing Touch");
+        harness.assertNotInGraveyard(player1, "Searing Touch");
+    }
 }
