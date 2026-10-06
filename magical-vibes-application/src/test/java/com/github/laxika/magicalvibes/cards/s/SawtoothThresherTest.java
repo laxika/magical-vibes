@@ -14,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(SawtoothThresher.class)
+@CardUsed({SawtoothThresher.class})
 class SawtoothThresherTest extends BaseCardTest {
 
     @Test
@@ -89,13 +89,70 @@ class SawtoothThresherTest extends BaseCardTest {
     @Test
     @DisplayName("The ability requires two +1/+1 counters")
     void cannotActivateWithOnlyOneCounter() {
-        Permanent thresher = addReadyThresher(1);
+        addReadyThresher(1);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough counters");
+    }
+
+    @Test
+    @DisplayName("Colorless mana adds no sunburst counters")
+    void colorlessManaAddsNoCounters() {
+        harness.setHand(player1, List.of(new SawtoothThresher()));
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent thresher = findPermanent(player1, "Sawtooth Thresher");
+        assertThat(thresher.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.getEffectivePower(gd, thresher)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, thresher)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Spending all five colors adds five sunburst counters")
+    void allFiveColorsAddFiveCounters() {
+        harness.setHand(player1, List.of(new SawtoothThresher()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent thresher = findPermanent(player1, "Sawtooth Thresher");
+        assertThat(thresher.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, thresher)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, thresher)).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("A tapped summoning-sick Thresher pays counters immediately and boosts on resolution")
+    void tappedSummoningSickThresherCanActivate() {
+        Permanent thresher = addReadyThresher(2);
+        thresher.setSummoningSick(true);
+        thresher.setTapped(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(thresher.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.getEffectivePower(gd, thresher)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, thresher)).isEqualTo(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, thresher)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, thresher)).isEqualTo(5);
+        assertThat(thresher.isTapped()).isTrue();
     }
 
     private Permanent addReadyThresher(int counters) {
