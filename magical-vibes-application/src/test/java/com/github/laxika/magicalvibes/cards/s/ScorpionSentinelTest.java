@@ -51,6 +51,38 @@ class ScorpionSentinelTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, sentinel)).isEqualTo(4);
     }
 
+    @Test
+    void gainsBoostWhenSeventhLandEnters() {
+        addLands(player1, 6);
+        Permanent sentinel = harness.addToBattlefieldAndReturn(player1, new ScorpionSentinel());
+
+        assertThat(gqs.getEffectivePower(gd, sentinel)).isEqualTo(1);
+
+        harness.addToBattlefield(player1, new Forest());
+
+        assertThat(gqs.getEffectivePower(gd, sentinel)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, sentinel)).isEqualTo(4);
+    }
+
+    @Test
+    void moreThanSevenLandsStillGrantsOnlyThreePower() {
+        addLands(player1, 9);
+        Permanent sentinel = harness.addToBattlefieldAndReturn(player1, new ScorpionSentinel());
+
+        assertThat(gqs.getEffectivePower(gd, sentinel)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, sentinel)).isEqualTo(4);
+    }
+
+    @Test
+    void nonlandPermanentsDoNotCountTowardThreshold() {
+        addLands(player1, 6);
+        Permanent sentinel = harness.addToBattlefieldAndReturn(player1, new ScorpionSentinel());
+        harness.addToBattlefield(player1, new ScorpionSentinel());
+
+        assertThat(gqs.getEffectivePower(gd, sentinel)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, sentinel)).isEqualTo(4);
+    }
+
     private void addLands(com.github.laxika.magicalvibes.model.Player player, int count) {
         for (int i = 0; i < count; i++) {
             harness.addToBattlefield(player, new Forest());
