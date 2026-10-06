@@ -27,9 +27,8 @@ class SarkhansCatharsisTest extends BaseCardTest {
 
     @Test
     void dealsFiveDamageToTargetPlaneswalker() {
-        Permanent elspeth = new Permanent(new ElspethKnightErrant());
+        Permanent elspeth = harness.addToBattlefieldAndReturn(player2, new ElspethKnightErrant());
         elspeth.setCounterCount(CounterType.LOYALTY, 8);
-        gd.playerBattlefields.get(player2.getId()).add(elspeth);
 
         cast(elspeth.getId());
 
@@ -46,10 +45,59 @@ class SarkhansCatharsisTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void canTargetItsController() {
+        cast(player1.getId());
+
+        harness.assertLife(player1, 15);
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Sarkhan's Catharsis");
+    }
+
+    @Test
+    void canTargetItsControllersPlaneswalker() {
+        Permanent elspeth = harness.addToBattlefieldAndReturn(player1, new ElspethKnightErrant());
+        elspeth.setCounterCount(CounterType.LOYALTY, 8);
+
+        cast(elspeth.getId());
+
+        assertThat(elspeth.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void putsPlaneswalkerWithFiveLoyaltyIntoGraveyard() {
+        Permanent elspeth = harness.addToBattlefieldAndReturn(player2, new ElspethKnightErrant());
+        elspeth.setCounterCount(CounterType.LOYALTY, 5);
+
+        cast(elspeth.getId());
+
+        harness.assertNotOnBattlefield(player2, "Elspeth, Knight-Errant");
+        harness.assertInGraveyard(player2, "Elspeth, Knight-Errant");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void doesNotDamagePlayerWhenTargetPlaneswalkerLeavesBattlefield() {
+        Permanent elspeth = harness.addToBattlefieldAndReturn(player2, new ElspethKnightErrant());
+        elspeth.setCounterCount(CounterType.LOYALTY, 8);
+        giveCardAndMana();
+        harness.castInstant(player1, 0, elspeth.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(elspeth);
+        gd.playerGraveyards.get(player2.getId()).add(elspeth.getCard());
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Sarkhan's Catharsis");
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void cast(UUID targetId) {
         giveCardAndMana();
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
     }
 
     private void giveCardAndMana() {
