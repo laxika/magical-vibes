@@ -83,13 +83,81 @@ class SkyclaveApparitionTest extends BaseCardTest {
                 .noneMatch(permanent -> permanent.getCard().getName().equals("Illusion"));
     }
 
+    @Test
+    @DisplayName("A permanent you control is not a legal target")
+    void doesNotTargetOwnPermanent() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        UUID ownId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID opposingId = harness.getPermanentId(player2, "Grizzly Bears");
+
+        castAndResolveApparition();
+
+        PendingInteraction.PermanentChoice choice = gd.interaction.activeInteraction(
+                PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validIds()).contains(opposingId).doesNotContain(ownId);
+        harness.handlePermanentChosen(player1, opposingId);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Removing the Apparition in response still exiles the target without an Illusion")
+    void leavesBeforeExileResolves() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        castAndResolveApparition();
+        harness.handlePermanentChosen(player1, bearsId);
+
+        destroyApparition(harness.getPermanentId(player1, "Skyclave Apparition"));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Skyclave Apparition");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.exiledCards).anyMatch(entry -> entry.card().getName().equals("Grizzly Bears"));
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(permanent -> permanent.getCard().getName().equals("Illusion"));
+    }
+
+    @Test
+    @DisplayName("A target destroyed in response is not exiled and produces no Illusion")
+    void targetLeavesBeforeExileResolves() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        castAndResolveApparition();
+        harness.handlePermanentChosen(player1, bearsId);
+        destroyApparition(bearsId);
+        harness.passBothPriorities();
+
+        assertThat(gd.exiledCards).noneMatch(entry -> entry.card().getName().equals("Grizzly Bears"));
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        destroyApparition(harness.getPermanentId(player1, "Skyclave Apparition"));
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(permanent -> permanent.getCard().getName().equals("Illusion"));
+    }
+
+    @Test
+    @DisplayName("The controller can choose zero targets even when a legal target exists")
+    void mayDeclineExiling() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        castAndResolveApparition();
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.exiledCards).isEmpty();
+        destroyApparition(harness.getPermanentId(player1, "Skyclave Apparition"));
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(permanent -> permanent.getCard().getName().equals("Illusion"));
+    }
+
     private void castAndResolveApparition() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new SkyclaveApparition()));
-        harness.addMana(player1, ManaColor.WHITE, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SkyclaveApparition(), "{1}{W}{W}");
         harness.passBothPriorities();
     }
 
@@ -99,7 +167,6 @@ class SkyclaveApparitionTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player1, List.of(new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, apparitionId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, apparitionId);
     }
 }
