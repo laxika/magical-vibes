@@ -45,4 +45,53 @@ class SimicRagwormTest extends BaseCardTest {
 
         assertThat(ragworm.isTapped()).isTrue();
     }
+
+    @Test
+    void canUntapWhileSummoningSick() {
+        Permanent ragworm = harness.addToBattlefieldAndReturn(player1, new SimicRagworm());
+        ragworm.setSummoningSick(true);
+        ragworm.tap();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(ragworm.isTapped()).isFalse();
+        assertThat(ragworm.isSummoningSick()).isTrue();
+    }
+
+    @Test
+    void untapsOnlyWhenAbilityResolves() {
+        Permanent ragworm = addCreatureReady(player1, new SimicRagworm());
+        ragworm.tap();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(ragworm.isTapped()).isTrue();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(ragworm.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void untapsOnlyTheSourceCreature() {
+        Permanent ragworm = addCreatureReady(player1, new SimicRagworm());
+        Permanent other = addCreatureReady(player1, new SimicRagworm());
+        Permanent opponent = addCreatureReady(player2, new SimicRagworm());
+        ragworm.tap();
+        other.tap();
+        opponent.tap();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(ragworm.isTapped()).isFalse();
+        assertThat(other.isTapped()).isTrue();
+        assertThat(opponent.isTapped()).isTrue();
+    }
 }
