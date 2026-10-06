@@ -76,4 +76,45 @@ class SireOfTheStormTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
+
+    @Test
+    @DisplayName("Sire does not trigger from its own casting or entry")
+    void ownCastingDoesNotTrigger() {
+        harness.castFromHand(player1, new SireOfTheStorm(), "{4}{U}{U}");
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(countPermanents(player1, "Sire of the Storm")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A Spirit entering without being cast does not trigger")
+    void spiritEnteringWithoutCastingDoesNotTrigger() {
+        harness.addToBattlefield(player1, new SireOfTheStorm());
+        harness.setHand(player1, List.of());
+
+        harness.enterBattlefieldAndReturn(player1, new HarshDeceiver());
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Each Sire triggers independently for one Arcane spell")
+    void multipleSiresDrawIndependently() {
+        harness.addToBattlefield(player1, new SireOfTheStorm());
+        harness.addToBattlefield(player1, new SireOfTheStorm());
+        harness.castFromHand(player1, new DesperateRitual(), "{1}{R}");
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+    }
 }
