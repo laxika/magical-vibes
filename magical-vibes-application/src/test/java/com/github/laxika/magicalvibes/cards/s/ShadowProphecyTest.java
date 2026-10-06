@@ -84,17 +84,111 @@ class ShadowProphecyTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("With one card looked at, it goes to hand without prompting")
-    void fewerThanTwoCardsGoToHand() {
+    @DisplayName("With one card looked at, the player may put it into the graveyard")
+    void domainOneMayKeepZeroCards() {
         harness.addToBattlefield(player1, new Plains());
         Card onlyCard = new Forest();
         setupDeck(onlyCard);
 
         castShadowProphecy();
 
-        assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerHands.get(player1.getId())).containsExactly(onlyCard);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class)).isNotNull();
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(onlyCard);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Domain two allows keeping only one of the two cards")
+    void domainTwoMayKeepOneCard() {
+        harness.addToBattlefield(player1, new Plains());
+        harness.addToBattlefield(player1, new Swamp());
+        Card first = new Forest();
+        Card second = new Mountain();
+        setupDeck(first, second);
+
+        castShadowProphecy();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class)).isNotNull();
+        harness.handleMultipleCardsChosen(player1, List.of(second.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(second);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(first);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("A short library still allows keeping zero cards")
+    void shortLibraryMayKeepZeroCards() {
+        harness.addToBattlefield(player1, new Plains());
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new Swamp());
+        Card onlyCard = new Forest();
+        setupDeck(onlyCard);
+
+        castShadowProphecy();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class)).isNotNull();
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(onlyCard);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Domain three allows putting every looked-at card into the graveyard")
+    void domainThreeMayKeepZeroCards() {
+        harness.addToBattlefield(player1, new Plains());
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new Swamp());
+        Card first = new Forest();
+        Card second = new Mountain();
+        Card third = new Plains();
+        setupDeck(first, second, third);
+
+        castShadowProphecy();
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(first, second, third);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("An empty library still causes two life loss")
+    void emptyLibraryStillLosesLife() {
+        harness.addToBattlefield(player1, new Swamp());
+        setupDeck();
+
+        castShadowProphecy();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Shadow Prophecy");
+        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Opposing lands do not contribute to domain")
+    void opponentLandsDoNotContributeToDomain() {
+        harness.addToBattlefield(player2, new Plains());
+        harness.addToBattlefield(player2, new Island());
+        harness.addToBattlefield(player2, new Swamp());
+        Card topCard = new Forest();
+        setupDeck(topCard);
+
+        castShadowProphecy();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
         assertThat(gd.getLife(player1.getId())).isEqualTo(18);
     }
 
@@ -102,8 +196,7 @@ class ShadowProphecyTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ShadowProphecy()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
     }
 
     private void setupDeck(Card... cards) {
