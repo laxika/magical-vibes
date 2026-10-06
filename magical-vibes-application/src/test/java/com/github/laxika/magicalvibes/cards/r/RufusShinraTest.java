@@ -59,6 +59,46 @@ class RufusShinraTest extends BaseCardTest {
         assertThat(countPermanents(player1, "Darkstar")).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("An opponent's Darkstar does not prevent token creation")
+    void createsDarkstarWhenOnlyOpponentControlsOne() {
+        addCreatureReady(player1, new RufusShinra());
+        harness.addToBattlefield(player2, darkstarCard());
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Darkstar")).isEqualTo(1);
+        assertThat(countPermanents(player2, "Darkstar")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A noncreature named Darkstar does not prevent token creation")
+    void createsDarkstarWhenNamesakeIsNotACreature() {
+        addCreatureReady(player1, new RufusShinra());
+        Card namesake = darkstarCard();
+        namesake.setType(CardType.ARTIFACT);
+        harness.addToBattlefield(player1, namesake);
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Darkstar")).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Darkstar enters untapped and is not attacking")
+    void darkstarDoesNotJoinTheAttack() {
+        addCreatureReady(player1, new RufusShinra());
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+
+        Permanent darkstar = findPermanent(player1, "Darkstar");
+        assertThat(darkstar.isTapped()).isFalse();
+        assertThat(darkstar.isAttacking()).isFalse();
+    }
+
     private Card darkstarCard() {
         Card card = new Card();
         card.setName("Darkstar");
