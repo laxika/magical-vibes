@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({SachiDaughterOfSeshiro.class, OrochiSustainer.class, Rootrunner.class})
 class SachiDaughterOfSeshiroTest extends BaseCardTest {
@@ -35,10 +36,8 @@ class SachiDaughterOfSeshiroTest extends BaseCardTest {
     @Test
     @DisplayName("Other Snakes you control get +0/+1")
     void boostsOtherOwnSnakes() {
-        harness.addToBattlefield(player1, new OrochiSustainer());
+        Permanent snake = harness.addToBattlefieldAndReturn(player1, new OrochiSustainer());
         addSachi(player1);
-
-        Permanent snake = findPermanent(player1, "Orochi Sustainer");
         var bonus = gqs.computeStaticBonus(gd, snake);
 
         assertThat(bonus.power()).isZero();
@@ -56,10 +55,8 @@ class SachiDaughterOfSeshiroTest extends BaseCardTest {
     @Test
     @DisplayName("Snakes an opponent controls are not boosted")
     void doesNotBoostOpponentSnakes() {
-        harness.addToBattlefield(player2, new OrochiSustainer());
+        Permanent snake = harness.addToBattlefieldAndReturn(player2, new OrochiSustainer());
         addSachi(player1);
-
-        Permanent snake = findPermanent(player2, "Orochi Sustainer");
 
         assertThat(gqs.computeStaticBonus(gd, snake).toughness()).isZero();
     }
@@ -67,10 +64,8 @@ class SachiDaughterOfSeshiroTest extends BaseCardTest {
     @Test
     @DisplayName("Non-Snake creatures you control are not boosted")
     void doesNotBoostNonSnakes() {
-        harness.addToBattlefield(player1, new Rootrunner());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new Rootrunner());
         addSachi(player1);
-
-        Permanent bears = findPermanent(player1, "Rootrunner");
 
         assertThat(gqs.computeStaticBonus(gd, bears).toughness()).isZero();
     }
@@ -78,10 +73,8 @@ class SachiDaughterOfSeshiroTest extends BaseCardTest {
     @Test
     @DisplayName("Shamans you control gain the {T}: Add {G}{G} ability")
     void grantsManaAbilityToShamans() {
-        harness.addToBattlefield(player1, new OrochiSustainer());
+        Permanent shaman = harness.addToBattlefieldAndReturn(player1, new OrochiSustainer());
         addSachi(player1);
-
-        Permanent shaman = findPermanent(player1, "Orochi Sustainer");
         var granted = gqs.computeStaticBonus(gd, shaman).grantedActivatedAbilities();
 
         assertThat(granted).hasSize(1);
@@ -99,10 +92,8 @@ class SachiDaughterOfSeshiroTest extends BaseCardTest {
     @Test
     @DisplayName("Non-Shaman creatures you control gain nothing")
     void doesNotGrantToNonShamans() {
-        harness.addToBattlefield(player1, new Rootrunner());
+        Permanent snake = harness.addToBattlefieldAndReturn(player1, new Rootrunner());
         addSachi(player1);
-
-        Permanent snake = findPermanent(player1, "Rootrunner");
 
         assertThat(gqs.computeStaticBonus(gd, snake).grantedActivatedAbilities()).isEmpty();
     }
@@ -110,10 +101,8 @@ class SachiDaughterOfSeshiroTest extends BaseCardTest {
     @Test
     @DisplayName("Opponent Shamans do not gain the mana ability")
     void doesNotGrantToOpponentShamans() {
-        harness.addToBattlefield(player2, new OrochiSustainer());
+        Permanent shaman = harness.addToBattlefieldAndReturn(player2, new OrochiSustainer());
         addSachi(player1);
-
-        Permanent shaman = findPermanent(player2, "Orochi Sustainer");
 
         assertThat(gqs.computeStaticBonus(gd, shaman).grantedActivatedAbilities()).isEmpty();
     }
@@ -137,5 +126,59 @@ class SachiDaughterOfSeshiroTest extends BaseCardTest {
 
         assertThat(shaman.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Sachi can tap for two green mana without using the stack")
+    void selfGrantedAbilityProducesManaImmediately() {
+        Permanent sachi = addCreatureReady(player1, new SachiDaughterOfSeshiro());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(sachi.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The granted tap ability obeys summoning sickness")
+    void summoningSickShamanCannotActivateGrantedAbility() {
+        Permanent shaman = harness.addToBattlefieldAndReturn(player1, new OrochiSustainer());
+        addSachi(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+
+        assertThat(shaman.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
+    @DisplayName("Noncreature Shamans can activate the granted ability immediately")
+    void nonCreatureShamanCanProduceManaImmediately() {
+        Permanent shaman = addNonCreatureShamanPermanent(player1);
+        addSachi(player1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(shaman.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Sachi's continuous bonuses end when she leaves the battlefield")
+    void bonusesEndWhenSachiLeavesBattlefield() {
+        Permanent shaman = addCreatureReady(player1, new OrochiSustainer());
+        Permanent sachi = addSachi(player1);
+        assertThat(gqs.computeStaticBonus(gd, shaman).toughness()).isEqualTo(1);
+        assertThat(gqs.computeStaticBonus(gd, shaman).grantedActivatedAbilities()).hasSize(1);
+
+        gd.playerBattlefields.get(player1.getId()).remove(sachi);
+        gd.playerGraveyards.get(player1.getId()).add(sachi.getCard());
+
+        assertThat(gqs.computeStaticBonus(gd, shaman).toughness()).isZero();
+        assertThat(gqs.computeStaticBonus(gd, shaman).grantedActivatedAbilities()).isEmpty();
     }
 }
