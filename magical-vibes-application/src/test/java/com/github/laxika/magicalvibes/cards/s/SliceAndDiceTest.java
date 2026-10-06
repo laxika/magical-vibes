@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.cards.g.GluttonousZombie;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -64,6 +66,8 @@ class SliceAndDiceTest extends BaseCardTest {
 
         assertThat(creature.getMarkedDamage()).isEqualTo(1);
         harness.assertOnBattlefield(player2, "Gluttonous Zombie");
+        harness.assertNotInHand(player1, "Gluttonous Zombie");
+        harness.passBothPriorities();
         harness.assertInHand(player1, "Gluttonous Zombie");
         harness.assertInGraveyard(player1, "Slice and Dice");
     }
@@ -83,7 +87,49 @@ class SliceAndDiceTest extends BaseCardTest {
 
         assertThat(creature.getMarkedDamage()).isZero();
         harness.assertOnBattlefield(player2, "Gluttonous Zombie");
+        harness.assertNotInHand(player1, "Gluttonous Zombie");
+        harness.passBothPriorities();
         harness.assertInHand(player1, "Gluttonous Zombie");
         harness.assertInGraveyard(player1, "Slice and Dice");
+    }
+
+    @Test
+    @DisplayName("Cycling puts a separate damage trigger above the draw ability")
+    void cyclingCreatesSeparateDamageTrigger() {
+        harness.setHand(player1, List.of(new SliceAndDice()));
+        harness.setLibrary(player1, List.of(new GluttonousZombie()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertInGraveyard(player1, "Slice and Dice");
+        harness.assertNotInHand(player1, "Gluttonous Zombie");
+        assertThat(gd.stack).extracting(StackEntry::getEntryType)
+                .containsExactly(StackEntryType.ACTIVATED_ABILITY, StackEntryType.TRIGGERED_ABILITY);
+    }
+
+    @Test
+    @DisplayName("Cycling damages creatures of both players without damaging players")
+    void cyclingDamagesBothPlayersCreaturesOnly() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GluttonousZombie());
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new ButcherOrgg());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new SliceAndDice()));
+        harness.setLibrary(player1, List.of(new GluttonousZombie()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(ownCreature.getMarkedDamage()).isEqualTo(1);
+        assertThat(opposingCreature.getMarkedDamage()).isEqualTo(1);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        harness.passBothPriorities();
+        harness.assertInHand(player1, "Gluttonous Zombie");
     }
 }
