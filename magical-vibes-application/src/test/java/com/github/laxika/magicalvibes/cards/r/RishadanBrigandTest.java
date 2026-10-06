@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.f.FreshVolunteers;
+import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +15,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RishadanBrigand.class, FreshVolunteers.class, RishadanAirship.class})
+@CardUsed({RishadanBrigand.class, FreshVolunteers.class, RishadanAirship.class, Island.class})
 class RishadanBrigandTest extends BaseCardTest {
 
     @Test
@@ -24,8 +25,7 @@ class RishadanBrigandTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 3);
         castRishadanBrigand();
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player2.getId());
@@ -41,8 +41,7 @@ class RishadanBrigandTest extends BaseCardTest {
         harness.addToBattlefield(player2, new FreshVolunteers());
         castRishadanBrigand();
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player2, false);
 
         harness.assertInGraveyard(player2, "Fresh Volunteers");
@@ -54,8 +53,9 @@ class RishadanBrigandTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 3);
         castRishadanBrigand();
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player2, false);
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
@@ -69,8 +69,7 @@ class RishadanBrigandTest extends BaseCardTest {
         Permanent second = harness.addToBattlefieldAndReturn(player2, new FreshVolunteers());
         castRishadanBrigand();
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player2, false);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).playerId())
@@ -97,7 +96,7 @@ class RishadanBrigandTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot block non-flying creatures")
     void cannotBlockNonFlyingCreatures() {
-        Permanent brigand = addCreatureReady(player2, new RishadanBrigand());
+        addCreatureReady(player2, new RishadanBrigand());
 
         Permanent nonFlyingAttacker = addCreatureReady(player1, new FreshVolunteers());
         nonFlyingAttacker.setAttacking(true);
@@ -106,6 +105,52 @@ class RishadanBrigandTest extends BaseCardTest {
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can only block creatures with flying");
+    }
+
+    @Test
+    @DisplayName("An opponent may pay even with no permanents to sacrifice")
+    void opponentMayPayWithNoPermanents() {
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        castRishadanBrigand();
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opponent may sacrifice a land and keeps unspent mana")
+    void opponentSacrificesLand() {
+        harness.addToBattlefield(player2, new Island());
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.addToBattlefield(player1, new FreshVolunteers());
+        castRishadanBrigand();
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player2, false);
+
+        harness.assertInGraveyard(player2, "Island");
+        harness.assertOnBattlefield(player1, "Fresh Volunteers");
+        harness.assertOnBattlefield(player1, "Rishadan Brigand");
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Colored mana can pay the generic cost without sacrificing any permanent")
+    void opponentPaysGenericCostWithColoredMana() {
+        harness.addToBattlefield(player2, new FreshVolunteers());
+        harness.addToBattlefield(player2, new Island());
+        harness.addMana(player2, ManaColor.BLUE, 3);
+        castRishadanBrigand();
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertOnBattlefield(player2, "Fresh Volunteers");
+        harness.assertOnBattlefield(player2, "Island");
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
     }
 
     private void castRishadanBrigand() {
