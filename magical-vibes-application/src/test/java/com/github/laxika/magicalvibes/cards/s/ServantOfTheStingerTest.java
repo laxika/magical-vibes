@@ -1,13 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -35,7 +33,7 @@ class ServantOfTheStingerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         harness.assertInGraveyard(player1, "Servant of the Stinger");
         harness.assertInHand(player1, "Forest");
@@ -73,18 +71,116 @@ class ServantOfTheStingerTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
     }
 
+    @Test
+    @DisplayName("An empty library does not prevent sacrificing the creature")
+    void sacrificesWithEmptyLibrary() {
+        harness.setLibrary(player1, List.of());
+        Permanent servant = addReadyServant(player1);
+        servant.setAttacking(true);
+
+        commitCrime();
+        resolveUnblockedCombat();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Servant of the Stinger");
+        harness.assertNotOnBattlefield(player1, "Servant of the Stinger");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Targeting yourself does not enable the combat damage ability")
+    void targetingYourselfIsNotACrime() {
+        harness.setLibrary(player1, List.of(new Forest()));
+        Permanent servant = addReadyServant(player1);
+        servant.setAttacking(true);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+
+        resolveUnblockedCombat();
+
+        harness.assertOnBattlefield(player1, "Servant of the Stinger");
+        harness.assertNotInHand(player1, "Forest");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An opponent's crime does not enable your combat damage ability")
+    void opponentsCrimeDoesNotEnableSearch() {
+        harness.setLibrary(player1, List.of(new Forest()));
+        Permanent servant = addReadyServant(player1);
+        servant.setAttacking(true);
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        resolveUnblockedCombat();
+
+        harness.assertOnBattlefield(player1, "Servant of the Stinger");
+        harness.assertNotInHand(player1, "Forest");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The unrestricted search can find a nonland card")
+    void searchesForNonlandCard() {
+        harness.setLibrary(player1, List.of(new ServantOfTheStinger(), new Forest()));
+        Permanent servant = addReadyServant(player1);
+        servant.setAttacking(true);
+
+        commitCrime();
+        resolveUnblockedCombat();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player1, "Servant of the Stinger");
+        harness.assertInHand(player1, "Servant of the Stinger");
+        harness.assertNotInHand(player1, "Forest");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Removing the source before resolution prevents the search")
+    void cannotSearchWhenSourceHasLeftBattlefield() {
+        harness.setLibrary(player1, List.of(new Forest()));
+        Permanent servant = addReadyServant(player1);
+        commitCrime();
+        harness.setHand(player2, List.of(new Shock(), new Shock()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        servant.setAttacking(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.castAndResolveInstant(player2, 0, servant.getId());
+        harness.castAndResolveInstant(player2, 0, servant.getId());
+        harness.assertInGraveyard(player1, "Servant of the Stinger");
+        harness.passBothPriorities();
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player1, true);
+            harness.passBothPriorities();
+        }
+
+        harness.assertNotInHand(player1, "Forest");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addReadyServant(Player player) {
-        Permanent servant = new Permanent(new ServantOfTheStinger());
+        Permanent servant = harness.addToBattlefieldAndReturn(player, new ServantOfTheStinger());
         servant.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(servant);
         return servant;
     }
 
     private void commitCrime() {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
     }
 
     private void resolveUnblockedCombat() {
