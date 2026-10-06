@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.cards.d.Dissipate;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(RiseOfTheAnts.class)
+@CardUsed({RiseOfTheAnts.class, Dissipate.class})
 class RiseOfTheAntsTest extends BaseCardTest {
 
     @Test
@@ -23,8 +23,7 @@ class RiseOfTheAntsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.addMana(player1, ManaColor.GREEN, 2);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(12);
         List<Permanent> insects = findPermanents(player1, "Insect");
@@ -50,8 +49,55 @@ class RiseOfTheAntsTest extends BaseCardTest {
         assertThat(gd.getLife(player1.getId())).isEqualTo(12);
         assertThat(findPermanents(player1, "Insect")).hasSize(2);
         harness.assertNotInGraveyard(player1, "Rise of the Ants");
-        GameData gameData = harness.getGameData();
-        assertThat(gameData.getPlayerExiledCards(player1.getId()))
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getName().equals("Rise of the Ants"));
+    }
+
+    @Test
+    void normalCastThenFlashbackProducesFourInsectsAndGainsFourLife() {
+        RiseOfTheAnts spell = new RiseOfTheAnts();
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 10);
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        harness.assertInGraveyard(player1, "Rise of the Ants");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castFlashback(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 14);
+        harness.assertLife(player2, 10);
+        assertThat(findPermanents(player1, "Insect")).hasSize(4);
+        assertThat(findPermanents(player2, "Insect")).isEmpty();
+        harness.assertNotInGraveyard(player1, "Rise of the Ants");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(spell);
+    }
+
+    @Test
+    void counteredFlashbackIsExiledWithoutTokensOrLifeGain() {
+        RiseOfTheAnts spell = new RiseOfTheAnts();
+        harness.setLife(player1, 10);
+        harness.setGraveyard(player1, List.of(spell));
+        harness.setHand(player2, List.of(new Dissipate()));
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castFlashback(player1, 0);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, spell.getId());
+
+        harness.assertLife(player1, 10);
+        assertThat(findPermanents(player1, "Insect")).isEmpty();
+        harness.assertNotInGraveyard(player1, "Rise of the Ants");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(spell);
+        assertThat(gd.stack).isEmpty();
     }
 }
