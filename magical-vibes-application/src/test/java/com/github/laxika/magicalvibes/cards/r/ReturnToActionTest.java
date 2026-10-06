@@ -74,9 +74,65 @@ class ReturnToActionTest extends BaseCardTest {
                 .noneMatch(permanent -> permanent.getCard().getId().equals(creatureCard.getId()));
     }
 
+    @Test
+    @DisplayName("Returned creature loses the bonuses and cannot return a second time")
+    void returnedCreatureIsANewObject() {
+        Permanent creature = addCreature(player1);
+        castOn(creature);
+        destroy(player2, creature);
+        resolveAllTriggers();
+
+        Permanent returned = findPermanent(player1, "Grizzly Bears");
+        assertThat(returned.getId()).isNotEqualTo(creature.getId());
+        assertThat(returned.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, returned)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, returned)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, returned, Keyword.LIFELINK)).isFalse();
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+
+        destroy(player2, returned);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Multiple copies stack the power boost but return the creature only once")
+    void multipleCopiesReturnOnlyOnce() {
+        Permanent creature = addCreature(player1);
+        castOn(creature);
+        castOn(creature);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+
+        destroy(player2, creature);
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Grizzly Bears")).isEqualTo(1);
+        Permanent returned = findPermanent(player1, "Grizzly Bears");
+        assertThat(returned.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, returned)).isEqualTo(2);
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Lifelink gains life equal to the boosted combat damage")
+    void lifelinkGainsLifeDuringCombat() {
+        Permanent creature = addCreature(player1);
+        creature.setSummoningSick(false);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        castOn(creature);
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+
+        harness.assertLife(player1, 23);
+        harness.assertLife(player2, 17);
+    }
+
     private Permanent addCreature(Player player) {
-        harness.addToBattlefield(player, new GrizzlyBears());
-        return gd.playerBattlefields.get(player.getId()).getLast();
+        return harness.addToBattlefieldAndReturn(player, new GrizzlyBears());
     }
 
     private void castOn(Permanent target) {
@@ -86,8 +142,7 @@ class ReturnToActionTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ReturnToAction()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 
     private void destroy(Player caster, Permanent target) {
@@ -96,7 +151,6 @@ class ReturnToActionTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(caster, List.of(new DoomBlade()));
         harness.addMana(caster, ManaColor.BLACK, 2);
-        harness.castInstant(caster, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(caster, 0, target.getId());
     }
 }
