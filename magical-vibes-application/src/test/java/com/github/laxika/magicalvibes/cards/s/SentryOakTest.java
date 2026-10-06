@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.c.CloudgoatRanger;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.model.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -30,6 +31,70 @@ class SentryOakTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
+    private void keepBothRevealedCardsOnTop() {
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+        gs.handleInteractionAnswer(gd, player2,
+                new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+    }
+
+    @Test
+    @DisplayName("Bottoming both revealed cards does not change the clash winner")
+    void bottomingRevealedCardsPreservesWin() {
+        harness.addToBattlefield(player1, new SentryOak());
+        CloudgoatRanger winningCard = new CloudgoatRanger();
+        Forest ownNextCard = new Forest();
+        Forest losingCard = new Forest();
+        CloudgoatRanger opposingNextCard = new CloudgoatRanger();
+        harness.setLibrary(player1, List.of(winningCard, ownNextCard));
+        harness.setLibrary(player2, List.of(losingCard, opposingNextCard));
+
+        advanceToCombat(player1);
+        harness.handleMayAbilityChosen(player1, true);
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+        gs.handleInteractionAnswer(gd, player2,
+                new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(ownNextCard, winningCard);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opposingNextCard, losingCard);
+        assertThat(sentryOak().getPowerModifier()).isEqualTo(2);
+        assertThat(sentryOak().hasKeyword(Keyword.DEFENDER)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Revealing a land wins against an opponent with an empty library")
+    void landWinsAgainstEmptyLibrary() {
+        harness.addToBattlefield(player1, new SentryOak());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setLibrary(player2, List.of());
+
+        advanceToCombat(player1);
+        harness.handleMayAbilityChosen(player1, true);
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+
+        assertThat(sentryOak().getPowerModifier()).isEqualTo(2);
+        assertThat(sentryOak().hasKeyword(Keyword.DEFENDER)).isFalse();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An empty library cannot win a clash")
+    void emptyLibraryDoesNotWin() {
+        harness.addToBattlefield(player1, new SentryOak());
+        harness.setLibrary(player1, List.of());
+        harness.setLibrary(player2, List.of(new Forest()));
+
+        advanceToCombat(player1);
+        harness.handleMayAbilityChosen(player1, true);
+        gs.handleInteractionAnswer(gd, player2,
+                new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+
+        assertThat(sentryOak().getPowerModifier()).isEqualTo(0);
+        assertThat(sentryOak().hasKeyword(Keyword.DEFENDER)).isTrue();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
     @Test
     @DisplayName("Winning the clash gives +2/+0 and removes defender until end of turn")
     void wonClashBoostsAndRemovesDefender() {
@@ -40,6 +105,7 @@ class SentryOakTest extends BaseCardTest {
         advanceToCombat(player1);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
+        keepBothRevealedCardsOnTop();
 
         Permanent oak = sentryOak();
         assertThat(oak.getPowerModifier()).isEqualTo(2);
@@ -56,6 +122,7 @@ class SentryOakTest extends BaseCardTest {
 
         advanceToCombat(player1);
         harness.handleMayAbilityChosen(player1, true);
+        keepBothRevealedCardsOnTop();
 
         Permanent oak = sentryOak();
         assertThat(oak.getPowerModifier()).isEqualTo(0);
@@ -71,6 +138,7 @@ class SentryOakTest extends BaseCardTest {
 
         advanceToCombat(player1);
         harness.handleMayAbilityChosen(player1, true);
+        keepBothRevealedCardsOnTop();
 
         Permanent oak = sentryOak();
         assertThat(oak.getPowerModifier()).isEqualTo(0);
@@ -114,6 +182,7 @@ class SentryOakTest extends BaseCardTest {
 
         advanceToCombat(player1);
         harness.handleMayAbilityChosen(player1, true);
+        keepBothRevealedCardsOnTop();
 
         Permanent oak = sentryOak();
         assertThat(oak.getPowerModifier()).isEqualTo(2);
