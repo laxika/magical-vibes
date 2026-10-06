@@ -80,6 +80,56 @@ class SeaOfSandTest extends BaseCardTest {
     }
 
     @Test
+    void multipleDrawsEachCreateALifeTriggerThatWaitsForResolution() {
+        harness.setLife(player1, 20);
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCards(gd, player1.getId(), 2));
+
+        harness.assertLife(player1, 20);
+        harness.assertInHand(player1, "Forest");
+        harness.passBothPriorities();
+        harness.assertLife(player1, 23);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 26);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void nonlandLifeLossWaitsForResolutionAndAffectsOnlyTheDrawingPlayer() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player2.getId()));
+
+        harness.assertLife(player2, 20);
+        harness.assertInHand(player2, "Grizzly Bears");
+        harness.passBothPriorities();
+        harness.assertLife(player2, 17);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    void chaosCanPutAnOpponentsLandOnTopOfItsOwnersLibrary() {
+        Forest land = new Forest();
+        land.setOwnerId(player1.getId());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, land);
+        GrizzlyBears previousTop = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(previousTop));
+        harness.setLibrary(player2, List.of());
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.inMutationScope(() -> triggers.processNextSpellTargetTrigger(gd));
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Forest");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(land, previousTop);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+    }
+
+    @Test
     void chaosPutsTargetPermanentOnTopOfItsOwnersLibrary() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
