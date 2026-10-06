@@ -69,8 +69,7 @@ class RetreatToEmeriaTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(3);
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(2);
@@ -89,5 +88,62 @@ class RetreatToEmeriaTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken())
                 .count()).isZero();
+    }
+
+    @Test
+    void laterTokensDoNotReceiveAnAlreadyResolvedBoost() {
+        harness.addToBattlefield(player1, new RetreatToEmeria());
+
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+        harness.handleListChoice(player1, CREATE_TOKEN);
+        harness.passBothPriorities();
+        Permanent firstToken = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken())
+                .findFirst().orElseThrow();
+
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+        harness.handleListChoice(player1, BOOST_CREATURES);
+        harness.passBothPriorities();
+
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+        harness.handleListChoice(player1, CREATE_TOKEN);
+        harness.passBothPriorities();
+        List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken()).toList();
+        assertThat(tokens).hasSize(2);
+        Permanent laterToken = tokens.stream()
+                .filter(permanent -> !permanent.getId().equals(firstToken.getId()))
+                .findFirst().orElseThrow();
+        assertThat(gqs.getEffectivePower(gd, firstToken)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, firstToken)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, laterToken)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, laterToken)).isEqualTo(1);
+    }
+
+    @Test
+    void repeatedLandEntriesStackBoostsEvenWhenLandsAreNotPlayed() {
+        harness.addToBattlefield(player1, new RetreatToEmeria());
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+        harness.handleListChoice(player1, CREATE_TOKEN);
+        harness.passBothPriorities();
+        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken())
+                .findFirst().orElseThrow();
+
+        for (int i = 0; i < 2; i++) {
+            harness.enterBattlefieldAndReturn(player1, new Forest());
+            harness.handleListChoice(player1, BOOST_CREATURES);
+            harness.passBothPriorities();
+        }
+
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(3);
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken())).hasSize(1);
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
     }
 }
