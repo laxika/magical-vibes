@@ -79,6 +79,58 @@ class ScattershotTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    @DisplayName("Can target a creature you control")
+    void canTargetOwnCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GoblinPsychopath());
+
+        castScattershot(target);
+        resolveAllTriggers();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Spells cast after Scattershot do not increase its storm count")
+    void laterSpellsDoNotIncreaseStormCount() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GoblinPsychopath());
+        gd.recordSpellCast(player1.getId(), new Stabilizer());
+
+        castScattershot(target);
+        gd.recordSpellCast(player2.getId(), new GoblinPsychopath());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(1);
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Storm copies do not count as spells cast for a later Scattershot")
+    void copiesDoNotIncreaseLaterStormCount() {
+        Permanent firstTarget = harness.addToBattlefieldAndReturn(player2, new GoblinPsychopath());
+        Permanent secondTarget = harness.addToBattlefieldAndReturn(player2, new GoblinPsychopath());
+        gd.recordSpellCast(player1.getId(), new Stabilizer());
+
+        castScattershot(firstTarget);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        castScattershot(secondTarget);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(2);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        assertThat(firstTarget.getMarkedDamage()).isEqualTo(2);
+        assertThat(secondTarget.getMarkedDamage()).isEqualTo(3);
+    }
+
     private void castScattershot(Permanent target) {
         harness.setHand(player1, List.of(new Scattershot()));
         addMana();
