@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -108,22 +109,59 @@ class SeaMonsterTest extends BaseCardTest {
     @DisplayName("Unblocked Sea Monster deals 6 damage to defending player")
     void dealsSixDamageWhenUnblocked() {
         harness.setLife(player2, 20);
+        harness.addToBattlefield(player2, new Island());
 
-        Permanent seaPerm = addCreatureReady(player1, new SeaMonster());
-        seaPerm.setAttacking(true);
-        resolveCombat();
+        addCreatureReady(player1, new SeaMonster());
+        declareAttackers(List.of(0));
 
         harness.assertLife(player2, 14);
     }
 
     @Test
     @DisplayName("Sea Monster cannot attack if defender controls only a changeling creature")
-    @CardUsed(AvianChangeling.class)
+    @CardUsed({AvianChangeling.class, SeaMonster.class})
     void cannotAttackWhenDefenderOnlyControlsChangelingCreature() {
         harness.addToBattlefield(player2, new AvianChangeling());
         addCreatureReady(player1, new SeaMonster());
 
         assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("An Island in the defending player's graveyard does not allow an attack")
+    void cannotAttackWhenIslandIsOnlyInDefendersGraveyard() {
+        harness.setGraveyard(player2, List.of(new Island()));
+        addCreatureReady(player1, new SeaMonster());
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Sea Monster can block without either player controlling an Island")
+    void canBlockWithoutIslands() {
+        addCreatureReady(player1, new GrizzlyBears());
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new SeaMonster());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+        resolveCombat();
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Sea Monster");
+    }
+
+    @Test
+    @DisplayName("Sea Monster checks the defending player when player two attacks")
+    void canAttackFromOtherPlayersBattlefield() {
+        harness.addToBattlefield(player1, new Island());
+        addCreatureReady(player2, new SeaMonster());
+
+        declareAttackers(player2, List.of(0));
+
+        harness.assertLife(player1, 14);
     }
 }
