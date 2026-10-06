@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.f.FreshVolunteers;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RockBadger.class, FreshVolunteers.class, Mountain.class})
+@CardUsed({RockBadger.class, FreshVolunteers.class, Mountain.class, Plains.class})
 class RockBadgerTest extends BaseCardTest {
 
     @Test
@@ -54,9 +55,7 @@ class RockBadgerTest extends BaseCardTest {
         Permanent blockerPerm = addCreatureReady(player2, new FreshVolunteers());
 
         Permanent atkPerm = addCreatureReady(player1, new RockBadger());
-        atkPerm.setAttacking(true);
-
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm)));
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);
@@ -72,9 +71,7 @@ class RockBadgerTest extends BaseCardTest {
         Permanent blockerPerm = addCreatureReady(player2, new FreshVolunteers());
 
         Permanent atkPerm = addCreatureReady(player1, new RockBadger());
-        atkPerm.setAttacking(true);
-
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm)));
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);
@@ -91,9 +88,7 @@ class RockBadgerTest extends BaseCardTest {
         Permanent blockerPerm = addCreatureReady(player2, new FreshVolunteers());
 
         Permanent atkPerm = addCreatureReady(player1, new RockBadger());
-        atkPerm.setAttacking(true);
-
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm)));
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);
@@ -114,6 +109,40 @@ class RockBadgerTest extends BaseCardTest {
         resolveCombat();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+    }
+
+    @Test
+    @DisplayName("A tapped Mountain still prevents Rock Badger from being blocked")
+    void cannotBeBlockedWhenDefendersMountainIsTapped() {
+        harness.addToBattlefield(player2, new Mountain());
+        findPermanent(player2, "Mountain").setTapped(true);
+        Permanent blocker = addCreatureReady(player2, new FreshVolunteers());
+        Permanent attacker = addCreatureReady(player1, new RockBadger());
+
+        declareAttackersAndPrepareBlockers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
+
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(blockerIndex, attackerIndex))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+    }
+
+    @Test
+    @DisplayName("A Plains does not prevent Rock Badger from being blocked")
+    void canBeBlockedWhenDefenderControlsOnlyPlains() {
+        harness.addToBattlefield(player2, new Plains());
+        Permanent blocker = addCreatureReady(player2, new FreshVolunteers());
+        Permanent attacker = addCreatureReady(player1, new RockBadger());
+
+        declareAttackersAndPrepareBlockers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
+
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
+
+        assertThat(blocker.isBlocking()).isTrue();
     }
 }
 
