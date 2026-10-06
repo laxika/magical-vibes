@@ -108,6 +108,27 @@ class ShadowmageInfiltratorTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
+    @Test
+    @DisplayName("An opponent-controlled Infiltrator draws for its controller, not the damaged player")
+    void opponentControlledInfiltratorDrawsForItsController() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setLibrary(player2, List.of(new Forest()));
+        Permanent shadowmage = addCreatureReady(player2, new ShadowmageInfiltrator());
+        shadowmage.setAttacking(true);
+
+        resolveCombat(player2);
+        harness.handleMayAbilityChosen(player2, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
     private Permanent addAttackingShadowmage() {
         Permanent shadowmage = addCreatureReady(player1, new ShadowmageInfiltrator());
         shadowmage.setAttacking(true);
