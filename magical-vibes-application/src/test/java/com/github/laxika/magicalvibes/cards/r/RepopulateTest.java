@@ -30,8 +30,7 @@ class RepopulateTest extends BaseCardTest {
 
         int deckSizeBefore = gd.playerDecks.get(player2.getId()).size();
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(noncreature);
         assertThat(gd.playerDecks.get(player2.getId()))
@@ -50,8 +49,7 @@ class RepopulateTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(noncreature);
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(libraryCard);
@@ -81,5 +79,83 @@ class RepopulateTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Repopulate");
         harness.assertInHand(player1, "Bloated Toad");
+    }
+
+    @Test
+    @DisplayName("Can target its controller without moving the opponent's graveyard")
+    void shufflesControllersCreatureCards() {
+        BloatedToad ownCreature = new BloatedToad();
+        BloatedToad opposingCreature = new BloatedToad();
+        IronWill noncreature = new IronWill();
+        Repopulate spell = new Repopulate();
+        harness.setGraveyard(player1, List.of(ownCreature, noncreature));
+        harness.setGraveyard(player2, List.of(opposingCreature));
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(ownCreature);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(noncreature, spell);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opposingCreature);
+    }
+
+    @Test
+    @DisplayName("Uses the creature cards present when the spell resolves")
+    void usesGraveyardContentsAtResolution() {
+        BloatedToad removedCreature = new BloatedToad();
+        BloatedToad addedCreature = new BloatedToad();
+        harness.setGraveyard(player2, List.of(removedCreature));
+        harness.setLibrary(player2, List.of());
+        harness.setHand(player1, List.of(new Repopulate()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.setGraveyard(player2, List.of(addedCreature));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(addedCreature);
+    }
+
+    @Test
+    @DisplayName("Cycling pays the discard before the draw resolves and does not shuffle creatures")
+    void cyclingDiscardsImmediatelyWithoutSpellEffect() {
+        Repopulate spell = new Repopulate();
+        BloatedToad creature = new BloatedToad();
+        IronWill drawnCard = new IronWill();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setHand(player1, List.of(spell));
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(creature, spell);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(drawnCard);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(creature, spell);
+    }
+
+    @Test
+    @DisplayName("Cycling requires two mana and leaves the card in hand when payment fails")
+    void cannotCycleWithInsufficientMana() {
+        Repopulate spell = new Repopulate();
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(spell);
+        harness.assertNotInGraveyard(player1, "Repopulate");
+        assertThat(gd.stack).isEmpty();
     }
 }
