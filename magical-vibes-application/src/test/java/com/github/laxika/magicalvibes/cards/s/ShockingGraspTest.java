@@ -26,8 +26,7 @@ class ShockingGraspTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(drawnCard));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(gqs.getEffectivePower(gd, target)).isZero();
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
@@ -42,8 +41,7 @@ class ShockingGraspTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new FountainOfYouth()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
         assertThat(gqs.getEffectivePower(gd, target)).isZero();
 
         harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.END_STEP);
@@ -63,5 +61,44 @@ class ShockingGraspTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Shocking Grasp does not draw when its target leaves before resolution")
+    void doesNotDrawWhenTargetLeavesBattlefield() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        FountainOfYouth drawnCard = new FountainOfYouth();
+        harness.setHand(player1, List.of(new ShockingGrasp()));
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castInstant(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerGraveyards.get(player2.getId()).add(target.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(drawnCard);
+        harness.assertInGraveyard(player1, "Shocking Grasp");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Shocking Grasp can target your own creature and stack reductions below zero")
+    void canTargetOwnCreatureAndReducePowerBelowZero() {
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        FountainOfYouth firstDraw = new FountainOfYouth();
+        FountainOfYouth secondDraw = new FountainOfYouth();
+        harness.setHand(player1, List.of(new ShockingGrasp(), new ShockingGrasp()));
+        harness.setLibrary(player1, List.of(firstDraw, secondDraw));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(-2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw);
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 }
