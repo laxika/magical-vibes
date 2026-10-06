@@ -164,6 +164,80 @@ class RuneOfProtectionArtifactsTest extends BaseCardTest {
         harness.assertInHand(player1, "Grizzly Bears");
     }
 
+    @Test
+    @DisplayName("The shield prevents only the first damage event from the chosen artifact")
+    void laterDamageFromSameArtifactIsNotPrevented() {
+        harness.setLife(player1, 20);
+        addReadyRune(player1);
+        Permanent rod = harness.addToBattlefieldAndReturn(player2, new RodOfRuin());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, rod.getId());
+
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player1, 20);
+
+        rod.setTapped(false);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+    }
+
+    @Test
+    @DisplayName("Damage to another player does not consume the shield")
+    void damageToAnotherPlayerDoesNotConsumeShield() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        addReadyRune(player1);
+        Permanent rod = harness.addToBattlefieldAndReturn(player2, new RodOfRuin());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, rod.getId());
+
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player2, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player2, 19);
+
+        rod.setTapped(false);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Two activations protect against two separate damage events")
+    void multipleShieldsAreNotConsumedByOneDamageEvent() {
+        harness.setLife(player1, 20);
+        addReadyRune(player1);
+        Permanent rod = harness.addToBattlefieldAndReturn(player2, new RodOfRuin());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        for (int activation = 0; activation < 2; activation++) {
+            harness.activateAbility(player1, 0, null, null);
+            harness.passBothPriorities();
+            harness.handlePermanentChosen(player1, rod.getId());
+        }
+
+        for (int event = 0; event < 3; event++) {
+            rod.setTapped(false);
+            harness.addMana(player2, ManaColor.COLORLESS, 3);
+            harness.activateAbility(player2, 0, null, player1.getId());
+            harness.passBothPriorities();
+            harness.assertLife(player1, event < 2 ? 20 : 19);
+        }
+    }
+
     private Permanent addReadyRune(Player player) {
         return addCreatureReady(player, new RuneOfProtectionArtifacts());
     }
