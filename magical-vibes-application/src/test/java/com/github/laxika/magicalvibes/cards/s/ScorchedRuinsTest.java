@@ -126,4 +126,52 @@ class ScorchedRuinsTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(4);
     }
+
+    @Test
+    @DisplayName("A tapped land cannot be selected when two untapped lands are available")
+    void rejectsTappedLandAndAllowsValidSelection() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new WindingCanyons());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new WindingCanyons());
+        Permanent tapped = harness.addToBattlefieldAndReturn(player1, new WindingCanyons());
+        tapped.tap();
+        harness.setHand(player1, List.of(new ScorchedRuins()));
+
+        harness.playLand(player1, 0);
+
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1,
+                List.of(first.getId(), tapped.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(first, second, tapped);
+
+        harness.handleMultiplePermanentsChosen(player1, List.of(first.getId(), second.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(tapped).doesNotContain(first, second);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(first.getCard(), second.getCard());
+        harness.assertOnBattlefield(player1, "Scorched Ruins");
+    }
+
+    @Test
+    @DisplayName("The same land cannot pay both sacrifices and a third land remains")
+    void requiresTwoDistinctLandsAndKeepsUnchosenLand() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new WindingCanyons());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new WindingCanyons());
+        Permanent third = harness.addToBattlefieldAndReturn(player1, new WindingCanyons());
+        harness.setHand(player1, List.of(new ScorchedRuins()));
+
+        harness.playLand(player1, 0);
+
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1,
+                List.of(first.getId(), first.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1,
+                List.of(first.getId(), second.getId(), third.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(first, second, third);
+
+        harness.handleMultiplePermanentsChosen(player1, List.of(first.getId(), second.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(third).doesNotContain(first, second);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(first.getCard(), second.getCard());
+        harness.assertOnBattlefield(player1, "Scorched Ruins");
+    }
 }
