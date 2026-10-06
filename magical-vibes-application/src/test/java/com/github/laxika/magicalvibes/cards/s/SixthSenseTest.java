@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,9 +14,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SixthSense.class, GrizzlyBears.class})
 class SixthSenseTest extends BaseCardTest {
-
-    // ===== Combat damage trigger =====
 
     @Test
     @DisplayName("Enchanted creature dealing combat damage presents may-draw choice")
@@ -93,8 +93,6 @@ class SixthSenseTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
 
-    // ===== Casting and attachment =====
-
     @Test
     @DisplayName("Casting Sixth Sense attaches it to the target creature")
     void castingAttachesToCreature() {
@@ -131,11 +129,46 @@ class SixthSenseTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Sixth Sense");
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("The creature controller chooses and draws when the Aura has a different controller")
+    void creatureControllerReceivesDrawChoice() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        attachSixthSense(player2, creature);
+        creature.setAttacking(true);
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        int creatureControllerHandSize = gd.playerHands.get(player1.getId()).size();
+        int auraControllerHandSize = gd.playerHands.get(player2.getId()).size();
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        PendingInteraction.MayAbilityChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(creatureControllerHandSize + 1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(auraControllerHandSize);
+    }
+
+    @Test
+    @DisplayName("Damage by an unenchanted creature does not trigger Sixth Sense")
+    void unenchantedAttackerDoesNotTrigger() {
+        Permanent enchantedCreature = addCreatureReady(player1, new GrizzlyBears());
+        attachSixthSense(player1, enchantedCreature);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setAttacking(true);
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 18);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+    }
 
     private void attachSixthSense(Player controller, Permanent creature) {
-        Permanent sixthSensePerm = new Permanent(new SixthSense());
+        Permanent sixthSensePerm = harness.addToBattlefieldAndReturn(controller, new SixthSense());
         sixthSensePerm.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(controller.getId()).add(sixthSensePerm);
     }
 }
