@@ -19,6 +19,39 @@ import static org.assertj.core.api.Assertions.assertThat;
 class SlithFirewalkerTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Can attack the turn it enters and grow from combat damage")
+    void attacksTheTurnItEnters() {
+        harness.setHand(player1, List.of(new SlithFirewalker()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        Permanent firewalker = findPermanent(player1, "Slith Firewalker");
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        assertThat(firewalker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Gets only one counter even when dealing multiple combat damage")
+    void oneCounterRegardlessOfDamageAmount() {
+        Permanent firewalker = addCreatureReady(player2, new SlithFirewalker());
+        firewalker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, List.of());
+        resolveCombat(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
+        assertThat(firewalker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
     @DisplayName("Gets a +1/+1 counter when dealing combat damage to a player")
     void getsCounterOnCombatDamageToPlayer() {
         Permanent firewalker = addCreatureReady(player1, new SlithFirewalker());
