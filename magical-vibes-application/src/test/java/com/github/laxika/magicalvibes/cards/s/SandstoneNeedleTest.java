@@ -73,6 +73,49 @@ class SandstoneNeedleTest extends BaseCardTest {
                 .hasMessageContaining("already tapped");
     }
 
+    @Test
+    @DisplayName("Cannot activate immediately after entering tapped")
+    void cannotActivateImmediatelyAfterEntering() {
+        harness.setHand(player1, List.of(new SandstoneNeedle()));
+        harness.playLand(player1, 0);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+
+        assertThat(redMana()).isZero();
+        assertThat(findPermanent(player1, "Sandstone Needle").getCounterCount(CounterType.DEPLETION))
+                .isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("An untapped newly controlled land can activate without waiting a turn")
+    void newlyControlledLandCanActivate() {
+        Permanent needle = addNeedle(2);
+        needle.setSummoningSick(true);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(redMana()).isEqualTo(2);
+        assertThat(needle.isTapped()).isTrue();
+        assertThat(needle.getCounterCount(CounterType.DEPLETION)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Other counters do not prevent sacrificing after the last depletion counter")
+    void sacrificesWithOtherCountersRemaining() {
+        Permanent needle = addNeedle(1);
+        needle.setCounterCount(CounterType.CHARGE, 2);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(redMana()).isEqualTo(2);
+        harness.assertNotOnBattlefield(player1, "Sandstone Needle");
+        harness.assertInGraveyard(player1, "Sandstone Needle");
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addNeedle(int counters) {
         Permanent needle = harness.addToBattlefieldAndReturn(player1, new SandstoneNeedle());
         needle.setSummoningSick(false);
