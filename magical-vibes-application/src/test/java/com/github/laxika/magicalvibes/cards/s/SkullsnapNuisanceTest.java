@@ -25,10 +25,7 @@ class SkullsnapNuisanceTest extends BaseCardTest {
         Card topCard = new Forest();
         gd.playerDecks.get(player1.getId()).add(0, topCard);
         int graveyardBefore = gd.playerGraveyards.get(player1.getId()).size();
-        harness.setHand(player1, List.of(new GloriousAnthem()));
-        harness.addMana(player1, ManaColor.WHITE, 3);
-
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new GloriousAnthem(), "{1}{W}{W}");
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
@@ -62,5 +59,67 @@ class SkullsnapNuisanceTest extends BaseCardTest {
         harness.castModalSorcery(player1, 0, 0, List.of());
         harness.passBothPriorities();
         return gd.playerBattlefields.get(player1.getId()).getFirst();
+    }
+
+    @Test
+    @DisplayName("A Room entering triggers once, and surveil may leave the card on top")
+    void roomEntryCanKeepTopCard() {
+        harness.addToBattlefield(player1, new SkullsnapNuisance());
+        Card topCard = new Forest();
+        harness.setLibrary(player1, List.of(topCard));
+        harness.setGraveyard(player1, List.of());
+
+        castRoom();
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Surveilling an empty library finishes without a choice")
+    void emptyLibrarySurveilFinishes() {
+        harness.addToBattlefield(player1, new SkullsnapNuisance());
+        harness.setLibrary(player1, List.of());
+        harness.setGraveyard(player1, List.of());
+
+        castRoom();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A non-enchantment entering does not trigger surveil")
+    void creatureEntryDoesNotTrigger() {
+        harness.addToBattlefield(player1, new SkullsnapNuisance());
+        harness.castFromHand(player1, new SkullsnapNuisance(), "{U}{B}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An opponent's enchantment does not trigger surveil")
+    void opponentEnchantmentDoesNotTrigger() {
+        harness.addToBattlefield(player1, new SkullsnapNuisance());
+        gd.activePlayerId = player2.getId();
+        harness.setHand(player2, List.of(new DazzlingTheaterPropRoom()));
+        harness.addMana(player2, ManaColor.WHITE, 4);
+
+        harness.castModalSorcery(player2, 0, 0, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 }
