@@ -34,10 +34,19 @@ class RiftmarkedKnightTest extends BaseCardTest {
         advanceToUpkeep(player1);
         resolveAllTriggers();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().isToken()
-                        && permanent.getCard().getName().equals("Knight")))
-                .isEmpty();
+        assertThat(countPermanents(player1, "Knight")).isZero();
+    }
+
+    @Test
+    void opponentsUpkeepDoesNotRemoveTimeCounters() {
+        RiftmarkedKnight card = suspendCard();
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 3);
+        assertThat(countPermanents(player1, "Knight")).isZero();
+        assertThat(countPermanents(player2, "Knight")).isZero();
     }
 
     @Test
@@ -63,6 +72,60 @@ class RiftmarkedKnightTest extends BaseCardTest {
     }
 
     @Test
+    void flankingDoesNotWeakenABlockerWithFlanking() {
+        Permanent knight = addCreatureReady(player1, new RiftmarkedKnight());
+        knight.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new RiftmarkedKnight());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(2);
+    }
+
+    @Test
+    void acceptingSuspendCastCreatesBothKnightAndToken() {
+        RiftmarkedKnight card = suspendCard();
+
+        for (int i = 0; i < 3; i++) {
+            advanceToUpkeep(player1);
+            harness.passBothPriorities();
+        }
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(card);
+        assertThat(countPermanents(player1, "Riftmarked Knight")).isEqualTo(1);
+        assertThat(countPermanents(player1, "Knight")).isEqualTo(1);
+        assertThat(countPermanents(player2, "Knight")).isZero();
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Riftmarked Knight"), Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    void addingATimeCounterAfterLastCounterTriggerDoesNotPreventTokenCreation() {
+        RiftmarkedKnight card = suspendCard();
+
+        for (int i = 0; i < 3; i++) {
+            advanceToUpkeep(player1);
+            harness.passBothPriorities();
+        }
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(countPermanents(player1, "Knight")).isZero();
+        gd.exiledCardTimeCounters.put(card.getId(), 1);
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Knight")).isEqualTo(1);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 1);
+    }
+
+    @Test
     void lastTimeCounterCreatesHastyFlankingKnightWithProtectionFromWhite() {
         suspendCard();
 
@@ -77,11 +140,7 @@ class RiftmarkedKnightTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
         resolveAllTriggers();
 
-        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().isToken()
-                        && permanent.getCard().getName().equals("Knight"))
-                .findFirst()
-                .orElseThrow();
+        Permanent token = findPermanent(player1, "Knight");
         assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, token, Keyword.FLANKING)).isTrue();
