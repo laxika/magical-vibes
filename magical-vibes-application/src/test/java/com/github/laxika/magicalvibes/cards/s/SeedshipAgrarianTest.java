@@ -66,6 +66,108 @@ class SeedshipAgrarianTest extends BaseCardTest {
                         && permanent.getCard().hasType(CardType.LAND));
     }
 
+    @Test
+    @DisplayName("Attacking creates a Lander through the combat tap event")
+    void attackingCreatesLander() {
+        Permanent agrarian = harness.addToBattlefieldAndReturn(player1, new SeedshipAgrarian());
+        agrarian.setSummoningSick(false);
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        assertThat(agrarian.isTapped()).isTrue();
+        assertThat(findPermanents(player1, "Lander")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Tapping another Agrarian triggers only that creature")
+    void tappingAnotherAgrarianTriggersOnlyThatCreature() {
+        harness.addToBattlefield(player1, new SeedshipAgrarian());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new SeedshipAgrarian());
+
+        tap(second);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Lander")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Tapping a land does not create a Lander")
+    void tappingLandDoesNotCreateLander() {
+        harness.addToBattlefield(player1, new SeedshipAgrarian());
+        harness.addToBattlefield(player1, new Forest());
+
+        harness.tapPermanent(player1, 1);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Lander")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opponent's land does not put a counter on Agrarian")
+    void opponentLandDoesNotPutCounterOnSelf() {
+        Permanent agrarian = harness.addToBattlefieldAndReturn(player1, new SeedshipAgrarian());
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new Forest()));
+
+        harness.playLand(player2, 0);
+        harness.passBothPriorities();
+
+        assertThat(agrarian.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("A Lander is sacrificed as a cost and its fetched land triggers landfall")
+    void fetchedLandTriggersLandfall() {
+        Permanent agrarian = harness.addToBattlefieldAndReturn(player1, new SeedshipAgrarian());
+        tap(agrarian);
+        harness.passBothPriorities();
+        harness.setLibrary(player1, List.of(new Forest()));
+        Permanent lander = findPermanent(player1, "Lander");
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(lander), null, null);
+
+        assertThat(findPermanents(player1, "Lander")).isEmpty();
+        assertThat(agrarian.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(agrarian.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(findPermanents(player1, "Lander")).isEmpty();
+    }
+    @Test
+    @DisplayName("Becoming tapped again in the same turn creates another Lander")
+    void repeatedTapCreatesAnotherLander() {
+        Permanent agrarian = harness.addToBattlefieldAndReturn(player1, new SeedshipAgrarian());
+        tap(agrarian);
+        harness.passBothPriorities();
+
+        agrarian.untap();
+        tap(agrarian);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Lander")).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("An empty library still consumes the Lander without triggering landfall")
+    void emptyLibraryConsumesLanderWithoutLandfall() {
+        Permanent agrarian = harness.addToBattlefieldAndReturn(player1, new SeedshipAgrarian());
+        tap(agrarian);
+        harness.passBothPriorities();
+        harness.setLibrary(player1, List.of());
+        Permanent lander = findPermanent(player1, "Lander");
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(lander), null, null);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Lander")).isEmpty();
+        assertThat(agrarian.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
     private void tap(Permanent permanent) {
         permanent.tap();
         harness.inMutationScope(
