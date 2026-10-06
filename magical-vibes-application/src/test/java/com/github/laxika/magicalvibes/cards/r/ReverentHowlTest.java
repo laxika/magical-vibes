@@ -49,7 +49,6 @@ class ReverentHowlTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, target, Keyword.LIFELINK)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
@@ -68,6 +67,56 @@ class ReverentHowlTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         assertThatThrownBy(() -> harness.castModalInstant(player1, 0, 1, List.of(player2.getId())))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The first mode can target its caster without affecting the opponent")
+    void drawModeCanTargetCaster() {
+        harness.setHand(player1, List.of(new ReverentHowl()));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        harness.setHand(player2, List.of());
+        addManaForSpell();
+
+        harness.castModalInstant(player1, 0, 0, List.of(player1.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Reverent Howl");
+    }
+
+    @Test
+    @DisplayName("The creature mode rejects a noncreature permanent")
+    void creatureModeRejectsLand() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.setHand(player1, List.of(new ReverentHowl()));
+        addManaForSpell();
+
+        assertThatThrownBy(() -> harness.castModalInstant(player1, 0, 1, List.of(land.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The creature mode does nothing when its target leaves before resolution")
+    void creatureModeDoesNotResolveWithMissingTarget() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new ReverentHowl()));
+        harness.setHand(player2, List.of());
+        addManaForSpell();
+
+        harness.castModalInstant(player1, 0, 1, List.of(target.getId()));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToExile(gd, target));
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, other, Keyword.LIFELINK)).isFalse();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Reverent Howl");
     }
 
     private void addManaForSpell() {
