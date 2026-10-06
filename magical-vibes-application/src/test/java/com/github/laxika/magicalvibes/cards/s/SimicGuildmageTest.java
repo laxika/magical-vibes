@@ -150,6 +150,77 @@ class SimicGuildmageTest extends BaseCardTest {
                 .hasMessageContaining("Aura attached to a permanent");
     }
 
+    @Test
+    @DisplayName("A source without a +1/+1 counter is legal and moves nothing")
+    void counterAbilityWithoutCounterDoesNothing() {
+        addCreatureReady(player1, new SimicGuildmage());
+        Permanent source = addCreatureReady(player2, new AssaultZeppelid());
+        Permanent destination = addCreatureReady(player2, new AssaultZeppelid());
+        source.setCounterCount(CounterType.CHARGE, 1);
+
+        activateCounterAbility(source, destination);
+
+        assertThat(source.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+        assertThat(source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(destination.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Both counter targets may change controller together before resolution")
+    void counterAbilityAllowsBothControllersToChange() {
+        addCreatureReady(player1, new SimicGuildmage());
+        Permanent source = addCreatureReady(player1, new AssaultZeppelid());
+        Permanent destination = addCreatureReady(player1, new AssaultZeppelid());
+        source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        prepareAbilityActivation(player1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(source.getId(), destination.getId()));
+
+        gd.playerBattlefields.get(player1.getId()).removeAll(List.of(source, destination));
+        gd.playerBattlefields.get(player2.getId()).addAll(List.of(source, destination));
+        harness.passBothPriorities();
+
+        assertThat(source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(destination.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("An Aura stays attached when there is no legal destination")
+    void auraAbilityWithNoLegalDestinationDoesNothing() {
+        addCreatureReady(player1, new SimicGuildmage());
+        Permanent host = addCreatureReady(player2, new AssaultZeppelid());
+        harness.addToBattlefield(player2, new BreedingPool());
+        Permanent aura = addAura(player1, new OcularHalo(), host);
+        prepareAbilityActivation(player1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 1, null, aura.getId());
+        harness.passBothPriorities();
+
+        assertThat(aura.getAttachedTo()).isEqualTo(host.getId());
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An Aura moves without a prompt when only one legal destination exists")
+    void auraAbilityWithOneDestinationMovesWithoutPrompt() {
+        addCreatureReady(player1, new SimicGuildmage());
+        Permanent host = addCreatureReady(player2, new AssaultZeppelid());
+        Permanent destination = addCreatureReady(player2, new AssaultZeppelid());
+        Permanent aura = addAura(player1, new OcularHalo(), host);
+        prepareAbilityActivation(player1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 1, null, aura.getId());
+        harness.passBothPriorities();
+
+        assertThat(aura.getAttachedTo()).isEqualTo(destination.getId());
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
     private Permanent addAura(Player player, com.github.laxika.magicalvibes.model.Card auraCard, Permanent host) {
         Permanent aura = harness.addToBattlefieldAndReturn(player, auraCard);
         aura.setAttachedTo(host.getId());
