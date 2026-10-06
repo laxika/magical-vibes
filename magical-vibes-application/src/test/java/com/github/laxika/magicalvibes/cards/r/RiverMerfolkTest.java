@@ -91,4 +91,50 @@ class RiverMerfolkTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
     }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick River Merfolk can activate its ability")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent merfolk = harness.addToBattlefieldAndReturn(player1, new RiverMerfolk());
+        merfolk.setSummoningSick(true);
+        merfolk.tap();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, merfolk, Keyword.MOUNTAINWALK)).isTrue();
+        assertThat(merfolk.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The ability grants mountainwalk only to its own source")
+    void grantsMountainwalkOnlyToSource() {
+        Permanent otherMerfolk = addCreatureReady(player1, new RiverMerfolk());
+        Permanent source = addCreatureReady(player1, new RiverMerfolk());
+        Permanent opposingMerfolk = addCreatureReady(player2, new RiverMerfolk());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, source, Keyword.MOUNTAINWALK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, otherMerfolk, Keyword.MOUNTAINWALK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opposingMerfolk, Keyword.MOUNTAINWALK)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A Mountain controlled by the attacker does not prevent blocking")
+    void attackersMountainDoesNotEnableMountainwalk() {
+        Permanent merfolk = addCreatureReady(player1, new RiverMerfolk());
+        harness.addToBattlefield(player1, new Mountain());
+        Permanent blocker = addCreatureReady(player2, new RiverMerfolk());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(bls.canBlockAttacker(gd, blocker, merfolk,
+                gd.playerBattlefields.get(player2.getId()))).isTrue();
+    }
 }
