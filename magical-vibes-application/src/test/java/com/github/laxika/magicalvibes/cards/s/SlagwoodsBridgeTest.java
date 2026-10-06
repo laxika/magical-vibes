@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({SlagwoodsBridge.class, StoneRain.class})
 class SlagwoodsBridgeTest extends BaseCardTest {
@@ -52,16 +53,58 @@ class SlagwoodsBridgeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 4);
 
         UUID targetId = harness.getPermanentId(player2, "Slagwoods Bridge");
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetId);
 
         harness.assertOnBattlefield(player2, "Slagwoods Bridge");
     }
 
     private Permanent addReadyBridge() {
-        Permanent bridge = new Permanent(new SlagwoodsBridge());
+        Permanent bridge = harness.addToBattlefieldAndReturn(player1, new SlagwoodsBridge());
         bridge.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bridge);
         return bridge;
+    }
+
+    @Test
+    @DisplayName("Enters tapped when put directly onto the battlefield")
+    void entersTappedWithoutBeingPlayed() {
+        Permanent bridge = harness.enterBattlefieldAndReturn(player2, new SlagwoodsBridge());
+
+        assertThat(bridge.isTapped()).isTrue();
+        harness.assertOnBattlefield(player2, "Slagwoods Bridge");
+    }
+
+    @Test
+    @DisplayName("Cannot activate the mana ability while tapped after entering")
+    void cannotActivateWhileTappedAfterEntering() {
+        harness.setHand(player1, List.of(new SlagwoodsBridge()));
+        harness.playLand(player1, 0);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An untapped newly entered bridge produces one mana immediately and cannot tap again")
+    void manaResolvesImmediatelyAndRequiresUntappedSource() {
+        harness.setHand(player1, List.of(new SlagwoodsBridge()));
+        harness.playLand(player1, 0);
+        Permanent bridge = gd.playerBattlefields.get(player1.getId()).getFirst();
+        bridge.untap();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, ManaColor.GREEN.name());
+
+        assertThat(bridge.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
     }
 }
