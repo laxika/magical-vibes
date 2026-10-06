@@ -102,4 +102,121 @@ class SandstormEidolonTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(eidolon);
     }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Eidolon can activate and is sacrificed before resolution")
+    void sacrificeIsPaidImmediatelyWithoutTapRestriction() {
+        Permanent eidolon = harness.addToBattlefieldAndReturn(player1, new SandstormEidolon());
+        eidolon.setSummoningSick(true);
+        eidolon.tap();
+        Permanent target = addCreatureReady(player2, new SilkwingScout());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Sandstorm Eidolon");
+        harness.assertInGraveyard(player1, "Sandstorm Eidolon");
+        assertThat(target.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(target.isCantBlockThisTurn()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The sacrifice ability requires red mana and cannot sacrifice without paying it")
+    void insufficientManaDoesNotSacrificeEidolon() {
+        Permanent eidolon = addCreatureReady(player1, new SandstormEidolon());
+        Permanent target = addCreatureReady(player2, new SilkwingScout());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(eidolon);
+        harness.assertNotInGraveyard(player1, "Sandstorm Eidolon");
+        assertThat(gd.stack).isEmpty();
+        assertThat(target.isCantBlockThisTurn()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The sacrifice ability can target a creature its controller controls")
+    void sacrificeAbilityCanTargetOwnCreature() {
+        addCreatureReady(player1, new SandstormEidolon());
+        Permanent target = addCreatureReady(player1, new SilkwingScout());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isCantBlockThisTurn()).isTrue();
+        harness.assertInGraveyard(player1, "Sandstorm Eidolon");
+    }
+
+    @Test
+    @DisplayName("An Eidolon on the battlefield does not trigger when a multicolored spell is cast")
+    void battlefieldEidolonDoesNotTriggerReturn() {
+        Permanent eidolon = addCreatureReady(player1, new SandstormEidolon());
+
+        harness.castFromHand(player1, new TrygonPredator(), "{1}{G}{U}");
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(eidolon);
+        harness.assertNotInHand(player1, "Sandstorm Eidolon");
+    }
+
+    @Test
+    @DisplayName("Each Eidolon in the graveyard triggers independently for the same multicolored spell")
+    void multipleGraveyardEidolonsReturnIndependently() {
+        SandstormEidolon first = new SandstormEidolon();
+        SandstormEidolon second = new SandstormEidolon();
+        harness.setGraveyard(player1, List.of(first, second));
+
+        harness.castFromHand(player1, new TrygonPredator(), "{1}{G}{U}");
+
+        assertThat(gd.stack).hasSize(3);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(first, second);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(first, second);
+    }
+
+    @Test
+    @DisplayName("The inability to block expires at the end of the turn")
+    void blockingRestrictionExpiresAfterCleanup() {
+        addCreatureReady(player1, new SandstormEidolon());
+        Permanent target = addCreatureReady(player2, new SilkwingScout());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+        assertThat(target.isCantBlockThisTurn()).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(target.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+    }
+
+    @Test
+    @DisplayName("Eidolon can target itself and is sacrificed even though its target becomes illegal")
+    void targetingSelfStillPaysSacrificeCost() {
+        Permanent eidolon = addCreatureReady(player1, new SandstormEidolon());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, 0, null, eidolon.getId());
+
+        harness.assertNotOnBattlefield(player1, "Sandstorm Eidolon");
+        harness.assertInGraveyard(player1, "Sandstorm Eidolon");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Sandstorm Eidolon");
+        harness.assertNotInHand(player1, "Sandstorm Eidolon");
+    }
 }
