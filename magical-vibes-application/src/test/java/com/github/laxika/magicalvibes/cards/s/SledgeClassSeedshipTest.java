@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.IntrepidTenderfoot;
+import com.github.laxika.magicalvibes.cards.m.MarchOfTheMachines;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -16,14 +17,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SledgeClassSeedship.class, GrizzlyBears.class})
+@CardUsed({SledgeClassSeedship.class, IntrepidTenderfoot.class, MarchOfTheMachines.class})
 class SledgeClassSeedshipTest extends BaseCardTest {
 
     @Test
     @DisplayName("Station puts counters equal to the tapped creature's power on Sledge-Class Seedship")
     void stationUsesTappedCreaturePower() {
         Permanent seedship = harness.addToBattlefieldAndReturn(player1, new SledgeClassSeedship());
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new IntrepidTenderfoot());
 
         harness.activateAbility(player1, battlefieldIndex(seedship), null, null);
         bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
@@ -54,7 +55,7 @@ class SledgeClassSeedshipTest extends BaseCardTest {
     @Test
     @DisplayName("When Sledge-Class Seedship attacks, it may put a creature from hand onto the battlefield")
     void attackPutsCreatureFromHandOntoBattlefield() {
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new IntrepidTenderfoot()));
         Permanent seedship = addReadySeedship();
         seedship.setCounterCount(CounterType.CHARGE, 7);
 
@@ -63,7 +64,7 @@ class SledgeClassSeedshipTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.HandCardChoice.class);
         harness.handleCardChosen(player1, 0);
 
-        assertThat(findPermanent(player1, "Grizzly Bears")).isNotNull();
+        assertThat(findPermanent(player1, "Intrepid Tenderfoot")).isNotNull();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
@@ -76,20 +77,107 @@ class SledgeClassSeedshipTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void stationCanTapASummoningSickCreature() {
+        Permanent seedship = harness.addToBattlefieldAndReturn(player1, new SledgeClassSeedship());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new IntrepidTenderfoot());
+        creature.setSummoningSick(true);
+
+        harness.activateAbility(player1, battlefieldIndex(seedship), null, null);
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(seedship.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
+    }
+
+    @Test
+    void stationCannotTapItselfOrAnOpponentsCreatureOrATappedCreature() {
+        Permanent seedship = addReadySeedship();
+        seedship.setCounterCount(CounterType.CHARGE, 7);
+        harness.addToBattlefield(player2, new IntrepidTenderfoot());
+        Permanent creature = addCreatureReady(player1, new IntrepidTenderfoot());
+        creature.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(seedship), null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(seedship.isTapped()).isFalse();
+        assertThat(seedship.getCounterCount(CounterType.CHARGE)).isEqualTo(7);
+    }
+
+    @Test
+    void stationCannotBeActivatedDuringCombat() {
+        Permanent seedship = harness.addToBattlefieldAndReturn(player1, new SledgeClassSeedship());
+        addCreatureReady(player1, new IntrepidTenderfoot());
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(seedship), null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void attackMayDeclineToPutACreatureOntoTheBattlefield() {
+        harness.setHand(player1, List.of(new IntrepidTenderfoot()));
+        Permanent seedship = addReadySeedship();
+        seedship.setCounterCount(CounterType.CHARGE, 7);
+
+        declareAttack();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(countPermanents(player1, "Intrepid Tenderfoot")).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void attackWithOnlyANoncreatureInHandDoesNotOfferAChoice() {
+        harness.setHand(player1, List.of(new SledgeClassSeedship()));
+        Permanent seedship = addReadySeedship();
+        seedship.setCounterCount(CounterType.CHARGE, 7);
+
+        declareAttack();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(countPermanents(player1, "Sledge-Class Seedship")).isEqualTo(1);
+    }
+
+    @Test
+    void externallyAnimatedSeedshipBelowSevenCountersHasNoAttackAbility() {
+        harness.addToBattlefield(player1, new MarchOfTheMachines());
+        harness.setHand(player1, List.of(new IntrepidTenderfoot()));
+        Permanent seedship = addReadySeedship();
+        seedship.setCounterCount(CounterType.CHARGE, 6);
+        assertThat(gqs.isCreature(gd, seedship)).isTrue();
+
+        declareAttack();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(countPermanents(player1, "Intrepid Tenderfoot")).isZero();
+    }
+
+    @Test
+    void attackTriggerStillResolvesAfterLosingTheChargeCounters() {
+        harness.setHand(player1, List.of(new IntrepidTenderfoot()));
+        Permanent seedship = addReadySeedship();
+        seedship.setCounterCount(CounterType.CHARGE, 7);
+
+        declareAttackers(List.of(battlefieldIndex(seedship)));
+        seedship.setCounterCount(CounterType.CHARGE, 0);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        Permanent creature = findPermanent(player1, "Intrepid Tenderfoot");
+        assertThat(creature.isTapped()).isFalse();
+        assertThat(creature.isAttacking()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
     private Permanent addReadySeedship() {
-        Permanent seedship = new Permanent(new SledgeClassSeedship());
-        seedship.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(seedship);
-        return seedship;
+        return addCreatureReady(player1, new SledgeClassSeedship());
     }
 
     private void declareAttack() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        gs.declareAttackers(gd, player1, List.of(battlefieldIndex(findPermanent(player1, "Sledge-Class Seedship"))));
+        declareAttackers(List.of(battlefieldIndex(findPermanent(player1, "Sledge-Class Seedship"))));
         harness.passBothPriorities();
     }
 
