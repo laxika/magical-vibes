@@ -160,6 +160,58 @@ class SavraQueenOfTheGolgariTest extends BaseCardTest {
         harness.assertInGraveyard(player2, opponentCreature.getCard().getName());
     }
 
+    @Test
+    @DisplayName("Paying for a black sacrifice is allowed when the opponent has no creatures")
+    void blackPaymentWithNoOpponentCreatures() {
+        harness.setLife(player1, 20);
+        Permanent sacrificed = addSavraAndDais(player1, new CarrionHowler());
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.handlePermanentChosen(player1, sacrificed.getId());
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+        harness.assertOnBattlefield(player1, "Savra, Queen of the Golgari");
+        harness.assertInGraveyard(player1, "Carrion Howler");
+    }
+
+    @Test
+    @DisplayName("Savra cannot make an opponent sacrifice when her controller cannot pay 2 life")
+    void insufficientLifeDoesNotCauseOpponentSacrifice() {
+        harness.setLife(player1, 1);
+        harness.addToBattlefield(player2, new GreaterMossdog());
+        Permanent sacrificed = addSavraAndDais(player1, new CarrionHowler());
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.handlePermanentChosen(player1, sacrificed.getId());
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Greater Mossdog");
+        harness.assertInGraveyard(player1, "Carrion Howler");
+    }
+
+    @Test
+    @DisplayName("An opponent sacrificing a black-green creature does not trigger Savra")
+    void opponentSacrificeDoesNotTriggerSavra() {
+        harness.setLife(player1, 20);
+        harness.addToBattlefield(player1, new SavraQueenOfTheGolgari());
+        harness.addToBattlefield(player2, new CullingDais());
+        Permanent sacrificed = harness.addToBattlefieldAndReturn(player2, new GolgariRotwurm());
+
+        harness.activateAbility(player2, 0, null, null);
+        harness.handlePermanentChosen(player2, sacrificed.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertOnBattlefield(player1, "Savra, Queen of the Golgari");
+        harness.assertInGraveyard(player2, "Golgari Rotwurm");
+    }
     private Permanent addSavraAndDais(Player player, Card sacrificedCard) {
         harness.addToBattlefield(player, new SavraQueenOfTheGolgari());
         harness.addToBattlefield(player, new CullingDais());
