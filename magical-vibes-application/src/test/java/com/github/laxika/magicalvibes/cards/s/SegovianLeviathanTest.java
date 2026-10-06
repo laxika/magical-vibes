@@ -101,4 +101,27 @@ class SegovianLeviathanTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can't be blocked");
     }
+    @Test
+    @DisplayName("Segovian Leviathan can be blocked when the defending Island becomes a Forest")
+    void canBeBlockedWhenDefendingIslandBecomesForest() {
+        Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
+        harness.setHand(player1, List.of(new PhantasmalTerrain()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castEnchantment(player1, 0, island.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "FOREST");
+
+        Permanent blockerPerm = addCreatureReady(player2, new GrizzlyBears());
+        Permanent atkPerm = addCreatureReady(player1, new SegovianLeviathan());
+        atkPerm.setAttacking(true);
+        prepareDeclareBlockers();
+
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
+        int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx)));
+
+        assertThat(blockerPerm.isBlocking()).isTrue();
+    }
 }
