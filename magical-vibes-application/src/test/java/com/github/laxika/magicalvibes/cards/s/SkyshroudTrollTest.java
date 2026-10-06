@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.m.MoggFanatic;
+import com.github.laxika.magicalvibes.cards.r.RollingThunder;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -9,9 +10,13 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import java.util.List;
+import java.util.Map;
 
-@CardUsed({SkyshroudTroll.class, MoggFanatic.class})
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+@CardUsed({SkyshroudTroll.class, MoggFanatic.class, RollingThunder.class})
 class SkyshroudTrollTest extends BaseCardTest {
 
     @Test
@@ -77,6 +82,59 @@ class SkyshroudTrollTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Skyshroud Troll");
         harness.assertInGraveyard(player1, "Skyshroud Troll");
+    }
+
+    @Test
+    @DisplayName("Regeneration can be activated in response to lethal spell damage")
+    void regenerationInResponseToLethalSpellDamage() {
+        Permanent troll = harness.addToBattlefieldAndReturn(player1, new SkyshroudTroll());
+        harness.setHand(player1, List.of(new RollingThunder()));
+        harness.addMana(player1, ManaColor.RED, 5);
+        harness.castSorceryForX(player1, 0, 3, Map.of(troll.getId(), 3));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(troll.getRegenerationShield()).isEqualTo(1);
+        assertThat(troll.isTapped()).isFalse();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Skyshroud Troll");
+        harness.assertNotInGraveyard(player1, "Skyshroud Troll");
+        assertThat(troll.getRegenerationShield()).isZero();
+        assertThat(troll.getMarkedDamage()).isZero();
+        assertThat(troll.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Repeated activations create separate shields without tapping the creature")
+    void repeatedActivationsCreateSeparateShields() {
+        Permanent troll = harness.addToBattlefieldAndReturn(player1, new SkyshroudTroll());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(troll.getRegenerationShield()).isEqualTo(2);
+        assertThat(troll.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Regeneration requires both the generic and green mana cost")
+    void regenerationRequiresFullManaCost() {
+        Permanent troll = addCreatureReady(player1, new SkyshroudTroll());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(troll.getRegenerationShield()).isZero();
     }
 
     private Permanent addCreatureReady(Player player, int power, int toughness) {
