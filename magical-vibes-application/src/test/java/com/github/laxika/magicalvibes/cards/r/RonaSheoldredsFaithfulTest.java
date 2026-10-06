@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -61,8 +60,7 @@ class RonaSheoldredsFaithfulTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        gs.playFlashbackSpell(gd, player1, 0, null, null, List.of(), null, null,
-                List.of(), null, null, List.of(), Map.of(), List.of(), List.of(), List.of(0, 1));
+        harness.castFromGraveyardWithDiscards(player1, 0, 0, List.of(1));
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
@@ -82,10 +80,88 @@ class RonaSheoldredsFaithfulTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        assertThatThrownBy(() -> gs.playFlashbackSpell(gd, player1, 0, null, null, List.of(), null, null,
-                List.of(), null, null, List.of(), Map.of(), List.of(), List.of(), List.of(0)))
+        assertThatThrownBy(() -> harness.castFromGraveyardWithDiscards(player1, 0, 0, List.of()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Must discard exactly 2 cards");
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(rona);
+    }
+
+    @Test
+    void opponentsInstantDoesNotTriggerRona() {
+        harness.addToBattlefield(player1, new RonaSheoldredsFaithful());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    void castingFromHandDoesNotRequireDiscarding() {
+        harness.setHand(player1, List.of(new RonaSheoldredsFaithful()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Rona, Sheoldred's Faithful");
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    void graveyardCastingStillRequiresManaAndDoesNotDiscardOnRejection() {
+        RonaSheoldredsFaithful rona = new RonaSheoldredsFaithful();
+        var hand = List.of(new RonaSheoldredsFaithful(), new RonaSheoldredsFaithful());
+        harness.setGraveyard(player1, List.of(rona));
+        harness.setHand(player1, hand);
+
+        assertThatThrownBy(() -> harness.castFromGraveyardWithDiscards(player1, 0, 0, List.of(1)))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyElementsOf(hand);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(rona);
+    }
+
+    @Test
+    void cannotDiscardTheSameCardTwice() {
+        RonaSheoldredsFaithful rona = new RonaSheoldredsFaithful();
+        var hand = List.of(new RonaSheoldredsFaithful(), new RonaSheoldredsFaithful());
+        harness.setGraveyard(player1, List.of(rona));
+        harness.setHand(player1, hand);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castFromGraveyardWithDiscards(player1, 0, 0, List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Duplicate cards");
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyElementsOf(hand);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(rona);
+    }
+
+    @Test
+    void graveyardPermissionDoesNotAllowCastingDuringCombat() {
+        RonaSheoldredsFaithful rona = new RonaSheoldredsFaithful();
+        var hand = List.of(new RonaSheoldredsFaithful(), new RonaSheoldredsFaithful());
+        harness.setGraveyard(player1, List.of(rona));
+        harness.setHand(player1, hand);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.castFromGraveyardWithDiscards(player1, 0, 0, List.of(1)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery-speed");
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyElementsOf(hand);
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(rona);
     }
 }
