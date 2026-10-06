@@ -68,11 +68,77 @@ class RuinationRioterTest extends BaseCardTest {
         assertThat(gd.getLife(player2.getId())).isEqualTo(20);
     }
 
+    @Test
+    @DisplayName("No lands in the controller's graveyard means no damage, even with opposing lands")
+    void emptyGraveyardIgnoresOpponentsLands() {
+        Permanent rioter = harness.addToBattlefieldAndReturn(player1, new RuinationRioter());
+        harness.setGraveyard(player2, List.of(new Forest(), new Forest()));
+        harness.setLife(player2, 20);
+        destroyRioter(rioter);
+
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Land count is evaluated when the death ability resolves")
+    void countsLandsAtResolution() {
+        Permanent rioter = harness.addToBattlefieldAndReturn(player1, new RuinationRioter());
+        harness.setGraveyard(player1, List.of(new Forest()));
+        harness.setLife(player2, 20);
+        destroyRioter(rioter);
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        harness.setGraveyard(player1, List.of(new RuinationRioter(), new Murder(),
+                new Forest(), new Forest(), new Forest()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @DisplayName("The death ability can deal damage to a creature")
+    void canDamageCreature() {
+        Permanent rioter = harness.addToBattlefieldAndReturn(player1, new RuinationRioter());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
+        harness.setGraveyard(player1, List.of(new Forest()));
+        destroyRioter(rioter);
+
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Llanowar Elves");
+        harness.assertInGraveyard(player2, "Llanowar Elves");
+    }
+
+    @Test
+    @DisplayName("The death ability can target its own controller")
+    void canDamageController() {
+        Permanent rioter = harness.addToBattlefieldAndReturn(player1, new RuinationRioter());
+        harness.setGraveyard(player1, List.of(new Forest(), new Forest()));
+        harness.setLife(player1, 20);
+        destroyRioter(rioter);
+
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+    }
+
     private void destroyRioter(Permanent rioter) {
         harness.setHand(player1, List.of(new Murder()));
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castInstant(player1, 0, rioter.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, rioter.getId());
     }
 }
