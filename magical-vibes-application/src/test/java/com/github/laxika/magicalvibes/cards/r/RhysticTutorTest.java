@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({RhysticTutor.class, RebelInformer.class, PlagueFiend.class})
 class RhysticTutorTest extends BaseCardTest {
@@ -60,6 +61,55 @@ class RhysticTutorTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).noneMatch(card -> card instanceof RebelInformer);
     }
 
+    @Test
+    void searchesForANoncreatureCardAndCannotFailToFind() {
+        RhysticTutor libraryCard = new RhysticTutor();
+        harness.setLibrary(player1, List.of(libraryCard));
+        castTutor();
+
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, -1))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(libraryCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Rhystic Tutor");
+    }
+
+    @Test
+    void resolvesWithAnEmptyLibraryWhenNobodyPays() {
+        harness.setLibrary(player1, List.of());
+        castTutor();
+
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Rhystic Tutor");
+    }
+
+    @Test
+    void opponentCanPayGenericCostWithColoredMana() {
+        RebelInformer libraryCard = new RebelInformer();
+        harness.setLibrary(player1, List.of(libraryCard));
+        castTutor();
+
+        harness.handleMayAbilityChosen(player1, false);
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Rhystic Tutor");
+    }
     private void castTutor() {
         harness.castFromHand(player1, new RhysticTutor(), "{2}{B}");
         harness.passBothPriorities();
