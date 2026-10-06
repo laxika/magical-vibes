@@ -3,6 +3,9 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.cards.c.CrimsonWisps;
+import com.github.laxika.magicalvibes.cards.l.LoamdraggerGiant;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
@@ -18,24 +21,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({RunesOfTheDeus.class, HillGiant.class, GrizzlyBears.class,
-        HonorGuard.class, FountainOfYouth.class})
+        HonorGuard.class, FountainOfYouth.class, LoamdraggerGiant.class, CrimsonWisps.class})
 class RunesOfTheDeusTest extends BaseCardTest {
 
     private Permanent attach(Permanent creature) {
-        Permanent runes = new Permanent(new RunesOfTheDeus());
+        Permanent runes = harness.addToBattlefieldAndReturn(player1, new RunesOfTheDeus());
         runes.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player1.getId()).add(runes);
         return runes;
     }
-
-    // ===== Red enchanted creature =====
 
     @Test
     @DisplayName("Red enchanted creature gets +1/+1 and double strike, no trample")
     void redCreatureGetsDoubleStrike() {
-        Permanent red = new Permanent(new HillGiant());
-        red.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(red);
+        Permanent red = addCreatureReady(player1, new HillGiant());
         attach(red);
 
         // Hill Giant is 3/3, with +1/+1 should be 4/4
@@ -45,14 +43,10 @@ class RunesOfTheDeusTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, red, Keyword.TRAMPLE)).isFalse();
     }
 
-    // ===== Green enchanted creature =====
-
     @Test
     @DisplayName("Green enchanted creature gets +1/+1 and trample, no double strike")
     void greenCreatureGetsTrample() {
-        Permanent green = new Permanent(new GrizzlyBears());
-        green.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(green);
+        Permanent green = addCreatureReady(player1, new GrizzlyBears());
         attach(green);
 
         // Grizzly Bears is 2/2, with +1/+1 should be 3/3
@@ -62,14 +56,10 @@ class RunesOfTheDeusTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, green, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 
-    // ===== Neither red nor green =====
-
     @Test
     @DisplayName("Non-red, non-green enchanted creature gets no boost or keywords")
     void otherColorCreatureUnaffected() {
-        Permanent white = new Permanent(new HonorGuard());
-        white.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(white);
+        Permanent white = addCreatureReady(player1, new HonorGuard());
         attach(white);
 
         // Honor Guard is a 1/1 white creature — unaffected
@@ -79,14 +69,10 @@ class RunesOfTheDeusTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, white, Keyword.TRAMPLE)).isFalse();
     }
 
-    // ===== Removal restores base stats =====
-
     @Test
     @DisplayName("Boost and keyword wear off when Runes of the Deus is removed")
     void boostRemovedWhenAuraLeaves() {
-        Permanent red = new Permanent(new HillGiant());
-        red.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(red);
+        Permanent red = addCreatureReady(player1, new HillGiant());
         Permanent runes = attach(red);
 
         assertThat(gqs.getEffectivePower(gd, red)).isEqualTo(4);
@@ -98,14 +84,10 @@ class RunesOfTheDeusTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, red, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 
-    // ===== Casting attaches to target =====
-
     @Test
     @DisplayName("Resolving Runes of the Deus attaches it to target creature")
     void resolvingAttachesToTarget() {
-        Permanent red = new Permanent(new HillGiant());
-        red.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(red);
+        Permanent red = addCreatureReady(player2, new HillGiant());
 
         harness.setHand(player1, List.of(new RunesOfTheDeus()));
         harness.addMana(player1, ManaColor.RED, 5);
@@ -120,20 +102,59 @@ class RunesOfTheDeusTest extends BaseCardTest {
                         && p.getAttachedTo().equals(red.getId()));
     }
 
-    // ===== Targeting restriction =====
-
     @Test
     @DisplayName("Cannot target a noncreature permanent with Runes of the Deus")
     void cannotTargetNonCreature() {
         harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.addToBattlefield(player1, new FountainOfYouth());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
         harness.setHand(player1, List.of(new RunesOfTheDeus()));
         harness.addMana(player1, ManaColor.RED, 5);
-
-        Permanent artifact = findPermanent(player1, "Fountain of Youth");
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("A red and green creature receives both bonuses and both keywords")
+    void multicoloredCreatureGetsBothBonuses() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new LoamdraggerGiant());
+        Permanent unrelated = harness.addToBattlefieldAndReturn(player1, new LoamdraggerGiant());
+        attach(creature);
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(9);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(8);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, unrelated)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, unrelated)).isEqualTo(6);
+        assertThat(gqs.hasKeyword(gd, unrelated, Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, unrelated, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Conditional bonuses track a temporary color replacement and its expiration")
+    void bonusesTrackColorChanges() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new LoamdraggerGiant());
+        attach(creature);
+        harness.setHand(player1, List.of(new CrimsonWisps()));
+        harness.setLibrary(player1, List.of(new LoamdraggerGiant()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(7);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isFalse();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(9);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(8);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
     }
 }
