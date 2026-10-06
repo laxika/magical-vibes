@@ -108,12 +108,73 @@ class ReturnToTheRanksTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ReturnToTheRanks()));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .extracting(Card::getName)
                 .containsExactly("Grizzly Bears", "Return to the Ranks");
+    }
+
+    @Test
+    @DisplayName("Returns only the chosen cards when other eligible cards remain")
+    void leavesUnchosenCreaturesInGraveyard() {
+        Card bears = new GrizzlyBears();
+        Card elves = new LlanowarElves();
+        harness.setGraveyard(player1, List.of(bears, elves));
+        harness.setHand(player1, List.of(new ReturnToTheRanks()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.castSorcery(player1, 0, 1);
+        harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
+        harness.assertInGraveyard(player1, "Llanowar Elves");
+        assertThat(findPermanent(player1, "Grizzly Bears").isTapped()).isFalse();
+        assertThat(findPermanent(player1, "Grizzly Bears").isSummoningSick()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Still returns the remaining legal target when another target leaves the graveyard")
+    void returnsRemainingLegalTarget() {
+        Card bears = new GrizzlyBears();
+        Card elves = new LlanowarElves();
+        harness.setGraveyard(player1, List.of(bears, elves));
+        harness.setHand(player1, List.of(new ReturnToTheRanks()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castSorcery(player1, 0, 2);
+        harness.handleMultipleCardsChosen(player1, List.of(bears.getId(), elves.getId()));
+        harness.setGraveyard(player1, List.of(elves));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Llanowar Elves");
+        harness.assertNotInGraveyard(player1, "Llanowar Elves");
+        harness.assertInGraveyard(player1, "Return to the Ranks");
+    }
+
+    @Test
+    @DisplayName("Convoke pays both white mana and X with summoning-sick creatures")
+    void convokePaysEntireCost() {
+        Permanent firstWarrior = harness.addToBattlefieldAndReturn(player1, new KjeldoranWarrior());
+        Permanent secondWarrior = harness.addToBattlefieldAndReturn(player1, new KjeldoranWarrior());
+        Permanent elves = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
+        Card bears = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(bears));
+        harness.setHand(player1, List.of(new ReturnToTheRanks()));
+
+        gs.playCard(gd, player1, 0, 1, null, null, List.of(),
+                List.of(firstWarrior.getId(), secondWarrior.getId(), elves.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
+        harness.passBothPriorities();
+
+        assertThat(firstWarrior.isTapped()).isTrue();
+        assertThat(secondWarrior.isTapped()).isTrue();
+        assertThat(elves.isTapped()).isTrue();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
     }
 }
