@@ -35,8 +35,7 @@ class SabertoothAlleyCatTest extends BaseCardTest {
         Permanent cat = addCreatureReady(player1, new SabertoothAlleyCat());
         Permanent recruit = addCreatureReady(player2, new BorosRecruit());
         activateBlockingRestriction();
-        cat.setAttacking(true);
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> declareBlock(recruit, cat))
                 .isInstanceOf(IllegalStateException.class)
@@ -49,8 +48,7 @@ class SabertoothAlleyCatTest extends BaseCardTest {
         Permanent cat = addCreatureReady(player1, new SabertoothAlleyCat());
         Permanent ancestor = addCreatureReady(player2, new BenevolentAncestor());
         activateBlockingRestriction();
-        cat.setAttacking(true);
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         declareBlock(ancestor, cat);
 
@@ -68,9 +66,56 @@ class SabertoothAlleyCatTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        cat.setAttacking(true);
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         declareBlock(recruit, cat);
+
+        assertThat(recruit.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A tapped cat is not required to attack")
+    void tappedCatNeedNotAttack() {
+        Permanent cat = addCreatureReady(player1, new SabertoothAlleyCat());
+        cat.setTapped(true);
+
+        declareAttackers(List.of());
+
+        assertThat(cat.isAttacking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A summoning-sick cat is not required to attack")
+    void summoningSickCatNeedNotAttack() {
+        Permanent cat = addCreatureReady(player1, new SabertoothAlleyCat());
+        cat.setSummoningSick(true);
+
+        declareAttackers(List.of());
+
+        assertThat(cat.isAttacking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Without activation, a creature without defender can block the cat")
+    void nonDefenderCanBlockWithoutActivation() {
+        Permanent cat = addCreatureReady(player1, new SabertoothAlleyCat());
+        Permanent recruit = addCreatureReady(player2, new BorosRecruit());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        declareBlock(recruit, cat);
+
+        assertThat(recruit.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Activating one cat does not restrict blockers for another cat")
+    void restrictionAppliesOnlyToSourceCat() {
+        addCreatureReady(player1, new SabertoothAlleyCat());
+        Permanent otherCat = addCreatureReady(player1, new SabertoothAlleyCat());
+        Permanent recruit = addCreatureReady(player2, new BorosRecruit());
+        activateBlockingRestriction();
+
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
+        declareBlock(recruit, otherCat);
 
         assertThat(recruit.isBlocking()).isTrue();
     }
