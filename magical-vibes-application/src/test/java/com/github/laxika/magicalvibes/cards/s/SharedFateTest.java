@@ -138,6 +138,72 @@ class SharedFateTest extends BaseCardTest {
         assertThat(gd.winnerPlayerId).isNull();
     }
 
+    @Test
+    @DisplayName("The drawing player chooses which Shared Fate replaces a draw")
+    void multipleCopiesRequireReplacementChoice() {
+        harness.addToBattlefield(player1, new SharedFate());
+        harness.addToBattlefield(player2, new SharedFate());
+        CardSetup setup = prepareDraw(player2, new AlphaMyr());
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player2.getId()));
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        assertThat(gd.findExiledCard(setup.exiledCard().getId())).isNull();
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .containsExactly(setup.exiledCard(), setup.remainingOpponentCard());
+    }
+
+    @Test
+    @DisplayName("An empty own library does not prevent Shared Fate from replacing a draw")
+    void emptyOwnLibraryStillExilesOpponentCard() {
+        harness.addToBattlefield(player1, new SharedFate());
+        Card exiled = new AlphaMyr();
+        harness.setLibrary(player1, List.of());
+        harness.setLibrary(player2, List.of(exiled));
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+
+        assertThat(gd.findExiledCard(exiled.getId())).isNotNull();
+        assertThat(gd.findExiledCard(exiled.getId()).exilerId()).isEqualTo(player1.getId());
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.winnerPlayerId).isNull();
+    }
+
+    @Test
+    @DisplayName("Shared Fate does not waive an exiled spell's mana cost")
+    void exiledSpellRequiresManaPayment() {
+        harness.addToBattlefield(player1, new SharedFate());
+        CardSetup setup = prepareDraw(player1, new AlphaMyr());
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, setup.exiledCard().getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.findExiledCard(setup.exiledCard().getId())).isNotNull();
+        harness.assertNotOnBattlefield(player1, "Alpha Myr");
+    }
+
+    @Test
+    @DisplayName("A new Shared Fate cannot grant access to cards exiled by a departed copy")
+    void replacementSourceDoesNotRestoreOldPermission() {
+        harness.addToBattlefield(player1, new SharedFate());
+        CardSetup setup = prepareDraw(player1, new AlphaMyr());
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.addToBattlefield(player1, new SharedFate());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, setup.exiledCard().getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("No permission");
+        assertThat(gd.findExiledCard(setup.exiledCard().getId())).isNotNull();
+    }
+
     private CardSetup prepareDraw(com.github.laxika.magicalvibes.model.Player drawer, Card exiledCard) {
         Card drawerLibraryCard = new Forest();
         Card remainingOpponentCard = new Forest();
