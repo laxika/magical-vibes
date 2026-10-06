@@ -36,7 +36,7 @@ class SelesnyaEvangelTest extends BaseCardTest {
 
     @Test
     void cannotActivateWithoutAnotherUntappedCreature() {
-        Permanent evangel = addCreatureReady(player1, new SelesnyaEvangel());
+        addCreatureReady(player1, new SelesnyaEvangel());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
@@ -65,5 +65,62 @@ class SelesnyaEvangelTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(evangel.isTapped()).isFalse();
+    }
+    @Test
+    void canTapSummoningSickCreatureForAdditionalCost() {
+        Permanent evangel = addCreatureReady(player1, new SelesnyaEvangel());
+        Permanent otherCreature = harness.addToBattlefieldAndReturn(player1, new Watchwolf());
+        otherCreature.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(evangel.isTapped()).isTrue();
+        assertThat(otherCreature.isTapped()).isTrue();
+        assertThat(countPermanents(player1, "Saproling")).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Saproling")).isEqualTo(1);
+        assertThat(countPermanents(player2, "Saproling")).isZero();
+    }
+
+    @Test
+    void cannotActivateWhileEvangelIsSummoningSick() {
+        Permanent evangel = harness.addToBattlefieldAndReturn(player1, new SelesnyaEvangel());
+        evangel.setSummoningSick(true);
+        Permanent otherCreature = addCreatureReady(player1, new Watchwolf());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(evangel.isTapped()).isFalse();
+        assertThat(otherCreature.isTapped()).isFalse();
+        assertThat(countPermanents(player1, "Saproling")).isZero();
+    }
+
+    @Test
+    void cannotActivateWithoutMana() {
+        Permanent evangel = addCreatureReady(player1, new SelesnyaEvangel());
+        Permanent otherCreature = addCreatureReady(player1, new Watchwolf());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(evangel.isTapped()).isFalse();
+        assertThat(otherCreature.isTapped()).isFalse();
+        assertThat(countPermanents(player1, "Saproling")).isZero();
+    }
+
+    @Test
+    void cannotActivateWhileEvangelIsTapped() {
+        Permanent evangel = addCreatureReady(player1, new SelesnyaEvangel());
+        evangel.tap();
+        Permanent otherCreature = addCreatureReady(player1, new Watchwolf());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(otherCreature.isTapped()).isFalse();
+        assertThat(countPermanents(player1, "Saproling")).isZero();
     }
 }
