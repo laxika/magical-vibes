@@ -23,6 +23,50 @@ import static org.assertj.core.api.Assertions.assertThat;
 class RiptideShapeshifterTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Sacrifices immediately and can activate while summoning sick")
+    void sacrificesAsCostWhileSummoningSick() {
+        harness.addToBattlefield(player1, new RiptideShapeshifter());
+        Card matching = new GoblinSledder();
+        harness.setLibrary(player1, List.of(matching));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Riptide Shapeshifter");
+        harness.assertInGraveyard(player1, "Riptide Shapeshifter");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(matching);
+        harness.assertNotOnBattlefield(player1, "Goblin Sledder");
+
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "GOBLIN");
+
+        harness.assertOnBattlefield(player1, "Goblin Sledder");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Stops at the first matching creature and leaves later matches in the library")
+    void stopsAtFirstMatchingCreature() {
+        addCreatureReady(player1, new RiptideShapeshifter());
+        Card nonmatching = new GlorySeeker();
+        Card firstMatching = new GoblinSledder();
+        Card laterMatching = new GoblinSledder();
+        harness.setLibrary(player1, List.of(nonmatching, firstMatching, laterMatching));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "GOBLIN");
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(firstMatching.getId()))
+                .noneMatch(permanent -> permanent.getCard().getId().equals(laterMatching.getId()));
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .containsExactlyInAnyOrder(nonmatching, laterMatching);
+    }
+
+    @Test
     @DisplayName("Chooses a creature type, finds a matching creature, and shuffles the other reveals")
     void findsCreatureOfChosenType() {
         Permanent shapeshifter = addCreatureReady(player1, new RiptideShapeshifter());
@@ -123,5 +167,24 @@ class RiptideShapeshifterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Still shuffles when the only library card enters the battlefield")
+    void shufflesWhenNoCardsRemain() {
+        addCreatureReady(player1, new RiptideShapeshifter());
+        harness.addToBattlefield(player2, new PsychogenicProbe());
+        harness.setLife(player1, 20);
+        harness.setLibrary(player1, List.of(new GoblinSledder()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "GOBLIN");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Goblin Sledder");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        harness.assertLife(player1, 18);
     }
 }
