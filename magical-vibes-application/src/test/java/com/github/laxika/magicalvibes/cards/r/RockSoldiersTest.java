@@ -23,8 +23,7 @@ class RockSoldiersTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new LeoninScimitar());
         castRockSoldiers(target.getId());
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player2, "Leonin Scimitar");
         harness.assertInGraveyard(player2, "Leonin Scimitar");
@@ -48,10 +47,37 @@ class RockSoldiersTest extends BaseCardTest {
     void canEnterWithoutTarget() {
         castRockSoldiers(null);
 
-        harness.passBothPriorities();
-
         resolveAllTriggers();
         assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Rock Soldiers");
+    }
+
+    @Test
+    @DisplayName("Can decline to target an available noncreature artifact")
+    void canDeclineAvailableTarget() {
+        harness.addToBattlefield(player2, new LeoninScimitar());
+        castRockSoldiers(null);
+
+        resolveAllTriggers();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Rock Soldiers");
+        harness.assertOnBattlefield(player2, "Leonin Scimitar");
+        harness.assertNotInGraveyard(player2, "Leonin Scimitar");
+    }
+
+    @Test
+    @DisplayName("Can destroy its controller's artifact and leaves other artifacts alone")
+    void canDestroyOwnArtifact() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+        harness.addToBattlefield(player2, new LeoninScimitar());
+        castRockSoldiers(target.getId());
+
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Leonin Scimitar");
+        harness.assertInGraveyard(player1, "Leonin Scimitar");
+        harness.assertOnBattlefield(player2, "Leonin Scimitar");
         harness.assertOnBattlefield(player1, "Rock Soldiers");
     }
 
