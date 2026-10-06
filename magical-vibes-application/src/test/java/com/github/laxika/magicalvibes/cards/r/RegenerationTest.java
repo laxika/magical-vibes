@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.c.CrownOfTheAges;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.n.Naturalize;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +18,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CrownOfTheAges.class, Forest.class, GrizzlyBears.class, Regeneration.class})
+@CardUsed({CrownOfTheAges.class, Forest.class, GrizzlyBears.class, Naturalize.class, Regeneration.class})
 class RegenerationTest extends BaseCardTest {
 
     @Test
@@ -28,7 +29,7 @@ class RegenerationTest extends BaseCardTest {
         harness.setHand(player1, List.of(regeneration));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
-        gs.playCard(gd, player1, 0, 0, bears.getId(), null);
+        harness.castEnchantment(player1, 0, bears.getId());
 
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
@@ -45,7 +46,7 @@ class RegenerationTest extends BaseCardTest {
         harness.setHand(player1, List.of(regeneration));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
-        gs.playCard(gd, player1, 0, 0, bears.getId(), null);
+        harness.castEnchantment(player1, 0, bears.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -234,6 +235,55 @@ class RegenerationTest extends BaseCardTest {
 
         assertThat(originallyEnchanted.getRegenerationShield()).isZero();
         assertThat(newlyEnchanted.getRegenerationShield()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Regeneration uses its last attachment after the Aura moves and leaves the battlefield")
+    void abilityUsesLastAttachmentAfterAuraLeaves() {
+        harness.addToBattlefieldAndReturn(player1, new CrownOfTheAges());
+        Permanent originallyEnchanted = addCreatureReady(player1, new GrizzlyBears());
+        Permanent newlyEnchanted = addCreatureReady(player1, new GrizzlyBears());
+        Permanent regenAura = harness.addToBattlefieldAndReturn(player1, new Regeneration());
+        regenAura.setAttachedTo(originallyEnchanted.getId());
+
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.activateAbility(player1, 3, null, null);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.activateAbility(player1, 0, null, regenAura.getId());
+        harness.passBothPriorities();
+        assertThat(regenAura.getAttachedTo()).isEqualTo(newlyEnchanted.getId());
+
+        harness.setHand(player1, List.of(new Naturalize()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castAndResolveInstant(player1, 0, regenAura.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(regenAura);
+        harness.passBothPriorities();
+
+        assertThat(originallyEnchanted.getRegenerationShield()).isZero();
+        assertThat(newlyEnchanted.getRegenerationShield()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Repeated activations create separate regeneration shields without tapping the Aura")
+    void repeatedActivationsCreateSeparateShields() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent regenAura = harness.addToBattlefieldAndReturn(player1, new Regeneration());
+        regenAura.setAttachedTo(bears.getId());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(regenAura.isTapped()).isFalse();
+        assertThat(bears.isTapped()).isFalse();
+        assertThat(bears.getRegenerationShield()).isEqualTo(2);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().tryDestroyPermanent(gd, bears));
+        assertThat(bears.getRegenerationShield()).isEqualTo(1);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().tryDestroyPermanent(gd, bears));
+        assertThat(bears.getRegenerationShield()).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(bears);
     }
 
     @Test
