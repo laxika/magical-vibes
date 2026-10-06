@@ -1,14 +1,15 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
+import com.github.laxika.magicalvibes.cards.e.EleshNornGrandCenobite;
+import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SigilCaptain.class, FugitiveWizard.class, GrizzlyBears.class,
+        GloriousAnthem.class, EleshNornGrandCenobite.class})
 class SigilCaptainTest extends BaseCardTest {
 
     @Test
@@ -23,15 +26,13 @@ class SigilCaptainTest extends BaseCardTest {
     void putsTwoCountersOn1_1() {
         harness.addToBattlefield(player1, new SigilCaptain());
 
-        harness.setHand(player1, List.of(new FugitiveWizard())); // 1/1
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new FugitiveWizard(), "{U}");
         harness.passBothPriorities(); // resolve the creature spell -> it enters, Sigil Captain triggers
         harness.passBothPriorities(); // resolve Sigil Captain's mandatory trigger
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        Permanent wizard = findByName(player1, "Fugitive Wizard");
+        Permanent wizard = findPermanent(player1, "Fugitive Wizard");
         assertThat(wizard.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(gqs.getEffectivePower(gd, wizard)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, wizard)).isEqualTo(3);
@@ -42,14 +43,12 @@ class SigilCaptainTest extends BaseCardTest {
     void noTriggerForNon1_1() {
         harness.addToBattlefield(player1, new SigilCaptain());
 
-        harness.setHand(player1, List.of(new GrizzlyBears())); // 2/2
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
         harness.passBothPriorities(); // resolve the creature spell
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(findByName(player1, "Grizzly Bears").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(findPermanent(player1, "Grizzly Bears").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     @Test
@@ -62,17 +61,50 @@ class SigilCaptainTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player2, List.of(new FugitiveWizard()));
-        harness.addMana(player2, ManaColor.BLUE, 1);
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, new FugitiveWizard(), "{U}");
         harness.passBothPriorities(); // resolve opponent's creature spell
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(findByName(player2, "Fugitive Wizard").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(findPermanent(player2, "Fugitive Wizard").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
-    private Permanent findByName(Player player, String name) {
-        return findPermanent(player, name);
+    @Test
+    void doesNotTriggerWhenAnthemMakesEnteringCreatureTwoTwo() {
+        harness.addToBattlefield(player1, new SigilCaptain());
+        harness.addToBattlefield(player1, new GloriousAnthem());
+        harness.castFromHand(player1, new FugitiveWizard(), "{U}");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanent(player1, "Fugitive Wizard")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void secondCaptainTriggerDoesNothingAfterFirstAddsCounters() {
+        harness.addToBattlefield(player1, new SigilCaptain());
+        harness.addToBattlefield(player1, new SigilCaptain());
+        harness.castFromHand(player1, new FugitiveWizard(), "{U}");
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanent(player1, "Fugitive Wizard")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void triggersForItselfWhenEnteringAsOneOne() {
+        harness.addToBattlefield(player2, new EleshNornGrandCenobite());
+        harness.castFromHand(player1, new SigilCaptain(), "{1}{G}{W}{W}");
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Sigil Captain")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 }
