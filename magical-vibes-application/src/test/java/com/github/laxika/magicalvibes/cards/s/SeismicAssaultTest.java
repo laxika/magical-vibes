@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
-import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.cards.w.WallOfStone;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -151,9 +150,7 @@ class SeismicAssaultTest extends BaseCardTest {
     void deals2DamageToCreature() {
         addReadySeismicAssault(player1);
         harness.setHand(player1, List.of(new Mountain()));
-        harness.addToBattlefield(player2, new RagingGoblin());
-
-        UUID goblinId = harness.getPermanentId(player2, "Raging Goblin");
+        UUID goblinId = harness.addToBattlefieldAndReturn(player2, new RagingGoblin()).getId();
         harness.activateAbility(player1, 0, null, goblinId);
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
@@ -175,6 +172,57 @@ class SeismicAssaultTest extends BaseCardTest {
 
         assertThat(wall.getMarkedDamage()).isEqualTo(2);
         harness.assertOnBattlefield(player2, "Wall of Stone");
+    }
+
+    @Test
+    @DisplayName("Can activate repeatedly without mana or tapping the enchantment")
+    void canActivateRepeatedlyWithOnlyLandDiscards() {
+        Permanent assault = harness.addToBattlefieldAndReturn(player1, new SeismicAssault());
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new Mountain(), new Mountain()));
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        assertThat(assault.isTapped()).isFalse();
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+        harness.assertLife(player2, 18);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 16);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An ability with a departed target does not refund the discarded land")
+    void departedTargetDoesNotRefundDiscardCost() {
+        addReadySeismicAssault(player1);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new Mountain(), new Mountain()));
+        Permanent goblin = harness.addToBattlefieldAndReturn(player2, new RagingGoblin());
+
+        harness.activateAbility(player1, 0, null, goblin.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.activateAbility(player1, 0, null, goblin.getId());
+        harness.handleCardChosen(player1, 0);
+
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player2, "Raging Goblin");
+        harness.assertInGraveyard(player2, "Raging Goblin");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        harness.assertLife(player2, 20);
     }
 
     private void addReadySeismicAssault(Player player) {
