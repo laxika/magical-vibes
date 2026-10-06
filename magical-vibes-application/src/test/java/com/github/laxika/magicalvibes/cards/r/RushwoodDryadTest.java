@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -112,5 +111,21 @@ class RushwoodDryadTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx)));
 
         assertThat(blockerPerm.isBlocking()).isTrue();
+    }
+    @Test
+    @DisplayName("A tapped Forest still makes Rushwood Dryad unblockable")
+    void cannotBeBlockedWhenDefendersForestIsTapped() {
+        harness.addToBattlefield(player2, new Forest());
+        findPermanent(player2, "Forest").setTapped(true);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new RushwoodDryad());
+        declareAttackersAndPrepareBlockers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
+
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(blockerIndex, attackerIndex))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
     }
 }
