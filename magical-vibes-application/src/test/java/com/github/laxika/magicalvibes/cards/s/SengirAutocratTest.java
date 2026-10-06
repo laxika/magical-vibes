@@ -99,6 +99,66 @@ class SengirAutocratTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Citizen")).hasSize(4);
     }
 
+    @Test
+    @DisplayName("Returning Autocrat to hand queues the Serf exile trigger")
+    void returningAutocratToHandExilesSerfsWhenTriggerResolves() {
+        Permanent autocrat = castAndResolveAutocrat(player1);
+
+        harness.inMutationScope(
+                () -> harness.getPermanentRemovalService().removePermanentToHand(gd, autocrat));
+
+        harness.assertInHand(player1, "Sengir Autocrat");
+        harness.assertNotOnBattlefield(player1, "Sengir Autocrat");
+        assertThat(serfTokens(player1)).hasSize(3);
+
+        resolveAllTriggers();
+
+        assertThat(serfTokens(player1)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Leaving before the entry trigger resolves removes existing Serfs then creates new Serfs")
+    void leavingBeforeEntryTriggerResolvesStillCreatesSerfs() {
+        castAndResolveAutocrat(player2);
+        Permanent autocrat = harness.enterBattlefieldAndReturn(player1, new SengirAutocrat());
+        assertThat(serfTokens(player1)).isEmpty();
+        assertThat(serfTokens(player2)).hasSize(3);
+
+        harness.inMutationScope(
+                () -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, autocrat));
+        harness.passBothPriorities();
+
+        assertThat(serfTokens(player1)).isEmpty();
+        assertThat(serfTokens(player2)).isEmpty();
+
+        resolveAllTriggers();
+
+        assertThat(serfTokens(player1)).hasSize(3);
+        assertThat(serfTokens(player2)).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Sengir Autocrat");
+        harness.assertInGraveyard(player1, "Sengir Autocrat");
+    }
+
+    @Test
+    @DisplayName("The leave trigger also exiles Serfs created after it triggered")
+    void leaveTriggerIncludesSerfsCreatedWhileItIsPending() {
+        Permanent autocrat = castAndResolveAutocrat(player1);
+        harness.inMutationScope(
+                () -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, autocrat));
+
+        harness.enterBattlefieldAndReturn(player2, new SengirAutocrat());
+        harness.passBothPriorities();
+
+        assertThat(serfTokens(player1)).hasSize(3);
+        assertThat(serfTokens(player2)).hasSize(3);
+
+        resolveAllTriggers();
+
+        assertThat(serfTokens(player1)).isEmpty();
+        assertThat(serfTokens(player2)).isEmpty();
+        harness.assertOnBattlefield(player2, "Sengir Autocrat");
+    }
+
     private Permanent castAndResolveAutocrat(com.github.laxika.magicalvibes.model.Player player) {
         harness.castFromHand(player, new SengirAutocrat(), "{3}{B}");
         resolveAllTriggers();
