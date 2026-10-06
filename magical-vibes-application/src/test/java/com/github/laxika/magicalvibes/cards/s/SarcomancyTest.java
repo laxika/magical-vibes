@@ -13,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(Sarcomancy.class)
+@CardUsed({Sarcomancy.class, ZombieInfestation.class})
 class SarcomancyTest extends BaseCardTest {
 
     @Test
@@ -85,7 +85,6 @@ class SarcomancyTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(ZombieInfestation.class)
     @DisplayName("A Zombie appearing before resolution stops the upkeep damage")
     void rechecksZombieConditionBeforeResolution() {
         harness.setLife(player1, 20);
@@ -104,5 +103,41 @@ class SarcomancyTest extends BaseCardTest {
 
         harness.assertLife(player1, 20);
         assertThat(countPermanents(player1, "Zombie")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Each Sarcomancy deals damage when no Zombies exist")
+    void multipleCopiesEachDealDamage() {
+        harness.setLife(player1, 20);
+        harness.addToBattlefield(player1, new Sarcomancy());
+        harness.addToBattlefield(player1, new Sarcomancy());
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(2);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("Losing the last Zombie after upkeep begins does not create a trigger")
+    void losingZombieAfterUpkeepDoesNotTriggerRetroactively() {
+        harness.setLife(player1, 20);
+        harness.castFromHand(player1, new Sarcomancy(), "{B}");
+        resolveAllTriggers();
+        Permanent zombie = findPermanent(player1, "Zombie");
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).isEmpty();
+        zombie.setMarkedDamage(2);
+        harness.runStateBasedActions();
+
+        assertThat(countPermanents(player1, "Zombie")).isZero();
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        harness.assertLife(player1, 19);
     }
 }
