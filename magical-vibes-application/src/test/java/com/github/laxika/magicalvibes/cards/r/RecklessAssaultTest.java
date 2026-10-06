@@ -71,4 +71,67 @@ class RecklessAssaultTest extends BaseCardTest {
         harness.assertLife(player2, 20);
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
     }
+
+    @Test
+    @DisplayName("Life is paid immediately and each activation deals damage separately")
+    void canActivateRepeatedly() {
+        harness.addToBattlefield(player1, new RecklessAssault());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.assertLife(player1, 16);
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+        harness.assertLife(player2, 19);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 16);
+    }
+
+    @Test
+    @DisplayName("Can target its controller, paying life before dealing damage")
+    void canTargetController() {
+        harness.addToBattlefield(player1, new RecklessAssault());
+        harness.setLife(player1, 20);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.assertLife(player1, 18);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 17);
+    }
+
+    @Test
+    @DisplayName("Cannot activate without mana and does not pay life")
+    void cannotActivateWithoutMana() {
+        harness.addToBattlefield(player1, new RecklessAssault());
+        harness.setLife(player1, 20);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot target a noncreature enchantment")
+    void cannotTargetNoncreatureEnchantment() {
+        var enchantment = harness.addToBattlefieldAndReturn(player1, new RecklessAssault());
+        harness.setLife(player1, 20);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, enchantment.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).isEmpty();
+    }
 }
