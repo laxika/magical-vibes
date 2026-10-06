@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.b.BlasphemousAct;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LanternSpirit;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.x.Xenograft;
 import com.github.laxika.magicalvibes.cards.y.YavimayaSapherd;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -12,6 +14,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,9 +23,9 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RequiemAngel.class, GrizzlyBears.class, LanternSpirit.class, Shock.class,
+        YavimayaSapherd.class, BlasphemousAct.class, Xenograft.class})
 class RequiemAngelTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("When another non-Spirit creature you control dies, creates a 1/1 white flying Spirit")
@@ -88,6 +91,74 @@ class RequiemAngelTest extends BaseCardTest {
         assertThat(spiritTokens(player1)).hasSize(1);
     }
 
+    @Test
+    @DisplayName("Its own death does not create a Spirit")
+    void doesNotTriggerForItsOwnDeath() {
+        harness.addToBattlefield(player1, new RequiemAngel());
+
+        castBlasphemousAct();
+
+        harness.assertInGraveyard(player1, "Requiem Angel");
+        assertThat(gd.stack).isEmpty();
+        assertThat(spiritTokens(player1)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Sees each other non-Spirit dying simultaneously, even when it also dies")
+    void triggersForEachEligibleSimultaneousDeath() {
+        harness.addToBattlefield(player1, new RequiemAngel());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new LanternSpirit());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        castBlasphemousAct();
+
+        harness.assertInGraveyard(player1, "Requiem Angel");
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(spiritTokens(player1)).hasSize(2);
+        assertThat(spiritTokens(player2)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Two Angels each see the other Angel die")
+    void angelsTriggerForEachOtherWhenBothDie() {
+        harness.addToBattlefield(player1, new RequiemAngel());
+        harness.addToBattlefield(player1, new RequiemAngel());
+
+        castBlasphemousAct();
+
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(spiritTokens(player1)).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("A creature made a Spirit by Xenograft does not trigger the Angel when it dies")
+    void excludesCreaturesWithSpiritSubtypeGrantedOnBattlefield() {
+        harness.addToBattlefield(player1, new RequiemAngel());
+        Permanent xenograft = harness.addToBattlefieldAndReturn(player1, new Xenograft());
+        xenograft.setChosenSubtype(CardSubtype.SPIRIT);
+        harness.addToBattlefield(player1, new GrizzlyBears());
+
+        killWithShock(player2, player1, "Grizzly Bears");
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
+        assertThat(spiritTokens(player1)).isEmpty();
+    }
+
+    private void castBlasphemousAct() {
+        harness.setHand(player1, List.of(new BlasphemousAct()));
+        harness.addMana(player1, ManaColor.RED, 9);
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
+    }
+
     private void killWithShock(com.github.laxika.magicalvibes.model.Player caster,
                                com.github.laxika.magicalvibes.model.Player targetController,
                                String targetName) {
@@ -98,8 +169,7 @@ class RequiemAngelTest extends BaseCardTest {
         harness.addMana(caster, ManaColor.RED, 1);
 
         UUID targetId = harness.getPermanentId(targetController, targetName);
-        harness.castInstant(caster, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(caster, 0, targetId);
     }
 
     private List<Permanent> spiritTokens(com.github.laxika.magicalvibes.model.Player player) {
