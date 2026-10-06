@@ -15,6 +15,45 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ReflexSliverTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Newly entered Slivers can attack, but non-Slivers cannot")
+    void newlyEnteredSliversCanAttack() {
+        Permanent source = harness.enterBattlefieldAndReturn(player1, new ReflexSliver());
+        Permanent sliver = harness.enterBattlefieldAndReturn(player1, new SynchronousSliver());
+        Permanent nonSliver = harness.enterBattlefieldAndReturn(player1, new GiantDustwasp());
+
+        assertThat(source.isSummoningSick()).isTrue();
+        assertThat(sliver.isSummoningSick()).isTrue();
+        assertThat(nonSliver.isSummoningSick()).isTrue();
+        assertThat(als.canAttack(gd, source, player1.getId())).isTrue();
+        assertThat(als.canAttack(gd, sliver, player1.getId())).isTrue();
+        assertThat(als.canAttack(gd, nonSliver, player1.getId())).isFalse();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, source));
+
+        assertThat(als.canAttack(gd, sliver, player1.getId())).isFalse();
+    }
+
+    @Test
+    @DisplayName("Haste remains while either player's Reflex Sliver remains")
+    void overlappingSourcesKeepGrantingHaste() {
+        Permanent firstSource = addCreatureReady(player1, new ReflexSliver());
+        Permanent secondSource = addCreatureReady(player2, new ReflexSliver());
+        Permanent sliver = addCreatureReady(player1, new SynchronousSliver());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, firstSource));
+
+        assertThat(gqs.hasKeyword(gd, sliver, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, secondSource, Keyword.HASTE)).isTrue();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, secondSource));
+
+        assertThat(gqs.hasKeyword(gd, sliver, Keyword.HASTE)).isFalse();
+    }
+
+    @Test
     @DisplayName("Reflex Sliver grants itself haste")
     void grantsSelfHaste() {
         Permanent sliver = addCreatureReady(player1, new ReflexSliver());
