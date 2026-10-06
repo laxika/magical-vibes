@@ -32,6 +32,31 @@ class SandbarSerpentTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cycling pays its discard cost before drawing and accepts colored mana")
+    void cyclingDiscardsImmediatelyAndDrawsExactlyOneOnResolution() {
+        Zephid firstCard = new Zephid();
+        Zephid secondCard = new Zephid();
+        harness.setHand(player1, List.of(new SandbarSerpent()));
+        harness.setLibrary(player1, List.of(firstCard, secondCard));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertInGraveyard(player1, "Sandbar Serpent");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(firstCard, secondCard);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(secondCard);
+        harness.assertInGraveyard(player1, "Sandbar Serpent");
+    }
+
+    @Test
     @DisplayName("Cycling cannot be activated without {2}")
     void cyclingRequiresTwoMana() {
         harness.setHand(player1, List.of(new SandbarSerpent()));
