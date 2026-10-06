@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.m.Memnite;
+import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,9 +15,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RazorvergeThicket.class, Mountain.class, Memnite.class})
 class RazorvergeThicketTest extends BaseCardTest {
-
-    // ===== Enters the battlefield: untapped (few lands) =====
 
     @Test
     @DisplayName("Enters untapped when you control zero other lands")
@@ -24,7 +25,7 @@ class RazorvergeThicketTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         Permanent thicket = findThicket(player1);
         assertThat(thicket.isTapped()).isFalse();
@@ -39,7 +40,7 @@ class RazorvergeThicketTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         Permanent thicket = findThicket(player1);
         assertThat(thicket.isTapped()).isFalse();
@@ -55,13 +56,11 @@ class RazorvergeThicketTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         Permanent thicket = findThicket(player1);
         assertThat(thicket.isTapped()).isFalse();
     }
-
-    // ===== Enters the battlefield: tapped (too many lands) =====
 
     @Test
     @DisplayName("Enters tapped when you control three other lands")
@@ -74,7 +73,7 @@ class RazorvergeThicketTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         Permanent thicket = findThicket(player1);
         assertThat(thicket.isTapped()).isTrue();
@@ -91,35 +90,30 @@ class RazorvergeThicketTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         Permanent thicket = findThicket(player1);
         assertThat(thicket.isTapped()).isTrue();
     }
-
-    // ===== Only counts lands, not other permanents =====
 
     @Test
     @DisplayName("Non-land permanents do not count toward the land check")
     void nonLandPermanentsDoNotCount() {
         // Add 3 creatures (not lands)
         for (int i = 0; i < 3; i++) {
-            Permanent creature = new Permanent(new LlanowarElves());
-            gd.playerBattlefields.get(player1.getId()).add(creature);
+            harness.addToBattlefield(player1, new Memnite());
         }
 
         harness.setHand(player1, List.of(new RazorvergeThicket()));
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
-        // 0 lands, 3 creatures — should enter untapped
+        // With zero lands and three creatures, the land enters untapped.
         Permanent thicket = findThicket(player1);
         assertThat(thicket.isTapped()).isFalse();
     }
-
-    // ===== Only counts your lands, not opponent's =====
 
     @Test
     @DisplayName("Opponent's lands do not count toward the land check")
@@ -133,14 +127,12 @@ class RazorvergeThicketTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
-        // Player1 has 0 other lands — should enter untapped
+        // Player1 controls zero other lands, so the land enters untapped.
         Permanent thicket = findThicket(player1);
         assertThat(thicket.isTapped()).isFalse();
     }
-
-    // ===== Mana production =====
 
     @Test
     @DisplayName("Tapping for green mana produces one green")
@@ -164,20 +156,32 @@ class RazorvergeThicketTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Two other nonbasic lands and nonland permanents still allow untapped entry")
+    void entersUntappedWithTwoNonbasicLandsAndCreatures() {
+        harness.addToBattlefield(player1, new RazorvergeThicket());
+        harness.addToBattlefield(player1, new RazorvergeThicket());
+        for (int i = 0; i < 3; i++) {
+            harness.addToBattlefield(player1, new Memnite());
+            harness.addToBattlefield(player2, new Mountain());
+        }
+        harness.setHand(player1, List.of(new RazorvergeThicket()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-    private Permanent addThicketReady(Player player) {
-        Permanent perm = new Permanent(new RazorvergeThicket());
+        harness.playLand(player1, 0);
+
+        Permanent enteringLand = gd.playerBattlefields.get(player1.getId()).getLast();
+        assertThat(enteringLand.isTapped()).isFalse();
+    }
+
+    private void addThicketReady(Player player) {
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new RazorvergeThicket());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
     }
 
     private void addBasicLand(Player player) {
-        // Create a simple land permanent — use a card that's typed as LAND
-        com.github.laxika.magicalvibes.model.Card land = new com.github.laxika.magicalvibes.cards.m.Mountain();
-        Permanent perm = new Permanent(land);
-        gd.playerBattlefields.get(player.getId()).add(perm);
+        harness.addToBattlefield(player, new Mountain());
     }
 
     private Permanent findThicket(Player player) {
