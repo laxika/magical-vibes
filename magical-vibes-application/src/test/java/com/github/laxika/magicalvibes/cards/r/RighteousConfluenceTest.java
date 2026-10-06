@@ -71,6 +71,85 @@ class RighteousConfluenceTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void repeatedEnchantmentModeCanExileThreeDifferentTargetsIncludingYourOwn() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GhostlyPrison());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GhostlyPrison());
+        Permanent third = harness.addToBattlefieldAndReturn(player2, new GhostlyPrison());
+        harness.setHand(player1, List.of(new RighteousConfluence()));
+        addMana();
+
+        int modes = ChooseOneEffect.encodeRepeatedModeSelection(3, 1, 1, 1);
+        harness.castSorcery(player1, 0, modes, List.of(first.getId(), second.getId(), third.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.findExiledCard(first.getCard().getId())).isNotNull();
+        assertThat(gd.findExiledCard(second.getCard().getId())).isNotNull();
+        assertThat(gd.findExiledCard(third.getCard().getId())).isNotNull();
+    }
+
+    @Test
+    void repeatedEnchantmentModeCanChooseTheSameTarget() {
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new GhostlyPrison());
+        harness.setHand(player1, List.of(new RighteousConfluence()));
+        addMana();
+
+        int modes = ChooseOneEffect.encodeRepeatedModeSelection(3, 1, 1, 2);
+        harness.castSorcery(player1, 0, modes, List.of(enchantment.getId(), enchantment.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.findExiledCard(enchantment.getCard().getId())).isNotNull();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        harness.assertLife(player1, 25);
+    }
+
+    @Test
+    void remainingLegalTargetAllowsLifeModeToResolve() {
+        Permanent gone = harness.addToBattlefieldAndReturn(player2, new GhostlyPrison());
+        Permanent remaining = harness.addToBattlefieldAndReturn(player2, new GhostlyPrison());
+        harness.setHand(player1, List.of(new RighteousConfluence()));
+        addMana();
+
+        int modes = ChooseOneEffect.encodeRepeatedModeSelection(3, 1, 1, 2);
+        harness.castSorcery(player1, 0, modes, List.of(gone.getId(), remaining.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(gone);
+        gd.playerGraveyards.get(player2.getId()).add(gone.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.findExiledCard(gone.getCard().getId())).isNull();
+        assertThat(gd.findExiledCard(remaining.getCard().getId())).isNotNull();
+        harness.assertLife(player1, 25);
+    }
+
+    @Test
+    void losingOnlyTargetPreventsTokenAndLifeModesFromResolving() {
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new GhostlyPrison());
+        harness.setHand(player1, List.of(new RighteousConfluence()));
+        addMana();
+
+        int modes = ChooseOneEffect.encodeRepeatedModeSelection(3, 0, 1, 2);
+        harness.castSorcery(player1, 0, modes, List.of(enchantment.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(enchantment);
+        gd.playerGraveyards.get(player2.getId()).add(enchantment.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.findExiledCard(enchantment.getCard().getId())).isNull();
+        harness.assertLife(player1, 20);
+        harness.assertInGraveyard(player1, "Righteous Confluence");
+    }
+
+    @Test
+    void choosingEnchantmentModeWithoutATargetIsRejected() {
+        harness.setHand(player1, List.of(new RighteousConfluence()));
+        addMana();
+
+        int modes = ChooseOneEffect.encodeRepeatedModeSelection(3, 0, 1, 2);
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, modes))
+                .isInstanceOf(IllegalStateException.class);
+    }
     private void addMana() {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.addMana(player1, ManaColor.WHITE, 2);
