@@ -47,9 +47,7 @@ class SarkhansResolveTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, 0, creature.getId());
         harness.passBothPriorities();
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
 
         assertThat(creature.getPowerModifier()).isZero();
         assertThat(creature.getToughnessModifier()).isZero();
@@ -89,5 +87,68 @@ class SarkhansResolveTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, 0, land.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Pump mode can boost your own flying creature without destroying it")
+    void pumpModeBoostsOwnFlyingCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new AirElemental());
+        harness.setHand(player1, List.of(new SarkhansResolve()));
+        addMana();
+
+        harness.castInstant(player1, 0, 0, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Air Elemental");
+        assertThat(creature.getPowerModifier()).isEqualTo(3);
+        assertThat(creature.getToughnessModifier()).isEqualTo(3);
+        harness.assertInGraveyard(player1, "Sarkhan's Resolve");
+    }
+
+    @Test
+    @DisplayName("Destroy mode can destroy your own flying creature")
+    void destroyModeDestroysOwnFlyingCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new AirElemental());
+        harness.setHand(player1, List.of(new SarkhansResolve()));
+        addMana();
+
+        harness.castInstant(player1, 0, 1, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Air Elemental");
+        harness.assertInGraveyard(player1, "Air Elemental");
+    }
+
+    @Test
+    @DisplayName("Destroy mode rejects a noncreature")
+    void destroyModeRejectsNoncreature() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new AdarkarWastes());
+        harness.setHand(player1, List.of(new SarkhansResolve()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, 1, land.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Pump mode does nothing when its target is destroyed in response")
+    void pumpModeDoesNothingWhenTargetLeavesBattlefield() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setHand(player1, List.of(new SarkhansResolve(), new SarkhansResolve()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castInstant(player1, 0, 0, creature.getId());
+        harness.castInstant(player1, 0, 1, creature.getId());
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player2, "Air Elemental");
+        harness.assertInGraveyard(player2, "Air Elemental");
+        harness.passBothPriorities();
+
+        assertThat(creature.getPowerModifier()).isZero();
+        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card instanceof SarkhansResolve).hasSize(2);
     }
 }
