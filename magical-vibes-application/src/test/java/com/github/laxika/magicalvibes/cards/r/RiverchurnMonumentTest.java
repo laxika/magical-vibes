@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DisplayName("Riverchurn Monument")
+@CardUsed({RiverchurnMonument.class, Forest.class})
 class RiverchurnMonumentTest extends BaseCardTest {
 
     @Test
@@ -71,6 +73,107 @@ class RiverchurnMonumentTest extends BaseCardTest {
                 player1, 0, 1, List.of(player1.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("only once");
+    }
+
+    @Test
+    void firstAbilityCanChooseNoPlayers() {
+        Permanent monument = addMonument();
+        stockLibrary(player1, 10);
+        stockLibrary(player2, 10);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of());
+        assertThat(monument.isTapped()).isTrue();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(10);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(10);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void exhaustWithNoTargetsStillConsumesItsActivation() {
+        Permanent monument = addMonument();
+        stockLibrary(player1, 10);
+        stockLibrary(player2, 10);
+        addExhaustMana();
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 1, List.of());
+        assertThat(monument.isTapped()).isTrue();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(10);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(10);
+        monument.untap();
+        addExhaustMana();
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(
+                player1, 0, 1, List.of(player2.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("only once");
+    }
+
+    @Test
+    void exhaustCountsGraveyardAtResolution() {
+        addMonument();
+        stockLibrary(player2, 10);
+        harness.setGraveyard(player2, List.of(new Forest()));
+        addExhaustMana();
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 1, List.of(player2.getId()));
+        harness.setGraveyard(player2, List.of(new Forest(), new Forest(), new Forest()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(7);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(6);
+    }
+
+    @Test
+    void exhaustMillsNothingForAnEmptyGraveyard() {
+        addMonument();
+        stockLibrary(player2, 10);
+        harness.setGraveyard(player2, List.of());
+        addExhaustMana();
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 1, List.of(player2.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(10);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void exhaustMillsOnlyTheRemainingLibraryWhenGraveyardIsLarger() {
+        addMonument();
+        stockLibrary(player2, 1);
+        harness.setGraveyard(player2, List.of(new Forest(), new Forest(), new Forest()));
+        addExhaustMana();
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 1, List.of(player2.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(4);
+    }
+
+    @Test
+    void firstAbilityRemainsRepeatableAfterExhaust() {
+        Permanent monument = addMonument();
+        stockLibrary(player2, 10);
+        harness.setGraveyard(player2, List.of(new Forest()));
+        addExhaustMana();
+        harness.activateAbilityWithMultiTargets(player1, 0, 1, List.of(player2.getId()));
+        harness.passBothPriorities();
+
+        for (int i = 0; i < 2; i++) {
+            monument.untap();
+            harness.addMana(player1, ManaColor.COLORLESS, 1);
+            harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(player2.getId()));
+            harness.passBothPriorities();
+        }
+
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(5);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(6);
     }
 
     private Permanent addMonument() {
