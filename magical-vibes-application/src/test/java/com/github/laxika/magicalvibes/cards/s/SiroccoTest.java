@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.i.Incinerate;
+import com.github.laxika.magicalvibes.cards.e.EverybodyLives;
 import com.github.laxika.magicalvibes.cards.m.MemoryLapse;
+import com.github.laxika.magicalvibes.cards.m.MistDragon;
 import com.github.laxika.magicalvibes.cards.t.TamiyoCollectorOfTales;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -20,7 +22,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({Sirocco.class, MemoryLapse.class, StalkingTiger.class, Incinerate.class,
-        TamiyoCollectorOfTales.class, SpiritualFocus.class})
+        MistDragon.class, TamiyoCollectorOfTales.class, SpiritualFocus.class, EverybodyLives.class})
 class SiroccoTest extends BaseCardTest {
 
     private void castSiroccoOn(int targetLife, List<Card> targetHand) {
@@ -41,8 +43,7 @@ class SiroccoTest extends BaseCardTest {
 
         harness.addMana(player1, ManaColor.RED, 2);
 
-        harness.castInstant(player1, 0, targetPlayer.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetPlayer.getId());
     }
 
     @Test
@@ -97,6 +98,73 @@ class SiroccoTest extends BaseCardTest {
         harness.assertLife(player2, 3);
         harness.assertInGraveyard(player2, "Memory Lapse");
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Paying for one card can leave too little life to keep the next")
+    void lifePaymentMakesRemainingCardUnpayable() {
+        castSiroccoOn(7, List.of(new MemoryLapse(), new MemoryLapse()));
+
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertLife(player2, 3);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Blue creatures and nonblue instants are not discarded")
+    void bothBlueAndInstantAreRequired() {
+        castSiroccoOn(20, List.of(new MemoryLapse(), new MistDragon(), new Incinerate()));
+
+        harness.handleMayAbilityChosen(player2, false);
+
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player2, "Memory Lapse");
+        harness.assertInHand(player2, "Mist Dragon");
+        harness.assertInHand(player2, "Incinerate");
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An empty revealed hand needs no decisions")
+    void emptyHandNeedsNoDecision() {
+        castSiroccoOn(20, List.of());
+
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The whole hand is revealed even when no cards match")
+    void revealsNonmatchingCards() {
+        castSiroccoOn(20, List.of(new MistDragon(), new Incinerate()));
+
+        assertThat(gameLogContains("reveals their hand:")).isTrue();
+        assertThat(gameLogContains("Mist Dragon")).isTrue();
+        assertThat(gameLogContains("Incinerate")).isTrue();
+        harness.assertInHand(player2, "Mist Dragon");
+        harness.assertInHand(player2, "Incinerate");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A player who cannot lose life cannot pay to keep a blue instant")
+    void cannotLoseLifeRequiresDiscard() {
+        harness.setHand(player1, List.of(new EverybodyLives()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player1, 0);
+
+        castSiroccoOn(player1, 20, List.of(new MemoryLapse()));
+
+        harness.assertLife(player1, 20);
+        harness.assertInGraveyard(player1, "Memory Lapse");
+        harness.assertNotInHand(player1, "Memory Lapse");
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test
