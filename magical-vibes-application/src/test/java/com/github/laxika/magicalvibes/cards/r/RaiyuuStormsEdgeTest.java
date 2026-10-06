@@ -87,12 +87,56 @@ class RaiyuuStormsEdgeTest extends BaseCardTest {
         assertThat(bears.isTapped()).isTrue();
     }
 
+    @Test
+    @DisplayName("Raiyuu attacking alone untaps itself and queues one additional combat")
+    void raiyuuAttackingAloneUntapsItself() {
+        Permanent raiyuu = addCreatureReady(player1, new RaiyuuStormsEdge());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(player1, List.of(0), 1);
+            resolveAllTriggers();
+        });
+
+        assertThat(raiyuu.isTapped()).isFalse();
+        assertThat(gd.additionalCombatPhasesOnly).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Raiyuu does not untap other creatures that attacked in an earlier combat")
+    void doesNotUntapEarlierAttackers() {
+        Permanent raiyuu = addCreatureReady(player1, new RaiyuuStormsEdge());
+        Permanent earlierAttacker = addCreatureReady(player1, new GrizzlyBears());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(player1, List.of(1), 1));
+        assertThat(earlierAttacker.isTapped()).isTrue();
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(player1, List.of(0), 2);
+            resolveAllTriggers();
+        });
+
+        assertThat(raiyuu.isTapped()).isFalse();
+        assertThat(earlierAttacker.isTapped()).isTrue();
+        assertThat(gd.additionalCombatPhasesOnly).isZero();
+    }
+
+    @Test
+    @DisplayName("An opponent's Samurai attacking alone does not trigger Raiyuu")
+    void opponentAttackingAloneDoesNotTrigger() {
+        harness.addToBattlefield(player1, new RaiyuuStormsEdge());
+        Permanent opponentSamurai = addCreatureReady(player2, new MothriderSamurai());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(player2, List.of(0), 1));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(opponentSamurai.isTapped()).isTrue();
+        assertThat(gd.additionalCombatPhasesOnly).isZero();
+    }
+
     private void declareAttackers(Player player, List<Integer> attackerIndices, int combatPhaseNumber) {
-        harness.forceActivePlayer(player);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         gd.combatPhasesThisTurn = combatPhaseNumber;
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player, attackerIndices);
+        declareAttackers(player, attackerIndices);
     }
 }
