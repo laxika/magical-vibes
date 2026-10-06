@@ -81,4 +81,102 @@ class SharaeOfNumbingDepthsTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castCreature(player1, 0, ownCreature.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    void entryTapDrawsACard() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new SharaeOfNumbingDepths()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0, target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(target.getCounterCount(CounterType.STUN)).isEqualTo(1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void entryAddsStunCounterToAlreadyTappedCreatureWithoutDrawing() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        target.tap();
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new SharaeOfNumbingDepths()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0, target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(target.getCounterCount(CounterType.STUN)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void tappingNoncreatureDoesNotUseTheOncePerTurnTrigger() {
+        harness.addToBattlefield(player1, new SharaeOfNumbingDepths());
+        harness.addToBattlefield(player1, new IcyManipulator());
+        harness.addToBattlefield(player1, new IcyManipulator());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new IcyManipulator());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.activateAbility(player1, 1, null, artifact.getId());
+        harness.passBothPriorities();
+
+        assertThat(artifact.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+
+        harness.activateAbility(player1, 2, null, creature.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+    }
+
+    @Test
+    void opponentTappingTheirOwnCreatureDoesNotDrawForSharae() {
+        harness.addToBattlefield(player1, new SharaeOfNumbingDepths());
+        harness.addToBattlefield(player2, new IcyManipulator());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.activateAbility(player2, 0, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+    }
+
+    @Test
+    void tappingYourOwnCreatureDoesNotDraw() {
+        harness.addToBattlefield(player1, new SharaeOfNumbingDepths());
+        harness.addToBattlefield(player1, new IcyManipulator());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.activateAbility(player1, 1, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+    }
 }
