@@ -16,6 +16,54 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class RiftstonePortalTest extends BaseCardTest {
 
     @Test
+    @DisplayName("The granted mana ability taps the land and resolves without using the stack")
+    void grantedManaAbilityPaysTapCostAndResolvesImmediately() {
+        harness.setGraveyard(player1, List.of(new RiftstonePortal()));
+        var land = harness.addToBattlefieldAndReturn(player1, new RiftstonePortal());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(land.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The granted ability preserves the land's original colorless mana ability")
+    void retainsOriginalManaAbility() {
+        harness.setGraveyard(player1, List.of(new RiftstonePortal()));
+        harness.addToBattlefield(player1, new RiftstonePortal());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+    }
+
+    @Test
+    @DisplayName("One Portal leaving the graveyard does not remove another Portal's grant")
+    void remainingPortalContinuesGrantingAbility() {
+        RiftstonePortal remaining = new RiftstonePortal();
+        harness.setGraveyard(player1, List.of(new RiftstonePortal(), remaining));
+        harness.addToBattlefield(player1, new RiftstonePortal());
+        harness.addToBattlefield(player1, new RiftstonePortal());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "GREEN");
+        harness.setGraveyard(player1, List.of(remaining));
+        harness.activateAbility(player1, 1, 1, null, null);
+        harness.handleListChoice(player1, "WHITE");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("Adds one colorless mana")
     void addsColorlessMana() {
         harness.addToBattlefield(player1, new RiftstonePortal());
