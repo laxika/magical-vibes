@@ -81,6 +81,48 @@ class RamosianSkyMarshalTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
+    @Test
+    @DisplayName("A Rebel with mana value exactly six enters untapped under your control")
+    void findsRebelAtManaValueLimit() {
+        addReadySkyMarshal();
+        JhovallQueen queen = new JhovallQueen();
+        SoothingBalm remainingCard = new SoothingBalm();
+        harness.setLibrary(player1, List.of(queen, remainingCard));
+        harness.setLibrary(player2, List.of(new RappellingScouts()));
+
+        activateSkyMarshal();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Jhovall Queen");
+        harness.assertNotOnBattlefield(player2, "Jhovall Queen");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().getId().equals(queen.getId()))
+                .singleElement().satisfies(permanent -> {
+                    assertThat(permanent.isTapped()).isFalse();
+                    assertThat(permanent.isSummoningSick()).isTrue();
+                });
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remainingCard);
+        assertThat(gd.playerDecks.get(player2.getId()))
+                .extracting(Card::getName).containsExactly("Rappelling Scouts");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("You may fail to find even when a matching Rebel is in the library")
+    void mayDeclineMatchingRebel() {
+        addReadySkyMarshal();
+        RappellingScouts scouts = new RappellingScouts();
+        harness.setLibrary(player1, List.of(scouts));
+
+        activateSkyMarshal();
+        harness.handleCardChosen(player1, -1);
+
+        harness.assertNotOnBattlefield(player1, "Rappelling Scouts");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(scouts);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
     private Permanent addReadySkyMarshal() {
         Permanent skyMarshal = addCreatureReady(player1, new RamosianSkyMarshal());
         harness.addMana(player1, ManaColor.COLORLESS, 7);
