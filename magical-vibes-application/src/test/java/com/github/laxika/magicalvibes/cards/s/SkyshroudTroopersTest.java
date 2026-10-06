@@ -51,4 +51,29 @@ class SkyshroudTroopersTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
         assertThat(troopers.isTapped()).isTrue();
     }
+
+    @Test
+    @DisplayName("Mana ability resolves immediately without using the stack")
+    void manaAbilityDoesNotUseStack() {
+        addCreatureReady(player1, new SkyshroudTroopers());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
+    @DisplayName("Player two's Troopers add mana to player two's pool")
+    void addsManaToItsController() {
+        Permanent troopers = addCreatureReady(player2, new SkyshroudTroopers());
+
+        harness.activateAbility(player2, 0, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(troopers.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
 }
