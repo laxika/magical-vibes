@@ -28,8 +28,7 @@ class RetractTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Retract()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .extracting(permanent -> permanent.getCard().getName())
@@ -49,8 +48,7 @@ class RetractTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Retract()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         harness.assertOnBattlefield(player1, "Crazed Goblin");
         harness.assertInGraveyard(player1, "Retract");
@@ -71,13 +69,55 @@ class RetractTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Retract()));
         harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
         harness.assertInHand(player1, "Memnarch");
         harness.assertInHand(player2, "Darksteel Ingot");
+        harness.assertInGraveyard(player1, "Retract");
+    }
+
+    @Test
+    @DisplayName("Returns a permanent that becomes an artifact before Retract resolves")
+    void returnsPermanentThatBecomesArtifactBeforeResolution() {
+        addCreatureReady(player1, new Memnarch());
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new CrazedGoblin());
+        harness.setHand(player1, List.of(new Retract()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player1, 0);
+        harness.activateAbility(player1, 0, 0, null, goblin.getId());
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Crazed Goblin");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        harness.assertInHand(player1, "Crazed Goblin");
+        harness.assertInHand(player1, "Memnarch");
+        harness.assertInGraveyard(player1, "Retract");
+    }
+
+    @Test
+    @DisplayName("Does not return an artifact you own that an opponent controls")
+    void doesNotReturnOwnedArtifactControlledByOpponent() {
+        addCreatureReady(player2, new Memnarch());
+        Permanent ingot = harness.addToBattlefieldAndReturn(player1, new DarksteelIngot());
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player2, 0, 1, null, ingot.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Retract()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(ingot);
+        harness.assertOnBattlefield(player2, "Memnarch");
+        harness.assertNotInHand(player1, "Darksteel Ingot");
+        harness.assertNotInHand(player2, "Darksteel Ingot");
         harness.assertInGraveyard(player1, "Retract");
     }
 }
