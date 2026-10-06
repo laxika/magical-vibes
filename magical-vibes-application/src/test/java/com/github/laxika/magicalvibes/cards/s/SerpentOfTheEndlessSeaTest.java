@@ -3,11 +3,13 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,9 +18,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SerpentOfTheEndlessSea.class, Island.class, Plains.class})
 class SerpentOfTheEndlessSeaTest extends BaseCardTest {
-
-    // ===== Casting and resolving =====
 
     @Test
     @DisplayName("Casting Serpent of the Endless Sea puts it on the stack")
@@ -33,8 +34,6 @@ class SerpentOfTheEndlessSeaTest extends BaseCardTest {
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Serpent of the Endless Sea");
     }
-
-    // ===== P/T based on Islands =====
 
     @Test
     @DisplayName("Serpent dies to state-based actions with no Islands")
@@ -104,7 +103,36 @@ class SerpentOfTheEndlessSeaTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, serpent)).isEqualTo(0);
     }
 
-    // ===== Attack restriction =====
+    @Test
+    @DisplayName("Serpent dies when its controller loses the last Island")
+    void diesAfterLosingLastIsland() {
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        harness.addToBattlefield(player1, new SerpentOfTheEndlessSea());
+        harness.runStateBasedActions();
+        harness.assertOnBattlefield(player1, "Serpent of the Endless Sea");
+
+        gd.playerBattlefields.get(player1.getId()).remove(island);
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Serpent of the Endless Sea");
+        harness.assertInGraveyard(player1, "Serpent of the Endless Sea");
+    }
+
+    @Test
+    @DisplayName("A counter lets Serpent survive without Islands and adds to its Island-based P/T")
+    void counterAddsToIslandBasedPowerAndToughness() {
+        Permanent serpent = harness.addToBattlefieldAndReturn(player1, new SerpentOfTheEndlessSea());
+        serpent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.runStateBasedActions();
+
+        harness.assertOnBattlefield(player1, "Serpent of the Endless Sea");
+        assertThat(gqs.getEffectivePower(gd, serpent)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, serpent)).isEqualTo(1);
+
+        harness.addToBattlefield(player1, new Island());
+        assertThat(gqs.getEffectivePower(gd, serpent)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, serpent)).isEqualTo(2);
+    }
 
     @Test
     @DisplayName("Serpent can attack when defending player controls an Island")
@@ -143,10 +171,8 @@ class SerpentOfTheEndlessSeaTest extends BaseCardTest {
     }
 
     private Permanent addSerpentReady(Player player) {
-        SerpentOfTheEndlessSea card = new SerpentOfTheEndlessSea();
-        Permanent permanent = new Permanent(card);
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new SerpentOfTheEndlessSea());
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 }
