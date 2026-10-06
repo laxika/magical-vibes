@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -30,8 +29,7 @@ class SageOfDaysTest extends BaseCardTest {
         passEtbPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-        harness.getGameService().handleInteractionAnswer(
-                gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(chosen);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(restOne, restTwo);
@@ -49,11 +47,87 @@ class SageOfDaysTest extends BaseCardTest {
         passEtbPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-        harness.getGameService().handleInteractionAnswer(
-                gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+        harness.handleCardChosen(player1, -1);
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(first, second, third);
+    }
+
+    @Test
+    void choosingThirdCardPreservesCardsBelowTheLookedAtCards() {
+        Card first = new Forest();
+        Card second = new Forest();
+        Card chosen = new SageOfDays();
+        Card fourth = new Forest();
+        Card fifth = new Forest();
+        harness.setLibrary(player1, List.of(first, second, chosen, fourth, fifth));
+
+        castSageOfDays();
+        passEtbPriorities();
+        harness.handleCardChosen(player1, 2);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(chosen, fourth, fifth);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyInAnyOrder(first, second);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void decliningWithLongerLibraryLeavesUnseenCardsInOrder() {
+        Card first = new Forest();
+        Card second = new Forest();
+        Card third = new Forest();
+        Card fourth = new SageOfDays();
+        Card fifth = new Forest();
+        harness.setLibrary(player1, List.of(first, second, third, fourth, fifth));
+
+        castSageOfDays();
+        passEtbPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(fourth, fifth);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyInAnyOrder(first, second, third);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void mayKeepTheOnlyCardInTheLibrary() {
+        Card onlyCard = new Forest();
+        harness.setLibrary(player1, List.of(onlyCard));
+
+        castSageOfDays();
+        passEtbPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(onlyCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void mayDeclineToKeepTheOnlyCardInTheLibrary() {
+        Card onlyCard = new Forest();
+        harness.setLibrary(player1, List.of(onlyCard));
+
+        castSageOfDays();
+        passEtbPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(onlyCard);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void emptyLibraryResolvesWithoutAChoice() {
+        harness.setLibrary(player1, List.of());
+
+        castSageOfDays();
+        passEtbPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 
     private void castSageOfDays() {
