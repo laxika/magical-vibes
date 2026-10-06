@@ -71,8 +71,7 @@ class SagesDousingTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, warrior.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, warrior.getId());
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -98,8 +97,7 @@ class SagesDousingTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, warrior.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, warrior.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
@@ -137,5 +135,51 @@ class SagesDousingTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("An opponent's Wizard does not enable the draw")
+    void noDrawForOpponentsWizard() {
+        harness.addToBattlefield(player1, new InkDissolver());
+        stockLibrary(player2, 3);
+
+        castWarriorCounteredBy(new SagesDousing());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Elvish Warrior");
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("Controlling multiple Wizards still draws exactly one card")
+    void multipleWizardsDrawOnlyOneCard() {
+        harness.addToBattlefield(player2, new InkDissolver());
+        harness.addToBattlefield(player2, new InkDissolver());
+        stockLibrary(player2, 3);
+
+        castWarriorCounteredBy(new SagesDousing());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Declining an affordable payment counters the spell and still draws")
+    void drawsWhenControllerDeclinesPayment() {
+        harness.addToBattlefield(player2, new InkDissolver());
+        stockLibrary(player2, 3);
+        castWarriorCounteredBy(new SagesDousing());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInGraveyard(player1, "Elvish Warrior");
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(2);
     }
 }
