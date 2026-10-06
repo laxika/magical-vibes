@@ -176,4 +176,61 @@ class SerumPowderTest extends BaseCardTest {
         assertThat(game.playersAttemptedDrawFromEmptyLibrary).contains(player.getId());
         assertThat(game.playerHands.get(player.getId())).isEmpty();
     }
+
+    @Test
+    @DisplayName("ordinary mulligans must bottom cards before Serum Powder can be used")
+    void ordinaryMulliganRequiresBottomingBeforePowderDecision() {
+        GameTestHarness mulliganHarness = new GameTestHarness();
+        Player player = mulliganHarness.getPlayer1();
+        GameData game = mulliganHarness.getGameData();
+        SerumPowder powder = new SerumPowder();
+        List<Card> cards = new ArrayList<>(List.of(powder));
+        for (int i = 0; i < 6; i++) {
+            cards.add(new DarksteelCitadel());
+        }
+        mulliganHarness.setHand(player, List.of());
+        mulliganHarness.setLibrary(player, cards);
+
+        mulliganHarness.getGameService().mulligan(game, player);
+
+        assertThat(game.playerNeedsToBottom).containsEntry(player.getId(), 1);
+        List<Card> hand = game.playerHands.get(player.getId());
+        int bottomIndex = hand.getFirst() == powder ? 1 : 0;
+        Card bottomedCard = hand.get(bottomIndex);
+        mulliganHarness.getGameService().bottomCards(game, player, List.of(bottomIndex));
+        assertThat(game.playerKeptHand).doesNotContain(player.getId());
+        assertThat(game.playerHands.get(player.getId())).hasSize(6).contains(powder);
+
+        List<Card> replacements = new ArrayList<>();
+        for (int i = 0; i < 6; i++) {
+            replacements.add(new DarksteelCitadel());
+        }
+        List<Card> library = new ArrayList<>(replacements);
+        library.add(bottomedCard);
+        mulliganHarness.setLibrary(player, library);
+        List<Card> exiledHand = new ArrayList<>(game.playerHands.get(player.getId()));
+        mulliganHarness.getGameService().mulligan(game, player);
+        mulliganHarness.handleMayAbilityChosen(player, true);
+
+        assertThat(game.getPlayerExiledCards(player.getId())).containsExactlyElementsOf(exiledHand);
+        assertThat(game.playerHands.get(player.getId())).containsExactlyElementsOf(replacements);
+        assertThat(game.playerDecks.get(player.getId())).containsExactly(bottomedCard);
+        assertThat(game.mulliganCounts).containsEntry(player.getId(), 1);
+        mulliganHarness.getGameService().keepHand(game, player);
+        assertThat(game.playerNeedsToBottom).doesNotContainKey(player.getId());
+        assertThat(game.playerHands.get(player.getId())).hasSize(6);
+    }
+
+    @Test
+    @DisplayName("the mana ability taps Serum Powder and does not use the stack")
+    void manaAbilityTapsPowderWithoutUsingStack() {
+        var powder = harness.addToBattlefieldAndReturn(player1, new SerumPowder());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(powder.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+    }
+
 }
