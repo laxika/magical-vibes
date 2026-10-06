@@ -96,4 +96,72 @@ class RootwaterAlligatorTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Alligator can activate its regeneration ability")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent alligator = harness.addToBattlefieldAndReturn(player1, new RootwaterAlligator());
+        alligator.setSummoningSick(true);
+        alligator.tap();
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        forest.tap();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Forest");
+        assertThat(alligator.getRegenerationShield()).isEqualTo(1);
+        assertThat(alligator.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Creating a regeneration shield does not immediately tap or heal the creature")
+    void creatingShieldDoesNotRegenerateImmediately() {
+        Permanent alligator = addCreatureReady(player1, new RootwaterAlligator());
+        alligator.setMarkedDamage(1);
+        harness.addToBattlefield(player1, new Forest());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(alligator.getRegenerationShield()).isEqualTo(1);
+        assertThat(alligator.getMarkedDamage()).isEqualTo(1);
+        assertThat(alligator.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Repeated activations protect against separate lethal damage events")
+    void repeatedActivationsCreateSeparateShields() {
+        Permanent alligator = addCreatureReady(player1, new RootwaterAlligator());
+        Permanent firstForest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handlePermanentChosen(player1, firstForest.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(alligator.getRegenerationShield()).isEqualTo(2);
+
+        alligator.setMarkedDamage(gqs.getEffectiveToughness(gd, alligator));
+        harness.runStateBasedActions();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(alligator);
+        assertThat(alligator.getRegenerationShield()).isEqualTo(1);
+        assertThat(alligator.getMarkedDamage()).isZero();
+
+        alligator.setMarkedDamage(gqs.getEffectiveToughness(gd, alligator));
+        harness.runStateBasedActions();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(alligator);
+        assertThat(alligator.getRegenerationShield()).isZero();
+        assertThat(alligator.getMarkedDamage()).isZero();
+
+        alligator.setMarkedDamage(gqs.getEffectiveToughness(gd, alligator));
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Rootwater Alligator");
+        harness.assertInGraveyard(player1, "Rootwater Alligator");
+    }
 }
