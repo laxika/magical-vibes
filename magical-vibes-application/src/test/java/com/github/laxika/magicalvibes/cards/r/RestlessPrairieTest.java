@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -50,6 +51,8 @@ class RestlessPrairieTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, prairie)).isEqualTo(3);
         assertThat(gqs.getEffectiveColors(gd, prairie))
                 .containsExactlyInAnyOrder(CardColor.GREEN, CardColor.WHITE);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, prairie)).containsExactly(CardSubtype.LLAMA);
+        assertThat(prairie.isTapped()).isFalse();
     }
 
     @Test
@@ -95,6 +98,59 @@ class RestlessPrairieTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(2);
     }
 
+    @Test
+    @DisplayName("Restless Prairie can produce green mana without using the stack")
+    void producesGreenMana() {
+        Permanent prairie = addReadyPrairie(player1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(prairie.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Creatures entering after the attack trigger resolves do not receive its boost")
+    void laterCreatureDoesNotReceiveBoost() {
+        addReadyPrairie(player1);
+        Permanent other = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+        addAnimationMana(player1);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        declareAttackers(player1, List.of(0));
+        resolveAllTriggers();
+
+        Permanent newcomer = addCreatureReady(player1, new GrizzlyBears());
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, newcomer)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, newcomer)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The attack trigger still boosts other creatures after Prairie leaves the battlefield")
+    void attackTriggerResolvesWithoutSource() {
+        Permanent prairie = addReadyPrairie(player1);
+        Permanent other = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+        addAnimationMana(player1);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        declareAttackers(player1, List.of(0));
+        assertThat(gd.stack).hasSize(1);
+
+        gd.playerBattlefields.get(player1.getId()).remove(prairie);
+        gd.playerGraveyards.get(player1.getId()).add(prairie.getCard());
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(3);
+    }
+
     private void addAnimationMana(Player player) {
         harness.addMana(player, ManaColor.COLORLESS, 2);
         harness.addMana(player, ManaColor.GREEN, 1);
@@ -102,9 +158,6 @@ class RestlessPrairieTest extends BaseCardTest {
     }
 
     private Permanent addReadyPrairie(Player player) {
-        Permanent permanent = new Permanent(new RestlessPrairie());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        return addCreatureReady(player, new RestlessPrairie());
     }
 }
