@@ -30,8 +30,7 @@ class SilkguardTestMarRegression extends BaseCardTest {
         Permanent notTargeted = addCreatureReady(player1, new GrizzlyBears());
         Permanent enchantedCreature = addCreatureReady(player1, new GrizzlyBears());
 
-        Permanent aura = new Permanent(new ZephidsEmbrace());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new ZephidsEmbrace());
         aura.setAttachedTo(enchantedCreature.getId());
 
         Permanent equipment = harness.addToBattlefieldAndReturn(player1, new JoustingLance());
