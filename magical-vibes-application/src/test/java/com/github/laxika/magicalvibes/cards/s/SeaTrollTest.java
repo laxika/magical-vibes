@@ -120,6 +120,57 @@ class SeaTrollTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void cannotRegenerateAfterBlockingNonBlueCreature() {
+        Permanent attacker = addCreatureReady(player1, new BeastWalkers());
+        attacker.setAttacking(true);
+        addCreatureReady(player2, new SeaTroll());
+
+        declareBlock();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void anotherTrollsCombatDoesNotEnableRegeneration() {
+        Permanent attacker = addCreatureReady(player1, new SeaTroll());
+        attacker.setAttacking(true);
+        Permanent uninvolvedTroll = addCreatureReady(player1, new SeaTroll());
+        addCreatureReady(player2, new SeaTroll());
+
+        declareBlock();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(uninvolvedTroll.getRegenerationShield()).isZero();
+    }
+
+    @Test
+    void canRegenerateAgainAfterRegenerationRemovesItFromCombat() {
+        Permanent troll = addCreatureReady(player1, new SeaTroll());
+        troll.setAttacking(true);
+        addCreatureReady(player2, new SeaTroll());
+
+        declareBlock();
+        activateRegenerationDuringCombat(player1);
+        resolveCombat();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(troll);
+        assertThat(troll.isTapped()).isTrue();
+        assertThat(troll.isAttacking()).isFalse();
+        assertThat(troll.getRegenerationShield()).isZero();
+
+        activateRegeneration(player1);
+
+        assertThat(troll.getRegenerationShield()).isEqualTo(1);
+    }
+
     private void declareBlock() {
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
