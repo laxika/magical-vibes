@@ -55,6 +55,39 @@ class SlithAscendantTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Gets only one counter even when it deals several combat damage")
+    void getsOneCounterRegardlessOfDamageAmount() {
+        Permanent slith = addCreatureReady(player1, new SlithAscendant());
+        slith.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 16);
+        assertThat(slith.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Each attacking Slith gets its own counter without growing a nonattacker")
+    void simultaneousDamageAddsCountersOnlyToDamageSources() {
+        Permanent first = addCreatureReady(player1, new SlithAscendant());
+        Permanent second = addCreatureReady(player1, new SlithAscendant());
+        Permanent nonattacker = addCreatureReady(player1, new SlithAscendant());
+
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
+        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 18);
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(nonattacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
     @DisplayName("Does not get a counter from noncombat damage")
     void noCounterOnNoncombatDamage() {
         Permanent slith = addCreatureReady(player1, new SlithAscendant());
