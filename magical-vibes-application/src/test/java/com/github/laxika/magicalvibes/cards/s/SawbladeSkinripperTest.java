@@ -86,10 +86,80 @@ class SawbladeSkinripperTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    void includesSacrificesMadeInResponseToTheEndStepTrigger() {
+        harness.addToBattlefield(player1, new SawbladeSkinripper());
+        harness.addToBattlefield(player1, new SawbladeSkinripper());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        advanceToEndStep();
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        harness.addToBattlefield(player1, new SawbladeSkinripper());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    void opponentsSacrificeDoesNotEnableTheTrigger() {
+        harness.addToBattlefield(player1, new SawbladeSkinripper());
+        harness.addToBattlefield(player2, new SawbladeSkinripper());
+        harness.addToBattlefield(player2, new SawbladeSkinripper());
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+
+        advanceToEndStep();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void sacrificingAfterEndStepBeginsDoesNotCreateATrigger() {
+        harness.addToBattlefield(player1, new SawbladeSkinripper());
+        harness.addToBattlefield(player1, new SawbladeSkinripper());
+        advanceToEndStep();
+
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void endStepDamageCanTargetACreature() {
+        harness.addToBattlefield(player1, new SawbladeSkinripper());
+        harness.addToBattlefield(player1, new SawbladeSkinripper());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SawbladeSkinripper());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.addToBattlefield(player1, new SawbladeSkinripper());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        advanceToEndStep();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Sawblade Skinripper");
+        harness.assertNotOnBattlefield(player2, "Sawblade Skinripper");
+    }
+
     private void advanceToEndStep() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
     }
 }
