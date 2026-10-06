@@ -10,8 +10,51 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 @CardUsed({RekiTheHistoryOfKamigawa.class, AyumiTheLastVisitor.class, ArabaMothrider.class})
 class RekiTheHistoryOfKamigawaTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("The draw resolves before the legendary spell and draws exactly one card")
+    void drawResolvesBeforeLegendarySpell() {
+        harness.addToBattlefield(player1, new RekiTheHistoryOfKamigawa());
+        harness.setLibrary(player1, List.of(new ArabaMothrider(), new ArabaMothrider()));
+        harness.setHand(player1, List.of(new AyumiTheLastVisitor()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0);
+
+        harness.assertNotInHand(player1, "Araba Mothrider");
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Araba Mothrider");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        harness.assertNotOnBattlefield(player1, "Ayumi, the Last Visitor");
+
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Ayumi, the Last Visitor");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Reki does not trigger when it is itself cast")
+    void castingRekiDoesNotDrawCard() {
+        harness.setLibrary(player1, List.of(new ArabaMothrider()));
+        harness.setHand(player1, List.of(new RekiTheHistoryOfKamigawa()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Reki, the History of Kamigawa");
+        harness.assertNotInHand(player1, "Araba Mothrider");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
 
     @Test
     @DisplayName("Casting a legendary spell draws a card")
