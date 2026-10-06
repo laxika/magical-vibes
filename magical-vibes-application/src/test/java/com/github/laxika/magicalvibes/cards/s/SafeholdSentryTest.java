@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(SafeholdSentry.class)
+@CardUsed({SafeholdSentry.class})
 class SafeholdSentryTest extends BaseCardTest {
 
     @Test
@@ -88,6 +88,59 @@ class SafeholdSentryTest extends BaseCardTest {
 
         assertThat(sentry.isTapped()).isTrue();
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Untapping is paid immediately, but the boost waits for resolution")
+    void untapsAsCostBeforeBoostResolves() {
+        Permanent sentry = addTappedSentry();
+        harness.addMana(player1, ManaColor.WHITE, 6);
+        enterMainWithPriority(player1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(sentry.isTapped()).isFalse();
+        assertThat(sentry.getToughnessModifier()).isZero();
+        assertThat(gd.stack).hasSize(1);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(sentry.getPowerModifier()).isZero();
+        assertThat(sentry.getToughnessModifier()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Three colorless mana cannot pay the required white mana")
+    void cannotActivateWithoutWhiteMana() {
+        Permanent sentry = addTappedSentry();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        enterMainWithPriority(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(sentry.isTapped()).isTrue();
+        assertThat(sentry.getToughnessModifier()).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The ability can be activated during an opponent's turn")
+    void canActivateDuringOpponentsTurn() {
+        Permanent sentry = addTappedSentry();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        enterMainWithPriority(player2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(sentry.isTapped()).isFalse();
+        assertThat(sentry.getPowerModifier()).isZero();
+        assertThat(sentry.getToughnessModifier()).isEqualTo(2);
     }
 
     private Permanent addTappedSentry() {
