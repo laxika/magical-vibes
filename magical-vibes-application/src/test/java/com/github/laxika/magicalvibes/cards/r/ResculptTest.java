@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -15,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Resculpt.class, GrizzlyBears.class, Millstone.class, Plains.class})
 class ResculptTest extends BaseCardTest {
 
     @Test
@@ -23,8 +25,7 @@ class ResculptTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Resculpt()));
         addMana();
 
-        harness.castInstant(player1, 0, harness.getPermanentId(player2, "Grizzly Bears"));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Grizzly Bears"));
 
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(card -> card.getName().equals("Grizzly Bears"));
@@ -46,8 +47,7 @@ class ResculptTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Resculpt()));
         addMana();
 
-        harness.castInstant(player1, 0, harness.getPermanentId(player2, "Millstone"));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Millstone"));
 
         harness.assertNotOnBattlefield(player2, "Millstone");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
@@ -69,6 +69,45 @@ class ResculptTest extends BaseCardTest {
                 harness.getPermanentId(player2, "Plains")))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("artifact or creature");
+    }
+
+
+    @Test
+    void createsNoAdditionalTokenWhenTargetLeavesBeforeResolution() {
+        var target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Resculpt(), new Resculpt()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castInstant(player1, 0, target.getId());
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(1);
+        harness.assertOnBattlefield(player2, "Elemental");
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card.getName().equals("Resculpt")).hasSize(2);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void exilingOwnTokenCreatesReplacementElemental() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Resculpt()));
+        addMana();
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Grizzly Bears"));
+        var originalTokenId = harness.getPermanentId(player1, "Elemental");
+        harness.setHand(player1, List.of(new Resculpt()));
+        addMana();
+
+        harness.castAndResolveInstant(player1, 0, originalTokenId);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        var replacement = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(replacement.getId()).isNotEqualTo(originalTokenId);
+        assertThat(replacement.getCard().isToken()).isTrue();
+        assertThat(replacement.getCard().getName()).isEqualTo("Elemental");
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
     }
 
     private void addMana() {
