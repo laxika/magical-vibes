@@ -18,6 +18,66 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class RazeTest extends BaseCardTest {
 
     @Test
+    @DisplayName("The land is sacrificed before Raze resolves")
+    void sacrificeIsPaidDuringCasting() {
+        Permanent sacrificedLand = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent targetLand = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.setHand(player1, List.of(new Raze()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castSorceryWithSacrifice(player1, 0, targetLand.getId(), sacrificedLand.getId());
+
+        harness.assertNotOnBattlefield(player1, "Forest");
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertOnBattlefield(player2, "Forest");
+        harness.assertNotInGraveyard(player2, "Forest");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Forest");
+        harness.assertInGraveyard(player1, "Raze");
+    }
+
+    @Test
+    @DisplayName("Can sacrifice the same land chosen as the target")
+    void canSacrificeTargetedLand() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addToBattlefield(player2, new Forest());
+        harness.setHand(player1, List.of(new Raze()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castSorceryWithSacrifice(player1, 0, land.getId(), land.getId());
+
+        harness.assertInGraveyard(player1, "Forest");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Raze");
+        harness.assertOnBattlefield(player2, "Forest");
+    }
+
+    @Test
+    @DisplayName("Can destroy a different land controlled by the caster")
+    void canDestroyOwnLand() {
+        Permanent sacrificedLand = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent targetLand = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.setHand(player1, List.of(new Raze()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castSorceryWithSacrifice(player1, 0, targetLand.getId(), sacrificedLand.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Forest");
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card.getName().equals("Forest"))
+                .hasSize(2);
+        harness.assertInGraveyard(player1, "Raze");
+    }
+
+    @Test
     @DisplayName("Sacrifices a land and destroys target land")
     void sacrificesLandAndDestroysTargetLand() {
         Permanent sacrificedLand = harness.addToBattlefieldAndReturn(player1, new Forest());
