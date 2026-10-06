@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.List;
 
@@ -80,16 +82,85 @@ class SecondWindTest extends BaseCardTest {
     @Test
     @DisplayName("Second Wind can target only a creature")
     void cannotEnchantIsland() {
-        harness.addToBattlefield(player1, new Island());
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
         harness.setHand(player1, List.of(new SecondWind()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        Permanent island = findPermanent(player1, "Island");
-
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, island.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {0, 1})
+    @DisplayName("The Aura controller can tap or untap an opponent's enchanted creature")
+    void abilitiesAffectOpponentsCreature(int abilityIndex) {
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        if (abilityIndex == 1) {
+            creature.tap();
+        }
+        Permanent aura = addAttachedAura(creature);
+
+        harness.activateAbility(player1, 0, abilityIndex, null, null);
+
+        assertThat(aura.isTapped()).isTrue();
+        assertThat(creature.isTapped()).isEqualTo(abilityIndex == 1);
+
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isEqualTo(abilityIndex == 0);
+        assertThat(aura.isTapped()).isTrue();
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {0, 1})
+    @DisplayName("Neither ability can be activated while Second Wind is tapped")
+    void tappedAuraCannotActivateEitherAbility(int abilityIndex) {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent aura = addAttachedAura(creature);
+        aura.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, abilityIndex, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+
+        assertThat(creature.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {0, 1})
+    @DisplayName("Either ability is legal even if the enchanted creature's state will not change")
+    void abilityCanResolveWithoutChangingCreatureState(int abilityIndex) {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        if (abilityIndex == 0) {
+            creature.tap();
+        }
+        Permanent aura = addAttachedAura(creature);
+
+        harness.activateAbility(player1, 1, abilityIndex, null, null);
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isEqualTo(abilityIndex == 0);
+        assertThat(aura.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Second Wind can activate immediately after resolving on a new creature")
+    void canActivateImmediatelyAfterResolving() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SecondWind()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        Permanent aura = findPermanent(player1, "Second Wind");
+
+        harness.activateAbility(player1, 1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(aura.isTapped()).isTrue();
     }
 
     private Permanent addAttachedAura(Permanent creature) {
