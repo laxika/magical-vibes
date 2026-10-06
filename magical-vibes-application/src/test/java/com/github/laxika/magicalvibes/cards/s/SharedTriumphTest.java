@@ -12,6 +12,39 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({SharedTriumph.class, GoblinSkyRaider.class, ElvishWarrior.class})
 class SharedTriumphTest extends BaseCardTest {
+    @Test
+    void chosenTypeCanBeAbsentAndCreaturesEnteringLaterGetBoosted() {
+        harness.castFromHand(player1, new SharedTriumph(), "{1}{W}");
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "WARRIOR");
+
+        Permanent goblin = harness.enterBattlefieldAndReturn(player1, new GoblinSkyRaider());
+        Permanent elf = harness.enterBattlefieldAndReturn(player2, new ElvishWarrior());
+
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(4);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void multipleCopiesChooseIndependentlyAndTheirBonusesStack() {
+        Permanent goblin = addCreatureReady(player1, new GoblinSkyRaider());
+        Permanent elf = addCreatureReady(player2, new ElvishWarrior());
+
+        harness.castFromHand(player1, new SharedTriumph(), "{1}{W}");
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "GOBLIN");
+        harness.castFromHand(player1, new SharedTriumph(), "{1}{W}");
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "WARRIOR");
+
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(4);
+    }
 
     @Test
     void creaturesOfChosenTypeOnEitherBattlefieldGetBoosted() {
