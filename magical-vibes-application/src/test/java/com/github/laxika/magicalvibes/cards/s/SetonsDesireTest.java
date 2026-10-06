@@ -135,6 +135,79 @@ class SetonsDesireTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of());
     }
 
+    @Test
+    @DisplayName("Aura resolves attached to an opposing creature and boosts only that creature")
+    void auraResolvesOnOpposingCreature() {
+        Permanent creature = addCreatureReady(player2, new PatrolHound());
+        Permanent other = addCreatureReady(player2, new PatrolHound());
+        harness.setHand(player1, List.of(new SetonsDesire()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        Permanent aura = findPermanent(player1, "Seton's Desire");
+        assertThat(aura.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Reaching seven graveyard cards enables threshold before blockers are declared")
+    void reachingSevenCardsEnablesThreshold() {
+        harness.setGraveyard(player1, graveyardWithSevenCards().subList(0, 6));
+        Permanent attacker = addAttackingCreature(player1);
+        attachAura(player1, attacker);
+        addCreatureReady(player2, new PatrolHound());
+        harness.setGraveyard(player1, graveyardWithSevenCards());
+
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must block enchanted creature if able");
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+    }
+
+    @Test
+    @DisplayName("Threshold requires able blockers while allowing tapped creatures to remain unassigned")
+    void thresholdRequiresOnlyAbleBlockers() {
+        harness.setGraveyard(player1, graveyardWithSevenCards());
+        Permanent attacker = addAttackingCreature(player1);
+        attachAura(player1, attacker);
+        addCreatureReady(player2, new PatrolHound());
+        Permanent tapped = addCreatureReady(player2, new PatrolHound());
+        tapped.tap();
+
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must block enchanted creature if able");
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+    }
+
+    @Test
+    @DisplayName("A blocker may choose either attacker when two threshold Auras require it to block")
+    void competingThresholdRequirementsAllowEitherAttacker() {
+        harness.setGraveyard(player1, graveyardWithSevenCards());
+        Permanent first = addAttackingCreature(player1);
+        Permanent second = addAttackingCreature(player1);
+        attachAura(player1, first);
+        attachAura(player1, second);
+        addCreatureReady(player2, new PatrolHound());
+
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must block enchanted creature if able");
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
+    }
+
     private Permanent addAttackingCreature(Player player) {
         Permanent creature = addCreatureReady(player, new PatrolHound());
         creature.setAttacking(true);
@@ -142,9 +215,8 @@ class SetonsDesireTest extends BaseCardTest {
     }
 
     private void attachAura(Player controller, Permanent creature) {
-        Permanent aura = new Permanent(new SetonsDesire());
+        Permanent aura = harness.addToBattlefieldAndReturn(controller, new SetonsDesire());
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(controller.getId()).add(aura);
     }
 
     private List<Card> graveyardWithSevenCards() {
