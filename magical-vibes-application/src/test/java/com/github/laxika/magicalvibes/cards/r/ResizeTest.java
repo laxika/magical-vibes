@@ -45,7 +45,6 @@ class ResizeTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, target.getId());
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(target.getPowerModifier()).isEqualTo(0);
@@ -121,6 +120,55 @@ class ResizeTest extends BaseCardTest {
                 .removePermanentToGraveyard(gd, land));
 
         assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(resize);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(resize);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(resize);
+    }
+
+    @Test
+    @DisplayName("Recover exiles Resize when the chosen payment cannot be paid")
+    void recoverExilesSourceWhenPaymentIsUnaffordable() {
+        Card resize = new Resize();
+        harness.setGraveyard(player1, List.of(resize));
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new BorealDruid());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, creature));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(resize);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(resize);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(resize);
+    }
+
+    @Test
+    @DisplayName("An old recover trigger cannot exile Resize after it is recovered and cast again")
+    void oldRecoverTriggerCannotExileRecastSource() {
+        Card resize = new Resize();
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of(resize));
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new BorealDruid());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new BorealDruid());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BorealCentaur());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.inMutationScope(() -> {
+            harness.getPermanentRemovalService().removePermanentToGraveyard(gd, first);
+            harness.getPermanentRemovalService().removePermanentToGraveyard(gd, second);
+        });
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.playerHands.get(player1.getId())).contains(resize);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(target.getEffectivePower()).isEqualTo(5);
+        assertThat(target.getEffectiveToughness()).isEqualTo(5);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(resize);
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(resize);
         assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(resize);
