@@ -1,11 +1,10 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -46,11 +45,42 @@ class SautekhImmortalTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, bearsId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bearsId);
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
 
         castImmortal();
+
+        assertThat(findImmortal().getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Flash permits casting during the opponent's end step")
+    void canCastDuringOpponentsEndStep() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+
+        castImmortal();
+
+        harness.assertOnBattlefield(player1, "Sautekh Immortal");
+        assertThat(findImmortal().getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Counts a creature dying in response to the creature spell")
+    void countsDeathWhileOnStack() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
+        harness.setHand(player1, List.of(new SautekhImmortal()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.castCreature(player1, 0);
+
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, bearsId);
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Sautekh Immortal");
+
+        harness.passBothPriorities();
 
         assertThat(findImmortal().getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
@@ -65,11 +95,7 @@ class SautekhImmortalTest extends BaseCardTest {
     }
 
     private Permanent findImmortal() {
-        return findImmortal(player1);
-    }
-
-    private Permanent findImmortal(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
+        return gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Sautekh Immortal"))
                 .findFirst().orElseThrow();
     }
