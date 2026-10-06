@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ShefetArchfiend.class, HillGiant.class, GrizzlyBears.class})
 class ShefetArchfiendTest extends BaseCardTest {
 
     @Test
@@ -22,8 +24,7 @@ class ShefetArchfiendTest extends BaseCardTest {
         harness.addToBattlefield(player2, new HillGiant());
 
         castShefetArchfiend();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent ownGiant = findPermanent(player1, "Hill Giant");
         Permanent opponentGiant = findPermanent(player2, "Hill Giant");
@@ -43,8 +44,7 @@ class ShefetArchfiendTest extends BaseCardTest {
         harness.addToBattlefield(player2, new HillGiant());
 
         castShefetArchfiend();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent giant = findPermanent(player2, "Hill Giant");
         assertThat(giant.getEffectivePower()).isEqualTo(1);
@@ -71,6 +71,74 @@ class ShefetArchfiendTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Shefet Archfiend");
         harness.assertInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("ETB kills other creatures with two toughness on both battlefields")
+    void etbKillsSmallCreatures() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        castShefetArchfiend();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Shefet Archfiend");
+    }
+
+    @Test
+    @DisplayName("Creatures entering after the ETB resolves are not debuffed")
+    void laterCreaturesAreNotAffected() {
+        castShefetArchfiend();
+        resolveAllTriggers();
+
+        Permanent bear = harness.enterBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.runStateBasedActions();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(bear.getEffectivePower()).isEqualTo(2);
+        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("ETB debuffs another Shefet Archfiend but excludes its own source")
+    void anotherArchfiendIsAffected() {
+        Permanent earlier = harness.addToBattlefieldAndReturn(player2, new ShefetArchfiend());
+
+        castShefetArchfiend();
+        resolveAllTriggers();
+
+        assertThat(earlier.getEffectivePower()).isEqualTo(3);
+        assertThat(earlier.getEffectiveToughness()).isEqualTo(3);
+        Permanent source = findPermanent(player1, "Shefet Archfiend");
+        assertThat(source.getEffectivePower()).isEqualTo(5);
+        assertThat(source.getEffectiveToughness()).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Cycling discards as a cost and does not trigger the battlefield debuff")
+    void cyclingDiscardsBeforeDrawingWithoutEtb() {
+        harness.setHand(player1, List.of(new ShefetArchfiend()));
+        harness.setLibrary(player1, List.of(new HillGiant()));
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertInGraveyard(player1, "Shefet Archfiend");
+        harness.assertNotInHand(player1, "Shefet Archfiend");
+        harness.assertNotInHand(player1, "Hill Giant");
+
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Hill Giant");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        Permanent bear = findPermanent(player2, "Grizzly Bears");
+        assertThat(bear.getEffectivePower()).isEqualTo(2);
+        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
     }
 
     private void castShefetArchfiend() {
