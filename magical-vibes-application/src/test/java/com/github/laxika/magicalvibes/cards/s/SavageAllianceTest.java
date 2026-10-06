@@ -4,7 +4,9 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SavageAlliance.class, GrizzlyBears.class})
 class SavageAllianceTest extends BaseCardTest {
 
     // Modes: 0 = trample to target player's creatures, 1 = 2 damage to creature,
@@ -96,5 +99,102 @@ class SavageAllianceTest extends BaseCardTest {
                 harness.castModalInstantWithModes(player1, 0, 1, 3, new int[]{0, 1},
                         List.of(player1.getId(), bears.getId())))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("All three modes can share a player target and deal cumulative damage")
+    void allThreeModesResolveWithTwoEscalatePayments() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent other = addCreatureReady(player2, new GrizzlyBears());
+        Permanent own = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SavageAlliance()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castModalInstantWithModes(player1, 0, 1, 3, new int[]{0, 1, 2},
+                List.of(player2.getId(), target.getId(), player2.getId()));
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(3);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(other.getMarkedDamage()).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, other, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, own, Keyword.TRAMPLE)).isFalse();
+        assertThat(own.getMarkedDamage()).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+    }
+
+    @Test
+    @DisplayName("All three modes require two additional generic mana")
+    void threeModesWithoutEnoughEscalateManaRejected() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SavageAlliance()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.castModalInstantWithModes(player1, 0, 1, 3,
+                new int[]{0, 1, 2}, List.of(player1.getId(), target.getId(), player2.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The mass damage mode cannot target the caster")
+    void massDamageCannotTargetController() {
+        addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SavageAlliance()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castModalInstantWithModes(player1, 0, 1, 3,
+                new int[]{2}, List.of(player1.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Trample applies to creatures present on resolution and expires at end of turn")
+    void trampleDoesNotApplyToLaterCreaturesAndExpires() {
+        Permanent original = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SavageAlliance()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castModalInstantWithModes(player1, 0, 1, 3, new int[]{0}, List.of(player1.getId()));
+        Permanent beforeResolution = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.passBothPriorities();
+        Permanent later = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(gqs.hasKeyword(gd, original, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, beforeResolution, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, later, Keyword.TRAMPLE)).isFalse();
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.hasKeyword(gd, original, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, beforeResolution, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A legal player target still resolves when the creature target dies in response")
+    void trampleResolvesWhenCreatureTargetBecomesIllegal() {
+        Permanent own = addCreatureReady(player1, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SavageAlliance()));
+        harness.setHand(player2, List.of(new SavageAlliance()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.castModalInstantWithModes(player1, 0, 1, 3, new int[]{0, 1},
+                List.of(player1.getId(), target.getId()));
+        harness.castModalInstantWithModes(player2, 0, 1, 3, new int[]{1}, List.of(target.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, own, Keyword.TRAMPLE)).isTrue();
+        harness.assertInGraveyard(player1, "Savage Alliance");
     }
 }
