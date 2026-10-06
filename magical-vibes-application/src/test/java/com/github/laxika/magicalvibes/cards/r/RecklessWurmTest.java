@@ -78,14 +78,58 @@ class RecklessWurmTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Madness cannot be paid with only generic mana")
+    void madnessRequiresRedMana() {
+        RecklessWurm wurm = discardViaPiracyCharm();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .noneMatch(card -> card.getId().equals(wurm.getId()));
+        harness.assertInGraveyard(player1, "Reckless Wurm");
+        harness.assertNotOnBattlefield(player1, "Reckless Wurm");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Madness cannot be cast when the generic portion cannot be paid")
+    void madnessRequiresFullCost() {
+        discardViaPiracyCharm();
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInGraveyard(player1, "Reckless Wurm");
+        harness.assertNotOnBattlefield(player1, "Reckless Wurm");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Madness remains optional when its cost can be paid")
+    void decliningAffordableMadnessDoesNotSpendMana() {
+        discardViaPiracyCharm();
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInGraveyard(player1, "Reckless Wurm");
+        harness.assertNotOnBattlefield(player1, "Reckless Wurm");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
+    }
+
+    @Test
     @DisplayName("Trample assigns excess combat damage to the defending player")
     void trampleDealsExcessCombatDamage() {
         harness.setLife(player2, 20);
         addCreatureReady(player1, new RecklessWurm());
         Permanent blocker = addCreatureReady(player2, new GiantDustwasp());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
 
