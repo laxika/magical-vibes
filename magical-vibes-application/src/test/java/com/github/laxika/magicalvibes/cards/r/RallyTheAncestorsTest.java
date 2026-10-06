@@ -67,12 +67,12 @@ class RallyTheAncestorsTest extends BaseCardTest {
         harness.castInstant(player1, 0, 2, null);
         harness.passBothPriorities();
 
-        gd.activePlayerId = player2.getId();
+        harness.forceActivePlayer(player2);
         harness.inMutationScope(() -> stepTriggerService().handleUpkeepTriggers(gd));
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.getDelayedActions(ExilePermanentAtNextUpkeep.class)).hasSize(1);
 
-        gd.activePlayerId = player1.getId();
+        harness.forceActivePlayer(player1);
         harness.inMutationScope(() -> stepTriggerService().handleUpkeepTriggers(gd));
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().isNonTargeting()).isTrue();
@@ -83,5 +83,65 @@ class RallyTheAncestorsTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getId().equals(creature.getId()));
         assertThat(gd.getDelayedActions(ExilePermanentAtNextUpkeep.class)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("All returned creatures are exiled by one delayed upkeep ability")
+    void returnedCreaturesShareOneUpkeepTrigger() {
+        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new RagingGoblin()));
+        harness.setHand(player1, List.of(new RallyTheAncestors()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castInstant(player1, 0, 2, null);
+        harness.passBothPriorities();
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.inMutationScope(() -> stepTriggerService().handleUpkeepTriggers(gd));
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Raging Goblin");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .extracting(Card::getName)
+                .contains("Grizzly Bears", "Raging Goblin", "Rally the Ancestors");
+    }
+
+    @Test
+    @DisplayName("X zero leaves positive-cost creatures in the graveyard and still exiles Rally")
+    void zeroXStillExilesSpell() {
+        harness.setGraveyard(player1, List.of(new RagingGoblin(), new Island()));
+        harness.setHand(player1, List.of(new RallyTheAncestors()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castInstant(player1, 0, 0, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Raging Goblin");
+        harness.assertInGraveyard(player1, "Island");
+        harness.assertNotOnBattlefield(player1, "Raging Goblin");
+        harness.assertNotInGraveyard(player1, "Rally the Ancestors");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .extracting(Card::getName).contains("Rally the Ancestors");
+    }
+
+    @Test
+    @DisplayName("Only the caster's graveyard supplies returned creatures")
+    void doesNotReturnOpponentsCreatures() {
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.setGraveyard(player2, List.of(new RagingGoblin()));
+        harness.setHand(player1, List.of(new RallyTheAncestors()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castInstant(player1, 0, 2, null);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Raging Goblin");
+        harness.assertNotOnBattlefield(player1, "Raging Goblin");
+        harness.assertNotOnBattlefield(player2, "Raging Goblin");
     }
 }
