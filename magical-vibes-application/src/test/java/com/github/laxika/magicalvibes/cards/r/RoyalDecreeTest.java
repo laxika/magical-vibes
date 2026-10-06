@@ -37,7 +37,7 @@ class RoyalDecreeTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         tap(swamp);
-        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
@@ -51,7 +51,7 @@ class RoyalDecreeTest extends BaseCardTest {
         harness.setLife(player1, 20);
 
         tap(mountain);
-        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
     }
@@ -64,7 +64,7 @@ class RoyalDecreeTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         tap(skeletons);
-        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
     }
@@ -77,7 +77,7 @@ class RoyalDecreeTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         tap(goblin);
-        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
     }
@@ -131,7 +131,7 @@ class RoyalDecreeTest extends BaseCardTest {
         tap(mountain);
 
         assertThat(gd.stack).hasSize(1);
-        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+        resolveAllTriggers();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
     }
 
@@ -182,6 +182,80 @@ class RoyalDecreeTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(decree);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(decree.getCard());
+    }
+
+    @Test
+    void tappingMountainForManaTriggersDecree() {
+        harness.addToBattlefield(player1, new RoyalDecree());
+        harness.addToBattlefield(player1, new Mountain());
+
+        harness.tapPermanent(player1, 1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
+    }
+
+    @Test
+    void damageStillResolvesAfterTappedPermanentLeavesBattlefield() {
+        harness.addToBattlefield(player1, new RoyalDecree());
+        Permanent swamp = harness.addToBattlefieldAndReturn(player2, new Swamp());
+
+        tap(swamp);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, swamp));
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+    }
+
+    @Test
+    void damageStillResolvesAfterDecreeLeavesBattlefield() {
+        Permanent decree = harness.addToBattlefieldAndReturn(player1, new RoyalDecree());
+        Permanent swamp = harness.addToBattlefieldAndReturn(player2, new Swamp());
+
+        tap(swamp);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, decree));
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+    }
+
+    @Test
+    void eachDecreeTriggersForTheSameTap() {
+        harness.addToBattlefield(player1, new RoyalDecree());
+        harness.addToBattlefield(player2, new RoyalDecree());
+        Permanent swamp = harness.addToBattlefieldAndReturn(player2, new Swamp());
+
+        tap(swamp);
+        assertThat(gd.stack).hasSize(2);
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+    }
+
+    @Test
+    void opponentUpkeepDoesNotAddAgeCounter() {
+        Permanent decree = harness.addToBattlefieldAndReturn(player1, new RoyalDecree());
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(decree.getCounterCount(CounterType.AGE)).isZero();
+    }
+
+    @Test
+    void attackingWithRedCreatureTriggersDecree() {
+        harness.addToBattlefield(player1, new RoyalDecree());
+        harness.addToBattlefield(player1, new RagingGoblin());
+
+        declareAttackers(player1, java.util.List.of(1));
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
     }
 
     private void tap(Permanent permanent) {
