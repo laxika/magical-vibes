@@ -99,4 +99,42 @@ class ShadowRiderTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
     }
+    @Test
+    @DisplayName("Flanking only weakens the non-flanking creature among mixed blockers")
+    void flankingOnlyWeakensNonFlankingCreatureAmongMixedBlockers() {
+        Permanent attacker = addCreatureReady(player1, new ShadowRider());
+        attacker.setAttacking(true);
+        Permanent ordinaryBlocker = addCreatureReady(player2, new RedwoodTreefolk());
+        Permanent flankingBlocker = addCreatureReady(player2, new ShadowRider());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0)));
+        resolveAllTriggers();
+
+        assertThat(ordinaryBlocker.getEffectivePower()).isEqualTo(2);
+        assertThat(ordinaryBlocker.getEffectiveToughness()).isEqualTo(5);
+        assertThat(flankingBlocker.getEffectivePower()).isEqualTo(3);
+        assertThat(flankingBlocker.getEffectiveToughness()).isEqualTo(3);
+        assertThat(attacker.getEffectivePower()).isEqualTo(3);
+        assertThat(attacker.getEffectiveToughness()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Flanking does not trigger when Shadow Rider blocks")
+    void flankingDoesNotTriggerWhenBlocking() {
+        Permanent attacker = addCreatureReady(player1, new RedwoodTreefolk());
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new ShadowRider());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(attacker.getEffectivePower()).isEqualTo(3);
+        assertThat(attacker.getEffectiveToughness()).isEqualTo(6);
+        assertThat(blocker.getEffectivePower()).isEqualTo(3);
+        assertThat(blocker.getEffectiveToughness()).isEqualTo(3);
+    }
 }
