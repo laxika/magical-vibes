@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({SidisisFaithful.class, GrizzlyBears.class, Forest.class})
@@ -59,6 +60,73 @@ class SidisisFaithfulTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, forest.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Sacrificing Faithful to its own exploit still returns the target creature")
+    void sacrificingItselfStillReturnsTarget() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SidisisFaithful());
+
+        castFaithfulToExploitPrompt();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Sidisi's Faithful"));
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Sidisi's Faithful");
+        harness.assertNotOnBattlefield(player1, "Sidisi's Faithful");
+        harness.assertInHand(player2, "Sidisi's Faithful");
+        harness.assertNotOnBattlefield(player2, "Sidisi's Faithful");
+    }
+
+    @Test
+    @DisplayName("Faithful can return itself after exploiting another creature")
+    void canTargetItselfAfterExploitingAnotherCreature() {
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new SidisisFaithful());
+
+        castFaithfulToExploitPrompt();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, sacrifice.getId());
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Sidisi's Faithful"));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Sidisi's Faithful");
+        harness.assertInHand(player1, "Sidisi's Faithful");
+        harness.assertNotOnBattlefield(player1, "Sidisi's Faithful");
+    }
+
+    @Test
+    @DisplayName("Faithful can exploit itself when no creature will remain to target")
+    void canExploitItselfWithNoRemainingTarget() {
+        castFaithfulToExploitPrompt();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Sidisi's Faithful"));
+
+        harness.assertInGraveyard(player1, "Sidisi's Faithful");
+        harness.assertNotInHand(player1, "Sidisi's Faithful");
+        harness.assertNotOnBattlefield(player1, "Sidisi's Faithful");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Exploit cannot sacrifice an opponent's creature")
+    void cannotSacrificeOpponentsCreature() {
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new SidisisFaithful());
+
+        castFaithfulToExploitPrompt();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, opponentCreature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Sidisi's Faithful"));
+        harness.handlePermanentChosen(player1, opponentCreature.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Sidisi's Faithful");
+        harness.assertInHand(player2, "Sidisi's Faithful");
+        harness.assertNotInGraveyard(player2, "Sidisi's Faithful");
     }
 
     private void castFaithfulToExploitPrompt() {
