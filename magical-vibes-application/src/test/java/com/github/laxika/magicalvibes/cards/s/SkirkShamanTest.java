@@ -57,6 +57,38 @@ class SkirkShamanTest extends BaseCardTest {
         assertThat(blocker.isBlocking()).isTrue();
     }
 
+    @Test
+    @DisplayName("Skirk Shaman can be blocked by both a red creature and an artifact creature")
+    void canBeBlockedByRedAndArtifactCreaturesTogether() {
+        Permanent shaman = addReadyPermanent(player1, new SkirkShaman(), true);
+        Permanent redBlocker = addReadyPermanent(player2, new RagingGoblin(), false);
+        Permanent artifactBlocker = addReadyPermanent(player2, new Ornithopter(), false);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(indexOf(player2, redBlocker), indexOf(player1, shaman)),
+                new BlockerAssignment(indexOf(player2, artifactBlocker), indexOf(player1, shaman))));
+
+        assertThat(redBlocker.isBlocking()).isTrue();
+        assertThat(artifactBlocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An allowed blocker does not let a non-artifact, non-red creature also block Skirk Shaman")
+    void everyBlockerMustBeArtifactOrRed() {
+        Permanent shaman = addReadyPermanent(player1, new SkirkShaman(), true);
+        Permanent redBlocker = addReadyPermanent(player2, new RagingGoblin(), false);
+        Permanent illegalBlocker = addReadyPermanent(player2, new GrizzlyBears(), false);
+
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(indexOf(player2, redBlocker), indexOf(player1, shaman)),
+                new BlockerAssignment(indexOf(player2, illegalBlocker), indexOf(player1, shaman)))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("artifact creatures or red creatures");
+    }
+
     private void declareBlocker(Permanent blocker, Permanent attacker) {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 indexOf(player2, blocker), indexOf(player1, attacker))));
