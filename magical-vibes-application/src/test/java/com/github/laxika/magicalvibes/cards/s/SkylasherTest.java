@@ -2,17 +2,16 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.c.Cancel;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.cards.i.IzzetCharm;
+import com.github.laxika.magicalvibes.cards.m.MazeGlider;
+import com.github.laxika.magicalvibes.cards.r.RunnersBane;
+import com.github.laxika.magicalvibes.cards.t.ThrashingMossdog;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -21,35 +20,9 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Skylasher.class, Cancel.class, GiantGrowth.class, IzzetCharm.class,
+        MazeGlider.class, ThrashingMossdog.class, RunnersBane.class})
 class SkylasherTest extends BaseCardTest {
-
-    private static Card createCreature(String name, int power, int toughness, CardColor color) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{1}");
-        card.setColor(color);
-        card.setPower(power);
-        card.setToughness(toughness);
-        return card;
-    }
-
-    private static Card createBlueInstant() {
-        Card card = new Card();
-        card.setName("Blue Zap");
-        card.setType(CardType.INSTANT);
-        card.setManaCost("{U}");
-        card.setColor(CardColor.BLUE);
-        card.addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(1));
-        return card;
-    }
-
-    private Permanent addSkylasher(com.github.laxika.magicalvibes.model.Player player) {
-        Permanent perm = new Permanent(new Skylasher());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 
     @Test
     @DisplayName("Skylasher cannot be countered by Cancel")
@@ -75,16 +48,13 @@ class SkylasherTest extends BaseCardTest {
     @Test
     @DisplayName("Blue spell cannot target Skylasher")
     void blueSpellCannotTarget() {
-        Permanent skylasher = addSkylasher(player2);
+        Permanent skylasher = addCreatureReady(player2, new Skylasher());
 
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bears);
-
-        harness.setHand(player1, List.of(createBlueInstant()));
+        harness.setHand(player1, List.of(new IzzetCharm()));
         harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
 
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, skylasher.getId(), null))
+        assertThatThrownBy(() -> harness.castModalInstant(player1, 0, 1, List.of(skylasher.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("protection from blue");
     }
@@ -92,7 +62,7 @@ class SkylasherTest extends BaseCardTest {
     @Test
     @DisplayName("Green spell can target Skylasher")
     void greenSpellCanTarget() {
-        Permanent skylasher = addSkylasher(player1);
+        Permanent skylasher = addCreatureReady(player1, new Skylasher());
 
         harness.setHand(player1, List.of(new GiantGrowth()));
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -106,17 +76,12 @@ class SkylasherTest extends BaseCardTest {
     @Test
     @DisplayName("Blue creature cannot block Skylasher")
     void blueCreatureCannotBlock() {
-        Permanent attacker = addSkylasher(player1);
+        Permanent attacker = addCreatureReady(player1, new Skylasher());
         attacker.setAttacking(true);
 
-        Permanent blocker = new Permanent(createCreature("Merfolk Scout", 2, 2, CardColor.BLUE));
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        addCreatureReady(player2, new MazeGlider());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers(player1);
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -126,20 +91,14 @@ class SkylasherTest extends BaseCardTest {
     @Test
     @DisplayName("Skylasher takes no combat damage from a blue creature")
     void takesNoDamageFromBlueCreature() {
-        Permanent attacker = new Permanent(createCreature("Sea Serpent", 5, 5, CardColor.BLUE));
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new MazeGlider());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = addSkylasher(player2);
+        Permanent blocker = addCreatureReady(player2, new Skylasher());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
+        resolveCombat(player1);
 
         harness.assertOnBattlefield(player2, "Skylasher");
     }
@@ -147,21 +106,73 @@ class SkylasherTest extends BaseCardTest {
     @Test
     @DisplayName("Skylasher dies to combat damage from a non-blue creature")
     void diesToNonBlueCreature() {
-        Permanent attacker = new Permanent(createCreature("Big Green", 5, 5, CardColor.GREEN));
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new ThrashingMossdog());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = addSkylasher(player2);
+        Permanent blocker = addCreatureReady(player2, new Skylasher());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
+        resolveCombat(player1);
 
         harness.assertInGraveyard(player2, "Skylasher");
+    }
+
+    @Test
+    @DisplayName("Skylasher can be cast during the opponent's upkeep")
+    void flashAllowsCastingOnOpponentsTurn() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.setHand(player1, List.of(new Skylasher()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.passPriority(player2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Skylasher");
+    }
+
+    @Test
+    @DisplayName("Reach allows Skylasher to block a flying blue creature")
+    void reachAllowsBlockingFlyingCreature() {
+        Permanent attacker = addCreatureReady(player1, new MazeGlider());
+        attacker.setAttacking(true);
+        addCreatureReady(player2, new Skylasher());
+        prepareDeclareBlockers(player1);
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat(player1);
+
+        harness.assertOnBattlefield(player2, "Skylasher");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("A blue Aura cannot target Skylasher")
+    void blueAuraCannotEnchantSkylasher() {
+        Permanent skylasher = addCreatureReady(player2, new Skylasher());
+        harness.setHand(player1, List.of(new RunnersBane()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, skylasher.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection from blue");
+    }
+
+    @Test
+    @DisplayName("A blue Aura attached without targeting falls off Skylasher")
+    void attachedBlueAuraIsPutIntoGraveyard() {
+        Permanent skylasher = addCreatureReady(player2, new Skylasher());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new RunnersBane());
+        aura.setAttachedTo(skylasher.getId());
+
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Runner's Bane");
+        harness.assertInGraveyard(player1, "Runner's Bane");
+        harness.assertOnBattlefield(player2, "Skylasher");
     }
 }
