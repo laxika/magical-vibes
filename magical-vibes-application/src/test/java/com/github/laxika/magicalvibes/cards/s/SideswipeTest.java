@@ -36,9 +36,7 @@ class SideswipeTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, bears2.getId());
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, ray.getId());
-
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, ray.getId());
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -73,9 +71,7 @@ class SideswipeTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, List.of(originalTarget.getId()));
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, cry.getId());
-
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, cry.getId());
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -108,9 +104,7 @@ class SideswipeTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, originalTarget.getId());
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, ray.getId());
-
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, ray.getId());
 
         GameData gd = harness.getGameData();
         harness.handleMayAbilityChosen(player2, true);
@@ -137,15 +131,91 @@ class SideswipeTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, bears2.getId());
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, ray.getId());
-
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, ray.getId());
         harness.handleMayAbilityChosen(player2, false);
 
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player2, "Lantern Kami");
         harness.assertOnBattlefield(player1, "Lantern Kami");
+    }
+
+    @Test
+    @DisplayName("Can change one target while leaving another target unchanged")
+    void changesOnlyOneOfTwoTargets() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new LanternKami());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new LanternKami());
+        Permanent replacement = harness.addToBattlefieldAndReturn(player2, new LanternKami());
+        TerashisCry cry = new TerashisCry();
+        harness.setHand(player1, List.of(cry));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.setHand(player2, List.of(new Sideswipe()));
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.castSorcery(player1, 0, List.of(first.getId(), second.getId()));
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, cry.getId());
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handlePermanentChosen(player2, replacement.getId());
+        harness.handleMayAbilityChosen(player2, false);
+        harness.passBothPriorities();
+
+        assertThat(first.isTapped()).isFalse();
+        assertThat(second.isTapped()).isTrue();
+        assertThat(replacement.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Can swap two targets when the final target list is legal")
+    void canSwapTwoTargets() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new LanternKami());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new LanternKami());
+        TerashisCry cry = new TerashisCry();
+        harness.setHand(player1, List.of(cry));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.setHand(player2, List.of(new Sideswipe()));
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.castSorcery(player1, 0, List.of(first.getId(), second.getId()));
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, cry.getId());
+        harness.handleMayAbilityChosen(player2, true);
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validIds()).contains(second.getId());
+        harness.handlePermanentChosen(player2, second.getId());
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handlePermanentChosen(player2, first.getId());
+
+        StackEntry cryEntry = gd.stack.stream()
+                .filter(se -> se.getCard() == cry).findFirst().orElseThrow();
+        assertThat(cryEntry.getDeclaredTargetIds()).containsExactly(second.getId(), first.getId());
+        harness.passBothPriorities();
+        assertThat(first.isTapped()).isTrue();
+        assertThat(second.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Can target an Arcane spell that was cast with zero targets")
+    void canTargetSpellWithZeroTargets() {
+        TerashisCry cry = new TerashisCry();
+        harness.setHand(player1, List.of(cry));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.setHand(player2, List.of(new Sideswipe()));
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.castSorcery(player1, 0, List.of());
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, cry.getId());
+        harness.handleMayAbilityChosen(player2, true);
+        assertThat(harness.getGameData().interaction.isAwaitingInput()).isFalse();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Terashi's Cry");
+        harness.assertInGraveyard(player2, "Sideswipe");
     }
 
     @Test
