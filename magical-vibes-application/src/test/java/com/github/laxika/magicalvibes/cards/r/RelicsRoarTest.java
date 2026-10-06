@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -72,7 +73,42 @@ class RelicsRoarTest extends BaseCardTest {
     private void castAt(Permanent target) {
         harness.setHand(player1, List.of(new RelicsRoar()));
         harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.castInstant(player1, 0, target.getId());
+        harness.castAndResolveInstant(player1, 0, target.getId());
+    }
+
+    @Test
+    void retainsExistingCreatureSubtype() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        castAt(target);
+
+        assertThat(gqs.hasEffectiveSubtype(gd, target, CardSubtype.BEAR)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, target, CardSubtype.DINOSAUR)).isTrue();
+    }
+
+    @Test
+    void countersApplyOnTopOfNewBasePowerAndToughness() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        castAt(target);
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
+    }
+
+    @Test
+    void artifactStopsBeingCreatureAfterTurnEnds() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Spellbook());
+
+        castAt(target);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
         harness.passBothPriorities();
+
+        assertThat(gqs.isArtifact(target)).isTrue();
+        assertThat(gqs.isCreature(gd, target)).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, target, CardSubtype.DINOSAUR)).isFalse();
+        harness.assertOnBattlefield(player1, "Spellbook");
     }
 }
