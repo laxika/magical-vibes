@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SharedFate;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RingOfMarF.class, GrizzlyBears.class})
+@CardUsed({RingOfMarF.class, GrizzlyBears.class, SharedFate.class})
 class RingOfMarFTest extends BaseCardTest {
 
     @Test
@@ -82,6 +83,94 @@ class RingOfMarFTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(libraryCard);
         assertThat(gd.playerSideboards.get(player1.getId())).containsExactly(outsideCard);
+    }
+
+    @Test
+    @DisplayName("Exiling the Ring is an activation cost, before the ability resolves")
+    void exilesRingBeforeResolution() {
+        Card ring = new RingOfMarF();
+        harness.addToBattlefield(player1, ring);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(ring);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("Only the first card in a two-card draw comes from outside the game")
+    void replacesOnlyFirstDrawInMultipleCardDraw() {
+        Card outsideCard = new RingOfMarF();
+        Card remainingOutsideCard = new RingOfMarF();
+        setSideboard(outsideCard, remainingOutsideCard);
+        harness.addToBattlefield(player1, new RingOfMarF());
+        harness.setHand(player1, List.of());
+        Card libraryCard = new RingOfMarF();
+        Card remainingLibraryCard = new RingOfMarF();
+        harness.setLibrary(player1, List.of(libraryCard, remainingLibraryCard));
+
+        activateRing();
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCards(gd, player1.getId(), 2));
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(outsideCard, libraryCard);
+        assertThat(gd.playerSideboards.get(player1.getId())).containsExactly(remainingOutsideCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remainingLibraryCard);
+    }
+
+    @Test
+    @DisplayName("An opponent's draw does not consume the controller's replacement")
+    void opponentDrawDoesNotConsumeReplacement() {
+        Card outsideCard = new RingOfMarF();
+        setSideboard(outsideCard);
+        harness.addToBattlefield(player1, new RingOfMarF());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        Card opponentLibraryCard = new RingOfMarF();
+        harness.setLibrary(player2, List.of(opponentLibraryCard));
+        Card libraryCard = new RingOfMarF();
+        harness.setLibrary(player1, List.of(libraryCard));
+
+        activateRing();
+        draw(player2);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(opponentLibraryCard);
+        draw(player1);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(outsideCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
+    }
+
+    @Test
+    @CardUsed({RingOfMarF.class, SharedFate.class})
+    @DisplayName("The drawing player chooses between Ring and Shared Fate before either replaces the draw")
+    void competingReplacementRequiresPlayerChoice() {
+        Card outsideCard = new RingOfMarF();
+        setSideboard(outsideCard);
+        harness.addToBattlefield(player1, new RingOfMarF());
+        harness.addToBattlefield(player2, new SharedFate());
+        harness.setHand(player1, List.of());
+        Card libraryCard = new RingOfMarF();
+        harness.setLibrary(player1, List.of(libraryCard));
+        Card opponentLibraryCard = new RingOfMarF();
+        harness.setLibrary(player2, List.of(opponentLibraryCard));
+
+        activateRing();
+        draw(player1);
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentLibraryCard);
+        assertThat(gd.playerSideboards.get(player1.getId())).containsExactly(outsideCard);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
     private void activateRing() {
