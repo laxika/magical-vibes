@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,11 +15,12 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(ShredderShadowMaster.class)
+@CardUsed({ShredderShadowMaster.class, JaceBeleren.class})
 class ShredderShadowMasterTest extends BaseCardTest {
 
     private Player player3;
@@ -46,9 +48,8 @@ class ShredderShadowMasterTest extends BaseCardTest {
         assertThat(gd.getDelayedActions(SacrificeAtEndOfCombat.class))
                 .anyMatch(action -> action.permanentId().equals(copy.getId()));
 
-        harness.forceStep(TurnStep.END_OF_COMBAT);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(copy);
         assertThat(shredder).isIn(gd.playerBattlefields.get(player1.getId()));
@@ -59,19 +60,123 @@ class ShredderShadowMasterTest extends BaseCardTest {
     void combatDamageHalvesDamagedPlayersLifeRoundedUp() {
         addReadyShredder().setAttacking(true);
         harness.setLife(player2, 20);
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat();
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(7);
     }
 
+    @Test
+    void attackingInTwoPlayerGameCreatesNoCopies() {
+        addReadyShredder();
+
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            declareAttackers(List.of(0));
+            resolveAllTriggers();
+        });
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.getDelayedActions(SacrificeAtEndOfCombat.class)).isEmpty();
+    }
+
+    @Test
+    void attackingPlaneswalkerDoesNotCreateCopies() {
+        addThirdPlayer();
+        addReadyShredder();
+        Permanent jace = harness.addToBattlefieldAndReturn(player2, new JaceBeleren());
+
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            harness.forceActivePlayer(player1);
+            harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+            harness.clearPriorityPassed();
+            harness.beginAttackerDeclarationInput();
+            gs.declareAttackers(gd, player1, List.of(0), Map.of(0, jace.getId()));
+            resolveAllTriggers();
+        });
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.getDelayedActions(SacrificeAtEndOfCombat.class)).isEmpty();
+    }
+
+    @Test
+    void tokenCopyAlsoHalvesThePlayerItDamages() {
+        addThirdPlayer();
+        addReadyShredder();
+        harness.setLife(player2, 21);
+        harness.setLife(player3, 20);
+
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            declareAttackers(List.of(0));
+            resolveAllTriggers();
+        });
+        harness.resolveCombatDamage();
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 8);
+        harness.assertLife(player3, 7);
+    }
+
+    @Test
+    void lifeLossUsesLifeTotalWhenTriggerResolves() {
+        Permanent shredder = addReadyShredder();
+        shredder.setAttacking(true);
+        shredder.setAttackTarget(player2.getId());
+        harness.setLife(player2, 20);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
+        harness.assertLife(player2, 15);
+        harness.setLife(player2, 22);
+
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 11);
+    }
+
+    @Test
+    void endOfCombatSacrificeWaitsForDelayedTriggerToResolve() {
+        addThirdPlayer();
+        addReadyShredder();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            declareAttackers(List.of(0));
+            resolveAllTriggers();
+        });
+        Permanent copy = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken())
+                .findFirst().orElseThrow();
+
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(copy);
+        assertThat(gd.stack).isNotEmpty();
+        resolveAllTriggers();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(copy);
+    }
+
+    @Test
+    void tokenControlledByOpponentCannotBeSacrificedByOriginalController() {
+        addThirdPlayer();
+        addReadyShredder();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            declareAttackers(List.of(0));
+            resolveAllTriggers();
+        });
+        Permanent copy = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken())
+                .findFirst().orElseThrow();
+        gd.playerBattlefields.get(player1.getId()).remove(copy);
+        gd.playerBattlefields.get(player2.getId()).add(copy);
+        copy.setAttacking(false);
+
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(copy);
+    }
+
     private Permanent addReadyShredder() {
-        Permanent permanent = new Permanent(new ShredderShadowMaster());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(permanent);
-        return permanent;
+        return addCreatureReady(player1, new ShredderShadowMaster());
     }
 
     private void addThirdPlayer() {
