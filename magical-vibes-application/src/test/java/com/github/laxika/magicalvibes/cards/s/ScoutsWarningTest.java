@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.b.BladeOfTheSixthPride;
+import com.github.laxika.magicalvibes.cards.d.DryadArbor;
 import com.github.laxika.magicalvibes.cards.f.Foresee;
+import com.github.laxika.magicalvibes.cards.l.LumithreadField;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -15,7 +17,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ScoutsWarning.class, BladeOfTheSixthPride.class, Foresee.class, SproutSwarm.class})
+@CardUsed({ScoutsWarning.class, BladeOfTheSixthPride.class, Foresee.class, SproutSwarm.class,
+        DryadArbor.class, LumithreadField.class})
 class ScoutsWarningTest extends BaseCardTest {
 
     private Card resolveScoutsWarning() {
@@ -95,8 +98,7 @@ class ScoutsWarningTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player1, List.of(new SproutSwarm()));
         harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
@@ -141,5 +143,95 @@ class ScoutsWarningTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("A creature cast at normal sorcery timing consumes the permission")
+    void normalTimingCreatureConsumesGrant() {
+        resolveScoutsWarning();
+        harness.setHand(player1, List.of(new BladeOfTheSixthPride(), new BladeOfTheSixthPride()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("Multiple Warnings all apply to the same next creature")
+    void multipleWarningsAreConsumedTogether() {
+        resolveScoutsWarning();
+        resolveScoutsWarning();
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new BladeOfTheSixthPride(), new BladeOfTheSixthPride()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("A noncreature morph card can be cast face down and consumes the permission")
+    void faceDownCreatureConsumesGrant() {
+        resolveScoutsWarning();
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new LumithreadField(), new BladeOfTheSixthPride()));
+        harness.addMana(player1, ManaColor.WHITE, 5);
+
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isFaceDown()).isTrue();
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("Dryad Arbor can be played during combat on the controller's turn")
+    void permitsCreatureLandOutsideMainPhaseOnOwnTurn() {
+        resolveScoutsWarning();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new DryadArbor()));
+
+        harness.playLand(player1, 0);
+
+        assertThat(countPermanents(player1, "Dryad Arbor")).isEqualTo(1);
+        assertThat(gd.landsPlayedThisTurn.get(player1.getId())).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Dryad Arbor still cannot be played on an opponent's turn")
+    void doesNotPermitCreatureLandOnOpponentsTurn() {
+        resolveScoutsWarning();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new DryadArbor()));
+
+        assertThatThrownBy(() -> harness.playLand(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+        assertThat(countPermanents(player1, "Dryad Arbor")).isZero();
     }
 }
