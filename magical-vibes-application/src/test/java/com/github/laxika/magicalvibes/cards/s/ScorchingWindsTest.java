@@ -13,10 +13,12 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ScorchingWinds.class, GrizzlyBears.class, RagingGoblin.class, WallOfGranite.class})
+@CardUsed({ScorchingWinds.class, GrizzlyBears.class, RagingGoblin.class, WallOfGranite.class, JaceBeleren.class})
 class ScorchingWindsTest extends BaseCardTest {
 
     @Test
@@ -91,7 +93,70 @@ class ScorchingWindsTest extends BaseCardTest {
                 .hasMessageContaining("not playable");
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Entering attacking does not count as having attacked the player")
+    void cannotCastWhenCreatureOnlyEnteredAttacking() {
+        harness.forceActivePlayer(player1);
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        attacker.enterAttacking(true);
+        attacker.setAttackTarget(player2.getId());
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+
+        assertThatThrownBy(() -> harness.castFromHand(player2, new ScorchingWinds(), "{R}"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("Can cast after all declared attackers have left combat")
+    void canCastAfterDeclaredAttackerLeavesCombat() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(List.of(0)));
+        attacker.setAttacking(false);
+        attacker.setAttackTarget(null);
+
+        castScorchingWinds();
+
+        assertThat(attacker.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player2, "Scorching Winds");
+    }
+
+    @Test
+    @DisplayName("Only creatures still attacking at resolution take damage")
+    void checksAttackingStateAtResolution() {
+        harness.forceActivePlayer(player1);
+        Permanent remaining = addAttacker(player1, player2, new GrizzlyBears());
+        Permanent removed = addAttacker(player1, player2, new GrizzlyBears());
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.castFromHand(player2, new ScorchingWinds(), "{R}");
+        removed.setAttacking(false);
+        removed.setAttackTarget(null);
+        harness.passBothPriorities();
+
+        assertThat(remaining.getMarkedDamage()).isEqualTo(1);
+        assertThat(removed.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @CardUsed(JaceBeleren.class)
+    @DisplayName("Also damages creatures attacking a planeswalker when the player was attacked")
+    void damagesPlaneswalkerAttackersToo() {
+        harness.forceActivePlayer(player1);
+        Permanent jace = harness.addToBattlefieldAndReturn(player2, new JaceBeleren());
+        Permanent direct = addAttacker(player1, player2, new GrizzlyBears());
+        Permanent planeswalkerAttacker = addAttacker(player1, player2, new GrizzlyBears());
+        planeswalkerAttacker.setAttackTarget(jace.getId());
+        Permanent defender = addCreatureReady(player2, new GrizzlyBears());
+
+        castScorchingWinds();
+
+        assertThat(direct.getMarkedDamage()).isEqualTo(1);
+        assertThat(planeswalkerAttacker.getMarkedDamage()).isEqualTo(1);
+        assertThat(defender.getMarkedDamage()).isZero();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
 
     private void castScorchingWinds() {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
