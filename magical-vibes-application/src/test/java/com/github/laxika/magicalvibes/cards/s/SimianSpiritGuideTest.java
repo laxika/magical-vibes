@@ -49,4 +49,28 @@ class SimianSpiritGuideTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Firefright Mage");
     }
+
+    @Test
+    @DisplayName("Mana ability resolves immediately on an opponent's turn with a spell on the stack")
+    void activatesOnOpponentsTurnWithSpellOnStack() {
+        harness.setHand(player1, List.of(new FirefrightMage()));
+        harness.setHand(player2, List.of(new SimianSpiritGuide()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castCreature(player1, 0);
+        var spell = gd.stack.getFirst();
+
+        harness.activateHandAbility(player2, 0, null);
+
+        assertThat(gd.stack).containsExactly(spell);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.exiledCards).extracting(entry -> entry.card().getName())
+                .containsExactly("Simian Spirit Guide");
+        harness.assertNotOnBattlefield(player1, "Firefright Mage");
+
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Firefright Mage");
+    }
 }
