@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.c.ChillToTheBone;
 import com.github.laxika.magicalvibes.cards.g.GoblinFurrier;
+import com.github.laxika.magicalvibes.cards.m.MartyrOfAshes;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -18,7 +19,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SekKuarDeathkeeper.class, GoblinFurrier.class, ChillToTheBone.class})
+@CardUsed({SekKuarDeathkeeper.class, GoblinFurrier.class, ChillToTheBone.class, MartyrOfAshes.class})
 class SekKuarDeathkeeperTest extends BaseCardTest {
 
     @Test
@@ -69,6 +70,46 @@ class SekKuarDeathkeeperTest extends BaseCardTest {
         destroyWithChillToTheBone(player1, player2, "Goblin Furrier");
 
         assertThat(findPermanents(player1, "Graveborn")).isEmpty();
+    }
+
+    @Test
+    void resolvesExistingTriggerAfterSekKuarDies() {
+        harness.addToBattlefield(player1, new SekKuarDeathkeeper());
+        harness.addToBattlefield(player1, new GoblinFurrier());
+
+        destroyWithChillToTheBone(player2, player1, "Goblin Furrier");
+        assertThat(gd.stack).hasSize(1);
+        destroyWithChillToTheBone(player2, player1, "Sek'Kuar, Deathkeeper");
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Sek'Kuar, Deathkeeper");
+        assertThat(findPermanents(player1, "Graveborn")).hasSize(1);
+        assertThat(findPermanents(player2, "Graveborn")).isEmpty();
+    }
+
+    @Test
+    void triggersForEachOtherNontokenCreatureDyingSimultaneouslyWithSekKuar() {
+        harness.addToBattlefield(player2, new MartyrOfAshes());
+        harness.addToBattlefield(player1, new SekKuarDeathkeeper());
+        harness.addToBattlefield(player1, new GoblinFurrier());
+        harness.addToBattlefield(player1, new GoblinFurrier());
+        harness.addToBattlefield(player2, new GoblinFurrier());
+        GoblinFurrier first = new GoblinFurrier();
+        GoblinFurrier second = new GoblinFurrier();
+        GoblinFurrier third = new GoblinFurrier();
+        harness.setHand(player2, List.of(first, second, third));
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player2, 0, 3, null);
+        harness.handleMultipleCardsChosen(player2, List.of(first.getId(), second.getId(), third.getId()));
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Sek'Kuar, Deathkeeper");
+        harness.assertInGraveyard(player2, "Martyr of Ashes");
+        harness.assertNotOnBattlefield(player1, "Goblin Furrier");
+        harness.assertNotOnBattlefield(player2, "Goblin Furrier");
+        assertThat(findPermanents(player1, "Graveborn")).hasSize(2);
+        assertThat(findPermanents(player2, "Graveborn")).isEmpty();
     }
 
     private void destroyWithChillToTheBone(Player caster, Player targetController, String targetName) {
