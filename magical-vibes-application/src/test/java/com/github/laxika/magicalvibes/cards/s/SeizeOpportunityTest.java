@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
@@ -17,7 +18,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SeizeOpportunity.class, FountainOfYouth.class, GrizzlyBears.class})
+@CardUsed({SeizeOpportunity.class, Forest.class, FountainOfYouth.class, GrizzlyBears.class})
 class SeizeOpportunityTest extends BaseCardTest {
 
     @Test
@@ -55,10 +56,7 @@ class SeizeOpportunityTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, opponent)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, opponent)).isEqualTo(2);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(2);
@@ -74,6 +72,189 @@ class SeizeOpportunityTest extends BaseCardTest {
         addMana();
 
         assertThatThrownBy(() -> harness.castModalInstant(player1, 0, 1, List.of(target.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Boost mode can be cast with no targets and does not exile cards")
+    void boostModeWithNoTargets() {
+        Card top = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(top));
+
+        cast(1, List.of());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(top);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof SeizeOpportunity);
+    }
+
+    @Test
+    @DisplayName("Boost mode can target a single opposing creature")
+    void boostModeWithOneOpposingTarget() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+
+        cast(1, List.of(target.getId()));
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Boost mode rejects more than two targets")
+    void boostModeRejectsThreeTargets() {
+        Permanent first = addCreatureReady(player1, new GrizzlyBears());
+        Permanent second = addCreatureReady(player1, new GrizzlyBears());
+        Permanent third = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SeizeOpportunity()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castModalInstant(player1, 0, 1,
+                List.of(first.getId(), second.getId(), third.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Boost mode still boosts the remaining target if one target leaves")
+    void boostModePartiallyResolves() {
+        Permanent first = addCreatureReady(player1, new GrizzlyBears());
+        Permanent second = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SeizeOpportunity()));
+        addMana();
+        harness.castModalInstant(player1, 0, 1, List.of(first.getId(), second.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(first);
+        harness.setGraveyard(player1, List.of(first.getCard()));
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Exile mode exiles the only remaining card without drawing")
+    void exileModeWithOneCard() {
+        Card only = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(only));
+
+        cast(0, List.of());
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(only);
+        assertThat(gd.exilePlayPermissions).containsEntry(only.getId(), player1.getId());
+    }
+
+    @Test
+    @DisplayName("Exile mode resolves with an empty library")
+    void exileModeWithEmptyLibrary() {
+        harness.setLibrary(player1, List.of());
+
+        cast(0, List.of());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof SeizeOpportunity);
+    }
+
+    @Test
+    @DisplayName("An exiled spell can be cast by its controller")
+    void castExiledSpell() {
+        Card artifact = new FountainOfYouth();
+        harness.setLibrary(player1, List.of(artifact));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        cast(0, List.of());
+
+        harness.castFromExile(player1, artifact.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(artifact.getId()));
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(artifact);
+    }
+
+    @Test
+    @DisplayName("Exile permission survives the current and opposing turns and expires after your next turn")
+    void exilePermissionExpiresAfterNextTurn() {
+        Card first = new GrizzlyBears();
+        Card second = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(first, second,
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.forceActivePlayer(player1);
+        cast(0, List.of());
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        assertThat(gd.exilePlayPermissions).containsKeys(first.getId(), second.getId());
+
+        harness.passUntil(player1, TurnStep.UPKEEP);
+        assertThat(gd.exilePlayPermissions).containsKeys(first.getId(), second.getId());
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        assertThat(gd.exilePlayPermissions).doesNotContainKeys(first.getId(), second.getId());
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(first, second);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        assertThatThrownBy(() -> harness.castFromExile(player1, first.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Exiled lands may be played but do not grant extra land plays")
+    void playExiledLand() {
+        Card first = new Forest();
+        Card second = new Forest();
+        harness.setLibrary(player1, List.of(first, second));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        cast(0, List.of());
+
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN,
+                () -> harness.castFromExile(player1, first.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(first.getId()));
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(first).contains(second);
+        assertThatThrownBy(() -> harness.castFromExile(player1, second.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Exiled creatures require their normal mana cost")
+    void exiledSpellRequiresMana() {
+        Card creature = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(creature));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        cast(0, List.of());
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(creature);
+
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castFromExile(player1, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(creature.getId()));
+    }
+
+    @Test
+    @DisplayName("Boost mode cannot target the same creature twice")
+    void boostModeRejectsDuplicateTargets() {
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SeizeOpportunity()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castModalInstant(player1, 0, 1,
+                List.of(target.getId(), target.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
 
