@@ -46,4 +46,50 @@ class RampagingSoulragerTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, soulrager)).isEqualTo(4);
     }
+
+    @Test
+    void losesBonusWhenADoorLocksAndRegainsItWhenUnlocked() {
+        Permanent soulrager = harness.addToBattlefieldAndReturn(player1, new RampagingSoulrager());
+        Permanent room = harness.addToBattlefieldAndReturn(player1, new DazzlingTheaterPropRoom());
+        room.unlockRoomDoor(0);
+        room.unlockRoomDoor(1);
+        assertThat(gqs.getEffectivePower(gd, soulrager)).isEqualTo(4);
+
+        room.lockRoomDoor(1);
+
+        assertThat(gqs.getEffectivePower(gd, soulrager)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, soulrager)).isEqualTo(4);
+
+        room.unlockRoomDoor(1);
+
+        assertThat(gqs.getEffectivePower(gd, soulrager)).isEqualTo(4);
+    }
+
+    @Test
+    void moreThanTwoUnlockedDoorsStillGrantsOnlyOneBonusToEachSoulrager() {
+        Permanent firstSoulrager = harness.addToBattlefieldAndReturn(player1, new RampagingSoulrager());
+        Permanent secondSoulrager = harness.addToBattlefieldAndReturn(player1, new RampagingSoulrager());
+        Permanent firstRoom = harness.addToBattlefieldAndReturn(player1, new DazzlingTheaterPropRoom());
+        Permanent secondRoom = harness.addToBattlefieldAndReturn(player1, new DazzlingTheaterPropRoom());
+        firstRoom.unlockRoomDoor(0);
+        firstRoom.unlockRoomDoor(1);
+        secondRoom.unlockRoomDoor(0);
+        secondRoom.unlockRoomDoor(1);
+
+        assertThat(gqs.getEffectivePower(gd, firstSoulrager)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, secondSoulrager)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, firstSoulrager)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, secondSoulrager)).isEqualTo(4);
+    }
+
+    @Test
+    void oneOwnDoorAndOneOpponentDoorDoNotMeetTheThreshold() {
+        Permanent soulrager = harness.addToBattlefieldAndReturn(player1, new RampagingSoulrager());
+        Permanent ownRoom = harness.addToBattlefieldAndReturn(player1, new DazzlingTheaterPropRoom());
+        Permanent opponentRoom = harness.addToBattlefieldAndReturn(player2, new DazzlingTheaterPropRoom());
+        ownRoom.unlockRoomDoor(0);
+        opponentRoom.unlockRoomDoor(1);
+
+        assertThat(gqs.getEffectivePower(gd, soulrager)).isEqualTo(1);
+    }
 }
