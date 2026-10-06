@@ -25,8 +25,7 @@ class ScavengingGhoulTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, List.of(new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, victim.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, victim.getId());
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(victim);
 
         Permanent ghoul = addReadyGhoul(player1);
@@ -48,13 +47,10 @@ class ScavengingGhoulTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve the trigger
     }
 
-    // ===== End-step trigger: corpse counters per creature death =====
-
     @Test
     @DisplayName("Gains a corpse counter at end step for each creature that died this turn")
     void gainsCorpseCountersForDeaths() {
-        Permanent ghoul = new Permanent(new ScavengingGhoul());
-        gd.playerBattlefields.get(player1.getId()).add(ghoul);
+        Permanent ghoul = harness.addToBattlefieldAndReturn(player1, new ScavengingGhoul());
 
         // Three creatures died this turn across both players.
         gd.creatureDeathCountThisTurn.merge(player1.getId(), 1, Integer::sum);
@@ -68,16 +64,13 @@ class ScavengingGhoulTest extends BaseCardTest {
     @Test
     @DisplayName("Gains no corpse counter at end step when no creature died this turn")
     void noCorpseCounterWhenNoDeath() {
-        Permanent ghoul = new Permanent(new ScavengingGhoul());
-        gd.playerBattlefields.get(player1.getId()).add(ghoul);
+        Permanent ghoul = harness.addToBattlefieldAndReturn(player1, new ScavengingGhoul());
 
         advanceToEndStepAndResolve();
 
         assertThat(ghoul.getCounterCount(CounterType.CORPSE)).isZero();
         assertThat(gd.stack).isEmpty();
     }
-
-    // ===== Activated ability: remove a corpse counter to regenerate =====
 
     @Test
     @DisplayName("Removing a corpse counter grants a regeneration shield")
@@ -107,8 +100,7 @@ class ScavengingGhoulTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, ghoul.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, ghoul.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(ghoul);
         assertThat(ghoul.getRegenerationShield()).isZero();
@@ -136,6 +128,66 @@ class ScavengingGhoulTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough counters");
+    }
+
+    @Test
+    void countsDeathsWhileEndStepTriggerIsOnStack() {
+        Permanent ghoul = addReadyGhoul(player1);
+        Permanent victim = addCreatureReady(player2, new ScatheZombies());
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.END_STEP);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(ghoul.getCounterCount(CounterType.CORPSE)).isZero();
+
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, victim.getId());
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(victim);
+        resolveAllTriggers();
+
+        assertThat(ghoul.getCounterCount(CounterType.CORPSE)).isEqualTo(1);
+    }
+
+    @Test
+    void canPayCounterCostWhileTappedAndSummoningSick() {
+        Permanent ghoul = harness.addToBattlefieldAndReturn(player1, new ScavengingGhoul());
+        ghoul.setTapped(true);
+        ghoul.setSummoningSick(true);
+        ghoul.setCounterCount(CounterType.CORPSE, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(ghoul.getCounterCount(CounterType.CORPSE)).isZero();
+        assertThat(ghoul.getRegenerationShield()).isZero();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(ghoul.getRegenerationShield()).isEqualTo(1);
+    }
+
+    @Test
+    void regenerationPreventsDeathAndDoesNotEarnCorpseCounter() {
+        Permanent ghoul = addReadyGhoul(player1);
+        ghoul.setCounterCount(CounterType.CORPSE, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, ghoul.getId());
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(ghoul);
+        assertThat(ghoul.isTapped()).isTrue();
+        assertThat(ghoul.getMarkedDamage()).isZero();
+        assertThat(ghoul.getRegenerationShield()).isZero();
+
+        advanceToEndStepAndResolve();
+
+        assertThat(ghoul.getCounterCount(CounterType.CORPSE)).isZero();
     }
 
     private Permanent addReadyGhoul(Player player) {
