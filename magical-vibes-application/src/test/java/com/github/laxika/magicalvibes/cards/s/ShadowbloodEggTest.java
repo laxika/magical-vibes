@@ -36,6 +36,31 @@ class ShadowbloodEggTest extends BaseCardTest {
     }
 
     @Test
+    void activationOnOpponentsTurnWaitsForResolutionToAddManaAndDraw() {
+        harness.forceActivePlayer(player2);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new ShadowbloodEgg()));
+        harness.addToBattlefield(player1, new ShadowbloodEgg());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Shadowblood Egg");
+        harness.assertInGraveyard(player1, "Shadowblood Egg");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        harness.assertNotInHand(player1, "Shadowblood Egg");
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        harness.assertInHand(player1, "Shadowblood Egg");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     void activationRequiresTwoGenericMana() {
         harness.addToBattlefield(player1, new ShadowbloodEgg());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
