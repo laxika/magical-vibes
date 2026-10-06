@@ -62,7 +62,6 @@ class ScorpionsStingTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(target.getPowerModifier()).isEqualTo(0);
@@ -72,13 +71,51 @@ class ScorpionsStingTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
-        Permanent artifact = new Permanent(new FountainOfYouth());
-        gd.playerBattlefields.get(player2.getId()).add(artifact);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
         harness.setHand(player1, List.of(new ScorpionsSting()));
         harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Can target a creature you control without affecting another creature")
+    void canTargetOwnCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AirElemental());
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setHand(player1, List.of(new ScorpionsSting()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getEffectivePower()).isEqualTo(1);
+        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(other.getEffectivePower()).isEqualTo(4);
+        assertThat(other.getEffectiveToughness()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Two casts combine their reductions and kill a surviving creature")
+    void reductionsFromTwoCastsStack() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setHand(player1, List.of(new ScorpionsSting(), new ScorpionsSting()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Air Elemental");
+        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Air Elemental");
+        harness.assertInGraveyard(player2, "Air Elemental");
     }
 }
