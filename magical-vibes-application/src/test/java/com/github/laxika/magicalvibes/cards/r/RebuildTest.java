@@ -61,4 +61,39 @@ class RebuildTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Rebuild");
         harness.assertInHand(player1, "Giant Cockroach");
     }
+
+    @Test
+    @DisplayName("Cycling pays the discard cost immediately and does not return artifacts")
+    void cyclingDiscardsBeforeDrawingAndLeavesArtifactsAlone() {
+        harness.addToBattlefield(player1, new BeastOfBurden());
+        harness.addToBattlefield(player2, new GrimMonolith());
+        harness.setHand(player1, List.of(new Rebuild()));
+        harness.setLibrary(player1, List.of(new GiantCockroach()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertInGraveyard(player1, "Rebuild");
+        harness.assertNotInHand(player1, "Rebuild");
+        harness.assertNotInHand(player1, "Giant Cockroach");
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Giant Cockroach");
+        harness.assertOnBattlefield(player1, "Beast of Burden");
+        harness.assertOnBattlefield(player2, "Grim Monolith");
+    }
+
+    @Test
+    @DisplayName("Resolves without artifacts and leaves nonartifact permanents alone")
+    void resolvesWithoutArtifacts() {
+        harness.addToBattlefield(player2, new GiantCockroach());
+
+        harness.castFromHand(player1, new Rebuild(), "{2}{U}");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Rebuild");
+        harness.assertOnBattlefield(player2, "Giant Cockroach");
+        harness.assertNotInHand(player2, "Giant Cockroach");
+    }
 }
