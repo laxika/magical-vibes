@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.event.GameEventEnvelope;
+import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -17,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(SilentBladeOni.class)
+@CardUsed({SilentBladeOni.class, GrizzlyBears.class, Forest.class})
 class SilentBladeOniTest extends BaseCardTest {
 
     @Test
@@ -26,10 +27,7 @@ class SilentBladeOniTest extends BaseCardTest {
     void ninjutsuSwapsTheUnblockedAttacker() {
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         addCreatureReady(player2, new GrizzlyBears());
-        declareAttackers(List.of(0));
-
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
+        declareAttackersAndPrepareBlockers(List.of(0));
         harness.setHand(player1, List.of(new SilentBladeOni()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -86,6 +84,7 @@ class SilentBladeOniTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerHands.get(player2.getId()))
                 .anyMatch(card -> card.getId().equals(damagedPlayerCard.getId()));
+        assertThat(gameLogContains("declines to cast Grizzly Bears")).isFalse();
     }
 
     @Test
@@ -110,6 +109,63 @@ class SilentBladeOniTest extends BaseCardTest {
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
         harness.setHand(player2, List.of(new GrizzlyBears()));
+
+        resolveCombatAndTrigger();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The controller privately sees the entire damaged player's hand, including lands")
+    void looksAtEntireHandBeforeChoosing() throws Exception {
+        addAttackingSilentBladeOni(player1);
+        Forest land = new Forest();
+        GrizzlyBears spell = new GrizzlyBears();
+        harness.setHand(player2, List.of(land, spell));
+        List<GameEventEnvelope> events = new ArrayList<>();
+
+        try (var subscription = harness.subscribeToGameEvents(batch -> events.addAll(batch.events()))) {
+            resolveCombatAndTrigger();
+        }
+
+        assertThat(events).anySatisfy(event -> {
+            assertThat(event.fact()).isInstanceOf(GameEventFact.PrivateReveal.class);
+            GameEventFact.PrivateReveal reveal = (GameEventFact.PrivateReveal) event.fact();
+            assertThat(reveal.subjectPlayerId()).isEqualTo(player2.getId());
+            assertThat(reveal.zone()).isEqualTo(GameEventFact.RevealZone.HAND);
+            assertThat(reveal.cards()).extracting(GameEventFact.CardSnapshot::cardId)
+                    .containsExactlyInAnyOrder(land.getId(), spell.getId());
+            assertThat(event.audience().playerIds()).containsExactly(player1.getId());
+        });
+    }
+
+    @Test
+    @DisplayName("Choosing a spell clears the other offers and leaves the other card in hand")
+    void castsOnlyOneSpellFromTheHand() {
+        addAttackingSilentBladeOni(player1);
+        GrizzlyBears first = new GrizzlyBears();
+        GrizzlyBears second = new GrizzlyBears();
+        harness.setHand(player2, List.of(first, second));
+
+        resolveCombatAndTrigger();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getId()).isEqualTo(second.getId());
+        assertThat(gd.playerHands.get(player2.getId())).extracting(card -> card.getId())
+                .containsExactly(first.getId());
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        harness.passBothPriorities();
+        assertThat(countPermanents(player1, "Grizzly Bears")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("An empty damaged player's hand finishes without a cast choice")
+    void emptyHandDoesNotOfferSpell() {
+        addAttackingSilentBladeOni(player1);
+        harness.setHand(player2, List.of());
 
         resolveCombatAndTrigger();
 
