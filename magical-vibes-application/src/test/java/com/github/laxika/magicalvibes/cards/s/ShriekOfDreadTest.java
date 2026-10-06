@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.c.CalderaKavu;
 import com.github.laxika.magicalvibes.cards.c.CavernHarpy;
 import com.github.laxika.magicalvibes.cards.c.CrosissCatacombs;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
+import com.github.laxika.magicalvibes.cards.d.Draco;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -20,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ShriekOfDread.class, CalderaKavu.class, CavernHarpy.class, CrosissCatacombs.class})
+@CardUsed({ShriekOfDread.class, CalderaKavu.class, CavernHarpy.class, CrosissCatacombs.class, Draco.class})
 class ShriekOfDreadTest extends BaseCardTest {
 
     @Test
@@ -29,8 +29,7 @@ class ShriekOfDreadTest extends BaseCardTest {
         Permanent bears = addCreature();
         setupSpell();
 
-        harness.castInstant(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bears.getId());
 
         assertThat(bears.hasKeyword(Keyword.FEAR)).isTrue();
     }
@@ -52,8 +51,7 @@ class ShriekOfDreadTest extends BaseCardTest {
         Permanent bears = addCreature();
         setupSpell();
 
-        harness.castInstant(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bears.getId());
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -82,8 +80,7 @@ class ShriekOfDreadTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, attacker.getId());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
-        Permanent blocker = addCreature(player2);
-        blocker.setSummoningSick(false);
+        addCreatureReady(player2, new CalderaKavu());
         prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
@@ -100,13 +97,40 @@ class ShriekOfDreadTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, attacker.getId());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
-        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new CavernHarpy());
-        blocker.setSummoningSick(false);
+        addCreatureReady(player2, new CavernHarpy());
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
-                .anyMatch(log -> log.contains("declares 1 blocker"));
+        assertThat(gameLogContains("declares 1 blocker")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Fear allows a colorless artifact creature to block")
+    void fearAllowsArtifactCreatureToBlock() {
+        Permanent attacker = addCreatureReady(player1, new CalderaKavu());
+        setupSpell();
+
+        harness.castAndResolveInstant(player1, 0, attacker.getId());
+        attacker.setAttacking(true);
+        addCreatureReady(player2, new Draco());
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(gameLogContains("declares 1 blocker")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Only the targeted creature gains fear")
+    void onlyTargetedCreatureGainsFear() {
+        Permanent target = addCreature();
+        Permanent other = addCreature();
+        setupSpell();
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(target.hasKeyword(Keyword.FEAR)).isTrue();
+        assertThat(other.hasKeyword(Keyword.FEAR)).isFalse();
     }
 
     private Permanent addCreature() {
