@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.c.CoralMerfolk;
 import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
+import com.github.laxika.magicalvibes.cards.p.PhyrexianProcessor;
 import com.github.laxika.magicalvibes.cards.w.WornPowerstone;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({ShowAndTell.class, CoralMerfolk.class, Forest.class, WornPowerstone.class,
-        GloriousAnthem.class, BlanchwoodArmor.class, Disenchant.class})
+        GloriousAnthem.class, BlanchwoodArmor.class, Disenchant.class, PhyrexianProcessor.class})
 class ShowAndTellTest extends BaseCardTest {
 
     @Test
@@ -153,5 +154,61 @@ class ShowAndTellTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Coral Merfolk");
         harness.assertNotOnBattlefield(player1, "Blanchwood Armor");
         assertThat(gd.playerHands.get(player1.getId())).contains(aura);
+    }
+
+    @Test
+    void bothPlayersMayDeclineWithoutMovingTheirCards() {
+        Card creature = new CoralMerfolk();
+        Card land = new Forest();
+        harness.setHand(player1, List.of(new ShowAndTell(), creature));
+        harness.setHand(player2, List.of(land));
+        castShowAndTell();
+
+        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.handleMultipleCardsChosen(player2, List.of());
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(creature);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(land);
+        harness.assertNotOnBattlefield(player1, "Coral Merfolk");
+        harness.assertNotOnBattlefield(player2, "Forest");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Show and Tell");
+    }
+
+    @Test
+    void artifactKeepsItsEntersTappedAbilityWithoutPayingItsManaCost() {
+        Card artifact = new WornPowerstone();
+        harness.setHand(player1, List.of(new ShowAndTell()));
+        harness.setHand(player2, List.of(artifact));
+        castShowAndTell();
+
+        harness.handleMultipleCardsChosen(player2, List.of(artifact.getId()));
+
+        harness.assertOnBattlefield(player2, "Worn Powerstone");
+        assertThat(findPermanent(player2, "Worn Powerstone").isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void processorOffersItsAsEntersLifePayment() {
+        Card processor = new PhyrexianProcessor();
+        Card land = new Forest();
+        harness.setHand(player1, List.of(new ShowAndTell(), processor));
+        harness.setHand(player2, List.of(land));
+        harness.setLife(player1, 20);
+        castShowAndTell();
+        harness.handleMultipleCardsChosen(player1, List.of(processor.getId()));
+        harness.handleMultipleCardsChosen(player2, List.of(land.getId()));
+
+        var payment = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(payment).isNotNull();
+        assertThat(payment.playerId()).isEqualTo(player1.getId());
+        harness.handleListChoice(player1, "5");
+
+        harness.assertLife(player1, 15);
+        assertThat(findPermanent(player1, "Phyrexian Processor").getChosenNumber()).isEqualTo(5);
+        harness.assertOnBattlefield(player2, "Forest");
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }
