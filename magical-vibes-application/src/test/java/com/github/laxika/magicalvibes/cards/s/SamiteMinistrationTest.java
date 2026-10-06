@@ -41,6 +41,7 @@ class SamiteMinistrationTest extends BaseCardTest {
         source.setAttacking(true);
         resolveCombat(player2);
 
+        resolveAllTriggers();
         harness.assertLife(player1, 23);
     }
 
@@ -56,6 +57,7 @@ class SamiteMinistrationTest extends BaseCardTest {
         source.setAttacking(true);
         resolveCombat(player2);
 
+        resolveAllTriggers();
         harness.assertLife(player1, 21);
     }
 
@@ -88,6 +90,7 @@ class SamiteMinistrationTest extends BaseCardTest {
         otherSource.setAttacking(true);
         resolveCombat(player2);
 
+        resolveAllTriggers();
         harness.assertLife(player1, 20);
     }
 
@@ -115,7 +118,45 @@ class SamiteMinistrationTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, zap.getId());
         harness.passBothPriorities();
 
+        resolveAllTriggers();
         harness.assertLife(player1, 21);
+    }
+
+    @Test
+    void lifeGainWaitsForThePreventionTriggerToResolve() {
+        harness.setLife(player1, 20);
+        Permanent source = addCreatureReady(player2, new AncientKavu());
+        castSamiteMinistration();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, source.getId());
+
+        source.setAttacking(true);
+        resolveCombat(player2);
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        harness.assertLife(player1, 23);
+    }
+
+    @Test
+    void usesTheSourcesColorWhenDamageIsPrevented() {
+        harness.setLife(player1, 20);
+        Permanent source = addCreatureReady(player2, new AncientKavu());
+        castSamiteMinistration();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, source.getId());
+
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+
+        source.setAttacking(true);
+        resolveCombat(player2);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
