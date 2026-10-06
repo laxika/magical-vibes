@@ -20,8 +20,7 @@ class ShivanMeteorTest extends BaseCardTest {
 
     @Test
     void dealsThirteenDamageToTargetCreature() {
-        harness.addToBattlefield(player2, new BloodKnight());
-        UUID targetId = harness.getPermanentId(player2, "Blood Knight");
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new BloodKnight()).getId();
         harness.setHand(player1, List.of(new ShivanMeteor()));
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -88,6 +87,62 @@ class ShivanMeteorTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(card);
         assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+    }
+
+    @Test
+    void suspendRemovesCountersOnlyDuringOwnersUpkeep() {
+        ShivanMeteor card = suspendCard();
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 2);
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 1);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
+    }
+
+    @Test
+    void decliningSuspendCastLeavesCardExiledWithoutCounters() {
+        harness.addToBattlefield(player2, new BloodKnight());
+        ShivanMeteor card = suspendCard();
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
+        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        harness.assertOnBattlefield(player2, "Blood Knight");
+        harness.assertNotInGraveyard(player1, "Shivan Meteor");
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
+    }
+
+    @Test
+    void canTargetCreatureControlledByCaster() {
+        UUID targetId = harness.addToBattlefieldAndReturn(player1, new BloodKnight()).getId();
+        harness.setHand(player1, List.of(new ShivanMeteor()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castAndResolveSorcery(player1, 0, targetId);
+
+        harness.assertNotOnBattlefield(player1, "Blood Knight");
+        harness.assertInGraveyard(player1, "Blood Knight");
+        harness.assertInGraveyard(player1, "Shivan Meteor");
     }
 
     private ShivanMeteor suspendCard() {
