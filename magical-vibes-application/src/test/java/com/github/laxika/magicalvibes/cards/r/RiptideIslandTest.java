@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.model.planar.PlanechaseState;
 import com.github.laxika.magicalvibes.service.planar.PlanechaseService;
-import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
@@ -43,9 +42,7 @@ class RiptideIslandTest extends BaseCardTest {
     void planeswalkToAndUpkeepCreateTwoColorlessSlivers() {
         triggerPlaneswalkTo();
 
-        harness.forceStep(TurnStep.UPKEEP);
-        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(StepTriggerService.class)
-                .handleUpkeepTriggers(gd));
+        advanceToUpkeep(player1);
         harness.passBothPriorities();
 
         List<Permanent> tokens = findPermanents(player1, "Sliver");
@@ -84,6 +81,51 @@ class RiptideIslandTest extends BaseCardTest {
         assertThat(ownSliver.getEffectivePower()).isEqualTo(1);
         assertThat(ownSliver.getEffectiveToughness()).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, ownSliver, Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    void upkeepCreatesTokensForTheNewActivePlayer() {
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player2, "Sliver")).isEqualTo(2);
+        assertThat(countPermanents(player1, "Sliver")).isZero();
+    }
+
+    @Test
+    void chaosCountsSliversAtResolutionAndLocksTheBonusAndRecipients() {
+        Permanent first = addCreatureReady(player1, new MetallicSliver());
+        harness.inMutationScope(() -> planar.chaos(gd));
+        Permanent second = addCreatureReady(player1, new MetallicSliver());
+        harness.passBothPriorities();
+
+        assertThat(first.getEffectivePower()).isEqualTo(3);
+        assertThat(first.getEffectiveToughness()).isEqualTo(3);
+        assertThat(second.getEffectivePower()).isEqualTo(3);
+        assertThat(second.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, second, Keyword.HASTE)).isTrue();
+
+        Permanent lateArrival = addCreatureReady(player1, new MetallicSliver());
+        assertThat(lateArrival.getEffectivePower()).isEqualTo(1);
+        assertThat(lateArrival.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, lateArrival, Keyword.HASTE)).isFalse();
+        assertThat(first.getEffectivePower()).isEqualTo(3);
+
+        gd.playerBattlefields.get(player1.getId()).remove(second);
+        assertThat(first.getEffectivePower()).isEqualTo(3);
+        assertThat(first.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, first, Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    void chaosWithNoSliversDoesNotAffectSliversEnteringLater() {
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.passBothPriorities();
+
+        Permanent sliver = addCreatureReady(player1, new MetallicSliver());
+        assertThat(sliver.getEffectivePower()).isEqualTo(1);
+        assertThat(sliver.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, sliver, Keyword.HASTE)).isFalse();
     }
 
     private void triggerPlaneswalkTo() {
