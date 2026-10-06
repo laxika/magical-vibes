@@ -111,4 +111,55 @@ class ReshapeTest extends BaseCardTest {
         harness.assertInHand(player1, "Reshape");
         harness.assertOnBattlefield(player1, "Crazed Goblin");
     }
+    @Test
+    @DisplayName("Reshape may fail to find even when a matching artifact exists")
+    void mayDeclineToFindMatchingArtifact() {
+        Permanent sacrificedArtifact = harness.addToBattlefieldAndReturn(player1, new DarksteelIngot());
+        DarksteelCitadel matchingArtifact = new DarksteelCitadel();
+        harness.setLibrary(player1, List.of(matchingArtifact));
+        harness.setHand(player1, List.of(new Reshape()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castSorceryWithSacrifice(player1, 0, sacrificedArtifact.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        harness.assertNotOnBattlefield(player1, "Darksteel Citadel");
+        harness.assertInGraveyard(player1, "Darksteel Ingot");
+        harness.assertInGraveyard(player1, "Reshape");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(matchingArtifact);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Reshape cannot sacrifice an opponent's artifact")
+    void cannotSacrificeOpponentsArtifact() {
+        harness.addToBattlefield(player1, new DarksteelIngot());
+        Permanent opponentsArtifact = harness.addToBattlefieldAndReturn(player2, new DarksteelPendant());
+        harness.setHand(player1, List.of(new Reshape()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        assertThatThrownBy(() -> harness.castSorceryWithSacrifice(player1, 0, opponentsArtifact.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Reshape");
+        harness.assertOnBattlefield(player1, "Darksteel Ingot");
+        harness.assertOnBattlefield(player2, "Darksteel Pendant");
+    }
+
+    @Test
+    @DisplayName("Reshape cannot sacrifice a nonartifact even when an artifact is available")
+    void cannotSacrificeNonartifact() {
+        harness.addToBattlefield(player1, new DarksteelIngot());
+        Permanent nonartifact = harness.addToBattlefieldAndReturn(player1, new CrazedGoblin());
+        harness.setHand(player1, List.of(new Reshape()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        assertThatThrownBy(() -> harness.castSorceryWithSacrifice(player1, 0, nonartifact.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Reshape");
+        harness.assertOnBattlefield(player1, "Darksteel Ingot");
+        harness.assertOnBattlefield(player1, "Crazed Goblin");
+    }
 }
