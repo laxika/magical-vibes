@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.f.FaerieMiscreant;
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SoulWarden;
+import com.github.laxika.magicalvibes.cards.s.StoneworkPackbeast;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({RavagersMace.class, BoggartBrute.class, FaerieMiscreant.class,
-        FugitiveWizard.class, GrizzlyBears.class, SoulWarden.class})
+        FugitiveWizard.class, GrizzlyBears.class, SoulWarden.class, StoneworkPackbeast.class})
 class RavagersMaceTest extends BaseCardTest {
 
     @Test
@@ -60,6 +61,90 @@ class RavagersMaceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(mace.getAttachedTo()).isEqualTo(creature.getId());
+    }
+
+    @Test
+    @DisplayName("An empty party still grants menace without a power bonus")
+    void emptyPartyStillGrantsMenace() {
+        Permanent mace = harness.addToBattlefieldAndReturn(player1, new RavagersMace());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        mace.setAttachedTo(creature.getId());
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.MENACE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Each multitype creature fills only one party role and the bonus updates")
+    void multitypeCreaturesEachFillOnlyOneRole() {
+        Permanent mace = harness.addToBattlefieldAndReturn(player1, new RavagersMace());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new StoneworkPackbeast());
+        mace.setAttachedTo(creature.getId());
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
+
+        for (int i = 0; i < 3; i++) {
+            harness.addToBattlefield(player1, new StoneworkPackbeast());
+        }
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(6);
+
+        harness.addToBattlefield(player1, new StoneworkPackbeast());
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(6);
+
+        gd.playerBattlefields.get(player1.getId()).removeIf(permanent ->
+                !permanent.getId().equals(mace.getId()) && !permanent.getId().equals(creature.getId()));
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("The party bonus uses the Equipment controller even on an opposing creature")
+    void partyBonusUsesEquipmentController() {
+        Permanent mace = harness.addToBattlefieldAndReturn(player1, new RavagersMace());
+        harness.addToBattlefield(player1, new StoneworkPackbeast());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new StoneworkPackbeast());
+        harness.addToBattlefield(player2, new StoneworkPackbeast());
+        mace.setAttachedTo(creature.getId());
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.MENACE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Reequipping moves both the party bonus and menace to the new creature")
+    void reequippingMovesBonuses() {
+        Permanent mace = harness.addToBattlefieldAndReturn(player1, new RavagersMace());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new StoneworkPackbeast());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new StoneworkPackbeast());
+        mace.setAttachedTo(first.getId());
+        addMaceMana(2);
+
+        harness.activateAbility(player1, 0, null, second.getId());
+        harness.passBothPriorities();
+
+        assertThat(mace.getAttachedTo()).isEqualTo(second.getId());
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, first, Keyword.MENACE)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, second, Keyword.MENACE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("The enters trigger leaves the Equipment unattached if its target leaves")
+    void entersTriggerDoesNotAttachWhenTargetLeaves() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new StoneworkPackbeast());
+        harness.setHand(player1, List.of(new RavagersMace()));
+        addMaceMana(1);
+
+        harness.castArtifact(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player1.getId()).remove(creature);
+        gd.playerGraveyards.get(player1.getId()).add(creature.getCard());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Ravager's Mace").getAttachedTo()).isNull();
     }
 
     private void addFullParty() {
