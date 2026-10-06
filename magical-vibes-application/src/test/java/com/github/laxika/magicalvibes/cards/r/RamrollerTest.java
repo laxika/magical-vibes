@@ -3,9 +3,8 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,7 +12,9 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThatCode;
 
+@CardUsed({Ramroller.class, Ornithopter.class, GrizzlyBears.class})
 class RamrollerTest extends BaseCardTest {
 
     @Test
@@ -86,22 +87,48 @@ class RamrollerTest extends BaseCardTest {
     @Test
     @DisplayName("Declaring no attackers while Ramroller can attack throws 'must attack'")
     void mustAttackWhenAble() {
-        addReadyRamroller(player1);
+        addCreatureReady(player1, new Ramroller());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of()))
+        assertThatThrownBy(() -> declareAttackers(List.of()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("must attack");
     }
 
-    private Permanent addReadyRamroller(Player player) {
-        Permanent perm = new Permanent(new Ramroller());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    @Test
+    @DisplayName("A tapped Ramroller is not required to attack")
+    void tappedRamrollerNeedNotAttack() {
+        Permanent ramroller = addCreatureReady(player1, new Ramroller());
+        ramroller.setTapped(true);
+
+        assertThatCode(() -> declareAttackers(List.of())).doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Ramroller is not required to attack")
+    void summoningSickRamrollerNeedNotAttack() {
+        harness.addToBattlefield(player1, new Ramroller());
+
+        assertThatCode(() -> declareAttackers(List.of())).doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("Declaring Ramroller as an attacker satisfies its requirement")
+    void attackingSatisfiesRequirement() {
+        Permanent ramroller = addCreatureReady(player1, new Ramroller());
+
+        assertThatCode(() -> declareAttackersAndPrepareBlockers(List.of(0))).doesNotThrowAnyException();
+        assertThat(ramroller.isAttacking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Multiple other artifacts grant only one +2/+0 bonus")
+    void boostDoesNotStackForMultipleArtifacts() {
+        harness.addToBattlefield(player1, new Ramroller());
+        harness.addToBattlefield(player1, new Ornithopter());
+        harness.addToBattlefield(player1, new Ornithopter());
+
+        Permanent ramroller = findPermanent(player1, "Ramroller");
+        assertThat(gqs.getEffectivePower(gd, ramroller)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, ramroller)).isEqualTo(3);
     }
 }
