@@ -1,10 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.e.ExpeditionEnvoy;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -17,56 +14,92 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({RecklessCohort.class, ExpeditionEnvoy.class})
 class RecklessCohortTest extends BaseCardTest {
 
-    private void addReady(Card card, Player player) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-    }
-
-    private void beginDeclareAttackers() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-    }
-
     @Test
     void mustAttackWithoutAnotherAlly() {
-        addReady(new RecklessCohort(), player1);
-        beginDeclareAttackers();
+        addCreatureReady(player1, new RecklessCohort());
 
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of()))
+        assertThatThrownBy(() -> declareAttackers(List.of()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("must attack");
     }
 
     @Test
     void anotherAllyLetsItStayHome() {
-        addReady(new RecklessCohort(), player1);
-        addReady(new ExpeditionEnvoy(), player1);
-        beginDeclareAttackers();
+        addCreatureReady(player1, new RecklessCohort());
+        addCreatureReady(player1, new ExpeditionEnvoy());
 
-        assertThatCode(() -> gs.declareAttackers(gd, player1, List.of())).doesNotThrowAnyException();
+        assertThatCode(() -> declareAttackers(List.of())).doesNotThrowAnyException();
     }
 
     @Test
     void theCohortDoesNotCountAsAnotherAlly() {
-        addReady(new RecklessCohort(), player1);
-        beginDeclareAttackers();
+        addCreatureReady(player1, new RecklessCohort());
 
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of()))
+        assertThatThrownBy(() -> declareAttackers(List.of()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("must attack");
     }
 
     @Test
     void opponentsAllyDoesNotLetItStayHome() {
-        addReady(new RecklessCohort(), player1);
-        addReady(new ExpeditionEnvoy(), player2);
-        beginDeclareAttackers();
+        addCreatureReady(player1, new RecklessCohort());
+        addCreatureReady(player2, new ExpeditionEnvoy());
 
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of()))
+        assertThatThrownBy(() -> declareAttackers(List.of()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("must attack");
+    }
+
+    @Test
+    void twoCohortsCanBothStayHome() {
+        addCreatureReady(player1, new RecklessCohort());
+        addCreatureReady(player1, new RecklessCohort());
+
+        assertThatCode(() -> declareAttackers(List.of())).doesNotThrowAnyException();
+    }
+
+    @Test
+    void tappedCohortIsNotRequiredToAttack() {
+        Permanent cohort = addCreatureReady(player1, new RecklessCohort());
+        cohort.setTapped(true);
+
+        assertThatCode(() -> declareAttackers(List.of())).doesNotThrowAnyException();
+    }
+
+    @Test
+    void summoningSickCohortIsNotRequiredToAttack() {
+        Permanent cohort = addCreatureReady(player1, new RecklessCohort());
+        cohort.setSummoningSick(true);
+
+        assertThatCode(() -> declareAttackers(List.of())).doesNotThrowAnyException();
+    }
+
+    @Test
+    void tappedSummoningSickAllyStillLetsCohortStayHome() {
+        addCreatureReady(player1, new RecklessCohort());
+        Permanent ally = addCreatureReady(player1, new ExpeditionEnvoy());
+        ally.setTapped(true);
+        ally.setSummoningSick(true);
+
+        assertThatCode(() -> declareAttackers(List.of())).doesNotThrowAnyException();
+    }
+
+    @Test
+    void mustAttackAfterOtherAllyLeavesBattlefield() {
+        addCreatureReady(player1, new RecklessCohort());
+        Permanent ally = addCreatureReady(player1, new ExpeditionEnvoy());
+        gd.playerBattlefields.get(player1.getId()).remove(ally);
+        gd.playerGraveyards.get(player1.getId()).add(ally.getCard());
+
+        assertThatThrownBy(() -> declareAttackers(List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must attack");
+    }
+
+    @Test
+    void canSatisfyRequirementByAttacking() {
+        addCreatureReady(player1, new RecklessCohort());
+
+        assertThatCode(() -> declareAttackers(List.of(0))).doesNotThrowAnyException();
     }
 }
