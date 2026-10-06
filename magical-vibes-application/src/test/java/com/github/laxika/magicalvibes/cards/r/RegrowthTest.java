@@ -17,6 +17,36 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class RegrowthTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Returns only the chosen card when multiple cards are in your graveyard")
+    void returnsOnlyChosenCard() {
+        Card unchosen = new GrizzlyBears();
+        Card target = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(unchosen, target));
+        harness.setHand(player1, List.of(new Regrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(target);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(unchosen).doesNotContain(target);
+        harness.assertInGraveyard(player1, "Regrowth");
+    }
+
+    @Test
+    @DisplayName("Cannot cast without a graveyard target")
+    void cannotCastWithoutTarget() {
+        harness.setGraveyard(player1, List.of());
+        harness.setHand(player1, List.of(new Regrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Regrowth");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Returns any target card from your graveyard to your hand")
     void returnsTargetCardFromOwnGraveyardToHand() {
         Card target = new GrizzlyBears();
