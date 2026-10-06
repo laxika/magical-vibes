@@ -74,6 +74,50 @@ class ShatteringPulseTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Shattering Pulse can destroy its controller's artifact")
+    void destroysOwnArtifact() {
+        harness.addToBattlefield(player1, new Spellbook());
+        harness.setHand(player1, List.of(new ShatteringPulse()));
+        addMana(2);
+
+        UUID targetId = harness.getPermanentId(player1, "Spellbook");
+        harness.castAndResolveInstant(player1, 0, targetId);
+
+        harness.assertNotOnBattlefield(player1, "Spellbook");
+        harness.assertInGraveyard(player1, "Spellbook");
+        harness.assertInGraveyard(player1, "Shattering Pulse");
+    }
+
+    @Test
+    @DisplayName("Buyback requires three additional mana")
+    void cannotPayBuybackWithOnlyFourMana() {
+        harness.addToBattlefield(player2, new Spellbook());
+        harness.setHand(player1, List.of(new ShatteringPulse()));
+        addMana(4);
+
+        UUID targetId = harness.getPermanentId(player2, "Spellbook");
+        assertThatThrownBy(() -> harness.castInstantWithBuyback(player1, 0, targetId))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Shattering Pulse");
+        harness.assertOnBattlefield(player2, "Spellbook");
+    }
+
+    @Test
+    @DisplayName("Buyback can be declined when enough mana is available")
+    void buybackIsOptionalWithEnoughMana() {
+        harness.addToBattlefield(player2, new Spellbook());
+        harness.setHand(player1, List.of(new ShatteringPulse()));
+        addMana(5);
+
+        UUID targetId = harness.getPermanentId(player2, "Spellbook");
+        harness.castAndResolveInstant(player1, 0, targetId);
+
+        harness.assertInGraveyard(player2, "Spellbook");
+        harness.assertInGraveyard(player1, "Shattering Pulse");
+        harness.assertNotInHand(player1, "Shattering Pulse");
+    }
     private void addMana(int amount) {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, amount - 1);
