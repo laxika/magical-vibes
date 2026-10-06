@@ -18,13 +18,11 @@ class SavageOffensiveTest extends BaseCardTest {
 
     @Test
     void withoutKickerGrantsFirstStrikeButNotThePump() {
-        harness.addToBattlefield(player1, new HoodedKavu());
-        harness.addToBattlefield(player2, new HoodedKavu());
+        Permanent ownKavu = harness.addToBattlefieldAndReturn(player1, new HoodedKavu());
+        Permanent opponentKavu = harness.addToBattlefieldAndReturn(player2, new HoodedKavu());
         harness.castFromHand(player1, new SavageOffensive(), "{1}{R}");
         harness.passBothPriorities();
 
-        Permanent ownKavu = findPermanent(player1, "Hooded Kavu");
-        Permanent opponentKavu = findPermanent(player2, "Hooded Kavu");
         assertThat(gqs.hasKeyword(gd, ownKavu, Keyword.FIRST_STRIKE)).isTrue();
         assertThat(gqs.getEffectivePower(gd, ownKavu)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, ownKavu)).isEqualTo(2);
@@ -34,8 +32,8 @@ class SavageOffensiveTest extends BaseCardTest {
 
     @Test
     void withKickerAlsoGivesOwnCreaturesPlusOnePlusOne() {
-        harness.addToBattlefield(player1, new HoodedKavu());
-        harness.addToBattlefield(player2, new HoodedKavu());
+        Permanent ownKavu = harness.addToBattlefieldAndReturn(player1, new HoodedKavu());
+        Permanent opponentKavu = harness.addToBattlefieldAndReturn(player2, new HoodedKavu());
         harness.setHand(player1, List.of(new SavageOffensive()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -44,8 +42,6 @@ class SavageOffensiveTest extends BaseCardTest {
         harness.castKickedSorcery(player1, 0);
         harness.passBothPriorities();
 
-        Permanent ownKavu = findPermanent(player1, "Hooded Kavu");
-        Permanent opponentKavu = findPermanent(player2, "Hooded Kavu");
         assertThat(gqs.hasKeyword(gd, ownKavu, Keyword.FIRST_STRIKE)).isTrue();
         assertThat(gqs.getEffectivePower(gd, ownKavu)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, ownKavu)).isEqualTo(3);
@@ -55,7 +51,7 @@ class SavageOffensiveTest extends BaseCardTest {
 
     @Test
     void effectsWearOffAtCleanup() {
-        harness.addToBattlefield(player1, new HoodedKavu());
+        Permanent kavu = harness.addToBattlefieldAndReturn(player1, new HoodedKavu());
         harness.setHand(player1, List.of(new SavageOffensive()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -67,9 +63,44 @@ class SavageOffensiveTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        Permanent kavu = findPermanent(player1, "Hooded Kavu");
         assertThat(gqs.hasKeyword(gd, kavu, Keyword.FIRST_STRIKE)).isFalse();
         assertThat(gqs.getEffectivePower(gd, kavu)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, kavu)).isEqualTo(2);
+    }
+
+    @Test
+    void creaturesEnteringAfterResolutionDoNotReceiveEitherEffect() {
+        Permanent existing = harness.addToBattlefieldAndReturn(player1, new HoodedKavu());
+        harness.setHand(player1, List.of(new SavageOffensive()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castKickedSorcery(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent newcomer = harness.enterBattlefieldAndReturn(player1, new HoodedKavu());
+
+        assertThat(gqs.hasKeyword(gd, existing, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, existing)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, existing)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, newcomer, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, newcomer)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, newcomer)).isEqualTo(2);
+    }
+
+    @Test
+    void creaturesEnteringBeforeResolutionReceiveBothEffects() {
+        harness.setHand(player1, List.of(new SavageOffensive()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castKickedSorcery(player1, 0);
+
+        Permanent newcomer = harness.enterBattlefieldAndReturn(player1, new HoodedKavu());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, newcomer, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, newcomer)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, newcomer)).isEqualTo(3);
     }
 }
