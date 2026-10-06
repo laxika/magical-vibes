@@ -126,4 +126,52 @@ class SilklashSpiderTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Storm Crow");
     }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Spider can activate its ability")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent spider = harness.addToBattlefieldAndReturn(player1, new SilklashSpider());
+        spider.setSummoningSick(true);
+        spider.setTapped(true);
+        addCreatureReady(player2, new StormCrow());
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.activateAbility(player1, 0, 2, null);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Storm Crow");
+        harness.assertOnBattlefield(player1, "Silklash Spider");
+    }
+
+    @Test
+    @DisplayName("Repeated activations accumulate damage on surviving flyers")
+    void repeatedActivationsAccumulateDamage() {
+        addSpider(player1);
+        addCreatureReady(player2, new StormCrow());
+        harness.addMana(player1, ManaColor.GREEN, 6);
+
+        harness.activateAbility(player1, 0, 1, null);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Storm Crow");
+
+        harness.activateAbility(player1, 0, 1, null);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Storm Crow");
+        harness.assertOnBattlefield(player1, "Silklash Spider");
+    }
+
+    @Test
+    @DisplayName("Ability affects flyers that enter after activation but before resolution")
+    void includesFlyersEnteringBeforeResolution() {
+        addSpider(player1);
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.activateAbility(player1, 0, 2, null);
+        harness.addToBattlefield(player2, new StormCrow());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Storm Crow");
+        harness.assertOnBattlefield(player1, "Silklash Spider");
+    }
 }
