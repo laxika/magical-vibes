@@ -113,6 +113,40 @@ class ShukoTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, unequippedCreature)).isEqualTo(3);
     }
 
+    @Test
+    @DisplayName("Equipping the already equipped creature does not stack the boost")
+    void canEquipAlreadyEquippedCreature() {
+        Permanent shuko = addShukoReady(player1);
+        Permanent creature = addCreatureReady(player1, new FrostOgre());
+
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(shuko.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("An equip target leaving before resolution preserves the previous attachment")
+    void missingEquipTargetPreservesPreviousAttachment() {
+        Permanent shuko = addShukoReady(player1);
+        Permanent firstCreature = addCreatureReady(player1, new FrostOgre());
+        Permanent secondCreature = addCreatureReady(player1, new FrostOgre());
+        shuko.setAttachedTo(firstCreature.getId());
+
+        harness.activateAbility(player1, 0, null, secondCreature.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(secondCreature);
+        gd.playerGraveyards.get(player1.getId()).add(secondCreature.getCard());
+        harness.passBothPriorities();
+
+        assertThat(shuko.getAttachedTo()).isEqualTo(firstCreature.getId());
+        assertThat(gqs.getEffectivePower(gd, firstCreature)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, firstCreature)).isEqualTo(3);
+    }
+
     private Permanent addShukoReady(Player player) {
         Permanent permanent = harness.addToBattlefieldAndReturn(player, new Shuko());
         permanent.setSummoningSick(false);
