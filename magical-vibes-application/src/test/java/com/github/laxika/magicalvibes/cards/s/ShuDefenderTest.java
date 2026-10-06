@@ -108,6 +108,44 @@ class ShuDefenderTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    @DisplayName("The blocking bonus applies only when the trigger resolves and only to its source")
+    void bonusWaitsForResolutionAndAffectsOnlyBlockingDefender() {
+        Permanent blocker = addDefenderReady(player2);
+        Permanent nonblocker = addDefenderReady(player2);
+        addAttackerReady(player1);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.getToughnessModifier()).isZero();
+        assertThat(nonblocker.getToughnessModifier()).isZero();
+
+        resolveAllTriggers();
+
+        assertThat(blocker.getToughnessModifier()).isEqualTo(2);
+        assertThat(nonblocker.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("A departed source's trigger does not boost a new permanent represented by the same card")
+    void departedSourceDoesNotBoostReplacementPermanent() {
+        Permanent blocker = addDefenderReady(player2);
+        addAttackerReady(player1);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        assertThat(gd.stack).hasSize(1);
+
+        gd.playerBattlefields.get(player2.getId()).remove(blocker);
+        Permanent returned = addCreatureReady(player2, blocker.getCard());
+
+        resolveAllTriggers();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(returned.getToughnessModifier()).isZero();
+    }
+
     private Permanent addDefenderReady(Player player) {
         return addCreatureReady(player, new ShuDefender());
     }
