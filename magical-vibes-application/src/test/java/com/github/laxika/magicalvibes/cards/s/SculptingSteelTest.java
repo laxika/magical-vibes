@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.cards.c.CobaltGolem;
 import com.github.laxika.magicalvibes.cards.i.IcyManipulator;
 import com.github.laxika.magicalvibes.cards.w.WeldingJar;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -20,7 +22,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({SculptingSteel.class, IcyManipulator.class, AuriokBladewarden.class, CobaltGolem.class,
-        WeldingJar.class, Shatter.class, BoshIronGolem.class})
+        WeldingJar.class, Shatter.class, BoshIronGolem.class, SolemnSimulacrum.class})
 class SculptingSteelTest extends BaseCardTest {
 
     @Test
@@ -179,6 +181,71 @@ class SculptingSteelTest extends BaseCardTest {
 
         Permanent steelPerm = findSculptingSteel();
         assertThat(steelPerm.getCard().getName()).isEqualTo("Icy Manipulator");
+    }
+
+    @Test
+    @DisplayName("Copying does not copy tapped status, counters, or granted flying")
+    void doesNotCopyStatusCountersOrGrantedAbilities() {
+        Permanent golem = harness.addToBattlefieldAndReturn(player1, new CobaltGolem());
+        golem.tap();
+        golem.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(gqs.hasKeyword(gd, golem, Keyword.FLYING)).isTrue();
+
+        harness.setHand(player1, List.of(new SculptingSteel()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, golem.getId());
+
+        Permanent copy = findSculptingSteel();
+        assertThat(copy.isTapped()).isFalse();
+        assertThat(copy.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.hasKeyword(gd, copy, Keyword.FLYING)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, copy)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, copy)).isEqualTo(3);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+        assertThat(gqs.hasKeyword(gd, copy, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Copied enter and death abilities trigger for Sculpting Steel's controller")
+    void copiedEnterAndDeathAbilitiesTrigger() {
+        Permanent original = harness.addToBattlefieldAndReturn(player2, new SolemnSimulacrum());
+        harness.setLibrary(player1, List.of(new WeldingJar()));
+        harness.setHand(player1, List.of(new SculptingSteel()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, original.getId());
+
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, false);
+
+        Permanent copy = findSculptingSteel();
+        harness.setHand(player1, List.of(new Shatter()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, copy.getId());
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInHand(player1, "Welding Jar");
+        harness.assertInGraveyard(player1, "Sculpting Steel");
+        harness.assertOnBattlefield(player2, "Solemn Simulacrum");
     }
 
     private Permanent findSculptingSteel() {
