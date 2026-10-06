@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -9,6 +10,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RekindlingPhoenix.class, WrathOfGod.class, GrizzlyBears.class, Shock.class})
 class RekindlingPhoenixTest extends BaseCardTest {
 
     @Test
@@ -37,8 +40,7 @@ class RekindlingPhoenixTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         gd.turnNumber = 2;
         harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.UPKEEP);
 
         PendingInteraction.MultiGraveyardChoice choice = (PendingInteraction.MultiGraveyardChoice)
                 gd.interaction.activeInteraction();
@@ -62,12 +64,88 @@ class RekindlingPhoenixTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         gd.turnNumber = 2;
         harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.UPKEEP);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertOnBattlefield(player1, "Elemental");
         harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Removing the Elemental in response does not stop the Phoenix returning")
+    void phoenixReturnsWhenTokenDiesInResponse() {
+        killPhoenix();
+        beginTokenUpkeep();
+        choosePhoenix();
+
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.ensurePriority(player2);
+        harness.castAndResolveInstant(player2, 0, harness.getPermanentId(player1, "Elemental"));
+        harness.assertNotOnBattlefield(player1, "Elemental");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Rekindling Phoenix");
+        harness.assertNotInGraveyard(player1, "Rekindling Phoenix");
+        assertThat(findPermanents(player1, "Rekindling Phoenix").getFirst().hasKeyword(Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("The returned Phoenix loses its granted haste after the turn ends")
+    void returnedPhoenixHasteExpires() {
+        killPhoenix();
+        beginTokenUpkeep();
+        choosePhoenix();
+        harness.passBothPriorities();
+        assertThat(findPermanents(player1, "Rekindling Phoenix").getFirst().hasKeyword(Keyword.HASTE)).isTrue();
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
+
+        harness.assertOnBattlefield(player1, "Rekindling Phoenix");
+        assertThat(findPermanents(player1, "Rekindling Phoenix").getFirst().hasKeyword(Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("An illegal graveyard target leaves the Elemental on the battlefield")
+    void illegalTargetDoesNotSacrificeToken() {
+        killPhoenix();
+        beginTokenUpkeep();
+        choosePhoenix();
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Elemental");
+        harness.assertNotOnBattlefield(player1, "Rekindling Phoenix");
+    }
+
+    @Test
+    @DisplayName("The Elemental can return another card named Rekindling Phoenix")
+    void tokenCanReturnDifferentPhoenix() {
+        killPhoenix();
+        Card otherPhoenix = new RekindlingPhoenix();
+        harness.setGraveyard(player1, List.of(otherPhoenix));
+        beginTokenUpkeep();
+        choosePhoenix();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Elemental");
+        assertThat(findPermanents(player1, "Rekindling Phoenix").getFirst().getCard().getId())
+                .isEqualTo(otherPhoenix.getId());
+        harness.assertNotInGraveyard(player1, "Rekindling Phoenix");
+    }
+
+    private void beginTokenUpkeep() {
+        harness.forceActivePlayer(player1);
+        gd.turnNumber = 2;
+        harness.forceStep(TurnStep.UNTAP);
+        harness.passUntil(TurnStep.UPKEEP);
+    }
+
+    private void choosePhoenix() {
+        PendingInteraction.MultiGraveyardChoice choice = (PendingInteraction.MultiGraveyardChoice)
+                gd.interaction.activeInteraction();
+        assertThat(choice).isNotNull();
+        harness.handleMultipleCardsChosen(player1, List.of(choice.cards().getFirst().getId()));
     }
 
     private void killPhoenix() {
@@ -77,8 +155,7 @@ class RekindlingPhoenixTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player2, List.of(new WrathOfGod()));
         harness.addMana(player2, ManaColor.WHITE, 4);
-        harness.getGameService().playCard(harness.getGameData(), player2, 0, 0, null, null);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player2, 0, 0);
         harness.passBothPriorities();
     }
 }
