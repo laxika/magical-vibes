@@ -45,6 +45,62 @@ class ReplenishTest extends BaseCardTest {
     }
 
     @Test
+    void returnsMultipleEnchantmentsWhileLeavingUnattachableAura() {
+        Card first = new Sanctimony();
+        Card second = new Sanctimony();
+        Card aura = new PatternOfRebirth();
+        harness.setGraveyard(player1, List.of(first, aura, second));
+
+        castReplenish();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(permanent -> permanent.getCard().getId())
+                .contains(first.getId(), second.getId())
+                .doesNotContain(aura.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(aura).doesNotContain(first, second);
+    }
+
+    @Test
+    void choosesAttachmentsForEveryAuraBeforeAnyEnchantmentEnters() {
+        var firstCreature = harness.addToBattlefieldAndReturn(player1, new CapashenKnight());
+        var secondCreature = harness.addToBattlefieldAndReturn(player2, new CapashenKnight());
+        Card firstAura = new PatternOfRebirth();
+        Card secondAura = new PatternOfRebirth();
+        Card enchantment = new Sanctimony();
+        harness.setGraveyard(player1, List.of(firstAura, enchantment, secondAura));
+
+        castReplenish();
+        harness.handlePermanentChosen(player1, firstCreature.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactlyInAnyOrder(firstCreature.getId(), secondCreature.getId());
+        harness.assertNotOnBattlefield(player1, "Pattern of Rebirth");
+        harness.assertNotOnBattlefield(player1, "Sanctimony");
+
+        harness.handlePermanentChosen(player1, secondCreature.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().getId().equals(firstAura.getId()))
+                .singleElement().satisfies(permanent -> assertThat(permanent.getAttachedTo()).isEqualTo(firstCreature.getId()));
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().getId().equals(secondAura.getId()))
+                .singleElement().satisfies(permanent -> assertThat(permanent.getAttachedTo()).isEqualTo(secondCreature.getId()));
+        harness.assertOnBattlefield(player1, "Sanctimony");
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(firstAura, secondAura, enchantment);
+    }
+
+    @Test
+    void resolvesWithAnEmptyGraveyard() {
+        harness.setGraveyard(player1, List.of());
+
+        castReplenish();
+
+        harness.assertInGraveyard(player1, "Replenish");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Returns all non-Aura enchantment cards from your graveyard to the battlefield")
     void returnsAllEnchantments() {
         harness.forceActivePlayer(player1);
