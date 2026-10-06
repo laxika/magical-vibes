@@ -25,8 +25,7 @@ class ReturnToBattleTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ReturnToBattle()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castSorcery(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, creature.getId());
 
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getId().equals(creature.getId()));
         assertThat(gd.playerGraveyards.get(player1.getId())).noneMatch(c -> c.getId().equals(creature.getId()));
@@ -41,8 +40,7 @@ class ReturnToBattleTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ReturnToBattle()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castSorcery(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, creature.getId());
 
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getId().equals(creature.getId()));
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -74,6 +72,17 @@ class ReturnToBattleTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, creature.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("your graveyard");
+    }
+
+    @Test
+    @DisplayName("Return to Battle cannot be cast without a target even with a creature in the graveyard")
+    void cannotCastWithoutTarget() {
+        harness.setGraveyard(player1, List.of(new ShuFootSoldiers()));
+        harness.setHand(player1, List.of(new ReturnToBattle()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
