@@ -33,7 +33,8 @@ class SkirkMarauderTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getMarkedDamage()).isEqualTo(2);
+        harness.assertNotOnBattlefield(player2, "Branchsnap Lorian");
+        harness.assertInGraveyard(player2, "Branchsnap Lorian");
     }
 
     @Test
@@ -78,6 +79,70 @@ class SkirkMarauderTest extends BaseCardTest {
 
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    void castingFaceDownDoesNotTriggerDamage() {
+        castFaceDown();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void castingFaceUpDoesNotTriggerDamage() {
+        harness.castFromHand(player1, new SkirkMarauder(), "{1}{R}");
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Skirk Marauder");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void turningFaceUpCanDamageItsController() {
+        Permanent marauder = castFaceDown();
+
+        turnFaceUp(marauder);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .contains(player1.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void turningFaceUpCanTargetItself() {
+        Permanent marauder = castFaceDown();
+
+        turnFaceUp(marauder);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .contains(marauder.getId());
+        harness.handlePermanentChosen(player1, marauder.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Skirk Marauder");
+        harness.assertInGraveyard(player1, "Skirk Marauder");
+    }
+
+    @Test
+    void damageTriggerStillResolvesAfterSourceLeavesBattlefield() {
+        Permanent marauder = castFaceDown();
+
+        turnFaceUp(marauder);
+        harness.handlePermanentChosen(player1, player2.getId());
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(marauder);
+        harness.setGraveyard(player1, List.of(marauder.getCard()));
+        resolveAllTriggers();
 
         harness.assertLife(player2, 18);
     }
