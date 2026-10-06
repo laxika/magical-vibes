@@ -65,13 +65,59 @@ class RecruitInstructorTest extends BaseCardTest {
         harness.setHand(player1, List.of(new GiantGrowth(), new GiantGrowth()));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
-        harness.castInstant(player1, 0, instructor.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.castInstant(player1, 0, instructor.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, instructor.getId());
+        resolveAllTriggers();
+        harness.castAndResolveInstant(player1, 0, instructor.getId());
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Mouse")).isEqualTo(1);
+    }
+
+    @Test
+    void opponentTargetingDoesNotTriggerOrConsumeValiant() {
+        Permanent instructor = addCreatureReady(player1, new RecruitInstructor());
+        harness.setHand(player2, List.of(new MabelsMettle()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+
+        harness.castAndResolveInstant(player2, 0, instructor.getId());
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Mouse")).isZero();
+        assertThat(countPermanents(player2, "Mouse")).isZero();
+
+        harness.setHand(player1, List.of(new MabelsMettle()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player1, 0, instructor.getId());
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Mouse")).isEqualTo(1);
+    }
+
+    @Test
+    void eachInstructorTriggersWhenTheSameSpellTargetsBoth() {
+        Permanent first = addCreatureReady(player1, new RecruitInstructor());
+        Permanent second = addCreatureReady(player1, new RecruitInstructor());
+        harness.setHand(player1, List.of(new MabelsMettle()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castAndResolveInstant(player1, 0, List.of(first.getId(), second.getId()));
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Mouse")).isEqualTo(2);
+    }
+
+    @Test
+    void equipAbilityTriggersValiantBeforeItResolves() {
+        Permanent instructor = addCreatureReady(player1, new RecruitInstructor());
+        harness.addToBattlefield(player1, new Embercleave());
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.activateAbility(player1, 1, null, instructor.getId());
         harness.passBothPriorities();
 
         assertThat(countPermanents(player1, "Mouse")).isEqualTo(1);
+        resolveAllTriggers();
+        assertThat(gd.playerBattlefields.get(player1.getId()).get(1).getAttachedTo())
+                .isEqualTo(instructor.getId());
     }
 }
