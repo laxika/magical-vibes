@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,9 +13,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ShatteredAngel.class, Forest.class, Mountain.class})
 class ShatteredAngelTest extends BaseCardTest {
-
-    // ===== Opponent plays land — accept may =====
 
     @Test
     @DisplayName("Gains 3 life when accepting may after opponent plays a land")
@@ -41,8 +41,6 @@ class ShatteredAngelTest extends BaseCardTest {
         harness.assertLife(player1, 23);
     }
 
-    // ===== Opponent plays land — decline may =====
-
     @Test
     @DisplayName("No life gain when declining may after opponent plays a land")
     void noLifeGainWhenOpponentPlaysLandDecline() {
@@ -65,8 +63,6 @@ class ShatteredAngelTest extends BaseCardTest {
         harness.assertLife(player1, 20);
     }
 
-    // ===== Does not trigger for controller's own lands =====
-
     @Test
     @DisplayName("Does not trigger when controller plays a land")
     void doesNotTriggerForControllerLands() {
@@ -85,8 +81,6 @@ class ShatteredAngelTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         harness.assertLife(player1, 20);
     }
-
-    // ===== Two Shattered Angels trigger separately =====
 
     @Test
     @DisplayName("Two Shattered Angels each trigger separately when opponent plays a land")
@@ -109,18 +103,13 @@ class ShatteredAngelTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
-
-        // Resolve second MayEffect
-        harness.passBothPriorities();
+        resolveAllTriggers();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
         harness.assertLife(player1, 26);
     }
-
-    // ===== Triggers on each land separately =====
 
     @Test
     @DisplayName("Triggers each time opponent plays a land on separate turns")
@@ -154,5 +143,60 @@ class ShatteredAngelTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
         harness.assertLife(player1, 26);
+    }
+
+    @Test
+    @DisplayName("Triggers when an opponent's land enters without being played")
+    void triggersForLandEnteringWithoutLandPlay() {
+        harness.addToBattlefield(player1, new ShatteredAngel());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.enterBattlefieldAndReturn(player2, new Forest());
+
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 23);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("An already-triggered ability still gains life after the Angel leaves")
+    void triggerResolvesAfterAngelLeaves() {
+        var angel = harness.addToBattlefieldAndReturn(player1, new ShatteredAngel());
+        harness.setLife(player1, 20);
+
+        harness.enterBattlefieldAndReturn(player2, new Forest());
+        assertThat(gd.stack).hasSize(1);
+
+        gd.playerBattlefields.get(player1.getId()).remove(angel);
+        gd.playerGraveyards.get(player1.getId()).add(angel.getCard());
+
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 23);
+        harness.assertNotOnBattlefield(player1, "Shattered Angel");
+    }
+
+    @Test
+    @DisplayName("An opponent's nonland creature does not trigger the Angel")
+    void doesNotTriggerForNonlandEntering() {
+        harness.addToBattlefield(player1, new ShatteredAngel());
+        harness.setLife(player1, 20);
+
+        harness.enterBattlefieldAndReturn(player2, new ShatteredAngel());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        harness.assertLife(player1, 20);
     }
 }
