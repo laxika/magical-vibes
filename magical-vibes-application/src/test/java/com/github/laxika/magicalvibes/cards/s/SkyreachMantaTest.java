@@ -54,4 +54,48 @@ class SkyreachMantaTest extends BaseCardTest {
         Permanent manta = findPermanent(player1, "Skyreach Manta");
         assertThat(manta.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
+
+    @Test
+    void entirelyColorlessPaymentLeavesMantaWithZeroToughness() {
+        harness.setHand(player1, List.of(new SkyreachManta()));
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Skyreach Manta");
+        harness.assertInGraveyard(player1, "Skyreach Manta");
+    }
+
+    @Test
+    void enteringWithoutBeingCastDoesNotUseManaInPool() {
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        Permanent manta = harness.enterBattlefieldAndReturn(player1, new SkyreachManta());
+        assertThat(manta.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Skyreach Manta");
+        harness.assertInGraveyard(player1, "Skyreach Manta");
+    }
+
+    @Test
+    void manaAddedAfterCastingDoesNotChangeSunburst() {
+        harness.setHand(player1, List.of(new SkyreachManta()));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+        harness.castCreature(player1, 0);
+
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.passBothPriorities();
+
+        Permanent manta = findPermanent(player1, "Skyreach Manta");
+        assertThat(manta.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
 }
