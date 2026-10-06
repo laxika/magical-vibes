@@ -1,21 +1,22 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.j.JibbirikOmnivore;
+import com.github.laxika.magicalvibes.cards.t.TyroxSauridTyrant;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RegalImperiosaur.class, TyroxSauridTyrant.class, JibbirikOmnivore.class})
 class RegalImperiosaurTest extends BaseCardTest {
 
     @Test
     @DisplayName("Other Dinosaurs you control get +1/+1")
     void buffsOtherDinosaursYouControl() {
-        harness.addToBattlefield(player1, new RaptorCompanion());
-
-        Permanent dinosaur = findPermanent(player1, "Raptor Companion");
+        Permanent dinosaur = harness.addToBattlefieldAndReturn(player1, new TyroxSauridTyrant());
         int powerBefore = gqs.getEffectivePower(gd, dinosaur);
         int toughnessBefore = gqs.getEffectiveToughness(gd, dinosaur);
 
@@ -28,14 +29,11 @@ class RegalImperiosaurTest extends BaseCardTest {
     @Test
     @DisplayName("Regal Imperiosaur does not boost itself")
     void doesNotBoostItself() {
-        harness.addToBattlefield(player1, new RegalImperiosaur());
-
-        Permanent imperiosaur = findPermanent(player1, "Regal Imperiosaur");
+        Permanent imperiosaur = harness.addToBattlefieldAndReturn(player1, new RegalImperiosaur());
         int powerBefore = gqs.getEffectivePower(gd, imperiosaur);
         int toughnessBefore = gqs.getEffectiveToughness(gd, imperiosaur);
 
-        harness.addToBattlefield(player1, new RegalImperiosaur());
-        Permanent secondImperiosaur = findPermanents(player1, "Regal Imperiosaur").getLast();
+        Permanent secondImperiosaur = harness.addToBattlefieldAndReturn(player1, new RegalImperiosaur());
 
         assertThat(gqs.getEffectivePower(gd, imperiosaur)).isEqualTo(powerBefore + 1);
         assertThat(gqs.getEffectiveToughness(gd, imperiosaur)).isEqualTo(toughnessBefore + 1);
@@ -46,9 +44,7 @@ class RegalImperiosaurTest extends BaseCardTest {
     @Test
     @DisplayName("Regal Imperiosaur does not boost non-Dinosaurs")
     void doesNotBoostNonDinosaurs() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new JibbirikOmnivore());
         int powerBefore = gqs.getEffectivePower(gd, bears);
         int toughnessBefore = gqs.getEffectiveToughness(gd, bears);
 
@@ -61,9 +57,7 @@ class RegalImperiosaurTest extends BaseCardTest {
     @Test
     @DisplayName("Regal Imperiosaur does not boost an opponent's Dinosaurs")
     void doesNotBoostOpponentDinosaurs() {
-        harness.addToBattlefield(player2, new RaptorCompanion());
-
-        Permanent opponentDinosaur = findPermanent(player2, "Raptor Companion");
+        Permanent opponentDinosaur = harness.addToBattlefieldAndReturn(player2, new TyroxSauridTyrant());
         int powerBefore = gqs.getEffectivePower(gd, opponentDinosaur);
         int toughnessBefore = gqs.getEffectiveToughness(gd, opponentDinosaur);
 
@@ -76,10 +70,8 @@ class RegalImperiosaurTest extends BaseCardTest {
     @Test
     @DisplayName("The bonus is removed when Regal Imperiosaur leaves the battlefield")
     void bonusRemovedWhenSourceLeaves() {
-        harness.addToBattlefield(player1, new RaptorCompanion());
+        Permanent dinosaur = harness.addToBattlefieldAndReturn(player1, new TyroxSauridTyrant());
         harness.addToBattlefield(player1, new RegalImperiosaur());
-
-        Permanent dinosaur = findPermanent(player1, "Raptor Companion");
         int powerWithBonus = gqs.getEffectivePower(gd, dinosaur);
         int toughnessWithBonus = gqs.getEffectiveToughness(gd, dinosaur);
 
@@ -88,5 +80,24 @@ class RegalImperiosaurTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, dinosaur)).isEqualTo(powerWithBonus - 1);
         assertThat(gqs.getEffectiveToughness(gd, dinosaur)).isEqualTo(toughnessWithBonus - 1);
+    }
+
+    @Test
+    @DisplayName("A lone Regal Imperiosaur receives no bonus from its own ability")
+    void loneImperiosaurDoesNotBoostItself() {
+        Permanent imperiosaur = harness.addToBattlefieldAndReturn(player1, new RegalImperiosaur());
+
+        assertThat(gqs.getEffectivePower(gd, imperiosaur)).isEqualTo(imperiosaur.getCard().getPower());
+        assertThat(gqs.getEffectiveToughness(gd, imperiosaur)).isEqualTo(imperiosaur.getCard().getToughness());
+    }
+
+    @Test
+    @DisplayName("A Dinosaur entering after Regal Imperiosaur immediately receives the bonus")
+    void boostsDinosaursEnteringLater() {
+        harness.addToBattlefield(player1, new RegalImperiosaur());
+        Permanent dinosaur = harness.addToBattlefieldAndReturn(player1, new TyroxSauridTyrant());
+
+        assertThat(gqs.getEffectivePower(gd, dinosaur)).isEqualTo(dinosaur.getCard().getPower() + 1);
+        assertThat(gqs.getEffectiveToughness(gd, dinosaur)).isEqualTo(dinosaur.getCard().getToughness() + 1);
     }
 }
