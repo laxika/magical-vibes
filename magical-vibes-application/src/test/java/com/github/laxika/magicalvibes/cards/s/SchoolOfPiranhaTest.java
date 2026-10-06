@@ -65,4 +65,36 @@ class SchoolOfPiranhaTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "School of Piranha");
     }
+
+    @Test
+    @DisplayName("Declining an affordable upkeep payment still sacrifices the creature")
+    void declineAffordablePaymentSacrifices() {
+        harness.addToBattlefield(player1, new SchoolOfPiranha());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertNotOnBattlefield(player1, "School of Piranha");
+        harness.assertInGraveyard(player1, "School of Piranha");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Two colorless mana cannot pay the blue upkeep requirement")
+    void missingBlueManaSacrificesWithoutSpendingMana() {
+        harness.addToBattlefield(player1, new SchoolOfPiranha());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "School of Piranha");
+        harness.assertInGraveyard(player1, "School of Piranha");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+    }
 }
