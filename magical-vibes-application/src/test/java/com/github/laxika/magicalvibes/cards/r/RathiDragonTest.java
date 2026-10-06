@@ -18,8 +18,7 @@ class RathiDragonTest extends BaseCardTest {
 
     private void castRathiDragon() {
         harness.castFromHand(player1, new RathiDragon(), "{2}{R}{R}");
-        harness.passBothPriorities(); // resolve creature spell → ETB on stack
-        harness.passBothPriorities(); // resolve ETB
+        resolveAllTriggers();
     }
 
     @Test
@@ -128,5 +127,24 @@ class RathiDragonTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Rathi Dragon");
         harness.assertInGraveyard(player1, "Rathi Dragon");
         assertThat(countPermanents(player2, "Mountain")).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Tapped Mountains can be sacrificed to keep Rathi Dragon")
+    void acceptsTappedMountains() {
+        harness.addToBattlefield(player1, new Mountain());
+        harness.addToBattlefield(player1, new Mountain());
+        harness.tapPermanent(player1, 0);
+        harness.tapPermanent(player1, 1);
+        castRathiDragon();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(countPermanents(player1, "Mountain")).isZero();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card.getName().equals("Mountain"))
+                .hasSize(2);
+        harness.assertOnBattlefield(player1, "Rathi Dragon");
     }
 }
