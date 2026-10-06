@@ -23,8 +23,7 @@ class SetonsScoutTest extends BaseCardTest {
         addCreatureReady(player1, new AvenTrooper());
         Permanent scout = addCreatureReady(player2, new SetonsScout());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(scout.isBlocking()).isTrue();
@@ -73,6 +72,37 @@ class SetonsScoutTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, scout)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, scout)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Gains the boost immediately when its controller reaches threshold")
+    void gainsBoostWhenGraveyardReachesThreshold() {
+        harness.setGraveyard(player1, graveyardCards(6));
+        Permanent scout = harness.addToBattlefieldAndReturn(player1, new SetonsScout());
+
+        assertThat(gqs.getEffectivePower(gd, scout)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, scout)).isEqualTo(1);
+
+        harness.setGraveyard(player1, graveyardCards(7));
+
+        assertThat(gqs.getEffectivePower(gd, scout)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, scout)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Above threshold the boost remains +2/+2 and affects only the Scout")
+    void boostDoesNotScaleOrAffectOtherCreatures() {
+        harness.setGraveyard(player1, graveyardCards(10));
+        Permanent scout = harness.addToBattlefieldAndReturn(player1, new SetonsScout());
+        Permanent trooper = harness.addToBattlefieldAndReturn(player1, new AvenTrooper());
+        Permanent opposingScout = harness.addToBattlefieldAndReturn(player2, new SetonsScout());
+
+        assertThat(gqs.getEffectivePower(gd, scout)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, scout)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, trooper)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, trooper)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, opposingScout)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opposingScout)).isEqualTo(1);
     }
 
     private List<Card> graveyardCards(int count) {
