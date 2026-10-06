@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.cards.b.BoggartShenanigans;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -19,7 +20,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SiegeGangCommander.class, LlanowarElves.class})
+@CardUsed({SiegeGangCommander.class, LlanowarElves.class, BoggartShenanigans.class})
 class SiegeGangCommanderTest extends BaseCardTest {
 
     @Test
@@ -29,8 +30,7 @@ class SiegeGangCommanderTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 5);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve ETB trigger
+        resolveAllTriggers();
 
         List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
         assertThat(battlefield).hasSize(4);
@@ -155,12 +155,70 @@ class SiegeGangCommanderTest extends BaseCardTest {
                 .hasMessageContaining("Not enough mana");
     }
 
+    @Test
+    @DisplayName("Can sacrifice a noncreature Goblin permanent")
+    void canSacrificeNoncreatureGoblin() {
+        harness.addToBattlefield(player1, new SiegeGangCommander());
+        Permanent shenanigans = harness.addToBattlefieldAndReturn(player1, new BoggartShenanigans());
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).contains(shenanigans.getId());
+        harness.handlePermanentChosen(player1, shenanigans.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Boggart Shenanigans");
+        harness.assertInGraveyard(player1, "Boggart Shenanigans");
+        harness.assertLife(player2, 18);
+        harness.assertOnBattlefield(player1, "Siege-Gang Commander");
+    }
+
+    @Test
+    @DisplayName("Cannot sacrifice an opponent's Goblin")
+    void opponentsGoblinIsNotOfferedForSacrifice() {
+        castAndResolveCommanderWithTokens();
+        Permanent opposingGoblin = harness.addToBattlefieldAndReturn(player2, new SiegeGangCommander());
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).doesNotContain(opposingGoblin.getId());
+    }
+
+    @Test
+    @DisplayName("Sacrificing the targeted Goblin leaves the ability without a legal target")
+    void sacrificedTargetDoesNotReceiveDamage() {
+        castAndResolveCommanderWithTokens();
+        UUID tokenId = getAnyGoblinTokenId(player1);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, tokenId);
+        harness.handlePermanentChosen(player1, tokenId);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getId().equals(tokenId));
+        assertThat(countGoblinTokens(player1)).isEqualTo(2);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
     private void castAndResolveCommanderWithTokens() {
         harness.setHand(player1, List.of(new SiegeGangCommander()));
         harness.addMana(player1, ManaColor.RED, 5);
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
     private int countGoblinTokens(Player player) {
