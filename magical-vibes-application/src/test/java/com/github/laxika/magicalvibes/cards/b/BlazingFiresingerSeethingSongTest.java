@@ -151,8 +151,7 @@ class BlazingFiresingerSeethingSongTest extends BaseCardTest {
 
     private Permanent castBlazingFiresinger() {
         harness.castFromHand(player1, new BlazingFiresingerSeethingSong(), "{2}{R}");
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve ETB BecomePrepared trigger
+        harness.passBothPriorities();
 
         return findPermanent(player1, "Blazing Firesinger");
     }
