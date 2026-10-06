@@ -55,4 +55,40 @@ class RagingSpiritTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("The ability changes only its source and only when it resolves")
+    void onlySourceBecomesColorlessOnResolution() {
+        Permanent spirit = harness.addToBattlefieldAndReturn(player1, new RagingSpirit());
+        Permanent friendlySpirit = harness.addToBattlefieldAndReturn(player1, new RagingSpirit());
+        Permanent opposingSpirit = harness.addToBattlefieldAndReturn(player2, new RagingSpirit());
+        List<CardColor> originalColors = List.copyOf(gqs.getEffectiveColors(gd, spirit));
+        List<CardColor> friendlyColors = List.copyOf(gqs.getEffectiveColors(gd, friendlySpirit));
+        List<CardColor> opposingColors = List.copyOf(gqs.getEffectiveColors(gd, opposingSpirit));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gqs.getEffectiveColors(gd, spirit)).containsExactlyElementsOf(originalColors);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectiveColors(gd, spirit)).isEmpty();
+        assertThat(gqs.getEffectiveColors(gd, friendlySpirit)).containsExactlyElementsOf(friendlyColors);
+        assertThat(gqs.getEffectiveColors(gd, opposingSpirit)).containsExactlyElementsOf(opposingColors);
+    }
+
+    @Test
+    @DisplayName("A tapped creature can activate using colored mana for the generic cost")
+    void tappedCreatureCanActivateWithColoredMana() {
+        Permanent spirit = harness.addToBattlefieldAndReturn(player1, new RagingSpirit());
+        spirit.setTapped(true);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectiveColors(gd, spirit)).isEmpty();
+        assertThat(spirit.isTapped()).isTrue();
+    }
 }
