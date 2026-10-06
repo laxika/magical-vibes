@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,9 +15,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RipjawRaptor.class, Shock.class, FugitiveWizard.class})
 class RipjawRaptorTest extends BaseCardTest {
-
-    // ===== Non-combat damage trigger =====
 
     @Test
     @DisplayName("When dealt non-lethal spell damage, controller draws a card")
@@ -28,8 +28,7 @@ class RipjawRaptorTest extends BaseCardTest {
         int handSizeBefore = gd.playerHands.get(player2.getId()).size();
 
         UUID raptorId = harness.getPermanentId(player2, "Ripjaw Raptor");
-        harness.castInstant(player1, 0, raptorId);
-        harness.passBothPriorities(); // Resolve Shock — 2 damage to Raptor (non-lethal for 4/5)
+        harness.castAndResolveInstant(player1, 0, raptorId); // Resolve Shock — 2 damage to Raptor (non-lethal for 4/5)
 
         // ON_DEALT_DAMAGE trigger should be on the stack
         assertThat(gd.stack).hasSize(1);
@@ -52,8 +51,7 @@ class RipjawRaptorTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         UUID raptorId = harness.getPermanentId(player2, "Ripjaw Raptor");
-        harness.castInstant(player1, 0, raptorId);
-        harness.passBothPriorities(); // Resolve Shock
+        harness.castAndResolveInstant(player1, 0, raptorId); // Resolve Shock
 
         // Measure after Shock resolves (Shock already left the hand), before trigger resolves
         int opponentHandSizeAfterCast = gd.playerHands.get(player1.getId()).size();
@@ -63,8 +61,6 @@ class RipjawRaptorTest extends BaseCardTest {
         // Opponent (player1) should NOT have drawn from the trigger
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(opponentHandSizeAfterCast);
     }
-
-    // ===== Combat damage trigger =====
 
     @Test
     @DisplayName("When dealt non-lethal combat damage, enrage trigger fires and raptor survives")
@@ -102,8 +98,6 @@ class RipjawRaptorTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId()).size()).isGreaterThan(handSizeBefore);
     }
 
-    // ===== Multiple damage instances =====
-
     @Test
     @DisplayName("Each damage instance triggers a separate card draw")
     void multipleDamageInstancesDrawMultipleCards() {
@@ -116,8 +110,7 @@ class RipjawRaptorTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         UUID raptorId = harness.getPermanentId(player2, "Ripjaw Raptor");
-        harness.castInstant(player1, 0, raptorId);
-        harness.passBothPriorities(); // Resolve first Shock
+        harness.castAndResolveInstant(player1, 0, raptorId); // Resolve first Shock
         harness.passBothPriorities(); // Resolve first trigger
 
         assertThat(gd.playerHands.get(player2.getId()).size()).isEqualTo(handSizeBefore + 1);
@@ -127,8 +120,7 @@ class RipjawRaptorTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         raptorId = harness.getPermanentId(player2, "Ripjaw Raptor");
-        harness.castInstant(player1, 0, raptorId);
-        harness.passBothPriorities(); // Resolve second Shock
+        harness.castAndResolveInstant(player1, 0, raptorId); // Resolve second Shock
         harness.passBothPriorities(); // Resolve second trigger
 
         // Raptor should still be alive (4/5 with 4 damage)
@@ -137,8 +129,6 @@ class RipjawRaptorTest extends BaseCardTest {
         // Controller should have drawn two cards total
         assertThat(gd.playerHands.get(player2.getId()).size()).isEqualTo(handSizeBefore + 2);
     }
-
-    // ===== No damage, no trigger =====
 
     @Test
     @DisplayName("No trigger fires when Ripjaw Raptor is not dealt damage")
@@ -155,5 +145,26 @@ class RipjawRaptorTest extends BaseCardTest {
 
         // No cards drawn
         assertThat(gd.playerHands.get(player2.getId()).size()).isEqualTo(handSizeBefore);
+    }
+
+    @Test
+    @DisplayName("Lethal damage still triggers a draw after Ripjaw Raptor dies")
+    void lethalDamageStillDrawsCard() {
+        harness.addToBattlefield(player2, new RipjawRaptor());
+        int handSizeBefore = gd.playerHands.get(player2.getId()).size();
+        UUID raptorId = harness.getPermanentId(player2, "Ripjaw Raptor");
+
+        for (int i = 0; i < 3; i++) {
+            harness.setHand(player1, List.of(new Shock()));
+            harness.addMana(player1, ManaColor.RED, 1);
+            harness.castAndResolveInstant(player1, 0, raptorId);
+            assertThat(gd.stack).hasSize(1);
+            if (i == 2) {
+                harness.assertNotOnBattlefield(player2, "Ripjaw Raptor");
+                harness.assertInGraveyard(player2, "Ripjaw Raptor");
+            }
+            harness.passBothPriorities();
+            assertThat(gd.playerHands.get(player2.getId())).hasSize(handSizeBefore + i + 1);
+        }
     }
 }
