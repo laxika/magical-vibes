@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.d.DevotedRetainer;
+import com.github.laxika.magicalvibes.cards.f.FieldOfSouls;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ShimatsuTheBloodcloaked.class, DevotedRetainer.class, Forest.class})
+@CardUsed({ShimatsuTheBloodcloaked.class, DevotedRetainer.class, Forest.class, FieldOfSouls.class})
 class ShimatsuTheBloodcloakedTest extends BaseCardTest {
 
     private void castShimatsu() {
@@ -35,8 +36,8 @@ class ShimatsuTheBloodcloakedTest extends BaseCardTest {
 
         assertThat(findPermanent(player1, "Shimatsu the Bloodcloaked")
                 .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(countPermanents(player1, "Devoted Retainer")).isZero();
-        assertThat(countPermanents(player1, "Forest")).isZero();
+        harness.assertNotOnBattlefield(player1, "Devoted Retainer");
+        harness.assertNotOnBattlefield(player1, "Forest");
     }
 
     @Test
@@ -59,7 +60,7 @@ class ShimatsuTheBloodcloakedTest extends BaseCardTest {
 
         assertThat(findPermanent(player1, "Shimatsu the Bloodcloaked")
                 .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(countPermanents(player1, "Devoted Retainer")).isZero();
+        harness.assertNotOnBattlefield(player1, "Devoted Retainer");
         harness.assertOnBattlefield(player1, "Forest");
         harness.assertOnBattlefield(player2, "Forest");
     }
@@ -67,7 +68,7 @@ class ShimatsuTheBloodcloakedTest extends BaseCardTest {
     @Test
     @DisplayName("Sacrificing nothing leaves it a 0/0 that dies to state-based actions")
     void sacrificingNothingLetsItDie() {
-        harness.addToBattlefieldAndReturn(player1, new DevotedRetainer());
+        harness.addToBattlefield(player1, new DevotedRetainer());
 
         castShimatsu();
         harness.passBothPriorities();
@@ -75,7 +76,7 @@ class ShimatsuTheBloodcloakedTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
         harness.handleMultiplePermanentsChosen(player1, List.of());
 
-        assertThat(countPermanents(player1, "Shimatsu the Bloodcloaked")).isZero();
+        harness.assertNotOnBattlefield(player1, "Shimatsu the Bloodcloaked");
         assertThat(countPermanents(player1, "Devoted Retainer")).isEqualTo(1);
     }
 
@@ -86,6 +87,25 @@ class ShimatsuTheBloodcloakedTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(countPermanents(player1, "Shimatsu the Bloodcloaked")).isZero();
+        harness.assertNotOnBattlefield(player1, "Shimatsu the Bloodcloaked");
+    }
+
+    @Test
+    @DisplayName("A sacrificed death-trigger source sees creatures sacrificed at the same time")
+    @CardUsed({ShimatsuTheBloodcloaked.class, FieldOfSouls.class, DevotedRetainer.class})
+    void sacrificesAreSimultaneousForDeathTriggers() {
+        Permanent field = harness.addToBattlefieldAndReturn(player1, new FieldOfSouls());
+        Permanent retainer = harness.addToBattlefieldAndReturn(player1, new DevotedRetainer());
+
+        castShimatsu();
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of(field.getId(), retainer.getId()));
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Field of Souls");
+        harness.assertInGraveyard(player1, "Devoted Retainer");
+        assertThat(findPermanent(player1, "Shimatsu the Bloodcloaked")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(findPermanents(player1, "Spirit")).hasSize(1);
     }
 }
