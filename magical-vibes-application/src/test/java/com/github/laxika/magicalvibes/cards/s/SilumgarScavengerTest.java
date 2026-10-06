@@ -32,8 +32,7 @@ class SilumgarScavengerTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FatalPush()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castInstant(player1, 0, fodder.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, fodder.getId());
         harness.passBothPriorities();
 
         assertThat(scavenger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -62,6 +61,54 @@ class SilumgarScavengerTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, scavenger, Keyword.HASTE)).isFalse();
     }
 
+    @Test
+    @DisplayName("Exploit grants the counter and haste together in one death trigger")
+    void exploitCounterAndHasteResolveTogether() {
+        Permanent fodder = harness.addToBattlefieldAndReturn(player1, new SilumgarScavenger());
+        castScavenger();
+        Permanent scavenger = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> !permanent.getId().equals(fodder.getId()))
+                .findFirst().orElseThrow();
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, fodder.getId());
+
+        assertThat(scavenger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.hasKeyword(gd, scavenger, Keyword.HASTE)).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(scavenger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, scavenger, Keyword.HASTE)).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Exploiting itself does not trigger the another-creature death ability")
+    void exploitingItselfDoesNotCreateDeathTrigger() {
+        castScavenger();
+        Permanent scavenger = findPermanent(player1, "Silumgar Scavenger");
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, scavenger.getId());
+
+        harness.assertNotOnBattlefield(player1, "Silumgar Scavenger");
+        harness.assertInGraveyard(player1, "Silumgar Scavenger");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opposing creature dying does not trigger Silumgar Scavenger")
+    void opponentCreatureDeathDoesNotTrigger() {
+        Permanent scavenger = harness.addToBattlefieldAndReturn(player1, new SilumgarScavenger());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new SilumgarScavenger());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .tryDestroyPermanent(gd, opponentCreature));
+
+        assertThat(scavenger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.hasKeyword(gd, scavenger, Keyword.HASTE)).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
     private void castScavenger() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
