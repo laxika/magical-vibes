@@ -90,7 +90,6 @@ class SamiteCenserBearerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -99,6 +98,71 @@ class SamiteCenserBearerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(ownCreature.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The shield is consumed and does not reduce a second damage event")
+    void subsequentDamageIsNotPrevented() {
+        addCreatureReady(player1, new SamiteCenserBearer());
+        Permanent creature = addCreatureReady(player1, new FomoriNomad());
+        Permanent scourge = addCreatureReady(player1, new ScourgeOfKherRidges());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, indexOf(player1, scourge), null, null);
+        harness.passBothPriorities();
+        assertThat(creature.getMarkedDamage()).isEqualTo(1);
+
+        harness.activateAbility(player1, indexOf(player1, scourge), null, null);
+        harness.passBothPriorities();
+
+        assertThat(creature.getMarkedDamage()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("A creature entering before the ability resolves receives a shield")
+    void protectsCreaturesEnteringBeforeResolution() {
+        harness.addToBattlefield(player1, new SamiteCenserBearer());
+        Permanent scourge = addCreatureReady(player1, new ScourgeOfKherRidges());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new FomoriNomad());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, indexOf(player1, scourge), null, null);
+        harness.passBothPriorities();
+
+        assertThat(creature.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Two activations provide independent shields that together prevent two damage")
+    void multipleActivationsAccumulatePrevention() {
+        addCreatureReady(player1, new SamiteCenserBearer());
+        addCreatureReady(player1, new SamiteCenserBearer());
+        Permanent creature = addCreatureReady(player1, new FomoriNomad());
+        Permanent scourge = addCreatureReady(player1, new ScourgeOfKherRidges());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, indexOf(player1, scourge), null, null);
+        harness.passBothPriorities();
+        assertThat(creature.getMarkedDamage()).isZero();
+
+        harness.activateAbility(player1, indexOf(player1, scourge), null, null);
+        harness.passBothPriorities();
+
+        assertThat(creature.getMarkedDamage()).isEqualTo(2);
     }
 
     private int indexOf(Player player, Permanent permanent) {
