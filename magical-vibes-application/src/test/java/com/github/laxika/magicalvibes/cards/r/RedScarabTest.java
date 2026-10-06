@@ -198,4 +198,38 @@ class RedScarabTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, enchantment.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    void resolvingAuraAttachesAndAppliesBoost() {
+        Permanent creature = addCreatureReady(player2, new BalduvianBears());
+        harness.addToBattlefield(player2, new DwarvenArmory());
+        harness.setHand(player1, List.of(new RedScarab()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        Permanent aura = findPermanent(player1, "Red Scarab");
+        assertThat(aura.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+    }
+
+    @Test
+    void multipleRedPermanentsGrantOnlyOneBoostAndOneRemainingKeepsItActive() {
+        Permanent creature = addCreatureReady(player1, new BalduvianBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new RedScarab());
+        aura.setAttachedTo(creature.getId());
+        Permanent firstRedPermanent = harness.addToBattlefieldAndReturn(player2, new BalduvianBarbarians());
+        harness.addToBattlefield(player2, new DwarvenArmory());
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+
+        gd.playerBattlefields.get(player2.getId()).remove(firstRedPermanent);
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+    }
 }
