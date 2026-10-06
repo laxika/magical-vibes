@@ -103,4 +103,50 @@ class RewardsOfDiversityTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         harness.assertLife(player1, lifeBefore);
     }
+
+    @Test
+    @DisplayName("Each copy gains life separately before the multicolored spell resolves")
+    void multipleCopiesTriggerIndependently() {
+        setUpOpponentTurn();
+        harness.addToBattlefield(player1, new RewardsOfDiversity());
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        int opponentLifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        harness.castFromHand(player2, new NoblePanther(), "{1}{G}{W}");
+
+        assertThat(gd.stack).hasSize(3);
+        harness.assertLife(player1, lifeBefore);
+
+        harness.passBothPriorities();
+        harness.assertLife(player1, lifeBefore + 4);
+        assertThat(gd.stack).hasSize(2);
+
+        harness.passBothPriorities();
+        harness.assertLife(player1, lifeBefore + 8);
+        harness.assertLife(player2, opponentLifeBefore);
+        assertThat(gd.stack).hasSize(1);
+        harness.assertNotOnBattlefield(player2, "Noble Panther");
+
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Noble Panther");
+        harness.assertLife(player1, lifeBefore + 8);
+    }
+
+    @Test
+    @DisplayName("Every multicolored spell in the same turn triggers")
+    void repeatedMulticoloredSpellsEachGainLife() {
+        setUpOpponentTurn();
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.castFromHand(player2, new NoblePanther(), "{1}{G}{W}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.assertLife(player1, lifeBefore + 4);
+
+        harness.castFromHand(player2, new NoblePanther(), "{1}{G}{W}");
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, lifeBefore + 8);
+    }
 }
