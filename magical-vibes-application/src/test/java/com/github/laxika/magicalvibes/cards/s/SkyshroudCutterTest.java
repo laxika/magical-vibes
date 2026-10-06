@@ -43,6 +43,47 @@ class SkyshroudCutterTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An opponent's Forest does not enable the alternate cost")
+    void opponentsForestDoesNotEnableAlternateCost() {
+        harness.addToBattlefield(player2, new Forest());
+        harness.setHand(player1, List.of(new SkyshroudCutter()));
+
+        assertThatThrownBy(() -> harness.castWithAlternateCost(player1, 0, (UUID) null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Skyshroud Cutter");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("A tapped Forest enables the alternate cost and remains on the battlefield")
+    void tappedForestEnablesAlternateCost() {
+        var forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        forest.setTapped(true);
+        harness.setHand(player1, List.of(new SkyshroudCutter()));
+
+        harness.castWithAlternateCost(player1, 0, (UUID) null);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Skyshroud Cutter");
+        harness.assertOnBattlefield(player1, "Forest");
+        assertThat(forest.isTapped()).isTrue();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 25);
+    }
+
+    @Test
+    @DisplayName("Is not playable without mana when another player cannot gain life")
+    void unavailableWhenLifeGainCostCannotBePaid() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new ErebosGodOfTheDead());
+        harness.setHand(player1, List.of(new SkyshroudCutter()));
+
+        assertThat(harness.getGameActionAvailabilityService()
+                .getPlayableCardIndices(gd, player1.getId())).doesNotContain(0);
+    }
+
+    @Test
     @DisplayName("Cannot use the alternate cost if an opponent cannot gain life")
     void alternateCostRequiresOpponentCanGainLife() {
         harness.addToBattlefield(player1, new Forest());
