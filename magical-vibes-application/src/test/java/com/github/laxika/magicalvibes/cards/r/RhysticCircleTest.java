@@ -168,12 +168,50 @@ class RhysticCircleTest extends BaseCardTest {
 
         assertThat(gd.playerSourceNextDamageShields).isNotEmpty();
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gd.playerSourceNextDamageShields).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opponent's Circle protects its controller when the active player declines first")
+    void opponentsCircleProtectsItsController() {
+        harness.setLife(player2, 20);
+        addReadyCircle(player2);
+        Permanent griffin = addReadyGriffin(player1);
+        harness.addMana(player2, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player2, false);
+        harness.handlePermanentChosen(player2, griffin.getId());
+
+        griffin.setAttacking(true);
+        resolveCombat(player1);
+
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Two activations for one source consume only one shield for its next damage")
+    void overlappingShieldsLeaveOneForLaterDamage() {
+        harness.setLife(player1, 20);
+        addReadyCircle(player1);
+        Permanent griffin = addReadyGriffin(player2);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        activateAndDeclinePayment(player1, player2);
+        harness.handlePermanentChosen(player1, griffin.getId());
+        activateAndDeclinePayment(player1, player2);
+        harness.handlePermanentChosen(player1, griffin.getId());
+
+        griffin.setAttacking(true);
+        resolveCombat(player2);
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerSourceNextDamageShields).hasSize(1);
     }
 
     private void activateAndDeclinePayment(Player firstPlayer, Player secondPlayer) {
