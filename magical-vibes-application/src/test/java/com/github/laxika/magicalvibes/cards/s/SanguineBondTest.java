@@ -1,17 +1,23 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.a.AngelOfMercy;
+import com.github.laxika.magicalvibes.cards.c.ChildOfNight;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.n.Naturalize;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SanguineBond.class, AngelOfMercy.class, SoulWarden.class, GrizzlyBears.class,
+        ChildOfNight.class, Naturalize.class, StrionicResonator.class})
 class SanguineBondTest extends BaseCardTest {
 
     @Test
@@ -26,9 +32,7 @@ class SanguineBondTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 5);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell (ETB triggers)
-        harness.passBothPriorities(); // resolve GainLifeEffect (life gain triggers Sanguine Bond)
-        harness.passBothPriorities(); // resolve Sanguine Bond's triggered ability
+        resolveAllTriggers();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(23); // 20 + 3
         assertThat(gd.getLife(player2.getId())).isEqualTo(opponentLifeBefore - 3);
@@ -51,8 +55,7 @@ class SanguineBondTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.WHITE, 5);
 
         harness.castCreature(player2, 0);
-        harness.passBothPriorities(); // resolve creature spell (ETB triggers)
-        harness.passBothPriorities(); // resolve GainLifeEffect
+        resolveAllTriggers();
 
         // Player 1's life should be unchanged, player 2 gained 3 life
         assertThat(gd.getLife(player1.getId())).isEqualTo(player1LifeBefore);
@@ -72,10 +75,7 @@ class SanguineBondTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 5);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell (ETB triggers)
-        harness.passBothPriorities(); // resolve GainLifeEffect (both Sanguine Bonds trigger)
-        harness.passBothPriorities(); // resolve first Sanguine Bond's triggered ability
-        harness.passBothPriorities(); // resolve second Sanguine Bond's triggered ability
+        resolveAllTriggers();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(23); // 20 + 3
         assertThat(gd.getLife(player2.getId())).isEqualTo(opponentLifeBefore - 6); // 3 + 3
@@ -96,11 +96,83 @@ class SanguineBondTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell (Soul Warden triggers)
-        harness.passBothPriorities(); // resolve Soul Warden's GainLifeEffect (Sanguine Bond triggers)
-        harness.passBothPriorities(); // resolve Sanguine Bond's triggered ability
+        resolveAllTriggers();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(21); // 20 + 1
         assertThat(gd.getLife(player2.getId())).isEqualTo(opponentLifeBefore - 1);
+    }
+
+    @Test
+    @DisplayName("Lifelink triggers life loss in addition to combat damage")
+    void triggersFromLifelink() {
+        harness.addToBattlefield(player1, new SanguineBond());
+        addCreatureReady(player1, new ChildOfNight());
+
+        declareAttackers(List.of(1));
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    @DisplayName("A pending trigger resolves after Sanguine Bond is destroyed")
+    void pendingTriggerSurvivesSourceRemoval() {
+        var bond = harness.addToBattlefieldAndReturn(player1, new SanguineBond());
+        harness.setHand(player1, List.of(new AngelOfMercy(), new Naturalize()));
+        harness.addMana(player1, ManaColor.WHITE, 5);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castAndResolveInstant(player1, 0, bond.getId());
+        harness.assertNotOnBattlefield(player1, "Sanguine Bond");
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 23);
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @DisplayName("Separate life gains retain their individual amounts")
+    void separateLifeGainEventsRetainTheirAmounts() {
+        harness.addToBattlefield(player1, new SanguineBond());
+        harness.addToBattlefield(player1, new SoulWarden());
+        harness.setHand(player1, List.of(new AngelOfMercy()));
+        harness.addMana(player1, ManaColor.WHITE, 5);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 24);
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    @DisplayName("A copied trigger cannot be retargeted to its controller")
+    void copiedTriggerCannotTargetItsController() {
+        harness.addToBattlefield(player1, new SanguineBond());
+        harness.addToBattlefield(player1, new StrionicResonator());
+        harness.setHand(player1, List.of(new AngelOfMercy()));
+        harness.addMana(player1, ManaColor.WHITE, 5);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        var triggerCardId = gd.stack.getLast().getCard().getId();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 1, null, triggerCardId);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, player1.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handlePermanentChosen(player1, player2.getId());
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 23);
+        harness.assertLife(player2, 14);
     }
 }
