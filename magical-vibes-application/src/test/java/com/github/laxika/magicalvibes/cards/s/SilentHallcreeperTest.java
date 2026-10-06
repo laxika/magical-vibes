@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -28,10 +27,7 @@ class SilentHallcreeperTest extends BaseCardTest {
         addCreatureReady(player2, new GrizzlyBears());
         hallcreeper.setAttacking(true);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -90,5 +86,57 @@ class SilentHallcreeperTest extends BaseCardTest {
         resolveCombat();
         harness.handleListChoice(player1, mode);
         harness.passBothPriorities();
+    }
+
+    @Test
+    @CardUsed({SilentHallcreeper.class})
+    void cannotChooseCountersAgainOnALaterCombat() {
+        Permanent hallcreeper = addCreatureReady(player1, new SilentHallcreeper());
+        dealCombatDamageAndChoose(COUNTERS);
+        hallcreeper.setTapped(false);
+        hallcreeper.setAttacking(false);
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+
+        assertThatThrownBy(() -> harness.handleListChoice(player1, COUNTERS))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThat(hallcreeper.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @CardUsed({SilentHallcreeper.class})
+    void copyingAnotherHallcreeperGivesANewAbilityWithUnchosenModes() {
+        Permanent hallcreeper = addCreatureReady(player1, new SilentHallcreeper());
+        Permanent target = addCreatureReady(player1, new SilentHallcreeper());
+        dealCombatDamageAndChoose(COUNTERS);
+        hallcreeper.setTapped(false);
+        hallcreeper.setAttacking(false);
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+        harness.handleListChoice(player1, COPY);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        assertThat(hallcreeper.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        hallcreeper.setTapped(false);
+        hallcreeper.setAttacking(false);
+
+        dealCombatDamageAndChoose(COUNTERS);
+
+        assertThat(hallcreeper.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+    }
+
+    @Test
+    @CardUsed({SilentHallcreeper.class})
+    void opposingCreatureDoesNotMakeCopyModeAvailable() {
+        addCreatureReady(player1, new SilentHallcreeper());
+        addCreatureReady(player2, new SilentHallcreeper());
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+
+        assertThatThrownBy(() -> harness.handleListChoice(player1, COPY))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 }
