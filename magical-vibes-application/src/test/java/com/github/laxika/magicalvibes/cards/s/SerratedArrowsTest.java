@@ -92,9 +92,8 @@ class SerratedArrowsTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve the sacrifice trigger
 
-        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(arrows);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Serrated Arrows"));
+        harness.assertNotOnBattlefield(player1, "Serrated Arrows");
+        harness.assertInGraveyard(player1, "Serrated Arrows");
     }
 
     @Test
@@ -120,9 +119,66 @@ class SerratedArrowsTest extends BaseCardTest {
         advanceToUpkeep(player2);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId())).contains(arrows);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Serrated Arrows"));
+        harness.assertOnBattlefield(player1, "Serrated Arrows");
+        harness.assertNotInGraveyard(player1, "Serrated Arrows");
+    }
+
+    @Test
+    @DisplayName("Upkeep sacrifice rechecks whether arrowhead counters are absent on resolution")
+    void upkeepDoesNotSacrificeIfCounterIsRestored() {
+        Permanent arrows = addArrows(player1);
+        arrows.setCounterCount(CounterType.ARROWHEAD, 0);
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        arrows.setCounterCount(CounterType.ARROWHEAD, 1);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Serrated Arrows");
+        harness.assertNotInGraveyard(player1, "Serrated Arrows");
+        assertThat(arrows.getCounterCount(CounterType.ARROWHEAD)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Using the last arrow during upkeep does not sacrifice the artifact until the next upkeep")
+    void lastArrowDuringUpkeepWaitsUntilNextUpkeep() {
+        Permanent arrows = addArrows(player1);
+        arrows.setCounterCount(CounterType.ARROWHEAD, 1);
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new AnabaBodyguard());
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).isEmpty();
+        harness.activateAbility(player1, 0, null, creature.getId());
+
+        assertThat(arrows.getCounterCount(CounterType.ARROWHEAD)).isZero();
+        assertThat(arrows.isTapped()).isTrue();
+        assertThat(creature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        harness.passBothPriorities();
+
+        assertThat(creature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Serrated Arrows");
+        assertThat(gd.stack).isEmpty();
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Serrated Arrows");
+        harness.assertInGraveyard(player1, "Serrated Arrows");
+    }
+
+    @Test
+    @DisplayName("Ability can target its controller's creature and kills it when its toughness reaches zero")
+    void abilityCanKillControllersCreature() {
+        addArrows(player1);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new AnabaBodyguard());
+        creature.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 2);
+
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Anaba Bodyguard");
+        harness.assertInGraveyard(player1, "Anaba Bodyguard");
+        harness.assertOnBattlefield(player1, "Serrated Arrows");
     }
 
     private Permanent addArrows(Player owner) {
