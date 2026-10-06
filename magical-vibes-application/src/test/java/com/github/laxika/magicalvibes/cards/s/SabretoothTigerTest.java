@@ -67,4 +67,34 @@ class SabretoothTigerTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertOnBattlefield(player2, "Sabretooth Tiger");
     }
+    @Test
+    @DisplayName("Opposing first strikers deal lethal damage simultaneously")
+    void opposingFirstStrikersDieSimultaneously() {
+        addCreatureReady(player1, new SabretoothTiger());
+        addCreatureReady(player2, new SabretoothTiger());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertInGraveyard(player1, "Sabretooth Tiger");
+        harness.assertInGraveyard(player2, "Sabretooth Tiger");
+        harness.assertNotOnBattlefield(player1, "Sabretooth Tiger");
+        harness.assertNotOnBattlefield(player2, "Sabretooth Tiger");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Unblocked first striker deals damage only once")
+    void unblockedFirstStrikerDealsDamageOnlyOnce() {
+        addCreatureReady(player1, new SabretoothTiger());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat();
+
+        harness.assertLife(player2, 18);
+        harness.assertOnBattlefield(player1, "Sabretooth Tiger");
+    }
 }
