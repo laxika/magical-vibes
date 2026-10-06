@@ -2,13 +2,14 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CabalEvangel;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,17 +19,15 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RunAmok.class, CabalEvangel.class})
 class RunAmokTest extends BaseCardTest {
-
-    // ===== Casting and resolving =====
 
     @Test
     @DisplayName("Casting Run Amok targeting an attacking creature puts it on the stack")
     void castingPutsOnStack() {
-        Permanent attacker = new Permanent(new GrizzlyBears());
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new CabalEvangel());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
@@ -39,17 +38,16 @@ class RunAmokTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Run Amok");
+        assertThat(gd.stack.getFirst().getCard()).isInstanceOf(RunAmok.class);
         assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(attacker.getId());
     }
 
     @Test
     @DisplayName("Resolving Run Amok gives +3/+3 and trample to target attacking creature")
     void resolvingBoostsAndGrantsTrample() {
-        Permanent attacker = new Permanent(new GrizzlyBears());
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new CabalEvangel());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
@@ -66,21 +64,17 @@ class RunAmokTest extends BaseCardTest {
         assertThat(attacker.hasKeyword(Keyword.TRAMPLE)).isTrue();
     }
 
-    // ===== Targeting restriction =====
-
     @Test
     @DisplayName("Cannot target a non-attacking creature")
     void cannotTargetNonAttackingCreature() {
         // Add an attacking creature so the spell is playable
-        Permanent attacker = new Permanent(new GrizzlyBears());
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new CabalEvangel());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
         // Add a non-attacking creature directly to get its ID
-        Permanent nonAttacker = new Permanent(new GrizzlyBears());
+        Permanent nonAttacker = harness.addToBattlefieldAndReturn(player1, new CabalEvangel());
         nonAttacker.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(nonAttacker);
 
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
@@ -93,15 +87,12 @@ class RunAmokTest extends BaseCardTest {
                 .hasMessageContaining("attacking creature");
     }
 
-    // ===== End of turn cleanup =====
-
     @Test
     @DisplayName("Boost and trample wear off at end of turn")
     void effectsWearOffAtEndOfTurn() {
-        Permanent attacker = new Permanent(new GrizzlyBears());
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new CabalEvangel());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
@@ -120,15 +111,54 @@ class RunAmokTest extends BaseCardTest {
         assertThat(attacker.hasKeyword(Keyword.TRAMPLE)).isFalse();
     }
 
-    // ===== Fizzle =====
+    @Test
+    @DisplayName("Run Amok can boost an opponent's attacking creature")
+    void canTargetOpponentsAttacker() {
+        Permanent attacker = harness.addToBattlefieldAndReturn(player2, new CabalEvangel());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new RunAmok()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castInstant(player1, 0, attacker.getId());
+        harness.passBothPriorities();
+
+        assertThat(attacker.getEffectivePower()).isEqualTo(5);
+        assertThat(attacker.getEffectiveToughness()).isEqualTo(5);
+        assertThat(attacker.hasKeyword(Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Run Amok does not resolve if its target stops attacking")
+    void fizzlesIfTargetStopsAttacking() {
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new CabalEvangel());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new RunAmok()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castInstant(player1, 0, attacker.getId());
+
+        attacker.setAttacking(false);
+        harness.passBothPriorities();
+
+        assertThat(attacker.getPowerModifier()).isZero();
+        assertThat(attacker.getToughnessModifier()).isZero();
+        assertThat(attacker.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Run Amok");
+    }
 
     @Test
     @DisplayName("Run Amok fizzles if target creature is removed before resolution")
     void fizzlesIfTargetRemoved() {
-        Permanent attacker = new Permanent(new GrizzlyBears());
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new CabalEvangel());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
