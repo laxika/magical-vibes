@@ -6,7 +6,9 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,9 +18,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Skulduggery.class, GrizzlyBears.class, LlanowarElves.class})
 class SkulduggeryTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Target creature you control gets +1/+1 and target opponent creature gets -1/-1")
@@ -30,8 +31,7 @@ class SkulduggeryTest extends BaseCardTest {
 
         UUID ownId = harness.getPermanentId(player1, "Grizzly Bears");
         UUID oppId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castInstant(player1, 0, List.of(ownId, oppId));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, List.of(ownId, oppId));
 
         Permanent own = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(own.getPowerModifier()).isEqualTo(1);
@@ -52,8 +52,7 @@ class SkulduggeryTest extends BaseCardTest {
 
         UUID ownId = harness.getPermanentId(player1, "Grizzly Bears");
         UUID oppId = harness.getPermanentId(player2, "Llanowar Elves");
-        harness.castInstant(player1, 0, List.of(ownId, oppId));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, List.of(ownId, oppId));
 
         Permanent own = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(own.getPowerModifier()).isEqualTo(1);
@@ -138,6 +137,73 @@ class SkulduggeryTest extends BaseCardTest {
         Permanent own = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(own.getPowerModifier()).isEqualTo(1);
         assertThat(own.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
+    void modifiersExpireAtCleanup() {
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Skulduggery()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveInstant(player1, 0, List.of(own.getId(), opponent.getId()));
+        assertThat(own.getPowerModifier()).isEqualTo(1);
+        assertThat(opponent.getToughnessModifier()).isEqualTo(-1);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(TurnStep.CLEANUP);
+
+        assertThat(own.getPowerModifier()).isZero();
+        assertThat(own.getToughnessModifier()).isZero();
+        assertThat(opponent.getPowerModifier()).isZero();
+        assertThat(opponent.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    void cannotCastWithOnlyOneTarget() {
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Skulduggery()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of(own.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void firstTargetChangingControllerDoesNotReceiveBoost() {
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Skulduggery()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castInstant(player1, 0, List.of(own.getId(), opponent.getId()));
+
+        gd.playerBattlefields.get(player1.getId()).remove(own);
+        gd.playerBattlefields.get(player2.getId()).add(own);
+        harness.passBothPriorities();
+
+        assertThat(own.getPowerModifier()).isZero();
+        assertThat(own.getToughnessModifier()).isZero();
+        assertThat(opponent.getPowerModifier()).isEqualTo(-1);
+        assertThat(opponent.getToughnessModifier()).isEqualTo(-1);
+    }
+
+    @Test
+    void secondTargetChangingControllerDoesNotReceiveDebuff() {
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Skulduggery()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castInstant(player1, 0, List.of(own.getId(), opponent.getId()));
+
+        gd.playerBattlefields.get(player2.getId()).remove(opponent);
+        gd.playerBattlefields.get(player1.getId()).add(opponent);
+        harness.passBothPriorities();
+
+        assertThat(own.getPowerModifier()).isEqualTo(1);
+        assertThat(own.getToughnessModifier()).isEqualTo(1);
+        assertThat(opponent.getPowerModifier()).isZero();
+        assertThat(opponent.getToughnessModifier()).isZero();
     }
 
     @Test
