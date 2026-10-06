@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed(ShadowbeastSighting.class)
 class ShadowbeastSightingTest extends BaseCardTest {
@@ -53,10 +54,47 @@ class ShadowbeastSightingTest extends BaseCardTest {
                 .anyMatch(card -> card.getName().equals("Shadowbeast Sighting"));
     }
 
+    @Test
+    @DisplayName("The same card can create a second Beast through flashback after a normal cast")
+    void normalCastThenFlashbackCreatesTwoBeasts() {
+        ShadowbeastSighting spell = new ShadowbeastSighting();
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 9);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities();
+        assertThat(beastTokens()).hasSize(1);
+        harness.assertInGraveyard(player1, "Shadowbeast Sighting");
+
+        harness.castFlashback(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(beastTokens()).hasSize(2);
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        harness.assertNotInGraveyard(player1, "Shadowbeast Sighting");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spell);
+    }
+
+    @Test
+    @DisplayName("Flashback cannot be paid with only the normal casting cost")
+    void flashbackRequiresItsFullCost() {
+        harness.setGraveyard(player1, List.of(new ShadowbeastSighting()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.castFlashback(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInGraveyard(player1, "Shadowbeast Sighting");
+        assertThat(gd.stack).isEmpty();
+        assertThat(beastTokens()).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
     private List<Permanent> beastTokens() {
-        return harness.getGameData().playerBattlefields.get(player1.getId()).stream()
+        return findPermanents(player1, "Beast").stream()
                 .filter(permanent -> permanent.getCard().isToken())
-                .filter(permanent -> permanent.getCard().getName().equals("Beast"))
                 .toList();
     }
 }
