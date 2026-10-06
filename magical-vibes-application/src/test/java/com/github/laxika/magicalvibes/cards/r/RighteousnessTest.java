@@ -1,13 +1,12 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CrawWurm;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -19,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Righteousness.class, GrizzlyBears.class, Plains.class})
+@CardUsed({Righteousness.class, GrizzlyBears.class, Plains.class, CrawWurm.class})
 class RighteousnessTest extends BaseCardTest {
 
 
@@ -34,8 +33,6 @@ class RighteousnessTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Righteousness()));
         harness.addMana(player2, ManaColor.WHITE, 1);
-        harness.passPriority(player1);
-
         harness.castInstant(player2, 0, blockerPerm.getId());
 
         assertThat(gd.stack).hasSize(1);
@@ -206,8 +203,6 @@ class RighteousnessTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Righteousness()));
         harness.addMana(player2, ManaColor.WHITE, 1);
-        harness.passPriority(player1);
-
         harness.castInstant(player2, 0, blockerPerm.getId());
 
         // Remove target before resolution
@@ -216,7 +211,7 @@ class RighteousnessTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+        assertThat(gameLogContains("fizzles")).isTrue();
     }
 
     @Test
@@ -229,15 +224,13 @@ class RighteousnessTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Righteousness()));
         harness.addMana(player2, ManaColor.WHITE, 1);
-        harness.passPriority(player1);
-
         harness.castInstant(player2, 0, blockerPerm.getId());
         blockerPerm.setBlocking(false);
         harness.passBothPriorities();
 
         assertThat(blockerPerm.getEffectivePower()).isEqualTo(2);
         assertThat(blockerPerm.getEffectiveToughness()).isEqualTo(2);
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+        assertThat(gameLogContains("fizzles")).isTrue();
     }
 
 
@@ -247,11 +240,8 @@ class RighteousnessTest extends BaseCardTest {
     void boostedBlockerSurvivesCombat() {
         harness.setLife(player2, 20);
 
-        // Player1 has a 5/5 attacker
-        GrizzlyBears bigCreature = new GrizzlyBears();
-        bigCreature.setPower(5);
-        bigCreature.setToughness(5);
-        Permanent atkPerm = addCreatureReady(player1, bigCreature);
+        // Player1 has a 6/4 attacker
+        Permanent atkPerm = addCreatureReady(player1, new CrawWurm());
         atkPerm.setAttacking(true);
 
         // Player2 has a 2/2 blocker — set up blocking state manually
@@ -275,9 +265,9 @@ class RighteousnessTest extends BaseCardTest {
         // Advance to combat damage
         resolveCombat(player1);
 
-        // Blocker should survive (9 toughness vs 5 damage), attacker should die (5 toughness vs 9 damage)
+        // Blocker survives 6 damage and deals lethal damage to the attacker.
         harness.assertOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Craw Wurm");
 
         // Player2 takes no damage (attacker was blocked)
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
@@ -300,6 +290,24 @@ class RighteousnessTest extends BaseCardTest {
 
         assertThat(blockerPerm.getEffectivePower()).isEqualTo(9);
         assertThat(blockerPerm.getEffectiveToughness()).isEqualTo(9);
+    }
+
+    @Test
+    @DisplayName("Boost remains after the target stops blocking once the spell has resolved")
+    void boostRemainsAfterCombat() {
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        blocker.setBlocking(true);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Righteousness()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+
+        harness.castAndResolveInstant(player2, 0, blocker.getId());
+        blocker.setBlocking(false);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+
+        assertThat(blocker.getEffectivePower()).isEqualTo(9);
+        assertThat(blocker.getEffectiveToughness()).isEqualTo(9);
     }
 }
 
