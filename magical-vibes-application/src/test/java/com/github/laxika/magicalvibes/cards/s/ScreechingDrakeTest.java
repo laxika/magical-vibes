@@ -60,4 +60,51 @@ class ScreechingDrakeTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(cardToDraw);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(cardToKeep);
     }
+
+    @Test
+    @DisplayName("The newly drawn card can be chosen for the mandatory discard")
+    void canDiscardTheDrawnCard() {
+        Forest cardToKeep = new Forest();
+        Forest cardToDraw = new Forest();
+        Forest opponentCard = new Forest();
+        harness.setHand(player1, List.of(cardToKeep));
+        harness.setHand(player2, List.of(opponentCard));
+        harness.setLibrary(player1, List.of(cardToDraw));
+
+        harness.enterBattlefieldAndReturn(player1, new ScreechingDrake());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(cardToKeep, cardToDraw);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(cardToKeep);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(cardToDraw);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(opponentCard);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The entry trigger still draws and discards after Drake leaves the battlefield")
+    void triggerResolvesAfterSourceLeavesBattlefield() {
+        ScreechingDrake drake = new ScreechingDrake();
+        Forest cardToDraw = new Forest();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(cardToDraw));
+        harness.enterBattlefieldAndReturn(player1, drake);
+
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.setGraveyard(player1, List.of(drake));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(cardToDraw);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(drake, cardToDraw);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
 }
