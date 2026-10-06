@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RakdosFirewheeler.class, GrizzlyBears.class, ChandraNalaar.class})
 class RakdosFirewheelerTest extends BaseCardTest {
 
     @Test
@@ -69,18 +71,57 @@ class RakdosFirewheelerTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
 
+    @Test
+    @DisplayName("ETB can damage a creature controlled by its controller")
+    void etbCanDamageOwnCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new RakdosFirewheeler());
+        castWithTargets(creature.getId());
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(creature.getMarkedDamage()).isEqualTo(2);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("ETB can omit the permanent target even when a creature is available")
+    void etbCanOmitAvailablePermanentTarget() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new RakdosFirewheeler());
+        castWithoutPermanentTarget();
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(creature.getMarkedDamage()).isZero();
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("ETB still deals both amounts of damage after its source leaves")
+    void etbResolvesAfterSourceLeaves() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new RakdosFirewheeler());
+        castWithTargets(creature.getId());
+
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.passBothPriorities();
+
+        assertThat(creature.getMarkedDamage()).isEqualTo(2);
+        harness.assertLife(player2, 18);
+    }
+
     private void castWithTargets(UUID permanentTargetId) {
         harness.setHand(player1, List.of(new RakdosFirewheeler()));
         addRakdosMana();
-        gs.playCard(gd, player1, 0, 0, null, null,
-                List.of(player2.getId(), permanentTargetId), List.of());
+        harness.castCreature(player1, 0, List.of(player2.getId(), permanentTargetId));
     }
 
     private void castWithoutPermanentTarget() {
         harness.setHand(player1, List.of(new RakdosFirewheeler()));
         addRakdosMana();
-        gs.playCard(gd, player1, 0, 0, null, null,
-                List.of(player2.getId()), List.of());
+        harness.castCreature(player1, 0, List.of(player2.getId()));
     }
 
     private void addRakdosMana() {
