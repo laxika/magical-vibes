@@ -2,11 +2,13 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.j.JungleDelver;
+import com.github.laxika.magicalvibes.cards.p.PerilousVoyage;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,9 +17,9 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({SirenLookout.class, Forest.class, JungleDelver.class, PerilousVoyage.class})
 class SirenLookoutTest extends BaseCardTest {
 
-    // ===== Explore reveals a land — put into hand =====
 
     @Test
     @DisplayName("Explore with land on top puts land into hand")
@@ -40,7 +42,7 @@ class SirenLookoutTest extends BaseCardTest {
 
         castLookout();
 
-        Permanent lookout = findLookout();
+        Permanent lookout = findPermanent(player1, "Siren Lookout");
         assertThat(lookout).isNotNull();
         assertThat(lookout.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
     }
@@ -55,16 +57,15 @@ class SirenLookoutTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 
-    // ===== Explore reveals a non-land — +1/+1 counter and may graveyard =====
 
     @Test
     @DisplayName("Explore with non-land on top puts +1/+1 counter on creature")
     void exploreNonLandAddsCounter() {
-        gd.playerDecks.get(player1.getId()).addFirst(new GrizzlyBears());
+        gd.playerDecks.get(player1.getId()).addFirst(new JungleDelver());
 
         castLookout();
 
-        Permanent lookout = findLookout();
+        Permanent lookout = findPermanent(player1, "Siren Lookout");
         assertThat(lookout).isNotNull();
         assertThat(lookout.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
@@ -72,7 +73,7 @@ class SirenLookoutTest extends BaseCardTest {
     @Test
     @DisplayName("Explore with non-land on top prompts may ability")
     void exploreNonLandPromptsMayAbility() {
-        gd.playerDecks.get(player1.getId()).addFirst(new GrizzlyBears());
+        gd.playerDecks.get(player1.getId()).addFirst(new JungleDelver());
 
         castLookout();
 
@@ -83,7 +84,7 @@ class SirenLookoutTest extends BaseCardTest {
     @Test
     @DisplayName("Explore non-land — accept puts card into graveyard")
     void exploreNonLandAcceptPutsInGraveyard() {
-        Card creature = new GrizzlyBears();
+        Card creature = new JungleDelver();
         gd.playerDecks.get(player1.getId()).addFirst(creature);
 
         castLookout();
@@ -98,7 +99,7 @@ class SirenLookoutTest extends BaseCardTest {
     @Test
     @DisplayName("Explore non-land — decline leaves card on top of library")
     void exploreNonLandDeclineLeavesOnTop() {
-        Card creature = new GrizzlyBears();
+        Card creature = new JungleDelver();
         gd.playerDecks.get(player1.getId()).addFirst(creature);
 
         castLookout();
@@ -110,22 +111,41 @@ class SirenLookoutTest extends BaseCardTest {
                 .noneMatch(c -> c.getId().equals(creature.getId()));
     }
 
-    // ===== Explore with empty library =====
 
     @Test
-    @DisplayName("Explore with empty library does nothing")
+    @DisplayName("Explore with empty library adds a +1/+1 counter")
     void exploreEmptyLibrary() {
         gd.playerDecks.get(player1.getId()).clear();
 
         castLookout();
 
-        Permanent lookout = findLookout();
+        Permanent lookout = findPermanent(player1, "Siren Lookout");
         assertThat(lookout).isNotNull();
-        assertThat(lookout.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
+        assertThat(lookout.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 
-    // ===== Helpers =====
+
+    @Test
+    @DisplayName("Explore still puts a land into hand after Lookout leaves the battlefield")
+    void exploreAfterSourceLeavesBattlefield() {
+        Card land = new Forest();
+        harness.setLibrary(player1, List.of(land));
+        harness.setHand(player1, List.of(new SirenLookout()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent lookout = findPermanent(player1, "Siren Lookout");
+        harness.setHand(player2, List.of(new PerilousVoyage()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player2, 0, lookout.getId());
+        harness.assertNotOnBattlefield(player1, "Siren Lookout");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(land);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
 
     private void castLookout() {
         harness.setHand(player1, List.of(new SirenLookout()));
@@ -137,9 +157,4 @@ class SirenLookoutTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB explore trigger
     }
 
-    private Permanent findLookout() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Siren Lookout"))
-                .findFirst().orElse(null);
-    }
 }
