@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import java.util.List;
 
@@ -49,12 +51,96 @@ class SanguineSaviorTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, savior.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, savior.getId());
 
         assertThat(gd.stack).isEmpty();
         assertThat(savior.isFaceDown()).isTrue();
         harness.assertInGraveyard(player2, "Shock");
+    }
+
+    @Test
+    void payingDisguiseWardOnceAllowsTheSpellToResolve() {
+        Permanent savior = castFaceDown();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.castAndResolveInstant(player2, 0, savior.getId());
+        harness.handleMayAbilityChosen(player2, true);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Sanguine Savior");
+        harness.assertInGraveyard(player1, "Sanguine Savior");
+        harness.assertInGraveyard(player2, "Shock");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ManaColor.class, names = {"WHITE", "BLACK"})
+    void eitherHybridColorCanPayTheEntireDisguiseCostWithoutALegalTarget(ManaColor color) {
+        Permanent savior = castFaceDown();
+        harness.addMana(player1, color, 2);
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(savior));
+        resolveAllTriggers();
+
+        assertThat(savior.isFaceDown()).isFalse();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Sanguine Savior");
+    }
+
+    @Test
+    void lifelinkAbilityDoesNotAffectOtherCreaturesWhenItsTargetLeaves() {
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        Permanent other = addCreatureReady(player1, new GrizzlyBears());
+        Permanent savior = castFaceDown();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(savior));
+        harness.handlePermanentChosen(player1, target.getId());
+
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gqs.hasKeyword(gd, other, Keyword.LIFELINK)).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void faceUpSaviorDoesNotHaveDisguiseWard() {
+        Permanent savior = castFaceDown();
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(savior));
+        resolveAllTriggers();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, savior.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Sanguine Savior");
+        harness.assertInGraveyard(player1, "Sanguine Savior");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void disguiseWardDoesNotCounterItsControllersSpell() {
+        Permanent savior = castFaceDown();
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, savior.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Sanguine Savior");
+        harness.assertInGraveyard(player1, "Sanguine Savior");
+        assertThat(gd.stack).isEmpty();
     }
 
     private Permanent castFaceDown() {
