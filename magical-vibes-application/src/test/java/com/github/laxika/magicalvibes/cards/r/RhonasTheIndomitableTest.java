@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,9 +19,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RhonasTheIndomitable.class, AirElemental.class, GrizzlyBears.class, HillGiant.class})
 class RhonasTheIndomitableTest extends BaseCardTest {
-
-    // ===== Attack restriction: another creature with power 4 or greater =====
 
     @Test
     @DisplayName("Can attack when controlling another creature with power 4 or greater")
@@ -44,8 +44,6 @@ class RhonasTheIndomitableTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Block restriction =====
-
     @Test
     @DisplayName("Can block when controlling another creature with power 4 or greater")
     void canBlockWithPowerFourCreature() {
@@ -53,9 +51,7 @@ class RhonasTheIndomitableTest extends BaseCardTest {
         addCreatureReady(player1, new RhonasTheIndomitable());
         addCreatureReady(player1, new AirElemental());
 
-        declareAttackers(player2, List.of(0));
-
-        harness.beginBlockerDeclarationInput();
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(findPermanent(player1, "Rhonas the Indomitable").isBlocking()).isTrue();
@@ -68,14 +64,10 @@ class RhonasTheIndomitableTest extends BaseCardTest {
         addCreatureReady(player1, new RhonasTheIndomitable());
         addCreatureReady(player1, new HillGiant());
 
-        declareAttackers(player2, List.of(0));
-
-        harness.beginBlockerDeclarationInput();
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
         assertThatThrownBy(() -> gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class);
     }
-
-    // ===== Activated ability: another target creature gets +2/+0 and gains trample =====
 
     @Test
     @DisplayName("Activated ability gives target creature +2/+0 and trample")
@@ -143,5 +135,102 @@ class RhonasTheIndomitableTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Helper methods =====
+    @Test
+    @DisplayName("Rhonas cannot attack using its own power to meet the restriction")
+    void cannotAttackAlone() {
+        addCreatureReady(player1, new RhonasTheIndomitable());
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("An opponent's powerful creature does not allow Rhonas to attack")
+    void opponentCreatureDoesNotEnableAttack() {
+        addCreatureReady(player1, new RhonasTheIndomitable());
+        addCreatureReady(player2, new AirElemental());
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Rhonas cannot block using its own power to meet the restriction")
+    void cannotBlockAlone() {
+        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new RhonasTheIndomitable());
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Boosting another creature to four power enables Rhonas to attack")
+    void boostingAnotherCreatureEnablesAttack() {
+        harness.setLife(player2, 20);
+        addCreatureReady(player1, new RhonasTheIndomitable());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.activateAbility(player1, 0, null, bears.getId());
+        harness.passBothPriorities();
+
+        declareAttackers(List.of(0));
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
+    }
+
+    @Test
+    @DisplayName("Repeated activations accumulate their power boosts")
+    void repeatedActivationsStack() {
+        addCreatureReady(player1, new RhonasTheIndomitable());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.GREEN, 6);
+        harness.activateAbility(player1, 0, null, bears.getId());
+        harness.activateAbility(player1, 0, null, bears.getId());
+        resolveAllTriggers();
+
+        assertThat(bears.getEffectivePower()).isEqualTo(6);
+        assertThat(bears.getGrantedKeywords()).contains(Keyword.TRAMPLE);
+    }
+
+    @Test
+    @DisplayName("Boosting another creature to four power enables Rhonas to block")
+    void boostingAnotherCreatureEnablesBlock() {
+        addCreatureReady(player2, new GrizzlyBears());
+        Permanent rhonas = addCreatureReady(player1, new RhonasTheIndomitable());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.activateAbility(player1, 0, null, bears.getId());
+        harness.passBothPriorities();
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(rhonas.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The activated ability requires green mana")
+    void abilityRequiresGreenMana() {
+        addCreatureReady(player1, new RhonasTheIndomitable());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The activated ability requires three mana")
+    void abilityRequiresThreeMana() {
+        addCreatureReady(player1, new RhonasTheIndomitable());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
 }
