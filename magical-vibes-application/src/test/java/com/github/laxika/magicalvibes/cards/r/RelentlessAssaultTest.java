@@ -199,6 +199,54 @@ class RelentlessAssaultTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Two resolutions in one main phase create two combat and main phase pairs")
+    void twoResolutionsCreateTwoPhasePairs() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+
+        harness.castFromHand(player1, new RelentlessAssault(), "{2}{R}{R}");
+        harness.passBothPriorities();
+        harness.castFromHand(player1, new RelentlessAssault(), "{2}{R}{R}");
+        harness.passBothPriorities();
+
+        for (int combat = 0; combat < 2; combat++) {
+            gs.advanceStep(gd);
+            assertThat(gd.currentStep).isEqualTo(TurnStep.BEGINNING_OF_COMBAT);
+            gs.advanceStep(gd);
+            assertThat(gd.currentStep).isEqualTo(TurnStep.DECLARE_ATTACKERS);
+            gs.advanceStep(gd);
+            assertThat(gd.currentStep).isEqualTo(TurnStep.END_OF_COMBAT);
+            gs.advanceStep(gd);
+            assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
+        }
+
+        gs.advanceStep(gd);
+        assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
+    }
+
+    @Test
+    @CardUsed(VedalkenOrrery.class)
+    @DisplayName("Casting during an opponent's main phase gives that opponent the additional combat")
+    void opponentGetsAdditionalCombatOnTheirTurn() {
+        harness.addToBattlefield(player1, new VedalkenOrrery());
+        Permanent opponentAttacker = addCreatureReady(player2, new GrizzlyBears());
+        declareAttackers(player2, List.of(0));
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castFromHand(player1, new RelentlessAssault(), "{2}{R}{R}");
+        harness.passBothPriorities();
+
+        assertThat(opponentAttacker.isTapped()).isFalse();
+        gs.advanceStep(gd);
+        assertThat(gd.currentStep).isEqualTo(TurnStep.BEGINNING_OF_COMBAT);
+        assertThat(gd.activePlayerId).isEqualTo(player2.getId());
+
+        declareAttackers(player2, List.of(0));
+        assertThat(opponentAttacker.isTapped()).isTrue();
+    }
+
+    @Test
     @DisplayName("A precombat cast leaves the normal combat after the additional main phase")
     void precombatCastLeavesNormalCombatAfterAdditionalMainPhase() {
         harness.forceActivePlayer(player1);
