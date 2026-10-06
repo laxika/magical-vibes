@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GarrukPrimalHunter;
 import com.github.laxika.magicalvibes.cards.k.KrenkoMobBoss;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -18,8 +20,55 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ShaunFatherOfSynths.class, KrenkoMobBoss.class, GrizzlyBears.class})
+@CardUsed({ShaunFatherOfSynths.class, KrenkoMobBoss.class, GrizzlyBears.class, GarrukPrimalHunter.class})
 class ShaunFatherOfSynthsTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Shaun can stay back and the controller can decline the copy")
+    void canDeclineCopyWithoutShaunAttacking() {
+        Permanent shaun = addCreatureReady(player1, new ShaunFatherOfSynths());
+        Permanent krenko = addCreatureReady(player1, new KrenkoMobBoss());
+
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            declareAttackers(player1, List.of(1));
+            harness.handlePermanentChosen(player1, krenko.getId());
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, false);
+        });
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(shaun, krenko);
+        assertThat(shaun.isAttacking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The Synth copy can attack a different defender from the original")
+    void choosesWhichDefenderTheCopyAttacks() {
+        addCreatureReady(player1, new ShaunFatherOfSynths());
+        Permanent krenko = addCreatureReady(player1, new KrenkoMobBoss());
+        Permanent garruk = harness.addToBattlefieldAndReturn(player2, new GarrukPrimalHunter());
+        garruk.setCounterCount(CounterType.LOYALTY, 3);
+
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            declareAttackers(player1, List.of(1));
+            harness.handlePermanentChosen(player1, krenko.getId());
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, true);
+
+            PendingInteraction.PermanentChoice choice =
+                    gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+            assertThat(choice).isNotNull();
+            assertThat(choice.validIds()).contains(player2.getId(), garruk.getId());
+            harness.handlePermanentChosen(player1, garruk.getId());
+        });
+
+        Permanent copy = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken())
+                .findFirst().orElseThrow();
+        assertThat(krenko.getAttackTarget()).isEqualTo(player2.getId());
+        assertThat(copy.getAttackTarget()).isEqualTo(garruk.getId());
+        assertThat(copy.isTapped()).isTrue();
+        assertThat(copy.isAttacking()).isTrue();
+    }
 
     @Test
     @DisplayName("Whenever you attack, Shaun may copy another attacking legendary creature")
@@ -49,6 +98,25 @@ class ShaunFatherOfSynthsTest extends BaseCardTest {
         assertThat(copy.getCard().hasType(CardType.ARTIFACT)).isTrue();
         assertThat(gqs.effectiveCreatureSubtypes(gd, copy)).contains(CardSubtype.SYNTH);
         assertThat(gqs.hasEffectiveSupertype(gd, copy, CardSupertype.LEGENDARY)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Shaun cannot copy a target that leaves before the trigger resolves")
+    void doesNotCopyRemovedAttacker() {
+        Permanent shaun = addCreatureReady(player1, new ShaunFatherOfSynths());
+        Permanent krenko = addCreatureReady(player1, new KrenkoMobBoss());
+
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            declareAttackers(player1, List.of(1));
+            harness.handlePermanentChosen(player1, krenko.getId());
+            harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                    .removePermanentToGraveyard(gd, krenko));
+            harness.clearPriorityPassed();
+            harness.passBothPriorities();
+        });
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(shaun);
     }
 
     @Test
