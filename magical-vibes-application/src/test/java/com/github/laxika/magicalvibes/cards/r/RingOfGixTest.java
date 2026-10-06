@@ -12,8 +12,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -155,6 +153,81 @@ class RingOfGixTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Ring of Gix");
     }
 
+    @Test
+    @DisplayName("Echo does not create an enters-the-battlefield trigger")
+    void enteringDoesNotCreateTrigger() {
+        harness.castFromHand(player1, new RingOfGix(), "{3}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Ring of Gix");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Can tap a permanent controlled by its controller")
+    void tapsOwnPermanent() {
+        Permanent ring = addReadyRing();
+        Permanent target = addCreatureReady(player1, new GiantCockroach());
+
+        activate(ring, target);
+
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Can target an already tapped permanent")
+    void canTargetTappedPermanent() {
+        Permanent ring = addReadyRing();
+        Permanent target = addCreatureReady(player2, new GiantCockroach());
+        target.tap();
+
+        activate(ring, target);
+
+        assertThat(ring.isTapped()).isTrue();
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The activation taps the target only when it resolves")
+    void targetIsTappedOnResolution() {
+        Permanent ring = addReadyRing();
+        Permanent target = addCreatureReady(player2, new GiantCockroach());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(ring), null,
+                target.getId());
+
+        assertThat(ring.isTapped()).isTrue();
+        assertThat(target.isTapped()).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Echo waits for its controller's upkeep rather than the opponent's")
+    void echoWaitsForControllerUpkeep() {
+        castAndResolveRingOfGix();
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Ring of Gix");
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.assertInGraveyard(player1, "Ring of Gix");
+        harness.assertNotOnBattlefield(player1, "Ring of Gix");
+    }
+
     private Permanent addReadyRing() {
         Permanent ring = harness.addToBattlefieldAndReturn(player1, new RingOfGix());
         ring.setSummoningSick(false);
@@ -169,11 +242,8 @@ class RingOfGixTest extends BaseCardTest {
     }
 
     private void castAndResolveRingOfGix() {
-        harness.setHand(player1, List.of(new RingOfGix()));
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castArtifact(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.castFromHand(player1, new RingOfGix(), "{3}");
+        resolveAllTriggers();
         harness.assertOnBattlefield(player1, "Ring of Gix");
     }
 }
