@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -77,6 +78,59 @@ class RhoxVeteranTest extends BaseCardTest {
         declareAttackers(List.of(0));
 
         assertThat(gd.hasPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Battle cry excludes its source and nonattackers and lasts until end of turn")
+    void battleCryExclusionsAndDuration() {
+        Permanent veteran = addCreatureReady(player1, new RhoxVeteran());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent nonattacker = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(List.of(0, 1));
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+
+        assertThat(veteran.getEffectivePower()).isEqualTo(2);
+        assertThat(attacker.getEffectivePower()).isEqualTo(3);
+        assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(nonattacker.getEffectivePower()).isEqualTo(2);
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(attacker.getEffectivePower()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("An already tapped opposing creature is a legal attack-trigger target")
+    void attackTriggerAcceptsAlreadyTappedCreature() {
+        addReadyVeteran(player1);
+        Permanent target = addCreatureReady(player2, new RhoxVeteran());
+        target.tap();
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Losing the tap target does not stop the separate battle cry trigger")
+    void battleCryResolvesWhenTapTargetLeaves() {
+        addReadyVeteran(player1);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new RhoxVeteran());
+
+        declareAttackers(List.of(0, 1));
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToHand(gd, target));
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(attacker.getEffectivePower()).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
     }
 
     private void addReadyVeteran(Player player) {
