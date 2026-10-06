@@ -57,8 +57,7 @@ class SephirothFallenHeroTest extends BaseCardTest {
         if (gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class) != null) {
             harness.handlePermanentChosen(player1, modified.getId());
         }
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent returned = findPermanent(player1, "Sephiroth, Fallen Hero");
         assertThat(returned.isTapped()).isTrue();
@@ -74,5 +73,92 @@ class SephirothFallenHeroTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void decliningCellCounterStillSetsAlreadyModifiedCreaturesBaseStats() {
+        addCreatureReady(player1, new SephirothFallenHero());
+        Permanent modified = addCreatureReady(player1, new GrizzlyBears());
+        modified.setCounterCount(CounterType.CELL, 1);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        assertThat(target.getCounterCount(CounterType.CELL)).isZero();
+        assertThat(gqs.getEffectivePower(gd, modified)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, modified)).isEqualTo(5);
+    }
+
+    @Test
+    void newlyModifiedTargetIsIncludedAndAffectedCreaturesAreLockedAtResolution() {
+        addCreatureReady(player1, new SephirothFallenHero());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        Permanent other = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(target.getCounterCount(CounterType.CELL)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
+        target.setCounterCount(CounterType.CELL, 0);
+        other.setCounterCount(CounterType.CELL, 1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(2);
+    }
+
+    @Test
+    void illegalAttackTargetPreventsEntireAbilityFromResolving() {
+        addCreatureReady(player1, new SephirothFallenHero());
+        Permanent modified = addCreatureReady(player1, new GrizzlyBears());
+        modified.setCounterCount(CounterType.CELL, 1);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .destroyPermanentToGraveyard(gd, target));
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, modified)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, modified)).isEqualTo(2);
+    }
+
+    @Test
+    void oldReunionActivationCannotReturnSephirothAfterItReturnsAndDiesAgain() {
+        Card sephiroth = new SephirothFallenHero();
+        Permanent first = addCreatureReady(player1, new GrizzlyBears());
+        Permanent second = addCreatureReady(player1, new GrizzlyBears());
+        first.setCounterCount(CounterType.CELL, 1);
+        second.setCounterCount(CounterType.CELL, 1);
+        harness.setGraveyard(player1, List.of(sephiroth));
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.activateGraveyardAbility(player1, 0);
+        if (gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class) != null) {
+            harness.handlePermanentChosen(player1, first.getId());
+        }
+        harness.activateGraveyardAbility(player1, 0);
+        if (gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class) != null) {
+            harness.handlePermanentChosen(player1, second.getId());
+        }
+        harness.passBothPriorities();
+        Permanent returned = findPermanent(player1, "Sephiroth, Fallen Hero");
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .destroyPermanentToGraveyard(gd, returned));
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Sephiroth, Fallen Hero");
+        harness.assertInGraveyard(player1, "Sephiroth, Fallen Hero");
     }
 }
