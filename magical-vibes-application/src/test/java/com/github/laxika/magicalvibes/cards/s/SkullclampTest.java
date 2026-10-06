@@ -141,6 +141,86 @@ class SkullclampTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
+    @Test
+    @DisplayName("Equipping a one-toughness creature kills it and draws two cards")
+    void equippingOneToughnessCreatureDrawsTwoCards() {
+        Permanent skullclamp = addSkullclampReady(player1);
+        Permanent creature = addCreatureReady(player1, new CrazedGoblin());
+        Card firstDraw = new DrossGolem();
+        Card secondDraw = new DrossGolem();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(firstDraw, secondDraw));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, creature.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Crazed Goblin");
+        harness.assertNotOnBattlefield(player1, "Crazed Goblin");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(skullclamp);
+        assertThat(skullclamp.getAttachedTo()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw);
+    }
+
+    @Test
+    @DisplayName("Re-equipping moves the boost without triggering a draw")
+    void reequippingMovesBoostWithoutDrawing() {
+        Permanent skullclamp = addSkullclampReady(player1);
+        Permanent firstCreature = addCreatureReady(player1, new DrossGolem());
+        Permanent secondCreature = addCreatureReady(player1, new DrossGolem());
+        skullclamp.setAttachedTo(firstCreature.getId());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new DrossGolem(), new DrossGolem()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, secondCreature.getId());
+        resolveAllTriggers();
+
+        assertThat(skullclamp.getAttachedTo()).isEqualTo(secondCreature.getId());
+        assertThat(gqs.getEffectivePower(gd, firstCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, firstCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, secondCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, secondCreature)).isEqualTo(1);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Equip cannot be activated during combat")
+    void cannotEquipDuringCombat() {
+        Permanent skullclamp = addSkullclampReady(player1);
+        Permanent creature = addCreatureReady(player1, new DrossGolem());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(skullclamp.getAttachedTo()).isNull();
+    }
+
+    @Test
+    @DisplayName("An equip target dying in response leaves the previous attachment intact")
+    void deadEquipTargetLeavesPreviousAttachmentIntact() {
+        Permanent skullclamp = addSkullclampReady(player1);
+        Permanent equippedCreature = addCreatureReady(player1, new DrossGolem());
+        Permanent newTarget = addCreatureReady(player1, new CrazedGoblin());
+        skullclamp.setAttachedTo(equippedCreature.getId());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new DrossGolem(), new DrossGolem()));
+        harness.setHand(player2, List.of(new EchoingDecay()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, newTarget.getId());
+        harness.castInstant(player2, 0, newTarget.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Crazed Goblin");
+        assertThat(skullclamp.getAttachedTo()).isEqualTo(equippedCreature.getId());
+        assertThat(gqs.getEffectiveToughness(gd, equippedCreature)).isEqualTo(1);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
     private Permanent addSkullclampReady(Player player) {
         Permanent skullclamp = harness.addToBattlefieldAndReturn(player, new Skullclamp());
         skullclamp.setSummoningSick(false);
