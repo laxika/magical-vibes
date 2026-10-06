@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GiantSolifuge;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SaiOfTheShinobi.class, GrizzlyBears.class})
+@CardUsed({SaiOfTheShinobi.class, GrizzlyBears.class, GiantSolifuge.class})
 class SaiOfTheShinobiTest extends BaseCardTest {
 
     @Test
@@ -51,8 +52,7 @@ class SaiOfTheShinobiTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castCreature(player1, 0);
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
@@ -74,18 +74,81 @@ class SaiOfTheShinobiTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castCreature(player1, 0);
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(sai.getAttachedTo()).isNull();
     }
 
+    @Test
+    @DisplayName("Accepting moves Sai from its previous creature and transfers the boost")
+    void acceptingMovesEquipment() {
+        Permanent original = addCreatureReady(player1, new GrizzlyBears());
+        Permanent sai = addSaiReady(player1);
+        sai.setAttachedTo(original.getId());
+
+        Permanent entering = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(sai.getAttachedTo()).isEqualTo(entering.getId());
+        assertThat(gqs.getEffectivePower(gd, original)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, original)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, entering)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, entering)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Declining preserves Sai's existing attachment")
+    void decliningPreservesAttachment() {
+        Permanent original = addCreatureReady(player1, new GrizzlyBears());
+        Permanent sai = addSaiReady(player1);
+        sai.setAttachedTo(original.getId());
+
+        Permanent entering = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(sai.getAttachedTo()).isEqualTo(original.getId());
+        assertThat(gqs.getEffectivePower(gd, original)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, original)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, entering)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, entering)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("An opponent's entering creature does not trigger Sai")
+    void opponentCreatureDoesNotTrigger() {
+        Permanent sai = addSaiReady(player1);
+
+        harness.enterBattlefieldAndReturn(player2, new GrizzlyBears());
+        resolveAllTriggers();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(sai.getAttachedTo()).isNull();
+    }
+
+    @Test
+    @DisplayName("The entering-creature attachment does not target and works through shroud")
+    void attachesToCreatureWithShroud() {
+        Permanent sai = addSaiReady(player1);
+
+        Permanent creature = harness.enterBattlefieldAndReturn(player1, new GiantSolifuge());
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(sai.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+    }
+
     private Permanent addSaiReady(Player player) {
-        Permanent permanent = new Permanent(new SaiOfTheShinobi());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new SaiOfTheShinobi());
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 }
