@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,14 +18,14 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ShapersOfNature.class, GrizzlyBears.class, Forest.class})
 class ShapersOfNatureTest extends BaseCardTest {
 
-    // ===== Ability 0: Put a +1/+1 counter on target creature =====
 
     @Test
     @DisplayName("Ability 0 puts a +1/+1 counter on target creature")
     void ability0PutsCounterOnTargetCreature() {
-        Permanent shapers = addReadyShapers(player1);
+        addReadyShapers(player1);
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         harness.forceActivePlayer(player1);
@@ -40,7 +42,7 @@ class ShapersOfNatureTest extends BaseCardTest {
     @Test
     @DisplayName("Ability 0 can target opponent's creature")
     void ability0CanTargetOpponentCreature() {
-        Permanent shapers = addReadyShapers(player1);
+        addReadyShapers(player1);
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         harness.forceActivePlayer(player1);
@@ -58,8 +60,7 @@ class ShapersOfNatureTest extends BaseCardTest {
     @DisplayName("Ability 0 cannot be activated without enough mana")
     void ability0RequiresMana() {
         addReadyShapers(player1);
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID bearsId = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears()).getId();
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -70,7 +71,6 @@ class ShapersOfNatureTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Ability 1: Remove a +1/+1 counter from a creature you control, draw a card =====
 
     @Test
     @DisplayName("Ability 1 auto-removes counter when only one creature has +1/+1 counters and draws a card")
@@ -95,7 +95,7 @@ class ShapersOfNatureTest extends BaseCardTest {
     @Test
     @DisplayName("Ability 1 can remove counter from a different creature you control")
     void ability1CanRemoveCounterFromOtherCreature() {
-        Permanent shapers = addReadyShapers(player1);
+        addReadyShapers(player1);
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
 
@@ -184,7 +184,6 @@ class ShapersOfNatureTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Both abilities together =====
 
     @Test
     @DisplayName("Can use ability 0 to add counter then ability 1 to remove it and draw")
@@ -214,13 +213,72 @@ class ShapersOfNatureTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
     }
 
-    // ===== Helpers =====
+
+    @Test
+    void counterAbilityRejectsNoncreaturePermanent() {
+        addReadyShapers(player1);
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, forest.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void counterIsPaidBeforeDrawResolves() {
+        Permanent shapers = harness.addToBattlefieldAndReturn(player1, new ShapersOfNature());
+        shapers.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(shapers.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+    }
+
+    @Test
+    void cannotPayWithOpponentsCreatureCounter() {
+        addReadyShapers(player1);
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new ShapersOfNature());
+        opponent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(opponent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void counterAbilityWorksWhileSummoningSickAndTapped() {
+        Permanent shapers = harness.addToBattlefieldAndReturn(player1, new ShapersOfNature());
+        shapers.setTapped(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 0, null, shapers.getId());
+        harness.passBothPriorities();
+
+        assertThat(shapers.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(shapers.isTapped()).isTrue();
+    }
 
     private Permanent addReadyShapers(Player player) {
-        ShapersOfNature card = new ShapersOfNature();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new ShapersOfNature());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }
