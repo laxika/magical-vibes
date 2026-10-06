@@ -77,11 +77,68 @@ class SaviorOfOllenbockTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player2, List.of(new Unsummon()));
         harness.addMana(player2, ManaColor.BLUE, 1);
-        harness.castInstant(player2, 0, savior.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, savior.getId());
 
         harness.assertInHand(player1, "Savior of Ollenbock");
+        harness.assertNotOnBattlefield(player2, "Hill Giant");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).extracting(Card::getName)
+                .containsExactly("Hill Giant");
+
+        harness.passBothPriorities();
+
         harness.assertOnBattlefield(player2, "Hill Giant");
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Savior may train without choosing an exile target")
+    void mayChooseNoTargets() {
+        Permanent savior = addCreatureReady(player1, new SaviorOfOllenbock());
+        addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(List.of(0, 1));
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(savior.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Attacking alone does not train Savior or trigger exile")
+    void attackingAloneDoesNotTrain() {
+        Permanent savior = addCreatureReady(player1, new SaviorOfOllenbock());
+        addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(List.of(0));
+
+        assertThat(savior.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Exile still resolves after Savior leaves, with no subsequent return")
+    void leavingBeforeExileResolutionStillExilesTarget() {
+        Permanent savior = addCreatureReady(player1, new SaviorOfOllenbock());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(List.of(0, 1));
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(bears.getCard().getId()));
+
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, savior.getId());
+        harness.assertInHand(player1, "Savior of Ollenbock");
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).extracting(Card::getName)
+                .containsExactly("Grizzly Bears");
     }
 }
