@@ -107,10 +107,43 @@ class ShinkaTheBloodsoakedKeepTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("A tapped Shinka cannot activate its first strike ability")
+    void cannotActivateWhileTapped() {
+        Permanent shinka = addReadyShinka(player1);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new IsamaruHoundOfKonda());
+        harness.addMana(player1, ManaColor.RED, 1);
+        shinka.setTapped(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("The first strike ability resolves even if Shinka leaves the battlefield")
+    void abilityResolvesAfterSourceLeavesBattlefield() {
+        Permanent shinka = addReadyShinka(player1);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new IsamaruHoundOfKonda());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.activateAbility(player1, 0, null, creature.getId());
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isFalse();
+        gd.playerBattlefields.get(player1.getId()).remove(shinka);
+        gd.playerGraveyards.get(player1.getId()).add(shinka.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addReadyShinka(Player player) {
-        Permanent permanent = new Permanent(new ShinkaTheBloodsoakedKeep());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        return addCreatureReady(player, new ShinkaTheBloodsoakedKeep());
     }
 }
