@@ -88,4 +88,40 @@ class ShivanReefTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
+
+    @Test
+    @DisplayName("An opponent-controlled Reef adds mana and deals damage only to that opponent")
+    void opponentControlledReef() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new ShivanReef());
+        int controllerLifeBefore = gd.playerLifeTotals.get(player2.getId());
+        int otherLifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.activateAbility(player2, 0, 2, null, null);
+
+        assertThat(land.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        harness.assertLife(player2, controllerLifeBefore - 1);
+        harness.assertLife(player1, otherLifeBefore);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("After untapping, each colored activation deals damage but colorless does not")
+    void repeatedActivationsAfterUntapping() {
+        harness.addToBattlefield(player1, new ShivanReef());
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.performUntapStep(player1);
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.performUntapStep(player1);
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        harness.assertLife(player1, lifeBefore - 2);
+        assertThat(gd.stack).isEmpty();
+    }
 }
