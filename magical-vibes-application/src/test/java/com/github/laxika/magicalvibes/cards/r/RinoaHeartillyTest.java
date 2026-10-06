@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -83,11 +82,67 @@ class RinoaHeartillyTest extends BaseCardTest {
         assertThat(target.getEffectiveToughness()).isEqualTo(2);
     }
 
+    @Test
+    @CardUsed({RinoaHeartilly.class})
+    @DisplayName("Angelo can receive the attack boost and opposing creatures are not counted")
+    void angeloReceivesBoostCountingOnlyYourCreatures() {
+        castRinoa();
+        resolveAllTriggers();
+        Permanent rinoa = findPermanent(player1, "Rinoa Heartilly");
+        Permanent angelo = findPermanent(player1, "Angelo");
+        rinoa.setSummoningSick(false);
+        addCreatureReady(player2, new RinoaHeartilly());
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, angelo.getId());
+        harness.passBothPriorities();
+
+        assertThat(angelo.getEffectivePower()).isEqualTo(3);
+        assertThat(angelo.getEffectiveToughness()).isEqualTo(3);
+        assertThat(rinoa.getPowerModifier()).isZero();
+    }
+
+    @Test
+    @CardUsed({RinoaHeartilly.class})
+    @DisplayName("The attack trigger survives Rinoa leaving and counts creatures at resolution")
+    void attackTriggerResolvesAfterRinoaLeaves() {
+        castRinoa();
+        resolveAllTriggers();
+        Permanent rinoa = findPermanent(player1, "Rinoa Heartilly");
+        Permanent angelo = findPermanent(player1, "Angelo");
+        rinoa.setSummoningSick(false);
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, angelo.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(rinoa);
+        harness.setGraveyard(player1, List.of(rinoa.getCard()));
+        harness.passBothPriorities();
+
+        assertThat(angelo.getEffectivePower()).isEqualTo(2);
+        assertThat(angelo.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @CardUsed({RinoaHeartilly.class})
+    @DisplayName("The attack trigger does not boost a target that changes controllers")
+    void attackTargetMustStillBeControlledAtResolution() {
+        castRinoa();
+        resolveAllTriggers();
+        Permanent rinoa = findPermanent(player1, "Rinoa Heartilly");
+        Permanent angelo = findPermanent(player1, "Angelo");
+        rinoa.setSummoningSick(false);
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, angelo.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(angelo);
+        gd.playerBattlefields.get(player2.getId()).add(angelo);
+        harness.passBothPriorities();
+
+        assertThat(angelo.getEffectivePower()).isEqualTo(1);
+        assertThat(angelo.getEffectiveToughness()).isEqualTo(1);
+    }
+
     private void castRinoa() {
-        harness.setHand(player1, List.of(new RinoaHeartilly()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new RinoaHeartilly(), "{3}{G}{W}");
     }
 }
