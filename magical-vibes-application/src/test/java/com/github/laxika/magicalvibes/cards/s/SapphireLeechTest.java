@@ -8,11 +8,53 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({SapphireLeech.class, DreamThrush.class, AlabasterLeech.class})
 class SapphireLeechTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Sapphire Leech does not tax itself before entering the battlefield")
+    void firstLeechDoesNotTaxItself() {
+        harness.castFromHand(player1, new SapphireLeech(), "{1}{U}");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("An existing Sapphire Leech taxes another Sapphire Leech")
+    void existingLeechTaxesAnotherLeech() {
+        harness.addToBattlefield(player1, new SapphireLeech());
+        harness.castFromHand(player1, new SapphireLeech(), "{1}{U}{U}");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Each Sapphire Leech adds a separate blue mana tax")
+    void multipleLeechesStackTheirTaxes() {
+        harness.addToBattlefield(player1, new SapphireLeech());
+        harness.addToBattlefield(player1, new SapphireLeech());
+        harness.castFromHand(player1, new DreamThrush(), "{1}{U}{U}{U}");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("A Sapphire Leech in the graveyard does not tax spells")
+    void graveyardLeechDoesNotTaxSpells() {
+        harness.setGraveyard(player1, List.of(new SapphireLeech()));
+        harness.castFromHand(player1, new DreamThrush(), "{1}{U}");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
 
     @Nested
     @DisplayName("Blue spells you cast cost {U} more")
