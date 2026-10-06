@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
+import com.github.laxika.magicalvibes.cards.f.Fly;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -17,7 +18,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RayOfFrost.class, FountainOfYouth.class, GrizzlyBears.class, ProdigalPyromancer.class})
+@CardUsed({RayOfFrost.class, FountainOfYouth.class, GrizzlyBears.class, ProdigalPyromancer.class,
+        Fly.class, RobeOfMirrors.class})
 class RayOfFrostTest extends BaseCardTest {
 
     @Test
@@ -44,9 +46,7 @@ class RayOfFrostTest extends BaseCardTest {
     @DisplayName("Ray of Frost removes a red creature's activated abilities")
     void redCreatureLosesAbilities() {
         Permanent pyromancer = addCreatureReady(player2, new ProdigalPyromancer());
-        Permanent aura = new Permanent(new RayOfFrost());
-        aura.setAttachedTo(pyromancer.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
+        attachRayOfFrost(pyromancer);
 
         assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, player1.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -59,7 +59,7 @@ class RayOfFrostTest extends BaseCardTest {
         pyromancer.tap();
         attachRayOfFrost(pyromancer);
 
-        advanceToNextTurn(player1);
+        harness.performUntapStep(player2);
 
         assertThat(pyromancer.isTapped()).isTrue();
     }
@@ -76,28 +76,107 @@ class RayOfFrostTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    void nonredCreatureAlsoDoesNotUntapButOtherCreaturesDo() {
+        Permanent enchanted = addCreatureReady(player2, new GrizzlyBears());
+        Permanent other = addCreatureReady(player2, new GrizzlyBears());
+        enchanted.tap();
+        other.tap();
+        castRayOfFrost(enchanted);
+
+        harness.performUntapStep(player2);
+
+        assertThat(enchanted.isTapped()).isTrue();
+        assertThat(other.isTapped()).isFalse();
+    }
+
+    @Test
+    void canBeCastDuringOpponentsCombat() {
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        castRayOfFrost(bears);
+
+        assertThat(findPermanent(player1, "Ray of Frost").getAttachedTo()).isEqualTo(bears.getId());
+        assertThat(bears.isTapped()).isFalse();
+    }
+
+    @Test
+    void canEnchantControllersOwnRedCreature() {
+        Permanent pyromancer = addCreatureReady(player1, new ProdigalPyromancer());
+
+        castRayOfFrost(pyromancer);
+
+        assertThat(pyromancer.isTapped()).isTrue();
+    }
+
+    @Test
+    void redCreatureKeepsAbilitiesGrantedAfterRayOfFrost() {
+        Permanent pyromancer = addCreatureReady(player2, new ProdigalPyromancer());
+        castRayOfFrost(pyromancer);
+
+        castFly(pyromancer);
+
+        assertThat(gqs.hasKeyword(gd, pyromancer, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    void redCreatureLosesAbilitiesGrantedBeforeRayOfFrost() {
+        Permanent pyromancer = addCreatureReady(player2, new ProdigalPyromancer());
+        castFly(pyromancer);
+
+        castRayOfFrost(pyromancer);
+
+        assertThat(gqs.hasKeyword(gd, pyromancer, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    void nonredCreatureKeepsItsGrantedAbilities() {
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        castFly(bears);
+
+        castRayOfFrost(bears);
+
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    void enterTriggerDoesNotTargetEnchantedCreature() {
+        Permanent pyromancer = addCreatureReady(player2, new ProdigalPyromancer());
+        harness.setHand(player1, List.of(new RayOfFrost()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castEnchantment(player1, 0, pyromancer.getId());
+        harness.passBothPriorities();
+        assertThat(pyromancer.isTapped()).isFalse();
+
+        Permanent robe = harness.addToBattlefieldAndReturn(player2, new RobeOfMirrors());
+        robe.setAttachedTo(pyromancer.getId());
+        robe.setTimestamp(gd.nextTimestamp());
+        assertThat(gqs.hasKeyword(gd, pyromancer, Keyword.SHROUD)).isTrue();
+
+        resolveAllTriggers();
+
+        assertThat(pyromancer.isTapped()).isTrue();
+    }
+
+    private void castFly(Permanent target) {
+        harness.setHand(player1, List.of(new Fly()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castEnchantment(player1, 0, target.getId());
+        resolveAllTriggers();
+    }
+
     private void castRayOfFrost(Permanent target) {
         harness.setHand(player1, List.of(new RayOfFrost()));
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.castEnchantment(player1, 0, target.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
     private void attachRayOfFrost(Permanent target) {
         Permanent aura = new Permanent(new RayOfFrost());
         aura.setAttachedTo(target.getId());
         gd.playerBattlefields.get(player1.getId()).add(aura);
-    }
-
-    private void advanceToNextTurn(Player currentActivePlayer) {
-        harness.forceActivePlayer(currentActivePlayer);
-        harness.setHand(player1, List.of());
-        harness.setHand(player2, List.of());
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
     }
 }
