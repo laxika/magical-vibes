@@ -2,9 +2,12 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.a.AuraMutation;
 import com.github.laxika.magicalvibes.cards.d.DevotedCaretaker;
+import com.github.laxika.magicalvibes.cards.d.DreamThrush;
 import com.github.laxika.magicalvibes.cards.i.IcatianInfantry;
+import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.o.OrcishSpy;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.s.SharaeOfNumbingDepths;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -19,7 +22,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({RaidingParty.class, OrcishSpy.class, IcatianInfantry.class, RiverMerfolk.class,
-        Plains.class, RayOfDistortion.class, DevotedCaretaker.class})
+        Plains.class, RayOfDistortion.class, DevotedCaretaker.class, AuraMutation.class,
+        DreamThrush.class, Island.class, SharaeOfNumbingDepths.class})
 class RaidingPartyTest extends BaseCardTest {
 
     @Test
@@ -150,5 +154,95 @@ class RaidingPartyTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, caretakerIndex, null, raidingParty.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("white spells or abilities from white sources");
+    }
+
+    @Test
+    void destroysALandThatBecameAPlains() {
+        harness.addToBattlefield(player1, new RaidingParty());
+        harness.addToBattlefield(player1, new OrcishSpy());
+        Permanent thrush = addCreatureReady(player1, new DreamThrush());
+        Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(thrush),
+                null, island.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "PLAINS");
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(island);
+        harness.assertInGraveyard(player2, "Island");
+    }
+
+    @Test
+    void preservesAPrintedPlainsThatBecameAnIsland() {
+        harness.addToBattlefield(player1, new RaidingParty());
+        harness.addToBattlefield(player1, new OrcishSpy());
+        Permanent thrush = addCreatureReady(player1, new DreamThrush());
+        Permanent plains = harness.addToBattlefieldAndReturn(player2, new Plains());
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(thrush),
+                null, plains.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "ISLAND");
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(plains);
+        harness.assertNotInGraveyard(player2, "Plains");
+    }
+
+    @Test
+    void opponentsTappingTheirOwnCreaturesDoesNotTriggerSharae() {
+        harness.addToBattlefield(player1, new RaidingParty());
+        harness.addToBattlefield(player1, new OrcishSpy());
+        harness.addToBattlefield(player1, new SharaeOfNumbingDepths());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Plains()));
+        Permanent whiteCreature = harness.addToBattlefieldAndReturn(player2, new IcatianInfantry());
+        harness.addToBattlefield(player2, new Plains());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of());
+        harness.handleMultiplePermanentsChosen(player2, List.of(whiteCreature.getId()));
+        harness.handleMultiplePermanentsChosen(player2, List.of());
+
+        assertThat(whiteCreature.isTapped()).isTrue();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player2, "Plains");
+    }
+
+    @Test
+    void twoWhiteCreaturesCanPreserveFourPlains() {
+        harness.addToBattlefield(player1, new RaidingParty());
+        Permanent orc = harness.addToBattlefieldAndReturn(player1, new OrcishSpy());
+        orc.tap();
+        Permanent firstWhite = harness.addToBattlefieldAndReturn(player1, new IcatianInfantry());
+        Permanent secondWhite = harness.addToBattlefieldAndReturn(player1, new IcatianInfantry());
+        Permanent firstPlains = harness.addToBattlefieldAndReturn(player1, new Plains());
+        Permanent secondPlains = harness.addToBattlefieldAndReturn(player1, new Plains());
+        Permanent thirdPlains = harness.addToBattlefieldAndReturn(player2, new Plains());
+        Permanent fourthPlains = harness.addToBattlefieldAndReturn(player2, new Plains());
+        Permanent unchosenPlains = harness.addToBattlefieldAndReturn(player2, new Plains());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of(firstWhite.getId(), secondWhite.getId()));
+        harness.handleMultiplePermanentsChosen(player1, List.of(firstPlains.getId(), secondPlains.getId(),
+                thirdPlains.getId(), fourthPlains.getId()));
+
+        assertThat(firstWhite.isTapped()).isTrue();
+        assertThat(secondWhite.isTapped()).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(firstPlains, secondPlains);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(thirdPlains, fourthPlains)
+                .doesNotContain(unchosenPlains);
+        harness.assertInGraveyard(player1, "Orcish Spy");
+        harness.assertInGraveyard(player2, "Plains");
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }
