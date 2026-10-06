@@ -181,6 +181,55 @@ class RepentantVampireTest extends BaseCardTest {
         assertThat(vampire.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
+    @Test
+    @DisplayName("An activated ability still resolves after threshold is lost")
+    void activatedAbilityResolvesAfterThresholdIsLost() {
+        fillGraveyard(player1, 7);
+        Permanent vampire = addCreatureReady(player1, new RepentantVampire());
+        Permanent target = addCreatureReady(player2, new DuskImp());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        fillGraveyard(player1, 6);
+
+        assertThat(gqs.getEffectiveColors(gd, vampire)).containsExactly(CardColor.BLACK);
+        assertThat(gs.getEffectiveActivatedAbilities(gd, vampire)).isEmpty();
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Dusk Imp");
+        assertThat(vampire.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("The threshold ability can destroy a black creature its controller controls")
+    void canDestroyOwnBlackCreatureWithoutGettingACounter() {
+        fillGraveyard(player1, 7);
+        Permanent vampire = addCreatureReady(player1, new RepentantVampire());
+        Permanent target = addCreatureReady(player1, new DuskImp());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Dusk Imp");
+        assertThat(vampire.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("The threshold tap ability cannot be activated while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        fillGraveyard(player1, 7);
+        Permanent vampire = harness.addToBattlefieldAndReturn(player1, new RepentantVampire());
+        vampire.setSummoningSick(true);
+        Permanent target = addCreatureReady(player2, new DuskImp());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+
+        assertThat(vampire.isTapped()).isFalse();
+        harness.assertOnBattlefield(player2, "Dusk Imp");
+    }
+
     private void fillGraveyard(Player player, int count) {
         List<Card> cards = new ArrayList<>();
         for (int i = 0; i < count; i++) {
