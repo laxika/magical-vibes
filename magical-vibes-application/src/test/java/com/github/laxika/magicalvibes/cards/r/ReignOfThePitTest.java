@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -29,11 +29,7 @@ class ReignOfThePitTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Hill Giant");
-        Permanent demon = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().isToken()
-                        && permanent.getCard().getName().equals("Demon"))
-                .findFirst()
-                .orElseThrow();
+        Permanent demon = findPermanent(player1, "Demon");
         assertThat(demon.getCard().getPower()).isEqualTo(5);
         assertThat(demon.getCard().getToughness()).isEqualTo(5);
     }
@@ -63,12 +59,7 @@ class ReignOfThePitTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Hill Giant");
         harness.assertInGraveyard(player2, "Grizzly Bears");
         harness.assertOnBattlefield(player1, "Grizzly Bears");
-        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().isToken()
-                        && permanent.getCard().getName().equals("Demon"))
-                .findFirst()
-                .orElseThrow()
-                .getCard().getPower()).isEqualTo(5);
+        assertThat(findPermanent(player1, "Demon").getCard().getPower()).isEqualTo(5);
     }
 
     @Test
@@ -78,20 +69,72 @@ class ReignOfThePitTest extends BaseCardTest {
 
         castReignOfThePit();
 
-        Permanent demon = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().isToken()
-                        && permanent.getCard().getName().equals("Demon"))
-                .findFirst()
-                .orElseThrow();
+        Permanent demon = findPermanent(player1, "Demon");
         assertThat(demon.getCard().getPower()).isEqualTo(2);
         assertThat(demon.getCard().getToughness()).isEqualTo(2);
     }
 
+    @Test
+    @DisplayName("The caster creates a flying Demon even when only the opponent sacrifices")
+    void casterWithoutCreatureStillCreatesDemon() {
+        addCreatureReady(player2, new HillGiant());
+
+        castReignOfThePit();
+
+        Permanent demon = findPermanent(player1, "Demon");
+        assertThat(demon.getCard().isToken()).isTrue();
+        assertThat(demon.getCard().getPower()).isEqualTo(3);
+        assertThat(demon.getCard().getToughness()).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, demon, Keyword.FLYING)).isTrue();
+        harness.assertInGraveyard(player2, "Hill Giant");
+        harness.assertNotOnBattlefield(player2, "Demon");
+    }
+
+    @Test
+    @DisplayName("No creatures produces a zero-toughness Demon that dies")
+    void noCreaturesLeavesNoDemon() {
+        castReignOfThePit();
+
+        harness.assertNotOnBattlefield(player1, "Demon");
+        harness.assertInGraveyard(player1, "Reign of the Pit");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The Demon uses modified battlefield power rather than printed power")
+    void includesPowerModifiers() {
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
+        bear.setPowerModifier(3);
+        addCreatureReady(player2, new HillGiant());
+
+        castReignOfThePit();
+
+        Permanent demon = findPermanent(player1, "Demon");
+        assertThat(demon.getCard().getPower()).isEqualTo(8);
+        assertThat(demon.getCard().getToughness()).isEqualTo(8);
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Hill Giant");
+    }
+
+    @Test
+    @DisplayName("Negative sacrificed power reduces the total")
+    void negativePowerReducesTotal() {
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
+        bear.setPowerModifier(-3);
+        addCreatureReady(player2, new HillGiant());
+
+        castReignOfThePit();
+
+        Permanent demon = findPermanent(player1, "Demon");
+        assertThat(demon.getCard().getPower()).isEqualTo(2);
+        assertThat(demon.getCard().getToughness()).isEqualTo(2);
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Hill Giant");
+    }
+
     private void castReignOfThePit() {
-        harness.setHand(player1, List.of(new ReignOfThePit()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.castSorcery(player1, 0);
+        harness.castFromHand(player1, new ReignOfThePit(), "{4}{B}{B}");
         harness.passBothPriorities();
     }
 }
