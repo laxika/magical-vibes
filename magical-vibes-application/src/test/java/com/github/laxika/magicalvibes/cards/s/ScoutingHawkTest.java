@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -53,10 +52,91 @@ class ScoutingHawkTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).anyMatch(card -> card instanceof Plains);
     }
 
+    @Test
+    void doesNotSearchIfLandCountsBecomeEqualBeforeTriggerResolves() {
+        Plains plains = new Plains();
+        harness.setLibrary(player1, List.of(plains));
+        harness.addToBattlefield(player2, new Forest());
+
+        castHawk();
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.addToBattlefield(player1, new Forest());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(plains);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void doesNotTriggerRetroactivelyWhenOpponentGetsMoreLands() {
+        Plains plains = new Plains();
+        harness.setLibrary(player1, List.of(plains));
+
+        castHawk();
+        harness.passBothPriorities();
+        assertThat(gd.stack).isEmpty();
+
+        harness.addToBattlefield(player2, new Forest());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(plains);
+    }
+
+    @Test
+    void canFailToFindEvenWhenBasicPlainsIsAvailable() {
+        Plains plains = new Plains();
+        Forest forest = new Forest();
+        harness.setLibrary(player1, List.of(plains, forest));
+        harness.addToBattlefield(player2, new Forest());
+
+        castHawk();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(plains, forest);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard() instanceof Plains);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void completesSearchWhenLibraryHasNoBasicPlains() {
+        Forest forest = new Forest();
+        harness.setLibrary(player1, List.of(forest));
+        harness.addToBattlefield(player2, new Forest());
+
+        castHawk();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard() instanceof Plains);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void completesSearchWithEmptyLibrary() {
+        harness.setLibrary(player1, List.of());
+        harness.addToBattlefield(player2, new Forest());
+
+        castHawk();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void castHawk() {
-        harness.setHand(player1, List.of(new ScoutingHawk()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new ScoutingHawk(), "{2}{W}");
     }
 }
