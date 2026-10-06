@@ -66,7 +66,6 @@ class RidgelineRagerTest extends BaseCardTest {
         assertThat(rager.getPowerModifier()).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(rager.getPowerModifier()).isEqualTo(0);
@@ -92,6 +91,45 @@ class RidgelineRagerTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("Multiple activations can be stacked before any resolve")
+    void canStackActivations() {
+        Permanent rager = addCreatureReady(player1, new RidgelineRager());
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(rager.getPowerModifier()).isEqualTo(0);
+        assertThat(gd.stack).hasSize(2);
+
+        harness.passBothPriorities();
+        assertThat(rager.getPowerModifier()).isEqualTo(1);
+
+        harness.passBothPriorities();
+        assertThat(rager.getPowerModifier()).isEqualTo(2);
+        assertThat(rager.getToughnessModifier()).isEqualTo(0);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped Rager can activate and boosts only itself")
+    void tappedRagerBoostsOnlyItself() {
+        Permanent otherRager = addCreatureReady(player1, new RidgelineRager());
+        Permanent rager = addCreatureReady(player1, new RidgelineRager());
+        rager.setTapped(true);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(rager.getPowerModifier()).isEqualTo(1);
+        assertThat(rager.getToughnessModifier()).isEqualTo(0);
+        assertThat(rager.isTapped()).isTrue();
+        assertThat(otherRager.getPowerModifier()).isEqualTo(0);
+        assertThat(otherRager.getToughnessModifier()).isEqualTo(0);
     }
 
 }
