@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -43,6 +45,63 @@ class SibyllineSoothsayerTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
         assertThat(gd.exiledCardTimeCounters).doesNotContainKey(nonland.getId());
         assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(land, nonland);
+    }
+
+    @Test
+    void preservesUnrevealedOrderAndPlacesSkippedCardsAtTheBottom() {
+        Forest skippedLand = new Forest();
+        GrizzlyBears skippedCreature = new GrizzlyBears();
+        SibyllineSoothsayer qualifyingCard = new SibyllineSoothsayer();
+        Forest unrevealedFirst = new Forest();
+        GrizzlyBears unrevealedSecond = new GrizzlyBears();
+        setUpSoothsayer(List.of(skippedLand, skippedCreature, qualifyingCard,
+                unrevealedFirst, unrevealedSecond));
+
+        resolveEnterTrigger();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(qualifyingCard);
+        List<Card> library = gd.playerDecks.get(player1.getId());
+        assertThat(library.subList(0, 2)).containsExactly(unrevealedFirst, unrevealedSecond);
+        assertThat(library.subList(2, 4)).containsExactlyInAnyOrder(skippedLand, skippedCreature);
+    }
+
+    @Test
+    void emptyLibraryDoesNotExileAnything() {
+        setUpSoothsayer(List.of());
+
+        resolveEnterTrigger();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.exiledCardTimeCounters).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void grantedSuspendRemovesCountersOnlyOnOwnersUpkeepsAndOffersCasting() {
+        SibyllineSoothsayer qualifyingCard = new SibyllineSoothsayer();
+        setUpSoothsayer(List.of(qualifyingCard, new Forest(), new Forest(), new Forest(),
+                new Forest(), new Forest(), new Forest(), new Forest(), new Forest()));
+        resolveEnterTrigger();
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
+        assertThat(gd.exiledCardTimeCounters).containsEntry(qualifyingCard.getId(), 3);
+
+        for (int remaining = 2; remaining >= 1; remaining--) {
+            harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
+            harness.passBothPriorities();
+            assertThat(gd.exiledCardTimeCounters).containsEntry(qualifyingCard.getId(), remaining);
+            harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
+            assertThat(gd.exiledCardTimeCounters).containsEntry(qualifyingCard.getId(), remaining);
+        }
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
+        harness.passBothPriorities();
+        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(qualifyingCard.getId());
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(qualifyingCard);
     }
 
     private void setUpSoothsayer(List<Card> library) {
