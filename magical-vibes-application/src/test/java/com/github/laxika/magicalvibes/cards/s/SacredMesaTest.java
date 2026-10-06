@@ -137,4 +137,45 @@ class SacredMesaTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Sacred Mesa");
         assertThat(countPermanents(player1, "Pegasus")).isZero();
     }
+
+    @Test
+    @DisplayName("A Pegasus created in response to the upkeep trigger can pay for Mesa")
+    void pegasusCreatedInResponsePaysUpkeepCost() {
+        harness.addToBattlefield(player1, new SacredMesa());
+
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Pegasus");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, findPermanent(player1, "Pegasus").getId());
+
+        harness.assertOnBattlefield(player1, "Sacred Mesa");
+        assertThat(countPermanents(player1, "Pegasus")).isZero();
+    }
+
+    @Test
+    @DisplayName("Two Sacred Mesas cannot both be kept by sacrificing one Pegasus")
+    void eachMesaRequiresItsOwnPegasus() {
+        harness.addToBattlefield(player1, new SacredMesa());
+        harness.addToBattlefield(player1, new SacredMesa());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, findPermanent(player1, "Pegasus").getId());
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Sacred Mesa")).isEqualTo(1);
+        assertThat(countPermanents(player1, "Pegasus")).isZero();
+        harness.assertInGraveyard(player1, "Sacred Mesa");
+    }
 }
