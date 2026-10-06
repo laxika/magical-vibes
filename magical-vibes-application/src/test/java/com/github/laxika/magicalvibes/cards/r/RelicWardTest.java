@@ -86,8 +86,7 @@ class RelicWardTest extends BaseCardTest {
         harness.setHand(player1, List.of(new CreepingMold()));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
-        harness.castSorcery(player1, 0, 0, aura.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0, aura.getId());
 
         harness.assertNotOnBattlefield(player1, "Relic Ward");
         harness.assertInGraveyard(player1, "Relic Ward");
@@ -125,8 +124,40 @@ class RelicWardTest extends BaseCardTest {
 
         GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd);
 
+        harness.assertOnBattlefield(player1, "Relic Ward");
+        assertThat(gqs.hasKeyword(gd, artifact, Keyword.SHROUD)).isTrue();
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+
         harness.assertNotOnBattlefield(player1, "Relic Ward");
         harness.assertInGraveyard(player1, "Relic Ward");
+        harness.assertOnBattlefield(player1, "Sisay's Ring");
+        assertThat(gqs.hasKeyword(gd, artifact, Keyword.SHROUD)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Flashing Relic Ward in response makes artifact removal lose its target")
+    void flashInResponseProtectsOpponentsArtifact() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new SisaysRing());
+        harness.setHand(player1, List.of(new CreepingMold()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.setHand(player2, List.of(new RelicWard()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+
+        harness.castSorcery(player1, 0, 0, artifact.getId());
+        harness.passPriority(player1);
+        harness.castEnchantment(player2, 0, artifact.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Relic Ward");
+        assertThat(gqs.hasKeyword(gd, artifact, Keyword.SHROUD)).isTrue();
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Sisay's Ring");
+        harness.assertInGraveyard(player1, "Creeping Mold");
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
