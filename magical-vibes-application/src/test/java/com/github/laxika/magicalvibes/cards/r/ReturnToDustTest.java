@@ -88,11 +88,7 @@ class ReturnToDustTest extends BaseCardTest {
         harness.addToBattlefield(player2, new BenalishCavalry());
         UUID creatureId = harness.getPermanentId(player2, "Benalish Cavalry");
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new ReturnToDust()));
-        harness.addMana(player1, ManaColor.WHITE, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        prepareReturnToDust(TurnStep.PRECOMBAT_MAIN);
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of(creatureId)))
                 .isInstanceOf(IllegalStateException.class);
@@ -106,6 +102,55 @@ class ReturnToDustTest extends BaseCardTest {
 
         assertThatThrownBy(() -> castReturnToDust(TurnStep.PRECOMBAT_MAIN, List.of(artifactId, artifactId)))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Exiles both targets during the controller's postcombat main phase")
+    void exilesBothTargetsDuringPostcombatMainPhase() {
+        PrismaticLens artifact = new PrismaticLens();
+        OpalGuardian enchantment = new OpalGuardian();
+        UUID artifactId = harness.addToBattlefieldAndReturn(player2, artifact).getId();
+        UUID enchantmentId = harness.addToBattlefieldAndReturn(player2, enchantment).getId();
+
+        castAndResolveReturnToDust(TurnStep.POSTCOMBAT_MAIN, List.of(artifactId, enchantmentId));
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(artifact, enchantment);
+    }
+
+    @Test
+    @DisplayName("Does not exile the optional target during an opponent's main phase")
+    void optionalTargetIsNotExiledDuringOpponentsMainPhase() {
+        PrismaticLens artifact = new PrismaticLens();
+        OpalGuardian enchantment = new OpalGuardian();
+        UUID artifactId = harness.addToBattlefieldAndReturn(player2, artifact).getId();
+        UUID enchantmentId = harness.addToBattlefieldAndReturn(player2, enchantment).getId();
+        prepareReturnToDust(TurnStep.PRECOMBAT_MAIN);
+        harness.forceActivePlayer(player2);
+
+        harness.castAndResolveInstant(player1, 0, List.of(artifactId, enchantmentId));
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(artifact).doesNotContain(enchantment);
+        harness.assertOnBattlefield(player2, "Opal Guardian");
+    }
+
+    @Test
+    @DisplayName("Still exiles the optional target if the first target leaves before resolution")
+    void exilesSecondTargetWhenFirstTargetLeavesBattlefield() {
+        PrismaticLens artifact = new PrismaticLens();
+        OpalGuardian enchantment = new OpalGuardian();
+        UUID artifactId = harness.addToBattlefieldAndReturn(player2, artifact).getId();
+        UUID enchantmentId = harness.addToBattlefieldAndReturn(player2, enchantment).getId();
+        prepareReturnToDust(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new ReturnToDust(), new ReturnToDust()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castInstant(player1, 0, List.of(artifactId, enchantmentId));
+        harness.castAndResolveInstant(player1, 0, List.of(artifactId));
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(artifact).doesNotContain(enchantment);
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(artifact, enchantment);
     }
 
     @Test
