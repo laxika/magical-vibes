@@ -2,9 +2,9 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.InvasionOfZendikar;
+import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
 import com.github.laxika.magicalvibes.cards.l.LeadGolem;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -21,7 +21,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SibilantSpirit.class, LeadGolem.class, Forest.class, GrizzlyBears.class})
+@CardUsed({SibilantSpirit.class, LeadGolem.class, Forest.class, GrizzlyBears.class,
+        JaceBeleren.class, InvasionOfZendikar.class})
 class SibilantSpiritTest extends BaseCardTest {
 
     @Test
@@ -63,7 +64,7 @@ class SibilantSpiritTest extends BaseCardTest {
     @DisplayName("Attacking a planeswalker still offers the draw to its controller")
     void attackingPlaneswalkerOffersDrawToController() {
         addCreatureReady(player1, new SibilantSpirit());
-        Permanent planeswalker = addPlaneswalker(player2, 4);
+        Permanent planeswalker = addPlaneswalker(player2);
         harness.setLibrary(player2, List.of(new Forest()));
 
         declareAttackersAtTarget(player1, List.of(0), Map.of(0, planeswalker.getId()));
@@ -129,10 +130,10 @@ class SibilantSpiritTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Does not offer the draw if the attacked planeswalker leaves before resolution")
-    void attackedPlaneswalkerLeavingBeforeResolutionOffersNoDraw() {
+    @DisplayName("Offers the draw if the attacked planeswalker leaves before resolution")
+    void attackedPlaneswalkerLeavingBeforeResolutionStillOffersDraw() {
         addCreatureReady(player1, new SibilantSpirit());
-        Permanent planeswalker = addPlaneswalker(player2, 4);
+        Permanent planeswalker = addPlaneswalker(player2);
         harness.setLibrary(player2, List.of(new Forest()));
         int handBefore = gd.playerHands.get(player2.getId()).size();
 
@@ -140,8 +141,10 @@ class SibilantSpiritTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).remove(planeswalker);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
-        assertThat(gd.playerHands.get(player2.getId()).size()).isEqualTo(handBefore);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, true);
+        assertThat(gd.playerHands.get(player2.getId()).size()).isEqualTo(handBefore + 1);
     }
 
     @Test
@@ -149,14 +152,7 @@ class SibilantSpiritTest extends BaseCardTest {
     void attackingBattleOffersDrawToProtector() {
         addCreatureReady(player1, new SibilantSpirit());
 
-        Card battleCard = new Card();
-        battleCard.setName("Test Siege");
-        battleCard.setType(CardType.BATTLE);
-        battleCard.setDefense(4);
-        Permanent battle = new Permanent(battleCard);
-        battle.setCounterCount(CounterType.DEFENSE, 4);
-        battle.setProtectorPlayerId(player2.getId());
-        gd.playerBattlefields.get(player1.getId()).add(battle);
+        Permanent battle = addBattleProtectedBy(player2);
 
         harness.setLibrary(player2, List.of(new Forest()));
         declareAttackersAtTarget(player1, List.of(0), Map.of(0, battle.getId()));
@@ -171,6 +167,57 @@ class SibilantSpiritTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId()).size()).isEqualTo(handBefore + 1);
     }
 
+    @Test
+    @DisplayName("Offers the draw if the attacked battle leaves before resolution")
+    void attackedBattleLeavingBeforeResolutionStillOffersDraw() {
+        addCreatureReady(player1, new SibilantSpirit());
+        Permanent battle = addBattleProtectedBy(player2);
+        harness.setLibrary(player2, List.of(new Forest()));
+        int handBefore = gd.playerHands.get(player2.getId()).size();
+
+        declareAttackersAtTarget(player1, List.of(0), Map.of(0, battle.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(battle);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, true);
+        assertThat(gd.playerHands.get(player2.getId()).size()).isEqualTo(handBefore + 1);
+    }
+
+    @Test
+    @DisplayName("The attack trigger survives Sibilant Spirit leaving the battlefield")
+    void sourceLeavingDoesNotPreventDraw() {
+        Permanent spirit = addCreatureReady(player1, new SibilantSpirit());
+        harness.setLibrary(player2, List.of(new Forest()));
+        int handBefore = gd.playerHands.get(player2.getId()).size();
+
+        declareAttackers(List.of(0));
+        gd.playerBattlefields.get(player1.getId()).remove(spirit);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, true);
+        assertThat(gd.playerHands.get(player2.getId()).size()).isEqualTo(handBefore + 1);
+    }
+
+    @Test
+    @DisplayName("The other player's attack offers the draw to player one")
+    void otherPlayerAttackingOffersDrawToPlayerOne() {
+        addCreatureReady(player2, new SibilantSpirit());
+        harness.setLibrary(player1, List.of(new Forest()));
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        declareAttackers(player2, List.of(0));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handBefore + 1);
+    }
+
     private void declareAttackersAtTarget(Player player, List<Integer> attackerIndices,
                                           Map<Integer, UUID> attackTargets) {
         harness.forceActivePlayer(player);
@@ -180,15 +227,17 @@ class SibilantSpiritTest extends BaseCardTest {
         gs.declareAttackers(gd, player, attackerIndices, attackTargets);
     }
 
-    private Permanent addPlaneswalker(Player player, int loyalty) {
-        Card card = new Card();
-        card.setName("Test Planeswalker");
-        card.setType(CardType.PLANESWALKER);
-        card.setLoyalty(loyalty);
-        Permanent permanent = new Permanent(card);
-        permanent.setCounterCount(CounterType.LOYALTY, loyalty);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    private Permanent addPlaneswalker(Player player) {
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player, new JaceBeleren());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 3);
+        return planeswalker;
+    }
+
+    private Permanent addBattleProtectedBy(Player protector) {
+        Permanent battle = harness.addToBattlefieldAndReturn(player1, new InvasionOfZendikar());
+        battle.setCounterCount(CounterType.DEFENSE, 3);
+        battle.setProtectorPlayerId(protector.getId());
+        return battle;
     }
 
 }
