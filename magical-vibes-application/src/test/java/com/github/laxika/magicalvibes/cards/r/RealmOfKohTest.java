@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.i.InnocenceKami;
+import com.github.laxika.magicalvibes.cards.k.KnowledgeSeeker;
+import com.github.laxika.magicalvibes.cards.o.OstrichHorse;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -16,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RealmOfKoh.class, Forest.class, GrizzlyBears.class, InnocenceKami.class})
+@CardUsed({RealmOfKoh.class, Forest.class, OstrichHorse.class, KnowledgeSeeker.class})
 class RealmOfKohTest extends BaseCardTest {
 
     @Test
@@ -80,21 +80,65 @@ class RealmOfKohTest extends BaseCardTest {
     @DisplayName("Spirit tokens can block and be blocked only by Spirit creatures")
     void spiritTokenCombatRestriction() {
         Permanent token = createSpiritToken();
-        Permanent nonSpirit = addCreatureReady(player2, new GrizzlyBears());
-        Permanent spirit = addCreatureReady(player2, new InnocenceKami());
+        Permanent nonSpirit = addCreatureReady(player2, new OstrichHorse());
+        Permanent spirit = addCreatureReady(player2, new KnowledgeSeeker());
 
         assertThat(bls.canBlockAttacker(gd, nonSpirit, token,
                 gd.playerBattlefields.get(player2.getId()))).isFalse();
         assertThat(bls.canBlockAttacker(gd, spirit, token,
                 gd.playerBattlefields.get(player2.getId()))).isTrue();
 
-        Permanent nonSpiritAttacker = addCreatureReady(player2, new GrizzlyBears());
-        Permanent spiritAttacker = addCreatureReady(player2, new InnocenceKami());
+        Permanent nonSpiritAttacker = addCreatureReady(player2, new OstrichHorse());
+        Permanent spiritAttacker = addCreatureReady(player2, new KnowledgeSeeker());
 
         assertThat(bls.canBlockAttacker(gd, token, nonSpiritAttacker,
                 gd.playerBattlefields.get(player1.getId()))).isFalse();
         assertThat(bls.canBlockAttacker(gd, token, spiritAttacker,
                 gd.playerBattlefields.get(player1.getId()))).isTrue();
+    }
+
+    @Test
+    @DisplayName("A nonbasic land does not satisfy the entry condition")
+    void entersTappedWithOnlyNonbasicLand() {
+        harness.addToBattlefield(player1, new RealmOfKoh());
+        playRealm(player1);
+
+        assertThat(findPermanents(player1, "Realm of Koh")).hasSize(2);
+        assertThat(findPermanents(player1, "Realm of Koh").get(1).isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A tapped basic land still satisfies the entry condition")
+    void entersUntappedWithTappedBasicLand() {
+        harness.addToBattlefieldAndReturn(player1, new Forest()).tap();
+        playRealm(player1);
+
+        assertThat(findRealm(player1).isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Creating a Spirit uses the stack and pays mana and tap costs immediately")
+    void tokenAbilityUsesStackAndPaysCosts() {
+        Permanent realm = addReadyRealm(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(realm.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+        assertThat(findPermanents(player1, "Spirit")).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Spirit")).singleElement().satisfies(token -> {
+            assertThat(token.getCard().isToken()).isTrue();
+            assertThat(gqs.getEffectiveColors(gd, token)).isEmpty();
+            assertThat(gqs.isCreature(gd, token)).isTrue();
+            assertThat(token.isTapped()).isFalse();
+        });
     }
 
     private void playRealm(Player player) {
