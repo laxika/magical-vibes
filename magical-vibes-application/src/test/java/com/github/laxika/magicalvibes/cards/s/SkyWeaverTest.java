@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.cards.d.DrudgeSkeletons;
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -20,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({SkyWeaver.class, SteadfastGuard.class, DrudgeSkeletons.class, GrizzlyBears.class,
-        FugitiveWizard.class, Pacifism.class})
+        FugitiveWizard.class, Pacifism.class, Unsummon.class})
 class SkyWeaverTest extends BaseCardTest {
 
     // ===== Activation =====
@@ -138,9 +139,7 @@ class SkyWeaverTest extends BaseCardTest {
 
         assertThat(target.hasKeyword(Keyword.FLYING)).isTrue();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(target.hasKeyword(Keyword.FLYING)).isFalse();
     }
@@ -196,5 +195,56 @@ class SkyWeaverTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
     }
-}
 
+    @Test
+    @DisplayName("Can activate while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent weaver = harness.addToBattlefieldAndReturn(player1, new SkyWeaver());
+        weaver.setSummoningSick(true);
+        weaver.setTapped(true);
+        Permanent target = addCreatureReady(player1, new SteadfastGuard());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(weaver.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Ability resolves after Sky Weaver leaves the battlefield")
+    void abilityResolvesAfterSourceLeaves() {
+        Permanent weaver = addCreatureReady(player1, new SkyWeaver());
+        Permanent target = addCreatureReady(player1, new SteadfastGuard());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.setHand(player2, java.util.List.of(new Unsummon()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player2, 0, weaver.getId());
+        harness.assertInHand(player1, "Sky Weaver");
+        harness.passBothPriorities();
+
+        assertThat(target.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Ability has no effect when its target leaves the battlefield")
+    void abilityHasNoEffectAfterTargetLeaves() {
+        addCreatureReady(player1, new SkyWeaver());
+        Permanent target = addCreatureReady(player1, new SteadfastGuard());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.setHand(player2, java.util.List.of(new Unsummon()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player2, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Steadfast Guard");
+        assertThat(target.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+}
