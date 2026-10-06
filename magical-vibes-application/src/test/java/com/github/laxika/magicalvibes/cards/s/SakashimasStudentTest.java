@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.n.NestInvader;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -14,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SakashimasStudent.class, GrizzlyBears.class})
+@CardUsed({SakashimasStudent.class, GrizzlyBears.class, NestInvader.class})
 class SakashimasStudentTest extends BaseCardTest {
 
     @Test
@@ -54,10 +56,7 @@ class SakashimasStudentTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.activateHandAbility(player1, 0, attacker.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, target.getId());
+        resolveCopyChoice(target);
 
         harness.assertInHand(player1, "Grizzly Bears");
         Permanent student = gd.playerBattlefields.get(player1.getId()).stream()
@@ -72,9 +71,81 @@ class SakashimasStudentTest extends BaseCardTest {
     }
 
     private void resolveCopyChoice(Permanent target) {
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, target.getId());
+    }
+
+    @Test
+    @DisplayName("Declining to copy leaves the Student to die with zero toughness")
+    void mayDeclineCopy() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SakashimasStudent()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertNotOnBattlefield(player1, "Sakashima's Student");
+        harness.assertInGraveyard(player1, "Sakashima's Student");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("With no creature to copy, the Student dies with zero toughness")
+    void noCreatureToCopy() {
+        harness.setHand(player1, List.of(new SakashimasStudent()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Sakashima's Student");
+        harness.assertInGraveyard(player1, "Sakashima's Student");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The Student can copy its controller's creature without copying counters or tapped state")
+    void copiesOwnCreatureWithoutCountersOrTappedState() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        bears.tap();
+        SakashimasStudent student = new SakashimasStudent();
+        harness.setHand(player1, List.of(student));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castCreature(player1, 0);
+        resolveCopyChoice(bears);
+
+        Permanent copy = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getOriginalCard() == student)
+                .findFirst().orElseThrow();
+        assertThat(copy.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(copy.isTapped()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, copy)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, copy)).isEqualTo(2);
+        assertThat(copy.getCard().getSubtypes()).contains(CardSubtype.NINJA);
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(bears.isTapped()).isTrue();
+    }
+
+    @Test
+    @CardUsed({SakashimasStudent.class, NestInvader.class})
+    @DisplayName("The copied creature's enter ability triggers for the Student's controller")
+    void copiedEnterAbilityTriggers() {
+        Permanent invader = harness.addToBattlefieldAndReturn(player2, new NestInvader());
+        harness.setHand(player1, List.of(new SakashimasStudent()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castCreature(player1, 0);
+        resolveCopyChoice(invader);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Eldrazi Spawn")).hasSize(1);
+        assertThat(findPermanents(player2, "Eldrazi Spawn")).isEmpty();
+        assertThat(findPermanent(player1, "Nest Invader").getCard().getSubtypes())
+                .contains(CardSubtype.NINJA);
     }
 }
