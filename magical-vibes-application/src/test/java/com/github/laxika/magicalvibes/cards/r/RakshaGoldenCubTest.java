@@ -108,6 +108,46 @@ class RakshaGoldenCubTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, cat, Keyword.DOUBLE_STRIKE)).isTrue();
     }
 
+    @Test
+    @DisplayName("Multiple Equipment enable only one bonus, which remains until the last detaches")
+    void multipleEquipmentDoNotMultiplyBonus() {
+        Permanent raksha = addCreatureReady(player1, new RakshaGoldenCub());
+        Permanent cat = addCreatureReady(player1, new SkyhunterProwler());
+        Permanent first = attachEquipment(player1, raksha);
+        Permanent second = attachEquipment(player1, raksha);
+
+        assertThat(gqs.getEffectivePower(gd, raksha)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, raksha)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, cat)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, cat)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, cat, Keyword.DOUBLE_STRIKE)).isTrue();
+
+        first.setAttachedTo(null);
+
+        assertThat(gqs.getEffectivePower(gd, cat)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, cat)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, cat, Keyword.DOUBLE_STRIKE)).isTrue();
+
+        second.setAttachedTo(null);
+
+        assertThat(gqs.getEffectivePower(gd, cat)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, cat)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, cat, Keyword.DOUBLE_STRIKE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Cats entering after Raksha is equipped immediately receive the bonus")
+    void catsEnteringLaterReceiveBonus() {
+        Permanent raksha = addCreatureReady(player1, new RakshaGoldenCub());
+        attachEquipment(player1, raksha);
+
+        Permanent cat = harness.enterBattlefieldAndReturn(player1, new SkyhunterProwler());
+
+        assertThat(gqs.getEffectivePower(gd, cat)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, cat)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, cat, Keyword.DOUBLE_STRIKE)).isTrue();
+    }
+
     private Permanent attachEquipment(Player player, Permanent creature) {
         Permanent equipment = harness.addToBattlefieldAndReturn(player, new ParadiseMantle());
         equipment.setAttachedTo(creature.getId());
