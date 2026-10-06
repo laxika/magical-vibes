@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.c.ChainOfVapor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -11,7 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(SkittishValesk.class)
+@CardUsed({SkittishValesk.class, ChainOfVapor.class})
 class SkittishValeskTest extends BaseCardTest {
 
     @Test
@@ -82,5 +83,25 @@ class SkittishValeskTest extends BaseCardTest {
 
         assertThat(gameLogContains("coin flip for Skittish Valesk")).isFalse();
         assertThat(valesk.isFaceDown()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An upkeep trigger still flips a coin after its source returns to hand")
+    void upkeepTriggerResolvesAfterSourceLeavesBattlefield() {
+        Permanent valesk = harness.addToBattlefieldAndReturn(player1, new SkittishValesk());
+        harness.setHand(player2, List.of(new ChainOfVapor()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        harness.castInstant(player2, 0, valesk.getId());
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Skittish Valesk")).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).contains(valesk.getCard());
+        boolean wonFlip = gameLogContains("wins the coin flip for Skittish Valesk");
+        boolean lostFlip = gameLogContains("loses the coin flip for Skittish Valesk");
+        assertThat(wonFlip).isNotEqualTo(lostFlip);
+        assertThat(valesk.isFaceDown()).isFalse();
     }
 }
