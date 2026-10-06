@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -66,8 +68,7 @@ class SerraPaladinTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -146,8 +147,7 @@ class SerraPaladinTest extends BaseCardTest {
         assertThat(reveka.hasKeyword(Keyword.VIGILANCE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(reveka.hasKeyword(Keyword.VIGILANCE)).isFalse();
         assertThat(paladin.isTapped()).isTrue();
@@ -172,5 +172,75 @@ class SerraPaladinTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, player1.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A consumed prevention shield does not prevent later damage")
+    void preventionIsConsumedByFirstDamage() {
+        addPaladinReady();
+        addCreatureReady(player1, new RevekaWizardSavant());
+        addCreatureReady(player2, new RevekaWizardSavant());
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, null, player2.getId());
+        harness.passBothPriorities();
+        assertThat(gd.getLife(player2.getId())).isEqualTo(19);
+
+        harness.activateAbility(player2, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(17);
+    }
+
+    @Test
+    @DisplayName("Both tap abilities are unavailable while summoning sick")
+    void bothAbilitiesRequireSummoningSicknessToWearOff() {
+        Permanent paladin = harness.addToBattlefieldAndReturn(player1, new SerraPaladin());
+        paladin.setSummoningSick(true);
+        Permanent reveka = addCreatureReady(player1, new RevekaWizardSavant());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, reveka.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(paladin.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Prevention shields from separate Paladins accumulate")
+    void multiplePreventionShieldsAccumulate() {
+        addPaladinReady();
+        addPaladinReady();
+        addCreatureReady(player1, new RevekaWizardSavant());
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, null, player2.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 2, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("A creature granted vigilance attacks without tapping")
+    void vigilanceAllowsAttackingWithoutTapping() {
+        addPaladinReady();
+        Permanent reveka = addCreatureReady(player1, new RevekaWizardSavant());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 1, null, reveka.getId());
+        harness.passBothPriorities();
+        declareAttackersAndPrepareBlockers(List.of(1));
+
+        assertThat(reveka.isAttacking()).isTrue();
+        assertThat(reveka.isTapped()).isFalse();
     }
 }
