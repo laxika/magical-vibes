@@ -28,8 +28,7 @@ class SkulkingKnightTest extends BaseCardTest {
         harness.setHand(player2, List.of(new SuddenShock()));
         harness.addMana(player2, ManaColor.RED, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
-        harness.castInstant(player2, 0, knight.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, knight.getId());
 
         harness.assertNotOnBattlefield(player1, "Skulking Knight");
         harness.assertInGraveyard(player1, "Skulking Knight");
@@ -57,8 +56,7 @@ class SkulkingKnightTest extends BaseCardTest {
         harness.setHand(player2, List.of(new SuddenShock()));
         harness.addMana(player2, ManaColor.RED, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getId().equals(knight.getId()));
@@ -115,5 +113,60 @@ class SkulkingKnightTest extends BaseCardTest {
 
         assertThat(blocker.getEffectivePower()).isEqualTo(2);
         assertThat(blocker.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Its controller's spell also triggers sacrifice, which uses the stack")
+    void friendlyTargetingTriggersSacrifice() {
+        Permanent knight = harness.addToBattlefieldAndReturn(player1, new SkulkingKnight());
+        harness.setHand(player1, List.of(new SuddenShock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player1, 0, knight.getId());
+
+        harness.assertOnBattlefield(player1, "Skulking Knight");
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Skulking Knight");
+        harness.assertInGraveyard(player1, "Skulking Knight");
+        resolveAllTriggers();
+        harness.assertInGraveyard(player1, "Sudden Shock");
+    }
+
+    @Test
+    @DisplayName("Flanking weakens each of multiple blockers independently")
+    void flankingAffectsEveryBlocker() {
+        Permanent knight = addCreatureReady(player1, new SkulkingKnight());
+        knight.setAttacking(true);
+        Permanent first = addCreatureReady(player2, new AshcoatBear());
+        Permanent second = addCreatureReady(player2, new AshcoatBear());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+        resolveAllTriggers();
+
+        assertThat(first.getEffectivePower()).isEqualTo(1);
+        assertThat(first.getEffectiveToughness()).isEqualTo(1);
+        assertThat(second.getEffectivePower()).isEqualTo(1);
+        assertThat(second.getEffectiveToughness()).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Skulking Knight");
+    }
+
+    @Test
+    @DisplayName("Flanking does not trigger when Skulking Knight blocks")
+    void flankingDoesNotTriggerAsBlocker() {
+        Permanent attacker = addCreatureReady(player1, new AshcoatBear());
+        attacker.setAttacking(true);
+        Permanent knight = addCreatureReady(player2, new SkulkingKnight());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(attacker.getEffectivePower()).isEqualTo(2);
+        assertThat(attacker.getEffectiveToughness()).isEqualTo(2);
+        harness.assertOnBattlefield(player2, "Skulking Knight");
     }
 }
