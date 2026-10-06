@@ -67,6 +67,104 @@ class ShannaPurifyingBladeTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }
 
+    @Test
+    @DisplayName("Lifelink combat damage supplies the end-step draw limit")
+    void lifelinkSuppliesDrawLimit() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        addCreatureReady(player1, new ShannaPurifyingBlade());
+        harness.setLibrary(player1, List.of(new ShannaPurifyingBlade(),
+                new ShannaPurifyingBlade(), new ShannaPurifyingBlade()));
+
+        harness.withAutoStop(TurnStep.POSTCOMBAT_MAIN, () -> {
+            declareAttackers(List.of(0));
+            resolveCombat();
+            harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
+        });
+
+        harness.assertLife(player1, 23);
+        harness.assertLife(player2, 17);
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+        advanceToEndStep(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class).maxValue())
+                .isEqualTo(3);
+        harness.handleXValueChosen(player1, 3);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 3);
+    }
+
+    @Test
+    @DisplayName("The controller may decline payment despite having life gain and mana")
+    void mayDeclinePayment() {
+        harness.addToBattlefield(player1, new ShannaPurifyingBlade());
+        harness.setLibrary(player1, List.of(new ShannaPurifyingBlade()));
+        gd.lifeGainedThisTurn.put(player1.getId(), 1);
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+
+        advanceToEndStep(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class)).isNotNull();
+        harness.handleXValueChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("An opponent's life gain does not permit a positive payment")
+    void opponentsLifeGainDoesNotCount() {
+        harness.addToBattlefield(player1, new ShannaPurifyingBlade());
+        harness.setLibrary(player1, List.of(new ShannaPurifyingBlade()));
+        gd.lifeGainedThisTurn.put(player2.getId(), 5);
+
+        advanceToEndStep(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Life gained after the ability triggers counts when it resolves")
+    void lifeGainLimitIsEvaluatedAtResolution() {
+        harness.addToBattlefield(player1, new ShannaPurifyingBlade());
+        harness.setLibrary(player1, List.of(new ShannaPurifyingBlade(), new ShannaPurifyingBlade()));
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+
+        advanceToEndStep(player1);
+        assertThat(gd.stack).hasSize(1);
+        gd.lifeGainedThisTurn.put(player1.getId(), 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class).maxValue())
+                .isEqualTo(2);
+        harness.handleXValueChosen(player1, 2);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 2);
+    }
+
+    @Test
+    @DisplayName("The triggered ability still draws after Shanna leaves the battlefield")
+    void triggerSurvivesSourceLeaving() {
+        harness.addToBattlefield(player1, new ShannaPurifyingBlade());
+        harness.setLibrary(player1, List.of(new ShannaPurifyingBlade()));
+        gd.lifeGainedThisTurn.put(player1.getId(), 1);
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+
+        advanceToEndStep(player1);
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.passBothPriorities();
+        harness.handleXValueChosen(player1, 1);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
+    }
+
     private void advanceToEndStep(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
