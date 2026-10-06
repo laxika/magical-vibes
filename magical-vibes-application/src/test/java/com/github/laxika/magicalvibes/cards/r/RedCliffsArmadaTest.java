@@ -45,4 +45,39 @@ class RedCliffsArmadaTest extends BaseCardTest {
         assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("A tapped Island still permits Red Cliffs Armada to attack")
+    void canAttackWhenDefendersIslandIsTapped() {
+        harness.setLife(player2, 20);
+        harness.addToBattlefieldAndReturn(player2, new Island()).setTapped(true);
+        addCreatureReady(player1, new RedCliffsArmada());
+
+        declareAttackers(List.of(0));
+
+        harness.assertLife(player2, 15);
+    }
+
+    @Test
+    @DisplayName("Islands in the defending player's hand and graveyard do not permit attacking")
+    void cannotAttackWithIslandsOutsideBattlefield() {
+        harness.setHand(player2, List.of(new Island()));
+        harness.setGraveyard(player2, List.of(new Island()));
+        addCreatureReady(player1, new RedCliffsArmada());
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The Island restriction uses the defending player when player two attacks")
+    void canAttackAsPlayerTwoWhenPlayerOneControlsIsland() {
+        harness.setLife(player1, 20);
+        harness.addToBattlefield(player1, new Island());
+        addCreatureReady(player2, new RedCliffsArmada());
+
+        declareAttackers(player2, List.of(0));
+
+        harness.assertLife(player1, 15);
+    }
 }
