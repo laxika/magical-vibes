@@ -30,6 +30,41 @@ class ScreamsFromWithinTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Casting Screams attaches it to the chosen creature")
+    void castingAttachesToChosenCreature() {
+        Permanent creature = addCreatureReady(player2, new DarksteelGargoyle());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new ScreamsFromWithin()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Screams from Within").getAttachedTo())
+                .isEqualTo(creature.getId());
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("An Aura controlled by someone other than its owner cannot return from its owner's graveyard")
+    void doesNotReturnFromAnotherPlayersGraveyard() {
+        Permanent dyingCreature = addCreatureReady(player1, new FangrenFirstborn());
+        addCreatureReady(player2, new DarksteelGargoyle());
+        ScreamsFromWithin stolenAura = new ScreamsFromWithin();
+        stolenAura.setOwnerId(player2.getId());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, stolenAura);
+        aura.setAttachedTo(dyingCreature.getId());
+
+        killCreature(dyingCreature);
+
+        harness.assertInGraveyard(player2, "Screams from Within");
+        harness.assertNotOnBattlefield(player1, "Screams from Within");
+        harness.assertNotOnBattlefield(player2, "Screams from Within");
+    }
+
+    @Test
     @DisplayName("When enchanted creature dies, Screams returns attached to the only legal creature")
     void returnsAttachedToOnlyLegalCreature() {
         Permanent dyingCreature = addCreatureReady(player1, new FangrenFirstborn());
@@ -68,8 +103,7 @@ class ScreamsFromWithinTest extends BaseCardTest {
         killCreature(dyingCreature);
 
         harness.assertInGraveyard(player1, "Screams from Within");
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(permanent -> permanent.getCard().getName().equals("Screams from Within"));
+        harness.assertNotOnBattlefield(player1, "Screams from Within");
     }
 
     private Permanent attachScreamsTo(Player controller, Permanent creature) {
@@ -85,8 +119,7 @@ class ScreamsFromWithinTest extends BaseCardTest {
         harness.setHand(player2, List.of(new EchoingDecay()));
         harness.addMana(player2, ManaColor.BLACK, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
-        harness.castInstant(player2, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, creature.getId());
         harness.passBothPriorities();
     }
 }
