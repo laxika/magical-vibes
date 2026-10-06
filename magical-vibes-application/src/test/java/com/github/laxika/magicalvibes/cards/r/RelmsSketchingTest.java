@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -53,8 +54,7 @@ class RelmsSketchingTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target an enchantment")
     void cannotTargetEnchantment() {
-        Permanent enchantment = new Permanent(new Pacifism());
-        gd.playerBattlefields.get(player2.getId()).add(enchantment);
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new Pacifism());
         harness.setHand(player1, List.of(new RelmsSketching()));
         addMana();
 
@@ -63,11 +63,55 @@ class RelmsSketchingTest extends BaseCardTest {
                 .hasMessageContaining("Target must be an artifact, creature, or land");
     }
 
+    @Test
+    @DisplayName("Can copy a permanent controlled by the caster")
+    void copiesOwnPermanent() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+
+        castAndResolve(harness.getPermanentId(player1, "Grizzly Bears"));
+
+        assertThat(countTokenCopies(player1, "Grizzly Bears")).isEqualTo(1);
+        assertThat(countTokenCopies(player2, "Grizzly Bears")).isZero();
+    }
+
+    @Test
+    @DisplayName("Copy does not inherit counters or tapped status")
+    void doesNotCopyCountersOrTappedStatus() {
+        Permanent original = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        original.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        original.tap();
+
+        castAndResolve(original.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).singleElement().satisfies(copy -> {
+            assertThat(copy.getCard().isToken()).isTrue();
+            assertThat(copy.getPlusOnePlusOneCounters()).isZero();
+            assertThat(copy.isTapped()).isFalse();
+        });
+        assertThat(original.getPlusOnePlusOneCounters()).isEqualTo(3);
+        assertThat(original.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Creates no token when the target leaves before resolution")
+    void targetLeavesBeforeResolution() {
+        Permanent original = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new RelmsSketching()));
+        addMana();
+        harness.castSorcery(player1, 0, original.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(original);
+        gd.playerGraveyards.get(player2.getId()).add(original.getCard());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Relm's Sketching");
+    }
+
     private void castAndResolve(UUID targetId) {
         harness.setHand(player1, List.of(new RelmsSketching()));
         addMana();
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetId);
     }
 
     private void addMana() {
