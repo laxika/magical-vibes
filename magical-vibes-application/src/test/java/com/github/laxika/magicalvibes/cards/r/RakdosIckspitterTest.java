@@ -84,4 +84,76 @@ class RakdosIckspitterTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature");
     }
+
+    @Test
+    @DisplayName("An ability with a target that leaves the battlefield causes no further life loss")
+    void doesNotLoseLifeWhenTargetLeavesBeforeResolution() {
+        addCreatureReady(player1, new RakdosIckspitter());
+        Permanent target = addCreatureReady(player2, new RakdosIckspitter());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.activateAbility(player2, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Rakdos Ickspitter");
+        harness.assertLife(player2, 19);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The ability still deals damage and causes life loss after its source dies")
+    void resolvesAfterSourceDies() {
+        Permanent source = addCreatureReady(player1, new RakdosIckspitter());
+        addCreatureReady(player2, new RakdosIckspitter());
+        Permanent target = addCreatureReady(player2, new AssaultZeppelid());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.activateAbility(player2, 0, null, source.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Rakdos Ickspitter");
+        harness.assertLife(player1, 19);
+
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        harness.assertLife(player2, 19);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate the tap ability while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        harness.addToBattlefield(player1, new RakdosIckspitter());
+        Permanent target = addCreatureReady(player2, new AssaultZeppelid());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Cannot pay the tap cost twice without untapping")
+    void cannotActivateAgainWhileTapped() {
+        addCreatureReady(player1, new RakdosIckspitter());
+        Permanent target = addCreatureReady(player2, new AssaultZeppelid());
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        harness.assertLife(player2, 19);
+    }
 }
