@@ -41,4 +41,20 @@ class SerrasSanctumTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
+
+    @Test
+    @DisplayName("Tapped enchantments count, but enchantment cards outside the battlefield do not")
+    void countsTappedEnchantmentsOnlyOnBattlefield() {
+        harness.addToBattlefield(player1, new SerrasSanctum());
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player1, new Abundance());
+        enchantment.setTapped(true);
+        harness.setHand(player1, java.util.List.of(new GreaterGood()));
+        harness.setGraveyard(player1, java.util.List.of(new Abundance()));
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
 }
