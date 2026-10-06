@@ -26,11 +26,9 @@ class SecondThoughtsTest extends BaseCardTest {
 
     private void castSecondThoughts(Permanent target) {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new SecondThoughts()));
         harness.addMana(player2, ManaColor.WHITE, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 4);
-        harness.passPriority(player1);
         harness.castInstant(player2, 0, target.getId());
     }
 
@@ -75,11 +73,7 @@ class SecondThoughtsTest extends BaseCardTest {
     @DisplayName("Cannot target a creature that is not attacking")
     void cannotTargetNonAttackingCreature() {
         addAttacker();
-        harness.addToBattlefield(player1, new DwarvenGrunt());
-        Permanent target = harness.getGameData().playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> !permanent.isAttacking())
-                .findFirst()
-                .orElseThrow();
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new DwarvenGrunt());
 
         assertThatThrownBy(() -> castSecondThoughts(target))
                 .isInstanceOf(IllegalStateException.class)
@@ -103,5 +97,25 @@ class SecondThoughtsTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Second Thoughts");
         assertThat(gd.exiledCards)
                 .noneMatch(exiled -> exiled.card().getName().equals("Dwarven Grunt"));
+    }
+
+    @Test
+    @DisplayName("Can exile a tapped, blocked attacker and still draws exactly one card")
+    void exilesBlockedAttackerAndDrawsExactlyOneCard() {
+        Permanent attacker = addAttacker();
+        attacker.setTapped(true);
+        attacker.setBlockedThisCombat(true);
+        harness.setLibrary(player2, List.of(new DwarvenGrunt(), new DwarvenGrunt()));
+
+        castSecondThoughts(attacker);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Dwarven Grunt");
+        assertThat(gd.exiledCards).anyMatch(exiled -> exiled.card().getId()
+                .equals(attacker.getCard().getId()));
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+        harness.assertInHand(player2, "Dwarven Grunt");
+        harness.assertInGraveyard(player2, "Second Thoughts");
     }
 }
