@@ -1,10 +1,13 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.b.BenevolentBodyguard;
+import com.github.laxika.magicalvibes.cards.c.CrucibleOfWorlds;
 import com.github.laxika.magicalvibes.cards.d.DefyGravity;
 import com.github.laxika.magicalvibes.cards.e.EmberShot;
 import com.github.laxika.magicalvibes.cards.k.KrosanVerge;
 import com.github.laxika.magicalvibes.cards.m.MentalNote;
+import com.github.laxika.magicalvibes.cards.m.MirarisWake;
+import com.github.laxika.magicalvibes.cards.r.RayOfRevelation;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -20,45 +23,37 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BenevolentBodyguard.class, DefyGravity.class, EmberShot.class, KrosanVerge.class, MentalNote.class, ShamansTrance.class})
+@CardUsed({BenevolentBodyguard.class, CrucibleOfWorlds.class, DefyGravity.class, EmberShot.class, KrosanVerge.class, MentalNote.class, MirarisWake.class, RayOfRevelation.class, ShamansTrance.class})
 class ShamansTranceTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Casts a spell from an opponent's graveyard and returns it to its owner's graveyard")
-    void castsSpellFromOpponentsGraveyard() {
-        ShamansTrance trance = new ShamansTrance();
+    @DisplayName("Does not itself permit casting Mental Note from an opponent's graveyard")
+    void cannotCastMentalNoteWithoutSeparatePermission() {
         MentalNote mentalNote = new MentalNote();
-        harness.setHand(player1, List.of(trance));
         harness.setGraveyard(player2, List.of(mentalNote));
-        harness.addMana(player1, ManaColor.RED, 3);
         prepareMainPhase(player1);
-
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new ShamansTrance(), "{2}{R}");
         harness.passBothPriorities();
         harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.castFromGraveyard(player1, mentalNote.getId());
-        harness.passBothPriorities();
 
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, mentalNote.getId()))
+                .isInstanceOf(IllegalStateException.class);
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(mentalNote);
-        assertThat(gd.playerGraveyards.get(player1.getId())).contains(trance);
     }
 
     @Test
-    @DisplayName("Allows playing a land from an opponent's graveyard")
-    void playsLandFromOpponentsGraveyard() {
-        ShamansTrance trance = new ShamansTrance();
+    @DisplayName("Does not itself permit playing an opponent's graveyard land")
+    void cannotPlayLandWithoutSeparatePermission() {
         KrosanVerge krosanVerge = new KrosanVerge();
-        harness.setHand(player1, List.of(trance));
         harness.setGraveyard(player2, List.of(krosanVerge));
-        harness.addMana(player1, ManaColor.RED, 3);
         prepareMainPhase(player1);
-
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new ShamansTrance(), "{2}{R}");
         harness.passBothPriorities();
-        harness.playGraveyardLand(player1, krosanVerge.getId());
 
-        harness.assertOnBattlefield(player1, "Krosan Verge");
-        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThatThrownBy(() -> harness.playGraveyardLand(player1, krosanVerge.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertNotOnBattlefield(player1, "Krosan Verge");
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(krosanVerge);
     }
 
     @Test
@@ -67,12 +62,10 @@ class ShamansTranceTest extends BaseCardTest {
         ShamansTrance trance = new ShamansTrance();
         DefyGravity defyGravity = new DefyGravity();
         Permanent target = addCreatureReady(player1, new BenevolentBodyguard());
-        harness.setHand(player1, List.of(trance));
         harness.setGraveyard(player1, List.of(defyGravity));
-        harness.addMana(player1, ManaColor.RED, 3);
         prepareMainPhase(player1);
 
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, trance, "{2}{R}");
         harness.passBothPriorities();
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castFromGraveyardTargeting(player1, 0, target.getId());
@@ -83,137 +76,135 @@ class ShamansTranceTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Prevents other players from playing cards from their graveyards")
-    void preventsOtherPlayersFromPlayingFromTheirGraveyards() {
-        ShamansTrance trance = new ShamansTrance();
-        MentalNote mentalNote = new MentalNote();
-        KrosanVerge krosanVerge = new KrosanVerge();
-        harness.setHand(player1, List.of(trance));
-        harness.setGraveyard(player2, List.of(mentalNote, krosanVerge));
-        harness.addMana(player1, ManaColor.RED, 3);
+    @DisplayName("An opponent regains permission to flash back spells on the next turn")
+    void opponentCanFlashBackAgainNextTurn() {
+        DefyGravity defyGravity = new DefyGravity();
+        Permanent target = addCreatureReady(player2, new BenevolentBodyguard());
+        harness.setHand(player2, List.of());
+        harness.setGraveyard(player2, List.of(defyGravity));
         prepareMainPhase(player1);
-
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new ShamansTrance(), "{2}{R}");
         harness.passBothPriorities();
-        prepareMainPhase(player2);
         harness.addMana(player2, ManaColor.BLUE, 1);
+        assertThatThrownBy(() -> harness.castFromGraveyardTargeting(player2, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
 
-        assertThatThrownBy(() -> harness.castFromGraveyard(player2, mentalNote.getId()))
-                .isInstanceOf(IllegalStateException.class);
-        assertThatThrownBy(() -> harness.playGraveyardLand(player2, krosanVerge.getId()))
-                .isInstanceOf(IllegalStateException.class);
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.castFromGraveyardTargeting(player2, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(defyGravity);
     }
 
-    private void prepareMainPhase(com.github.laxika.magicalvibes.model.Player player) {
+    private void prepareMainPhase(Player player) {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
     }
 
     @Test
-    @DisplayName("Casts a spell from an opponent's graveyard and returns it to its owner's graveyard")
-    void castsSpellFromOpponentsGraveyardJudReview() {
-        ShamansTrance trance = new ShamansTrance();
+    @DisplayName("Does not itself permit casting Ember Shot from an opponent's graveyard")
+    void cannotCastEmberShotWithoutSeparatePermission() {
         EmberShot emberShot = new EmberShot();
         harness.setGraveyard(player2, List.of(emberShot));
-        harness.setLibrary(player1, List.of(new KrosanVerge()));
-        prepareMainPhaseForJudReview(player1);
-
-        harness.castFromHand(player1, trance, "{2}{R}");
+        prepareMainPhase(player1);
+        harness.castFromHand(player1, new ShamansTrance(), "{2}{R}");
         harness.passBothPriorities();
         harness.addMana(player1, ManaColor.RED, 7);
-        gs.playFlashbackSpell(gd, player1, emberShot.getId(), null, player2.getId(), List.of(), List.of(), null);
-        harness.passBothPriorities();
 
-        harness.assertLife(player2, 17);
-        harness.assertInHand(player1, "Krosan Verge");
+        assertThatThrownBy(() -> gs.playFlashbackSpell(
+                gd, player1, emberShot.getId(), null, player2.getId(), List.of(), List.of(), null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertLife(player2, 20);
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(emberShot);
-        harness.assertInGraveyard(player1, "Shaman's Trance");
     }
 
     @Test
-    @DisplayName("Grants permission to play an opponent's graveyard spell")
-    void advertisesOpponentGraveyardSpellAsPlayable() {
-        ShamansTrance trance = new ShamansTrance();
-        EmberShot emberShot = new EmberShot();
-        harness.setGraveyard(player2, List.of(emberShot));
-        prepareMainPhaseForJudReview(player1);
+    @DisplayName("Allows flashing back an opponent's spell and exiles it after resolution")
+    void flashesBackOpponentsSpellAndExilesIt() {
+        DefyGravity defyGravity = new DefyGravity();
+        Permanent target = addCreatureReady(player1, new BenevolentBodyguard());
+        harness.setGraveyard(player2, List.of(defyGravity));
+        prepareMainPhase(player1);
+        harness.castFromHand(player1, new ShamansTrance(), "{2}{R}");
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castFromHand(player1, trance, "{2}{R}");
+        gs.playFlashbackSpell(gd, player1, defyGravity.getId(), null, target.getId(), List.of(), List.of(), null);
         harness.passBothPriorities();
 
-        assertThat(gd.graveyardPlayFilterPermissionsThisTurn)
-                .anyMatch(permission -> permission.playerId().equals(player1.getId()));
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(defyGravity);
+        assertThat(gd.playerGraveyards.get(player2.getId())).doesNotContain(defyGravity);
     }
 
     @Test
-    @DisplayName("Allows playing an opponent's graveyard land")
-    void advertisesOpponentGraveyardLandAsPlayable() {
+    @DisplayName("Does not advertise an opponent's graveyard land without another permission")
+    void doesNotAdvertiseLandWithoutSeparatePermission() {
         ShamansTrance trance = new ShamansTrance();
         KrosanVerge krosanVerge = new KrosanVerge();
         harness.setGraveyard(player2, List.of(krosanVerge));
-        prepareMainPhaseForJudReview(player1);
+        prepareMainPhase(player1);
 
         harness.castFromHand(player1, trance, "{2}{R}");
         harness.passBothPriorities();
 
         assertThat(harness.getGameActionAvailabilityService()
                 .canPlayGraveyardLand(gd, player1.getId(), krosanVerge, player2.getId()))
-                .isTrue();
+                .isFalse();
     }
 
     @Test
-    @DisplayName("The permission to play from other graveyards expires at end of turn")
+    @DisplayName("Permission to flash back an opponent's spell expires at end of turn")
     void permissionExpiresAtEndOfTurn() {
-        ShamansTrance trance = new ShamansTrance();
-        KrosanVerge firstVerge = new KrosanVerge();
-        KrosanVerge secondVerge = new KrosanVerge();
+        DefyGravity defyGravity = new DefyGravity();
+        Permanent target = addCreatureReady(player1, new BenevolentBodyguard());
         harness.setHand(player2, List.of());
-        harness.setGraveyard(player2, List.of(firstVerge, secondVerge));
-        prepareMainPhaseForJudReview(player1);
-
-        harness.castFromHand(player1, trance, "{2}{R}");
+        harness.setGraveyard(player2, List.of(defyGravity));
+        prepareMainPhase(player1);
+        harness.castFromHand(player1, new ShamansTrance(), "{2}{R}");
         harness.passBothPriorities();
-        harness.playGraveyardLand(player1, firstVerge.getId());
-
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.BLUE, 1);
 
-        assertThatThrownBy(() -> harness.playGraveyardLand(player1, secondVerge.getId()))
+        assertThatThrownBy(() -> gs.playFlashbackSpell(
+                gd, player1, defyGravity.getId(), null, target.getId(), List.of(), List.of(), null))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(secondVerge);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(defyGravity);
     }
 
     @Test
-    @DisplayName("Prevents other players from casting spells from their graveyards")
+    @DisplayName("Prevents an opponent from using flashback this turn")
     void preventsOtherPlayersFromCastingSpellsFromTheirGraveyards() {
-        ShamansTrance trance = new ShamansTrance();
-        EmberShot emberShot = new EmberShot();
-        harness.setGraveyard(player2, List.of(emberShot));
-        prepareMainPhaseForJudReview(player1);
-
-        harness.castFromHand(player1, trance, "{2}{R}");
+        DefyGravity defyGravity = new DefyGravity();
+        Permanent target = addCreatureReady(player2, new BenevolentBodyguard());
+        harness.setGraveyard(player2, List.of(defyGravity));
+        prepareMainPhase(player1);
+        harness.castFromHand(player1, new ShamansTrance(), "{2}{R}");
         harness.passBothPriorities();
-        prepareMainPhaseForJudReview(player2);
-        harness.addMana(player2, ManaColor.RED, 7);
+        prepareMainPhase(player2);
+        harness.addMana(player2, ManaColor.BLUE, 1);
 
-        assertThatThrownBy(() -> gs.playFlashbackSpell(
-                gd, player2, emberShot.getId(), null, player1.getId(), List.of(), List.of(), null))
+        assertThatThrownBy(() -> harness.castFromGraveyardTargeting(player2, 0, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(emberShot);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(defyGravity);
     }
 
     @Test
     @DisplayName("Prevents other players from playing lands from their graveyards")
     void preventsOtherPlayersFromPlayingLandsFromTheirGraveyards() {
+        harness.addToBattlefield(player2, new CrucibleOfWorlds());
         ShamansTrance trance = new ShamansTrance();
         KrosanVerge krosanVerge = new KrosanVerge();
         harness.setGraveyard(player2, List.of(krosanVerge));
-        prepareMainPhaseForJudReview(player1);
+        prepareMainPhase(player1);
 
         harness.castFromHand(player1, trance, "{2}{R}");
         harness.passBothPriorities();
-        prepareMainPhaseForJudReview(player2);
+        prepareMainPhase(player2);
 
         assertThatThrownBy(() -> harness.playGraveyardLand(player2, krosanVerge.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -227,7 +218,7 @@ class ShamansTranceTest extends BaseCardTest {
         ShamansTrance trance = new ShamansTrance();
         EmberShot emberShot = new EmberShot();
         harness.setGraveyard(player1, List.of(emberShot));
-        prepareMainPhaseForJudReview(player1);
+        prepareMainPhase(player1);
 
         harness.castFromHand(player1, trance, "{2}{R}");
         harness.passBothPriorities();
@@ -239,9 +230,42 @@ class ShamansTranceTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(emberShot);
     }
 
-    private void prepareMainPhaseForJudReview(Player player) {
-        harness.forceActivePlayer(player);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
+    @Test
+    @DisplayName("Uses the opponent's spell's flashback cost instead of its mana cost")
+    void usesFlashbackCostForOpponentsSpell() {
+        RayOfRevelation ray = new RayOfRevelation();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new MirarisWake());
+        harness.setGraveyard(player2, List.of(ray));
+        prepareMainPhase(player1);
+        harness.castFromHand(player1, new ShamansTrance(), "{2}{R}");
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        gs.playFlashbackSpell(gd, player1, ray.getId(), null, target.getId(), List.of(), List.of(), null);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Mirari's Wake");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(ray);
     }
+
+    @Test
+    @DisplayName("Crucible of Worlds allows playing an opponent's land while Shaman's Trance applies")
+    void playsOpponentsLandWithCrucibleAndRespectsLandLimit() {
+        KrosanVerge first = new KrosanVerge();
+        KrosanVerge second = new KrosanVerge();
+        harness.addToBattlefield(player1, new CrucibleOfWorlds());
+        harness.setGraveyard(player2, List.of(first, second));
+        prepareMainPhase(player1);
+        harness.castFromHand(player1, new ShamansTrance(), "{2}{R}");
+        harness.passBothPriorities();
+
+        harness.playGraveyardLand(player1, first.getId());
+
+        harness.assertOnBattlefield(player1, "Krosan Verge");
+        assertThat(findPermanent(player1, "Krosan Verge").isTapped()).isTrue();
+        assertThatThrownBy(() -> harness.playGraveyardLand(player1, second.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(second);
+    }
+
 }
