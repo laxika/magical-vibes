@@ -117,6 +117,45 @@ class ScrabblingClawsTest extends BaseCardTest {
     }
 
     @Test
+    void sacrificeAbilityCanBeActivatedWhileTappedAndSacrificesBeforeResolution() {
+        ScrabblingClaws claws = new ScrabblingClaws();
+        Card graveyardCard = new HematiteGolem();
+        Card libraryCard = new HematiteGolem();
+        harness.addToBattlefield(player1, claws);
+        harness.setGraveyard(player2, List.of(graveyardCard));
+        harness.setLibrary(player1, List.of(libraryCard));
+        harness.setHand(player1, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, null, player1.getId());
+        harness.passBothPriorities();
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 1, List.of(graveyardCard.getId()));
+
+        harness.assertNotOnBattlefield(player1, "Scrabbling Claws");
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(claws);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(graveyardCard);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(graveyardCard);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(libraryCard);
+    }
+
+    @Test
+    void tappingAbilityCanTargetItsController() {
+        Card graveyardCard = new HematiteGolem();
+        harness.addToBattlefield(player1, new ScrabblingClaws());
+        harness.setGraveyard(player1, List.of(graveyardCard));
+
+        harness.activateAbility(player1, 0, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(graveyardCard);
+    }
+
+    @Test
     void sacrificeAbilityDoesNotDrawWhenItsTargetLeavesTheGraveyardBeforeResolution() {
         Card graveyardCard = new HematiteGolem();
         Card libraryCard = new HematiteGolem();
