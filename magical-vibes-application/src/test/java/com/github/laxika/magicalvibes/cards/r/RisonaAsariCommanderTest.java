@@ -64,10 +64,68 @@ class RisonaAsariCommanderTest extends BaseCardTest {
         harness.setHand(player2, List.of(new LightningBolt()));
         harness.addMana(player2, ManaColor.RED, 1);
 
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
         resolveAllTriggers();
 
         assertThat(risona.getCounterCount(CounterType.INDESTRUCTIBLE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Simultaneous combat damage from two creatures removes only one counter")
+    void simultaneousCombatDamageRemovesOnlyOneCounter() {
+        Permanent risona = harness.addToBattlefieldAndReturn(player1, new RisonaAsariCommander());
+        risona.setCounterCount(CounterType.INDESTRUCTIBLE, 2);
+        addCreatureReady(player2, new GrizzlyBears()).setAttacking(true);
+        addCreatureReady(player2, new GrizzlyBears()).setAttacking(true);
+
+        resolveCombat(player2);
+        resolveAllTriggers();
+
+        assertThat(risona.getCounterCount(CounterType.INDESTRUCTIBLE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Risona rechecks the absence of an indestructible counter on resolution")
+    void counterAddedInResponsePreventsAnotherCounter() {
+        Permanent risona = addCreatureReady(player1, new RisonaAsariCommander());
+        risona.setAttacking(true);
+
+        harness.resolveCombatDamage();
+        assertThat(gd.stack).hasSize(1);
+        risona.setCounterCount(CounterType.INDESTRUCTIBLE, 1);
+        resolveAllTriggers();
+
+        assertThat(risona.getCounterCount(CounterType.INDESTRUCTIBLE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("An indestructible counter protects Risona from lethal damage")
+    void indestructibleCounterPreventsDeathFromLethalDamage() {
+        Permanent risona = harness.addToBattlefieldAndReturn(player1, new RisonaAsariCommander());
+        risona.setCounterCount(CounterType.INDESTRUCTIBLE, 1);
+        harness.setHand(player2, List.of(new LightningBolt()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player2, 0, risona.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(risona);
+        assertThat(risona.getCounterCount(CounterType.INDESTRUCTIBLE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Removing Risona's counter causes her to die with lethal damage marked")
+    void losingCounterWithLethalDamageCausesDeath() {
+        Permanent risona = harness.addToBattlefieldAndReturn(player1, new RisonaAsariCommander());
+        risona.setCounterCount(CounterType.INDESTRUCTIBLE, 1);
+        harness.setHand(player2, List.of(new LightningBolt()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, risona.getId());
+        addCreatureReady(player2, new GrizzlyBears()).setAttacking(true);
+
+        resolveCombat(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(risona);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(risona.getCard());
     }
 }
