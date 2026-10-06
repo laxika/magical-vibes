@@ -321,6 +321,36 @@ class SerrasEmbraceTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, otherBears, Keyword.VIGILANCE)).isFalse();
     }
 
+    @Test
+    @DisplayName("Multiple Embraces stack their boosts and one remaining Aura keeps both keywords")
+    void multipleEmbracesStackAndRemainingAuraKeepsKeywords() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent firstEmbrace = addAttachedEmbrace(bears);
+        addAttachedEmbrace(bears);
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(6);
+
+        gd.playerBattlefields.get(player1.getId()).remove(firstEmbrace);
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.VIGILANCE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Vigilance does not let a tapped enchanted creature attack")
+    void vigilanceDoesNotAllowTappedCreatureToAttack() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        addAttachedEmbrace(bears);
+        bears.tap();
+
+        assertThat(als.canAttack(gd, bears, player1.getId())).isFalse();
+        assertThat(bears.isTapped()).isTrue();
+        assertThat(bears.isAttacking()).isFalse();
+    }
+
     private Permanent addAttachedEmbrace(Permanent creature) {
         Permanent embrace = harness.addToBattlefieldAndReturn(player1, new SerrasEmbrace());
         embrace.setAttachedTo(creature.getId());
