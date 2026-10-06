@@ -21,6 +21,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 class SawtoothLoonTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Entering creates two separate triggered abilities")
+    void enteringCreatesTwoSeparateTriggers() {
+        harness.castFromHand(player1, new SawtoothLoon(), "{2}{W}{U}");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(2);
+    }
+
+    @Test
     @DisplayName("ETB only allows a white or blue creature you control to be returned")
     void etbFiltersBounceChoices() {
         UUID whiteId = harness.addToBattlefieldAndReturn(player1, new AuroraGriffin()).getId();
@@ -40,7 +49,7 @@ class SawtoothLoonTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("ETB bounces first, then draws two and puts two cards on the bottom")
+    @DisplayName("Resolving the return trigger first allows drawing and bottoming two cards afterward")
     void bouncesThenDrawsAndBottomsTwo() {
         UUID whiteId = harness.addToBattlefieldAndReturn(player1, new AuroraGriffin()).getId();
         Card first = new QuirionExplorer();
@@ -51,6 +60,9 @@ class SawtoothLoonTest extends BaseCardTest {
 
         castAndResolveSpell();
         harness.handlePermanentChosen(player1, whiteId);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.PutCardsFromHandOnLibraryCardChoice.class);
@@ -77,6 +89,8 @@ class SawtoothLoonTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .containsExactly(loonId);
         harness.handlePermanentChosen(player1, loonId);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.passBothPriorities();
         harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
 
         harness.assertInHand(player1, "Sawtooth Loon");
