@@ -180,8 +180,7 @@ class RedeemTest extends BaseCardTest {
 
         castRedeem(List.of(target.getId()));
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(target);
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
@@ -193,5 +192,31 @@ class RedeemTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .extracting(Permanent::getId)
                 .doesNotContain(attacker.getId());
+    }
+
+    @Test
+    @DisplayName("Cannot choose more than two target creatures")
+    void cannotTargetThreeCreatures() {
+        Permanent a = harness.addToBattlefieldAndReturn(player1, new ElvishLyrist());
+        Permanent b = harness.addToBattlefieldAndReturn(player1, new ElvishLyrist());
+        Permanent c = harness.addToBattlefieldAndReturn(player2, new ElvishLyrist());
+        harness.setHand(player1, List.of(new Redeem()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of(a.getId(), b.getId(), c.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot choose the same creature twice")
+    void cannotTargetSameCreatureTwice() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new ElvishLyrist());
+        harness.setHand(player1, List.of(new Redeem()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of(creature.getId(), creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
     }
 }
