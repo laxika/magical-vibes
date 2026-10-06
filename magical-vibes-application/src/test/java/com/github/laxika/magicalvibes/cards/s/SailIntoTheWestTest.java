@@ -29,7 +29,7 @@ class SailIntoTheWestTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(player1First, player1Second));
         harness.setGraveyard(player2, List.of(player2First, player2Second));
 
-        cast(spell);
+        cast();
         harness.handleListChoice(player1, ChoiceContext.SailIntoTheWestChoice.RETURN);
         harness.handleListChoice(player2, ChoiceContext.SailIntoTheWestChoice.RETURN);
 
@@ -56,7 +56,7 @@ class SailIntoTheWestTest extends BaseCardTest {
         harness.setLibrary(player1, sevenCards());
         harness.setLibrary(player2, sevenCards());
 
-        cast(spell);
+        cast();
         harness.handleListChoice(player1, ChoiceContext.SailIntoTheWestChoice.RETURN);
         harness.handleListChoice(player2, ChoiceContext.SailIntoTheWestChoice.EMBARK);
 
@@ -70,12 +70,76 @@ class SailIntoTheWestTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(spell);
     }
 
-    private void cast(SailIntoTheWest spell) {
+    @Test
+    void returnAllowsStoppingAfterOneCardAndReturningNone() {
+        SailIntoTheWest spell = new SailIntoTheWest();
+        Card returned = new SailIntoTheWest();
+        Card leftBehind = new SailIntoTheWest();
+        Card opponentCard = new SailIntoTheWest();
+        harness.setHand(player1, List.of(spell));
+        harness.setGraveyard(player1, List.of(returned, leftBehind));
+        harness.setGraveyard(player2, List.of(opponentCard));
+
+        cast();
+        harness.handleListChoice(player1, ChoiceContext.SailIntoTheWestChoice.RETURN);
+        harness.handleListChoice(player2, ChoiceContext.SailIntoTheWestChoice.RETURN);
+        harness.handleGraveyardCardChosen(player1, 0);
+        harness.handleGraveyardCardChosen(player1, -1);
+        harness.handleGraveyardCardChosen(player2, -1);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(returned);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(leftBehind);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentCard);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spell);
+    }
+
+    @Test
+    void returnWithEmptyGraveyardsStillExilesSpell() {
+        SailIntoTheWest spell = new SailIntoTheWest();
+        harness.setHand(player1, List.of(spell));
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of());
+
+        cast();
+        harness.handleListChoice(player1, ChoiceContext.SailIntoTheWestChoice.RETURN);
+        harness.handleListChoice(player2, ChoiceContext.SailIntoTheWestChoice.RETURN);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spell);
+    }
+
+    @Test
+    void embarkMajorityAllowsDrawingWithEmptyHands() {
+        SailIntoTheWest spell = new SailIntoTheWest();
+        harness.setHand(player1, List.of(spell));
+        harness.setHand(player2, List.of());
+        List<Card> firstLibrary = westCards();
+        List<Card> secondLibrary = westCards();
+        harness.setLibrary(player1, firstLibrary);
+        harness.setLibrary(player2, secondLibrary);
+
+        cast();
+        harness.handleListChoice(player1, ChoiceContext.SailIntoTheWestChoice.EMBARK);
+        harness.handleListChoice(player2, ChoiceContext.SailIntoTheWestChoice.EMBARK);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyElementsOf(firstLibrary);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactlyElementsOf(secondLibrary);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(spell);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(spell);
+    }
+
+    private List<Card> westCards() {
+        return List.of(new SailIntoTheWest(), new SailIntoTheWest(), new SailIntoTheWest(),
+                new SailIntoTheWest(), new SailIntoTheWest(), new SailIntoTheWest(), new SailIntoTheWest());
+    }
+    private void cast() {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         PendingInteraction.ColorChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
