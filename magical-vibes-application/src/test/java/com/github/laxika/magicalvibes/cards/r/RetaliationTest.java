@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.d.DazzlingBeauty;
 import com.github.laxika.magicalvibes.cards.f.FlashFoliage;
 import com.github.laxika.magicalvibes.cards.g.GorillaWarrior;
+import com.github.laxika.magicalvibes.cards.h.Humble;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Retaliation.class, GorillaWarrior.class})
+@CardUsed({Retaliation.class, GorillaWarrior.class, DazzlingBeauty.class, FlashFoliage.class, Humble.class})
 class RetaliationTest extends BaseCardTest {
 
     @Test
@@ -98,8 +99,7 @@ class RetaliationTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(attacker.getPowerModifier()).isZero();
         assertThat(attacker.getToughnessModifier()).isZero();
@@ -114,11 +114,11 @@ class RetaliationTest extends BaseCardTest {
         addCreatureReady(player1, new Retaliation());
         addCreatureReady(player2, new GorillaWarrior());
 
-        declareAttackers(List.of(0));
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.setHand(player2, List.of(new DazzlingBeauty()));
         harness.addMana(player2, ManaColor.WHITE, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 2);
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
         harness.castAndResolveInstant(player2, 0, attacker.getId());
         resolveAllTriggers();
 
@@ -136,14 +136,53 @@ class RetaliationTest extends BaseCardTest {
         addCreatureReady(player1, new Retaliation());
         addCreatureReady(player2, new GorillaWarrior());
 
-        declareAttackers(List.of(0));
         harness.setHand(player2, List.of(new FlashFoliage()));
         harness.addMana(player2, ManaColor.GREEN, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 2);
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
         harness.castAndResolveInstant(player2, 0, attacker.getId());
         resolveAllTriggers();
 
         assertThat(attacker.getPowerModifier()).isEqualTo(1);
         assertThat(attacker.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
+    @CardUsed(Humble.class)
+    @DisplayName("Losing abilities after Retaliation enters removes the granted trigger")
+    void creatureLosingAbilitiesDoesNotTrigger() {
+        Permanent attacker = addCreatureReady(player1, new GorillaWarrior());
+        addCreatureReady(player1, new Retaliation());
+        addCreatureReady(player2, new GorillaWarrior());
+
+        harness.setHand(player2, List.of(new Humble()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0, attacker.getId());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(attacker.getPowerModifier()).isZero();
+        assertThat(attacker.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Each Retaliation grants a separate trigger")
+    void multipleRetaliationsEachGrantBoost() {
+        Permanent attacker = addCreatureReady(player1, new GorillaWarrior());
+        attacker.setAttacking(true);
+        addCreatureReady(player1, new Retaliation());
+        addCreatureReady(player1, new Retaliation());
+        addCreatureReady(player2, new GorillaWarrior());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveAllTriggers();
+
+        assertThat(attacker.getPowerModifier()).isEqualTo(2);
+        assertThat(attacker.getToughnessModifier()).isEqualTo(2);
     }
 }
