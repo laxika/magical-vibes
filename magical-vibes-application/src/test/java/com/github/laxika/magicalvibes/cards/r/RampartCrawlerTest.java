@@ -46,4 +46,17 @@ class RampartCrawlerTest extends BaseCardTest {
 
         assertThat(blocker.isBlocking()).isTrue();
     }
+
+    @Test
+    @DisplayName("Walls can still block another creature attacking alongside Rampart Crawler")
+    void wallCanBlockAnotherAttacker() {
+        Permanent wall = addCreatureReady(player2, new CrenellatedWall());
+        addCreatureReady(player1, new RampartCrawler()).setAttacking(true);
+        addCreatureReady(player1, new FreshVolunteers()).setAttacking(true);
+        prepareDeclareBlockers(player1);
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
+
+        assertThat(wall.isBlocking()).isTrue();
+    }
 }
