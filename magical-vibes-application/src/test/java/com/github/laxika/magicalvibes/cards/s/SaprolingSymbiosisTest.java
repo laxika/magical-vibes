@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.l.LlanowarVanguard;
+import com.github.laxika.magicalvibes.cards.r.Recoup;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -18,7 +19,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SaprolingSymbiosis.class, LlanowarVanguard.class, Forest.class})
+@CardUsed({SaprolingSymbiosis.class, LlanowarVanguard.class, Forest.class, Recoup.class})
 class SaprolingSymbiosisTest extends BaseCardTest {
 
     @Test
@@ -31,8 +32,7 @@ class SaprolingSymbiosisTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SaprolingSymbiosis()));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         List<Permanent> tokens = findPermanents(player1, "Saproling");
         assertThat(tokens).hasSize(2);
@@ -52,8 +52,7 @@ class SaprolingSymbiosisTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SaprolingSymbiosis()));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(findPermanents(player1, "Saproling")).isEmpty();
     }
@@ -83,5 +82,58 @@ class SaprolingSymbiosisTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, 0))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Counts creatures present at resolution rather than casting")
+    void countsCreaturesAtResolution() {
+        harness.addToBattlefield(player1, new LlanowarVanguard());
+        harness.setHand(player1, List.of(new SaprolingSymbiosis()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.addToBattlefield(player1, new LlanowarVanguard());
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Saproling")).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Existing creature tokens count without counting newly created tokens again")
+    void countsExistingTokens() {
+        harness.addToBattlefield(player1, new LlanowarVanguard());
+        harness.setHand(player1, List.of(new SaprolingSymbiosis(), new SaprolingSymbiosis()));
+        harness.addMana(player1, ManaColor.GREEN, 8);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        assertThat(findPermanents(player1, "Saproling")).hasSize(1);
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(findPermanents(player1, "Saproling")).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("Flash surcharge can be paid alongside flashback granted by Recoup")
+    @CardUsed({SaprolingSymbiosis.class, LlanowarVanguard.class, Recoup.class})
+    void canPayFlashSurchargeWithGrantedFlashback() {
+        SaprolingSymbiosis symbiosis = new SaprolingSymbiosis();
+        harness.addToBattlefield(player1, new LlanowarVanguard());
+        harness.setGraveyard(player1, List.of(symbiosis));
+        harness.setHand(player1, List.of(new Recoup()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveSorcery(player1, 0, symbiosis.getId());
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.castFlashback(player1, 0);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Saproling")).hasSize(1);
+        harness.assertNotInGraveyard(player1, "Saproling Symbiosis");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getId().equals(symbiosis.getId()));
     }
 }
