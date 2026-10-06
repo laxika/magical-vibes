@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.c.ConsumingVortex;
 import com.github.laxika.magicalvibes.cards.i.IsamaruHoundOfKonda;
 import com.github.laxika.magicalvibes.cards.w.WanderingOnes;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -11,10 +12,12 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ShizoDeathsStorehouse.class, IsamaruHoundOfKonda.class, WanderingOnes.class})
+@CardUsed({ShizoDeathsStorehouse.class, IsamaruHoundOfKonda.class, WanderingOnes.class, ConsumingVortex.class})
 class ShizoDeathsStorehouseTest extends BaseCardTest {
 
     @Test
@@ -55,8 +58,7 @@ class ShizoDeathsStorehouseTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.hasKeyword(gd, isamaru, Keyword.FEAR)).isFalse();
     }
@@ -78,7 +80,7 @@ class ShizoDeathsStorehouseTest extends BaseCardTest {
     @DisplayName("A legendary noncreature is not a legal target")
     void legendaryNoncreatureIsIllegalTarget() {
         Permanent shizo = harness.addToBattlefieldAndReturn(player1, new ShizoDeathsStorehouse());
-        Permanent otherShizo = harness.addToBattlefieldAndReturn(player1, new ShizoDeathsStorehouse());
+        Permanent otherShizo = harness.addToBattlefieldAndReturn(player2, new ShizoDeathsStorehouse());
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, otherShizo.getId()))
@@ -98,6 +100,58 @@ class ShizoDeathsStorehouseTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(shizo.isTapped()).isTrue();
+        assertThat(gqs.hasKeyword(gd, isamaru, Keyword.FEAR)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Fear ability requires black mana without tapping on failure")
+    void fearAbilityRequiresBlackMana() {
+        Permanent shizo = harness.addToBattlefieldAndReturn(player1, new ShizoDeathsStorehouse());
+        Permanent isamaru = harness.addToBattlefieldAndReturn(player1, new IsamaruHoundOfKonda());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, isamaru.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(shizo.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.hasKeyword(gd, isamaru, Keyword.FEAR)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Returning the target to hand in response prevents the fear grant")
+    void returnedTargetDoesNotGainFear() {
+        harness.addToBattlefield(player1, new ShizoDeathsStorehouse());
+        Permanent isamaru = harness.addToBattlefieldAndReturn(player1, new IsamaruHoundOfKonda());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.setHand(player2, List.of(new ConsumingVortex()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, 1, null, isamaru.getId());
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.hasKeyword(gd, isamaru, Keyword.FEAR)).isFalse();
+        harness.castInstant(player2, 0, isamaru.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(isamaru);
+        assertThat(gd.playerHands.get(player1.getId())).contains(isamaru.getCard());
+        assertThat(gqs.hasKeyword(gd, isamaru, Keyword.FEAR)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Fear ability resolves even if Shizo leaves the battlefield")
+    void fearAbilityResolvesWithoutSource() {
+        Permanent shizo = harness.addToBattlefieldAndReturn(player1, new ShizoDeathsStorehouse());
+        Permanent isamaru = harness.addToBattlefieldAndReturn(player1, new IsamaruHoundOfKonda());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, 1, null, isamaru.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(shizo);
+        gd.playerGraveyards.get(player1.getId()).add(shizo.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
         assertThat(gqs.hasKeyword(gd, isamaru, Keyword.FEAR)).isTrue();
     }
 }
