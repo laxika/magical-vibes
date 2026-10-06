@@ -14,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RogueKavu.class, GrizzlyBears.class, FireNavyTrebuchet.class, RagingKavu.class})
+@CardUsed({RogueKavu.class, GrizzlyBears.class, FireNavyTrebuchet.class})
 class RogueKavuTest extends BaseCardTest {
 
     @Test
@@ -76,12 +76,37 @@ class RogueKavuTest extends BaseCardTest {
     @DisplayName("Attacking with another creature — trigger does not fire and P/T stays 1/1")
     void attackingWithOtherCreatureNoTrigger() {
         Permanent kavu = addCreatureReady(player1, new RogueKavu());
-        addCreatureReady(player1, new RagingKavu());
+        addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0, 1));
 
         assertThat(gd.stack).isEmpty();
         assertThat(gqs.getEffectivePower(gd, kavu)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, kavu)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Another creature attacking alone does not trigger Rogue Kavu")
+    void anotherCreatureAttackingAloneDoesNotTrigger() {
+        Permanent kavu = addCreatureReady(player1, new RogueKavu());
+        addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(player1, List.of(1));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, kavu)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Two Rogue Kavus attacking together trigger neither ability")
+    void twoRogueKavusAttackingTogetherDoNotTrigger() {
+        Permanent first = addCreatureReady(player1, new RogueKavu());
+        Permanent second = addCreatureReady(player1, new RogueKavu());
+
+        declareAttackers(player1, List.of(0, 1));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(1);
     }
 }
