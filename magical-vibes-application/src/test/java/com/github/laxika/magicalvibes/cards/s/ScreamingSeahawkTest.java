@@ -111,6 +111,58 @@ class ScreamingSeahawkTest extends BaseCardTest {
         assertThat(gameLogContains("finds no cards named Screaming Seahawk")).isTrue();
     }
 
+    @Test
+    @DisplayName("A named search may fail to find even when a matching card exists")
+    void mayFailToFindMatchingCard() {
+        setupAndCast();
+        ScreamingSeahawk seahawk = new ScreamingSeahawk();
+        BarrenMoor barrenMoor = new BarrenMoor();
+        harness.setLibrary(player1, List.of(seahawk, barrenMoor));
+
+        resolveCreatureAndTrigger();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(seahawk, barrenMoor);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gameLogContains("Library is shuffled")).isTrue();
+        assertThat(gameLogContains("reveals Screaming Seahawk")).isFalse();
+    }
+
+    @Test
+    @DisplayName("Accepting the ability with an empty library still shuffles")
+    void acceptedSearchWithEmptyLibraryShuffles() {
+        setupAndCast();
+        harness.setLibrary(player1, List.of());
+
+        resolveCreatureAndTrigger();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gameLogContains("Library is shuffled")).isTrue();
+    }
+
+    @Test
+    @DisplayName("The ability searches only its controller's library")
+    void searchesOnlyControllersLibrary() {
+        setupAndCast();
+        BarrenMoor barrenMoor = new BarrenMoor();
+        ScreamingSeahawk opponentsSeahawk = new ScreamingSeahawk();
+        harness.setLibrary(player1, List.of(barrenMoor));
+        harness.setLibrary(player2, List.of(opponentsSeahawk));
+
+        resolveCreatureAndTrigger();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(barrenMoor);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentsSeahawk);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gameLogContains("Library is shuffled")).isTrue();
+    }
     private void setupAndCast() {
         harness.castFromHand(player1, new ScreamingSeahawk(), "{4}{U}");
     }
