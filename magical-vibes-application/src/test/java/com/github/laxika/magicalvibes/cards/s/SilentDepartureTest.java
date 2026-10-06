@@ -3,12 +3,13 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.w.WalkingCorpse;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +19,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SilentDeparture.class, WalkingCorpse.class, Forest.class})
 class SilentDepartureTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -25,8 +27,8 @@ class SilentDepartureTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Silent Departure targeting a creature puts it on the stack")
     void castingTargetingCreaturePutsOnStack() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.addToBattlefield(player2, new WalkingCorpse());
+        UUID targetId = harness.getPermanentId(player2, "Walking Corpse");
 
         harness.setHand(player1, List.of(new SilentDeparture()));
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -61,19 +63,18 @@ class SilentDepartureTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving returns creature to owner's hand")
     void resolvingReturnsCreatureToHand() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.addToBattlefield(player2, new WalkingCorpse());
+        UUID targetId = harness.getPermanentId(player2, "Walking Corpse");
 
         harness.setHand(player1, List.of(new SilentDeparture()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetId);
 
         // Creature removed from battlefield
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Walking Corpse");
         // Creature returned to owner's hand
-        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertInHand(player2, "Walking Corpse");
     }
 
     // ===== Spell goes to graveyard =====
@@ -81,14 +82,13 @@ class SilentDepartureTest extends BaseCardTest {
     @Test
     @DisplayName("Silent Departure goes to caster's graveyard after resolving")
     void goesToGraveyardAfterResolving() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.addToBattlefield(player2, new WalkingCorpse());
+        UUID targetId = harness.getPermanentId(player2, "Walking Corpse");
 
         harness.setHand(player1, List.of(new SilentDeparture()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetId);
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
@@ -100,8 +100,8 @@ class SilentDepartureTest extends BaseCardTest {
     @Test
     @DisplayName("Fizzles if target is removed before resolution")
     void fizzlesIfTargetRemoved() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.addToBattlefield(player2, new WalkingCorpse());
+        UUID targetId = harness.getPermanentId(player2, "Walking Corpse");
 
         harness.setHand(player1, List.of(new SilentDeparture()));
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -115,7 +115,7 @@ class SilentDepartureTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Hand should not have the creature
-        harness.assertNotInHand(player2, "Grizzly Bears");
+        harness.assertNotInHand(player2, "Walking Corpse");
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         // Silent Departure still goes to graveyard
         harness.assertInGraveyard(player1, "Silent Departure");
@@ -126,34 +126,32 @@ class SilentDepartureTest extends BaseCardTest {
     @Test
     @DisplayName("Flashback from graveyard returns creature to hand")
     void flashbackFromGraveyard() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.addToBattlefield(player2, new WalkingCorpse());
+        UUID targetId = harness.getPermanentId(player2, "Walking Corpse");
 
         harness.setGraveyard(player1, List.of(new SilentDeparture()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
-        harness.castFlashback(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, targetId);
 
         // Creature removed from battlefield
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Walking Corpse");
         // Creature returned to owner's hand
-        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertInHand(player2, "Walking Corpse");
     }
 
     @Test
     @DisplayName("Flashback exiles the spell after resolving")
     void flashbackExilesAfterResolving() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.addToBattlefield(player2, new WalkingCorpse());
+        UUID targetId = harness.getPermanentId(player2, "Walking Corpse");
 
         harness.setGraveyard(player1, List.of(new SilentDeparture()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
-        harness.castFlashback(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, targetId);
 
         GameData gd = harness.getGameData();
         // Should NOT be in graveyard
@@ -161,5 +159,72 @@ class SilentDepartureTest extends BaseCardTest {
         // Should be in exile
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Silent Departure"));
+    }
+
+    @Test
+    @DisplayName("Can return a creature controlled by the caster")
+    void returnsOwnCreature() {
+        harness.addToBattlefield(player1, new WalkingCorpse());
+        UUID targetId = harness.getPermanentId(player1, "Walking Corpse");
+        harness.setHand(player1, List.of(new SilentDeparture()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveSorcery(player1, 0, targetId);
+
+        harness.assertNotOnBattlefield(player1, "Walking Corpse");
+        harness.assertInHand(player1, "Walking Corpse");
+        harness.assertInGraveyard(player1, "Silent Departure");
+    }
+
+    @Test
+    @DisplayName("Returns a stolen creature to its owner rather than its controller")
+    void returnsStolenCreatureToOwner() {
+        harness.addToBattlefield(player1, new WalkingCorpse());
+        UUID targetId = harness.getPermanentId(player1, "Walking Corpse");
+        harness.getGameData().stolenCreatures.put(targetId, player2.getId());
+        harness.setHand(player1, List.of(new SilentDeparture()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveSorcery(player1, 0, targetId);
+
+        harness.assertNotOnBattlefield(player1, "Walking Corpse");
+        harness.assertInHand(player2, "Walking Corpse");
+        harness.assertNotInHand(player1, "Walking Corpse");
+    }
+
+    @Test
+    @DisplayName("Flashback exiles the spell even when its target becomes illegal")
+    void flashbackExilesWithMissingTarget() {
+        harness.addToBattlefield(player2, new WalkingCorpse());
+        UUID targetId = harness.getPermanentId(player2, "Walking Corpse");
+        harness.setGraveyard(player1, List.of(new SilentDeparture()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castFlashback(player1, 0, targetId);
+        harness.getGameData().playerBattlefields.get(player2.getId()).clear();
+        harness.passBothPriorities();
+
+        assertThat(harness.getGameData().stack).isEmpty();
+        harness.assertNotInHand(player2, "Walking Corpse");
+        harness.assertNotInGraveyard(player1, "Silent Departure");
+        assertThat(harness.getGameData().getPlayerExiledCards(player1.getId()))
+                .anyMatch(c -> c.getName().equals("Silent Departure"));
+    }
+
+    @Test
+    @DisplayName("Flashback requires its full five-mana cost")
+    void cannotFlashbackWithOnlyNormalCastingCost() {
+        harness.addToBattlefield(player2, new WalkingCorpse());
+        UUID targetId = harness.getPermanentId(player2, "Walking Corpse");
+        harness.setGraveyard(player1, List.of(new SilentDeparture()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.castFlashback(player1, 0, targetId))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(harness.getGameData().stack).isEmpty();
+        harness.assertInGraveyard(player1, "Silent Departure");
+        harness.assertOnBattlefield(player2, "Walking Corpse");
     }
 }
