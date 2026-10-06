@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.FumeSpitter;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.w.WatertrapWeaver;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -13,9 +15,52 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SirenStormtamer.class, Shock.class, GrizzlyBears.class, FumeSpitter.class, WatertrapWeaver.class})
 class SirenStormtamerTest extends BaseCardTest {
 
-    // ===== Counter spell targeting a creature you control =====
+    @Test
+    @DisplayName("Counters a triggered ability without removing its source")
+    void countersTriggeredAbility() {
+        SirenStormtamer protectedCreature = new SirenStormtamer();
+        harness.addToBattlefield(player1, protectedCreature);
+        harness.addToBattlefield(player1, new SirenStormtamer());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.setHand(player2, List.of(new WatertrapWeaver()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+        harness.forceActivePlayer(player2);
+        harness.castCreature(player2, 0, 0,
+                harness.getPermanentId(player1, "Siren Stormtamer"));
+        harness.passBothPriorities();
+
+        var triggerId = gd.stack.getFirst().getTargetableId();
+        harness.activateAbility(player1, 1, null, triggerId);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player2, "Watertrap Weaver");
+        var survivor = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(survivor.isTapped()).isFalse();
+        assertThat(survivor.getSkipUntapCount()).isZero();
+        harness.assertInGraveyard(player1, "Siren Stormtamer");
+    }
+
+    @Test
+    @DisplayName("Can counter your own spell targeting you")
+    void countersOwnSpellTargetingYou() {
+        harness.addToBattlefield(player1, new SirenStormtamer());
+        Shock shock = new Shock();
+        harness.setHand(player1, List.of(shock));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castInstant(player1, 0, player1.getId());
+        harness.activateAbility(player1, 0, null, shock.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
+        harness.assertInGraveyard(player1, "Shock");
+        harness.assertInGraveyard(player1, "Siren Stormtamer");
+    }
 
     @Test
     @DisplayName("Counters a spell targeting a creature you control")
@@ -53,8 +98,6 @@ class SirenStormtamerTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Siren Stormtamer");
     }
 
-    // ===== Counter spell targeting you (the player) =====
-
     @Test
     @DisplayName("Counters a spell targeting you (the player)")
     void countersSpellTargetingYou() {
@@ -77,19 +120,15 @@ class SirenStormtamerTest extends BaseCardTest {
         // Resolve the counter ability
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-
         // Shock should be countered
         harness.assertInGraveyard(player2, "Shock");
 
         // Player1 life should be untouched (20)
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        harness.assertLife(player1, 20);
 
         // Stormtamer should be sacrificed
         harness.assertInGraveyard(player1, "Siren Stormtamer");
     }
-
-    // ===== Cannot counter a spell that doesn't target you or your creatures =====
 
     @Test
     @DisplayName("Cannot target a spell that targets opponent's creature")
@@ -135,8 +174,6 @@ class SirenStormtamerTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Counter an activated ability =====
-
     @Test
     @DisplayName("Counters an activated ability targeting a creature you control")
     void countersActivatedAbilityTargetingYourCreature() {
@@ -176,8 +213,6 @@ class SirenStormtamerTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
-    // ===== Fizzle =====
-
     @Test
     @DisplayName("Ability fizzles if target spell is removed from the stack")
     void fizzlesIfTargetSpellRemoved() {
@@ -210,8 +245,6 @@ class SirenStormtamerTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Siren Stormtamer");
     }
 
-    // ===== Mana validation =====
-
     @Test
     @DisplayName("Cannot activate ability without {U} mana")
     void cannotActivateWithoutBlueMana() {
@@ -233,8 +266,6 @@ class SirenStormtamerTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, shock.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
-
-    // ===== Counter spell targeting opponent (player) — cannot use =====
 
     @Test
     @DisplayName("Cannot target a spell targeting the opponent player")
