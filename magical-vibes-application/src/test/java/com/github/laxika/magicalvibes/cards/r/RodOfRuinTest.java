@@ -23,7 +23,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RodOfRuin.class, GrizzlyBears.class, Plains.class, AjaniMentorOfHeroes.class, InvasionOfTolvada.class, TheBrokenSky.class, InvasionOfZendikar.class, AwakenedSkyclave.class, SuntailHawk.class})
+@CardUsed({RodOfRuin.class, GrizzlyBears.class, Plains.class, SuntailHawk.class})
 class RodOfRuinTest extends BaseCardTest {
     @Test
     @DisplayName("Casting puts it on the stack")
@@ -124,18 +124,16 @@ class RodOfRuinTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player1.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
+        harness.assertLife(player1, 19);
     }
     @Test
     @DisplayName("Deals 1 damage to target creature, destroying a 1/1")
     void deals1DamageDestroying1Toughness() {
         addCreatureReady(player1, new RodOfRuin());
-        harness.addToBattlefield(player2, new SuntailHawk());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SuntailHawk());
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        UUID targetId = harness.getPermanentId(player2, "Suntail Hawk");
-        harness.activateAbility(player1, 0, null, targetId);
+        harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player2, "Suntail Hawk");
@@ -146,11 +144,10 @@ class RodOfRuinTest extends BaseCardTest {
     @DisplayName("Deals 1 damage to target creature, 2/2 creature survives")
     void deals1DamageDoesNotKill2Toughness() {
         addCreatureReady(player1, new RodOfRuin());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.activateAbility(player1, 0, null, targetId);
+        harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
@@ -285,5 +282,47 @@ class RodOfRuinTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+    }
+
+    @Test
+    @DisplayName("Ability still deals damage after Rod of Ruin leaves the battlefield")
+    void abilityResolvesAfterSourceLeavesBattlefield() {
+        Permanent rod = harness.addToBattlefieldAndReturn(player1, new RodOfRuin());
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, rod);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Rod of Ruin");
+        harness.assertLife(player2, 19);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can deal damage to its controller's creature")
+    void canDamageOwnCreature() {
+        harness.addToBattlefield(player1, new RodOfRuin());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Cannot target a land")
+    void cannotTargetLand() {
+        harness.addToBattlefield(player1, new RodOfRuin());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Plains());
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, land.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("creature, planeswalker, battle, or player");
     }
 }
