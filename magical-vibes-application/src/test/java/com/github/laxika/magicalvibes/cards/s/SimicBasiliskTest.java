@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.a.AzoriusSignet;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RakdosIckspitter;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -19,7 +20,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SimicBasilisk.class, GrizzlyBears.class, GiantSpider.class, AzoriusSignet.class})
+@CardUsed({SimicBasilisk.class, GrizzlyBears.class, GiantSpider.class, AzoriusSignet.class,
+        RakdosIckspitter.class})
 class SimicBasiliskTest extends BaseCardTest {
 
     @Test
@@ -188,6 +190,68 @@ class SimicBasiliskTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, basiliskIndex, null, signet.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature");
+    }
+
+    @Test
+    @DisplayName("Losing the counter after resolution does not remove the granted ability, even if its source dies")
+    void grantedAbilitySurvivesCounterLossAndLethalCombatDamage() {
+        Permanent basilisk = addReadyBasilisk(player1);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        activateAbility(basilisk, attacker);
+        attacker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+
+        Permanent blocker = addCreatureReady(player2, new GiantSpider());
+        resolveBlockedCombat(player1, attacker, player2, blocker);
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Giant Spider");
+    }
+
+    @Test
+    @DisplayName("Simic Basilisk can grant the ability to itself")
+    void canGrantAbilityToItself() {
+        Permanent basilisk = addReadyBasilisk(player1);
+        activateAbility(basilisk, basilisk);
+
+        Permanent blocker = addCreatureReady(player2, new GiantSpider());
+        resolveBlockedCombat(player1, basilisk, player2, blocker);
+
+        harness.assertOnBattlefield(player1, "Simic Basilisk");
+        harness.assertInGraveyard(player2, "Giant Spider");
+    }
+
+    @Test
+    @DisplayName("Granting the ability to one creature does not grant it to other creatures")
+    void doesNotDestroyCreaturesDamagedByAnotherCreature() {
+        Permanent basilisk = addReadyBasilisk(player1);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        activateAbility(basilisk, basilisk);
+
+        Permanent blocker = addCreatureReady(player2, new GiantSpider());
+        resolveBlockedCombat(player1, attacker, player2, blocker);
+
+        harness.assertOnBattlefield(player2, "Giant Spider");
+    }
+
+    @Test
+    @DisplayName("The granted ability does not trigger for noncombat damage")
+    void noncombatDamageDoesNotScheduleDestruction() {
+        Permanent basilisk = addReadyBasilisk(player1);
+        Permanent ickspitter = addCreatureReady(player1, new RakdosIckspitter());
+        ickspitter.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent spider = addCreatureReady(player2, new GiantSpider());
+        activateAbility(basilisk, ickspitter);
+
+        int ickspitterIndex = gd.playerBattlefields.get(player1.getId()).indexOf(ickspitter);
+        harness.activateAbility(player1, ickspitterIndex, null, spider.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+        harness.passUntilWithNoAttackers(player1, TurnStep.POSTCOMBAT_MAIN);
+
+        harness.assertOnBattlefield(player2, "Giant Spider");
     }
 
     private Permanent addReadyBasilisk(Player player) {
