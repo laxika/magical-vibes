@@ -109,8 +109,7 @@ class RatsFeastTest extends BaseCardTest {
         harness.setHand(player1, List.of(spell));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(graveyardCard, spell);
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
@@ -138,5 +137,78 @@ class RatsFeastTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(spell);
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .containsExactlyInAnyOrder(first, second);
+    }
+
+    @Test
+    @DisplayName("Can cast with X=0 when both graveyards are empty")
+    void zeroWithEmptyGraveyards() {
+        RatsFeast spell = new RatsFeast();
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(spell);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can target a noncreature card")
+    void exilesNoncreatureCard() {
+        RatsFeast target = new RatsFeast();
+        RatsFeast spell = new RatsFeast();
+        harness.setGraveyard(player2, List.of(target));
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castSorcery(player1, 0, 1);
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(target);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(spell);
+    }
+
+    @Test
+    @DisplayName("Rejects mixed-graveyard selections even when one graveyard has enough cards")
+    void rejectsMixedGraveyardSelection() {
+        Card ownFirst = new SuntailHawk();
+        Card ownSecond = new BenevolentBodyguard();
+        Card opponentCard = new BorderPatrol();
+        harness.setGraveyard(player1, List.of(ownFirst, ownSecond));
+        harness.setGraveyard(player2, List.of(opponentCard));
+        harness.setHand(player1, List.of(new RatsFeast()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castSorcery(player1, 0, 2);
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1,
+                List.of(ownFirst.getId(), opponentCard.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("single graveyard");
+    }
+
+    @Test
+    @DisplayName("Still exiles a legal target when another target leaves the graveyard")
+    void resolvesWithOneRemainingTarget() {
+        Card departed = new SuntailHawk();
+        Card remaining = new BenevolentBodyguard();
+        RatsFeast spell = new RatsFeast();
+        harness.setGraveyard(player2, List.of(departed, remaining));
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.castSorcery(player1, 0, 2);
+        harness.handleMultipleCardsChosen(player1, List.of(departed.getId(), remaining.getId()));
+
+        harness.setGraveyard(player2, List.of(remaining));
+        harness.setHand(player2, List.of(departed));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(remaining);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(departed);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(spell);
     }
 }
