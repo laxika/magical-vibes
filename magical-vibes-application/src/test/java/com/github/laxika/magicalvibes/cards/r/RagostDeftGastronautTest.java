@@ -5,14 +5,13 @@ import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({RagostDeftGastronaut.class, FountainOfYouth.class, Spellbook.class})
 class RagostDeftGastronautTest extends BaseCardTest {
@@ -69,10 +68,7 @@ class RagostDeftGastronautTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(fountain);
         assertThat(ragost.isTapped()).isTrue();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.inMutationScope(() -> stepTriggerService().handleEndStepTriggers(gd));
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        advanceToEndStep(player1);
 
         assertThat(ragost.isTapped()).isFalse();
     }
@@ -89,12 +85,123 @@ class RagostDeftGastronautTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(ragost.isTapped()).isTrue();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.inMutationScope(() -> stepTriggerService().handleEndStepTriggers(gd));
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        advanceToEndStep(player1);
 
         assertThat(ragost.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Untaps during an opponent's end step if its controller gained life that turn")
+    void untapsAtOpponentsEndStepAfterControllerGainsLife() {
+        Permanent ragost = addRagost();
+        Permanent fountain = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        ragost.setTapped(true);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, indexOf(player1, fountain), 0, null, null);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 21);
+
+        advanceToEndStep(player2);
+
+        assertThat(ragost.isTapped()).isFalse();
+        assertThat(fountain.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Life gained by an opponent does not untap Ragost")
+    void doesNotUntapWhenOnlyOpponentGainedLife() {
+        Permanent ragost = addRagost();
+        Permanent fountain = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+        goToMainPhase();
+        ragost.setTapped(true);
+
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player2, indexOf(player2, fountain), 0, null, null);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 21);
+
+        advanceToEndStep(player1);
+
+        assertThat(ragost.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Gaining life after the end step begins does not retroactively trigger the untap")
+    void lifeGainDuringEndStepDoesNotTriggerUntap() {
+        Permanent ragost = addRagost();
+        Permanent fountain = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
+        goToMainPhase();
+        ragost.setTapped(true);
+        advanceToEndStep(player1);
+        assertThat(ragost.isTapped()).isTrue();
+
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, indexOf(player1, fountain), 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 21);
+        assertThat(ragost.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Life gained still qualifies after losing more life than was gained")
+    void untapsAfterLifeGainEvenWithNetLifeLoss() {
+        Permanent ragost = addRagost();
+        Permanent fountain = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
+        Permanent opposingRagost = addCreatureReady(player2, new RagostDeftGastronaut());
+        harness.addToBattlefield(player2, new Spellbook());
+        goToMainPhase();
+
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, indexOf(player1, fountain), 0, null, null);
+        harness.passBothPriorities();
+
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player2, indexOf(player2, opposingRagost), 0, null, null);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 18);
+        ragost.setTapped(true);
+
+        advanceToEndStep(player1);
+
+        assertThat(ragost.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Opposing artifacts do not gain the Food ability")
+    void doesNotGrantFoodAbilityToOpposingArtifacts() {
+        addRagost();
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new Spellbook());
+        goToMainPhase();
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() ->
+                harness.activateAbility(player2, indexOf(player2, artifact), 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(artifact);
+    }
+
+    @Test
+    @DisplayName("Cannot pay the Food sacrifice cost with an opponent's artifact")
+    void cannotActivateWithoutOwnFood() {
+        Permanent ragost = addRagost();
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new Spellbook());
+        goToMainPhase();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() ->
+                harness.activateAbility(player1, indexOf(player1, ragost), 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertLife(player2, 20);
+        assertThat(ragost.isTapped()).isFalse();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(artifact);
     }
 
     private Permanent addRagost() {
@@ -111,7 +218,11 @@ class RagostDeftGastronautTest extends BaseCardTest {
         return gd.playerBattlefields.get(player.getId()).indexOf(permanent);
     }
 
-    private StepTriggerService stepTriggerService() {
-        return GameTestEngineContext.get().getBean(StepTriggerService.class);
+    private void advanceToEndStep(com.github.laxika.magicalvibes.model.Player activePlayer) {
+        harness.forceActivePlayer(activePlayer);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(activePlayer, TurnStep.END_STEP);
+        resolveAllTriggers();
     }
 }
