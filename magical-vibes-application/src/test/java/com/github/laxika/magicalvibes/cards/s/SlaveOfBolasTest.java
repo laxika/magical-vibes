@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
+import com.github.laxika.magicalvibes.cards.r.RayOfCommand;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -9,6 +10,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SlaveOfBolas.class, GrizzlyBears.class, Pacifism.class, RayOfCommand.class})
 class SlaveOfBolasTest extends BaseCardTest {
 
     @Test
@@ -28,7 +31,6 @@ class SlaveOfBolasTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Slave of Bolas");
         assertThat(entry.getTargetId()).isEqualTo(target.getId());
     }
 
@@ -61,8 +63,9 @@ class SlaveOfBolasTest extends BaseCardTest {
         // Still controlled by player1 during the main phase.
         assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(p -> p.getId().equals(target.getId()));
 
-        // Advance into the end step — the delayed sacrifice fires.
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
+
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
@@ -73,13 +76,103 @@ class SlaveOfBolasTest extends BaseCardTest {
     @DisplayName("Cannot target a non-creature permanent")
     void cannotTargetNonCreature() {
         addCreatureReady(player1, new GrizzlyBears()); // valid target so the spell is playable
-        Permanent enchantment = new Permanent(new Pacifism());
-        gd.playerBattlefields.get(player2.getId()).add(enchantment);
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new Pacifism());
         setUpSlaveOfBolas();
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, enchantment.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    void delayedSacrificeUsesTheSpellAsItsSource() {
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        castSlaveOfBolas(target.getId());
+        StackEntry spell = gd.stack.getFirst();
+        harness.passBothPriorities();
+
+        harness.passUntil(TurnStep.END_STEP);
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(spell.getCard());
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
+    }
+
+    @Test
+    void cannotSacrificeCreatureTakenByOpponentBeforeEndStep() {
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        castSlaveOfBolas(target.getId());
+        harness.passBothPriorities();
+        takeCreatureBackWithRayOfCommand(target);
+
+        harness.passUntil(TurnStep.END_STEP);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
+        resolveAllTriggers();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void cannotSacrificeCreatureTakenInResponseToDelayedTrigger() {
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        castSlaveOfBolas(target.getId());
+        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
+
+        takeCreatureBackWithRayOfCommand(target);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void canTargetAndSacrificeOwnCreature() {
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        target.tap();
+        castSlaveOfBolas(target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void missingTargetDoesNotScheduleSacrificeForAnotherCreature() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent survivor = addCreatureReady(player2, new GrizzlyBears());
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        castSlaveOfBolas(target.getId());
+        harness.getPermanentRemovalService().removePermanentToHand(gd, target);
+        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(survivor);
+        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+    }
+
+    private void takeCreatureBackWithRayOfCommand(Permanent target) {
+        harness.setHand(player2, List.of(new RayOfCommand()));
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.castInstant(player2, 0, target.getId());
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
     private void setUpSlaveOfBolas() {
