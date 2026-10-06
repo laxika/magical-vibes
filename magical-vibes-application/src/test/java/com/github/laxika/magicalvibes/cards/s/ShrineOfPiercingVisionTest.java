@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.GameLogEntry;
+import com.github.laxika.magicalvibes.model.InteractionAnswer;
+import com.github.laxika.magicalvibes.cards.t.TellingTime;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
@@ -17,9 +20,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({ShrineOfPiercingVision.class, TellingTime.class, Shock.class})
 class ShrineOfPiercingVisionTest extends BaseCardTest {
-
-    // ===== Upkeep trigger =====
 
     @Test
     @DisplayName("Upkeep trigger adds a charge counter (mandatory)")
@@ -47,8 +49,6 @@ class ShrineOfPiercingVisionTest extends BaseCardTest {
 
         assertThat(shrine.getCounterCount(CounterType.CHARGE)).isEqualTo(0);
     }
-
-    // ===== Blue spell cast trigger =====
 
     @Test
     @DisplayName("Casting a blue spell adds a charge counter")
@@ -86,8 +86,6 @@ class ShrineOfPiercingVisionTest extends BaseCardTest {
 
         assertThat(shrine.getCounterCount(CounterType.CHARGE)).isEqualTo(0);
     }
-
-    // ===== Activated ability: Tap + sacrifice to look at top X =====
 
     @Test
     @DisplayName("Sacrificing with charge counters enters library reveal choice state")
@@ -141,7 +139,7 @@ class ShrineOfPiercingVisionTest extends BaseCardTest {
     @Test
     @DisplayName("Sacrificing with zero counters does nothing")
     void sacrificeWithZeroCountersDoesNothing() {
-        Permanent shrine = addReadyShrine(player1);
+        addReadyShrine(player1);
         // No charge counters
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
@@ -215,13 +213,74 @@ class ShrineOfPiercingVisionTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class).allCards()).hasSize(deckSize);
     }
 
-    // ===== Helper methods =====
+    @Test
+    void remainingCardsGoToBottomInChosenOrder() {
+        Permanent shrine = addReadyShrine(player1);
+        shrine.setCounterCount(CounterType.CHARGE, 3);
+        Card first = new ShrineOfPiercingVision();
+        Card chosen = new ShrineOfPiercingVision();
+        Card third = new ShrineOfPiercingVision();
+        Card untouched = new ShrineOfPiercingVision();
+        harness.setLibrary(player1, List.of(first, chosen, third, untouched));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(1, 0)));
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(chosen);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(untouched, third, first);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void emptyLibraryDoesNotDrawOrRequestChoice() {
+        Permanent shrine = addReadyShrine(player1);
+        shrine.setCounterCount(CounterType.CHARGE, 3);
+        harness.setLibrary(player1, List.of());
+        List<Card> handBefore = List.copyOf(gd.playerHands.get(player1.getId()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyElementsOf(handBefore);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void countersOtherThanChargeDoNotIncreaseCardsLookedAt() {
+        Permanent shrine = addReadyShrine(player1);
+        shrine.setCounterCount(CounterType.CHARGE, 1);
+        shrine.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 4);
+        Card first = new ShrineOfPiercingVision();
+        Card second = new ShrineOfPiercingVision();
+        harness.setLibrary(player1, List.of(first, second));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(first);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void opponentCastingBlueSpellDoesNotAddCounter() {
+        Permanent shrine = addReadyShrine(player1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.setHand(player2, List.of(new TellingTime()));
+
+        harness.castInstant(player2, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(shrine.getCounterCount(CounterType.CHARGE)).isZero();
+    }
 
     private Permanent addReadyShrine(Player player) {
-        ShrineOfPiercingVision card = new ShrineOfPiercingVision();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new ShrineOfPiercingVision());
     }
 }
