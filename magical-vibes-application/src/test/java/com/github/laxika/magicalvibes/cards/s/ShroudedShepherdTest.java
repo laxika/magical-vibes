@@ -52,6 +52,48 @@ class ShroudedShepherdTest extends BaseCardTest {
     }
 
     @Test
+    void canCastCreatureFromExileAfterAdventureResolves() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new ShroudedShepherd());
+        ShroudedShepherd shepherd = new ShroudedShepherd();
+        harness.setHand(player1, List.of(shepherd));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAdventure(player1, 0, List.of());
+        harness.passBothPriorities();
+        assertThat(gd.findExiledCard(shepherd.getId())).isNotNull();
+
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castFromExile(player1, shepherd.getId(), target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.findExiledCard(shepherd.getId())).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(shepherd.getId()));
+        assertThat(target.getEffectivePower()).isEqualTo(4);
+        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+    }
+
+    @Test
+    void adventureDoesNotWeakenCreaturesEnteringAfterResolution() {
+        Permanent existing = harness.addToBattlefieldAndReturn(player2, new ShroudedShepherd());
+        harness.setHand(player1, List.of(new ShroudedShepherd()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAdventure(player1, 0, List.of());
+        harness.passBothPriorities();
+        Permanent later = harness.addToBattlefieldAndReturn(player2, new ShroudedShepherd());
+
+        assertThat(existing.getEffectivePower()).isEqualTo(1);
+        assertThat(existing.getEffectiveToughness()).isEqualTo(1);
+        assertThat(later.getEffectivePower()).isEqualTo(2);
+        assertThat(later.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
     void adventureWeakensOnlyOpponentsCreaturesUntilEndOfTurn() {
         Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
