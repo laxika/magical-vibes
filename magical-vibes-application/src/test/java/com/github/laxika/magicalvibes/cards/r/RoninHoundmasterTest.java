@@ -114,6 +114,18 @@ class RoninHoundmasterTest extends BaseCardTest {
         assertThat(houndmaster.getToughnessModifier()).isZero();
     }
 
+    @Test
+    @DisplayName("Haste allows Ronin Houndmaster to attack the turn it enters")
+    void canAttackWhileSummoningSick() {
+        Permanent houndmaster = harness.addToBattlefieldAndReturn(player1, new RoninHoundmaster());
+        houndmaster.setSummoningSick(true);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThat(houndmaster.isAttacking()).isTrue();
+        assertThat(houndmaster.isTapped()).isTrue();
+    }
+
     private Permanent addReadyHoundmaster(Player player) {
         return addCreatureReady(player, new RoninHoundmaster());
     }
