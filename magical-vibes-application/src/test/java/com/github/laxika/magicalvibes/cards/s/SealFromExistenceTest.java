@@ -56,13 +56,11 @@ class SealFromExistenceTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new Naturalize()));
-        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.setHand(player1, List.of(new Naturalize()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
         UUID sourceId = harness.getPermanentId(player1, "Seal from Existence");
 
-        harness.passPriority(player1);
-        harness.castInstant(player2, 0, sourceId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, sourceId);
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(permanent -> permanent.getCard() instanceof GrizzlyBears);
@@ -91,5 +89,70 @@ class SealFromExistenceTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SealFromExistence()));
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, ownPermanentId))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Ward counters opposing removal when its controller cannot pay three mana")
+    void wardCountersRemovalWithoutPayment() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        castAndResolve(targetId);
+        UUID sourceId = harness.getPermanentId(player1, "Seal from Existence");
+        harness.setHand(player2, List.of(new Naturalize()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+
+        harness.castInstant(player2, 0, sourceId);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getId().equals(sourceId));
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(card -> card instanceof GrizzlyBears);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Paying three mana for ward allows opposing removal and returns the exiled card")
+    void payingWardAllowsRemoval() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        castAndResolve(harness.getPermanentId(player2, "Grizzly Bears"));
+        UUID sourceId = harness.getPermanentId(player1, "Seal from Existence");
+        harness.setHand(player2, List.of(new Naturalize()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+
+        harness.castInstant(player2, 0, sourceId);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getId().equals(sourceId));
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(permanent -> permanent.getCard() instanceof GrizzlyBears);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The target is not exiled if Seal leaves before its enter trigger resolves")
+    void sourceLeavingBeforeTriggerPreventsExile() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new SealFromExistence(), new Naturalize()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castEnchantment(player1, 0, targetId);
+        harness.passBothPriorities();
+        UUID sourceId = harness.getPermanentId(player1, "Seal from Existence");
+
+        harness.castAndResolveInstant(player1, 0, sourceId);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(permanent -> permanent.getId().equals(targetId));
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
     }
 }
