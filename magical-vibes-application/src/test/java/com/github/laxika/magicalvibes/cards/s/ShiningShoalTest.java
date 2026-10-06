@@ -205,6 +205,68 @@ class ShiningShoalTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Choosing a spell source completes resolution and redirects its damage")
+    void redirectsDamageFromChosenSpell() {
+        Permanent victim = addCreatureReady(player1, new GnarledMass());
+        FirstVolley volley = new FirstVolley();
+        harness.setHand(player2, List.of(volley));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.castInstant(player2, 0, victim.getId());
+
+        harness.setHand(player1, List.of(new ShiningShoal()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.castInstant(player1, 0, 2, player2.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, volley.getId());
+        harness.passBothPriorities();
+
+        assertThat(victim.getMarkedDamage()).isZero();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 18);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Damage is not redirected when the destination has left the battlefield")
+    void doesNotRedirectToDepartedDestination() {
+        Permanent attacker = addCreatureReady(player2, new FrostOgre());
+        Permanent destination = addCreatureReady(player2, new AkkiRaider());
+        harness.setHand(player1, List.of(new ShiningShoal(), new FirstVolley()));
+        harness.addMana(player1, ManaColor.WHITE, 5);
+        harness.castInstant(player1, 0, 3, destination.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, attacker.getId());
+
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castInstant(player1, 0, destination.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Akki Raider");
+
+        attacker.setAttacking(true);
+        resolveCombat(player2);
+
+        harness.assertLife(player1, 15);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("The alternative cost creates a working damage redirection effect")
+    void alternativeCostRedirectsCombatDamage() {
+        Permanent attacker = addCreatureReady(player2, new FrostOgre());
+        harness.setHand(player1, List.of(new ShiningShoal(), new ShiningShoal()));
+        harness.castInstantWithAlternateExileFromHand(player1, 0, 2, player2.getId(), 1);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, attacker.getId());
+
+        attacker.setAttacking(true);
+        resolveCombat(player2);
+
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 18);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
     @DisplayName("Damage from a source other than the chosen one is unaffected")
     void doesNotAffectOtherSources() {
         harness.setLife(player1, 20);
