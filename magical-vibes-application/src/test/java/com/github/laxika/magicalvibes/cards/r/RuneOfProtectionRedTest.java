@@ -186,6 +186,58 @@ class RuneOfProtectionRedTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).contains(merfolk);
     }
 
+    @Test
+    @DisplayName("Can choose a departed red source referenced by an existing prevention shield")
+    void canChooseSourceReferencedByPreventionShield() {
+        addReadyRune(player1);
+        Permanent goblin = addReadyRedCreature(player2);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, goblin.getId());
+
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, goblin);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validPermanentIds()).contains(goblin.getId());
+        harness.handlePermanentChosen(player1, goblin.getId());
+    }
+
+    @Test
+    @DisplayName("Damage to a creature does not consume the shield, and only one player damage event is prevented")
+    void shieldProtectsOnlyYouAndOnlyOnce() {
+        harness.setLife(player1, 20);
+        addReadyRune(player1);
+        Permanent merfolk = addReadyNonRedCreature(player1);
+        Permanent goblin = addReadyRedCreature(player2);
+        Permanent study = harness.addToBattlefieldAndReturn(player2, new HermeticStudy());
+        study.setAttachedTo(goblin.getId());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, goblin.getId());
+
+        harness.activateAbility(player2, 0, 0, null, merfolk.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Coral Merfolk");
+
+        goblin.setTapped(false);
+        harness.activateAbility(player2, 0, 0, null, player1.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player1, 20);
+
+        goblin.setTapped(false);
+        harness.activateAbility(player2, 0, 0, null, player1.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player1, 19);
+    }
+
     private Permanent addReadyRune(Player player) {
         return addCreatureReady(player, new RuneOfProtectionRed());
     }
