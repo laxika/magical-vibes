@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.b.BoggartShenanigans;
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.g.GoblinGrappler;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -18,7 +20,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SkirkDrillSergeant.class, GoblinGrappler.class, FugitiveWizard.class, Shock.class})
+@CardUsed({SkirkDrillSergeant.class, GoblinGrappler.class, FugitiveWizard.class, Shock.class,
+        BoggartShenanigans.class})
 class SkirkDrillSergeantTest extends BaseCardTest {
 
     @Test
@@ -131,6 +134,97 @@ class SkirkDrillSergeantTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topGoblin);
+    }
+
+    @Test
+    @DisplayName("A noncreature Goblin dying also triggers the paid reveal")
+    void noncreatureGoblinDyingTriggersAbility() {
+        harness.addToBattlefield(player1, new SkirkDrillSergeant());
+        Permanent goblinEnchantment = harness.addToBattlefieldAndReturn(player2, new BoggartShenanigans());
+        Card topGoblin = new GoblinGrappler();
+        harness.setLibrary(player1, List.of(topGoblin));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, goblinEnchantment));
+
+        harness.assertInGraveyard(player2, "Boggart Shenanigans");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertOnBattlefield(player1, "Goblin Grappler");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("A Goblin enchantment revealed from the library enters the battlefield")
+    void noncreatureGoblinPermanentEntersBattlefield() {
+        harness.addToBattlefield(player1, new SkirkDrillSergeant());
+        harness.addToBattlefield(player2, new GoblinGrappler());
+        Card topGoblin = new BoggartShenanigans();
+        harness.setLibrary(player1, List.of(topGoblin));
+        addShockMana(player1);
+
+        killCreature(player1, player2, "Goblin Grappler");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertOnBattlefield(player1, "Boggart Shenanigans");
+        harness.assertNotInGraveyard(player1, "Boggart Shenanigans");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Payment is still spent when the library is empty")
+    void paidRevealWithEmptyLibraryDoesNothing() {
+        harness.addToBattlefield(player1, new SkirkDrillSergeant());
+        harness.addToBattlefield(player2, new GoblinGrappler());
+        harness.setLibrary(player1, List.of());
+        addShockMana(player1);
+
+        killCreature(player1, player2, "Goblin Grappler");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Skirk Drill Sergeant");
+        harness.assertNotOnBattlefield(player1, "Goblin Grappler");
+    }
+
+    @Test
+    @DisplayName("Simultaneous deaths trigger once for itself and once for the other Goblin")
+    void simultaneousGoblinDeathsTriggerSeparately() {
+        Permanent sergeant = harness.addToBattlefieldAndReturn(player1, new SkirkDrillSergeant());
+        Permanent grappler = harness.addToBattlefieldAndReturn(player1, new GoblinGrappler());
+        Card firstGoblin = new GoblinGrappler();
+        Card secondGoblin = new SkirkDrillSergeant();
+        harness.setLibrary(player1, List.of(firstGoblin, secondGoblin));
+        harness.addMana(player1, ManaColor.RED, 6);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().performSimultaneousRemovals(
+                gd, List.of(sergeant, grappler), () -> {
+                    harness.getPermanentRemovalService().removePermanentToGraveyard(gd, sergeant);
+                    harness.getPermanentRemovalService().removePermanentToGraveyard(gd, grappler);
+                }));
+
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(permanent -> permanent.getCard().getId())
+                .containsExactlyInAnyOrder(firstGoblin.getId(), secondGoblin.getId());
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
     }
 
     private void addShockMana(Player player) {
