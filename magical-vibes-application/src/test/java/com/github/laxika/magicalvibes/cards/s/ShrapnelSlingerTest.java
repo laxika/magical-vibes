@@ -2,10 +2,12 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
+import com.github.laxika.magicalvibes.cards.t.TyvarsStand;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ShrapnelSlinger.class, GrizzlyBears.class, LeoninScimitar.class, TyvarsStand.class})
 class ShrapnelSlingerTest extends BaseCardTest {
 
     @Test
@@ -78,11 +81,67 @@ class ShrapnelSlingerTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentCreature);
     }
 
+    @Test
+    @CardUsed({ShrapnelSlinger.class})
+    @DisplayName("Shrapnel Slinger can sacrifice itself and destroy an opposing artifact creature")
+    void canSacrificeItselfToDestroyArtifactCreature() {
+        Permanent opponentArtifact = harness.addToBattlefieldAndReturn(player2, new ShrapnelSlinger());
+        castShrapnelSlinger();
+        passEtbTrigger();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Shrapnel Slinger"));
+        harness.assertInGraveyard(player1, "Shrapnel Slinger");
+        harness.handlePermanentChosen(player1, opponentArtifact.getId());
+        harness.assertOnBattlefield(player2, "Shrapnel Slinger");
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Shrapnel Slinger");
+        harness.assertNotOnBattlefield(player2, "Shrapnel Slinger");
+    }
+
+    @Test
+    @CardUsed({ShrapnelSlinger.class})
+    @DisplayName("Sacrificing itself is allowed even when only friendly artifacts remain")
+    void canSacrificeItselfWithOnlyFriendlyArtifacts() {
+        Permanent friendlyArtifact = harness.addToBattlefieldAndReturn(player1, new ShrapnelSlinger());
+        castShrapnelSlinger();
+        passEtbTrigger();
+        harness.handleMayAbilityChosen(player1, true);
+        Permanent source = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> !permanent.getId().equals(friendlyArtifact.getId()))
+                .findFirst().orElseThrow();
+        harness.handlePermanentChosen(player1, source.getId());
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Shrapnel Slinger");
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(friendlyArtifact);
+    }
+
+    @Test
+    @CardUsed({ShrapnelSlinger.class, TyvarsStand.class})
+    @DisplayName("An opposing artifact with hexproof cannot be chosen for the reflexive trigger")
+    void excludesHexproofArtifactFromReflexiveTargets() {
+        Permanent protectedArtifact = harness.addToBattlefieldAndReturn(player2, new ShrapnelSlinger());
+        Permanent legalArtifact = harness.addToBattlefieldAndReturn(player2, new ShrapnelSlinger());
+        harness.setHand(player2, List.of(new TyvarsStand()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.ensurePriority(player2);
+        harness.castInstant(player2, 0, 0, protectedArtifact.getId());
+        harness.passBothPriorities();
+
+        castShrapnelSlinger();
+        passEtbTrigger();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Shrapnel Slinger"));
+        PendingInteraction.PermanentChoice targetChoice =
+                (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
+        assertThat(targetChoice.validIds()).containsExactly(legalArtifact.getId());
+        harness.handlePermanentChosen(player1, legalArtifact.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(protectedArtifact);
+    }
+
     private void castShrapnelSlinger() {
-        harness.setHand(player1, List.of(new ShrapnelSlinger()));
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new ShrapnelSlinger(), "{1}{R}");
     }
 
     private void passEtbTrigger() {
