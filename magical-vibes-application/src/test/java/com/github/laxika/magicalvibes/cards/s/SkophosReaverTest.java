@@ -73,6 +73,59 @@ class SkophosReaverTest extends BaseCardTest {
                 .anyMatch(card -> card.getId().equals(reaver.getId()));
     }
 
+    @Test
+    @DisplayName("Each Reaver gets only its own bonus during its controller's turn")
+    void multipleReaversDoNotBoostEachOther() {
+        Permanent first = addCreatureReady(player1, new SkophosReaver());
+        Permanent second = addCreatureReady(player1, new SkophosReaver());
+        Permanent opposing = addCreatureReady(player2, new SkophosReaver());
+
+        harness.forceActivePlayer(player1);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, opposing)).isEqualTo(2);
+
+        harness.forceActivePlayer(player2);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opposing)).isEqualTo(4);
+
+        harness.forceActivePlayer(player1);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, opposing)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Madness cannot be cast with only the red portion of its cost")
+    void insufficientManaPutsReaverIntoGraveyard() {
+        SkophosReaver reaver = discardViaUnhinge();
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInGraveyard(player1, "Skophos Reaver");
+        harness.assertNotOnBattlefield(player1, "Skophos Reaver");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .noneMatch(card -> card.getId().equals(reaver.getId()));
+    }
+
+    @Test
+    @DisplayName("Madness requires red mana even when enough colorless mana is available")
+    void missingRedManaPutsReaverIntoGraveyard() {
+        SkophosReaver reaver = discardViaUnhinge();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInGraveyard(player1, "Skophos Reaver");
+        harness.assertNotOnBattlefield(player1, "Skophos Reaver");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .noneMatch(card -> card.getId().equals(reaver.getId()));
+    }
+
     private SkophosReaver discardViaUnhinge() {
         SkophosReaver reaver = new SkophosReaver();
         harness.setHand(player1, List.of(reaver));
