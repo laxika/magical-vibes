@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,7 +15,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SandsteppeCitadel.class})
 class SandsteppeCitadelTest extends BaseCardTest {
 
     @Test
@@ -65,10 +68,44 @@ class SandsteppeCitadelTest extends BaseCardTest {
         }
     }
 
+    @Test
+    @DisplayName("Enters tapped when put onto the battlefield without being played")
+    void entersTappedWithoutBeingPlayed() {
+        Permanent citadel = harness.enterBattlefieldAndReturn(player1, new SandsteppeCitadel());
+
+        assertThat(citadel.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot produce mana on entry, but can after untapping on the same turn")
+    void producesManaAfterUntapping() {
+        harness.setHand(player1, List.of(new SandsteppeCitadel()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.playLand(player1, 0);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+
+        findPermanent(player1, "Sandsteppe Citadel").untap();
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+    }
+
     private Permanent addCitadelReady(Player player) {
-        Permanent permanent = new Permanent(new SandsteppeCitadel());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new SandsteppeCitadel());
         permanent.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 }
