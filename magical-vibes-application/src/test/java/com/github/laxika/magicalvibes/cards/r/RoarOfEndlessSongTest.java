@@ -67,17 +67,72 @@ class RoarOfEndlessSongTest extends BaseCardTest {
 
         gd.interaction.clearAwaitingInput();
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(2);
     }
 
+    @Test
+    @CardUsed({RoarOfEndlessSong.class})
+    @DisplayName("Casting the Saga creates two Elephants, doubles both, then sacrifices the Saga")
+    void fullSagaProgression() {
+        harness.castFromHand(player1, new RoarOfEndlessSong(), "{2}{G}{U}{R}");
+        harness.passBothPriorities();
+        Permanent saga = findSaga();
+        assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(1);
+        harness.passBothPriorities();
+        assertThat(findElephants()).hasSize(1);
+
+        advanceToNextChapter();
+        harness.passBothPriorities();
+        assertThat(findElephants()).hasSize(2);
+
+        advanceToNextChapter();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(saga);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(saga);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(saga.getCard());
+        assertThat(findElephants()).allSatisfy(elephant -> {
+            assertThat(gqs.getEffectivePower(gd, elephant)).isEqualTo(10);
+            assertThat(gqs.getEffectiveToughness(gd, elephant)).isEqualTo(10);
+        });
+    }
+
+    @Test
+    @CardUsed({RoarOfEndlessSong.class})
+    @DisplayName("Chapter III snapshots current stats including counters and excludes later creatures")
+    void doublingIncludesCountersButDoesNotAffectLaterCreatures() {
+        harness.castFromHand(player1, new RoarOfEndlessSong(), "{2}{G}{U}{R}");
+        harness.passBothPriorities();
+        Permanent saga = findSaga();
+        harness.passBothPriorities();
+        Permanent elephant = findElephants().getFirst();
+        elephant.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        saga.setCounterCount(CounterType.LORE, 2);
+
+        advanceToNextChapter();
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, elephant)).isEqualTo(14);
+        assertThat(gqs.getEffectiveToughness(gd, elephant)).isEqualTo(14);
+
+        elephant.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        assertThat(gqs.getEffectivePower(gd, elephant)).isEqualTo(15);
+        assertThat(gqs.getEffectiveToughness(gd, elephant)).isEqualTo(15);
+
+        harness.castFromHand(player1, new RoarOfEndlessSong(), "{2}{G}{U}{R}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        Permanent lateElephant = findElephants().stream()
+                .filter(permanent -> permanent != elephant).findFirst().orElseThrow();
+        assertThat(gqs.getEffectivePower(gd, lateElephant)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, lateElephant)).isEqualTo(5);
+    }
+
     private void advanceToNextChapter() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
     }
 
