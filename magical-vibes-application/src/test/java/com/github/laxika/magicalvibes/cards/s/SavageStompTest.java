@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({SavageStomp.class, GrizzlyBears.class, HillGiant.class, HuatlisSnubhorn.class, LlanowarElves.class})
 class SavageStompTest extends BaseCardTest {
 
     
@@ -161,18 +163,12 @@ class SavageStompTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target own creature as second target")
     void cannotTargetOwnCreatureAsSecondTarget() {
-        GrizzlyBears bear1 = new GrizzlyBears();
-        GrizzlyBears bear2 = new GrizzlyBears();
-        harness.addToBattlefield(player1, bear1);
-        harness.addToBattlefield(player1, bear2);
+        Permanent bear1 = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent bear2 = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new SavageStomp()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
-        List<Permanent> bf = gd.playerBattlefields.get(player1.getId());
-        UUID id1 = bf.get(0).getId();
-        UUID id2 = bf.get(1).getId();
-
-        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(id1, id2)))
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(bear1.getId(), bear2.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -218,5 +214,70 @@ class SavageStompTest extends BaseCardTest {
 
         Permanent dino = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(dino.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void counterStillAppliedWhenSecondTargetRemoved() {
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new HuatlisSnubhorn());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new HuatlisSnubhorn());
+        harness.setHand(player1, List.of(new SavageStomp()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castSorcery(player1, 0, List.of(own.getId(), opponent.getId()));
+
+        gd.playerBattlefields.get(player2.getId()).remove(opponent);
+        harness.passBothPriorities();
+
+        assertThat(own.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(own.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player1, "Huatli's Snubhorn");
+        harness.assertInGraveyard(player1, "Savage Stomp");
+    }
+
+    @Test
+    void neitherCreatureFightsWhenSecondTargetChangesController() {
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new HuatlisSnubhorn());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new HuatlisSnubhorn());
+        harness.setHand(player1, List.of(new SavageStomp()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castSorcery(player1, 0, List.of(own.getId(), opponent.getId()));
+
+        gd.playerBattlefields.get(player2.getId()).remove(opponent);
+        gd.playerBattlefields.get(player1.getId()).add(opponent);
+        harness.passBothPriorities();
+
+        assertThat(own.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(opponent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(own.getMarkedDamage()).isZero();
+        assertThat(opponent.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(own, opponent);
+    }
+
+    @Test
+    void noCounterOrFightWhenFirstTargetChangesController() {
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new HuatlisSnubhorn());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new HuatlisSnubhorn());
+        harness.setHand(player1, List.of(new SavageStomp()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castSorcery(player1, 0, List.of(own.getId(), opponent.getId()));
+
+        gd.playerBattlefields.get(player1.getId()).remove(own);
+        gd.playerBattlefields.get(player2.getId()).add(own);
+        harness.passBothPriorities();
+
+        assertThat(own.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(own.getMarkedDamage()).isZero();
+        assertThat(opponent.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(own, opponent);
+    }
+
+    @Test
+    void opponentsDinosaurDoesNotReduceCost() {
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new HuatlisSnubhorn());
+        harness.setHand(player1, List.of(new SavageStomp()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(own.getId(), opponent.getId())))
+                .isInstanceOf(IllegalStateException.class);
     }
 }
