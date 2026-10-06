@@ -26,8 +26,7 @@ class ShowerOfSparksTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ShowerOfSparks()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, List.of(creature.getId(), player2.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, List.of(creature.getId(), player2.getId()));
 
         assertThat(creature.getMarkedDamage()).isEqualTo(1);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
@@ -42,8 +41,7 @@ class ShowerOfSparksTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ShowerOfSparks()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, List.of(creature.getId(), planeswalker.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, List.of(creature.getId(), planeswalker.getId()));
 
         assertThat(creature.getMarkedDamage()).isEqualTo(1);
         assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
@@ -81,8 +79,7 @@ class ShowerOfSparksTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ShowerOfSparks()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, List.of(creature.getId(), player1.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, List.of(creature.getId(), player1.getId()));
 
         assertThat(creature.getMarkedDamage()).isEqualTo(1);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
@@ -99,5 +96,71 @@ class ShowerOfSparksTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0,
                 List.of(creature.getId(), mountain.getId())))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Deals damage to the creature when the planeswalker target leaves")
+    void resolvesWhenPlaneswalkerLeaves() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new Acridian());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new LilianaVess());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 5);
+        harness.setHand(player1, List.of(new ShowerOfSparks()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, List.of(creature.getId(), planeswalker.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(planeswalker);
+        harness.passBothPriorities();
+
+        assertThat(creature.getMarkedDamage()).isEqualTo(1);
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Shower of Sparks");
+    }
+
+    @Test
+    @DisplayName("Does not resolve when both targets leave")
+    void doesNotResolveWithNoLegalTargets() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new Acridian());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new LilianaVess());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 5);
+        harness.setHand(player1, List.of(new ShowerOfSparks()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, List.of(creature.getId(), planeswalker.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(creature);
+        gd.playerBattlefields.get(player2.getId()).remove(planeswalker);
+        harness.passBothPriorities();
+
+        assertThat(creature.getMarkedDamage()).isZero();
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Shower of Sparks");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Requires both targets when cast")
+    void rejectsMissingSecondTarget() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new Acridian());
+        harness.setHand(player1, List.of(new ShowerOfSparks()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of(creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Lethal creature damage does not prevent damage to the player")
+    void lethalCreatureDamageStillDamagesPlayer() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new Acridian());
+        creature.setMarkedDamage(3);
+        harness.setHand(player1, List.of(new ShowerOfSparks()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, List.of(creature.getId(), player2.getId()));
+
+        harness.assertInGraveyard(player2, "Acridian");
+        harness.assertNotOnBattlefield(player2, "Acridian");
+        harness.assertLife(player2, 19);
     }
 }
