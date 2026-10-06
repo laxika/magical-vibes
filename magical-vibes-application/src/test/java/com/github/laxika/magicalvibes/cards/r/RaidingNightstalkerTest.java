@@ -101,4 +101,26 @@ class RaidingNightstalkerTest extends BaseCardTest {
 
         assertThat(blockerPerm.isBlocking()).isTrue();
     }
+    @Test
+    @DisplayName("Raiding Nightstalker cannot be blocked when a nonbasic land gains the Swamp type")
+    void cannotBeBlockedWhenNonbasicLandBecomesSwamp() {
+        Permanent frontier = harness.addToBattlefieldAndReturn(player2, new UnstableFrontier());
+        Permanent blockerPerm = addCreatureReady(player2, new BearCub());
+
+        harness.forceActivePlayer(player2);
+        harness.activateAbility(player2, 0, 1, null, frontier.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player2, "SWAMP");
+
+        Permanent atkPerm = addCreatureReady(player1, new RaidingNightstalker());
+        atkPerm.setAttacking(true);
+        prepareDeclareBlockers();
+
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
+        int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+    }
 }
