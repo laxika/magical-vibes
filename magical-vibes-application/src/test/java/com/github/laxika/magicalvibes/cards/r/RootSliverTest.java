@@ -43,8 +43,6 @@ class RootSliverTest extends BaseCardTest {
         harness.addToBattlefield(player1, new RootSliver());
 
         MetallicSliver sliver = new MetallicSliver();
-        harness.setHand(player2, List.of(sliver));
-        harness.addMana(player2, ManaColor.COLORLESS, 1);
 
         harness.setHand(player1, List.of(new Cancel()));
         harness.addMana(player1, ManaColor.BLUE, 2);
@@ -68,9 +66,6 @@ class RootSliverTest extends BaseCardTest {
         harness.addToBattlefield(player1, new RootSliver());
 
         GrizzlyBears bears = new GrizzlyBears();
-        harness.setHand(player2, List.of(bears));
-        harness.addMana(player2, ManaColor.GREEN, 1);
-        harness.addMana(player2, ManaColor.COLORLESS, 1);
 
         harness.setHand(player1, List.of(new Cancel()));
         harness.addMana(player1, ManaColor.BLUE, 2);
@@ -85,6 +80,50 @@ class RootSliverTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Cancel");
+    }
+
+    @Test
+    void rootSliverInHandDoesNotProtectOtherSliverSpells() {
+        harness.setHand(player1, List.of(new RootSliver(), new Cancel()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        MetallicSliver sliver = new MetallicSliver();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castFromHand(player2, sliver, "{1}");
+        harness.passPriority(player2);
+        harness.castInstant(player1, 1, sliver.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Metallic Sliver");
+        harness.assertInGraveyard(player2, "Metallic Sliver");
+        harness.assertInGraveyard(player1, "Cancel");
+    }
+
+    @Test
+    void protectionEndsWhenRootSliverLeavesBeforeCounterspellResolves() {
+        RootSliver root = new RootSliver();
+        Permanent permanent = harness.addToBattlefieldAndReturn(player1, root);
+        harness.setHand(player1, List.of(new Cancel()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        MetallicSliver sliver = new MetallicSliver();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castFromHand(player2, sliver, "{1}");
+        harness.passPriority(player2);
+        harness.castInstant(player1, 0, sliver.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(permanent);
+        harness.setGraveyard(player1, List.of(root));
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Metallic Sliver");
+        harness.assertInGraveyard(player2, "Metallic Sliver");
         harness.assertInGraveyard(player1, "Cancel");
     }
 
