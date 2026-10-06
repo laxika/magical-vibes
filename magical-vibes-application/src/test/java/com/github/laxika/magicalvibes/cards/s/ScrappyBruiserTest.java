@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -21,8 +21,8 @@ class ScrappyBruiserTest extends BaseCardTest {
     @DisplayName("Attacking boosts another attacking creature and gives it trample")
     void boostsAnotherAttackingCreature() {
         harness.setLife(player2, 20);
-        addReadyCreature(player1, new ScrappyBruiser());
-        Permanent attacker = addReadyCreature(player1, new GrizzlyBears());
+        addCreatureReady(player1, new ScrappyBruiser());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(List.of(0, 1));
         harness.handlePermanentChosen(player1, attacker.getId());
@@ -36,8 +36,8 @@ class ScrappyBruiserTest extends BaseCardTest {
     @DisplayName("The targeted attacker returns to its owner's hand at end of combat")
     void returnsTargetedAttackerAtEndOfCombat() {
         harness.setLife(player2, 20);
-        addReadyCreature(player1, new ScrappyBruiser());
-        addReadyCreature(player1, new GrizzlyBears());
+        addCreatureReady(player1, new ScrappyBruiser());
+        addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(List.of(0, 1));
         Permanent attacker = gd.playerBattlefields.get(player1.getId()).get(1);
@@ -54,12 +54,13 @@ class ScrappyBruiserTest extends BaseCardTest {
     @DisplayName("The attack trigger can resolve without a target")
     void canChooseNoTarget() {
         harness.setLife(player2, 20);
-        addReadyCreature(player1, new ScrappyBruiser());
+        addCreatureReady(player1, new ScrappyBruiser());
 
         declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 
-        resolveCombat();
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
 
         harness.assertOnBattlefield(player1, "Scrappy Bruiser");
     }
@@ -67,9 +68,9 @@ class ScrappyBruiserTest extends BaseCardTest {
     @Test
     @DisplayName("A non-attacking creature cannot be targeted")
     void cannotTargetNonAttackingCreature() {
-        addReadyCreature(player1, new ScrappyBruiser());
-        addReadyCreature(player1, new GrizzlyBears());
-        Permanent nonAttacker = addReadyCreature(player1, new GrizzlyBears());
+        addCreatureReady(player1, new ScrappyBruiser());
+        addCreatureReady(player1, new GrizzlyBears());
+        Permanent nonAttacker = addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(List.of(0, 1));
 
@@ -77,10 +78,45 @@ class ScrappyBruiserTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private Permanent addReadyCreature(Player player, com.github.laxika.magicalvibes.model.Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    @DisplayName("Scrappy Bruiser can target itself and return itself at end of combat")
+    void canTargetItself() {
+        Permanent bruiser = addCreatureReady(player1, new ScrappyBruiser());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            harness.handlePermanentChosen(player1, bruiser.getId());
+            harness.passBothPriorities();
+        });
+
+        assertThat(gqs.getEffectivePower(gd, bruiser)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, bruiser, Keyword.TRAMPLE)).isTrue();
+
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+
+        harness.assertNotOnBattlefield(player1, "Scrappy Bruiser");
+        harness.assertInHand(player1, "Scrappy Bruiser");
+    }
+
+    @Test
+    @DisplayName("The delayed return retains Scrappy Bruiser as its source")
+    void delayedReturnRetainsOriginalSource() {
+        Permanent bruiser = addCreatureReady(player1, new ScrappyBruiser());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0, 1));
+            harness.handlePermanentChosen(player1, attacker.getId());
+            harness.passBothPriorities();
+        });
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(bruiser.getId());
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
+
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+        harness.assertInHand(player1, "Grizzly Bears");
     }
 }
