@@ -28,9 +28,8 @@ class RaphaelNinjaDestroyerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         UUID raphaelId = harness.getPermanentId(player2, "Raphael, Ninja Destroyer");
-        harness.castInstant(player1, 0, raphaelId);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, raphaelId);
+        resolveAllTriggers();
 
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.RED)).isEqualTo(2);
         assertThat(gd.playerManaPools.get(player2.getId()).getPersistentMana(ManaColor.RED)).isEqualTo(2);
@@ -61,4 +60,72 @@ class RaphaelNinjaDestroyerTest extends BaseCardTest {
         assertThat(blocker.isBlocking()).isTrue();
     }
 
+    @Test
+    @DisplayName("Mana expires at the end of the turn, while ordinary mana drains earlier")
+    void manaProtectionExpiresAtEndOfTurn() {
+        harness.addToBattlefield(player2, new RaphaelNinjaDestroyer());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0,
+                harness.getPermanentId(player2, "Raphael, Ninja Destroyer"));
+        resolveAllTriggers();
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.RED)).isEqualTo(2);
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.playerManaPools.get(player2.getId()).getPersistentMana(ManaColor.RED)).isZero();
+    }
+
+    @Test
+    @DisplayName("Lethal damage still produces mana after Raphael dies")
+    void lethalDamageStillAddsMana() {
+        harness.addToBattlefield(player2, new RaphaelNinjaDestroyer());
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        UUID raphaelId = harness.getPermanentId(player2, "Raphael, Ninja Destroyer");
+
+        harness.castAndResolveInstant(player1, 0, raphaelId);
+        resolveAllTriggers();
+        harness.castAndResolveInstant(player1, 0, raphaelId);
+        harness.assertInGraveyard(player2, "Raphael, Ninja Destroyer");
+        resolveAllTriggers();
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.RED)).isEqualTo(4);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+    }
+
+    @Test
+    @DisplayName("Combat damage received produces mana")
+    void combatDamageAddsMana() {
+        addCreatureReady(player1, new RaphaelNinjaDestroyer());
+        addCreatureReady(player2, new GrizzlyBears());
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(2);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Raphael, Ninja Destroyer");
+    }
+
+    @Test
+    @DisplayName("A tapped creature does not have to block Raphael")
+    void noBlockRequiredWhenOnlyDefenderIsTapped() {
+        Permanent raphael = addCreatureReady(player1, new RaphaelNinjaDestroyer());
+        raphael.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        blocker.setTapped(true);
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 16);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+    }
 }
