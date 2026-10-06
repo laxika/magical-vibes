@@ -128,8 +128,7 @@ class RemoveSoulTest extends BaseCardTest {
         ManaDrain manaDrain = new ManaDrain();
         harness.setHand(player1, List.of(manaDrain));
         harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.castInstant(player1, 0, boars.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, boars.getId());
         harness.passBothPriorities();
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
@@ -188,5 +187,19 @@ class RemoveSoulTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Durkwood Boars");
         harness.assertInGraveyard(player1, "Remove Soul");
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot cast without a creature spell to target")
+    void cannotCastWithoutTarget() {
+        RemoveSoul removeSoul = new RemoveSoul();
+        harness.setHand(player1, List.of(removeSoul));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(removeSoul);
     }
 }
