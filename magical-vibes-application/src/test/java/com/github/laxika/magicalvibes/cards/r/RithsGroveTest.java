@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import java.util.List;
 
@@ -149,5 +151,55 @@ class RithsGroveTest extends BaseCardTest {
         harness.playLand(player1, 0);
         harness.passBothPriorities();
         return grove;
+    }
+
+    @Test
+    @DisplayName("A tapped non-Lair land can be returned to keep Rith's Grove")
+    void returnsTappedNonLairLand() {
+        Permanent moraine = harness.addToBattlefieldAndReturn(player1, new TerminalMoraine());
+        harness.tapPermanent(player1, 0);
+        assertThat(moraine.isTapped()).isTrue();
+        RithsGrove grove = playAndResolveEtb();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(moraine.getCard());
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent == moraine)
+                .anyMatch(permanent -> permanent.getCard() == grove);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ManaColor.class, names = {"RED", "WHITE"})
+    @DisplayName("Each remaining mana color adds exactly one mana immediately")
+    void addsRedOrWhiteMana(ManaColor color) {
+        Permanent grove = harness.addToBattlefieldAndReturn(player1, new RithsGrove());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, color.name());
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(color)).isEqualTo(1);
+        assertThat(grove.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Rith's Grove can produce mana before its entry trigger sacrifices it")
+    void producesManaBeforeEntryTriggerResolves() {
+        RithsGrove grove = new RithsGrove();
+        harness.setHand(player1, List.of(grove));
+        harness.playLand(player1, 0);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "RED");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(grove);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard() == grove);
     }
 }
