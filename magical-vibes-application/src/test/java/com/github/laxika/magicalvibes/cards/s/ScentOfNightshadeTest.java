@@ -31,8 +31,7 @@ class ScentOfNightshadeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ScentOfNightshade(), blackCard, new FlameJet()));
         addSpellMana();
 
-        harness.castInstant(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, creature.getId());
 
         PendingInteraction.RevealAnyNumberOfCardsFromHandChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.RevealAnyNumberOfCardsFromHandChoice.class);
@@ -52,8 +51,7 @@ class ScentOfNightshadeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ScentOfNightshade(), new FlameJet()));
         addSpellMana();
 
-        harness.castInstant(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, creature.getId());
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(6);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(5);
@@ -67,8 +65,7 @@ class ScentOfNightshadeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ScentOfNightshade(), blackCard, new FlameJet()));
         addSpellMana();
 
-        harness.castInstant(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, creature.getId());
 
         PendingInteraction.RevealAnyNumberOfCardsFromHandChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.RevealAnyNumberOfCardsFromHandChoice.class);
@@ -102,8 +99,7 @@ class ScentOfNightshadeTest extends BaseCardTest {
                 new ScentOfNightshade(), firstBlackCard, secondBlackCard, new FlameJet()));
         addSpellMana();
 
-        harness.castInstant(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, creature.getId());
 
         PendingInteraction.RevealAnyNumberOfCardsFromHandChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.RevealAnyNumberOfCardsFromHandChoice.class);
@@ -124,8 +120,7 @@ class ScentOfNightshadeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ScentOfNightshade(), blackCard));
         addSpellMana();
 
-        harness.castInstant(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, creature.getId());
         harness.handleMultipleCardsChosen(player1, List.of(blackCard.getId()));
 
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
@@ -137,6 +132,42 @@ class ScentOfNightshadeTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(6);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Can reveal only a subset of eligible cards and target your own creature")
+    void revealsOnlySelectedCardsAndLeavesThemInHand() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new AncientSilverback());
+        TwistedExperiment selected = new TwistedExperiment();
+        ChimeOfNight unselected = new ChimeOfNight();
+        harness.setHand(player1, List.of(new ScentOfNightshade(), selected, unselected));
+        addSpellMana();
+
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(selected.getId()));
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(selected, unselected);
+        harness.assertInGraveyard(player1, "Scent of Nightshade");
+    }
+
+    @Test
+    @DisplayName("Revealing five black cards puts a five-toughness creature into its owner's graveyard")
+    void zeroToughnessCreatureDies() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new AncientSilverback());
+        List<TwistedExperiment> blackCards = List.of(new TwistedExperiment(), new TwistedExperiment(),
+                new TwistedExperiment(), new TwistedExperiment(), new TwistedExperiment());
+        harness.setHand(player1, List.of(new ScentOfNightshade(), blackCards.get(0), blackCards.get(1),
+                blackCards.get(2), blackCards.get(3), blackCards.get(4)));
+        addSpellMana();
+
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+        harness.handleMultipleCardsChosen(player1, blackCards.stream().map(card -> card.getId()).toList());
+
+        harness.assertNotOnBattlefield(player2, "Ancient Silverback");
+        harness.assertInGraveyard(player2, "Ancient Silverback");
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyElementsOf(blackCards);
     }
 
     private void addSpellMana() {
