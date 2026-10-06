@@ -63,8 +63,7 @@ class SavorTest extends BaseCardTest {
     @Test
     @DisplayName("The -2/-2 effect can kill a 2/2 creature")
     void killsTwoToughnessCreature() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent target = harness.getGameData().playerBattlefields.get(player2.getId()).getFirst();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         castSavor(target);
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
@@ -74,8 +73,7 @@ class SavorTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
-        harness.addToBattlefield(player2, new FountainOfYouth());
-        Permanent target = harness.getGameData().playerBattlefields.get(player2.getId()).getFirst();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
         harness.setHand(player1, List.of(new Savor()));
         addSavorMana();
 
@@ -83,11 +81,59 @@ class SavorTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("An illegal sole target prevents Savor from creating another Food")
+    void createsNoFoodWhenTargetLeavesBeforeResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Savor(), new Savor()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castInstant(player1, 0, target.getId());
+        harness.castInstant(player1, 0, target.getId());
+
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        harness.assertOnBattlefield(player1, "Food");
+
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Food is sacrificed on activation and life is gained only on resolution")
+    void foodSacrificeIsPaidBeforeLifeGain() {
+        Permanent target = addCreature(player2, new HillGiant());
+        castSavor(target);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Food");
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+        harness.assertLife(player1, 23);
+    }
+
+    @Test
+    @DisplayName("Savor can target its controller's creature and still creates Food")
+    void canTargetOwnCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        castSavor(target);
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Food");
+    }
+
     private void castSavor(Permanent target) {
         harness.setHand(player1, List.of(new Savor()));
         addSavorMana();
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 
     private void addSavorMana() {
@@ -96,9 +142,8 @@ class SavorTest extends BaseCardTest {
     }
 
     private Permanent addCreature(Player player, Card creature) {
-        Permanent permanent = new Permanent(creature);
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, creature);
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 }
