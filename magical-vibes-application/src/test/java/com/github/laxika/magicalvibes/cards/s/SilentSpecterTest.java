@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
 import com.github.laxika.magicalvibes.cards.g.GoblinSharpshooter;
+import com.github.laxika.magicalvibes.model.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SilentSpecter.class, ElvishWarrior.class, GoblinSharpshooter.class})
+@CardUsed({SilentSpecter.class, ElvishWarrior.class, GoblinSharpshooter.class, ScreamingSeahawk.class})
 class SilentSpecterTest extends BaseCardTest {
 
     @Test
@@ -47,11 +48,10 @@ class SilentSpecterTest extends BaseCardTest {
     void blockedSpecterDoesNotTrigger() {
         List<Card> hand = new ArrayList<>(List.of(new ElvishWarrior(), new ElvishWarrior()));
         harness.setHand(player2, hand);
-        Permanent specter = addCreatureReady(player1, new SilentSpecter());
-        specter.setAttacking(true);
-        Permanent blocker = addCreatureReady(player2, new ElvishWarrior());
-        blocker.setBlocking(true);
-        blocker.addBlockingTarget(0);
+        addCreatureReady(player1, new SilentSpecter());
+        addCreatureReady(player2, new ScreamingSeahawk());
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         resolveCombat();
         harness.passBothPriorities();
@@ -95,5 +95,77 @@ class SilentSpecterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(specter.isFaceDown()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A player with one card discards that card and completes resolution")
+    void discardsOnlyAvailableCard() {
+        ElvishWarrior card = new ElvishWarrior();
+        harness.setHand(player2, List.of(card));
+        Permanent specter = addCreatureReady(player1, new SilentSpecter());
+        specter.setAttacking(true);
+
+        resolveCombat();
+        resolveAllTriggers();
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(card);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Combat damage to a player with an empty hand completes without a discard prompt")
+    void emptyHandDoesNotRequireDiscard() {
+        harness.setHand(player2, List.of());
+        Permanent specter = addCreatureReady(player1, new SilentSpecter());
+        specter.setAttacking(true);
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 16);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Face-down Silent Specter deals combat damage without triggering discard")
+    void faceDownCombatDoesNotTriggerDiscard() {
+        harness.setHand(player2, List.of(new ElvishWarrior(), new ElvishWarrior()));
+        Permanent specter = addCreatureReady(player1, new SilentSpecter());
+        specter.setFaceDown(true);
+        specter.setAttacking(true);
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 18);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Turning Silent Specter face up before combat restores its discard ability")
+    void turningFaceUpRestoresDiscardTrigger() {
+        harness.setHand(player2, List.of(new ElvishWarrior(), new ElvishWarrior()));
+        Permanent specter = addCreatureReady(player1, new SilentSpecter());
+        specter.setFaceDown(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.turnFaceUp(player1, 0);
+        specter.setAttacking(true);
+
+        resolveCombat();
+        resolveAllTriggers();
+        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, 0);
+
+        harness.assertLife(player2, 16);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }
