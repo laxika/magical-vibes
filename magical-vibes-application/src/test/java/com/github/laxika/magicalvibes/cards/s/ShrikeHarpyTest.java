@@ -2,11 +2,13 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ShrikeHarpy.class, GrizzlyBears.class, GiantSpider.class})
 class ShrikeHarpyTest extends BaseCardTest {
 
     @Test
@@ -31,10 +34,8 @@ class ShrikeHarpyTest extends BaseCardTest {
     @Test
     @DisplayName("Declining tribute makes the targeted opponent choose a creature to sacrifice")
     void opponentDeclinesTribute() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        Permanent giant = new Permanent(new GiantSpider());
-        gd.playerBattlefields.get(player2.getId()).add(bears);
-        gd.playerBattlefields.get(player2.getId()).add(giant);
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent giant = harness.addToBattlefieldAndReturn(player2, new GiantSpider());
 
         castShrikeHarpy();
         harness.handleMayAbilityChosen(player2, false);
@@ -60,6 +61,38 @@ class ShrikeHarpyTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, player1.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Paying tribute places two counters and leaves the opponent's creature intact")
+    void tributePlacesCountersWithoutSacrifice() {
+        harness.addToBattlefield(player2, new ShrikeHarpy());
+
+        castShrikeHarpy();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Shrike Harpy")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        harness.assertOnBattlefield(player2, "Shrike Harpy");
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opponent with no creatures can be targeted and sacrifices nothing")
+    void opponentWithoutCreatures() {
+        castShrikeHarpy();
+        harness.handleMayAbilityChosen(player2, false);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Shrike Harpy");
+        assertThat(findPermanent(player1, "Shrike Harpy")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     private void castShrikeHarpy() {
