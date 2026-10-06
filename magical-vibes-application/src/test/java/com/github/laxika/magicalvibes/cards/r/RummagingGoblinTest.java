@@ -5,13 +5,12 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.n.NestRobber;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -21,15 +20,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RummagingGoblin.class, NestRobber.class, Forest.class, Mountain.class})
 class RummagingGoblinTest extends BaseCardTest {
-
-    // ===== Activated ability — discard cost =====
 
     @Test
     @DisplayName("Activating ability starts discard-cost choice for any card")
     void activationStartsDiscardChoice() {
-        addReadyGoblin(player1);
-        harness.setHand(player1, List.of(new GrizzlyBears(), new Mountain()));
+        addCreatureReady(player1, new RummagingGoblin());
+        harness.setHand(player1, List.of(new NestRobber(), new Mountain()));
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -42,16 +40,16 @@ class RummagingGoblinTest extends BaseCardTest {
     @Test
     @DisplayName("Choosing a card pays cost and puts ability on stack")
     void choosingCardPaysCostAndStacksAbility() {
-        addReadyGoblin(player1);
-        harness.setHand(player1, List.of(new GrizzlyBears(), new Mountain()));
+        addCreatureReady(player1, new RummagingGoblin());
+        harness.setHand(player1, List.of(new NestRobber(), new Mountain()));
 
         harness.activateAbility(player1, 0, null, null);
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
-        harness.assertNotInHand(player1, "Grizzly Bears");
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotInHand(player1, "Nest Robber");
+        harness.assertInGraveyard(player1, "Nest Robber");
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Rummaging Goblin");
@@ -60,21 +58,19 @@ class RummagingGoblinTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate without cards in hand")
     void cannotActivateWithoutCardsInHand() {
-        addReadyGoblin(player1);
+        addCreatureReady(player1, new RummagingGoblin());
         harness.setHand(player1, new ArrayList<>());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Activated ability — resolution =====
-
     @Test
     @DisplayName("Resolving ability draws a card")
     void resolvingDrawsACard() {
-        addReadyGoblin(player1);
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        setDeck(player1, List.of(new Forest(), new Mountain()));
+        addCreatureReady(player1, new RummagingGoblin());
+        harness.setHand(player1, List.of(new NestRobber()));
+        harness.setLibrary(player1, List.of(new Forest(), new Mountain()));
 
         harness.activateAbility(player1, 0, null, null);
         harness.handleCardChosen(player1, 0);
@@ -88,11 +84,11 @@ class RummagingGoblinTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Can discard any card type as cost — lands work too")
+    @DisplayName("Can discard any card type as cost, including lands")
     void canDiscardLandAsCost() {
-        addReadyGoblin(player1);
+        addCreatureReady(player1, new RummagingGoblin());
         harness.setHand(player1, List.of(new Mountain()));
-        setDeck(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new Forest()));
 
         harness.activateAbility(player1, 0, null, null);
         harness.handleCardChosen(player1, 0);
@@ -101,14 +97,12 @@ class RummagingGoblinTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
     }
 
-    // ===== Tap restrictions =====
-
     @Test
     @DisplayName("Cannot activate when tapped")
     void cannotActivateWhenTapped() {
-        Permanent goblin = addReadyGoblin(player1);
+        Permanent goblin = addCreatureReady(player1, new RummagingGoblin());
         goblin.tap();
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new NestRobber()));
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
@@ -118,11 +112,9 @@ class RummagingGoblinTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate with summoning sickness")
     void cannotActivateWithSummoningSickness() {
-        RummagingGoblin card = new RummagingGoblin();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player1, new RummagingGoblin());
         perm.setSummoningSick(true);
-        gd.playerBattlefields.get(player1.getId()).add(perm);
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new NestRobber()));
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
@@ -131,8 +123,8 @@ class RummagingGoblinTest extends BaseCardTest {
     @Test
     @DisplayName("Activating ability taps Rummaging Goblin after paying discard cost")
     void activatingTapsGoblin() {
-        Permanent goblin = addReadyGoblin(player1);
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        Permanent goblin = addCreatureReady(player1, new RummagingGoblin());
+        harness.setHand(player1, List.of(new NestRobber()));
 
         harness.activateAbility(player1, 0, null, null);
         harness.handleCardChosen(player1, 0);
@@ -140,18 +132,46 @@ class RummagingGoblinTest extends BaseCardTest {
         assertThat(goblin.isTapped()).isTrue();
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Discard is paid immediately and the draw resolves after the source leaves")
+    void resolvesAfterSourceLeavesBattlefield() {
+        Permanent goblin = addCreatureReady(player1, new RummagingGoblin());
+        harness.setHand(player1, List.of(new Mountain()));
+        harness.setLibrary(player1, List.of(new Forest()));
 
-    private Permanent addReadyGoblin(Player player) {
-        RummagingGoblin card = new RummagingGoblin();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Mountain");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, goblin));
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Rummaging Goblin");
+        harness.assertInHand(player1, "Forest");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
     }
 
-    private void setDeck(Player player, List<Card> cards) {
-        gd.playerDecks.get(player.getId()).clear();
-        gd.playerDecks.get(player.getId()).addAll(cards);
+    @Test
+    @DisplayName("Can activate on the opponent's turn and only the controller draws")
+    void activatesOnOpponentsTurn() {
+        harness.forceActivePlayer(player2);
+        addCreatureReady(player1, new RummagingGoblin());
+        harness.setHand(player1, List.of(new Mountain()));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setLibrary(player2, List.of(new Mountain()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Forest");
+        harness.assertInGraveyard(player1, "Mountain");
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
     }
 }
