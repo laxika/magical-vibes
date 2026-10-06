@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
+import com.github.laxika.magicalvibes.cards.p.Pacifism;
+import com.github.laxika.magicalvibes.cards.l.LavaAxe;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.t.TrialOfZeal;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +18,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ReturnTheFavor.class, ProdigalPyromancer.class, Shock.class, TrialOfZeal.class})
+@CardUsed({ReturnTheFavor.class, ProdigalPyromancer.class, Shock.class, TrialOfZeal.class, Pacifism.class, LavaAxe.class})
 class ReturnTheFavorTest extends BaseCardTest {
 
     @Test
@@ -107,10 +109,94 @@ class ReturnTheFavorTest extends BaseCardTest {
         assertThat(harness.getGameData().playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
 
+    @Test
+    void redirectsAuraSpell() {
+        Permanent original = addReadyPyromancer();
+        Permanent replacement = addReadyPyromancer();
+        Pacifism pacifism = new Pacifism();
+        harness.setHand(player1, List.of(pacifism));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castEnchantment(player1, 0, original.getId());
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        cast(new int[]{1}, List.of(pacifism.getId()));
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, replacement.getId());
+        harness.passBothPriorities();
+
+        assertThat(harness.getGameData().playerBattlefields.get(player1.getId()))
+                .anySatisfy(permanent -> {
+                    assertThat(permanent.getCard()).isInstanceOf(Pacifism.class);
+                    assertThat(permanent.getAttachedTo()).isEqualTo(replacement.getId());
+                });
+    }
+
+    @Test
+    void choosesNewTargetForInstantCopyWithoutChangingOriginal() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        Shock shock = new Shock();
+        harness.setHand(player2, List.of(shock));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, player1.getId());
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        cast(new int[]{0}, List.of(shock.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    void redirectsActivatedAbility() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        Permanent pyromancer = addReadyPyromancer();
+        harness.activateAbility(player1, battlefieldIndex(pyromancer), null, player2.getId());
+        UUID abilityId = harness.getGameData().stack.getLast().getTargetableId();
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        cast(new int[]{1}, List.of(abilityId));
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void copiesSorcerySpell() {
+        harness.setLife(player2, 20);
+        LavaAxe axe = new LavaAxe();
+        harness.setHand(player1, List.of(axe));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        cast(new int[]{0}, List.of(axe.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 10);
+    }
+
     private Permanent addReadyPyromancer() {
-        Permanent pyromancer = new Permanent(new ProdigalPyromancer());
+        Permanent pyromancer = harness.addToBattlefieldAndReturn(player1, new ProdigalPyromancer());
         pyromancer.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(pyromancer);
         return pyromancer;
     }
 
