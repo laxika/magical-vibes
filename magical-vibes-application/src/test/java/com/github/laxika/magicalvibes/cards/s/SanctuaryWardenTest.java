@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BackupAgent;
+import com.github.laxika.magicalvibes.cards.c.CitizensCrowbar;
+import com.github.laxika.magicalvibes.cards.e.ElspethResplendent;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -16,12 +18,12 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SanctuaryWarden.class, GrizzlyBears.class})
+@CardUsed({SanctuaryWarden.class, BackupAgent.class, ElspethResplendent.class, CitizensCrowbar.class})
 class SanctuaryWardenTest extends BaseCardTest {
 
     @Test
     void entersWithShieldCountersAndMayDrawAndCreateCitizen() {
-        Card drawn = new GrizzlyBears();
+        Card drawn = new BackupAgent();
         harness.setLibrary(player1, List.of(drawn));
         Permanent warden = castWarden();
 
@@ -46,10 +48,10 @@ class SanctuaryWardenTest extends BaseCardTest {
 
     @Test
     void choosingPermanentAndCounterTypeRemovesOnlyTheChosenCounter() {
-        Permanent otherCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent otherCreature = harness.addToBattlefieldAndReturn(player1, new BackupAgent());
         otherCreature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         otherCreature.setCounterCount(CounterType.SHIELD, 1);
-        Card drawn = new GrizzlyBears();
+        Card drawn = new BackupAgent();
         harness.setLibrary(player1, List.of(drawn));
 
         Permanent warden = castWarden();
@@ -69,7 +71,7 @@ class SanctuaryWardenTest extends BaseCardTest {
 
     @Test
     void decliningDoesNotRemoveCounterDrawOrCreateToken() {
-        Card drawn = new GrizzlyBears();
+        Card drawn = new BackupAgent();
         harness.setLibrary(player1, List.of(drawn));
         Permanent warden = castWarden();
 
@@ -84,7 +86,7 @@ class SanctuaryWardenTest extends BaseCardTest {
 
     @Test
     void attackTriggerMayRemoveCounterAndCreateCitizen() {
-        Card drawn = new GrizzlyBears();
+        Card drawn = new BackupAgent();
         harness.setLibrary(player1, List.of(drawn));
         Permanent warden = addCreatureReady(player1, new SanctuaryWarden());
         warden.setCounterCount(CounterType.SHIELD, 1);
@@ -100,6 +102,86 @@ class SanctuaryWardenTest extends BaseCardTest {
                 .hasSize(1);
     }
 
+    @Test
+    void acceptingWithoutEligibleCountersDoesNotDrawOrCreateToken() {
+        Card drawn = new BackupAgent();
+        harness.setLibrary(player1, List.of(drawn));
+        Permanent warden = addCreatureReady(player1, new SanctuaryWarden());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new BackupAgent());
+        opponentCreature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(warden.getCounterCount(CounterType.SHIELD)).isZero();
+        assertThat(opponentCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(drawn);
+        assertThat(countPermanents(player1, "Citizen")).isZero();
+    }
+
+    @Test
+    void canRemoveLoyaltyFromOwnPlaneswalker() {
+        Permanent elspeth = harness.addToBattlefieldAndReturn(player1, new ElspethResplendent());
+        elspeth.setCounterCount(CounterType.LOYALTY, 5);
+        Card drawn = new BackupAgent();
+        harness.setLibrary(player1, List.of(drawn));
+        Permanent warden = castWarden();
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, elspeth.getId());
+
+        assertThat(elspeth.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
+        assertThat(warden.getCounterCount(CounterType.SHIELD)).isEqualTo(2);
+        assertThat(gd.playerHands.get(player1.getId())).contains(drawn);
+        assertThat(countPermanents(player1, "Citizen")).isEqualTo(1);
+    }
+
+    @Test
+    void counterChoiceIncludesOnlyOwnCreaturesAndPlaneswalkersWithCounters() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new BackupAgent());
+        ownCreature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent uncounteredCreature = harness.addToBattlefieldAndReturn(player1, new BackupAgent());
+        Permanent ownEquipment = harness.addToBattlefieldAndReturn(player1, new CitizensCrowbar());
+        ownEquipment.setCounterCount(CounterType.SHIELD, 1);
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new BackupAgent());
+        opponentCreature.setCounterCount(CounterType.SHIELD, 1);
+        Card drawn = new BackupAgent();
+        harness.setLibrary(player1, List.of(drawn));
+        Permanent warden = castWarden();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)
+                .validPermanentIds()).containsExactlyInAnyOrder(ownCreature.getId(), warden.getId())
+                .doesNotContain(uncounteredCreature.getId(), opponentCreature.getId(), ownEquipment.getId());
+        harness.handlePermanentChosen(player1, ownCreature.getId());
+
+        assertThat(ownCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(opponentCreature.getCounterCount(CounterType.SHIELD)).isEqualTo(1);
+        assertThat(ownEquipment.getCounterCount(CounterType.SHIELD)).isEqualTo(1);
+        assertThat(gd.playerHands.get(player1.getId())).contains(drawn);
+        assertThat(countPermanents(player1, "Citizen")).isEqualTo(1);
+    }
+
+    @Test
+    void triggerStillRewardsRemovingCounterAfterWardenLeavesBattlefield() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new BackupAgent());
+        ownCreature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Card drawn = new BackupAgent();
+        harness.setLibrary(player1, List.of(drawn));
+        Permanent warden = castWarden();
+        gd.playerBattlefields.get(player1.getId()).remove(warden);
+        gd.playerGraveyards.get(player1.getId()).add(warden.getCard());
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(ownCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).contains(drawn);
+        assertThat(countPermanents(player1, "Citizen")).isEqualTo(1);
+    }
+
     private Permanent castWarden() {
         harness.setHand(player1, List.of(new SanctuaryWarden()));
         harness.addMana(player1, ManaColor.WHITE, 2);
@@ -107,9 +189,6 @@ class SanctuaryWardenTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
         harness.passBothPriorities();
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().getName().equals("Sanctuary Warden"))
-                .findFirst()
-                .orElseThrow();
+        return findPermanent(player1, "Sanctuary Warden");
     }
 }
