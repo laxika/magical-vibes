@@ -47,6 +47,23 @@ class ShadowbloodRidgeTest extends BaseCardTest {
     }
 
     @Test
+    void cannotActivateAgainWhileTappedEvenWithProducedManaAvailable() {
+        Permanent ridge = harness.addToBattlefieldAndReturn(player1, new ShadowbloodRidge());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(ridge.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     void activationRequiresUntappedSource() {
         Permanent ridge = harness.addToBattlefieldAndReturn(player1, new ShadowbloodRidge());
         ridge.tap();
