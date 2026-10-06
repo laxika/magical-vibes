@@ -28,8 +28,7 @@ class ScentOfJasmineTest extends BaseCardTest {
                 new ScentOfCinder()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         harness.handleMultipleCardsChosen(player1, List.of(firstWhiteCard.getId(), secondWhiteCard.getId()));
         harness.assertLife(player1, 24);
@@ -41,8 +40,7 @@ class ScentOfJasmineTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ScentOfJasmine(), new ScentOfCinder(), new ScentOfBrine()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         harness.assertLife(player1, 20);
     }
@@ -56,8 +54,7 @@ class ScentOfJasmineTest extends BaseCardTest {
                 new ScentOfJasmine(), firstWhiteCard, secondWhiteCard, new ScentOfCinder()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         PendingInteraction.RevealAnyNumberOfCardsFromHandChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.RevealAnyNumberOfCardsFromHandChoice.class);
@@ -70,14 +67,44 @@ class ScentOfJasmineTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Revealed cards remain in hand and can be revealed for another spell")
+    void canRevealTheSameCardAgain() {
+        ScentOfJasmine secondSpell = new ScentOfJasmine();
+        VoiceOfDuty whiteCard = new VoiceOfDuty();
+        harness.setHand(player1, List.of(new ScentOfJasmine(), secondSpell, whiteCard));
+        harness.setHand(player2, List.of(new SerraAdvocate()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castAndResolveInstant(player1, 0);
+
+        PendingInteraction.RevealAnyNumberOfCardsFromHandChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.RevealAnyNumberOfCardsFromHandChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactly(secondSpell.getId(), whiteCard.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(secondSpell.getId(), whiteCard.getId()));
+
+        harness.assertLife(player1, 24);
+        harness.assertLife(player2, 20);
+        harness.assertInHand(player1, "Scent of Jasmine");
+        harness.assertInHand(player1, "Voice of Duty");
+
+        harness.castAndResolveInstant(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(whiteCard.getId()));
+
+        harness.assertLife(player1, 26);
+        harness.assertLife(player2, 20);
+        harness.assertInHand(player1, "Voice of Duty");
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
     @DisplayName("Can reveal zero white cards")
     void canRevealZeroWhiteCards() {
         VoiceOfDuty whiteCard = new VoiceOfDuty();
         harness.setHand(player1, List.of(new ScentOfJasmine(), whiteCard, new ScentOfCinder()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         PendingInteraction.RevealAnyNumberOfCardsFromHandChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.RevealAnyNumberOfCardsFromHandChoice.class);
