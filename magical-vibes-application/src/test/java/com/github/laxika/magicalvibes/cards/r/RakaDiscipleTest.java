@@ -52,7 +52,6 @@ class RakaDiscipleTest extends BaseCardTest {
         assertThat(target.hasKeyword(Keyword.FLYING)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(target.hasKeyword(Keyword.FLYING)).isFalse();
@@ -118,7 +117,6 @@ class RakaDiscipleTest extends BaseCardTest {
         assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
@@ -130,6 +128,58 @@ class RakaDiscipleTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void creaturePreventionShieldExpiresAtEndOfTurn() {
+        addCreatureReady(player1, new RakaDisciple());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AngelfireCrusader());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        assertThat(target.getDamagePreventionShield()).isEqualTo(1);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        assertThat(target.getDamagePreventionShield()).isZero();
+    }
+
+    @Test
+    void flyingAbilityCannotTargetLand() {
+        addCreatureReady(player1, new RakaDisciple());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new BattlefieldForge());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, land.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void tappingForPreventionPreventsActivatingFlying() {
+        Permanent disciple = addCreatureReady(player1, new RakaDisciple());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+
+        assertThat(disciple.isTapped()).isTrue();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, disciple.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.passBothPriorities();
+    }
+
+    @Test
+    void summoningSicknessPreventsBothAbilities() {
+        Permanent disciple = harness.addToBattlefieldAndReturn(player1, new RakaDisciple());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player1.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, disciple.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 }
