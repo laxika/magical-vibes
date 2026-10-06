@@ -96,6 +96,45 @@ class RecklessDetectiveTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(card);
     }
 
+    @Test
+    @DisplayName("Accepting without an artifact or a card does not draw or boost")
+    void noAvailablePaymentDoesNothing() {
+        Shock drawn = new Shock();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(drawn));
+        Permanent detective = addCreatureReady(player1, new RecklessDetective());
+        addCreatureReady(player1, new GrizzlyBears());
+        Permanent opposingArtifact = addCreatureReady(player2, new Ornithopter());
+
+        attackAndAcceptMay();
+
+        assertThat(gqs.getEffectivePower(gd, detective)).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opposingArtifact);
+    }
+
+    @Test
+    @DisplayName("Choosing sacrifice when both payments are available preserves the hand card")
+    void choosesSacrificeWhenBothPaymentsAreAvailable() {
+        Shock kept = new Shock();
+        Shock drawn = new Shock();
+        harness.setHand(player1, List.of(kept));
+        harness.setLibrary(player1, List.of(drawn));
+        Permanent detective = addCreatureReady(player1, new RecklessDetective());
+        Permanent artifact = addCreatureReady(player1, new Ornithopter());
+
+        attackAndAcceptMay();
+        harness.handleListChoice(player1, "Sacrifice an artifact");
+        harness.handlePermanentChosen(player1, artifact.getId());
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(kept, drawn);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(artifact.getCard());
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(artifact);
+        assertThat(gqs.getEffectivePower(gd, detective)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, detective)).isEqualTo(3);
+    }
+
     private void attackAndAcceptMay() {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
