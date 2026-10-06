@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.b.BeaconHawk;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -16,7 +16,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SimicSkySwallower.class, GrizzlyBears.class, Shock.class})
+@CardUsed({SimicSkySwallower.class, GrizzlyBears.class, Shock.class, BeaconHawk.class, SealOfFire.class})
 class SimicSkySwallowerTest extends BaseCardTest {
 
     @Test
@@ -44,7 +44,7 @@ class SimicSkySwallowerTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, swallower.getId(), null))
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, swallower.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("shroud");
     }
@@ -54,22 +54,40 @@ class SimicSkySwallowerTest extends BaseCardTest {
     void trampleAssignsExcessCombatDamageToDefendingPlayer() {
         harness.setLife(player2, 20);
         Permanent swallower = addCreatureReady(player1, new SimicSkySwallower());
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new BeaconHawk());
 
-        swallower.setAttacking(true);
-        blocker.setBlocking(true);
-        blocker.addBlockingTarget(0);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
 
         harness.handleCombatDamageAssigned(player1, 0, Map.of(
-                blocker.getId(), 2,
-                player2.getId(), 4));
+                blocker.getId(), 1,
+                player2.getId(), 5));
 
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(swallower);
+    }
+
+    @Test
+    void shroudPreventsOpponentSpellTargeting() {
+        Permanent swallower = harness.addToBattlefieldAndReturn(player1, new SimicSkySwallower());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, swallower.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("shroud");
+    }
+
+    @Test
+    void shroudPreventsActivatedAbilityTargeting() {
+        Permanent swallower = harness.addToBattlefieldAndReturn(player1, new SimicSkySwallower());
+        Permanent seal = harness.addToBattlefieldAndReturn(player2, new SealOfFire());
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, swallower.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("shroud");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(seal);
     }
 }
