@@ -22,9 +22,7 @@ class SkirkCommandoTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castCreatureWithMorph(player1, 0);
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent commando = findPermanent(player1, "Skirk Commando");
         assertThat(commando.isFaceDown()).isTrue();
@@ -124,5 +122,82 @@ class SkirkCommandoTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(target.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void faceDownCombatDamageDoesNotTriggerPrintedAbility() {
+        harness.setHand(player1, List.of(new SkirkCommando()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        resolveAllTriggers();
+
+        Permanent commando = findPermanent(player1, "Skirk Commando");
+        commando.setSummoningSick(false);
+        commando.setAttacking(true);
+        Permanent target = addCreatureReady(player2, new CrudeRampart());
+        harness.setLife(player2, 20);
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 18);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(target.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void noLegalCreatureTargetDoesNotPromptForOptionalDamage() {
+        Permanent commando = addCreatureReady(player1, new SkirkCommando());
+        commando.setAttacking(true);
+        addCreatureReady(player1, new CrudeRampart());
+        harness.addToBattlefield(player2, new ForgottenCave());
+        harness.setLife(player2, 20);
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 18);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void otherPlayersCommandoTargetsThePlayerItDamaged() {
+        Permanent commando = addCreatureReady(player2, new SkirkCommando());
+        commando.setAttacking(true);
+        Permanent target = addCreatureReady(player1, new CrudeRampart());
+        Permanent ownCreature = addCreatureReady(player2, new CrudeRampart());
+
+        resolveCombat(player2);
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).containsExactly(target.getId());
+        harness.handlePermanentChosen(player2, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+        assertThat(ownCreature.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void optionalDamageDestroysCreatureWithLethalDamage() {
+        Permanent commando = addCreatureReady(player1, new SkirkCommando());
+        commando.setAttacking(true);
+        Permanent target = addCreatureReady(player2, new SkirkCommando());
+
+        resolveCombat();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player2, "Skirk Commando");
+        harness.assertInGraveyard(player2, "Skirk Commando");
+        harness.assertOnBattlefield(player1, "Skirk Commando");
     }
 }
