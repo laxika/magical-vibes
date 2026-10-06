@@ -11,9 +11,68 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({RootGreevil.class, LashknifeBarrier.class, KeldonTwilight.class, ManaCylix.class})
 class RootGreevilTest extends BaseCardTest {
+
+    @Test
+    void cannotActivateWhileSummoningSick() {
+        harness.addToBattlefield(player1, new RootGreevil());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Root Greevil");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotActivateWhileTapped() {
+        addCreatureReady(player1, new RootGreevil()).setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Root Greevil");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotPayGreenCostWithOnlyColorlessMana() {
+        addCreatureReady(player1, new RootGreevil());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Root Greevil");
+        assertThat(findPermanent(player1, "Root Greevil").isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void choosingColorWithNoMatchingEnchantmentsStillResolves() {
+        addCreatureReady(player1, new RootGreevil());
+        harness.addToBattlefield(player2, new RootGreevil());
+        harness.addToBattlefield(player2, new LashknifeBarrier());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "GREEN");
+
+        harness.assertInGraveyard(player1, "Root Greevil");
+        harness.assertOnBattlefield(player2, "Root Greevil");
+        harness.assertOnBattlefield(player2, "Lashknife Barrier");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
 
     @Test
     @DisplayName("Activating Root Greevil sacrifices it and prompts for a color")
