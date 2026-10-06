@@ -101,4 +101,40 @@ class RepelTest extends BaseCardTest {
                 .isSameAs(creatureCard);
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(controllerDeckSizeBefore);
     }
+
+    @Test
+    @DisplayName("Repel can put your own creature into an empty library")
+    void putsOwnCreatureIntoEmptyLibrary() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new AvenFlock());
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new Repel()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        assertThat(harness.getGameData().playerBattlefields.get(player1.getId()))
+                .doesNotContain(creature);
+        assertThat(harness.getGameData().playerDecks.get(player1.getId()))
+                .containsExactly(creature.getCard());
+        assertThat(harness.getGameData().playerHands.get(player1.getId()))
+                .doesNotContain(creature.getCard());
+    }
+
+    @Test
+    @DisplayName("Repel preserves the order of cards below the returned creature")
+    void preservesExistingLibraryOrder() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new AvenFlock());
+        Forest firstCard = new Forest();
+        AvenFlock secondCard = new AvenFlock();
+        harness.setLibrary(player2, List.of(firstCard, secondCard));
+        harness.setHand(player1, List.of(new Repel()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        assertThat(harness.getGameData().playerDecks.get(player2.getId()))
+                .containsExactly(creature.getCard(), firstCard, secondCard);
+    }
 }
