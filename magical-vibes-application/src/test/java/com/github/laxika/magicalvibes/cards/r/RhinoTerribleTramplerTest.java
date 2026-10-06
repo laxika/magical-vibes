@@ -20,6 +20,46 @@ import static org.assertj.core.api.Assertions.assertThat;
 class RhinoTerribleTramplerTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Counter division includes only the chosen creatures")
+    void assignsAllThreeCountersToOneCreatureThroughNormalInput() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.enterBattlefieldAndReturn(player1, new RhinoTerribleTrampler());
+
+        harness.handlePermanentChosen(player1, land.getId());
+        harness.handlePermanentChosen(player1, creature.getId());
+
+        PendingInteraction.ColorChoice division =
+                gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(division).isNotNull();
+        assertThat(division.options()).containsExactly("3");
+        harness.handleListChoice(player1, "3");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Forest");
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Choosing zero creatures does not require a counter division")
+    void canDestroyLandWithoutChoosingCounterRecipients() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.enterBattlefieldAndReturn(player1, new RhinoTerribleTrampler());
+
+        harness.handlePermanentChosen(player1, land.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Forest");
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
     @DisplayName("ETB destroys an artifact and distributes counters and trample to other creatures")
     void entersWithAllEtbEffects() {
         Permanent artifact = harness.addToBattlefieldAndReturn(player2, new WeldingJar());
