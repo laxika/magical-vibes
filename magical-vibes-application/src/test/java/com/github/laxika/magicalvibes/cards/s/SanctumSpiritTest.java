@@ -1,10 +1,13 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.cards.h.HistoryOfBenalia;
+import com.github.laxika.magicalvibes.cards.e.Eviscerate;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.m.MirriCatWarrior;
-import com.github.laxika.magicalvibes.cards.o.Ornithopter;
+import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.d.DanithaCapashenParagon;
+import com.github.laxika.magicalvibes.cards.j.JoustingLance;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -21,9 +24,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SanctumSpirit.class, LlanowarElves.class, DanithaCapashenParagon.class, JoustingLance.class, HistoryOfBenalia.class, Eviscerate.class})
 class SanctumSpiritTest extends BaseCardTest {
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting Sanctum Spirit puts it on the stack")
@@ -53,19 +55,17 @@ class SanctumSpiritTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Sanctum Spirit");
     }
 
-    // ===== Discard historic card cost — activation =====
-
     @Test
     @DisplayName("Activating ability with an artifact in hand starts discard-cost choice")
     void activationWithArtifactStartsDiscardChoice() {
         addSpiritReady(player1);
-        harness.setHand(player1, List.of(new GrizzlyBears(), new Ornithopter()));
+        harness.setHand(player1, List.of(new LlanowarElves(), new JoustingLance()));
 
         harness.activateAbility(player1, 0, null, null);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardCostChoice.class);
         assertThat(gd.stack).isEmpty();
-        // Only index 1 (Ornithopter, an artifact) should be valid
+        // Only index 1 (JoustingLance, an artifact) should be valid
         assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).validIndices()).containsExactly(1);
     }
 
@@ -73,28 +73,28 @@ class SanctumSpiritTest extends BaseCardTest {
     @DisplayName("Activating ability with a legendary creature in hand starts discard-cost choice")
     void activationWithLegendaryStartsDiscardChoice() {
         addSpiritReady(player1);
-        harness.setHand(player1, List.of(new GrizzlyBears(), new MirriCatWarrior()));
+        harness.setHand(player1, List.of(new LlanowarElves(), new DanithaCapashenParagon()));
 
         harness.activateAbility(player1, 0, null, null);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardCostChoice.class);
-        // Only index 1 (Mirri, legendary) should be valid
+        // Only index 1 (Danitha, legendary) should be valid
         assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).validIndices()).containsExactly(1);
     }
 
     @Test
     @DisplayName("Choosing a historic card pays cost and puts ability on stack")
     void choosingHistoricCardPaysCostAndStacksAbility() {
-        Permanent spirit = addSpiritReady(player1);
-        harness.setHand(player1, List.of(new GrizzlyBears(), new Ornithopter()));
+        addSpiritReady(player1);
+        harness.setHand(player1, List.of(new LlanowarElves(), new JoustingLance()));
 
         harness.activateAbility(player1, 0, null, null);
         harness.handleCardChosen(player1, 1);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
-        assertThat(gd.playerHands.get(player1.getId()).getFirst().getName()).isEqualTo("Grizzly Bears");
-        harness.assertInGraveyard(player1, "Ornithopter");
+        assertThat(gd.playerHands.get(player1.getId()).getFirst().getName()).isEqualTo("Llanowar Elves");
+        harness.assertInGraveyard(player1, "Jousting Lance");
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
@@ -105,7 +105,7 @@ class SanctumSpiritTest extends BaseCardTest {
     @DisplayName("Cannot activate without a historic card in hand")
     void cannotActivateWithoutHistoricCard() {
         addSpiritReady(player1);
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new LlanowarElves()));
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
@@ -116,23 +116,21 @@ class SanctumSpiritTest extends BaseCardTest {
     @DisplayName("Cannot choose a non-historic card for discard cost")
     void cannotChooseNonHistoricForDiscardCost() {
         addSpiritReady(player1);
-        harness.setHand(player1, List.of(new GrizzlyBears(), new Ornithopter()));
+        harness.setHand(player1, List.of(new LlanowarElves(), new JoustingLance()));
 
         harness.activateAbility(player1, 0, null, null);
-        // Try choosing index 0 (GrizzlyBears, non-historic) — should re-prompt
+        // Try choosing index 0 (LlanowarElves, non-historic) — should re-prompt
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardCostChoice.class);
         assertThat(gd.stack).isEmpty();
     }
 
-    // ===== Indestructible grant =====
-
     @Test
     @DisplayName("Resolving ability grants indestructible until end of turn")
     void resolvingGrantsIndestructible() {
         Permanent spirit = addSpiritReady(player1);
-        harness.setHand(player1, List.of(new Ornithopter()));
+        harness.setHand(player1, List.of(new JoustingLance()));
 
         harness.activateAbility(player1, 0, null, null);
         harness.handleCardChosen(player1, 0);
@@ -146,7 +144,7 @@ class SanctumSpiritTest extends BaseCardTest {
     @DisplayName("Indestructible granted by ability resets at end of turn cleanup")
     void indestructibleResetsAtEndOfTurn() {
         Permanent spirit = addSpiritReady(player1);
-        harness.setHand(player1, List.of(new Ornithopter()));
+        harness.setHand(player1, List.of(new JoustingLance()));
 
         harness.activateAbility(player1, 0, null, null);
         harness.handleCardChosen(player1, 0);
@@ -161,13 +159,11 @@ class SanctumSpiritTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, spirit, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
-    // ===== Activation constraints =====
-
     @Test
     @DisplayName("Activating ability does NOT tap Sanctum Spirit")
     void activatingDoesNotTap() {
         Permanent spirit = addSpiritReady(player1);
-        harness.setHand(player1, List.of(new Ornithopter()));
+        harness.setHand(player1, List.of(new JoustingLance()));
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -179,7 +175,7 @@ class SanctumSpiritTest extends BaseCardTest {
     void canActivateWhenTapped() {
         Permanent spirit = addSpiritReady(player1);
         spirit.tap();
-        harness.setHand(player1, List.of(new Ornithopter()));
+        harness.setHand(player1, List.of(new JoustingLance()));
 
         harness.activateAbility(player1, 0, null, null);
         harness.handleCardChosen(player1, 0);
@@ -190,9 +186,8 @@ class SanctumSpiritTest extends BaseCardTest {
     @Test
     @DisplayName("Can activate ability with summoning sickness (no tap required)")
     void canActivateWithSummoningSickness() {
-        Permanent spirit = new Permanent(new SanctumSpirit());
-        gd.playerBattlefields.get(player1.getId()).add(spirit);
-        harness.setHand(player1, List.of(new Ornithopter()));
+        harness.addToBattlefield(player1, new SanctumSpirit());
+        harness.setHand(player1, List.of(new JoustingLance()));
 
         harness.activateAbility(player1, 0, null, null);
         harness.handleCardChosen(player1, 0);
@@ -204,14 +199,14 @@ class SanctumSpiritTest extends BaseCardTest {
     @DisplayName("Can activate ability multiple times discarding different historic cards")
     void canActivateMultipleTimes() {
         Permanent spirit = addSpiritReady(player1);
-        harness.setHand(player1, List.of(new Ornithopter(), new MirriCatWarrior()));
+        harness.setHand(player1, List.of(new JoustingLance(), new DanithaCapashenParagon()));
 
-        // First activation — discard Ornithopter
+        // First activation — discard JoustingLance
         harness.activateAbility(player1, 0, null, null);
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        // Second activation — discard Mirri (now at index 0 after first discard)
+        // Second activation — discard Danitha (now at index 0 after first discard)
         harness.activateAbility(player1, 0, null, null);
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
@@ -220,13 +215,11 @@ class SanctumSpiritTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
-    // ===== Fizzle =====
-
     @Test
-    @DisplayName("Ability fizzles if Sanctum Spirit is removed before resolution")
-    void abilityFizzlesIfSourceRemoved() {
+    @DisplayName("Ability has no effect if Sanctum Spirit is removed before resolution")
+    void abilityHasNoEffectIfSourceRemoved() {
         addSpiritReady(player1);
-        harness.setHand(player1, List.of(new Ornithopter()));
+        harness.setHand(player1, List.of(new JoustingLance()));
 
         harness.activateAbility(player1, 0, null, null);
         harness.handleCardChosen(player1, 0);
@@ -239,12 +232,83 @@ class SanctumSpiritTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
-    // ===== Helper methods =====
+    @Test
+    @DisplayName("A nonlegendary Saga can pay the historic discard cost")
+    void canDiscardSaga() {
+        Permanent spirit = addSpiritReady(player1);
+        harness.setHand(player1, List.of(new LlanowarElves(), new HistoryOfBenalia()));
+
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).validIndices()).containsExactly(1);
+        harness.handleCardChosen(player1, 1);
+        harness.assertInGraveyard(player1, "History of Benalia");
+        assertThat(gqs.hasKeyword(gd, spirit, Keyword.INDESTRUCTIBLE)).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, spirit, Keyword.INDESTRUCTIBLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Unblocked combat damage gains life through lifelink")
+    void combatDamageGainsLife() {
+        Permanent spirit = addSpiritReady(player1);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        spirit.setAttacking(true);
+        spirit.setAttackTarget(player2.getId());
+
+        harness.resolveCombatDamage();
+
+        harness.assertLife(player1, 23);
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @DisplayName("A different Sanctum Spirit does not receive the removed source's grant")
+    void removedSourceDoesNotGrantToAnotherSpirit() {
+        addSpiritReady(player1);
+        harness.setHand(player1, List.of(new JoustingLance()));
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        gd.playerBattlefields.get(player1.getId()).clear();
+        Permanent replacement = harness.addToBattlefieldAndReturn(player1, new SanctumSpirit());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.hasKeyword(gd, replacement, Keyword.INDESTRUCTIBLE)).isFalse();
+        harness.assertInGraveyard(player1, "Jousting Lance");
+    }
+
+    @Test
+    @DisplayName("Discarding a historic card in response prevents destruction")
+    void activationInResponsePreventsDestruction() {
+        Permanent spirit = addSpiritReady(player1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new JoustingLance()));
+        harness.setHand(player2, List.of(new Eviscerate()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.castSorcery(player2, 0, spirit.getId());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.stack).hasSize(2);
+        harness.assertInGraveyard(player1, "Jousting Lance");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Sanctum Spirit");
+        harness.assertInGraveyard(player2, "Eviscerate");
+        assertThat(gd.stack).isEmpty();
+    }
 
     private Permanent addSpiritReady(Player player) {
-        Permanent perm = new Permanent(new SanctumSpirit());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new SanctumSpirit());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }
