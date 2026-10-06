@@ -47,7 +47,6 @@ class RollingSpoilTest extends BaseCardTest {
         assertThat(opposingCreature.getEffectiveToughness()).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(ownCreature.getEffectiveToughness()).isEqualTo(2);
@@ -62,8 +61,8 @@ class RollingSpoilTest extends BaseCardTest {
 
         castRollingSpoil(target, true);
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(permanent -> permanent.getCard().getName().equals("Frenzied Goblin"));
+        harness.assertNotOnBattlefield(player2, "Frenzied Goblin");
+        harness.assertInGraveyard(player2, "Frenzied Goblin");
     }
 
     @Test
@@ -76,6 +75,60 @@ class RollingSpoilTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, creature.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("An illegal land target prevents the black mana debuff from resolving")
+    void illegalTargetPreventsAllEffects() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new ScreechingGriffin());
+        harness.setHand(player1, List.of(new RollingSpoil()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castSorcery(player1, 0, target.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, target));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Forest");
+        harness.assertInGraveyard(player1, "Rolling Spoil");
+        assertThat(creature.getEffectivePower()).isEqualTo(2);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Black mana added after casting does not enable the debuff")
+    void blackManaMustBeSpentToCast() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new ScreechingGriffin());
+        harness.setHand(player1, List.of(new RollingSpoil()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castSorcery(player1, 0, target.getId());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Forest");
+        assertThat(creature.getEffectivePower()).isEqualTo(2);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Can destroy your own land and affects only creatures present at resolution")
+    void ownLandAndCreaturesEnteringLater() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new ScreechingGriffin());
+
+        castRollingSpoil(target, true);
+        Permanent laterCreature = harness.addToBattlefieldAndReturn(player1, new ScreechingGriffin());
+
+        harness.assertNotOnBattlefield(player1, "Forest");
+        harness.assertInGraveyard(player1, "Forest");
+        assertThat(creature.getEffectivePower()).isEqualTo(1);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(laterCreature.getEffectivePower()).isEqualTo(2);
+        assertThat(laterCreature.getEffectiveToughness()).isEqualTo(2);
     }
 
     private void castRollingSpoil(Permanent target, boolean blackManaSpent) {
