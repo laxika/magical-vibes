@@ -18,8 +18,7 @@ class ScionOfTheSwarmTest extends BaseCardTest {
 
     @Test
     void putsCounterOnItWhenControllerGainsLife() {
-        harness.addToBattlefield(player1, new ScionOfTheSwarm());
-        Permanent scion = findPermanent(player1, "Scion of the Swarm");
+        Permanent scion = harness.addToBattlefieldAndReturn(player1, new ScionOfTheSwarm());
 
         harness.setHand(player1, List.of(new AngelOfMercy()));
         harness.addMana(player1, ManaColor.WHITE, 5);
@@ -34,8 +33,7 @@ class ScionOfTheSwarmTest extends BaseCardTest {
 
     @Test
     void doesNotTriggerWhenOpponentGainsLife() {
-        harness.addToBattlefield(player1, new ScionOfTheSwarm());
-        Permanent scion = findPermanent(player1, "Scion of the Swarm");
+        Permanent scion = harness.addToBattlefieldAndReturn(player1, new ScionOfTheSwarm());
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -47,6 +45,60 @@ class ScionOfTheSwarmTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
+        assertThat(scion.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void separateLifeGainsEachPutOneCounter() {
+        Permanent scion = harness.addToBattlefieldAndReturn(player1, new ScionOfTheSwarm());
+        harness.setHand(player1, List.of(new AngelOfMercy(), new AngelOfMercy()));
+        harness.addMana(player1, ManaColor.WHITE, 10);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 26);
+        assertThat(scion.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void eachScionGetsItsOwnCounterOnlyWhenItsTriggerResolves() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new ScionOfTheSwarm());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new ScionOfTheSwarm());
+        harness.setHand(player1, List.of(new AngelOfMercy()));
+        harness.addMana(player1, ManaColor.WHITE, 5);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 23);
+        assertThat(gd.stack).hasSize(2);
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void gainingZeroLifeDoesNotTrigger() {
+        Permanent scion = harness.addToBattlefieldAndReturn(player1, new ScionOfTheSwarm());
+
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 0));
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
         assertThat(scion.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 }
