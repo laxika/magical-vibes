@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -48,10 +47,61 @@ class SeedGuardianTest extends BaseCardTest {
         assertThat(elemental.getEffectiveToughness()).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("Seed Guardian counts creatures that die at the same time")
+    void countsSimultaneouslyDyingCreatures() {
+        harness.addToBattlefield(player1, new SeedGuardian());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        destroyAllCreatures();
+
+        Permanent elemental = findPermanent(player1, "Elemental");
+        assertThat(elemental.getEffectivePower()).isEqualTo(2);
+        assertThat(elemental.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(elemental);
+        harness.assertNotOnBattlefield(player2, "Elemental");
+    }
+
+    @Test
+    @DisplayName("The graveyard is counted at resolution and the token's size is then fixed")
+    void countsAtResolutionAndDoesNotContinuouslyUpdateTokenSize() {
+        harness.addToBattlefield(player1, new SeedGuardian());
+        harness.castFromHand(player1, new WrathOfGod(), "{2}{W}{W}");
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Seed Guardian");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.setGraveyard(player1, List.of(new SeedGuardian(), new SeedGuardian(), new Forest()));
+        harness.passBothPriorities();
+
+        Permanent elemental = findPermanent(player1, "Elemental");
+        assertThat(elemental.getEffectivePower()).isEqualTo(2);
+        assertThat(elemental.getEffectiveToughness()).isEqualTo(2);
+
+        harness.setGraveyard(player1, List.of());
+        assertThat(elemental.getEffectivePower()).isEqualTo(2);
+        assertThat(elemental.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("An empty graveyard at resolution produces a token that dies immediately")
+    void zeroToughnessTokenDoesNotSurvive() {
+        harness.addToBattlefield(player1, new SeedGuardian());
+        harness.castFromHand(player1, new WrathOfGod(), "{2}{W}{W}");
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Seed Guardian");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Elemental");
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void destroyAllCreatures() {
-        harness.setHand(player1, List.of(new WrathOfGod()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
-        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, null, null);
+        harness.castFromHand(player1, new WrathOfGod(), "{2}{W}{W}");
         harness.passBothPriorities();
         harness.passBothPriorities();
     }
