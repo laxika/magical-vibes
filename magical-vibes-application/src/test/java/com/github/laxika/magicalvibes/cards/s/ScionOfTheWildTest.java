@@ -91,4 +91,51 @@ class ScionOfTheWildTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, scion)).isEqualTo(3);
     }
 
+    @Test
+    @DisplayName("Resolving Scion counts itself and existing creatures but not enchantments")
+    void resolvingCountsOnlyCreaturesIncludingItself() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GloriousAnthem());
+        harness.setHand(player1, List.of(new ScionOfTheWild()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent scion = findPermanent(player1, "Scion of the Wild");
+        assertThat(gqs.getEffectivePower(gd, scion)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, scion)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Scion in hand is 0/0 without controlled creatures and updates as they enter")
+    void characteristicAbilityWorksInHand() {
+        ScionOfTheWild scion = new ScionOfTheWild();
+        harness.setHand(player1, List.of(scion));
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GloriousAnthem());
+
+        assertThat(gqs.getEffectiveCardPower(gd, scion)).isZero();
+        assertThat(gqs.getEffectiveCardToughness(gd, scion)).isZero();
+
+        harness.addToBattlefield(player1, new GrizzlyBears());
+
+        assertThat(gqs.getEffectiveCardPower(gd, scion)).isEqualTo(1);
+        assertThat(gqs.getEffectiveCardToughness(gd, scion)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Scion in a graveyard counts its owner's creatures without battlefield bonuses")
+    void characteristicAbilityWorksInGraveyard() {
+        ScionOfTheWild scion = new ScionOfTheWild();
+        harness.setGraveyard(player1, List.of(scion, new GrizzlyBears()));
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GloriousAnthem());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        assertThat(gqs.getEffectiveCardPower(gd, scion)).isEqualTo(2);
+        assertThat(gqs.getEffectiveCardToughness(gd, scion)).isEqualTo(2);
+    }
+
 }
