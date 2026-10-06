@@ -139,4 +139,58 @@ class SickeningShoalTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, 2, landId))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Can target a creature you control")
+    void canTargetOwnCreature() {
+        harness.addToBattlefield(player1, new GnarledMass());
+        harness.setHand(player1, List.of(new SickeningShoal()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        UUID massId = harness.getPermanentId(player1, "Gnarled Mass");
+        harness.castInstant(player1, 0, 2, massId);
+        harness.passBothPriorities();
+
+        Permanent mass = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(mass.getEffectivePower()).isEqualTo(1);
+        assertThat(mass.getEffectiveToughness()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Cannot exile the spell itself to pay its alternative cost")
+    void alternativeCostCannotExileItself() {
+        harness.addToBattlefield(player2, new GnarledMass());
+        harness.setHand(player1, List.of(new SickeningShoal()));
+
+        UUID massId = harness.getPermanentId(player2, "Gnarled Mass");
+        assertThatThrownBy(() ->
+                harness.castInstantWithAlternateExileFromHand(player1, 0, 2, massId, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The alternative cost exiles an earlier hand card before resolution")
+    void alternativeCostExilesEarlierHandCardBeforeResolution() {
+        harness.addToBattlefield(player2, new GnarledMass());
+        SickeningShoal payment = new SickeningShoal();
+        SickeningShoal spell = new SickeningShoal();
+        harness.setHand(player1, List.of(payment, spell));
+
+        UUID massId = harness.getPermanentId(player2, "Gnarled Mass");
+        harness.castInstantWithAlternateExileFromHand(player1, 1, 2, massId, 0);
+
+        assertThat(gd.exiledCards).extracting(entry -> entry.card().getId())
+                .containsExactly(payment.getId());
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        Permanent mass = gd.playerBattlefields.get(player2.getId()).getFirst();
+        assertThat(mass.getEffectiveToughness()).isEqualTo(3);
+
+        harness.passBothPriorities();
+
+        assertThat(mass.getEffectivePower()).isEqualTo(1);
+        assertThat(mass.getEffectiveToughness()).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Sickening Shoal");
+        assertThat(gd.exiledCards).extracting(entry -> entry.card().getId())
+                .containsExactly(payment.getId());
+    }
 }
