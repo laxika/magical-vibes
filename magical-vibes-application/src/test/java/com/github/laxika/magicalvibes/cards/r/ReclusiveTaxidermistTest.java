@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.Mulch;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -9,12 +9,15 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ReclusiveTaxidermist.class, GrizzlyBears.class})
+@CardUsed({ReclusiveTaxidermist.class, Mulch.class})
 class ReclusiveTaxidermistTest extends BaseCardTest {
 
     @Test
@@ -76,6 +79,63 @@ class ReclusiveTaxidermistTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, taxidermist)).isEqualTo(2);
     }
 
+    @ParameterizedTest
+    @EnumSource(value = ManaColor.class, names = {"WHITE", "BLACK", "RED", "GREEN"})
+    void tappingCanProduceEachOtherColor(ManaColor color) {
+        Permanent taxidermist = addReadyTaxidermist();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, color.name());
+
+        assertThat(taxidermist.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        for (ManaColor manaColor : ManaColor.values()) {
+            assertThat(gd.playerManaPools.get(player1.getId()).get(manaColor))
+                    .isEqualTo(manaColor == color ? 1 : 0);
+        }
+    }
+
+    @Test
+    void summoningSicknessPreventsManaAbility() {
+        Permanent taxidermist = harness.addToBattlefieldAndReturn(player1, new ReclusiveTaxidermist());
+        taxidermist.setSummoningSick(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+
+        assertThat(taxidermist.isTapped()).isFalse();
+    }
+
+    @Test
+    void noncreatureCardsDoNotCountTowardThreshold() {
+        harness.setGraveyard(player1, List.of(new ReclusiveTaxidermist(),
+                new ReclusiveTaxidermist(), new ReclusiveTaxidermist(), new Mulch()));
+        Permanent taxidermist = addReadyTaxidermist();
+
+        assertThat(gqs.getEffectivePower(gd, taxidermist)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, taxidermist)).isEqualTo(2);
+    }
+
+    @Test
+    void gainsBonusImmediatelyWhenFourthCreatureCardEntersGraveyard() {
+        harness.setGraveyard(player1, graveyardWithCreatureCards(3));
+        Permanent taxidermist = addReadyTaxidermist();
+        assertThat(gqs.getEffectivePower(gd, taxidermist)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, taxidermist)).isEqualTo(2);
+
+        harness.setGraveyard(player1, graveyardWithCreatureCards(4));
+
+        assertThat(gqs.getEffectivePower(gd, taxidermist)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, taxidermist)).isEqualTo(4);
+
+        harness.setGraveyard(player1, graveyardWithCreatureCards(5));
+
+        assertThat(gqs.getEffectivePower(gd, taxidermist)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, taxidermist)).isEqualTo(4);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addReadyTaxidermist() {
         Permanent taxidermist = harness.addToBattlefieldAndReturn(player1, new ReclusiveTaxidermist());
         taxidermist.setSummoningSick(false);
@@ -84,7 +144,7 @@ class ReclusiveTaxidermistTest extends BaseCardTest {
 
     private List<Card> graveyardWithCreatureCards(int count) {
         return java.util.stream.IntStream.range(0, count)
-                .mapToObj(ignored -> (Card) new GrizzlyBears())
+                .mapToObj(ignored -> (Card) new ReclusiveTaxidermist())
                 .toList();
     }
 }
