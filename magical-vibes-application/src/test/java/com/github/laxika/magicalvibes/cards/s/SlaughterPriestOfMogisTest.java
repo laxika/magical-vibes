@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.d.DiabolicEdict;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.o.OmenOfTheForge;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -19,7 +20,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SlaughterPriestOfMogis.class, DiabolicEdict.class, GrizzlyBears.class, GloriousAnthem.class})
+@CardUsed({SlaughterPriestOfMogis.class, DiabolicEdict.class, GrizzlyBears.class, GloriousAnthem.class,
+        OmenOfTheForge.class})
 class SlaughterPriestOfMogisTest extends BaseCardTest {
 
     @Test
@@ -41,7 +43,7 @@ class SlaughterPriestOfMogisTest extends BaseCardTest {
     @DisplayName("Does not trigger when an opponent sacrifices a permanent")
     void doesNotBoostWhenOpponentSacrificesPermanent() {
         Permanent priest = addReadyPriest(player1);
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
 
         castEdictAt(player2);
         harness.passBothPriorities();
@@ -69,7 +71,8 @@ class SlaughterPriestOfMogisTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bears.getId());
         resolveAllTriggers();
 
-        assertThat(priest.getEffectivePower()).isEqualTo(4);
+        assertThat(priest.getEffectivePower()).isEqualTo(5);
+        assertThat(priest.getEffectiveToughness()).isEqualTo(3);
         assertThat(priest.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
         harness.assertInGraveyard(player1, "Grizzly Bears");
     }
@@ -103,10 +106,103 @@ class SlaughterPriestOfMogisTest extends BaseCardTest {
                 .hasMessageContaining("sacrifice");
     }
 
+    @Test
+    @CardUsed({SlaughterPriestOfMogis.class, OmenOfTheForge.class})
+    @DisplayName("A tapped, summoning-sick priest can sacrifice a noncreature enchantment")
+    void tappedSummoningSickPriestCanActivate() {
+        Permanent priest = harness.addToBattlefieldAndReturn(player1, new SlaughterPriestOfMogis());
+        priest.setSummoningSick(true);
+        priest.setTapped(true);
+        harness.addToBattlefield(player1, new OmenOfTheForge());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, battlefieldIndex(priest), null, null);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Omen of the Forge");
+        assertThat(priest.getEffectivePower()).isEqualTo(4);
+        assertThat(priest.getEffectiveToughness()).isEqualTo(2);
+        assertThat(priest.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(priest.isTapped()).isTrue();
+    }
+
+    @Test
+    @CardUsed({SlaughterPriestOfMogis.class, OmenOfTheForge.class})
+    @DisplayName("Repeated activations each boost power even after first strike is gained")
+    void repeatedActivationsAccumulateBoosts() {
+        Permanent priest = addReadyPriest(player1);
+        Permanent firstOmen = harness.addToBattlefieldAndReturn(player1, new OmenOfTheForge());
+        harness.addToBattlefield(player1, new OmenOfTheForge());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, battlefieldIndex(priest), null, null);
+        harness.handlePermanentChosen(player1, firstOmen.getId());
+        resolveAllTriggers();
+        harness.activateAbility(player1, battlefieldIndex(priest), null, null);
+        resolveAllTriggers();
+
+        assertThat(priest.getEffectivePower()).isEqualTo(6);
+        assertThat(priest.getEffectiveToughness()).isEqualTo(2);
+        assertThat(priest.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @CardUsed({SlaughterPriestOfMogis.class, OmenOfTheForge.class})
+    @DisplayName("Every priest triggers, but only the activated priest gains first strike")
+    void sacrificeTriggersEachPriest() {
+        Permanent priest = addReadyPriest(player1);
+        Permanent otherPriest = addReadyPriest(player1);
+        Permanent omen = harness.addToBattlefieldAndReturn(player1, new OmenOfTheForge());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, battlefieldIndex(priest), null, null);
+        harness.handlePermanentChosen(player1, omen.getId());
+        resolveAllTriggers();
+
+        assertThat(priest.getEffectivePower()).isEqualTo(4);
+        assertThat(otherPriest.getEffectivePower()).isEqualTo(4);
+        assertThat(priest.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(otherPriest.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
+    @CardUsed({SlaughterPriestOfMogis.class, OmenOfTheForge.class})
+    @DisplayName("The ability cannot be activated with only one mana")
+    void cannotActivateWithoutTwoMana() {
+        Permanent priest = addReadyPriest(player1);
+        harness.addToBattlefield(player1, new OmenOfTheForge());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(priest), null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Omen of the Forge");
+        assertThat(priest.getEffectivePower()).isEqualTo(2);
+        assertThat(priest.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+    }
+
     private Permanent addReadyPriest(Player player) {
-        Permanent priest = harness.addToBattlefieldAndReturn(player, new SlaughterPriestOfMogis());
-        priest.setSummoningSick(false);
-        return priest;
+        return addCreatureReady(player, new SlaughterPriestOfMogis());
+    }
+
+    @Test
+    @CardUsed({SlaughterPriestOfMogis.class, OmenOfTheForge.class})
+    @DisplayName("Sacrificing an enchantment to its own ability boosts the priest without granting first strike")
+    void sacrificeToOtherAbilityOnlyGrantsBoost() {
+        Permanent priest = addReadyPriest(player1);
+        Permanent omen = harness.addToBattlefieldAndReturn(player1, new OmenOfTheForge());
+        harness.setLibrary(player1, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, battlefieldIndex(omen), null, null);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Omen of the Forge");
+        assertThat(priest.getEffectivePower()).isEqualTo(4);
+        assertThat(priest.getEffectiveToughness()).isEqualTo(2);
+        assertThat(priest.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
     }
 
     private int battlefieldIndex(Permanent permanent) {
