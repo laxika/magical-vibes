@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -15,12 +14,11 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RestlessVents.class, Forest.class, GrizzlyBears.class})
+@CardUsed({RestlessVents.class, Forest.class})
 class RestlessVentsTest extends BaseCardTest {
 
     @Test
@@ -79,14 +77,14 @@ class RestlessVentsTest extends BaseCardTest {
     @Test
     @DisplayName("Attacking with Restless Vents lets its controller discard and draw")
     void attackingDiscardsThenDraws() {
-        Permanent vents = addReadyVents(player1);
+        addReadyVents(player1);
         addAnimationMana(player1);
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        GrizzlyBears discarded = new GrizzlyBears();
+        Forest discarded = new Forest();
         Forest drawn = new Forest();
-        harness.setHand(player1, new ArrayList<>(List.of(discarded)));
+        harness.setHand(player1, List.of(discarded));
         harness.setLibrary(player1, List.of(drawn));
 
         declareAttackers(List.of(0));
@@ -103,13 +101,13 @@ class RestlessVentsTest extends BaseCardTest {
     @Test
     @DisplayName("Declining Restless Vents's attack trigger does not discard or draw")
     void decliningAttackTriggerDoesNothing() {
-        Permanent vents = addReadyVents(player1);
+        addReadyVents(player1);
         addAnimationMana(player1);
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        GrizzlyBears retained = new GrizzlyBears();
-        harness.setHand(player1, new ArrayList<>(List.of(retained)));
+        Forest retained = new Forest();
+        harness.setHand(player1, List.of(retained));
         harness.setLibrary(player1, List.of(new Forest()));
 
         declareAttackers(List.of(0));
@@ -120,6 +118,56 @@ class RestlessVentsTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
     }
 
+    @Test
+    @DisplayName("Restless Vents can produce red mana")
+    void producesRedMana() {
+        Permanent vents = addReadyVents(player1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "RED");
+
+        assertThat(vents.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+    }
+
+    @Test
+    @DisplayName("Restless Vents can animate while tapped without untapping")
+    void animatesWhileTapped() {
+        Permanent vents = addReadyVents(player1);
+        vents.tap();
+        addAnimationMana(player1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, vents)).isTrue();
+        assertThat(vents.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    @DisplayName("Restless Vents does not draw when there is no card to discard")
+    void emptyHandDoesNotDraw() {
+        addReadyVents(player1);
+        addAnimationMana(player1);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of());
+        Forest undrawn = new Forest();
+        harness.setLibrary(player1, List.of(undrawn));
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(undrawn);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
     private void addAnimationMana(Player player) {
         harness.addMana(player, ManaColor.COLORLESS, 1);
         harness.addMana(player, ManaColor.BLACK, 1);
@@ -127,9 +175,8 @@ class RestlessVentsTest extends BaseCardTest {
     }
 
     private Permanent addReadyVents(Player player) {
-        Permanent permanent = new Permanent(new RestlessVents());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new RestlessVents());
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 }
