@@ -5,10 +5,12 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SkyshipPlunderer.class, Forest.class})
 class SkyshipPlundererTest extends BaseCardTest {
 
     @Test
@@ -49,9 +51,74 @@ class SkyshipPlundererTest extends BaseCardTest {
         assertThat(gd.playerEnergyCounters.get(player2.getId())).isEqualTo(4);
     }
 
+    @Test
+    void addsOtherExistingPlayerCounterKindsToItsController() {
+        Permanent plunderer = addReadyPlunderer();
+        plunderer.setAttacking(true);
+        gd.playerExperienceCounters.put(player1.getId(), 2);
+        gd.playerRadCounters.put(player1.getId(), 3);
+        gd.playerSparkCounters.put(player1.getId(), 4);
+
+        resolveCombat();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerExperienceCounters.get(player1.getId())).isEqualTo(3);
+        assertThat(gd.playerRadCounters.get(player1.getId())).isEqualTo(4);
+        assertThat(gd.playerSparkCounters.get(player1.getId())).isEqualTo(5);
+    }
+
+    @Test
+    void canTargetItselfWithoutCountersAndDoesNotInventCounters() {
+        Permanent plunderer = addReadyPlunderer();
+        plunderer.setAttacking(true);
+
+        resolveCombat();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, plunderer.getId());
+        harness.passBothPriorities();
+
+        assertThat(plunderer.getTotalCounterCount()).isZero();
+    }
+
+    @Test
+    void canTargetAPlayerWithoutCountersAndDoesNotInventCounters() {
+        Permanent plunderer = addReadyPlunderer();
+        plunderer.setAttacking(true);
+
+        resolveCombat();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerPoisonCounters.getOrDefault(player1.getId(), 0)).isZero();
+        assertThat(gd.playerEnergyCounters.getOrDefault(player1.getId(), 0)).isZero();
+        assertThat(gd.playerExperienceCounters.getOrDefault(player1.getId(), 0)).isZero();
+        assertThat(gd.playerRadCounters.getOrDefault(player1.getId(), 0)).isZero();
+        assertThat(gd.playerSparkCounters.getOrDefault(player1.getId(), 0)).isZero();
+    }
+
+    @Test
+    void usesCounterKindsPresentAtResolution() {
+        Permanent plunderer = addReadyPlunderer();
+        plunderer.setAttacking(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Forest());
+        target.setCounterCount(CounterType.CHARGE, 2);
+
+        resolveCombat();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        assertThat(gd.stack).hasSize(1);
+        target.setCounterCount(CounterType.CHARGE, 0);
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+    }
+
     private Permanent addReadyPlunderer() {
-        Permanent plunderer = harness.addToBattlefieldAndReturn(player1, new SkyshipPlunderer());
-        plunderer.setSummoningSick(false);
-        return plunderer;
+        return addCreatureReady(player1, new SkyshipPlunderer());
     }
 }
