@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.p.PhyrexianWalker;
+import com.github.laxika.magicalvibes.cards.t.TimeAndTide;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -11,7 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ShimmeringEfreet.class, PhyrexianWalker.class})
+@CardUsed({ShimmeringEfreet.class, PhyrexianWalker.class, TimeAndTide.class})
 class ShimmeringEfreetTest extends BaseCardTest {
 
     @Test
@@ -62,6 +63,57 @@ class ShimmeringEfreetTest extends BaseCardTest {
         assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(efreet);
     }
 
+    @Test
+    @DisplayName("Target phases in and untaps during its controller's next untap step")
+    void targetReturnsOnItsControllersNextUntap() {
+        Permanent efreet = addCreatureReady(player1, new ShimmeringEfreet());
+        Permanent walker = addCreatureReady(player2, new PhyrexianWalker());
+        walker.setTapped(true);
+
+        advanceTurn();
+        advanceTurn();
+        advanceTurn();
+        advanceTurn();
+
+        harness.handlePermanentChosen(player1, walker.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.phasedOutPermanents.get(player2.getId())).contains(walker);
+        assertThat(walker.isTapped()).isTrue();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+
+        advanceTurn();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(walker);
+        assertThat(gd.phasedOutPermanents.get(player2.getId())).doesNotContain(walker);
+        assertThat(walker.isTapped()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(efreet);
+    }
+
+    @Test
+    @DisplayName("Time and Tide causes a phase-in trigger outside the untap step")
+    @CardUsed({ShimmeringEfreet.class, PhyrexianWalker.class, TimeAndTide.class})
+    void spellDrivenPhaseInTriggersImmediately() {
+        Permanent efreet = addCreatureReady(player1, new ShimmeringEfreet());
+        Permanent walker = addCreatureReady(player2, new PhyrexianWalker());
+        advanceToUpkeep(player1);
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(efreet);
+
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player1, new TimeAndTide(), "{U}{U}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(efreet);
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.currentStep).isEqualTo(TurnStep.PRECOMBAT_MAIN);
+
+        harness.handlePermanentChosen(player1, walker.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.phasedOutPermanents.get(player2.getId())).contains(walker);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(efreet);
+    }
     private void advanceTurn() {
         harness.forceStep(TurnStep.CLEANUP);
         harness.clearPriorityPassed();
