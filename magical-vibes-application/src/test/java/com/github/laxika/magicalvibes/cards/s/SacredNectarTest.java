@@ -29,4 +29,19 @@ class SacredNectarTest extends BaseCardTest {
         harness.assertLife(player1, 17);
         harness.assertLife(player2, 7);
     }
+
+    @Test
+    @DisplayName("Sacred Nectar gains life only when it resolves")
+    void gainsLifeOnlyOnResolution() {
+        harness.setLife(player1, 20);
+        harness.castFromHand(player1, new SacredNectar(), "{1}{W}");
+
+        harness.assertLife(player1, 20);
+        harness.assertNotInGraveyard(player1, "Sacred Nectar");
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 24);
+        harness.assertInGraveyard(player1, "Sacred Nectar");
+    }
 }
