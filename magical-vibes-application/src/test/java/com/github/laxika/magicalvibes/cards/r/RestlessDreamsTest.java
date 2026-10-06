@@ -118,4 +118,60 @@ class RestlessDreamsTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough matching cards in graveyard");
     }
+
+    @Test
+    @DisplayName("Returns the remaining legal target when another target leaves the graveyard")
+    void returnsRemainingLegalTarget() {
+        Card rootwalla = new BaskingRootwalla();
+        Card aquamoeba = new Aquamoeba();
+        Card firstDiscard = new DeepAnalysis();
+        Card secondDiscard = new DeepAnalysis();
+        harness.setGraveyard(player1, List.of(rootwalla, aquamoeba));
+        harness.setHand(player1, List.of(new RestlessDreams(), firstDiscard, secondDiscard));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castSorceryWithDiscards(player1, 0, 2, List.of(), List.of(1, 2));
+        harness.handleMultipleCardsChosen(player1, List.of(rootwalla.getId(), aquamoeba.getId()));
+        harness.setGraveyard(player1, List.of(aquamoeba, firstDiscard, secondDiscard));
+        harness.setExile(player1, List.of(rootwalla));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(aquamoeba);
+        harness.assertInGraveyard(player1, "Restless Dreams");
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(firstDiscard, secondDiscard);
+    }
+
+    @Test
+    @DisplayName("Does not return another creature when its only target leaves the graveyard")
+    void doesNotReplaceIllegalTarget() {
+        Card target = new BaskingRootwalla();
+        Card otherCreature = new Aquamoeba();
+        Card discarded = new DeepAnalysis();
+        harness.setGraveyard(player1, List.of(target, otherCreature));
+        harness.setHand(player1, List.of(new RestlessDreams(), discarded));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castSorceryWithDiscards(player1, 0, 1, List.of(), List.of(1));
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.setGraveyard(player1, List.of(otherCreature, discarded));
+        harness.setExile(player1, List.of(target));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(otherCreature, discarded);
+        harness.assertInGraveyard(player1, "Restless Dreams");
+    }
+
+    @Test
+    @DisplayName("Casting requires discarding exactly the announced X cards")
+    void rejectsTooFewDiscards() {
+        harness.setGraveyard(player1, List.of(new BaskingRootwalla(), new Aquamoeba()));
+        harness.setHand(player1, List.of(new RestlessDreams(), new DeepAnalysis(), new DeepAnalysis()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() ->
+                harness.castSorceryWithDiscards(player1, 0, 2, List.of(), List.of(1)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Must discard 2 cards");
+    }
 }
