@@ -5,22 +5,23 @@ import com.github.laxika.magicalvibes.cards.p.ProdigalSorcerer;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
+@CardUsed({RestoreThePeace.class, GrizzlyBears.class, ProdigalSorcerer.class})
 class RestoreThePeaceTest extends BaseCardTest {
 
     @Test
     @DisplayName("Returns creatures that dealt combat damage this turn, regardless of controller")
     void returnsCreaturesThatDealtCombatDamage() {
-        Permanent attacker = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player2.getId()).add(attacker);
-        Permanent ownAttacker = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(ownAttacker);
+        Permanent attacker = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent ownAttacker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         dealtCombatDamage(attacker, player1);
         dealtCombatDamage(ownAttacker, player2);
 
@@ -35,8 +36,7 @@ class RestoreThePeaceTest extends BaseCardTest {
     @Test
     @DisplayName("Leaves creatures that dealt no damage this turn on the battlefield")
     void leavesUndamagingCreatures() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player2.getId()).add(bears);
+        harness.addToBattlefield(player2, new GrizzlyBears());
 
         cast();
 
@@ -60,9 +60,54 @@ class RestoreThePeaceTest extends BaseCardTest {
     }
 
     private void dealtCombatDamage(Permanent source, Player damaged) {
+        gd.recordDamageDealtBySource(source.getId(), 2);
         gd.combatDamageToPlayersThisTurn
                 .computeIfAbsent(source.getId(), k -> ConcurrentHashMap.newKeySet())
                 .add(damaged.getId());
+    }
+
+    @Test
+    @DisplayName("Returns an attacker after actual combat damage to a player")
+    void returnsAttackerAfterCombatDamage() {
+        addCreatureReady(player1, new GrizzlyBears());
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> {
+            declareAttackers(List.of(0));
+            resolveCombat();
+        });
+
+        cast();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Returns a stolen creature to its owner after it deals damage to a player")
+    void returnsDamageDealerToOwner() {
+        Permanent sorcerer = addCreatureReady(player1, new ProdigalSorcerer());
+        gd.stolenCreatures.put(sorcerer.getId(), player2.getId());
+        harness.activateAbility(player1, indexOf(player1, sorcerer), null, player2.getId());
+        harness.passBothPriorities();
+
+        cast();
+
+        harness.assertNotOnBattlefield(player1, "Prodigal Sorcerer");
+        harness.assertInHand(player2, "Prodigal Sorcerer");
+        harness.assertNotInHand(player1, "Prodigal Sorcerer");
+    }
+
+    @Test
+    @DisplayName("Does not return a creature whose damage was fully prevented")
+    void leavesCreatureWhoseDamageWasPrevented() {
+        Permanent sorcerer = addCreatureReady(player2, new ProdigalSorcerer());
+        gd.preventAllDamageByCreatures = true;
+        harness.activateAbility(player2, indexOf(player2, sorcerer), null, player1.getId());
+        harness.passBothPriorities();
+
+        cast();
+
+        harness.assertOnBattlefield(player2, "Prodigal Sorcerer");
+        harness.assertNotInHand(player2, "Prodigal Sorcerer");
     }
 
     private void cast() {
