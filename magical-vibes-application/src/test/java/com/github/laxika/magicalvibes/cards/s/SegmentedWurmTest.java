@@ -25,9 +25,7 @@ class SegmentedWurmTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new SearingTouch()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, wurm.getId());
-
-        harness.passBothPriorities(); // resolve the becomes-target trigger
+        harness.castAndResolveInstant(player1, 0, wurm.getId());
 
         assertThat(wurm.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
         assertThat(wurm.getEffectivePower()).isEqualTo(4);
@@ -58,8 +56,7 @@ class SegmentedWurmTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new SearingTouch()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, armodon.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, armodon.getId());
 
         assertThat(wurm.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
         assertThat(wurm.getEffectivePower()).isEqualTo(5);
@@ -85,5 +82,59 @@ class SegmentedWurmTest extends BaseCardTest {
 
         assertThat(wurm.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
         harness.assertInGraveyard(player1, "Searing Touch");
+    }
+
+    @Test
+    @DisplayName("Friendly spells trigger the Wurm each time they target it")
+    void friendlySpellsEachPutCounterOnWurm() {
+        Permanent wurm = addCreatureReady(player1, new SegmentedWurm());
+        harness.setHand(player1, List.of(new SearingTouch(), new SearingTouch()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castInstant(player1, 0, wurm.getId());
+        resolveAllTriggers();
+        assertThat(wurm.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+
+        harness.castInstant(player1, 0, wurm.getId());
+        resolveAllTriggers();
+
+        assertThat(wurm.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Segmented Wurm");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A friendly activated ability also triggers the Wurm")
+    void friendlyAbilityPutsCounterOnWurm() {
+        Permanent wurm = addCreatureReady(player1, new SegmentedWurm());
+        Permanent fireslinger = addCreatureReady(player1, new Fireslinger());
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(fireslinger),
+                null, wurm.getId());
+        resolveAllTriggers();
+
+        assertThat(wurm.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        harness.assertLife(player1, 19);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The fifth counter kills the Wurm before the targeting spell resolves")
+    void lethalCounterResolvesBeforeTargetingSpell() {
+        Permanent wurm = addCreatureReady(player2, new SegmentedWurm());
+        wurm.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 4);
+        harness.setHand(player1, List.of(new SearingTouch()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, wurm.getId());
+
+        harness.assertNotOnBattlefield(player2, "Segmented Wurm");
+        harness.assertInGraveyard(player2, "Segmented Wurm");
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Searing Touch");
+        assertThat(gd.stack).isEmpty();
     }
 }
