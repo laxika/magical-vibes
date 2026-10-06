@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.a.ArdentSoldier;
 import com.github.laxika.magicalvibes.cards.c.CoastalTower;
+import com.github.laxika.magicalvibes.cards.s.ShivanZombie;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -17,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RampantElephant.class, ArdentSoldier.class, CoastalTower.class})
+@CardUsed({RampantElephant.class, ArdentSoldier.class, CoastalTower.class, ShivanZombie.class, Repulse.class})
 class RampantElephantTest extends BaseCardTest {
 
     @Test
@@ -124,6 +125,117 @@ class RampantElephantTest extends BaseCardTest {
         harness.passBothPriorities();
         target.tap();
         elephant.setAttacking(true);
+        prepareDeclareBlockers();
+
+        assertThatCode(() -> gs.declareBlockers(gd, player2, List.of()))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Elephant can activate its ability")
+    void tappedSummoningSickSourceCanActivate() {
+        Permanent elephant = harness.addToBattlefieldAndReturn(player1, new RampantElephant());
+        elephant.setSummoningSick(true);
+        elephant.tap();
+        Permanent target = addCreatureReady(player2, new ArdentSoldier());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getMustBlockIds()).contains(elephant.getId());
+        assertThat(elephant.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The ability can target a creature its controller controls")
+    void canTargetOwnCreature() {
+        Permanent elephant = addReadyElephant(player1);
+        Permanent target = addCreatureReady(player1, new ArdentSoldier());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getMustBlockIds()).contains(elephant.getId());
+    }
+
+    @Test
+    @DisplayName("Protection from white prevents targeting even though activation costs green mana")
+    void cannotTargetCreatureWithProtectionFromWhite() {
+        addReadyElephant(player1);
+        Permanent target = addCreatureReady(player2, new ShivanZombie());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A creature required to block two Elephants may choose either one")
+    void competingRequirementsAllowBlockingSecondElephant() {
+        Permanent first = addReadyElephant(player1);
+        Permanent second = addReadyElephant(player1);
+        Permanent blocker = addCreatureReady(player2, new ArdentSoldier());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, blocker.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, null, blocker.getId());
+        harness.passBothPriorities();
+
+        first.setAttacking(true);
+        second.setAttacking(true);
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must block");
+        assertThatCode(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1))))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("The ability does not affect a target that leaves before resolution")
+    void targetLeavesBeforeResolution() {
+        addReadyElephant(player1);
+        Permanent target = addCreatureReady(player2, new ArdentSoldier());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.setHand(player2, List.of(new Repulse()));
+        harness.setLibrary(player2, List.of(new ArdentSoldier()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.castAndResolveInstant(player2, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Ardent Soldier");
+        harness.assertInHand(player2, "Ardent Soldier");
+        assertThat(target.getMustBlockIds()).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Removing the source does not force the target to block another attacker")
+    void sourceLeavesBeforeResolution() {
+        Permanent elephant = addReadyElephant(player1);
+        Permanent otherAttacker = addCreatureReady(player1, new ArdentSoldier());
+        Permanent target = addCreatureReady(player2, new ArdentSoldier());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.setHand(player2, List.of(new Repulse()));
+        harness.setLibrary(player2, List.of(new ArdentSoldier()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.castAndResolveInstant(player2, 0, elephant.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Rampant Elephant");
+        harness.assertInHand(player1, "Rampant Elephant");
+        otherAttacker.setAttacking(true);
         prepareDeclareBlockers();
 
         assertThatCode(() -> gs.declareBlockers(gd, player2, List.of()))
