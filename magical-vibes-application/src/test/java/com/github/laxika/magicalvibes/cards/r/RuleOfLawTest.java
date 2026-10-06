@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.c.Cancel;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -16,10 +17,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RuleOfLaw.class, GrizzlyBears.class, Plains.class, Shock.class})
+@CardUsed({RuleOfLaw.class, GrizzlyBears.class, Plains.class, Shock.class, Cancel.class})
 class RuleOfLawTest extends BaseCardTest {
-
-    // ===== Spell limiting =====
 
     @Test
     @DisplayName("First spell is still castable with Rule of Law on battlefield")
@@ -43,7 +42,7 @@ class RuleOfLawTest extends BaseCardTest {
     void castingRuleOfLawCountsTowardLimit() {
         harness.setHand(player1, List.of(new RuleOfLaw(), new GrizzlyBears()));
         harness.addMana(player1, ManaColor.WHITE, 3);
-        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -119,8 +118,7 @@ class RuleOfLawTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         harness.assertLife(player2, 18);
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
@@ -208,6 +206,76 @@ class RuleOfLawTest extends BaseCardTest {
         harness.playLand(player1, 0);
 
         harness.assertOnBattlefield(player1, "Plains");
+    }
+
+    @Test
+    @DisplayName("Spells cast before Rule of Law enters still count")
+    void countsSpellsCastBeforeEntering() {
+        harness.setHand(player1, List.of(new GrizzlyBears(), new RuleOfLaw(), new Shock()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Rule of Law");
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("A countered spell still uses the player's spell for the turn")
+    void counteredSpellCountsTowardLimit() {
+        harness.addToBattlefield(player1, new RuleOfLaw());
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setHand(player1, List.of(bears, new GrizzlyBears()));
+        harness.setHand(player2, List.of(new Cancel()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.addMana(player2, ManaColor.BLUE, 3);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castCreature(player1, 0);
+        harness.castAndResolveInstant(player2, 0, bears.getId());
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("Each player has an independent limit on the same turn")
+    void eachPlayerCanCastOnceOnSameTurn() {
+        harness.addToBattlefield(player1, new RuleOfLaw());
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.setHand(player2, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 18);
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, player1.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
     }
 }
 
