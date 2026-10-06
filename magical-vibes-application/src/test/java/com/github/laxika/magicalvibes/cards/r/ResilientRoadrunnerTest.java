@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.c.CunningCoyote;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -20,14 +21,14 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ResilientRoadrunner.class})
+@CardUsed({ResilientRoadrunner.class, CunningCoyote.class, RecklessLackey.class})
 class ResilientRoadrunnerTest extends BaseCardTest {
 
     @Test
     @DisplayName("Coyote creatures cannot block Resilient Roadrunner")
     void coyoteCannotBlock() {
         addRoadrunner();
-        Permanent blocker = addCreature(player2, "Coyote", 3, 3, List.of(CardSubtype.COYOTE));
+        addCreature(player2, "Coyote", 3, 3, List.of(CardSubtype.COYOTE));
 
         prepareBlockingInput();
 
@@ -39,22 +40,15 @@ class ResilientRoadrunnerTest extends BaseCardTest {
     @Test
     @DisplayName("Protection from Coyotes prevents their combat damage")
     void coyoteDamageIsPrevented() {
-        Permanent coyote = new Permanent(createCreature("Coyote", 3, 3, List.of(CardSubtype.COYOTE)));
-        coyote.setSummoningSick(false);
+        Permanent coyote = addCreatureReady(player1,
+                createCreature("Coyote", 3, 3, List.of(CardSubtype.COYOTE)));
         coyote.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(coyote);
 
-        Permanent roadrunner = new Permanent(new ResilientRoadrunner());
-        roadrunner.setSummoningSick(false);
+        Permanent roadrunner = addCreatureReady(player2, new ResilientRoadrunner());
         roadrunner.setBlocking(true);
         roadrunner.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(roadrunner);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
+        resolveCombat();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(coyote);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(roadrunner);
@@ -76,7 +70,7 @@ class ResilientRoadrunnerTest extends BaseCardTest {
     @DisplayName("The activated ability allows only creatures with haste to block this turn")
     void activatedAbilityRestrictsBlockersToCreaturesWithHaste() {
         activateRestriction();
-        Permanent blocker = addCreature(player2, "Grizzly Bear", 2, 2, List.of());
+        addCreature(player2, "Grizzly Bear", 2, 2, List.of());
 
         prepareBlockingInput();
 
@@ -113,11 +107,74 @@ class ResilientRoadrunnerTest extends BaseCardTest {
         assertThat(blocker.isBlocking()).isTrue();
     }
 
+    @Test
+    @DisplayName("Haste does not let a Coyote bypass protection after activation")
+    void hastyCoyoteStillCannotBlock() {
+        activateRestriction();
+        harness.addToBattlefield(player2, new CunningCoyote());
+
+        prepareBlockingInput();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection");
+    }
+
+    @Test
+    @DisplayName("A real non-Coyote with haste can block while summoning sick")
+    void recklessLackeyCanBlock() {
+        activateRestriction();
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new RecklessLackey());
+
+        prepareBlockingInput();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The restriction can be activated while the source is tapped")
+    void tappedRoadrunnerCanActivate() {
+        Permanent attacker = addRoadrunner();
+        attacker.setTapped(true);
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        addCreature(player2, "Grizzly Bear", 2, 2, List.of());
+
+        prepareBlockingInput();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("creatures with haste");
+        assertThat(attacker.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Haste allows a newly entered Roadrunner to attack")
+    void newlyEnteredRoadrunnerCanAttack() {
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new ResilientRoadrunner());
+        harness.addToBattlefield(player2, new RecklessLackey());
+        declareAttackers(List.of(0));
+
+        assertThat(attacker.isAttacking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Protection prevents targeting by a friendly Coyote's triggered ability")
+    void friendlyCoyoteCannotTargetRoadrunner() {
+        Permanent roadrunner = harness.addToBattlefieldAndReturn(player1, new ResilientRoadrunner());
+        harness.setHand(player1, List.of(new CunningCoyote()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, roadrunner.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection");
+    }
+
     private Permanent addRoadrunner() {
-        Permanent attacker = new Permanent(new ResilientRoadrunner());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new ResilientRoadrunner());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
         return attacker;
     }
 
@@ -132,10 +189,7 @@ class ResilientRoadrunnerTest extends BaseCardTest {
     private Permanent addCreature(Player player, String name,
                                   int power, int toughness, List<CardSubtype> subtypes,
                                   Keyword... keywords) {
-        Permanent permanent = new Permanent(createCreature(name, power, toughness, subtypes, keywords));
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        return addCreatureReady(player, createCreature(name, power, toughness, subtypes, keywords));
     }
 
     private static Card createCreature(String name, int power, int toughness, List<CardSubtype> subtypes,
@@ -154,9 +208,6 @@ class ResilientRoadrunnerTest extends BaseCardTest {
     }
 
     private void prepareBlockingInput() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
     }
 }
