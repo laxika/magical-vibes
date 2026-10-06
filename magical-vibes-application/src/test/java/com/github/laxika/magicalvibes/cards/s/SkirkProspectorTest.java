@@ -14,10 +14,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SkirkProspector.class, GoblinSledder.class, ElvishWarrior.class})
+@CardUsed({SkirkProspector.class, GoblinSledder.class, ElvishWarrior.class, BoggartShenanigans.class})
 class SkirkProspectorTest extends BaseCardTest {
-
-    // ===== Mana ability behavior =====
 
     @Test
     @DisplayName("Sacrificing itself adds one red mana immediately (mana ability, no stack)")
@@ -78,7 +76,6 @@ class SkirkProspectorTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(BoggartShenanigans.class)
     @DisplayName("Can sacrifice a noncreature Goblin permanent")
     void sacrificeNoncreatureGoblinPermanent() {
         harness.addToBattlefield(player1, new BoggartShenanigans());
@@ -94,5 +91,40 @@ class SkirkProspectorTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
         harness.assertNotOnBattlefield(player1, "Boggart Shenanigans");
         harness.assertOnBattlefield(player1, "Skirk Prospector");
+    }
+
+    @Test
+    @DisplayName("An opposing Goblin cannot be sacrificed to pay the cost")
+    void cannotSacrificeOpponentsGoblin() {
+        harness.addToBattlefield(player1, new SkirkProspector());
+        harness.addToBattlefield(player2, new GoblinSledder());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertInGraveyard(player1, "Skirk Prospector");
+        harness.assertOnBattlefield(player2, "Goblin Sledder");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can activate repeatedly, sacrificing another Goblin and then itself")
+    void repeatedActivationsAddManaForEachSacrifice() {
+        harness.addToBattlefield(player1, new SkirkProspector());
+        harness.addToBattlefield(player1, new GoblinSledder());
+        UUID sledderId = harness.getPermanentId(player1, "Goblin Sledder");
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, sledderId);
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Goblin Sledder");
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(2);
+        harness.assertInGraveyard(player1, "Skirk Prospector");
+        harness.assertNotOnBattlefield(player1, "Skirk Prospector");
     }
 }
