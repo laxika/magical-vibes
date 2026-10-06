@@ -10,7 +10,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(RhysticScrying.class)
+@CardUsed({RhysticScrying.class})
 class RhysticScryingTest extends BaseCardTest {
 
     @Test
@@ -60,6 +60,66 @@ class RhysticScryingTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void drawsBeforeEitherPlayerDecidesWhetherToPay() {
+        RhysticScrying first = new RhysticScrying();
+        RhysticScrying second = new RhysticScrying();
+        RhysticScrying third = new RhysticScrying();
+        harness.setLibrary(player1, List.of(first, second, third));
+        castScrying();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(first, second, third);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(first, second, third);
+        harness.handleMayAbilityChosen(player2, false);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void insufficientManaDoesNotCauseDiscardOrConsumeMana() {
+        harness.setLibrary(player1, List.of(new RhysticScrying(), new RhysticScrying(), new RhysticScrying()));
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        castScrying();
+
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void mayDiscardCardsAlreadyInHandInsteadOfTheCardsDrawn() {
+        RhysticScrying oldFirst = new RhysticScrying();
+        RhysticScrying oldSecond = new RhysticScrying();
+        RhysticScrying oldThird = new RhysticScrying();
+        RhysticScrying drawnFirst = new RhysticScrying();
+        RhysticScrying drawnSecond = new RhysticScrying();
+        RhysticScrying drawnThird = new RhysticScrying();
+        harness.setLibrary(player1, List.of(drawnFirst, drawnSecond, drawnThird));
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.castFromHand(player1, new RhysticScrying(), "{2}{U}{U}");
+        harness.setHand(player1, List.of(oldFirst, oldSecond, oldThird));
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnFirst, drawnSecond, drawnThird);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(oldFirst, oldSecond, oldThird);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
