@@ -1,11 +1,14 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.f.FaithlessLooting;
+import com.github.laxika.magicalvibes.cards.d.DrannithStinger;
+import com.github.laxika.magicalvibes.cards.n.Neutralize;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -15,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RielleTheEverwise.class, FaithlessLooting.class, GrizzlyBears.class})
+@CardUsed({RielleTheEverwise.class, FaithlessLooting.class, GrizzlyBears.class, DrannithStinger.class, Neutralize.class})
 class RielleTheEverwiseTest extends BaseCardTest {
 
     @Test
@@ -68,6 +71,99 @@ class RielleTheEverwiseTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(6);
     }
 
+    @Test
+    void doesNotTriggerIfControllerDiscardedBeforeRielleEntered() {
+        harness.setHand(player1, List.of(new DrannithStinger(), new DrannithStinger()));
+        harness.setLibrary(player1, List.of(new DrannithStinger(), new DrannithStinger(),
+                new DrannithStinger(), new DrannithStinger()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+        addRielleReady(player1);
+
+        harness.activateHandAbility(player1, 0, null);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    void cyclingTriggersDrawBeforeCyclingResolvesAndOnlyOncePerTurn() {
+        addRielleReady(player1);
+        harness.setHand(player1, List.of(new DrannithStinger(), new DrannithStinger()));
+        harness.setLibrary(player1, List.of(new DrannithStinger(), new DrannithStinger(),
+                new DrannithStinger(), new DrannithStinger()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+
+        harness.activateHandAbility(player1, 0, null);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+    }
+
+    @Test
+    void opponentsDiscardDoesNotTriggerAndControllerCanTriggerOnOpponentsTurn() {
+        addRielleReady(player1);
+        harness.setHand(player1, List.of(new DrannithStinger()));
+        harness.setHand(player2, List.of(new DrannithStinger()));
+        harness.setLibrary(player1, List.of(new DrannithStinger(), new DrannithStinger()));
+        harness.setLibrary(player2, List.of(new DrannithStinger(), new DrannithStinger()));
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.activateHandAbility(player2, 0, null);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateHandAbility(player1, 0, null);
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    void powerUpdatesWhenInstantAndSorceryCardsLeaveGraveyard() {
+        Permanent rielle = addRielleReady(player1);
+        harness.setGraveyard(player1, List.of(new Neutralize(), new FaithlessLooting(),
+                new DrannithStinger()));
+        assertThat(gqs.getEffectivePower(gd, rielle)).isEqualTo(2);
+
+        harness.setGraveyard(player1, List.of(new DrannithStinger()));
+        assertThat(gqs.getEffectivePower(gd, rielle)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, rielle)).isEqualTo(3);
+    }
+    @Test
+    void firstDiscardDrawResetsOnTheNextTurn() {
+        addRielleReady(player1);
+        harness.setHand(player1, List.of(new DrannithStinger(), new DrannithStinger()));
+        harness.setLibrary(player1, List.of(new DrannithStinger(), new DrannithStinger(),
+                new DrannithStinger(), new DrannithStinger()));
+        harness.setLibrary(player2, List.of(new DrannithStinger(), new DrannithStinger()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateHandAbility(player1, 0, null);
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
+    }
     private Permanent addRielleReady(Player player) {
         return addCreatureReady(player, new RielleTheEverwise());
     }
