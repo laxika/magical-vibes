@@ -10,12 +10,17 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SanctumOfAll.class, Forest.class, HondenOfCleansingFire.class,
+        HondenOfSeeingWinds.class, SanctumOfFruitfulHarvest.class,
+        SanctumOfTranquilLight.class, SanctumOfCalmWaters.class,
+        SanctumOfStoneFangs.class, SanctumOfShatteredHeights.class})
 class SanctumOfAllTest extends BaseCardTest {
 
     @Test
@@ -118,6 +123,72 @@ class SanctumOfAllTest extends BaseCardTest {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.DRAW);
         harness.clearPriorityPassed();
+        harness.passUntil(player, TurnStep.PRECOMBAT_MAIN);
+    }
+
+    @Test
+    void mayDeclineSearch() {
+        SanctumOfTranquilLight shrine = new SanctumOfTranquilLight();
+        harness.setLibrary(player1, List.of(shrine));
+        harness.addToBattlefield(player1, new SanctumOfAll());
+
+        advanceToUpkeep(player1);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(shrine);
+        harness.assertNotOnBattlefield(player1, "Sanctum of Tranquil Light");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void doesNotDoubleItsOwnUpkeepTriggerAtSixShrines() {
+        addSixM21Shrines();
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void shrineEnteringDuringUpkeepDoesNotTriggerThatUpkeep() {
+        HondenOfCleansingFire shrine = new HondenOfCleansingFire();
+        harness.setGraveyard(player1, List.of(shrine));
+        harness.addToBattlefield(player1, new SanctumOfAll());
+        harness.setLife(player1, 20);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMultipleCardsChosen(player1, List.of(shrine.getId()));
+
+        harness.assertOnBattlefield(player1, "Honden of Cleansing Fire");
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void doesNotDoubleOpponentsShrineTrigger() {
+        addSixM21Shrines();
+        harness.addToBattlefield(player2, new HondenOfCleansingFire());
+        harness.setLife(player2, 20);
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 22);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    private void addSixM21Shrines() {
+        harness.addToBattlefield(player1, new SanctumOfAll());
+        harness.addToBattlefield(player1, new SanctumOfTranquilLight());
+        harness.addToBattlefield(player1, new SanctumOfCalmWaters());
+        harness.addToBattlefield(player1, new SanctumOfStoneFangs());
+        harness.addToBattlefield(player1, new SanctumOfShatteredHeights());
+        harness.addToBattlefield(player1, new SanctumOfFruitfulHarvest());
     }
 }
