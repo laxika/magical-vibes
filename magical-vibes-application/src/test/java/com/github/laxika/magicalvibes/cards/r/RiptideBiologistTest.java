@@ -97,4 +97,67 @@ class RiptideBiologistTest extends BaseCardTest {
         assertThat(biologist.getMarkedDamage()).isZero();
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(biologist);
     }
+
+    @Test
+    void faceDownBiologistCanBeBlockedByBeast() {
+        harness.setHand(player1, List.of(new RiptideBiologist()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        resolveAllTriggers();
+        Permanent biologist = findPermanent(player1, "Riptide Biologist");
+        biologist.setSummoningSick(false);
+        biologist.setAttacking(true);
+        Permanent beast = addCreatureReady(player2, new KrosanTusker());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(beast),
+                gd.playerBattlefields.get(player1.getId()).indexOf(biologist))));
+
+        assertThat(beast.isBlocking()).isTrue();
+    }
+
+    @Test
+    void faceDownBiologistDoesNotPreventBeastCombatDamage() {
+        harness.setHand(player2, List.of(new RiptideBiologist()));
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.forceActivePlayer(player2);
+        harness.castCreatureWithMorph(player2, 0);
+        resolveAllTriggers();
+        Permanent biologist = findPermanent(player2, "Riptide Biologist");
+        Permanent beast = addCreatureReady(player1, new KrosanTusker());
+        beast.setAttacking(true);
+        biologist.setBlocking(true);
+        biologist.addBlockingTarget(gd.playerBattlefields.get(player1.getId()).indexOf(beast));
+
+        resolveCombat();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(biologist);
+        harness.assertInGraveyard(player2, "Riptide Biologist");
+    }
+
+    @Test
+    void turningFaceUpAfterBlockingPreventsBeastCombatDamage() {
+        harness.setHand(player2, List.of(new RiptideBiologist()));
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.forceActivePlayer(player2);
+        harness.castCreatureWithMorph(player2, 0);
+        resolveAllTriggers();
+        Permanent biologist = findPermanent(player2, "Riptide Biologist");
+        Permanent beast = addCreatureReady(player1, new KrosanTusker());
+        beast.setAttacking(true);
+        biologist.setBlocking(true);
+        biologist.addBlockingTarget(gd.playerBattlefields.get(player1.getId()).indexOf(beast));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.DECLARE_BLOCKERS);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.turnFaceUp(player2, gd.playerBattlefields.get(player2.getId()).indexOf(biologist));
+        resolveCombat();
+
+        assertThat(biologist.isFaceDown()).isFalse();
+        assertThat(biologist.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(biologist);
+    }
 }
