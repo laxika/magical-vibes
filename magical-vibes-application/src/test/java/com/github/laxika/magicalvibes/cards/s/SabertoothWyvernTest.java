@@ -37,12 +37,42 @@ class SabertoothWyvernTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new SabertoothWyvern());
         Permanent blocker = addCreatureReady(player2, new WaywardSoul());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(blocker.getCard());
+    }
+
+    @Test
+    @DisplayName("First strike lets Sabertooth Wyvern kill an attacking flyer before it deals damage")
+    void firstStrikeWorksWhileBlocking() {
+        Permanent attacker = addCreatureReady(player1, new WaywardSoul());
+        Permanent blocker = addCreatureReady(player2, new SabertoothWyvern());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(attacker.getCard());
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(blocker);
+        assertThat(blocker.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Two Sabertooth Wyverns deal first strike damage simultaneously and both die")
+    void firstStrikersDealDamageSimultaneously() {
+        Permanent attacker = addCreatureReady(player1, new SabertoothWyvern());
+        Permanent blocker = addCreatureReady(player2, new SabertoothWyvern());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(attacker.getCard());
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(blocker.getCard());
     }
 }
