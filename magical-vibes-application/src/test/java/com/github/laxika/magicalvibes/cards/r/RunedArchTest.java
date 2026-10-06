@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.a.Aurochs;
 import com.github.laxika.magicalvibes.cards.b.BalduvianBarbarians;
 import com.github.laxika.magicalvibes.cards.k.KjeldoranWarrior;
+import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RunedArch.class, Aurochs.class, BalduvianBarbarians.class, KjeldoranWarrior.class})
+@CardUsed({RunedArch.class, Aurochs.class, BalduvianBarbarians.class, KjeldoranWarrior.class, GiantGrowth.class})
 class RunedArchTest extends BaseCardTest {
 
     @Test
@@ -28,7 +29,7 @@ class RunedArchTest extends BaseCardTest {
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();
 
-        Permanent arch = gd.playerBattlefields.get(player1.getId()).getLast();
+        Permanent arch = findPermanent(player1, "Runed Arch");
         assertThat(arch.isTapped()).isTrue();
     }
 
@@ -118,18 +119,114 @@ class RunedArchTest extends BaseCardTest {
     @DisplayName("A target that becomes too powerful before resolution is ignored while legal targets are affected")
     void ignoresTargetThatBecomesTooPowerfulBeforeResolution() {
         harness.addToBattlefield(player1, new RunedArch());
-        Permanent targetThatGetsTooPowerful = addCreatureReady(player1, new Aurochs());
-        Permanent legalTarget = addCreatureReady(player1, new KjeldoranWarrior());
-        addCreatureReady(player1, new Aurochs());
+        Permanent targetThatGetsTooPowerful = harness.addToBattlefieldAndReturn(player1, new Aurochs());
+        Permanent legalTarget = harness.addToBattlefieldAndReturn(player1, new KjeldoranWarrior());
+        harness.setHand(player2, List.of(new GiantGrowth()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbilityWithMultiTargets(player1, 0, 0, 2,
                 List.of(targetThatGetsTooPowerful.getId(), legalTarget.getId()));
 
-        declareAttackers(player1, List.of(0, 2));
+        harness.castInstant(player2, 0, targetThatGetsTooPowerful.getId());
         resolveAllTriggers();
 
         assertThat(targetThatGetsTooPowerful.isCantBeBlocked()).isFalse();
         assertThat(legalTarget.isCantBeBlocked()).isTrue();
+    }
+
+    @Test
+    void sacrificeIsPaidBeforeResolution() {
+        harness.addToBattlefield(player1, new RunedArch());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Aurochs());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, 1, List.of(target.getId()));
+
+        harness.assertInGraveyard(player1, "Runed Arch");
+        assertThat(countPermanents(player1, "Runed Arch")).isZero();
+        assertThat(target.isCantBeBlocked()).isFalse();
+
+        harness.passBothPriorities();
+        assertThat(target.isCantBeBlocked()).isTrue();
+    }
+
+    @Test
+    void rejectsTappedArch() {
+        Permanent arch = harness.addToBattlefieldAndReturn(player1, new RunedArch());
+        arch.setTapped(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Aurochs());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(
+                player1, 0, 0, 1, List.of(target.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(countPermanents(player1, "Runed Arch")).isEqualTo(1);
+    }
+
+    @Test
+    void rejectsRepeatedTarget() {
+        harness.addToBattlefield(player1, new RunedArch());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Aurochs());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(
+                player1, 0, 0, 2, List.of(target.getId(), target.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void rejectsNoncreatureTarget() {
+        Permanent arch = harness.addToBattlefieldAndReturn(player1, new RunedArch());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(
+                player1, 0, 0, 1, List.of(arch.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void doesNotResolveWhenEveryTargetBecomesIllegal() {
+        harness.addToBattlefield(player1, new RunedArch());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Aurochs());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.setHand(player2, List.of(new GiantGrowth()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, 1, List.of(target.getId()));
+        harness.castInstant(player2, 0, target.getId());
+        resolveAllTriggers();
+
+        assertThat(target.isCantBeBlocked()).isFalse();
+        harness.assertInGraveyard(player1, "Runed Arch");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void requiresPaymentOfX() {
+        harness.addToBattlefield(player1, new RunedArch());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Aurochs());
+
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(
+                player1, 0, 0, 1, List.of(target.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(countPermanents(player1, "Runed Arch")).isEqualTo(1);
+        assertThat(target.isCantBeBlocked()).isFalse();
+    }
+
+    @Test
+    void increasingPowerAfterResolutionDoesNotRemoveUnblockability() {
+        harness.addToBattlefield(player1, new RunedArch());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Aurochs());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.setHand(player2, List.of(new GiantGrowth()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, 1, List.of(target.getId()));
+        harness.passBothPriorities();
+        harness.castInstant(player2, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isCantBeBlocked()).isTrue();
     }
 }
