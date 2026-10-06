@@ -34,6 +34,8 @@ class SHIELDFlyingCarTest extends BaseCardTest {
                 .anyMatch(card -> card.getId().equals(bears.getCard().getId()));
 
         advanceToEndStep();
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         assertThat(harness.getPermanentId(player1, "Grizzly Bears")).isNotEqualTo(originalId);
@@ -91,6 +93,65 @@ class SHIELDFlyingCarTest extends BaseCardTest {
         assertThat(crew.isTapped()).isTrue();
     }
 
+    @Test
+    void returnsStolenCreatureToItsOwner() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        gd.stolenCreatures.put(bears.getId(), player2.getId());
+        castFlyingCar(bears.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        advanceToEndStep();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void flashDuringOpponentsEndStepReturnsAtFollowingEndStep() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        castFlyingCar(bears.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.passUntilWithNoAttackers(player1, TurnStep.POSTCOMBAT_MAIN);
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        advanceToEndStep();
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void summoningSickCreatureCanCrewAndAnimationEndsAtCleanup() {
+        Permanent vehicle = addReadyFlyingCar();
+        Permanent crew = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        crew.setSummoningSick(true);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(crew.isTapped()).isTrue();
+        assertThat(gqs.isCreature(gd, vehicle)).isTrue();
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+        assertThat(gqs.isCreature(gd, vehicle)).isFalse();
+    }
+
+    @Test
+    void tappedCreatureCannotPayCrewCost() {
+        Permanent vehicle = addReadyFlyingCar();
+        Permanent crew = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        crew.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gqs.isCreature(gd, vehicle)).isFalse();
+    }
+
     private void castFlyingCar(UUID targetId) {
         harness.setHand(player1, List.of(new SHIELDFlyingCar()));
         addFlyingCarMana();
@@ -109,9 +170,6 @@ class SHIELDFlyingCarTest extends BaseCardTest {
     }
 
     private void advanceToEndStep() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
     }
 }
