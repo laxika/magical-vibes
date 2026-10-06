@@ -32,8 +32,7 @@ class ReyavMasterSmithTest extends BaseCardTest {
         equipment.setAttachedTo(equipped.getId());
 
         declareAttackers(player1, List.of(1, 2, 3));
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gqs.hasKeyword(gd, enchanted, Keyword.DOUBLE_STRIKE)).isTrue();
         assertThat(gqs.hasKeyword(gd, equipped, Keyword.DOUBLE_STRIKE)).isTrue();
@@ -55,6 +54,99 @@ class ReyavMasterSmithTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.DOUBLE_STRIKE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Reyav can grant double strike to itself when equipped")
+    void equippedReyavGainsDoubleStrike() {
+        Permanent reyav = addCreatureReady(player1, new ReyavMasterSmith());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new Bonesplitter());
+        equipment.setAttachedTo(reyav.getId());
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gqs.hasKeyword(gd, reyav, Keyword.DOUBLE_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Being both enchanted and equipped produces only one trigger")
+    void enchantedAndEquippedCreatureTriggersOnce() {
+        addCreatureReady(player1, new ReyavMasterSmith());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new HolyStrength());
+        aura.setAttachedTo(attacker.getId());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new Bonesplitter());
+        equipment.setAttachedTo(attacker.getId());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(List.of(1)));
+
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.DOUBLE_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("An Aura controlled by an opponent qualifies the attacker")
+    void opponentControlledAuraQualifiesAttacker() {
+        addCreatureReady(player1, new ReyavMasterSmith());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new HolyStrength());
+        aura.setAttachedTo(attacker.getId());
+
+        declareAttackers(List.of(1));
+        resolveAllTriggers();
+
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.DOUBLE_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Opposing enchanted attackers do not trigger Reyav")
+    void opposingAttackerDoesNotGainDoubleStrike() {
+        addCreatureReady(player1, new ReyavMasterSmith());
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new HolyStrength());
+        aura.setAttachedTo(attacker.getId());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(player2, List.of(0)));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.DOUBLE_STRIKE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Losing Equipment before resolution does not stop the grant")
+    void losingEquipmentBeforeResolutionStillGrantsDoubleStrike() {
+        addCreatureReady(player1, new ReyavMasterSmith());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new Bonesplitter());
+        equipment.setAttachedTo(attacker.getId());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(List.of(1)));
+        assertThat(gd.stack).hasSize(1);
+        equipment.setAttachedTo(null);
+        resolveAllTriggers();
+
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.DOUBLE_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Becoming equipped after attacking does not create a trigger")
+    void becomingEquippedAfterAttackingDoesNotTrigger() {
+        addCreatureReady(player1, new ReyavMasterSmith());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new Bonesplitter());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(List.of(1)));
+        assertThat(gd.stack).isEmpty();
+        equipment.setAttachedTo(attacker.getId());
+        resolveAllTriggers();
 
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.DOUBLE_STRIKE)).isFalse();
     }
