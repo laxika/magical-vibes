@@ -84,11 +84,10 @@ class ReyaDawnbringerTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Upkeep trigger asks for a target even with summoning sickness")
-    void triggerFiresWithSummoningSickness() {
+    @DisplayName("Upkeep trigger asks for a target for a creature placed directly on the battlefield")
+    void triggerFiresForCreaturePlacedOnBattlefield() {
         GiantSpider target = new GiantSpider();
-        Permanent reya = new Permanent(new ReyaDawnbringer());
-        gd.playerBattlefields.get(player1.getId()).add(reya);
+        harness.addToBattlefield(player1, new ReyaDawnbringer());
         harness.setGraveyard(player1, List.of(target));
 
         advanceToUpkeep(player1);
@@ -289,6 +288,58 @@ class ReyaDawnbringerTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
                 .anyMatch(text -> text.contains("Reya Dawnbringer") && text.contains("fizzles"));
+        harness.assertNotOnBattlefield(player1, "Giant Spider");
+    }
+
+    @Test
+    @DisplayName("The return resolves after Reya leaves the battlefield")
+    void resolvesAfterSourceLeavesBattlefield() {
+        GiantSpider target = new GiantSpider();
+        Permanent reya = addCreatureReady(player1, new ReyaDawnbringer());
+        harness.setGraveyard(player1, List.of(target));
+
+        advanceToUpkeep(player1);
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(reya);
+        harness.setGraveyard(player1, List.of(target, reya.getCard()));
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertOnBattlefield(player1, "Giant Spider");
+        harness.assertNotInGraveyard(player1, "Giant Spider");
+        harness.assertInGraveyard(player1, "Reya Dawnbringer");
+        harness.assertNotOnBattlefield(player1, "Reya Dawnbringer");
+    }
+
+    @Test
+    @DisplayName("Returned creature enters untapped with summoning sickness")
+    void returnedCreatureEntersUntappedWithSummoningSickness() {
+        GiantSpider target = new GiantSpider();
+        addCreatureReady(player1, new ReyaDawnbringer());
+        harness.setGraveyard(player1, List.of(target));
+
+        advanceToUpkeep(player1);
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        Permanent returned = findPermanent(player1, "Giant Spider");
+        assertThat(returned.isTapped()).isFalse();
+        assertThat(returned.isSummoningSick()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Opponent's graveyard cannot supply the only available target")
+    void noTargetWhenOnlyOpponentHasCreatureInGraveyard() {
+        addCreatureReady(player1, new ReyaDawnbringer());
+        harness.setGraveyard(player2, List.of(new GiantSpider()));
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player2, "Giant Spider");
         harness.assertNotOnBattlefield(player1, "Giant Spider");
     }
 }
