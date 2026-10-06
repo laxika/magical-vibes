@@ -56,4 +56,25 @@ class RevivingDoseTest extends BaseCardTest {
 
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
     }
+
+    @Test
+    @DisplayName("The second player gains life and draws exactly the top card")
+    void secondPlayerDrawsExactlyOneCard() {
+        GrizzlyBears topCard = new GrizzlyBears();
+        GrizzlyBears remainingCard = new GrizzlyBears();
+        harness.setLife(player1, 17);
+        harness.setLife(player2, 17);
+        harness.setLibrary(player2, List.of(topCard, remainingCard));
+        int opponentHandSize = gd.playerHands.get(player1.getId()).size();
+
+        harness.castFromHand(player2, new RevivingDose(), "{2}{W}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(topCard);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(remainingCard);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(opponentHandSize);
+        harness.assertInGraveyard(player2, "Reviving Dose");
+    }
 }
