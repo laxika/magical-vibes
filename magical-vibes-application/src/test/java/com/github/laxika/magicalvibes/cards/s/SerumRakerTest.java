@@ -4,23 +4,22 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.ConsecratedSphinx;
+import com.github.laxika.magicalvibes.cards.t.TreasureMage;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SerumRaker.class, TreasureMage.class, ConsecratedSphinx.class})
 class SerumRakerTest extends BaseCardTest {
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting Serum Raker puts it on the battlefield")
@@ -35,15 +34,13 @@ class SerumRakerTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Serum Raker");
     }
 
-    // ===== Death trigger =====
-
     @Test
     @DisplayName("When Serum Raker dies in combat, death trigger goes on the stack")
     void deathTriggerGoesOnStack() {
         harness.addToBattlefield(player1, new SerumRaker());
 
         setupCombatWhereSerumRakerDies();
-        harness.passBothPriorities(); // Combat damage — Serum Raker dies
+        resolveCombat(); // Combat damage - Serum Raker dies
 
         harness.assertInGraveyard(player1, "Serum Raker");
 
@@ -56,11 +53,11 @@ class SerumRakerTest extends BaseCardTest {
     @DisplayName("Resolving death trigger prompts active player to discard first (APNAP)")
     void deathTriggerPromptsActivePlayerFirst() {
         harness.addToBattlefield(player1, new SerumRaker());
-        harness.setHand(player1, new ArrayList<>(List.of(new GrizzlyBears())));
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears())));
+        harness.setHand(player1, List.of(new TreasureMage()));
+        harness.setHand(player2, List.of(new TreasureMage()));
 
         setupCombatWhereSerumRakerDies();
-        harness.passBothPriorities(); // Combat damage — Serum Raker dies
+        resolveCombat(); // Combat damage - Serum Raker dies
         harness.passBothPriorities(); // Resolve death trigger
 
         // Active player (player1) should be prompted to discard first
@@ -70,17 +67,17 @@ class SerumRakerTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("After active player discards, non-active player is prompted")
-    void afterActivePlayerDiscardsNonActivePlayerPrompted() {
+    @DisplayName("After active player chooses, non-active player is prompted")
+    void afterActivePlayerChoosesNonActivePlayerPrompted() {
         harness.addToBattlefield(player1, new SerumRaker());
-        harness.setHand(player1, new ArrayList<>(List.of(new GrizzlyBears())));
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears())));
+        harness.setHand(player1, List.of(new TreasureMage()));
+        harness.setHand(player2, List.of(new TreasureMage()));
 
         setupCombatWhereSerumRakerDies();
-        harness.passBothPriorities(); // Combat damage — Serum Raker dies
+        resolveCombat(); // Combat damage - Serum Raker dies
         harness.passBothPriorities(); // Resolve death trigger
 
-        // Active player discards
+        // Active player chooses
         harness.handleCardChosen(player1, 0);
 
         // Non-active player should now be prompted
@@ -93,11 +90,11 @@ class SerumRakerTest extends BaseCardTest {
     @DisplayName("Both players discard a card when death trigger fully resolves")
     void bothPlayersDiscardOnDeath() {
         harness.addToBattlefield(player1, new SerumRaker());
-        harness.setHand(player1, new ArrayList<>(List.of(new GrizzlyBears())));
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears())));
+        harness.setHand(player1, List.of(new TreasureMage()));
+        harness.setHand(player2, List.of(new TreasureMage()));
 
         setupCombatWhereSerumRakerDies();
-        harness.passBothPriorities(); // Combat damage — Serum Raker dies
+        resolveCombat(); // Combat damage - Serum Raker dies
         harness.passBothPriorities(); // Resolve death trigger
 
         // Both players discard
@@ -106,22 +103,22 @@ class SerumRakerTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
-        harness.assertInGraveyard(player1, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Treasure Mage");
+        harness.assertInGraveyard(player2, "Treasure Mage");
     }
 
     @Test
     @DisplayName("Death trigger skips player with empty hand and prompts the other")
     void skipsPlayerWithEmptyHand() {
         harness.addToBattlefield(player1, new SerumRaker());
-        harness.setHand(player1, new ArrayList<>());
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears())));
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new TreasureMage()));
 
         setupCombatWhereSerumRakerDies();
-        harness.passBothPriorities(); // Combat damage — Serum Raker dies
+        resolveCombat(); // Combat damage - Serum Raker dies
         harness.passBothPriorities(); // Resolve death trigger
 
-        // Active player (player1) has no cards — should skip to player2
+        // Active player (player1) has no cards - should skip to player2
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId()).isEqualTo(player2.getId());
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("no cards to discard"));
@@ -131,34 +128,49 @@ class SerumRakerTest extends BaseCardTest {
     @DisplayName("Death trigger does nothing when both players have empty hands")
     void doesNothingWhenBothHandsEmpty() {
         harness.addToBattlefield(player1, new SerumRaker());
-        harness.setHand(player1, new ArrayList<>());
-        harness.setHand(player2, new ArrayList<>());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
 
         setupCombatWhereSerumRakerDies();
-        harness.passBothPriorities(); // Combat damage — Serum Raker dies
+        resolveCombat(); // Combat damage - Serum Raker dies
         harness.passBothPriorities(); // Resolve death trigger
 
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Each player chooses before either chosen card is discarded")
+    void discardIsDeferredUntilBothPlayersChoose() {
+        harness.addToBattlefield(player1, new SerumRaker());
+        harness.setHand(player1, List.of(new TreasureMage(), new SerumRaker()));
+        harness.setHand(player2, List.of(new TreasureMage(), new SerumRaker()));
+
+        setupCombatWhereSerumRakerDies();
+        resolveCombat();
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.assertInHand(player1, "Treasure Mage");
+        harness.assertNotInGraveyard(player1, "Treasure Mage");
+
+        harness.handleCardChosen(player2, 0);
+
+        harness.assertInGraveyard(player1, "Treasure Mage");
+        harness.assertInGraveyard(player2, "Treasure Mage");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
 
     private void setupCombatWhereSerumRakerDies() {
         Permanent serumRakerPerm = findPermanent(player1, "Serum Raker");
         serumRakerPerm.setSummoningSick(false);
         serumRakerPerm.setAttacking(true);
 
-        GrizzlyBears bigBear = new GrizzlyBears();
-        bigBear.setPower(5);
-        bigBear.setToughness(5);
-        Permanent blockerPerm = new Permanent(bigBear);
-        blockerPerm.setSummoningSick(false);
+        Permanent blockerPerm = addCreatureReady(player2, new ConsecratedSphinx());
         blockerPerm.setBlocking(true);
         blockerPerm.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blockerPerm);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
     }
 }
