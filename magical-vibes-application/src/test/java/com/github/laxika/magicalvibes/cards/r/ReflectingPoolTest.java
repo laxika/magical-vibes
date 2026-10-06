@@ -1,6 +1,11 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GaeasCradle;
+import com.github.laxika.magicalvibes.cards.s.SongOfTheDryads;
+import com.github.laxika.magicalvibes.cards.s.SunkenRuins;
+import com.github.laxika.magicalvibes.cards.w.WiltLeafCavaliers;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.w.Wasteland;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -10,9 +15,12 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ReflectingPool.class, Forest.class, Island.class, Wasteland.class})
+@CardUsed({ReflectingPool.class, Forest.class, Island.class, Wasteland.class,
+        GaeasCradle.class, SongOfTheDryads.class, SunkenRuins.class, WiltLeafCavaliers.class})
 class ReflectingPoolTest extends BaseCardTest {
 
     @Test
@@ -22,7 +30,7 @@ class ReflectingPoolTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        // Reflecting Pool cannot tap for itself, so nothing is available
+        // Its own ability does not establish a mana type without another source.
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(0);
     }
@@ -109,5 +117,73 @@ class ReflectingPoolTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(0);
+    }
+
+    @Test
+    void tappedLandStillContributesItsManaType() {
+        Permanent pool = harness.addToBattlefieldAndReturn(player1, new ReflectingPool());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        forest.setTapped(true);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(pool.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+    }
+
+    @Test
+    void filterLandContributesColorsEvenWithoutManaToPayItsCost() {
+        harness.addToBattlefield(player1, new ReflectingPool());
+        harness.addToBattlefield(player1, new SunkenRuins());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        PendingInteraction.ColorChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.options()).containsExactly("BLACK", "BLUE", "COLORLESS");
+        harness.handleListChoice(player1, "BLACK");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+    }
+
+    @Test
+    void multiplePoolsWithoutAnIndependentSourceProduceNoMana() {
+        harness.addToBattlefield(player1, new ReflectingPool());
+        harness.addToBattlefield(player1, new ReflectingPool());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 1, null, null);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void cradleWithoutCreaturesDoesNotContributeGreenMana() {
+        harness.addToBattlefield(player1, new ReflectingPool());
+        harness.addToBattlefield(player1, new GaeasCradle());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void creatureTurnedIntoForestContributesGreenMana() {
+        harness.addToBattlefield(player1, new ReflectingPool());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new WiltLeafCavaliers());
+        harness.setHand(player1, List.of(new SongOfTheDryads()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
     }
 }
