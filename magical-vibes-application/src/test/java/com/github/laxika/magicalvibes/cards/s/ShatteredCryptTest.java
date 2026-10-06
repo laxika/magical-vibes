@@ -100,4 +100,63 @@ class ShatteredCryptTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Shattered Crypt");
         assertThat(gd.getLife(player1.getId())).isEqualTo(startingLife);
     }
+
+    @Test
+    @DisplayName("A remaining legal target returns and life loss still equals X")
+    void oneTargetLeavesGraveyardBeforeResolution() {
+        Card infantry = new BenalishInfantry();
+        Card knight = new BenalishKnight();
+        harness.setGraveyard(player1, List.of(infantry, knight));
+        harness.setHand(player1, List.of(new ShatteredCrypt()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        int startingLife = gd.getLife(player1.getId());
+
+        harness.castSorcery(player1, 0, 2);
+        harness.handleMultipleCardsChosen(player1, List.of(infantry.getId(), knight.getId()));
+        harness.setGraveyard(player1, List.of(knight));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Benalish Knight");
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getId)
+                .doesNotContain(infantry.getId());
+        harness.assertNotInGraveyard(player1, "Benalish Knight");
+        harness.assertInGraveyard(player1, "Shattered Crypt");
+        harness.assertLife(player1, startingLife - 2);
+    }
+
+    @Test
+    @DisplayName("All targets leaving the graveyard prevents resolution and life loss")
+    void allTargetsLeaveGraveyardBeforeResolution() {
+        Card infantry = new BenalishInfantry();
+        Card knight = new BenalishKnight();
+        harness.setGraveyard(player1, List.of(infantry, knight));
+        harness.setHand(player1, List.of(new ShatteredCrypt()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        int startingLife = gd.getLife(player1.getId());
+
+        harness.castSorcery(player1, 0, 2);
+        harness.handleMultipleCardsChosen(player1, List.of(infantry.getId(), knight.getId()));
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Shattered Crypt");
+        harness.assertLife(player1, startingLife);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("X=0 can be cast with an empty graveyard")
+    void xZeroWithEmptyGraveyard() {
+        harness.setGraveyard(player1, List.of());
+        harness.setHand(player1, List.of(new ShatteredCrypt()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        int startingLife = gd.getLife(player1.getId());
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        harness.assertInGraveyard(player1, "Shattered Crypt");
+        harness.assertLife(player1, startingLife);
+        assertThat(gd.stack).isEmpty();
+    }
 }
