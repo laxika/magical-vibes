@@ -118,6 +118,83 @@ class SadisticHypnotistTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
     }
 
+    @Test
+    @DisplayName("An empty-handed target still requires the sacrifice cost")
+    void emptyHandStillRequiresSacrifice() {
+        addReadyHypnotist(player1);
+        harness.addToBattlefield(player1, new AngelicWall());
+        harness.setHand(player2, List.of());
+        readyForSorcerySpeed(player1);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Angelic Wall"));
+        harness.assertInGraveyard(player1, "Angelic Wall");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Hypnotist can sacrifice itself")
+    void summoningSicknessDoesNotPreventActivation() {
+        harness.addToBattlefieldAndReturn(player1, new SadisticHypnotist()).setSummoningSick(true);
+        harness.addToBattlefield(player1, new AngelicWall());
+        harness.setHand(player2, List.of(new Forest(), new Forest()));
+        readyForSorcerySpeed(player1);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Sadistic Hypnotist"));
+        harness.assertInGraveyard(player1, "Sadistic Hypnotist");
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+        harness.assertOnBattlefield(player1, "Angelic Wall");
+    }
+
+    @Test
+    @DisplayName("Cannot activate outside a main phase")
+    void cannotActivateDuringUpkeep() {
+        addReadyHypnotist(player1);
+        readyForSorcerySpeed(player1);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery speed");
+        harness.assertOnBattlefield(player1, "Sadistic Hypnotist");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate while another activation is on the stack")
+    void cannotActivateWithNonemptyStack() {
+        addReadyHypnotist(player1);
+        harness.addToBattlefield(player1, new AngelicWall());
+        harness.setHand(player2, List.of(new Forest(), new Forest()));
+        readyForSorcerySpeed(player1);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Angelic Wall"));
+        assertThat(gd.stack).hasSize(1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("stack is empty");
+        harness.assertOnBattlefield(player1, "Sadistic Hypnotist");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, 0);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
+
     private void addReadyHypnotist(Player player) {
         addCreatureReady(player, new SadisticHypnotist());
     }
