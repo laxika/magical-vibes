@@ -1,17 +1,16 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.ShortSword;
-import com.github.laxika.magicalvibes.cards.w.WallOfWood;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.a.AmprynTactician;
+import com.github.laxika.magicalvibes.cards.v.VeteransSidearm;
+import com.github.laxika.magicalvibes.cards.g.GuardiansOfMeletis;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RelicSeeker.class, VeteransSidearm.class, AmprynTactician.class, GuardiansOfMeletis.class})
 class RelicSeekerTest extends BaseCardTest {
 
     @Test
@@ -40,7 +40,7 @@ class RelicSeekerTest extends BaseCardTest {
                 .allMatch(c -> c.getSubtypes().contains(CardSubtype.EQUIPMENT));
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
     }
@@ -76,12 +76,10 @@ class RelicSeekerTest extends BaseCardTest {
     @DisplayName("Blocked Relic Seeker never becomes renowned, so nothing triggers")
     void blockedDoesNotTrigger() {
         Permanent seeker = addCreatureReady(player1, new RelicSeeker());
-        addCreatureReady(player2, new WallOfWood());
+        addCreatureReady(player2, new GuardiansOfMeletis());
         setupLibrary();
 
-        declareAttackers(player1, List.of(0));
-        resolveAllTriggers();
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
         resolveAllTriggers();
@@ -90,6 +88,67 @@ class RelicSeekerTest extends BaseCardTest {
         assertThat(harness.getGameData().interaction.activeInteraction()).isNull();
     }
 
+
+    @Test
+    @DisplayName("Searching with no Equipment leaves the hand unchanged and shuffles")
+    void noEquipmentStillShuffles() {
+        addCreatureReady(player1, new RelicSeeker());
+        AmprynTactician creature = new AmprynTactician();
+        harness.setLibrary(player1, List.of(creature));
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        attackUnblocked();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(creature);
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
+    }
+
+    @Test
+    @DisplayName("A restricted Equipment search may fail to find even with Equipment available")
+    void mayFailToFindEquipment() {
+        addCreatureReady(player1, new RelicSeeker());
+        VeteransSidearm equipment = new VeteransSidearm();
+        harness.setLibrary(player1, List.of(equipment));
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        attackUnblocked();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(equipment);
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
+    }
+
+    @Test
+    @DisplayName("The opposing controller searches their own library and receives the revealed Equipment")
+    void opposingControllerSearchesOwnLibrary() {
+        Permanent seeker = addCreatureReady(player2, new RelicSeeker());
+        VeteransSidearm equipment = new VeteransSidearm();
+        AmprynTactician otherLibraryCard = new AmprynTactician();
+        harness.setLibrary(player2, List.of(equipment));
+        harness.setLibrary(player1, List.of(otherLibraryCard));
+
+        declareAttackers(player2, List.of(0));
+        resolveAllTriggers();
+        resolveCombat(player2);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(seeker.isRenowned()).isTrue();
+        assertThat(seeker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerHands.get(player2.getId())).contains(equipment);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(equipment);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(otherLibraryCard);
+        assertThat(gameLogContains("reveals Veteran's Sidearm")).isTrue();
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
+    }
     private void attackUnblocked() {
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();
@@ -98,8 +157,6 @@ class RelicSeekerTest extends BaseCardTest {
     }
 
     private void setupLibrary() {
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new ShortSword(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new VeteransSidearm(), new AmprynTactician()));
     }
 }
