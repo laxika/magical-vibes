@@ -2,8 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.a.AlphaKavu;
 import com.github.laxika.magicalvibes.cards.c.CloudCover;
-import com.github.laxika.magicalvibes.cards.s.StormscapeFamiliar;
-import com.github.laxika.magicalvibes.cards.s.SunscapeFamiliar;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -75,6 +73,62 @@ class SilverDrakeTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getId().equals(silverDrakeId));
         assertThat(gd.playerHands.get(player1.getId())).contains(silverDrake);
+    }
+
+    @Test
+    @DisplayName("A controlled creature returns to its owner rather than its controller")
+    void returnsCreatureToItsOwner() {
+        SunscapeFamiliar stolenCard = new SunscapeFamiliar();
+        stolenCard.setOwnerId(player2.getId());
+        Permanent stolenCreature = harness.addToBattlefieldAndReturn(player1, stolenCard);
+
+        castAndResolveSpell();
+        resolveTriggerToChoice();
+        harness.handlePermanentChosen(player1, stolenCreature.getId());
+
+        assertThat(gd.playerHands.get(player2.getId())).contains(stolenCard);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(stolenCard);
+        harness.assertNotOnBattlefield(player1, "Sunscape Familiar");
+        harness.assertOnBattlefield(player1, "Silver Drake");
+    }
+
+    @Test
+    @DisplayName("The return still happens after Silver Drake leaves the battlefield")
+    void triggerResolvesWithoutItsSource() {
+        Permanent blueCreature = harness.addToBattlefieldAndReturn(player1, new StormscapeFamiliar());
+        castAndResolveSpell();
+        Permanent drake = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard() instanceof SilverDrake)
+                .findFirst().orElseThrow();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, drake));
+
+        resolveTriggerToChoice();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactly(blueCreature.getId());
+        harness.handlePermanentChosen(player1, blueCreature.getId());
+        harness.assertInHand(player1, "Stormscape Familiar");
+        harness.assertNotOnBattlefield(player1, "Stormscape Familiar");
+        harness.assertInGraveyard(player1, "Silver Drake");
+    }
+
+    @Test
+    @DisplayName("The return does nothing if no matching creatures remain at resolution")
+    void noMatchingCreaturesAtResolution() {
+        harness.addToBattlefield(player1, new AlphaKavu());
+        castAndResolveSpell();
+        Permanent drake = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard() instanceof SilverDrake)
+                .findFirst().orElseThrow();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, drake));
+
+        resolveTriggerToChoice();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Alpha Kavu");
+        harness.assertNotInHand(player1, "Alpha Kavu");
+        harness.assertInGraveyard(player1, "Silver Drake");
     }
 
     private SilverDrake castAndResolveSpell() {
