@@ -1,25 +1,28 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.w.WalkingCorpse;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SharpenedPitchfork.class, SnapcasterMage.class, WalkingCorpse.class})
 class SharpenedPitchforkTest extends BaseCardTest {
-
-    // ===== Static effects: first strike =====
 
     @Test
     @DisplayName("Equipped creature has first strike regardless of creature type")
     void equippedCreatureHasFirstStrike() {
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new WalkingCorpse());
         Permanent pitchfork = addPitchforkReady(player1);
         pitchfork.setAttachedTo(creature.getId());
 
@@ -39,7 +42,7 @@ class SharpenedPitchforkTest extends BaseCardTest {
     @Test
     @DisplayName("Creature loses first strike when Pitchfork is removed")
     void creatureLosesFirstStrikeWhenEquipmentRemoved() {
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new WalkingCorpse());
         Permanent pitchfork = addPitchforkReady(player1);
         pitchfork.setAttachedTo(creature.getId());
 
@@ -49,8 +52,6 @@ class SharpenedPitchforkTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isFalse();
     }
-
-    // ===== Static effects: conditional +1/+1 for Humans =====
 
     @Test
     @DisplayName("Equipped Human creature gets +1/+1")
@@ -66,7 +67,7 @@ class SharpenedPitchforkTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped non-Human creature does not get +1/+1")
     void equippedNonHumanDoesNotGetBoost() {
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new WalkingCorpse());
         Permanent pitchfork = addPitchforkReady(player1);
         pitchfork.setAttachedTo(creature.getId());
 
@@ -74,15 +75,13 @@ class SharpenedPitchforkTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2); // 2 + 0
     }
 
-    // ===== First strike in combat =====
-
     @Test
     @DisplayName("Equipped creature deals first strike damage before regular damage")
     void equippedCreatureDealsFirstStrikeDamage() {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new WalkingCorpse());
         Permanent pitchfork = addPitchforkReady(player1);
         pitchfork.setAttachedTo(creature.getId());
         creature.setAttacking(true);
@@ -93,14 +92,12 @@ class SharpenedPitchforkTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
 
-    // ===== Re-equip =====
-
     @Test
     @DisplayName("Moving Pitchfork from Human to non-Human removes +1/+1 but keeps first strike")
     void movingFromHumanToNonHumanRemovesBoostKeepsFirstStrike() {
         Permanent pitchfork = addPitchforkReady(player1);
         Permanent human = addReadyHuman(player1);
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new WalkingCorpse());
         pitchfork.setAttachedTo(human.getId());
 
         assertThat(gqs.getEffectivePower(gd, human)).isEqualTo(3);
@@ -123,7 +120,7 @@ class SharpenedPitchforkTest extends BaseCardTest {
     @DisplayName("Moving Pitchfork from non-Human to Human grants +1/+1")
     void movingFromNonHumanToHumanGrantsBoost() {
         Permanent pitchfork = addPitchforkReady(player1);
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new WalkingCorpse());
         Permanent human = addReadyHuman(player1);
         pitchfork.setAttachedTo(creature.getId());
 
@@ -139,19 +136,39 @@ class SharpenedPitchforkTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, human, Keyword.FIRST_STRIKE)).isTrue();
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Equipped creature kills its blocker before regular combat damage")
+    void firstStrikeKillsBlockerBeforeItCanDealDamage() {
+        Permanent attacker = addCreatureReady(player1, new WalkingCorpse());
+        Permanent pitchfork = addPitchforkReady(player1);
+        pitchfork.setAttachedTo(attacker.getId());
+        addCreatureReady(player2, new WalkingCorpse());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
+        harness.assertInGraveyard(player2, "Walking Corpse");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Unequipped Pitchfork grants no bonuses to nearby creatures")
+    void unequippedPitchforkGrantsNoBonuses() {
+        addPitchforkReady(player1);
+        Permanent human = addReadyHuman(player1);
+
+        assertThat(gqs.getEffectivePower(gd, human)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, human)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, human, Keyword.FIRST_STRIKE)).isFalse();
+    }
 
     private Permanent addPitchforkReady(Player player) {
-        Permanent perm = new Permanent(new SharpenedPitchfork());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new SharpenedPitchfork());
     }
 
     private Permanent addReadyHuman(Player player) {
-        Permanent perm = new Permanent(new EliteVanguard());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new SnapcasterMage());
     }
 }
