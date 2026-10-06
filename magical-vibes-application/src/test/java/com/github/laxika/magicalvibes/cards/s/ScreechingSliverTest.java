@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -74,6 +76,84 @@ class ScreechingSliverTest extends BaseCardTest {
         addCreatureReady(player1, new BenalishCavalry());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+    @Test
+    @DisplayName("The ability mills exactly the top card into the target player's graveyard")
+    void millsExactlyTheTopCard() {
+        addCreatureReady(player1, new ScreechingSliver());
+        SidewinderSliver topCard = new SidewinderSliver();
+        BenalishCavalry nextCard = new BenalishCavalry();
+        harness.setLibrary(player2, List.of(topCard, nextCard));
+        harness.setGraveyard(player2, List.of());
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(nextCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(topCard);
+    }
+
+    @Test
+    @DisplayName("An empty library is a legal target and milling it does not cause a loss")
+    void canMillAnEmptyLibrary() {
+        Permanent sliver = addCreatureReady(player1, new ScreechingSliver());
+        harness.setLibrary(player2, List.of());
+        harness.setGraveyard(player2, List.of());
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.status).isEqualTo(com.github.laxika.magicalvibes.model.GameStatus.RUNNING);
+        assertThat(sliver.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Sliver cannot pay the granted tap cost")
+    void summoningSicknessPreventsActivation() {
+        addCreatureReady(player1, new ScreechingSliver());
+        Permanent sliver = addCreatureReady(player1, new SidewinderSliver());
+        sliver.setSummoningSick(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(sliver.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped Sliver cannot pay the granted tap cost again")
+    void tappedSliverCannotActivate() {
+        addCreatureReady(player1, new ScreechingSliver());
+        Permanent sliver = addCreatureReady(player1, new SidewinderSliver());
+        sliver.setTapped(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Removing Screeching Sliver removes the grant but does not counter an activated ability")
+    void pendingAbilityResolvesAfterGrantSourceLeaves() {
+        Permanent source = addCreatureReady(player1, new ScreechingSliver());
+        Permanent sliver = addCreatureReady(player1, new SidewinderSliver());
+        BenalishCavalry topCard = new BenalishCavalry();
+        harness.setLibrary(player2, List.of(topCard));
+        harness.setGraveyard(player2, List.of());
+
+        harness.activateAbility(player1, 1, null, player2.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(topCard);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        sliver.setTapped(false);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 }
