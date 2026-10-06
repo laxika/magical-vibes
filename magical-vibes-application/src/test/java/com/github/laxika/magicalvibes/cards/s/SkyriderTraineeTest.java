@@ -54,6 +54,45 @@ class SkyriderTraineeTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, trainee, Keyword.FLYING)).isFalse();
     }
 
+    @Test
+    @DisplayName("Has flying when enchanted by an opponent's Aura")
+    void opponentsAuraGrantsFlying() {
+        Permanent trainee = addTrainee();
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new GuardiansMagemark());
+        aura.setAttachedTo(trainee.getId());
+
+        assertThat(gqs.hasKeyword(gd, trainee, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Keeps flying until the last attached Aura leaves")
+    void keepsFlyingUntilLastAuraLeaves() {
+        Permanent trainee = addTrainee();
+        Permanent firstAura = attachAura(trainee);
+        Permanent secondAura = attachAura(trainee);
+
+        assertThat(gqs.hasKeyword(gd, trainee, Keyword.FLYING)).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).remove(firstAura);
+
+        assertThat(gqs.hasKeyword(gd, trainee, Keyword.FLYING)).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).remove(secondAura);
+
+        assertThat(gqs.hasKeyword(gd, trainee, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("An Aura attached to another creature does not grant flying")
+    void auraOnAnotherCreatureDoesNotGrantFlying() {
+        Permanent trainee = addTrainee();
+        Permanent otherTrainee = addTrainee();
+        attachAura(otherTrainee);
+
+        assertThat(gqs.hasKeyword(gd, trainee, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, otherTrainee, Keyword.FLYING)).isTrue();
+    }
+
     private Permanent addTrainee() {
         return addCreatureReady(player1, new SkyriderTrainee());
     }
