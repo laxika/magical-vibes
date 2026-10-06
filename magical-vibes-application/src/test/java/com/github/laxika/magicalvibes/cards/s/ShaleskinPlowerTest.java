@@ -47,6 +47,51 @@ class ShaleskinPlowerTest extends BaseCardTest {
                 .doesNotContain(bears.getId());
     }
 
+    @Test
+    void turningFaceUpMustDestroyYourOwnLandWhenItIsTheOnlyTarget() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent plower = castFaceDown();
+
+        turnFaceUp(plower);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactly(forest.getId());
+        harness.handlePermanentChosen(player1, forest.getId());
+        assertThat(gd.stack).hasSize(1);
+        harness.assertOnBattlefield(player1, "Forest");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Forest");
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertOnBattlefield(player1, "Shaleskin Plower");
+    }
+
+    @Test
+    void turningFaceUpWithoutLandsStillTurnsTheCreatureFaceUp() {
+        Permanent plower = castFaceDown();
+
+        turnFaceUp(plower);
+
+        assertThat(plower.isFaceDown()).isFalse();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Shaleskin Plower");
+    }
+
+    @Test
+    void castingFaceUpDoesNotDestroyALand() {
+        harness.addToBattlefield(player2, new Forest());
+        harness.castFromHand(player1, new ShaleskinPlower(), "{3}{R}");
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Shaleskin Plower");
+        harness.assertOnBattlefield(player2, "Forest");
+        harness.assertNotInGraveyard(player2, "Forest");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+    }
+
     private Permanent castFaceDown() {
         harness.setHand(player1, List.of(new ShaleskinPlower()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
