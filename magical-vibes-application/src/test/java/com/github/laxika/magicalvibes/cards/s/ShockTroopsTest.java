@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
-import com.github.laxika.magicalvibes.cards.f.FreshVolunteers;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
@@ -14,7 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ShockTroops.class, GrizzlyBears.class, ChandraNalaar.class, FreshVolunteers.class})
+@CardUsed({ShockTroops.class, GrizzlyBears.class, ChandraNalaar.class})
 class ShockTroopsTest extends BaseCardTest {
 
     @Test
@@ -58,9 +57,7 @@ class ShockTroopsTest extends BaseCardTest {
     @DisplayName("Deals 2 damage to target creature, destroying a 2/2")
     void dealsDamageToCreatureKilling2Toughness() {
         addCreatureReady(player1, new ShockTroops());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-
-        Permanent target = findPermanent(player2, "Grizzly Bears");
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
@@ -85,9 +82,7 @@ class ShockTroopsTest extends BaseCardTest {
     @DisplayName("Ability fizzles if target creature is removed before resolution")
     void fizzlesIfTargetRemoved() {
         addCreatureReady(player1, new ShockTroops());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-
-        Permanent target = findPermanent(player2, "Grizzly Bears");
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.activateAbility(player1, 0, null, target.getId());
 
         gd.playerBattlefields.get(player2.getId()).clear();
@@ -119,5 +114,37 @@ class ShockTroopsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Can activate while tapped without paying mana")
+    void canActivateWhileTapped() {
+        Permanent troops = harness.addToBattlefieldAndReturn(player1, new ShockTroops());
+        troops.tap();
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        harness.assertInGraveyard(player1, "Shock Troops");
+        harness.assertNotOnBattlefield(player1, "Shock Troops");
+    }
+
+    @Test
+    @DisplayName("Can target itself but the sacrificed target is gone at resolution")
+    void canTargetItself() {
+        Permanent troops = harness.addToBattlefieldAndReturn(player1, new ShockTroops());
+
+        harness.activateAbility(player1, 0, null, troops.getId());
+
+        harness.assertInGraveyard(player1, "Shock Troops");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
     }
 }
