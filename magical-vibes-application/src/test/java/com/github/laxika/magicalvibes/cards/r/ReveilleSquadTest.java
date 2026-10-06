@@ -13,7 +13,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DisplayName("Reveille Squad")
-@CardUsed(ReveilleSquad.class)
+@CardUsed({ReveilleSquad.class})
 class ReveilleSquadTest extends BaseCardTest {
 
     @Test
@@ -85,6 +85,55 @@ class ReveilleSquadTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(ally.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A single attacker triggers the optional untap")
+    void singleAttackerTriggersUntap() {
+        addCreatureReady(player1, new ReveilleSquad());
+        Permanent ally = addCreatureReady(player1, new ReveilleSquad());
+        ally.tap();
+        addReadyAttackers(1);
+
+        declareAttackers(player2, List.of(0));
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(ally.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An untapped Squad does not trigger when its controller attacks")
+    void doesNotTriggerWhenControllerAttacks() {
+        addCreatureReady(player1, new ReveilleSquad());
+        Permanent attacker = addCreatureReady(player1, new ReveilleSquad());
+
+        declareAttackers(player1, List.of(1));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(attacker.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Squad may untap creatures if tapped then untapped before resolution")
+    void mayUntapAfterSourceBecomesUntappedAgain() {
+        Permanent squad = addCreatureReady(player1, new ReveilleSquad());
+        Permanent ally = addCreatureReady(player1, new ReveilleSquad());
+        ally.tap();
+        addReadyAttackers(1);
+
+        declareAttackers(player2, List.of(0));
+        squad.tap();
+        squad.untap();
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(ally.isTapped()).isFalse();
     }
 
     private List<Permanent> addReadyAttackers(int count) {
