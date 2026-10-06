@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -96,6 +95,104 @@ class RelicGolemTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
     }
 
+    @Test
+    void canMillItsControllerBelowGraveyardThreshold() {
+        Permanent golem = addReadyRelicGolem(player1);
+        Card first = new Spellbook();
+        Card second = new Spellbook();
+        Card remaining = new Spellbook();
+        harness.setLibrary(player1, List.of(first, second, remaining));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+
+        assertThat(golem.isTapped()).isTrue();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(first, second, remaining);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remaining);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(first, second);
+    }
+
+    @Test
+    void millsOnlyAvailableCardFromShortLibrary() {
+        addReadyRelicGolem(player1);
+        Card onlyCard = new Spellbook();
+        harness.setLibrary(player2, List.of(onlyCard));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(onlyCard);
+    }
+
+    @Test
+    void cannotActivateWhileSummoningSick() {
+        Permanent golem = harness.addToBattlefieldAndReturn(player1, new RelicGolem());
+        golem.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(golem.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotActivateWithoutTwoMana() {
+        Permanent golem = addReadyRelicGolem(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(golem.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotActivateAgainWhileTapped() {
+        addReadyRelicGolem(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+    }
+
+    @Test
+    void millingOpponentEnablesAnotherGolemToAttack() {
+        addReadyRelicGolem(player1);
+        Permanent attacker = addReadyRelicGolem(player1);
+        fillGraveyard(player2, 6);
+        harness.setLibrary(player2, List.of(new Spellbook(), new Spellbook(), new Spellbook()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        beginAttackerDeclaration(player1);
+        gs.declareAttackers(gd, player1, List.of(1));
+
+        assertThat(attacker.isAttacking()).isTrue();
+    }
+
+    @Test
+    void losingGraveyardThresholdBeforeDeclarationPreventsAttack() {
+        Permanent golem = addReadyRelicGolem(player1);
+        fillGraveyard(player2, 8);
+        fillGraveyard(player2, 7);
+        beginAttackerDeclaration(player1);
+
+        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+        assertThat(golem.isAttacking()).isFalse();
+    }
+
     private Permanent addReadyRelicGolem(Player player) {
         Permanent permanent = harness.addToBattlefieldAndReturn(player, new RelicGolem());
         permanent.setSummoningSick(false);
@@ -114,14 +211,13 @@ class RelicGolemTest extends BaseCardTest {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(activePlayer.getId()));
+        harness.beginAttackerDeclarationInput();
     }
 
     private void addAttackingCreature(Player player) {
-        Permanent attacker = new Permanent(new GrizzlyBears());
+        Permanent attacker = harness.addToBattlefieldAndReturn(player, new GrizzlyBears());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player.getId()).add(attacker);
     }
 
     private void beginBlockerDeclaration() {
