@@ -52,4 +52,23 @@ class RithsAttendantTest extends BaseCardTest {
         harness.assertNotInGraveyard(player1, "Rith's Attendant");
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
+
+    @Test
+    @DisplayName("A tapped Rith's Attendant can pay its generic cost with colored mana")
+    void canActivateWhileTappedUsingColoredMana() {
+        harness.addToBattlefieldAndReturn(player1, new RithsAttendant()).setTapped(true);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Rith's Attendant");
+        harness.assertInGraveyard(player1, "Rith's Attendant");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+    }
 }
