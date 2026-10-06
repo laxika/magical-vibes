@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AerialDoombot;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -15,16 +15,16 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RobotDomination.class, GrizzlyBears.class})
+@CardUsed({RobotDomination.class, AerialDoombot.class})
 class RobotDominationTest extends BaseCardTest {
 
     @Test
     @DisplayName("A creature card entering your graveyard draws, loses life, and adds a plan counter")
     void creatureCardEnteringGraveyardTriggers() {
         Permanent domination = harness.addToBattlefieldAndReturn(player1, new RobotDomination());
-        Card drawn = new GrizzlyBears();
+        Card drawn = new AerialDoombot();
         harness.setLibrary(player1, List.of(drawn));
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new AerialDoombot());
         int lifeBefore = gd.getLife(player1.getId());
 
         putIntoGraveyard(creature);
@@ -41,12 +41,11 @@ class RobotDominationTest extends BaseCardTest {
     void thirdPlanCounterCreatesRobots() {
         Permanent domination = harness.addToBattlefieldAndReturn(player1, new RobotDomination());
         domination.setCounterCount(CounterType.PLAN, 2);
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new AerialDoombot()));
+        Permanent creature = addCreatureReady(player1, new AerialDoombot());
 
         putIntoGraveyard(creature);
-        resolveTopOfStack();
-        resolveTopOfStack();
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Robot Domination");
         harness.assertInGraveyard(player1, "Robot Domination");
@@ -58,8 +57,8 @@ class RobotDominationTest extends BaseCardTest {
     void createsRobotsAfterSourceLeaves() {
         Permanent domination = harness.addToBattlefieldAndReturn(player1, new RobotDomination());
         domination.setCounterCount(CounterType.PLAN, 2);
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new AerialDoombot()));
+        Permanent creature = addCreatureReady(player1, new AerialDoombot());
 
         putIntoGraveyard(creature);
         resolveTopOfStack();
@@ -67,6 +66,85 @@ class RobotDominationTest extends BaseCardTest {
         resolveTopOfStack();
 
         assertRobots();
+    }
+
+    @Test
+    @DisplayName("Removing plan counters after the third counter trigger does not prevent Robots")
+    void createsRobotsAfterPlanCountersAreRemoved() {
+        Permanent domination = harness.addToBattlefieldAndReturn(player1, new RobotDomination());
+        domination.setCounterCount(CounterType.PLAN, 2);
+        harness.setLibrary(player1, List.of(new AerialDoombot()));
+        Permanent creature = addCreatureReady(player1, new AerialDoombot());
+
+        putIntoGraveyard(creature);
+        resolveTopOfStack();
+        domination.setCounterCount(CounterType.PLAN, 0);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Robot Domination");
+        assertRobots();
+    }
+
+    @Test
+    @DisplayName("Two creature cards dying simultaneously cause only one graveyard trigger")
+    void simultaneousCreatureDeathsTriggerOnce() {
+        Permanent domination = harness.addToBattlefieldAndReturn(player1, new RobotDomination());
+        Card drawn = new AerialDoombot();
+        harness.setLibrary(player1, List.of(drawn, new AerialDoombot(), new AerialDoombot()));
+        Permanent first = addCreatureReady(player1, new AerialDoombot());
+        Permanent second = addCreatureReady(player1, new AerialDoombot());
+        first.setMarkedDamage(1);
+        second.setMarkedDamage(1);
+        int lifeBefore = gd.getLife(player1.getId());
+
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+        harness.assertLife(player1, lifeBefore - 1);
+        assertThat(domination.getCounterCount(CounterType.PLAN)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("An opponent's creature card entering their graveyard does not trigger")
+    void opponentsCreatureDoesNotTrigger() {
+        Permanent domination = harness.addToBattlefieldAndReturn(player1, new RobotDomination());
+        Permanent creature = addCreatureReady(player2, new AerialDoombot());
+
+        putIntoGraveyard(creature);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(domination.getCounterCount(CounterType.PLAN)).isZero();
+    }
+
+    @Test
+    @DisplayName("A noncreature card entering your graveyard does not trigger")
+    void noncreatureCardDoesNotTrigger() {
+        Permanent domination = harness.addToBattlefieldAndReturn(player1, new RobotDomination());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new RobotDomination());
+
+        putIntoGraveyard(other);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(domination.getCounterCount(CounterType.PLAN)).isZero();
+    }
+
+    @Test
+    @DisplayName("Robot creature tokens dying do not trigger the graveyard ability")
+    void creatureTokensDoNotTrigger() {
+        Permanent domination = harness.addToBattlefieldAndReturn(player1, new RobotDomination());
+        domination.setCounterCount(CounterType.PLAN, 2);
+        harness.setLibrary(player1, List.of(new AerialDoombot()));
+        Permanent creature = addCreatureReady(player1, new AerialDoombot());
+        putIntoGraveyard(creature);
+        resolveAllTriggers();
+        assertRobots();
+        Permanent watcher = harness.addToBattlefieldAndReturn(player1, new RobotDomination());
+
+        putIntoGraveyard(findPermanent(player1, "Robot"));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(watcher.getCounterCount(CounterType.PLAN)).isZero();
     }
 
     private void putIntoGraveyard(Permanent permanent) {
