@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.a.AdventurersGuildhouse;
 import com.github.laxika.magicalvibes.cards.b.BatonOfMorale;
 import com.github.laxika.magicalvibes.cards.k.Karakas;
+import com.github.laxika.magicalvibes.cards.l.LivonyaSilone;
 import com.github.laxika.magicalvibes.cards.m.MasterOfTheHunt;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -12,10 +14,13 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ShelkinBrownie.class, MasterOfTheHunt.class, BatonOfMorale.class, Karakas.class})
+@CardUsed({ShelkinBrownie.class, MasterOfTheHunt.class, BatonOfMorale.class, Karakas.class,
+        AdventurersGuildhouse.class, LivonyaSilone.class})
 class ShelkinBrownieTest extends BaseCardTest {
 
     @Test
@@ -82,5 +87,79 @@ class ShelkinBrownieTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, karakas.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can target itself even without bands with other")
+    void canTargetItselfWithoutBandsWithOther() {
+        Permanent brownie = addCreatureReady(player1, new ShelkinBrownie());
+
+        harness.activateAbility(player1, 0, null, brownie.getId());
+        harness.passBothPriorities();
+
+        assertThat(brownie.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(brownie);
+    }
+
+    @Test
+    @DisplayName("Cannot activate while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        Permanent brownie = harness.addToBattlefieldAndReturn(player1, new ShelkinBrownie());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, brownie.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(brownie.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate while already tapped")
+    void cannotActivateWhileTapped() {
+        Permanent brownie = addCreatureReady(player1, new ShelkinBrownie());
+        brownie.setTapped(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, brownie.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Removes bands with other granted by an existing Guildhouse")
+    void removesAbilityGrantedByExistingGuildhouse() {
+        addCreatureReady(player1, new ShelkinBrownie());
+        Permanent legend = addCreatureReady(player1, new LivonyaSilone());
+        harness.enterBattlefieldAndReturn(player1, new AdventurersGuildhouse());
+        assertThat(gqs.canUseBandsWithOther(gd, List.of(legend), false)).isTrue();
+
+        harness.activateAbility(player1, 0, null, legend.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.canUseBandsWithOther(gd, List.of(legend), false)).isFalse();
+        assertThat(gqs.hasKeyword(gd, legend, Keyword.FIRST_STRIKE)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.canUseBandsWithOther(gd, List.of(legend), false)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A later Guildhouse can grant bands with other after Brownie resolves")
+    void laterGuildhouseCanGrantAbilityAfterBrownieResolves() {
+        addCreatureReady(player1, new ShelkinBrownie());
+        Permanent legend = addCreatureReady(player1, new LivonyaSilone());
+
+        harness.activateAbility(player1, 0, null, legend.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.canUseBandsWithOther(gd, List.of(legend), false)).isFalse();
+
+        harness.enterBattlefieldAndReturn(player1, new AdventurersGuildhouse());
+
+        assertThat(gqs.canUseBandsWithOther(gd, List.of(legend), false)).isTrue();
+        assertThat(gqs.hasKeyword(gd, legend, Keyword.FIRST_STRIKE)).isTrue();
     }
 }
