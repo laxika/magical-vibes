@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -69,5 +70,61 @@ class SaprazzanLegateTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Saprazzan Legate");
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Tapped qualifying lands still allow the free cast")
+    void tappedLandsAllowAlternateCost() {
+        harness.addToBattlefieldAndReturn(player1, new Island()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player2, new Mountain()).setTapped(true);
+        harness.setHand(player1, List.of(new SaprazzanLegate()));
+
+        harness.castWithAlternateCost(player1, 0, (UUID) null);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Saprazzan Legate");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("May pay the normal mana cost even when the free cast is available")
+    void normalCostRemainsOptionalWithQualifyingLands() {
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player2, new Mountain());
+
+        harness.castFromHand(player1, new SaprazzanLegate(), "{3}{U}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Saprazzan Legate");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Losing qualifying lands after casting does not prevent resolution")
+    void conditionIsNotRecheckedOnResolution() {
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player2, new Mountain());
+        harness.setHand(player1, List.of(new SaprazzanLegate()));
+
+        harness.castWithAlternateCost(player1, 0, (UUID) null);
+        gd.playerBattlefields.get(player1.getId()).clear();
+        gd.playerBattlefields.get(player2.getId()).clear();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Saprazzan Legate");
+    }
+
+    @Test
+    @DisplayName("The free cast does not grant instant timing")
+    void alternateCostDoesNotGrantFlash() {
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player2, new Mountain());
+        harness.setHand(player1, List.of(new SaprazzanLegate()));
+        harness.forceStep(TurnStep.END_STEP);
+
+        assertThatThrownBy(() -> harness.castWithAlternateCost(player1, 0, (UUID) null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInHand(player1, "Saprazzan Legate");
+        assertThat(gd.stack).isEmpty();
     }
 }
