@@ -2,12 +2,10 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.a.AustereCommand;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -40,6 +38,59 @@ class SeiferAlmasyTest extends BaseCardTest {
         declareAttackers(player1, List.of(0, 1));
 
         assertThat(seifer.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
+    }
+
+    @Test
+    void anotherCreatureAttackingAloneGainsDoubleStrike() {
+        Permanent seifer = addCreatureReady(player1, new SeiferAlmasy());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(player1, List.of(1));
+        harness.passBothPriorities();
+
+        assertThat(attacker.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(seifer.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
+    }
+
+    @Test
+    void opponentAttackingAloneDoesNotGainDoubleStrike() {
+        addCreatureReady(player1, new SeiferAlmasy());
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(player2, List.of(0));
+        harness.passBothPriorities();
+
+        assertThat(attacker.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
+    }
+
+    @Test
+    void decliningCastLeavesCardInGraveyard() {
+        Shock shock = new Shock();
+        harness.setGraveyard(player1, List.of(shock));
+
+        dealCombatDamage();
+        harness.handleMultipleCardsChosen(player1, List.of(shock.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(shock);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(shock);
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    void opponentGraveyardIsNotEligible() {
+        Shock ownShock = new Shock();
+        Shock opponentShock = new Shock();
+        harness.setGraveyard(player1, List.of(ownShock));
+        harness.setGraveyard(player2, List.of(opponentShock));
+
+        dealCombatDamage();
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactly(ownShock.getId());
     }
 
     @Test
@@ -84,10 +135,7 @@ class SeiferAlmasyTest extends BaseCardTest {
         Permanent seifer = addCreatureReady(player1, new SeiferAlmasy());
         seifer.setAttacking(true);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers(player1);
         gs.declareBlockers(gd, player2, List.of());
         harness.passBothPriorities();
     }
