@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.c.ChurningEddy;
 import com.github.laxika.magicalvibes.cards.n.NantukoShade;
+import com.github.laxika.magicalvibes.cards.p.PayNoHeed;
 import com.github.laxika.magicalvibes.cards.t.TaintedIsle;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Skullscorch.class, ChurningEddy.class, NantukoShade.class, TaintedIsle.class})
+@CardUsed({Skullscorch.class, ChurningEddy.class, NantukoShade.class, TaintedIsle.class, PayNoHeed.class})
 class SkullscorchTest extends BaseCardTest {
 
     @Test
@@ -78,6 +79,66 @@ class SkullscorchTest extends BaseCardTest {
         harness.assertLife(player2, 20);
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An empty-handed target may still choose to take damage")
+    void emptyHandedTargetMayChooseDamage() {
+        harness.setHand(player1, List.of(new Skullscorch()));
+        harness.setHand(player2, List.of());
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertLife(player2, 16);
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The controller may decline damage and discard their own cards")
+    void controllerMayDeclineDamageAndDiscard() {
+        harness.setHand(player1, List.of(new Skullscorch(), new NantukoShade(), new TaintedIsle()));
+        harness.setHand(player2, List.of(new ChurningEddy()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Skullscorch");
+        harness.assertInGraveyard(player1, "Nantuko Shade");
+        harness.assertInGraveyard(player1, "Tainted Isle");
+        harness.assertInHand(player2, "Churning Eddy");
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Choosing damage avoids discard even when the damage is prevented")
+    void preventedDamageStillAvoidsDiscard() {
+        Skullscorch skullscorch = new Skullscorch();
+        harness.setHand(player1, List.of(skullscorch));
+        harness.setHand(player2, List.of(new NantukoShade(), new TaintedIsle()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.castFromHand(player2, new PayNoHeed(), "{W}");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player2, skullscorch.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertLife(player2, 20);
+        harness.assertLife(player1, 20);
+        harness.assertInHand(player2, "Nantuko Shade");
+        harness.assertInHand(player2, "Tainted Isle");
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .extracting(card -> card.getName()).containsExactly("Pay No Heed");
     }
 
     @Test
