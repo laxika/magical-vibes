@@ -17,8 +17,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class RavenGuildInitiateTest extends BaseCardTest {
 
     @Test
-    void turnsFaceUpByReturningABirdToItsOwnersHand() {
+    void turnsFaceUpWithoutManaByReturningATappedBirdToItsOwnersHand() {
         Permanent bird = harness.addToBattlefieldAndReturn(player1, new CoastWatcher());
+        bird.tap();
         harness.setHand(player1, List.of(new RavenGuildInitiate()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
@@ -27,9 +28,8 @@ class RavenGuildInitiateTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
         Permanent initiate = findPermanent(player1, "Raven Guild Initiate");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
         harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(initiate),
                 List.of(bird.getId()));
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
@@ -38,6 +38,43 @@ class RavenGuildInitiateTest extends BaseCardTest {
         assertThat(initiate.isFaceDown()).isFalse();
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bird);
         assertThat(gd.playerHands.get(player1.getId())).contains(bird.getCard());
+    }
+
+    @Test
+    void turningFaceUpDoesNotSpendAvailableMana() {
+        Permanent bird = harness.addToBattlefieldAndReturn(player1, new CoastWatcher());
+        harness.setHand(player1, List.of(new RavenGuildInitiate()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        Permanent initiate = findPermanent(player1, "Raven Guild Initiate");
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(initiate),
+                List.of(bird.getId()));
+
+        assertThat(initiate.isFaceDown()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
+        harness.assertInHand(player1, "Coast Watcher");
+    }
+
+    @Test
+    void cannotTurnFaceUpWithoutReturningABirdEvenWithManaAvailable() {
+        harness.setHand(player1, List.of(new RavenGuildInitiate()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        Permanent initiate = findPermanent(player1, "Raven Guild Initiate");
+        assertThatThrownBy(() -> harness.turnFaceUp(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(initiate), List.of()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(initiate.isFaceDown()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
     }
 
     @Test
