@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.model.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -11,10 +13,12 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RishadanDockhand.class, Forest.class, BalduvianBears.class})
+@CardUsed({RishadanDockhand.class, Forest.class, BalduvianBears.class, Island.class})
 class RishadanDockhandTest extends BaseCardTest {
 
     @Test
@@ -106,10 +110,81 @@ class RishadanDockhandTest extends BaseCardTest {
         assertThat(dockhand.isTapped()).isFalse();
     }
 
+    @Test
+    void canTargetAlreadyTappedLand() {
+        addReadyDockhand(player1);
+        Permanent land = addLand(player2);
+        land.tap();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, land.getId());
+        harness.passBothPriorities();
+
+        assertThat(land.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void abilityResolvesAfterSourceLeavesBattlefield() {
+        Permanent dockhand = addReadyDockhand(player1);
+        Permanent land = addLand(player2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, land.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(dockhand);
+
+        harness.passBothPriorities();
+
+        assertThat(land.isTapped()).isTrue();
+    }
+
+    @Test
+    void abilityDoesNothingWhenTargetLeavesBattlefield() {
+        Permanent dockhand = addReadyDockhand(player1);
+        Permanent land = addLand(player2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, land.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(land);
+        Permanent replacement = addLand(player2);
+
+        harness.passBothPriorities();
+
+        assertThat(replacement.isTapped()).isFalse();
+        assertThat(dockhand.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void islandwalkPreventsBlockingEvenWithTappedIsland() {
+        Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
+        island.tap();
+        Permanent blocker = addCreatureReady(player2, new BalduvianBears());
+        Permanent attacker = addReadyDockhand(player1);
+        attacker.setAttacking(true);
+        prepareDeclareBlockers();
+
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(blockerIndex, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+    }
+
+    @Test
+    void islandControlledOnlyByAttackerDoesNotPreventBlocking() {
+        Permanent attacker = addReadyDockhand(player1);
+        harness.addToBattlefield(player1, new Island());
+        Permanent blocker = addCreatureReady(player2, new BalduvianBears());
+        attacker.setAttacking(true);
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
     private Permanent addReadyDockhand(Player player) {
-        Permanent dockhand = addCreatureReady(player, new RishadanDockhand());
-        dockhand.setSummoningSick(false);
-        return dockhand;
+        return addCreatureReady(player, new RishadanDockhand());
     }
 
     private Permanent addLand(Player player) {
