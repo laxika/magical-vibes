@@ -89,4 +89,42 @@ class SkyshroudForestTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
     }
+
+    @Test
+    @DisplayName("A newly played forest cannot produce mana until it untaps")
+    void newlyPlayedForestCanProduceManaAfterUntapping() {
+        harness.setHand(player1, List.of(new SkyshroudForest()));
+        harness.setLife(player1, 20);
+        harness.playLand(player1, 0);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+
+        harness.performUntapStep(player1);
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        harness.assertLife(player1, 19);
+        assertThat(findPermanent(player1, "Skyshroud Forest").isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The second player's blue mana activation damages only that player")
+    void secondPlayerProducesBlueAndTakesDamage() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 17);
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new SkyshroudForest());
+
+        harness.activateAbility(player2, 0, 2, null, null);
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 16);
+        assertThat(forest.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
 }
