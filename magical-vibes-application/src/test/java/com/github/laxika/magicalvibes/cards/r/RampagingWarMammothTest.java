@@ -32,6 +32,7 @@ class RampagingWarMammothTest extends BaseCardTest {
         harness.getGameService().activateHandAbility(
                 gd, player1, 0, 0, null, 2, List.of(first.getId(), second.getId()));
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
@@ -50,6 +51,7 @@ class RampagingWarMammothTest extends BaseCardTest {
 
         harness.getGameService().activateHandAbility(
                 gd, player1, 0, 0, null, 2, List.of(artifact.getId()));
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
@@ -73,5 +75,82 @@ class RampagingWarMammothTest extends BaseCardTest {
                 gd, player1, 0, 0, null, 1, List.of(land.getId())))
                 .isInstanceOf(IllegalStateException.class);
         harness.assertInHand(player1, "Rampaging War Mammoth");
+    }
+
+    @Test
+    @DisplayName("The cycling trigger resolves before the separate cycling draw")
+    void destructionResolvesBeforeSeparateDraw() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new Millstone());
+        Forest drawn = new Forest();
+        harness.setHand(player1, List.of(new RampagingWarMammoth()));
+        harness.setLibrary(player1, List.of(drawn));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        gs.activateHandAbility(gd, player1, 0, 0, null, 1, List.of(artifact.getId()));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Millstone");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+    }
+
+    @Test
+    @DisplayName("Cycling still draws when every artifact target has left the battlefield")
+    void illegalArtifactTargetsDoNotPreventDraw() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new Millstone());
+        Forest drawn = new Forest();
+        harness.setHand(player1, List.of(new RampagingWarMammoth()));
+        harness.setLibrary(player1, List.of(drawn));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        gs.activateHandAbility(gd, player1, 0, 0, null, 1, List.of(artifact.getId()));
+        gd.playerBattlefields.get(player2.getId()).clear();
+        gd.playerGraveyards.get(player2.getId()).add(artifact.getCard());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+    }
+
+    @Test
+    @DisplayName("Cycling with X zero needs no artifact targets and still draws")
+    void cyclingWithZeroXDraws() {
+        Forest drawn = new Forest();
+        harness.setHand(player1, List.of(new RampagingWarMammoth()));
+        harness.setLibrary(player1, List.of(drawn));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateHandAbilityWithMultiTargets(player1, 0, List.of());
+        harness.passBothPriorities();
+        if (!gd.stack.isEmpty()) {
+            harness.passBothPriorities();
+        }
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+        harness.assertInGraveyard(player1, "Rampaging War Mammoth");
+    }
+
+    @Test
+    @DisplayName("Cycling can choose no artifacts even with positive X")
+    void cyclingWithPositiveXAndNoTargetsDraws() {
+        harness.addToBattlefield(player2, new Millstone());
+        Forest drawn = new Forest();
+        harness.setHand(player1, List.of(new RampagingWarMammoth()));
+        harness.setLibrary(player1, List.of(drawn));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        gs.activateHandAbility(gd, player1, 0, 0, null, 2, List.of());
+        harness.passBothPriorities();
+        if (!gd.stack.isEmpty()) {
+            harness.passBothPriorities();
+        }
+
+        harness.assertOnBattlefield(player2, "Millstone");
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
     }
 }
