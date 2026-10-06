@@ -51,11 +51,7 @@ class RocksteadyMutantMarauderTest extends BaseCardTest {
     void nontokenCreatureEntryPutsCounterOnTargetCreature() {
         harness.addToBattlefield(player1, new RocksteadyMutantMarauder());
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
-        harness.castCreature(player1, 0, player1.getId());
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
@@ -70,11 +66,7 @@ class RocksteadyMutantMarauderTest extends BaseCardTest {
     void counterTriggerCanTargetOpponentCreature() {
         harness.addToBattlefield(player1, new RocksteadyMutantMarauder());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
-        harness.castCreature(player1, 0, player1.getId());
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
@@ -87,14 +79,135 @@ class RocksteadyMutantMarauderTest extends BaseCardTest {
     void counterTriggerCannotTargetLand() {
         harness.addToBattlefield(player1, new RocksteadyMutantMarauder());
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, forest.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The target player may decline the partner search")
+    void partnerSearchCanBeDeclined() {
+        Card partner = new BebopSkullCrossbones();
+        Card decoy = new Forest();
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(decoy, partner));
+        harness.setHand(player1, List.of(new RocksteadyMutantMarauder()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(decoy, partner);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The partner search can target its controller and fail to find Bebop")
+    void partnerSearchCanTargetControllerAndFailToFind() {
+        Card partner = new BebopSkullCrossbones();
+        harness.setLibrary(player1, List.of(partner));
+        harness.setHand(player1, List.of(new RocksteadyMutantMarauder()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castCreature(player1, 0, player1.getId());
         harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, -1);
 
-        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, forest.getId()))
-                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(partner);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Accepting the partner search without Bebop completes without choosing another card")
+    void partnerSearchWithoutMatchingCardCompletes() {
+        Card decoy = new Forest();
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(decoy));
+        harness.setHand(player1, List.of(new RocksteadyMutantMarauder()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(decoy);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Rocksteady does not trigger its counter ability for its own entry")
+    void ownEntryDoesNotTriggerCounterAbility() {
+        harness.setHand(player1, List.of(new RocksteadyMutantMarauder()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0, player1.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).singleElement()
+                .satisfies(permanent -> assertThat(permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero());
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An allied token creature does not trigger Rocksteady")
+    void tokenEntryDoesNotTriggerCounterAbility() {
+        Permanent rocksteady = harness.addToBattlefieldAndReturn(player1, new RocksteadyMutantMarauder());
+        Card token = new GrizzlyBears();
+        token.setToken(true);
+
+        harness.enterBattlefieldAndReturn(player1, token);
+
+        assertThat(rocksteady.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An opponent's nontoken creature does not trigger Rocksteady")
+    void opponentEntryDoesNotTriggerCounterAbility() {
+        Permanent rocksteady = harness.addToBattlefieldAndReturn(player1, new RocksteadyMutantMarauder());
+
+        harness.enterBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        assertThat(rocksteady.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The counter trigger can target the entering creature")
+    void counterTriggerCanTargetEnteringCreature() {
+        harness.addToBattlefield(player1, new RocksteadyMutantMarauder());
+        Card enteringCard = new GrizzlyBears();
+        harness.castFromHand(player1, enteringCard, "{1}{G}");
+        harness.passBothPriorities();
+        Permanent entering = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard() == enteringCard)
+                .findFirst().orElseThrow();
+
+        harness.handlePermanentChosen(player1, entering.getId());
+        harness.passBothPriorities();
+
+        assertThat(entering.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 }
