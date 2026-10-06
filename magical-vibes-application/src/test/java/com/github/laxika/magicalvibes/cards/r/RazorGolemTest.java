@@ -83,4 +83,32 @@ class RazorGolemTest extends BaseCardTest {
 
         assertThat(golem.isTapped()).isFalse();
     }
+
+    @Test
+    @DisplayName("Excess Plains make Razor Golem free without adding or spending mana")
+    void excessPlainsDoNotChangeManaPool() {
+        for (int i = 0; i < 8; i++) {
+            harness.addToBattlefield(player1, new Plains());
+        }
+        harness.setHand(player1, List.of(new RazorGolem()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Plains in hand, graveyard, and exile do not reduce the cost")
+    void plainsOutsideBattlefieldDoNotReduceCost() {
+        harness.setHand(player1, List.of(new RazorGolem(), new Plains(), new Plains()));
+        harness.setGraveyard(player1, List.of(new Plains(), new Plains()));
+        harness.setExile(player1, List.of(new Plains(), new Plains()));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
 }
