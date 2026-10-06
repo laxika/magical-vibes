@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -91,8 +90,7 @@ class SeethingAngerTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
 
         harness.castSorceryWithBuyback(player1, 0, falcon.getId());
-        harness.castInstant(player2, 0, falcon.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, falcon.getId());
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Seething Anger");
@@ -108,6 +106,55 @@ class SeethingAngerTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Seething Anger can boost an opponent's creature")
+    void boostsOpponentsCreature() {
+        Permanent falcon = harness.addToBattlefieldAndReturn(player2, new SkyshroudFalcon());
+        harness.setHand(player1, List.of(new SeethingAnger()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveSorcery(player1, 0, falcon.getId());
+
+        assertThat(gqs.getEffectivePower(gd, falcon)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, falcon)).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Seething Anger");
+    }
+
+    @Test
+    @DisplayName("A bought-back spell can be cast again without buyback and its boosts accumulate")
+    void recastWithoutBuybackAccumulatesBoosts() {
+        Permanent falcon = harness.addToBattlefieldAndReturn(player1, new SkyshroudFalcon());
+        harness.setHand(player1, List.of(new SeethingAnger()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castSorceryWithBuyback(player1, 0, falcon.getId());
+        harness.passBothPriorities();
+        harness.assertInHand(player1, "Seething Anger");
+        harness.castAndResolveSorcery(player1, 0, falcon.getId());
+
+        assertThat(gqs.getEffectivePower(gd, falcon)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, falcon)).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Seething Anger");
+        harness.assertNotInHand(player1, "Seething Anger");
+    }
+
+    @Test
+    @DisplayName("Buyback requires three additional mana beyond the spell's red mana cost")
+    void cannotPayBuybackWithInsufficientMana() {
+        Permanent falcon = harness.addToBattlefieldAndReturn(player1, new SkyshroudFalcon());
+        harness.setHand(player1, List.of(new SeethingAnger()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castSorceryWithBuyback(player1, 0, falcon.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Seething Anger");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, falcon)).isEqualTo(1);
     }
 
 }
