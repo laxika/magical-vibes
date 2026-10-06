@@ -24,6 +24,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class SeedlingCharmTest extends BaseCardTest {
 
     @Nested
+    @CardUsed({SeedlingCharm.class, MtendaLion.class, FeralShadow.class, Pacifism.class})
     @DisplayName("Mode 0: Return target Aura attached to a creature to its owner's hand")
     class BounceAuraMode {
 
@@ -41,6 +42,23 @@ class SeedlingCharmTest extends BaseCardTest {
 
             assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(aura);
             harness.assertInHand(player2, "Pacifism");
+        }
+
+        @Test
+        void returnsAuraToOwnerRatherThanController() {
+            Permanent host = harness.addToBattlefieldAndReturn(player2, new MtendaLion());
+            Permanent aura = addAuraAttachedTo(player2, host);
+            gd.stolenCreatures.put(aura.getId(), player1.getId());
+            harness.setHand(player1, List.of(new SeedlingCharm()));
+            harness.addMana(player1, ManaColor.GREEN, 1);
+
+            harness.castInstant(player1, 0, 0, aura.getId());
+            harness.passBothPriorities();
+
+            harness.assertInHand(player1, "Pacifism");
+            harness.assertNotInHand(player2, "Pacifism");
+            harness.assertOnBattlefield(player2, "Mtenda Lion");
+            harness.assertNotOnBattlefield(player2, "Pacifism");
         }
 
         @Test
@@ -69,6 +87,7 @@ class SeedlingCharmTest extends BaseCardTest {
     }
 
     @Nested
+    @CardUsed({SeedlingCharm.class, MtendaLion.class, FeralShadow.class, Pacifism.class})
     @DisplayName("Mode 1: Regenerate target green creature")
     class RegenerateMode {
 
@@ -83,7 +102,36 @@ class SeedlingCharmTest extends BaseCardTest {
             harness.castInstant(player1, 0, 1, lionId);
             harness.passBothPriorities();
 
-            assertThat(permanent(player1.getId(), lionId).getRegenerationShield()).isEqualTo(1);
+            assertThat(gqs.findPermanentById(gd, lionId).getRegenerationShield()).isEqualTo(1);
+        }
+
+        @Test
+        void canRegenerateOpponentsCreatureWithoutImmediatelyTappingIt() {
+            Permanent lion = harness.addToBattlefieldAndReturn(player2, new MtendaLion());
+            harness.setHand(player1, List.of(new SeedlingCharm()));
+            harness.addMana(player1, ManaColor.GREEN, 1);
+
+            harness.castInstant(player1, 0, 1, lion.getId());
+            harness.passBothPriorities();
+
+            assertThat(lion.getRegenerationShield()).isEqualTo(1);
+            assertThat(lion.isTapped()).isFalse();
+        }
+
+        @Test
+        void unusedRegenerationShieldExpiresAtEndOfTurn() {
+            Permanent lion = harness.addToBattlefieldAndReturn(player1, new MtendaLion());
+            harness.setHand(player1, List.of(new SeedlingCharm()));
+            harness.addMana(player1, ManaColor.GREEN, 1);
+            harness.castInstant(player1, 0, 1, lion.getId());
+            harness.passBothPriorities();
+            assertThat(lion.getRegenerationShield()).isEqualTo(1);
+
+            harness.forceStep(TurnStep.END_STEP);
+            harness.clearPriorityPassed();
+            harness.passBothPriorities();
+
+            assertThat(lion.getRegenerationShield()).isZero();
         }
 
         @Test
@@ -120,6 +168,7 @@ class SeedlingCharmTest extends BaseCardTest {
     }
 
     @Nested
+    @CardUsed({SeedlingCharm.class, MtendaLion.class, FeralShadow.class, Pacifism.class})
     @DisplayName("Mode 2: Target creature gains trample until end of turn")
     class TrampleMode {
 
@@ -134,7 +183,7 @@ class SeedlingCharmTest extends BaseCardTest {
             harness.castInstant(player1, 0, 2, targetId);
             harness.passBothPriorities();
 
-            assertThat(gqs.hasKeyword(gd, permanent(player1.getId(), targetId), Keyword.TRAMPLE)).isTrue();
+            assertThat(gqs.hasKeyword(gd, gqs.findPermanentById(gd, targetId), Keyword.TRAMPLE)).isTrue();
         }
 
         @Test
@@ -152,7 +201,7 @@ class SeedlingCharmTest extends BaseCardTest {
             harness.clearPriorityPassed();
             harness.passBothPriorities();
 
-            assertThat(gqs.hasKeyword(gd, permanent(player1.getId(), targetId), Keyword.TRAMPLE)).isFalse();
+            assertThat(gqs.hasKeyword(gd, gqs.findPermanentById(gd, targetId), Keyword.TRAMPLE)).isFalse();
         }
 
         @Test
@@ -166,7 +215,7 @@ class SeedlingCharmTest extends BaseCardTest {
             harness.castInstant(player1, 0, 2, shadowId);
             harness.passBothPriorities();
 
-            assertThat(gqs.hasKeyword(gd, permanent(player2.getId(), shadowId), Keyword.TRAMPLE)).isTrue();
+            assertThat(gqs.hasKeyword(gd, gqs.findPermanentById(gd, shadowId), Keyword.TRAMPLE)).isTrue();
         }
 
         @Test
@@ -187,8 +236,4 @@ class SeedlingCharmTest extends BaseCardTest {
         return aura;
     }
 
-    private Permanent permanent(UUID playerId, UUID id) {
-        return gd.playerBattlefields.get(playerId).stream()
-                .filter(p -> p.getId().equals(id)).findFirst().orElseThrow();
-    }
 }
