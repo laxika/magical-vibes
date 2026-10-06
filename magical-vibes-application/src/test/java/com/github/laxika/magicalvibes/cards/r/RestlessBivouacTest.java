@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -18,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RestlessBivouac.class, GrizzlyBears.class})
+@CardUsed({RestlessBivouac.class, RedcapThief.class})
 class RestlessBivouacTest extends BaseCardTest {
 
     @Test
@@ -60,7 +59,7 @@ class RestlessBivouacTest extends BaseCardTest {
     @DisplayName("Restless Bivouac puts a +1/+1 counter on a creature you control when it attacks")
     void attackingPutsCounterOnTargetCreatureYouControl() {
         addReadyBivouac(player1);
-        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        Permanent target = addCreatureReady(player1, new RedcapThief());
         addAnimationMana(player1);
 
         harness.activateAbility(player1, 0, 1, null, null);
@@ -77,7 +76,7 @@ class RestlessBivouacTest extends BaseCardTest {
     void attackTriggerCannotTargetOpponentCreature() {
         addReadyBivouac(player1);
         addAnimationMana(player1);
-        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent opponentCreature = addCreatureReady(player2, new RedcapThief());
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
@@ -103,6 +102,65 @@ class RestlessBivouacTest extends BaseCardTest {
         assertThat(gqs.isLand(gd, bivouac)).isTrue();
     }
 
+    @Test
+    @DisplayName("Restless Bivouac can produce red mana while animated")
+    void animatedLandRetainsRedManaAbility() {
+        Permanent bivouac = addReadyBivouac(player1);
+        addAnimationMana(player1);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "RED");
+
+        assertThat(bivouac.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Restless Bivouac can target itself and reanimating preserves its counter")
+    void selfTargetAndRepeatedAnimationPreserveCounter() {
+        Permanent bivouac = addReadyBivouac(player1);
+        addAnimationMana(player1);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, bivouac.getId());
+        harness.passBothPriorities();
+
+        assertThat(bivouac.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, bivouac)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bivouac)).isEqualTo(3);
+
+        addAnimationMana(player1);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(bivouac.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, bivouac)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bivouac)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Restless Bivouac cannot target an unanimated land you control")
+    void attackTriggerCannotTargetNoncreatureLand() {
+        Permanent bivouac = addReadyBivouac(player1);
+        Permanent otherLand = addReadyBivouac(player1);
+        addAnimationMana(player1);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        declareAttackers(List.of(0));
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, otherLand.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handlePermanentChosen(player1, bivouac.getId());
+        harness.passBothPriorities();
+
+        assertThat(otherLand.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(bivouac.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
     private void addAnimationMana(Player player) {
         harness.addMana(player, ManaColor.COLORLESS, 1);
         harness.addMana(player, ManaColor.RED, 1);
@@ -110,9 +168,6 @@ class RestlessBivouacTest extends BaseCardTest {
     }
 
     private Permanent addReadyBivouac(Player player) {
-        Permanent permanent = new Permanent(new RestlessBivouac());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        return addCreatureReady(player, new RestlessBivouac());
     }
 }
