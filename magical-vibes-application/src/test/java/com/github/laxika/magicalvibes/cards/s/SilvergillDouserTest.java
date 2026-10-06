@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
+import com.github.laxika.magicalvibes.cards.a.AmoeboidChangeling;
 import com.github.laxika.magicalvibes.cards.f.FaerieHarbinger;
+import com.github.laxika.magicalvibes.cards.f.FaerieTauntings;
 import com.github.laxika.magicalvibes.cards.h.HillcomberGiant;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -15,7 +15,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SilvergillDouser.class, SilvergillAdept.class, FaerieHarbinger.class, HillcomberGiant.class})
+@CardUsed({SilvergillDouser.class, SilvergillAdept.class, FaerieHarbinger.class, HillcomberGiant.class,
+        AmoeboidChangeling.class, FaerieTauntings.class})
 class SilvergillDouserTest extends BaseCardTest {
 
     @Test
@@ -125,7 +126,64 @@ class SilvergillDouserTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(harness.getGameData().stack).isEmpty();
-        assertThat(harness.getGameData().gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+        assertThat(gameLogContains("fizzles")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Counts a changeling only once even though it is both Merfolk and Faerie")
+    void countsChangelingOnce() {
+        addCreatureReady(player1, new SilvergillDouser());
+        harness.addToBattlefield(player1, new AmoeboidChangeling());
+        harness.addToBattlefield(player2, new HillcomberGiant());
+
+        harness.activateAbility(player1, 0, null, harness.getPermanentId(player2, "Hillcomber Giant"));
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player2, "Hillcomber Giant").getPowerModifier()).isEqualTo(-2);
+    }
+
+    @Test
+    @DisplayName("Counts a Faerie permanent that is not a creature")
+    void countsKindredEnchantment() {
+        addCreatureReady(player1, new SilvergillDouser());
+        harness.addToBattlefield(player1, new FaerieTauntings());
+        harness.addToBattlefield(player2, new HillcomberGiant());
+
+        harness.activateAbility(player1, 0, null, harness.getPermanentId(player2, "Hillcomber Giant"));
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player2, "Hillcomber Giant").getPowerModifier()).isEqualTo(-2);
+    }
+
+    @Test
+    @DisplayName("Ability still resolves with zero counted permanents after the Douser leaves")
+    void resolvesWithZeroAfterSourceLeaves() {
+        Permanent douser = addCreatureReady(player1, new SilvergillDouser());
+        harness.addToBattlefield(player2, new HillcomberGiant());
+
+        harness.activateAbility(player1, 0, null, harness.getPermanentId(player2, "Hillcomber Giant"));
+        assertThat(douser.isTapped()).isTrue();
+        gd.playerBattlefields.get(player1.getId()).remove(douser);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player2, "Hillcomber Giant").getPowerModifier()).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gameLogContains("fizzles")).isFalse();
+    }
+
+    @Test
+    @DisplayName("Reduction remains fixed when counted permanents leave after resolution")
+    void reductionStaysFixedAfterResolution() {
+        addCreatureReady(player1, new SilvergillDouser());
+        harness.addToBattlefield(player1, new SilvergillAdept());
+        harness.addToBattlefield(player2, new HillcomberGiant());
+
+        harness.activateAbility(player1, 0, null, harness.getPermanentId(player2, "Hillcomber Giant"));
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player1.getId()).clear();
+
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player2, "Hillcomber Giant"))).isEqualTo(1);
+        assertThat(findPermanent(player2, "Hillcomber Giant").getToughnessModifier()).isZero();
     }
 
 }
