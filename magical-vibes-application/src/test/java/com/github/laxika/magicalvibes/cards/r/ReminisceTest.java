@@ -178,5 +178,30 @@ class ReminisceTest extends BaseCardTest {
 
         assertThat(harness.getGameData().stack).isEmpty();
     }
+
+    @Test
+    @DisplayName("Targeting an opponent with an empty library moves only their graveyard")
+    void onlyTargetPlayersZonesAreChanged() {
+        Card ownGraveyardCard = new GrizzlyBears();
+        Card ownLibraryCard = new GiantSpider();
+        Card opponentCreature = new GrizzlyBears();
+        Card opponentSorcery = new Reminisce();
+        Card spell = new Reminisce();
+        harness.setGraveyard(player1, List.of(ownGraveyardCard));
+        harness.setLibrary(player1, List.of(ownLibraryCard));
+        harness.setGraveyard(player2, List.of(opponentCreature, opponentSorcery));
+        harness.setLibrary(player2, List.of());
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId()))
+                .containsExactlyInAnyOrder(opponentCreature, opponentSorcery);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .containsExactly(ownGraveyardCard, spell);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(ownLibraryCard);
+    }
 }
 
