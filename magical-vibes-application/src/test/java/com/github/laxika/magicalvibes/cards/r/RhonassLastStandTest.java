@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.FeralProwler;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -18,10 +19,12 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RhonassLastStand.class, Plains.class, Island.class, FeralProwler.class})
 class RhonassLastStandTest extends BaseCardTest {
 
     @Nested
     @DisplayName("Create a 5/4 green Snake creature token")
+    @CardUsed({RhonassLastStand.class})
     class CreateSnake {
 
         @Test
@@ -44,6 +47,7 @@ class RhonassLastStandTest extends BaseCardTest {
 
     @Nested
     @DisplayName("Lands you control don't untap during your next untap step")
+    @CardUsed({RhonassLastStand.class, Plains.class, Island.class, FeralProwler.class})
     class LandsDontUntap {
 
         @Test
@@ -79,20 +83,64 @@ class RhonassLastStandTest extends BaseCardTest {
         @DisplayName("Non-land permanents you control untap normally")
         void nonLandUntapsNormally() {
             Permanent plains = harness.addToBattlefieldAndReturn(player1, new Plains());
-            Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-            bears.setSummoningSick(false);
+            Permanent prowler = harness.addToBattlefieldAndReturn(player1, new FeralProwler());
+            prowler.setSummoningSick(false);
             plains.tap();
-            bears.tap();
+            prowler.tap();
 
             cast();
 
-            assertThat(bears.getSkipUntapCount()).isZero();
+            assertThat(prowler.getSkipUntapCount()).isZero();
 
             advanceToNextTurn(player1);
             advanceToNextTurn(player2);
 
             assertThat(plains.isTapped()).isTrue();
-            assertThat(bears.isTapped()).isFalse();
+            assertThat(prowler.isTapped()).isFalse();
+        }
+
+        @Test
+        @DisplayName("Lands entering after resolution also stay tapped at the next untap")
+        void laterLandStaysTapped() {
+            cast();
+            Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+            island.tap();
+
+            advanceToNextTurn(player1);
+            advanceToNextTurn(player2);
+
+            assertThat(island.isTapped()).isTrue();
+        }
+
+        @Test
+        @DisplayName("An untapped land at resolution is restricted if tapped later")
+        void landTappedAfterResolutionStaysTapped() {
+            Permanent plains = harness.addToBattlefieldAndReturn(player1, new Plains());
+            cast();
+            assertThat(plains.isTapped()).isFalse();
+            plains.tap();
+
+            advanceToNextTurn(player1);
+            advanceToNextTurn(player2);
+
+            assertThat(plains.isTapped()).isTrue();
+        }
+
+        @Test
+        @DisplayName("Two resolutions both expire at the same next untap step")
+        void multipleResolutionsExpireTogether() {
+            Permanent plains = harness.addToBattlefieldAndReturn(player1, new Plains());
+            plains.tap();
+            cast();
+            cast();
+
+            advanceToNextTurn(player1);
+            advanceToNextTurn(player2);
+            assertThat(plains.isTapped()).isTrue();
+
+            advanceToNextTurn(player1);
+            advanceToNextTurn(player2);
+            assertThat(plains.isTapped()).isFalse();
         }
 
         @Test
@@ -114,8 +162,7 @@ class RhonassLastStandTest extends BaseCardTest {
     private void cast() {
         harness.setHand(player1, List.of(new RhonassLastStand()));
         harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
     }
 
     private void advanceToNextTurn(Player currentActivePlayer) {
@@ -124,8 +171,6 @@ class RhonassLastStandTest extends BaseCardTest {
         harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(currentActivePlayer == player1 ? player2 : player1, TurnStep.UPKEEP);
     }
 }
