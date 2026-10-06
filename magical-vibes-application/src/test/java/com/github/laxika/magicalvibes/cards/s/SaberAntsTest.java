@@ -25,8 +25,7 @@ class SaberAntsTest extends BaseCardTest {
         addCreatureReady(player1, new ShockTroops());
 
         harness.activateAbility(player1, 0, null, ants.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
@@ -52,8 +51,7 @@ class SaberAntsTest extends BaseCardTest {
         addCreatureReady(player1, new ShockTroops());
 
         harness.activateAbility(player1, 0, null, ants.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.handleMayAbilityChosen(player2, false);
 
@@ -69,8 +67,7 @@ class SaberAntsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 2);
 
         harness.activateAbility(player1, 0, 1, ants.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player2, true);
@@ -94,5 +91,41 @@ class SaberAntsTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, true);
 
         assertThat(findPermanents(player2, "Insect")).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Lethal damage still creates tokens for the full damage amount")
+    void lethalDamageCreatesTokensAfterAntsDies() {
+        Permanent ants = addCreatureReady(player2, new SaberAnts());
+        addCreatureReady(player1, new CinderElemental());
+        harness.addMana(player1, ManaColor.RED, 6);
+
+        harness.activateAbility(player1, 0, 5, ants.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Saber Ants");
+        assertThat(findPermanents(player2, "Saber Ants")).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(findPermanents(player2, "Insect")).hasSize(5);
+        assertThat(findPermanents(player1, "Insect")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Zero damage does not trigger token creation")
+    void zeroDamageDoesNotTrigger() {
+        Permanent ants = addCreatureReady(player2, new SaberAnts());
+        addCreatureReady(player1, new CinderElemental());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, 0, ants.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanents(player2, "Insect")).isEmpty();
+        assertThat(findPermanents(player2, "Saber Ants")).hasSize(1);
     }
 }
