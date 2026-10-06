@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(RazorPendulum.class)
+@CardUsed({RazorPendulum.class, LeylineOfSanctity.class})
 class RazorPendulumTest extends BaseCardTest {
 
     private void advanceToEndStep(Player activePlayer) {
@@ -87,7 +87,6 @@ class RazorPendulumTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(LeylineOfSanctity.class)
     @DisplayName("Deals damage even when the end-step player has hexproof")
     void nonTargetingAbilityIgnoresPlayerHexproof() {
         harness.addToBattlefield(player2, new RazorPendulum());
@@ -100,5 +99,35 @@ class RazorPendulumTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(2);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Does not trigger above five life even if life drops during the end step")
+    void lifeDroppingAfterEndStepBeginsDoesNotTrigger() {
+        harness.addToBattlefield(player1, new RazorPendulum());
+        harness.setLife(player1, 6);
+
+        advanceToEndStep(player1);
+        assertThat(gd.stack).isEmpty();
+
+        harness.setLife(player1, 5);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 5);
+    }
+
+    @Test
+    @DisplayName("Each Razor Pendulum deals damage independently")
+    void multiplePendulumsEachDealDamage() {
+        harness.addToBattlefield(player1, new RazorPendulum());
+        harness.addToBattlefield(player1, new RazorPendulum());
+        harness.setLife(player1, 5);
+        harness.setLife(player2, 20);
+
+        advanceToEndStep(player1);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 1);
+        harness.assertLife(player2, 20);
     }
 }
