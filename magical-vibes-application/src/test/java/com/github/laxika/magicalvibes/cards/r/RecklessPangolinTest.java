@@ -52,4 +52,41 @@ class RecklessPangolinTest extends BaseCardTest {
         assertThat(pangolin.getPowerModifier()).isZero();
         assertThat(pangolin.getToughnessModifier()).isZero();
     }
+
+    @Test
+    @DisplayName("Attack bonus is applied when the trigger resolves, not when attackers are declared")
+    void boostWaitsForTriggerResolution() {
+        Permanent pangolin = addCreatureReady(player1, new RecklessPangolin());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(player1, List.of(0)));
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(pangolin.getPowerModifier()).isZero();
+        assertThat(pangolin.getToughnessModifier()).isZero();
+
+        resolveAllTriggers();
+
+        assertThat(pangolin.getPowerModifier()).isEqualTo(1);
+        assertThat(pangolin.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Only the attacking Pangolin gets the bonus")
+    void boostAffectsOnlyItsSource() {
+        Permanent attacker = addCreatureReady(player1, new RecklessPangolin());
+        Permanent nonattacker = addCreatureReady(player1, new RecklessPangolin());
+        Permanent opponent = addCreatureReady(player2, new RecklessPangolin());
+
+        declareAttackers(player1, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(attacker.getPowerModifier()).isEqualTo(1);
+        assertThat(attacker.getToughnessModifier()).isEqualTo(1);
+        assertThat(nonattacker.getPowerModifier()).isZero();
+        assertThat(nonattacker.getToughnessModifier()).isZero();
+        assertThat(opponent.getPowerModifier()).isZero();
+        assertThat(opponent.getToughnessModifier()).isZero();
+    }
+
 }
