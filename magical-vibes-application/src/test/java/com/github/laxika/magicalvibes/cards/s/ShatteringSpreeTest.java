@@ -76,6 +76,54 @@ class ShatteringSpreeTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Can destroy an artifact controlled by the caster")
+    void destroysOwnArtifact() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new GruulSignet());
+        castShatteringSpree(List.of(), artifact.getId());
+
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Gruul Signet");
+        harness.assertInGraveyard(player1, "Gruul Signet");
+    }
+
+    @Test
+    @DisplayName("Replicate payment requires mana in addition to the spell cost")
+    void cannotReplicateWithoutEnoughMana() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new GruulSignet());
+        harness.setHand(player1, List.of(new ShatteringSpree()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castInstantWithRepeatedCosts(
+                player1, 0, artifact.getId(), List.of("{R}")))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player2, "Gruul Signet");
+    }
+
+    @Test
+    @DisplayName("A replicate copy can retarget when the original target has left the battlefield")
+    void copyCanRetargetAfterOriginalTargetLeaves() {
+        Permanent originalTarget = harness.addToBattlefieldAndReturn(player2, new GruulSignet());
+        Permanent copyTarget = harness.addToBattlefieldAndReturn(player2, new GruulSignet());
+        castShatteringSpree(List.of("{R}"), originalTarget.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(originalTarget);
+        gd.playerGraveyards.get(player2.getId()).add(originalTarget.getCard());
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, copyTarget.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotOnBattlefield(player2, "Gruul Signet");
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card instanceof ShatteringSpree).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .filteredOn(card -> card instanceof GruulSignet).hasSize(2);
+    }
     private void castShatteringSpree(List<String> replicatePayments, UUID targetId) {
         harness.setHand(player1, List.of(new ShatteringSpree()));
         harness.addMana(player1, ManaColor.RED, 1 + replicatePayments.size());
