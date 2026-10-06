@@ -25,9 +25,9 @@ class RudeAwakeningTest extends BaseCardTest {
     @Test
     @DisplayName("Untap mode untaps all lands you control")
     void untapModeUntapsOwnLands() {
-        Permanent ownForest = addLand(player1, new Forest());
-        Permanent ownMountain = addLand(player1, new Mountain());
-        Permanent opponentForest = addLand(player2, new Forest());
+        Permanent ownForest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent ownMountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        Permanent opponentForest = harness.addToBattlefieldAndReturn(player2, new Forest());
         ownForest.tap();
         ownMountain.tap();
         opponentForest.tap();
@@ -42,9 +42,9 @@ class RudeAwakeningTest extends BaseCardTest {
     @Test
     @DisplayName("Animation mode makes your lands 2/2 creatures until end of turn")
     void animationModeAnimatesOwnLands() {
-        Permanent forest = addLand(player1, new Forest());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent opponentMountain = addLand(player2, new Mountain());
+        Permanent opponentMountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
 
         cast(new int[]{1}, false);
 
@@ -76,7 +76,7 @@ class RudeAwakeningTest extends BaseCardTest {
     @Test
     @DisplayName("Animation mode wears off at end of turn")
     void animationModeEndsAtEndOfTurn() {
-        Permanent forest = addLand(player1, new Forest());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
 
         cast(new int[]{1}, false);
         assertThat(gqs.isCreature(gd, forest)).isTrue();
@@ -92,7 +92,7 @@ class RudeAwakeningTest extends BaseCardTest {
     @Test
     @DisplayName("Entwine untaps and animates your lands")
     void entwinedResolvesBothModes() {
-        Permanent forest = addLand(player1, new Forest());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
         forest.tap();
 
         cast(new int[]{0, 1}, true);
@@ -116,8 +116,64 @@ class RudeAwakeningTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private Permanent addLand(com.github.laxika.magicalvibes.model.Player player, com.github.laxika.magicalvibes.model.Card land) {
-        return harness.addToBattlefieldAndReturn(player, land);
+
+    @Test
+    @DisplayName("Untap mode leaves nonlands tapped and does not animate lands")
+    void untapModeOnlyUntapsLands() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent crocodile = harness.addToBattlefieldAndReturn(player1, new DrossCrocodile());
+        forest.tap();
+        crocodile.tap();
+
+        cast(new int[]{0}, false);
+
+        assertThat(forest.isTapped()).isFalse();
+        assertThat(gqs.isCreature(gd, forest)).isFalse();
+        assertThat(crocodile.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Animation mode leaves lands tapped and excludes lands entering later")
+    void animationDoesNotUntapOrAffectLaterLands() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        forest.tap();
+
+        cast(new int[]{1}, false);
+        Permanent laterForest = harness.enterBattlefieldAndReturn(player1, new Forest());
+
+        assertThat(forest.isTapped()).isTrue();
+        assertThat(gqs.isCreature(gd, forest)).isTrue();
+        assertThat(gqs.isCreature(gd, laterForest)).isFalse();
+        assertThat(gqs.isLand(gd, laterForest)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Animation checks lands controlled when the spell resolves")
+    void animationIncludesLandsEnteringBeforeResolution() {
+        harness.setHand(player1, List.of(new RudeAwakening()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castModalSorceryWithModes(player1, 0, 1, 2, new int[]{1}, List.of(), null);
+        Permanent forest = harness.enterBattlefieldAndReturn(player1, new Forest());
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, forest)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, forest)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, forest)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Animation does not announce abilities or subtypes it does not grant")
+    void animationLogDoesNotAnnounceUnprintedAbilities() {
+        harness.addToBattlefield(player1, new Forest());
+
+        cast(new int[]{1}, false);
+
+        assertThat(gameLogContains("Elemental")).isFalse();
+        assertThat(gameLogContains("reach")).isFalse();
+        assertThat(gameLogContains("indestructible")).isFalse();
+        assertThat(gameLogContains("haste")).isFalse();
     }
 
     private void cast(int[] modes, boolean entwined) {
