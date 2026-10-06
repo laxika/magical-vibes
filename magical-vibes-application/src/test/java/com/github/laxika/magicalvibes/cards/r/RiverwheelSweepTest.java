@@ -33,8 +33,7 @@ class RiverwheelSweepTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castSorcery(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, target.getId());
 
         assertThat(target.isTapped()).isTrue();
         assertThat(target.getCounterCount(CounterType.STUN)).isEqualTo(3);
@@ -45,9 +44,94 @@ class RiverwheelSweepTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(second.getId()));
 
         assertThat(gd.exilePlayPermissions).containsEntry(second.getId(), player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireAtTurnEnd.get(second.getId()))
-                .isEqualTo(gd.turnNumber + 2);
+        assertThat(gd.exilePlayPermissionsAwaitNextTurnOfPlayer)
+                .containsEntry(second.getId(), player1.getId());
         assertThat(gd.exilePlayPermissions).doesNotContainKey(first.getId());
+    }
+
+    @Test
+    void alreadyTappedCreatureStillGetsThreeStunCountersWithAnEmptyLibrary() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        target.setTapped(true);
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new RiverwheelSweep()));
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(target.getCounterCount(CounterType.STUN)).isEqualTo(3);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+
+        for (int remaining = 2; remaining >= 0; remaining--) {
+            harness.performUntapStep(player1);
+            assertThat(target.isTapped()).isTrue();
+            assertThat(target.getCounterCount(CounterType.STUN)).isEqualTo(remaining);
+        }
+        harness.performUntapStep(player1);
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    void singleCardLibraryAllowsPlayingTheExiledLand() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Card land = new Island();
+        harness.setLibrary(player1, List.of(land));
+        harness.setHand(player1, List.of(new RiverwheelSweep()));
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(land.getId()));
+        harness.castFromExile(player1, land.getId());
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(land);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(land.getId()));
+    }
+
+    @Test
+    void mustChooseExactlyOneOfTheTwoExiledCards() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Card first = new Island();
+        Card second = new Forest();
+        harness.setLibrary(player1, List.of(first, second));
+        harness.setHand(player1, List.of(new RiverwheelSweep()));
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1,
+                List.of(first.getId(), second.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId()));
+        assertThat(gd.exilePlayPermissions).containsEntry(first.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissions).doesNotContainKey(second.getId());
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyInAnyOrder(first, second);
+    }
+
+    @Test
+    void doesNotExileCardsWhenItsOnlyTargetLeavesBeforeResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Card first = new Island();
+        Card second = new Forest();
+        harness.setLibrary(player1, List.of(first, second));
+        harness.setHand(player1, List.of(new RiverwheelSweep()));
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.castSorcery(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerGraveyards.get(player2.getId()).add(target.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(first, second);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof RiverwheelSweep);
     }
 
     @Test
