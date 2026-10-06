@@ -31,8 +31,7 @@ class RoilingDragonstormTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.castEnchantment(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         int discardedIndex = gd.playerHands.get(player1.getId()).indexOf(discarded);
@@ -50,8 +49,7 @@ class RoilingDragonstormTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 6);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Roiling Dragonstorm");
         harness.assertInHand(player1, "Roiling Dragonstorm");
@@ -84,5 +82,43 @@ class RoilingDragonstormTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Roiling Dragonstorm");
+    }
+
+    @Test
+    @DisplayName("Can discard a newly drawn card when casting leaves the hand empty")
+    void discardsNewlyDrawnCard() {
+        Forest firstDraw = new Forest();
+        Island secondDraw = new Island();
+        harness.setHand(player1, List.of(new RoilingDragonstorm()));
+        harness.setLibrary(player1, List.of(firstDraw, secondDraw));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castEnchantment(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player1, gd.playerHands.get(player1.getId()).indexOf(firstDraw));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(secondDraw);
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertOnBattlefield(player1, "Roiling Dragonstorm");
+    }
+
+    @Test
+    @DisplayName("A Dragon entering without being cast returns every copy independently")
+    void dragonEnteringWithoutBeingCastReturnsEveryCopy() {
+        RoilingDragonstorm first = new RoilingDragonstorm();
+        RoilingDragonstorm second = new RoilingDragonstorm();
+        harness.setHand(player1, List.of());
+        harness.addToBattlefield(player1, first);
+        harness.addToBattlefield(player1, second);
+
+        harness.enterBattlefieldAndReturn(player1, new ShivanDragon());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Roiling Dragonstorm");
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(first, second);
+        harness.assertOnBattlefield(player1, "Shivan Dragon");
     }
 }
