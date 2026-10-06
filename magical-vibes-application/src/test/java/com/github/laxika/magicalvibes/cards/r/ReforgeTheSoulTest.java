@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,13 +14,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ReforgeTheSoul.class, Mountain.class})
 class ReforgeTheSoulTest extends BaseCardTest {
 
     private void fillLibraries(int cardsEach) {
         List.of(player1, player2).forEach(p -> {
             List<com.github.laxika.magicalvibes.model.Card> deck = new ArrayList<>();
             for (int i = 0; i < cardsEach; i++) {
-                deck.add(new GrizzlyBears());
+                deck.add(new Mountain());
             }
             harness.setLibrary(p, deck);
         });
@@ -29,20 +31,19 @@ class ReforgeTheSoulTest extends BaseCardTest {
     @DisplayName("Each player discards their hand and draws seven cards")
     void discardsHandsAndDrawsSeven() {
         fillLibraries(10);
-        harness.setHand(player1, List.of(new ReforgeTheSoul(), new GrizzlyBears(), new GrizzlyBears()));
-        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new ReforgeTheSoul(), new Mountain(), new Mountain()));
+        harness.setHand(player2, List.of(new Mountain()));
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(7);
         assertThat(gd.playerHands.get(player2.getId())).hasSize(7);
         assertThat(gd.playerGraveyards.get(player1.getId()))
-                .filteredOn(c -> c.getName().equals("Grizzly Bears")).hasSize(2);
+                .filteredOn(c -> c.getName().equals("Mountain")).hasSize(2);
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
         harness.assertInGraveyard(player1, "Reforge the Soul");
     }
@@ -81,11 +82,11 @@ class ReforgeTheSoulTest extends BaseCardTest {
         List<com.github.laxika.magicalvibes.model.Card> p1Lib = new ArrayList<>();
         p1Lib.add(reforge);
         for (int i = 0; i < 10; i++) {
-            p1Lib.add(new GrizzlyBears());
+            p1Lib.add(new Mountain());
         }
         harness.setLibrary(player1, p1Lib);
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.setHand(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player1, List.of(new Mountain()));
+        harness.setHand(player2, List.of(new Mountain(), new Mountain()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -99,5 +100,155 @@ class ReforgeTheSoulTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(7);
         assertThat(gd.playerHands.get(player2.getId())).hasSize(7);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Players with empty hands still draw seven cards")
+    void emptyHandsStillDrawSeven() {
+        fillLibraries(10);
+        harness.setHand(player1, List.of(new ReforgeTheSoul()));
+        harness.setHand(player2, List.of());
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(7);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(7);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(c -> c.getName()).containsExactly("Reforge the Soul");
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("Declining the miracle reveal leaves the card in hand")
+    void decliningRevealLeavesCardInHand() {
+        ReforgeTheSoul reforge = new ReforgeTheSoul();
+        harness.setLibrary(player1, List.of(reforge));
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+        harness.inMutationScope(() -> harness.getPlayerInputService().processNextMayAbility(gd));
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInHand(player1, "Reforge the Soul");
+        assertThat(gd.pendingMayAbilities).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Declining the miracle cast does not discard either hand")
+    void decliningCastLeavesHandsUnchanged() {
+        ReforgeTheSoul reforge = new ReforgeTheSoul();
+        harness.setLibrary(player1, List.of(reforge));
+        harness.setHand(player1, List.of(new Mountain()));
+        harness.setHand(player2, List.of(new Mountain()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+        harness.inMutationScope(() -> harness.getPlayerInputService().processNextMayAbility(gd));
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInHand(player1, "Reforge the Soul");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Miracle cannot be cast without the required red mana")
+    void insufficientMiracleManaLeavesCardInHand() {
+        harness.setLibrary(player1, List.of(new ReforgeTheSoul()));
+        harness.setHand(player1, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+        harness.inMutationScope(() -> harness.getPlayerInputService().processNextMayAbility(gd));
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInHand(player1, "Reforge the Soul");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Miracle can cast the sorcery on an opponent's turn outside a main phase")
+    void miracleWorksOnOpponentsTurn() {
+        fillLibraries(10);
+        List<com.github.laxika.magicalvibes.model.Card> library = new ArrayList<>();
+        library.add(new ReforgeTheSoul());
+        for (int i = 0; i < 10; i++) {
+            library.add(new Mountain());
+        }
+        harness.setLibrary(player1, library);
+        harness.setHand(player1, List.of(new Mountain()));
+        harness.setHand(player2, List.of(new Mountain()));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+        harness.inMutationScope(() -> harness.getPlayerInputService().processNextMayAbility(gd));
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(7);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(7);
+        harness.assertInGraveyard(player1, "Reforge the Soul");
+        harness.assertInGraveyard(player1, "Mountain");
+        harness.assertInGraveyard(player2, "Mountain");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("The first wheel draw must offer miracle reveal before subsequent draws")
+    void wheelPausesForFirstCardMiracleReveal() {
+        fillLibraries(10);
+        ReforgeTheSoul drawnReforge = new ReforgeTheSoul();
+        List<com.github.laxika.magicalvibes.model.Card> library = new ArrayList<>();
+        library.add(drawnReforge);
+        for (int i = 0; i < 9; i++) {
+            library.add(new Mountain());
+        }
+        harness.setLibrary(player1, library);
+        harness.setHand(player1, List.of(new ReforgeTheSoul(), new Mountain()));
+        harness.setHand(player2, List.of(new Mountain()));
+        gd.cardsDrawnThisTurn.put(player1.getId(), 0);
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.playerHands.get(player1.getId()))
+                .extracting(c -> c.getId()).containsExactly(drawnReforge.getId());
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(9);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Mountain");
+        harness.assertInGraveyard(player2, "Mountain");
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(7);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(7);
+        harness.assertInGraveyard(player1, "Reforge the Soul");
+        assertThat(gd.pendingCardDraws).isEmpty();
     }
 }
