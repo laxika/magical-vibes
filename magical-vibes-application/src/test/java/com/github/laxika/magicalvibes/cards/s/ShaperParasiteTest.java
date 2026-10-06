@@ -53,14 +53,44 @@ class ShaperParasiteTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, parasite)).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.forceStep(TurnStep.CLEANUP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
+    }
+
+    @Test
+    void toughnessReductionKillsAFaceDownCreature() {
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new ShaperParasite()));
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player2, 0);
+        harness.passBothPriorities();
+        Permanent target = gd.playerBattlefields.get(player2.getId()).getFirst();
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Permanent parasite = castFaceDownAndTurnFaceUp();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "Gets +2/-2");
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+        harness.assertInGraveyard(player2, "Shaper Parasite");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(parasite);
+    }
+
+    @Test
+    void castingFaceUpDoesNotTriggerTheAbility() {
+        harness.setHand(player1, List.of(new ShaperParasite()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Shaper Parasite");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     private Permanent castFaceDownAndTurnFaceUp() {
