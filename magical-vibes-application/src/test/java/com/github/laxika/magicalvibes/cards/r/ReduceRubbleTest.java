@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ReduceRubble.class, Forest.class, LlanowarElves.class, GrizzlyBears.class})
 class ReduceRubbleTest extends BaseCardTest {
 
     @Test
@@ -30,8 +32,7 @@ class ReduceRubbleTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, elves.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, elves.getId());
 
         harness.assertInGraveyard(player1, "Llanowar Elves");
         harness.assertNotOnBattlefield(player1, "Llanowar Elves");
@@ -50,8 +51,7 @@ class ReduceRubbleTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, elves.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, elves.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
@@ -89,8 +89,7 @@ class ReduceRubbleTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new ReduceRubble()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        harness.castFlashback(player1, 0, List.of(land.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, land.getId());
 
         assertThat(land.getSkipUntapCount()).isEqualTo(1);
     }
@@ -117,5 +116,112 @@ class ReduceRubbleTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castFlashback(player1, 0))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("sorcery-speed");
+    }
+
+    @Test
+    @DisplayName("Reduce allows declining payment even with enough mana")
+    void reduceCountersWhenPaymentDeclined() {
+        LlanowarElves elves = new LlanowarElves();
+        harness.setHand(player1, List.of(elves));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.setHand(player2, List.of(new ReduceRubble()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, elves.getId());
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInGraveyard(player1, "Llanowar Elves");
+        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
+    }
+
+    @Test
+    @DisplayName("Reduce offers payment when mana can be produced from untapped lands")
+    void reduceAllowsManaAbilitiesDuringPayment() {
+        LlanowarElves elves = new LlanowarElves();
+        harness.setHand(player1, List.of(elves));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
+        harness.setHand(player2, List.of(new ReduceRubble()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, elves.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.assertNotInGraveyard(player1, "Llanowar Elves");
+    }
+
+    @Test
+    @DisplayName("Rubble can resolve with zero targets and is still exiled")
+    void rubbleAllowsZeroTargets() {
+        harness.setGraveyard(player1, List.of(new ReduceRubble()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castFlashback(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(c -> c.getName().equals("Reduce"));
+    }
+
+    @Test
+    @DisplayName("Rubble does not tap lands and prevents only their controller's next untap")
+    void rubblePreventsExactlyNextUntapWithoutTapping() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.setGraveyard(player1, List.of(new ReduceRubble()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castAndResolveFlashback(player1, 0, land.getId());
+        assertThat(land.isTapped()).isFalse();
+        land.setTapped(true);
+
+        harness.performUntapStep(player1);
+        harness.performUntapStep(player2);
+        assertThat(land.isTapped()).isTrue();
+        harness.performUntapStep(player2);
+        assertThat(land.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Rubble rejects more than three land targets")
+    void rubbleRejectsFourTargets() {
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new Forest());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new Forest());
+        Permanent third = harness.addToBattlefieldAndReturn(player2, new Forest());
+        Permanent fourth = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.setGraveyard(player1, List.of(new ReduceRubble()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        assertThatThrownBy(() -> harness.castFlashback(player1, 0,
+                List.of(first.getId(), second.getId(), third.getId(), fourth.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Rubble is exiled when countered and does not affect its targets")
+    void rubbleIsExiledWhenCountered() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+        land.setTapped(true);
+        ReduceRubble rubble = new ReduceRubble();
+        harness.setGraveyard(player1, List.of(rubble));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.setHand(player2, List.of(new ReduceRubble()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        harness.castFlashback(player1, 0, land.getId());
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, rubble.getId());
+
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(c -> c.getId().equals(rubble.getId()));
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        harness.performUntapStep(player2);
+        assertThat(land.isTapped()).isFalse();
     }
 }
