@@ -57,7 +57,6 @@ class SavageSwipeTest extends BaseCardTest {
 
         assertThat(ownCreature.getEffectivePower()).isEqualTo(4);
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(ownCreature.getEffectivePower()).isEqualTo(2);
@@ -80,6 +79,75 @@ class SavageSwipeTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(ownCreature.getId(), otherOwnCreature.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("opponent");
+    }
+
+    @Test
+    @DisplayName("Checks power when resolving rather than when cast")
+    void checksPowerAtResolution() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.setHand(player1, List.of(new SavageSwipe()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castSorcery(player1, 0, List.of(ownCreature.getId(), opponent.getId()));
+
+        ownCreature.setPowerModifier(1);
+        ownCreature.setToughnessModifier(1);
+        harness.passBothPriorities();
+
+        assertThat(ownCreature.getEffectivePower()).isEqualTo(4);
+        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(4);
+        harness.assertOnBattlefield(player1, "Llanowar Elves");
+        harness.assertInGraveyard(player2, "Hill Giant");
+    }
+
+    @Test
+    @DisplayName("A creature below 2 power still fights without a boost")
+    void onePowerCreatureStillFights() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
+
+        castSwipe(ownCreature, opponent);
+
+        harness.assertInGraveyard(player1, "Llanowar Elves");
+        harness.assertInGraveyard(player2, "Llanowar Elves");
+    }
+
+    @Test
+    @DisplayName("Still boosts the legal first target when the opposing target leaves")
+    void boostsWhenOpponentLeavesBeforeResolution() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.setHand(player1, List.of(new SavageSwipe()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castSorcery(player1, 0, List.of(ownCreature.getId(), opponent.getId()));
+
+        gd.playerBattlefields.get(player2.getId()).remove(opponent);
+        harness.passBothPriorities();
+
+        assertThat(ownCreature.getEffectivePower()).isEqualTo(4);
+        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(4);
+        assertThat(ownCreature.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Neither creature fights when the first target changes controller")
+    void noFightWhenFirstTargetChangesController() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.setHand(player1, List.of(new SavageSwipe()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castSorcery(player1, 0, List.of(ownCreature.getId(), opponent.getId()));
+
+        gd.playerBattlefields.get(player1.getId()).remove(ownCreature);
+        gd.playerBattlefields.get(player2.getId()).add(ownCreature);
+        harness.passBothPriorities();
+
+        assertThat(ownCreature.getEffectivePower()).isEqualTo(2);
+        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(ownCreature.getMarkedDamage()).isZero();
+        assertThat(opponent.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Hill Giant");
     }
 
     private void castSwipe(Permanent ownCreature, Permanent opponent) {
