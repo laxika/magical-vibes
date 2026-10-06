@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.c.CityOfTraitors;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.s.SonicBurst;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RavenousBaboons.class, CityOfTraitors.class, Forest.class})
+@CardUsed({RavenousBaboons.class, CityOfTraitors.class, Forest.class, SonicBurst.class})
 class RavenousBaboonsTest extends BaseCardTest {
 
     @Test
@@ -96,5 +97,55 @@ class RavenousBaboonsTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.gameLog.stream().map(entry -> entry.plainText()))
                 .anyMatch(log -> log.contains("fizzles"));
+    }
+
+    @Test
+    @DisplayName("ETB must destroy its controller's nonbasic land when that land is targeted")
+    void etbDestroysControllersNonbasicLand() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new CityOfTraitors());
+        harness.setHand(player1, List.of(new RavenousBaboons()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castCreature(player1, 0, 0, target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Ravenous Baboons");
+        harness.assertNotOnBattlefield(player1, "City of Traitors");
+        harness.assertInGraveyard(player1, "City of Traitors");
+    }
+
+    @Test
+    @DisplayName("Nonland permanents are illegal ETB targets")
+    void nonlandPermanentsAreIllegalTargets() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new RavenousBaboons());
+        harness.setHand(player1, List.of(new RavenousBaboons()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("nonbasic land");
+    }
+
+    @Test
+    @DisplayName("ETB destroys the land even if Ravenous Baboons dies before resolution")
+    void etbResolvesAfterSourceDies() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new CityOfTraitors());
+        harness.setHand(player1, List.of(new RavenousBaboons()));
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.castCreature(player1, 0, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new SonicBurst(), new RavenousBaboons()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player1, 0,
+                harness.getPermanentId(player1, "Ravenous Baboons"));
+        harness.assertNotOnBattlefield(player1, "Ravenous Baboons");
+        harness.assertOnBattlefield(player2, "City of Traitors");
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "City of Traitors");
+        harness.assertInGraveyard(player2, "City of Traitors");
     }
 }
