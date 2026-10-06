@@ -52,7 +52,6 @@ class ShrinkTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, bear.getId());
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(bear.getPowerModifier()).isEqualTo(0);
@@ -86,5 +85,43 @@ class ShrinkTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Shrink permits negative power without reducing toughness or affecting other creatures")
+    void negativePowerDoesNotKillCreatureOrAffectOtherCreatures() {
+        Permanent target = addCreatureReady(player2, new SpectralBears());
+        Permanent other = addCreatureReady(player2, new SpectralBears());
+        harness.setHand(player1, List.of(new Shrink()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.runStateBasedActions();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(-2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target, other);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Repeated Shrinks accumulate and remain in effect through the end step")
+    void repeatedShrinksAccumulateUntilCleanup() {
+        Permanent target = addCreatureReady(player2, new SpectralBears());
+        harness.setHand(player1, List.of(new Shrink(), new Shrink()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.forceStep(TurnStep.END_STEP);
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(-7);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
     }
 }
