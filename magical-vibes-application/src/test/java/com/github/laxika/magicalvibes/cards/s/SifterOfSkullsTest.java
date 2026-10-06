@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -69,12 +68,71 @@ class SifterOfSkullsTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("Sifter's own death does not create a Scion")
+    void ownDeathDoesNotTrigger() {
+        Permanent sifter = harness.addToBattlefieldAndReturn(player1, new SifterOfSkulls());
+        sifter.setMarkedDamage(3);
+
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Sifter of Skulls");
+        assertThat(findPermanents(player1, "Eldrazi Scion")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Two Sifters dying simultaneously each see the other's death")
+    void simultaneousSifterDeathsCreateTwoScions() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new SifterOfSkulls());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new SifterOfSkulls());
+        first.setMarkedDamage(3);
+        second.setMarkedDamage(3);
+
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Sifter of Skulls")).isEmpty();
+        assertThat(findPermanents(player1, "Eldrazi Scion")).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Each dying nontoken creature creates a separate Scion")
+    void multipleDeathsCreateMultipleScions() {
+        harness.addToBattlefield(player1, new SifterOfSkulls());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new SifterOfSkulls());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new SifterOfSkulls());
+        first.setMarkedDamage(3);
+        second.setMarkedDamage(3);
+
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Sifter of Skulls")).hasSize(1);
+        assertThat(findPermanents(player1, "Eldrazi Scion")).hasSize(4);
+    }
+
+    @Test
+    @DisplayName("A death trigger still creates its Scion after Sifter leaves the battlefield")
+    void triggerResolvesAfterSourceDies() {
+        Permanent sifter = harness.addToBattlefieldAndReturn(player1, new SifterOfSkulls());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        creature.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        sifter.setMarkedDamage(3);
+        harness.runStateBasedActions();
+
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Sifter of Skulls");
+        assertThat(findPermanents(player1, "Eldrazi Scion")).hasSize(1);
+    }
+
     private void destroyWithShock(Player caster, UUID targetId) {
         harness.forceActivePlayer(caster);
         harness.setHand(caster, List.of(new Shock()));
         harness.addMana(caster, ManaColor.RED, 1);
-        harness.castInstant(caster, 0, targetId);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(caster, 0, targetId);
+        resolveAllTriggers();
     }
 }
