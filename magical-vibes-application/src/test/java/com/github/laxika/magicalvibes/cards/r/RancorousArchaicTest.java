@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,6 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RancorousArchaic.class})
 class RancorousArchaicTest extends BaseCardTest {
 
     private Permanent castAndResolve() {
@@ -85,5 +87,39 @@ class RancorousArchaicTest extends BaseCardTest {
         Permanent archaic = castAndResolve();
 
         assertThat(archaic.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Entering without being cast gives no converge counters")
+    void enteringWithoutCastingGivesNoCounters() {
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        Permanent archaic = harness.enterBattlefieldAndReturn(player1, new RancorousArchaic());
+
+        assertThat(archaic.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.getEffectivePower(gd, archaic)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, archaic)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Mana added after casting does not change converge")
+    void manaAddedBeforeResolutionDoesNotChangeCounters() {
+        harness.setHand(player1, List.of(new RancorousArchaic()));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+        harness.castCreature(player1, 0);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.passBothPriorities();
+
+        Permanent archaic = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(archaic.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, archaic)).isEqualTo(3);
     }
 }
