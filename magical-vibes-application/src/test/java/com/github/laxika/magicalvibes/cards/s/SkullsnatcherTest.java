@@ -90,8 +90,9 @@ class SkullsnatcherTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new GnarledMass());
         addCreatureReady(player2, new FrostOgre());
         harness.setGraveyard(player2, List.of(new TendoIceBridge()));
-        declareAttackers(List.of(0));
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        declareAttackersAndPrepareBlockers(List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> gs.declareBlockers(gd, player2, List.of()));
         harness.clearPriorityPassed();
 
         harness.setHand(player1, List.of(new Skullsnatcher()));
@@ -120,6 +121,57 @@ class SkullsnatcherTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, attacker.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("unblocked attacker");
+    }
+
+    @Test
+    @DisplayName("Choosing one card leaves the other available cards in the graveyard")
+    void choosingOneCardExilesOnlyThatCard() {
+        Card chosen = new GnarledMass();
+        Card unchosen = new FrostOgre();
+        harness.setGraveyard(player2, List.of(chosen, unchosen));
+
+        attackDealingDamage();
+        harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
+        resolveAllTriggers();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(chosen);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(unchosen);
+    }
+
+    @Test
+    @DisplayName("The remaining target is exiled when another target leaves the graveyard")
+    void remainingTargetIsExiledWhenOtherTargetLeaves() {
+        Card removed = new GnarledMass();
+        Card remaining = new FrostOgre();
+        harness.setGraveyard(player2, List.of(removed, remaining));
+
+        attackDealingDamage();
+        harness.handleMultipleCardsChosen(player1, List.of(removed.getId(), remaining.getId()));
+        harness.setGraveyard(player2, List.of(remaining));
+        harness.setHand(player2, List.of(removed));
+        resolveAllTriggers();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(remaining);
+        harness.assertInHand(player2, "Gnarled Mass");
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Combat damage to a blocking creature does not exile graveyard cards")
+    void damageToCreatureDoesNotTriggerExile() {
+        Card graveyardCard = new TendoIceBridge();
+        harness.setGraveyard(player2, List.of(graveyardCard));
+        addCreatureReady(player1, new Skullsnatcher());
+        addCreatureReady(player2, new GnarledMass());
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(graveyardCard);
+        harness.assertInGraveyard(player1, "Skullsnatcher");
     }
 
     private List<String> graveyardNames(UUID playerId) {
