@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RiotRingleader.class})
 class RiotRingleaderTest extends BaseCardTest {
 
     @Test
@@ -88,10 +90,53 @@ class RiotRingleaderTest extends BaseCardTest {
         assertThat(ringleader.getPowerModifier()).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(ringleader.getPowerModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Humans entering before the attack trigger resolves receive the boost")
+    void boostsHumansPresentAtResolution() {
+        addCreatureReady(player1, new RiotRingleader());
+        declareAttackers(player1, List.of(0));
+        assertThat(gd.stack).hasSize(1);
+
+        Permanent newcomer = addCreatureReady(player1, new RiotRingleader());
+        resolveAllTriggers();
+
+        assertThat(newcomer.getPowerModifier()).isEqualTo(1);
+        assertThat(newcomer.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Humans entering after resolution do not receive the boost")
+    void doesNotBoostHumansEnteringAfterResolution() {
+        Permanent attacker = addCreatureReady(player1, new RiotRingleader());
+        declareAttackers(player1, List.of(0));
+        resolveAllTriggers();
+
+        Permanent newcomer = addCreatureReady(player1, new RiotRingleader());
+
+        assertThat(attacker.getPowerModifier()).isEqualTo(1);
+        assertThat(newcomer.getPowerModifier()).isZero();
+        assertThat(newcomer.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Two attacking Ringleaders each boost all your Humans")
+    void multipleAttackTriggersStack() {
+        Permanent first = addCreatureReady(player1, new RiotRingleader());
+        Permanent second = addCreatureReady(player1, new RiotRingleader());
+        Permanent nonAttacker = addCreatureReady(player1, new RiotRingleader());
+
+        declareAttackers(player1, List.of(0, 1));
+        resolveAllTriggers();
+
+        for (Permanent human : List.of(first, second, nonAttacker)) {
+            assertThat(human.getPowerModifier()).isEqualTo(2);
+            assertThat(human.getToughnessModifier()).isZero();
+        }
     }
 
     private Card createCreature(String name, CardSubtype subtype) {
