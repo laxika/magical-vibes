@@ -23,8 +23,7 @@ class SkyTheaterStrixTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, strix)).isEqualTo(2);
@@ -52,8 +51,7 @@ class SkyTheaterStrixTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
@@ -62,6 +60,56 @@ class SkyTheaterStrixTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, strix)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, strix)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("An opponent's noncreature spell does not boost the Strix")
+    void doesNotPumpForOpponentsSpell() {
+        Permanent strix = addStrix();
+
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        assertThat(gqs.getEffectivePower(gd, strix)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, strix)).isEqualTo(2);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Each noncreature spell adds another temporary power boost")
+    void boostsAccumulateForMultipleSpells() {
+        Permanent strix = addStrix();
+
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, strix)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, strix)).isEqualTo(2);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
+    }
+
+    @Test
+    @DisplayName("The cast trigger resolves before the spell that caused it")
+    void boostResolvesBeforeSpell() {
+        Permanent strix = addStrix();
+
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, player2.getId());
+
+        assertThat(gqs.getEffectivePower(gd, strix)).isEqualTo(1);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, strix)).isEqualTo(2);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
 
     private Permanent addStrix() {
