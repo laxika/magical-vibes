@@ -11,9 +11,51 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({SleightOfHand.class, GrizzlyBears.class, LlanowarElves.class})
 class SleightOfHandTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Exactly one of the top two cards must be chosen")
+    void mustChooseExactlyOneCard() {
+        Card top1 = new GrizzlyBears();
+        Card top2 = new LlanowarElves();
+        harness.setLibrary(player1, List.of(top1, top2));
+        harness.castFromHand(player1, new SleightOfHand(), "{U}");
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(top1.getId(), top2.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.handleMultipleCardsChosen(player1, List.of(top2.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(top2);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top1);
+        harness.assertInGraveyard(player1, "Sleight of Hand");
+    }
+
+    @Test
+    @DisplayName("A card below the top two cannot be chosen")
+    void cannotChooseCardBelowTopTwo() {
+        Card top1 = new GrizzlyBears();
+        Card top2 = new LlanowarElves();
+        Card belowTopTwo = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(top1, top2, belowTopTwo));
+        harness.castFromHand(player1, new SleightOfHand(), "{U}");
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(belowTopTwo.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.handleMultipleCardsChosen(player1, List.of(top1.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(top1);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(belowTopTwo, top2);
+        harness.assertInGraveyard(player1, "Sleight of Hand");
+    }
 
     @Test
     @DisplayName("Chosen card goes to hand; the other goes to the bottom of the library")
