@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.t.TheFifteenthDoctor;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -19,7 +20,7 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RoseNoble.class, Shock.class})
+@CardUsed({RoseNoble.class, Shock.class, TheFifteenthDoctor.class})
 class RoseNobleTest extends BaseCardTest {
 
     @Test
@@ -78,6 +79,62 @@ class RoseNobleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Shock");
+        harness.assertOnBattlefield(player1, "Rose Noble");
+        assertThat(rose.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Rose Noble does not trigger for its own cast")
+    void doesNotTriggerForItsOwnCast() {
+        harness.setHand(player1, List.of(new RoseNoble()));
+        harness.setLibrary(player1, List.of(new RoseNoble()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Rose Noble");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opponent casting a companion does not draw for Rose's controller")
+    void opponentCompanionDoesNotDrawCard() {
+        addRose();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new RoseNoble()));
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.castCreature(player2, 0);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player2, "Rose Noble");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A qualifying cast draws before the creature resolves")
+    void drawResolvesBeforeCreature() {
+        addRose();
+        harness.setHand(player1, List.of(new TheFifteenthDoctor()));
+        harness.setLibrary(player1, List.of(new RoseNoble(), new RoseNoble(),
+                new RoseNoble(), new RoseNoble(), new RoseNoble()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Rose Noble");
+        harness.assertNotOnBattlefield(player1, "The Fifteenth Doctor");
+        resolveAllTriggers();
+        harness.assertOnBattlefield(player1, "The Fifteenth Doctor");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 
     private void addRose() {
@@ -89,8 +146,7 @@ class RoseNobleTest extends BaseCardTest {
     private void castAndResolve(Card spell) {
         harness.setHand(player1, List.of(spell));
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
     private Card doctorSpell() {
