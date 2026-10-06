@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.i.IndomitableAncients;
+import com.github.laxika.magicalvibes.cards.m.MothdustChangeling;
 import com.github.laxika.magicalvibes.cards.r.RusticClachan;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +16,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ScarbladeElite.class, IndomitableAncients.class})
+@CardUsed({ScarbladeElite.class, IndomitableAncients.class, RusticClachan.class, MothdustChangeling.class})
 class ScarbladeEliteTest extends BaseCardTest {
 
     private Permanent setup() {
@@ -100,7 +101,6 @@ class ScarbladeEliteTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(RusticClachan.class)
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNoncreaturePermanent() {
         Permanent elite = setup();
@@ -109,5 +109,73 @@ class ScarbladeEliteTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, idxOf(elite), 0, null, land.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void canExileChangelingAsAnAssassin() {
+        Permanent elite = setup();
+        harness.setGraveyard(player1, List.of(new MothdustChangeling()));
+        UUID targetId = addCreatureReady(player2, new IndomitableAncients()).getId();
+
+        harness.activateAbility(player1, idxOf(elite), 0, null, targetId);
+        harness.handleGraveyardCardChosen(player1, 0);
+        harness.assertNotInGraveyard(player1, "Mothdust Changeling");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(c -> c.getName().equals("Mothdust Changeling"));
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player2, "Indomitable Ancients");
+        harness.assertInGraveyard(player2, "Indomitable Ancients");
+    }
+
+    @Test
+    void cannotPayWithOpponentsAssassin() {
+        Permanent elite = setup();
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of(new ScarbladeElite()));
+        UUID targetId = addCreatureReady(player2, new IndomitableAncients()).getId();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, idxOf(elite), 0, null, targetId))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(elite.isTapped()).isFalse();
+        harness.assertInGraveyard(player2, "Scarblade Elite");
+    }
+
+    @Test
+    void cannotActivateWhileSummoningSick() {
+        Permanent elite = setup();
+        elite.setSummoningSick(true);
+        harness.setGraveyard(player1, List.of(new ScarbladeElite()));
+        UUID targetId = addCreatureReady(player2, new IndomitableAncients()).getId();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, idxOf(elite), 0, null, targetId))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Scarblade Elite");
+    }
+
+    @Test
+    void cannotActivateWhileTapped() {
+        Permanent elite = setup();
+        elite.setTapped(true);
+        harness.setGraveyard(player1, List.of(new ScarbladeElite()));
+        UUID targetId = addCreatureReady(player2, new IndomitableAncients()).getId();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, idxOf(elite), 0, null, targetId))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Scarblade Elite");
+    }
+
+    @Test
+    void canTargetItself() {
+        Permanent elite = setup();
+        harness.setGraveyard(player1, List.of(new ScarbladeElite()));
+
+        harness.activateAbility(player1, idxOf(elite), 0, null, elite.getId());
+        harness.handleGraveyardCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Scarblade Elite");
+        harness.assertInGraveyard(player1, "Scarblade Elite");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(c -> c.getName().equals("Scarblade Elite"));
     }
 }
