@@ -31,26 +31,75 @@ class ReplicatingRingTest extends BaseCardTest {
         Permanent ring = addRing();
         ring.setCounterCount(CounterType.NIGHT, 7);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
 
         assertThat(ring.getCounterCount(CounterType.NIGHT)).isZero();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(p -> p.getCard().getName().equals("Replicated Ring"))
                 .hasSize(8);
 
-        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Replicated Ring"))
-                .findFirst()
-                .orElseThrow();
+        Permanent token = findPermanent(player1, "Replicated Ring");
         harness.activateAbility(player1, battlefieldIndex(token), 0, null, null);
         harness.handleListChoice(player1, "BLUE");
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).getSnowManaTotal()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Accumulates night counters below eight without creating tokens")
+    void accumulatesNightCountersBelowThreshold() {
+        Permanent ring = addRing();
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(ring.getCounterCount(CounterType.NIGHT)).isEqualTo(1);
+        assertThat(countPermanents(player1, "Replicated Ring")).isZero();
+
+        ring.setCounterCount(CounterType.NIGHT, 6);
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(ring.getCounterCount(CounterType.NIGHT)).isEqualTo(7);
+        assertThat(countPermanents(player1, "Replicated Ring")).isZero();
+    }
+
+    @Test
+    @DisplayName("Removes every night counter above eight but preserves other counters")
+    void replicatesAboveThresholdAndPreservesOtherCounters() {
+        Permanent ring = addRing();
+        ring.setCounterCount(CounterType.NIGHT, 10);
+        ring.setCounterCount(CounterType.CHARGE, 2);
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(ring.getCounterCount(CounterType.NIGHT)).isZero();
+        assertThat(ring.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
+        assertThat(countPermanents(player1, "Replicated Ring")).isEqualTo(8);
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(ring.getCounterCount(CounterType.NIGHT)).isEqualTo(1);
+        assertThat(countPermanents(player1, "Replicated Ring")).isEqualTo(8);
+        assertThat(findPermanents(player1, "Replicated Ring"))
+                .allSatisfy(token -> assertThat(token.getCounterCount(CounterType.NIGHT)).isZero());
+    }
+
+    @Test
+    @DisplayName("Does not add night counters during the opponent's upkeep")
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        Permanent ring = addRing();
+        ring.setCounterCount(CounterType.NIGHT, 7);
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(ring.getCounterCount(CounterType.NIGHT)).isEqualTo(7);
+        assertThat(countPermanents(player1, "Replicated Ring")).isZero();
     }
 
     private Permanent addRing() {
