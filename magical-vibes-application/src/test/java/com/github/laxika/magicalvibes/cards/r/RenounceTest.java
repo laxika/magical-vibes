@@ -86,4 +86,29 @@ class RenounceTest extends BaseCardTest {
     private void castRenounce() {
         harness.castFromHand(player1, new Renounce(), "{1}{W}");
     }
+
+    @Test
+    @DisplayName("Sacrifices only the selected permanents during resolution")
+    void sacrificesOnlySelectedPermanentsDuringResolution() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent volunteers = harness.addToBattlefieldAndReturn(player1, new FreshVolunteers());
+        harness.setLife(player1, 10);
+
+        castRenounce();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(forest, volunteers);
+        harness.assertLife(player1, 10);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(forest, volunteers);
+        harness.assertLife(player1, 10);
+        harness.handleMultiplePermanentsChosen(player1, List.of(volunteers.getId()));
+
+        harness.assertLife(player1, 12);
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(forest);
+        harness.assertInGraveyard(player1, "Fresh Volunteers");
+        harness.assertNotInGraveyard(player1, "Forest");
+        harness.assertInGraveyard(player1, "Renounce");
+    }
 }
