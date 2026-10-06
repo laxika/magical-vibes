@@ -77,4 +77,47 @@ class SearingRaysTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
+
+    @Test
+    @DisplayName("Choosing green counts multicolored creatures once and ignores green noncreatures")
+    void greenCountsMulticoloredCreaturesOnce() {
+        harness.addToBattlefield(player1, new RagingKavu());
+        harness.addToBattlefield(player1, new KavuTitan());
+        harness.addToBattlefield(player1, new FiresOfYavimaya());
+        harness.addToBattlefield(player2, new ViashinoGrappler());
+        harness.addToBattlefield(player2, new RagingKavu());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        castSearingRays();
+        harness.handleListChoice(player1, "GREEN");
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 19);
+        harness.assertOnBattlefield(player1, "Raging Kavu");
+        harness.assertOnBattlefield(player1, "Kavu Titan");
+        harness.assertOnBattlefield(player2, "Viashino Grappler");
+        harness.assertOnBattlefield(player2, "Raging Kavu");
+    }
+
+    @Test
+    @DisplayName("Successive spells choose their colors independently")
+    void successiveSpellsChooseColorsIndependently() {
+        harness.addToBattlefield(player1, new ViashinoGrappler());
+        harness.addToBattlefield(player2, new KavuTitan());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        castSearingRays();
+        harness.handleListChoice(player1, "RED");
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 20);
+
+        castSearingRays();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player1, "GREEN");
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
+    }
 }
