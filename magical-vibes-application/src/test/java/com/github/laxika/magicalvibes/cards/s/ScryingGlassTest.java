@@ -17,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ScryingGlass.class, GoblinMasons.class, YavimayaEnchantress.class})
+@CardUsed({ScryingGlass.class, GoblinMasons.class, YavimayaEnchantress.class, MycosynthLattice.class})
 class ScryingGlassTest extends BaseCardTest {
 
     private Permanent addReadyGlass() {
@@ -110,7 +110,6 @@ class ScryingGlassTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(MycosynthLattice.class)
     @DisplayName("Uses the hand cards' effective colors")
     void doesNotDrawWhenMycosynthLatticeMakesHandColorless() {
         harness.addToBattlefield(player1, new MycosynthLattice());
@@ -137,5 +136,86 @@ class ScryingGlassTest extends BaseCardTest {
                 gd.playerBattlefields.get(player1.getId()).indexOf(glass), 0, null, player1.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be an opponent");
+    }
+
+    @Test
+    @DisplayName("Reveals the entire hand to both players only after both choices, even on a mismatch")
+    void revealsHandAfterChoicesEvenWithoutDrawing() {
+        GoblinMasons redCard = new GoblinMasons();
+        YavimayaEnchantress greenCard = new YavimayaEnchantress();
+        harness.setHand(player2, List.of(redCard, greenCard));
+        Permanent glass = addReadyGlass();
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+        harness.clearMessages();
+
+        activate(glass);
+
+        assertThat(harness.getConn1().getMessagesContaining("REVEAL_HAND")).isEmpty();
+        assertThat(harness.getConn2().getMessagesContaining("REVEAL_HAND")).isEmpty();
+        harness.handleXValueChosen(player1, 2);
+        assertThat(harness.getConn1().getMessagesContaining("REVEAL_HAND")).isEmpty();
+        assertThat(harness.getConn2().getMessagesContaining("REVEAL_HAND")).isEmpty();
+        harness.handleListChoice(player1, "RED");
+
+        assertThat(harness.getConn1().getMessagesContaining("REVEAL_HAND"))
+                .anyMatch(message -> message.contains(redCard.getId().toString())
+                        && message.contains(greenCard.getId().toString()));
+        assertThat(harness.getConn2().getMessagesContaining("REVEAL_HAND"))
+                .anyMatch(message -> message.contains(redCard.getId().toString())
+                        && message.contains(greenCard.getId().toString()));
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(redCard, greenCard);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
+    }
+
+    @Test
+    @DisplayName("An empty opponent hand never matches a positive number")
+    void doesNotDrawForEmptyHand() {
+        harness.setHand(player2, List.of());
+        Permanent glass = addReadyGlass();
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+        int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
+
+        activate(glass);
+        harness.handleXValueChosen(player1, 1);
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Zero is rejected and a positive choice can still complete resolution")
+    void rejectsZeroChoice() {
+        harness.setHand(player2, List.of(new YavimayaEnchantress()));
+        Permanent glass = addReadyGlass();
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+
+        activate(glass);
+
+        assertThatThrownBy(() -> harness.handleXValueChosen(player1, 0))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.XValueChoice.class);
+        harness.handleXValueChosen(player1, 1);
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
+    }
+
+    @Test
+    @DisplayName("Activation pays three mana and taps the artifact before making resolution choices")
+    void paysManaAndTapCostsOnActivation() {
+        harness.setHand(player2, List.of(new GoblinMasons()));
+        Permanent glass = addReadyGlass();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(glass),
+                0, null, player2.getId());
+
+        assertThat(glass.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.passBothPriorities();
+        harness.handleXValueChosen(player1, 1);
+        harness.handleListChoice(player1, "RED");
     }
 }
