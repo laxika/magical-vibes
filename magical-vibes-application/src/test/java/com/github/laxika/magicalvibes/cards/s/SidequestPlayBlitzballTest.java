@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.IronGiant;
 import com.github.laxika.magicalvibes.cards.v.Vizzerdrix;
 import com.github.laxika.magicalvibes.cards.w.WorldChampionCelestialWeapon;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -17,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SidequestPlayBlitzball.class, WorldChampionCelestialWeapon.class, GrizzlyBears.class, Vizzerdrix.class})
+@CardUsed({SidequestPlayBlitzball.class, WorldChampionCelestialWeapon.class, GrizzlyBears.class, Vizzerdrix.class, IronGiant.class})
 class SidequestPlayBlitzballTest extends BaseCardTest {
 
     @Test
@@ -43,10 +44,7 @@ class SidequestPlayBlitzballTest extends BaseCardTest {
     @Test
     void transformsAfterAPlayerIsDealtSixCombatDamageAndAttachesToYourCreature() {
         Permanent source = addReadyPermanent(player1, new SidequestPlayBlitzball());
-        Vizzerdrix attackerCard = new Vizzerdrix();
-        attackerCard.setPower(6);
-        attackerCard.setToughness(6);
-        Permanent attacker = addReadyCreature(player1, attackerCard);
+        Permanent attacker = addReadyCreature(player1, new Vizzerdrix());
 
         attacker.setAttacking(true);
         resolveCombat(player1);
@@ -63,10 +61,7 @@ class SidequestPlayBlitzballTest extends BaseCardTest {
     @Test
     void doesNotTransformWhenCombatDamageIsBelowSix() {
         Permanent source = addReadyPermanent(player1, new SidequestPlayBlitzball());
-        Vizzerdrix attackerCard = new Vizzerdrix();
-        attackerCard.setPower(3);
-        attackerCard.setToughness(4);
-        Permanent attacker = addReadyCreature(player1, attackerCard);
+        Permanent attacker = addReadyCreature(player1, new GrizzlyBears());
 
         advanceToCombat(player1);
         harness.handlePermanentChosen(player1, attacker.getId());
@@ -82,10 +77,7 @@ class SidequestPlayBlitzballTest extends BaseCardTest {
     @Test
     void doesNotTransformDuringAnOpponentsCombat() {
         Permanent source = addReadyPermanent(player1, new SidequestPlayBlitzball());
-        Vizzerdrix attackerCard = new Vizzerdrix();
-        attackerCard.setPower(6);
-        attackerCard.setToughness(6);
-        Permanent attacker = addReadyCreature(player2, attackerCard);
+        Permanent attacker = addReadyCreature(player2, new Vizzerdrix());
         attacker.setAttacking(true);
 
         resolveCombat(player2);
@@ -116,6 +108,57 @@ class SidequestPlayBlitzballTest extends BaseCardTest {
         assertThat(weapon.getAttachedTo()).isEqualTo(creature.getId());
     }
 
+    @Test
+    void transformsEvenWhenNoCreatureRemainsToAttachTo() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new SidequestPlayBlitzball());
+        Permanent attacker = addReadyCreature(player1, new IronGiant());
+        attacker.setAttacking(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(14);
+
+        gd.playerBattlefields.get(player1.getId()).remove(attacker);
+        harness.clearPriorityPassed();
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> {
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+        });
+
+        assertThat(source.isTransformed()).isTrue();
+        assertThat(source.getCard()).isInstanceOf(WorldChampionCelestialWeapon.class);
+        assertThat(source.getAttachedTo()).isNull();
+    }
+
+    @Test
+    void combinesCombatDamageFromMultipleCreaturesToOnePlayer() {
+        Permanent source = addReadyPermanent(player1, new SidequestPlayBlitzball());
+        Permanent first = addReadyCreature(player1, new GrizzlyBears());
+        Permanent second = addReadyCreature(player1, new GrizzlyBears());
+        Permanent third = addReadyCreature(player1, new GrizzlyBears());
+        first.setAttacking(true);
+        second.setAttacking(true);
+        third.setAttacking(true);
+
+        resolveCombat(player1);
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of(second.getId()));
+
+        assertThat(source.isTransformed()).isTrue();
+        assertThat(source.getAttachedTo()).isEqualTo(second.getId());
+    }
+
+    @Test
+    void doesNotBoostCreaturesAtBeginningOfOpponentsCombat() {
+        harness.addToBattlefield(player1, new SidequestPlayBlitzball());
+        Permanent creature = addReadyCreature(player1, new GrizzlyBears());
+
+        advanceToCombat(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+    }
+
     private void advanceToCombat(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -124,26 +167,21 @@ class SidequestPlayBlitzballTest extends BaseCardTest {
     }
 
     private Permanent addReadyCreature(Player player, com.github.laxika.magicalvibes.model.Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        return addReadyPermanent(player, card);
     }
 
     private Permanent addReadyPermanent(Player player, com.github.laxika.magicalvibes.model.Card card) {
-        Permanent permanent = new Permanent(card);
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, card);
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 
     private Permanent addTransformedWeapon(Player player) {
         SidequestPlayBlitzball front = new SidequestPlayBlitzball();
-        Permanent weapon = new Permanent(front);
+        Permanent weapon = harness.addToBattlefieldAndReturn(player, front);
         weapon.setCard(front.getBackFaceCard());
         weapon.setTransformed(true);
         weapon.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(weapon);
         return weapon;
     }
 }
