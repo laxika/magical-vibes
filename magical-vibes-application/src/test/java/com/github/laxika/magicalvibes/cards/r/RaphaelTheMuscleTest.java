@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.z.ZuranSpellcaster;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -14,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({RaphaelTheMuscle.class, GrizzlyBears.class, ZuranSpellcaster.class})
 class RaphaelTheMuscleTest extends BaseCardTest {
@@ -25,8 +28,7 @@ class RaphaelTheMuscleTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 5);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Mutagen")).hasSize(1);
     }
@@ -69,6 +71,75 @@ class RaphaelTheMuscleTest extends BaseCardTest {
         declareAttackers(List.of(battlefieldIndex(player1, attacker)));
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(16);
+    }
+
+    @Test
+    void createsTokenWithMutagenSubtype() {
+        harness.enterBattlefieldAndReturn(player1, new RaphaelTheMuscle());
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player1, "Mutagen").getCard().getSubtypes())
+                .contains(CardSubtype.MUTAGEN);
+    }
+
+    @Test
+    void mutagenCanPutCounterOnOpponentsCreature() {
+        harness.enterBattlefieldAndReturn(player1, new RaphaelTheMuscle());
+        resolveAllTriggers();
+        Permanent target = addCreatureReady(player2, new RaphaelTheMuscle());
+        Permanent token = findPermanent(player1, "Mutagen");
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, battlefieldIndex(player1, token), null, target.getId());
+
+        assertThat(findPermanents(player1, "Mutagen")).isEmpty();
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        resolveAllTriggers();
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void mutagenCannotBeActivatedDuringCombat() {
+        Permanent target = harness.enterBattlefieldAndReturn(player1, new RaphaelTheMuscle());
+        resolveAllTriggers();
+        Permanent token = findPermanent(player1, "Mutagen");
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, battlefieldIndex(player1, token), null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(findPermanents(player1, "Mutagen")).hasSize(1);
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void doesNotDoubleOpponentsCreatureDamage() {
+        addCreatureReady(player1, new RaphaelTheMuscle());
+        Permanent spellcaster = addCreatureReady(player2, new ZuranSpellcaster());
+        spellcaster.setCounterCount(CounterType.CHARGE, 1);
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player2, battlefieldIndex(player2, spellcaster), null, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(19);
+    }
+
+    @Test
+    void doublesDamageToCreaturesOnlyOnceForMultipleCounters() {
+        addCreatureReady(player1, new RaphaelTheMuscle());
+        Permanent spellcaster = addCreatureReady(player1, new ZuranSpellcaster());
+        spellcaster.setCounterCount(CounterType.CHARGE, 3);
+        Permanent target = addCreatureReady(player2, new RaphaelTheMuscle());
+
+        harness.activateAbility(player1, battlefieldIndex(player1, spellcaster), null, target.getId());
+        resolveAllTriggers();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
     }
 
     private int battlefieldIndex(Player player, Permanent permanent) {
