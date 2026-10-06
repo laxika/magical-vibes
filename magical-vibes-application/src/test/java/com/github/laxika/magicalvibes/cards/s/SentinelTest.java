@@ -73,6 +73,67 @@ class SentinelTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Uses target power at resolution and preserves toughness modifiers")
+    void usesPowerAtResolutionWithToughnessModifiers() {
+        Permanent sentinel = addCreatureReady(player1, new Sentinel());
+        sentinel.setToughnessModifier(2);
+        Permanent attacker = addCreatureReady(player2, new Sentinel());
+        attacker.setAttacking(true);
+        prepareDeclareBlockers(player2);
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(
+                indexOf(player1, sentinel), indexOf(player2, attacker))));
+
+        harness.activateAbility(player1, indexOf(player1, sentinel), null, attacker.getId());
+        attacker.setPowerModifier(3);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectiveToughness(gd, sentinel)).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, sentinel)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A later activation replaces the previous base toughness")
+    void laterActivationReplacesPreviousBaseToughness() {
+        Permanent sentinel = addCreatureReady(player1, new Sentinel());
+        Permanent attacker = addCreatureReady(player2, new Sentinel());
+        attacker.setAttacking(true);
+        attacker.setPowerModifier(3);
+        prepareDeclareBlockers(player2);
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(
+                indexOf(player1, sentinel), indexOf(player2, attacker))));
+
+        harness.activateAbility(player1, indexOf(player1, sentinel), null, attacker.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectiveToughness(gd, sentinel)).isEqualTo(5);
+
+        attacker.setPowerModifier(0);
+        harness.activateAbility(player1, indexOf(player1, sentinel), null, attacker.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectiveToughness(gd, sentinel)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Does not resolve when the target is no longer in combat with Sentinel")
+    void doesNotResolveWhenCombatRelationshipEnds() {
+        Permanent sentinel = addCreatureReady(player1, new Sentinel());
+        Permanent attacker = addCreatureReady(player2, new Sentinel());
+        attacker.setAttacking(true);
+        attacker.setPowerModifier(3);
+        prepareDeclareBlockers(player2);
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(
+                indexOf(player1, sentinel), indexOf(player2, attacker))));
+
+        harness.activateAbility(player1, indexOf(player1, sentinel), null, attacker.getId());
+        sentinel.setBlocking(false);
+        sentinel.getBlockingTargetIds().clear();
+        attacker.setAttacking(false);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectiveToughness(gd, sentinel)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private int indexOf(Player player, Permanent permanent) {
         return gd.playerBattlefields.get(player.getId()).indexOf(permanent);
     }
