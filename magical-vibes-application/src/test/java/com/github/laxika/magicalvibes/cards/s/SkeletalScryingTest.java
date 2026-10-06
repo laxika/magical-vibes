@@ -92,4 +92,56 @@ class SkeletalScryingTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(3);
     }
+    @Test
+    @DisplayName("Only selected cards are exiled, and neither player loses life before resolution")
+    void exilesOnlySelectedCardsAsCastingCost() {
+        RottingGiant first = new RottingGiant();
+        Concentrate retained = new Concentrate();
+        RottingGiant last = new RottingGiant();
+        Concentrate opponentCard = new Concentrate();
+        harness.setGraveyard(player1, List.of(first, retained, last));
+        harness.setGraveyard(player2, List.of(opponentCard));
+        harness.setHand(player1, List.of(new SkeletalScrying()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        cast(2, List.of(0, 2));
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(retained);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyInAnyOrder(first, last);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentCard);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Skeletal Scrying");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyInAnyOrder(first, last);
+    }
+
+    @Test
+    @DisplayName("X can exceed current life because losing life is not a casting cost")
+    void canCastWithLessLifeThanX() {
+        harness.setGraveyard(player1, List.of(new RottingGiant(), new Concentrate()));
+        harness.setHand(player1, List.of(new SkeletalScrying()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.setLife(player1, 1);
+
+        cast(2, List.of(0, 1));
+
+        assertThat(gd.stack).hasSize(1);
+        harness.assertLife(player1, 1);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(2);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        harness.assertLife(player1, -1);
+        assertThat(gd.status).isEqualTo(com.github.laxika.magicalvibes.model.GameStatus.FINISHED);
+    }
 }
