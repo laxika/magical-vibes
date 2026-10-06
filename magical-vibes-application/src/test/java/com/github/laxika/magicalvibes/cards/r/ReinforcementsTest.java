@@ -134,4 +134,103 @@ class ReinforcementsTest extends BaseCardTest {
                 .extracting(Card::getId)
                 .containsExactly(escort.getId(), homeGuard.getId());
     }
+
+    @Test
+    @DisplayName("Three chosen creatures are ordered above the existing library and unchosen cards stay behind")
+    void threeTargetsArePlacedAboveExistingLibrary() {
+        Card homeGuard = new KjeldoranHomeGuard();
+        Card escort = new KjeldoranEscort();
+        Card advocate = new JuniperOrderAdvocate();
+        Card unchosen = new KjeldoranEscort();
+        Card originalTop = new NobleSteeds();
+        Reinforcements spell = new Reinforcements();
+        harness.setGraveyard(player1, List.of(homeGuard, escort, advocate, unchosen));
+        harness.setLibrary(player1, List.of(originalTop));
+
+        harness.castFromHand(player1, spell, "{W}");
+        harness.handleMultipleCardsChosen(player1, List.of(homeGuard.getId(), escort.getId(), advocate.getId()));
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(2, 0, 1)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getId)
+                .containsExactly(advocate.getId(), homeGuard.getId(), escort.getId(), originalTop.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId())).extracting(Card::getId)
+                .containsExactly(unchosen.getId(), spell.getId());
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("One chosen creature is put on top without an ordering prompt")
+    void singleTargetGoesOnTopWithoutReordering() {
+        Card creature = new KjeldoranHomeGuard();
+        Card unchosen = new KjeldoranEscort();
+        Card originalTop = new NobleSteeds();
+        harness.setGraveyard(player1, List.of(creature, unchosen));
+        harness.setLibrary(player1, List.of(originalTop));
+
+        harness.castFromHand(player1, new Reinforcements(), "{W}");
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getId)
+                .containsExactly(creature.getId(), originalTop.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId())).extracting(Card::getId)
+                .contains(unchosen.getId()).doesNotContain(creature.getId());
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A target moved by a response is skipped while the remaining target is returned")
+    void remainingLegalTargetStillReturns() {
+        Card homeGuard = new KjeldoranHomeGuard();
+        Card escort = new KjeldoranEscort();
+        Card originalTop = new NobleSteeds();
+        Reinforcements spell = new Reinforcements();
+        Reinforcements response = new Reinforcements();
+        harness.setGraveyard(player1, List.of(homeGuard, escort));
+        harness.setLibrary(player1, List.of(originalTop));
+
+        harness.castFromHand(player1, spell, "{W}");
+        harness.handleMultipleCardsChosen(player1, List.of(homeGuard.getId(), escort.getId()));
+        harness.castFromHand(player1, response, "{W}");
+        harness.handleMultipleCardsChosen(player1, List.of(homeGuard.getId()));
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getId)
+                .containsExactly(escort.getId(), homeGuard.getId(), originalTop.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId())).extracting(Card::getId)
+                .containsExactly(response.getId(), spell.getId());
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("When its only target leaves the graveyard the spell does not move that card again")
+    void allTargetsLeavingGraveyardStopsResolution() {
+        Card creature = new KjeldoranHomeGuard();
+        Card originalTop = new NobleSteeds();
+        Reinforcements spell = new Reinforcements();
+        Reinforcements response = new Reinforcements();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setLibrary(player1, List.of(originalTop));
+
+        harness.castFromHand(player1, spell, "{W}");
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+        harness.castFromHand(player1, response, "{W}");
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getId)
+                .containsExactly(creature.getId(), originalTop.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId())).extracting(Card::getId)
+                .containsExactly(response.getId(), spell.getId());
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
 }
