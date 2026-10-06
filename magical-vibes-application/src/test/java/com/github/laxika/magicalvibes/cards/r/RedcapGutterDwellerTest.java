@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -87,5 +86,68 @@ class RedcapGutterDwellerTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(redcap);
         assertThat(gqs.getEffectivePower(gd, redcap)).isEqualTo(3);
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Sacrificing a Rat still adds a counter when the library is empty")
+    void emptyLibraryDoesNotPreventCounter() {
+        Permanent redcap = harness.enterBattlefieldAndReturn(player1, new RedcapGutterDweller());
+        harness.passBothPriorities();
+        Permanent rat = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent != redcap)
+                .findFirst().orElseThrow();
+        harness.setLibrary(player1, List.of());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, rat.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(rat).hasSize(2);
+        assertThat(gqs.getEffectivePower(gd, redcap)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, redcap)).isEqualTo(4);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The ability does not trigger during an opponent's upkeep")
+    void doesNotTriggerOnOpponentUpkeep() {
+        Permanent redcap = harness.addToBattlefieldAndReturn(player1, new RedcapGutterDweller());
+        Forest topCard = new Forest();
+        harness.setLibrary(player1, List.of(topCard));
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gqs.getEffectivePower(gd, redcap)).isEqualTo(3);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The sacrifice and exile still resolve after Redcap leaves the battlefield")
+    void sourceLeavingDoesNotPreventExile() {
+        Permanent redcap = harness.enterBattlefieldAndReturn(player1, new RedcapGutterDweller());
+        harness.passBothPriorities();
+        Permanent rat = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent != redcap)
+                .findFirst().orElseThrow();
+        Forest topCard = new Forest();
+        harness.setLibrary(player1, List.of(topCard));
+
+        advanceToUpkeep(player1);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, redcap));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, rat.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(redcap, rat).hasSize(1);
+        harness.assertInGraveyard(player1, "Redcap Gutter-Dweller");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(topCard);
+        assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
+        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).contains(topCard.getId());
+        assertThat(gd.exilePlayWithoutPayingManaCost).doesNotContain(topCard.getId());
     }
 }
