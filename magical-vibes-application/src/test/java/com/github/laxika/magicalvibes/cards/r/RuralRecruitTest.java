@@ -39,6 +39,46 @@ class RuralRecruitTest extends BaseCardTest {
         assertThat(recruit.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
+    @Test
+    void trainingDoesNotTriggerWhenAttackingAloneEvenWithAStrongerCreatureOnTheBattlefield() {
+        Permanent recruit = addCreatureReady(player1, new RuralRecruit());
+        Permanent ally = addCreatureReady(player1, new RuralRecruit());
+        ally.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        assertThat(recruit.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void trainingDoesNotTriggerWithAnEqualPowerAttacker() {
+        Permanent recruit = addCreatureReady(player1, new RuralRecruit());
+        Permanent ally = addCreatureReady(player1, new RuralRecruit());
+
+        declareAttackers(List.of(0, 1));
+        resolveAllTriggers();
+
+        assertThat(recruit.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(ally.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void trainingAddsOnlyOneCounterWithMultipleStrongerAttackers() {
+        Permanent recruit = addCreatureReady(player1, new RuralRecruit());
+        Permanent firstAlly = addCreatureReady(player1, new RuralRecruit());
+        Permanent secondAlly = addCreatureReady(player1, new RuralRecruit());
+        firstAlly.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        secondAlly.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        declareAttackers(List.of(0, 1, 2));
+        resolveAllTriggers();
+
+        assertThat(recruit.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(firstAlly.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(secondAlly.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
     private Permanent castRuralRecruit() {
         harness.setHand(player1, List.of(new RuralRecruit()));
         harness.addMana(player1, ManaColor.GREEN, 1);
