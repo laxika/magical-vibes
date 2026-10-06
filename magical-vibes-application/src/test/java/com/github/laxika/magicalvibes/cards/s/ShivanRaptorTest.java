@@ -18,6 +18,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ShivanRaptorTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Echo creates no enters-the-battlefield trigger")
+    void echoDoesNotCreateAnEntersTheBattlefieldTrigger() {
+        harness.withAutoStop(gd.currentStep, () -> {
+            harness.castFromHand(player1, new ShivanRaptor(), "{2}{R}");
+            harness.passBothPriorities();
+
+            harness.assertOnBattlefield(player1, "Shivan Raptor");
+            assertThat(gd.stack).isEmpty();
+            assertThat(gd.interaction.activeInteraction()).isNull();
+        });
+    }
+
+    @Test
     @DisplayName("Haste allows Shivan Raptor to attack the turn it enters")
     void hasteAllowsAttackingTheTurnItEnters() {
         castAndResolveShivanRaptor();
