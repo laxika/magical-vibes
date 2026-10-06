@@ -19,8 +19,7 @@ class RenewingDawnTest extends BaseCardTest {
         harness.setHand(player1, List.of(new RenewingDawn()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
     }
 
     @Test
@@ -69,6 +68,26 @@ class RenewingDawnTest extends BaseCardTest {
         castRenewingDawn();
 
         harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Counts Mountains when the spell resolves")
+    void countsMountainsAtResolution() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addToBattlefield(player2, new Mountain());
+        harness.setHand(player1, List.of(new RenewingDawn()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castSorcery(player1, 0, player2.getId());
+
+        harness.addToBattlefield(player2, new Mountain());
+        harness.assertLife(player1, 20);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 24);
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Renewing Dawn");
     }
 
     @Test
