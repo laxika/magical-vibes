@@ -50,8 +50,7 @@ class RiveteersRequisitionerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 3);
 
         harness.castCreatureWithAlternateCost(player1, 0, List.of());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent requisitioner = findPermanent(player1, "Riveteers Requisitioner");
         assertThat(gqs.hasKeyword(gd, requisitioner, Keyword.HASTE)).isTrue();
@@ -66,5 +65,57 @@ class RiveteersRequisitionerTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Riveteers Requisitioner");
         harness.assertInHand(player1, "Grizzly Bears");
         assertThat(findPermanents(player1, "Treasure")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Blitz grants haste as the creature spell resolves without an entry trigger")
+    void blitzHasHasteImmediatelyOnEntry() {
+        harness.setHand(player1, List.of(new RiveteersRequisitioner()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castCreatureWithAlternateCost(player1, 0, List.of());
+        harness.passBothPriorities();
+
+        Permanent requisitioner = findPermanent(player1, "Riveteers Requisitioner");
+        assertThat(gqs.hasKeyword(gd, requisitioner, Keyword.HASTE)).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Blitz draws and creates a Treasure when sacrificed before the end step")
+    void blitzDeathBeforeEndStepDrawsAndCreatesTreasure() {
+        harness.addToBattlefield(player1, new NantukoHusk());
+        harness.setHand(player1, List.of(new RiveteersRequisitioner()));
+        harness.setLibrary(player1, List.of(new RiveteersRequisitioner()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castCreatureWithAlternateCost(player1, 0, List.of());
+        resolveAllTriggers();
+        Permanent requisitioner = findPermanent(player1, "Riveteers Requisitioner");
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, requisitioner.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Riveteers Requisitioner");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(findPermanents(player1, "Treasure")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A normally cast Requisitioner survives the end step")
+    void normalCastIsNotSacrificedAtEndStep() {
+        harness.setHand(player1, List.of(new RiveteersRequisitioner()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Riveteers Requisitioner");
+        harness.assertNotInGraveyard(player1, "Riveteers Requisitioner");
+        assertThat(findPermanents(player1, "Treasure")).isEmpty();
     }
 }
