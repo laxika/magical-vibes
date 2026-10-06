@@ -2,18 +2,17 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RampagingRendhorn.class})
 class RampagingRendhornTest extends BaseCardTest {
 
     @Test
@@ -41,15 +40,32 @@ class RampagingRendhornTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, rendhorn, Keyword.HASTE)).isTrue();
     }
 
+    @Test
+    @DisplayName("Riot is chosen before Rampaging Rendhorn enters the battlefield")
+    void riotChoicePrecedesEntry() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castFromHand(player1, new RampagingRendhorn(), "{4}{G}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.assertNotOnBattlefield(player1, "Rampaging Rendhorn");
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertOnBattlefield(player1, "Rampaging Rendhorn");
+        Permanent rendhorn = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(rendhorn.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.hasKeyword(gd, rendhorn, Keyword.HASTE)).isTrue();
+    }
+
     private Permanent castRendhorn(boolean chooseCounter) {
-        harness.setHand(player1, List.of(new RampagingRendhorn()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new RampagingRendhorn(), "{4}{G}");
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, chooseCounter);
