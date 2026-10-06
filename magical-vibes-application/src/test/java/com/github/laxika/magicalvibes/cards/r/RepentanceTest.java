@@ -1,7 +1,10 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.Anoint;
+import com.github.laxika.magicalvibes.cards.f.FieryEmancipation;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.w.WallOfDiffusion;
 import com.github.laxika.magicalvibes.cards.w.WallOfSwords;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +20,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Repentance.class, GrizzlyBears.class, Plains.class, WallOfSwords.class})
+@CardUsed({Repentance.class, GrizzlyBears.class, Plains.class, WallOfSwords.class,
+        Rootwalla.class, WallOfDiffusion.class, Anoint.class, FieryEmancipation.class})
 class RepentanceTest extends BaseCardTest {
 
     @Test
@@ -37,28 +41,22 @@ class RepentanceTest extends BaseCardTest {
     @Test
     @DisplayName("Repentance leaves a 3/5 alive with 3 marked damage")
     void survivesWhenPowerIsBelowToughness() {
-        harness.addToBattlefield(player2, new WallOfSwords());
+        Permanent wall = harness.addToBattlefieldAndReturn(player2, new WallOfSwords());
         harness.setHand(player1, List.of(new Repentance()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
-        UUID targetId = harness.getPermanentId(player2, "Wall of Swords");
-        harness.castAndResolveSorcery(player1, 0, targetId);
-
-        Permanent wall = findPermanent(player2, "Wall of Swords");
+        harness.castAndResolveSorcery(player1, 0, wall.getId());
         assertThat(wall.getMarkedDamage()).isEqualTo(3);
     }
 
     @Test
     @DisplayName("Repentance can target a creature its caster controls")
     void canTargetOwnCreature() {
-        harness.addToBattlefield(player1, new WallOfSwords());
+        Permanent wall = harness.addToBattlefieldAndReturn(player1, new WallOfSwords());
         harness.setHand(player1, List.of(new Repentance()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
-        UUID targetId = harness.getPermanentId(player1, "Wall of Swords");
-        harness.castAndResolveSorcery(player1, 0, targetId);
-
-        Permanent wall = findPermanent(player1, "Wall of Swords");
+        harness.castAndResolveSorcery(player1, 0, wall.getId());
         assertThat(wall.getMarkedDamage()).isEqualTo(3);
     }
 
@@ -94,5 +92,73 @@ class RepentanceTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Repentance");
+    }
+
+    @Test
+    void zeroPowerCreatureDealsNoDamage() {
+        Permanent wall = harness.addToBattlefieldAndReturn(player2, new WallOfDiffusion());
+        harness.setHand(player1, List.of(new Repentance()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.castAndResolveSorcery(player1, 0, wall.getId());
+
+        harness.assertOnBattlefield(player2, "Wall of Diffusion");
+        assertThat(wall.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void usesPowerAtResolutionAfterResponse() {
+        Permanent rootwalla = harness.addToBattlefieldAndReturn(player2, new Rootwalla());
+        harness.setHand(player1, List.of(new Repentance()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.addMana(player2, ManaColor.GREEN, 2);
+
+        harness.castSorcery(player1, 0, rootwalla.getId());
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Rootwalla");
+    }
+
+    @Test
+    void damageCanBePrevented() {
+        Permanent rootwalla = harness.addToBattlefieldAndReturn(player2, new Rootwalla());
+        harness.setHand(player1, List.of(new Repentance()));
+        harness.setHand(player2, List.of(new Anoint()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.addMana(player2, ManaColor.WHITE, 1);
+
+        harness.castSorcery(player1, 0, rootwalla.getId());
+        harness.castAndResolveInstant(player2, 0, rootwalla.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Rootwalla");
+        assertThat(rootwalla.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void castersDamageMultiplierDoesNotApplyToOpponentsCreature() {
+        harness.addToBattlefield(player1, new FieryEmancipation());
+        Permanent wall = harness.addToBattlefieldAndReturn(player2, new WallOfSwords());
+        harness.setHand(player1, List.of(new Repentance()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.castAndResolveSorcery(player1, 0, wall.getId());
+
+        harness.assertOnBattlefield(player2, "Wall of Swords");
+        assertThat(wall.getMarkedDamage()).isEqualTo(3);
+    }
+
+    @Test
+    void creaturesControllersDamageMultiplierAppliesToSelfDamage() {
+        harness.addToBattlefield(player2, new FieryEmancipation());
+        Permanent wall = harness.addToBattlefieldAndReturn(player2, new WallOfSwords());
+        harness.setHand(player1, List.of(new Repentance()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.castAndResolveSorcery(player1, 0, wall.getId());
+
+        harness.assertInGraveyard(player2, "Wall of Swords");
     }
 }
