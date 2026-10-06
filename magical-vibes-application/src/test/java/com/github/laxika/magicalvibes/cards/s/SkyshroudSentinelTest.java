@@ -108,6 +108,59 @@ class SkyshroudSentinelTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
     }
 
+    @Test
+    @DisplayName("The search may find zero cards even when Sentinels are available")
+    void acceptingMayCanChooseZeroCards() {
+        castSentinel();
+        setupLibraryWithSentinels(3);
+
+        resolveToMayPrompt();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getName)
+                .containsExactlyInAnyOrder("Skyshroud Sentinel", "Skyshroud Sentinel",
+                        "Skyshroud Sentinel", "Skyshroud Ridgeback");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Searching an empty library completes the ability")
+    void acceptingMayWithEmptyLibraryCompletes() {
+        castSentinel();
+        harness.setLibrary(player1, List.of());
+
+        resolveToMayPrompt();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertOnBattlefield(player1, "Skyshroud Sentinel");
+    }
+
+    @Test
+    @DisplayName("Finding fewer than three Sentinels completes without searching the opponent's library")
+    void fewerThanThreeMatchesSearchesOnlyControllersLibrary() {
+        castSentinel();
+        setupLibraryWithSentinels(2);
+        harness.setLibrary(player2, List.of(new SkyshroudSentinel()));
+
+        resolveToMayPrompt();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName)
+                .containsExactly("Skyshroud Sentinel", "Skyshroud Sentinel");
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getName)
+                .containsExactly("Skyshroud Ridgeback");
+        assertThat(gd.playerDecks.get(player2.getId())).extracting(Card::getName)
+                .containsExactly("Skyshroud Sentinel");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
     private void castSentinel() {
         harness.setHand(player1, List.of(new SkyshroudSentinel()));
         harness.addMana(player1, ManaColor.GREEN, 3);
