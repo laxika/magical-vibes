@@ -44,7 +44,6 @@ class SawbackManticoreTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, manticore, Keyword.FLYING)).isFalse();
@@ -172,5 +171,61 @@ class SawbackManticoreTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Zhalfirin Knight");
+    }
+
+    @Test
+    @DisplayName("An attacking Sawback Manticore can deal exactly 2 damage to itself")
+    void canTargetItselfWhileAttacking() {
+        Permanent manticore = addCreatureReady(player1, new SawbackManticore());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        manticore.setAttacking(true);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, 1, null, manticore.getId());
+        harness.passBothPriorities();
+
+        assertThat(manticore.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Sawback Manticore");
+    }
+
+    @Test
+    @DisplayName("Damage still resolves after the source stops attacking")
+    void sourceNeedNotRemainInCombatAtResolution() {
+        Permanent manticore = addCreatureReady(player1, new SawbackManticore());
+        Permanent target = addCreatureReady(player2, new ZhalfirinKnight());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        manticore.setAttacking(true);
+        target.setBlocking(true);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        manticore.setAttacking(false);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Zhalfirin Knight");
+    }
+
+    @Test
+    @DisplayName("Each Sawback Manticore has its own once-per-turn activation limit")
+    void separateManticoresCanEachActivate() {
+        Permanent first = addCreatureReady(player1, new SawbackManticore());
+        Permanent second = addCreatureReady(player1, new SawbackManticore());
+        Permanent target = addCreatureReady(player2, new SawbackManticore());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        first.setAttacking(true);
+        second.setAttacking(true);
+        target.setBlocking(true);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        harness.passBothPriorities();
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+        harness.activateAbility(player1, 1, 1, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Sawback Manticore");
     }
 }
