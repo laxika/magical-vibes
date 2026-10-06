@@ -34,6 +34,7 @@ class RuinsOfTrokairTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
         assertThat(findPermanent(player1, "Ruins of Trokair").isTapped()).isTrue();
         harness.assertOnBattlefield(player1, "Ruins of Trokair");
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
@@ -61,5 +62,23 @@ class RuinsOfTrokairTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(2);
         harness.assertNotOnBattlefield(player1, "Ruins of Trokair");
         harness.assertInGraveyard(player1, "Ruins of Trokair");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A newly played land cannot activate either mana ability")
+    void newlyPlayedLandCannotProduceMana() {
+        harness.setHand(player1, List.of(new RuinsOfTrokair()));
+        harness.playLand(player1, 0);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+        harness.assertOnBattlefield(player1, "Ruins of Trokair");
+        harness.assertNotInGraveyard(player1, "Ruins of Trokair");
+        assertThat(gd.stack).isEmpty();
     }
 }
