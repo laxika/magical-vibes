@@ -107,4 +107,88 @@ class SkyshipWeatherlightTest extends BaseCardTest {
         assertThat(gd.playerHands.get(ownerId)).extracting(Card::getId).contains(returnedId);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
+
+    @Test
+    void etbMayStopAfterOneCardAndActivationUsesThatSearch() {
+        Card artifact = new ManaCylix();
+        Card creature = new DralnusPet();
+        harness.setLibrary(player1, List.of(artifact, creature, new ForsakenCity()));
+        harness.setHand(player1, List.of(new SkyshipWeatherlight()));
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, -1);
+
+        UUID sourceId = harness.getPermanentId(player1, "Skyship Weatherlight");
+        assertThat(gd.getCardsExiledByPermanent(sourceId)).containsExactly(artifact);
+        assertThat(gd.playerDecks.get(player1.getId())).contains(creature).hasSize(2);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gameLogContains("library is shuffled")).isTrue();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Mana Cylix");
+        assertThat(gd.getCardsExiledByPermanent(sourceId)).isEmpty();
+    }
+
+    @Test
+    void etbCanExileMultipleCardsWithTheSameName() {
+        Card first = new ManaCylix();
+        Card second = new ManaCylix();
+        harness.setLibrary(player1, List.of(first, second));
+        harness.setHand(player1, List.of(new SkyshipWeatherlight()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        UUID sourceId = harness.getPermanentId(player1, "Skyship Weatherlight");
+        assertThat(gd.getCardsExiledByPermanent(sourceId)).containsExactlyInAnyOrder(first, second);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gameLogContains("library is shuffled")).isTrue();
+    }
+
+    @Test
+    void etbWithNoMatchingCardsStillShuffles() {
+        Card land = new ForsakenCity();
+        harness.setLibrary(player1, List.of(land));
+        harness.setHand(player1, List.of(new SkyshipWeatherlight()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        UUID sourceId = harness.getPermanentId(player1, "Skyship Weatherlight");
+        assertThat(gd.getCardsExiledByPermanent(sourceId)).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(land);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gameLogContains("Library is shuffled")).isTrue();
+    }
+
+    @Test
+    void activationWithNoLinkedCardsDoesNotReturnUnrelatedExiledCards() {
+        harness.setHand(player1, List.of());
+        Permanent skyship = harness.addToBattlefieldAndReturn(player1, new SkyshipWeatherlight());
+        Card unrelated = new ManaCylix();
+        gd.addToExile(player1.getId(), unrelated, UUID.randomUUID());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        assertThat(skyship.isTapped()).isTrue();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.exiledCards).extracting(exiled -> exiled.card().getId())
+                .containsExactly(unrelated.getId());
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
 }
