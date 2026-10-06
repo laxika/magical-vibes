@@ -78,4 +78,43 @@ class ShinenOfStarsLightTest extends BaseCardTest {
         harness.assertInHand(player1, "Shinen of Stars' Light");
         assertThat(gd.stack).isEmpty();
     }
+
+    @Test
+    @DisplayName("Channel discards its source as a cost before granting first strike")
+    void channelPaysDiscardBeforeResolution() {
+        harness.setHand(player1, List.of(new ShinenOfStarsLight()));
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new KitsuneBonesetter());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new KitsuneBonesetter());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateHandAbility(player1, 0, target.getId());
+
+        harness.assertNotInHand(player1, "Shinen of Stars' Light");
+        harness.assertInGraveyard(player1, "Shinen of Stars' Light");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Channel requires white mana and does not discard when its cost cannot be paid")
+    void channelRequiresWhiteMana() {
+        harness.setHand(player1, List.of(new ShinenOfStarsLight()));
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new KitsuneBonesetter());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Shinen of Stars' Light");
+        harness.assertNotInGraveyard(player1, "Shinen of Stars' Light");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isFalse();
+    }
 }
