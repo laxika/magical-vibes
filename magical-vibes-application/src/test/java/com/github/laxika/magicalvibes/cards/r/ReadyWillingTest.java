@@ -1,13 +1,18 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.PossibilityStorm;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.List;
 
@@ -18,6 +23,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * Ready // Willing is one card whose two halves (and their fusion) are the three modes of a single
  * modal instant, each paying its own total cost.
  */
+@CardUsed({ReadyWilling.class, GrizzlyBears.class, PossibilityStorm.class})
 class ReadyWillingTest extends BaseCardTest {
 
     private static final int READY = 0;
@@ -137,5 +143,82 @@ class ReadyWillingTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, mine, Keyword.INDESTRUCTIBLE)).isFalse();
         assertThat(gqs.hasKeyword(gd, mine, Keyword.DEATHTOUCH)).isFalse();
         assertThat(gqs.hasKeyword(gd, mine, Keyword.LIFELINK)).isFalse();
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {READY, WILLING, FUSE})
+    @DisplayName("Creatures entering after resolution do not receive the keyword grants")
+    void laterCreaturesDoNotReceiveGrants(int mode) {
+        harness.setHand(player1, List.of(new ReadyWilling()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castModalInstant(player1, 0, mode, List.of());
+        harness.passBothPriorities();
+
+        Permanent later = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(gqs.hasKeyword(gd, later, Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, later, Keyword.DEATHTOUCH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, later, Keyword.LIFELINK)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Fuse affects every creature controlled when the spell resolves")
+    void creaturesEnteringBeforeResolutionReceiveBothHalves() {
+        harness.setHand(player1, List.of(new ReadyWilling()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castModalInstant(player1, 0, FUSE, List.of());
+
+        Permanent arriving = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        arriving.tap();
+        harness.passBothPriorities();
+
+        assertThat(arriving.isTapped()).isFalse();
+        assertThat(gqs.hasKeyword(gd, arriving, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, arriving, Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, arriving, Keyword.LIFELINK)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Willing neither untaps creatures nor grants indestructible")
+    void willingDoesNotApplyReady() {
+        Permanent mine = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        mine.tap();
+        harness.setHand(player1, List.of(new ReadyWilling()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castModalInstant(player1, 0, WILLING, List.of());
+        harness.passBothPriorities();
+
+        assertThat(mine.isTapped()).isTrue();
+        assertThat(gqs.hasKeyword(gd, mine, Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, mine, Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, mine, Keyword.LIFELINK)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Possibility Storm offers only individual halves when casting from exile")
+    void cannotFuseFromExile() {
+        harness.addToBattlefield(player1, new PossibilityStorm());
+        harness.setLibrary(player1, List.of(new ReadyWilling()));
+        harness.setHand(player1, List.of(new ReadyWilling()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castModalInstant(player1, 0, READY, List.of());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        PendingInteraction.ColorChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.options()).hasSize(2);
+        assertThat(choice.options()).noneMatch(option -> option.startsWith("Fuse"));
     }
 }
