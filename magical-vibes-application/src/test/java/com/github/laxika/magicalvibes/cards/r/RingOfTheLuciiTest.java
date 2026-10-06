@@ -68,4 +68,70 @@ class RingOfTheLuciiTest extends BaseCardTest {
     private Permanent addRing() {
         return harness.addToBattlefieldAndReturn(player1, new RingOfTheLucii());
     }
+
+    @Test
+    void canTapAnOpponentsNoncreatureArtifact() {
+        addRing();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new RingOfTheLucii());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+        harness.assertLife(player1, 19);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    void canTargetAnAlreadyTappedPermanent() {
+        addRing();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new RingOfTheLucii());
+        target.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+        harness.assertLife(player1, 19);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotActivateTapAbilityWithoutEnoughMana() {
+        Permanent ring = addRing();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new RingOfTheLucii());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.setLife(player1, 20);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(ring.isTapped()).isFalse();
+        assertThat(target.isTapped()).isFalse();
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotActivateEitherAbilityWhenRingIsTapped() {
+        Permanent ring = addRing();
+        ring.setTapped(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new RingOfTheLucii());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.setLife(player1, 20);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+        assertThat(target.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
 }
