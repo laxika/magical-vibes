@@ -101,6 +101,60 @@ class RestlessRidgelineTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
+    @Test
+    @DisplayName("Restless Ridgeline can produce green mana")
+    void producesGreenMana() {
+        Permanent ridgeline = addReadyRidgeline(player1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(ridgeline.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Attacking alone does not let Restless Ridgeline target itself")
+    void attackingAloneHasNoLegalTarget() {
+        Permanent ridgeline = addReadyRidgeline(player1);
+        addAnimationMana(player1);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(player1, List.of(0)));
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, ridgeline)).isEqualTo(3);
+        assertThat(ridgeline.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Restless Ridgeline cannot target a creature that is not attacking")
+    void excludesNonattackingCreatures() {
+        addReadyRidgeline(player1);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent nonattacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
+        addAnimationMana(player1);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        declareAttackers(player1, List.of(0, 1));
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactly(attacker.getId());
+        harness.handlePermanentChosen(player1, attacker.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(4);
+        assertThat(attacker.isTapped()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, nonattacker)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(2);
+    }
+
     private void addAnimationMana(Player player) {
         harness.addMana(player, ManaColor.COLORLESS, 2);
         harness.addMana(player, ManaColor.RED, 1);
@@ -108,9 +162,6 @@ class RestlessRidgelineTest extends BaseCardTest {
     }
 
     private Permanent addReadyRidgeline(Player player) {
-        Permanent permanent = new Permanent(new RestlessRidgeline());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        return addCreatureReady(player, new RestlessRidgeline());
     }
 }
