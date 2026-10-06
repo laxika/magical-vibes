@@ -86,4 +86,78 @@ class ResplendentMentorTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("no activated ability");
     }
+
+    @Test
+    @DisplayName("Granted tap ability cannot be activated by a summoning-sick creature")
+    void summoningSickCreatureCannotActivate() {
+        harness.addToBattlefield(player1, new ResplendentMentor());
+        Permanent cohort = harness.addToBattlefieldAndReturn(player1, new BallynockCohort());
+        int cohortIndex = gd.playerBattlefields.get(player1.getId()).indexOf(cohort);
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, cohortIndex, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+
+        assertThat(cohort.isTapped()).isFalse();
+        harness.assertLife(player1, lifeBefore);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Granted tap ability cannot be activated by an already tapped creature")
+    void tappedCreatureCannotActivate() {
+        harness.addToBattlefield(player1, new ResplendentMentor());
+        Permanent cohort = addCreatureReady(player1, new BallynockCohort());
+        cohort.setTapped(true);
+        int cohortIndex = gd.playerBattlefields.get(player1.getId()).indexOf(cohort);
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, cohortIndex, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+
+        harness.assertLife(player1, lifeBefore);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Activated life ability resolves after its granting Mentor leaves")
+    void activatedAbilitySurvivesMentorLeaving() {
+        Permanent mentor = harness.addToBattlefieldAndReturn(player1, new ResplendentMentor());
+        Permanent cohort = addCreatureReady(player1, new BallynockCohort());
+        int cohortIndex = gd.playerBattlefields.get(player1.getId()).indexOf(cohort);
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        int opponentLifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        harness.activateAbility(player1, cohortIndex, null, null);
+
+        assertThat(cohort.isTapped()).isTrue();
+        harness.assertLife(player1, lifeBefore);
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(mentor);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, lifeBefore + 1);
+        harness.assertLife(player2, opponentLifeBefore);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Granted life ability benefits the activating creature's controller")
+    void opponentGainsLifeFromTheirOwnMentor() {
+        harness.addToBattlefield(player1, new ResplendentMentor());
+        harness.addToBattlefield(player2, new ResplendentMentor());
+        Permanent cohort = addCreatureReady(player2, new BallynockCohort());
+        int cohortIndex = gd.playerBattlefields.get(player2.getId()).indexOf(cohort);
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+        int opponentLifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.activateAbility(player2, cohortIndex, null, null);
+        harness.passBothPriorities();
+
+        assertThat(cohort.isTapped()).isTrue();
+        harness.assertLife(player2, lifeBefore + 1);
+        harness.assertLife(player1, opponentLifeBefore);
+    }
 }
