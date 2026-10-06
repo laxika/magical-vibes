@@ -57,4 +57,49 @@ class SerpentWarriorTest extends BaseCardTest {
         harness.assertLife(player1, player1LifeBefore - 3);
         harness.assertLife(player2, player2LifeBefore);
     }
+
+    @Test
+    @DisplayName("Life is lost only when the ETB trigger resolves")
+    void lifeLossWaitsForTriggerResolution() {
+        harness.setLife(player1, 20);
+
+        harness.castFromHand(player1, new SerpentWarrior(), "{2}{B}");
+        harness.assertLife(player1, 20);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 17);
+    }
+
+    @Test
+    @DisplayName("An opponent's Serpent Warrior makes that opponent lose life")
+    void opponentControllerLosesLife() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.enterBattlefieldAndReturn(player2, new SerpentWarrior());
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @DisplayName("Each Serpent Warrior entering causes a separate life loss")
+    void eachEntryLosesLife() {
+        harness.setLife(player1, 20);
+
+        harness.enterBattlefieldAndReturn(player1, new SerpentWarrior());
+        resolveAllTriggers();
+        harness.assertLife(player1, 17);
+
+        harness.enterBattlefieldAndReturn(player1, new SerpentWarrior());
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 14);
+    }
 }
