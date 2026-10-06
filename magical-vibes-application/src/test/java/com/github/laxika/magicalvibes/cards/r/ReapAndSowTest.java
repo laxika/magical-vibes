@@ -22,8 +22,7 @@ class ReapAndSowTest extends BaseCardTest {
     @Test
     @DisplayName("Destroy mode destroys target land")
     void destroyModeDestroysTargetLand() {
-        harness.addToBattlefield(player2, new BlinkmothNexus());
-        Permanent land = findPermanent(player2, "Blinkmoth Nexus");
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new BlinkmothNexus());
         harness.setHand(player1, List.of(new ReapAndSow()));
         addMana(false);
 
@@ -50,8 +49,7 @@ class ReapAndSowTest extends BaseCardTest {
     @Test
     @DisplayName("Entwine destroys a land and searches for another land")
     void entwinedResolvesBothModes() {
-        harness.addToBattlefield(player2, new BlinkmothNexus());
-        Permanent land = findPermanent(player2, "Blinkmoth Nexus");
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new BlinkmothNexus());
         prepareCast(true, List.of(new BlinkmothNexus()));
 
         harness.castModalSorceryWithModes(player1, 0, 1, 2, new int[]{0, 1}, List.of(land.getId()), null);
@@ -67,8 +65,7 @@ class ReapAndSowTest extends BaseCardTest {
     @Test
     @DisplayName("Destroy mode cannot target a creature")
     void destroyModeCannotTargetCreature() {
-        harness.addToBattlefield(player2, new AuriokGlaivemaster());
-        Permanent creature = findPermanent(player2, "Auriok Glaivemaster");
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new AuriokGlaivemaster());
         harness.setHand(player1, List.of(new ReapAndSow()));
         addMana(false);
 
@@ -94,8 +91,7 @@ class ReapAndSowTest extends BaseCardTest {
     @Test
     @DisplayName("Entwine requires its additional mana cost")
     void entwineRequiresAdditionalMana() {
-        harness.addToBattlefield(player2, new BlinkmothNexus());
-        Permanent land = findPermanent(player2, "Blinkmoth Nexus");
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new BlinkmothNexus());
         prepareCast(false, List.of(new BlinkmothNexus()));
 
         assertThatThrownBy(() -> harness.castModalSorceryWithModes(
@@ -106,8 +102,7 @@ class ReapAndSowTest extends BaseCardTest {
     @Test
     @DisplayName("Destroy mode does not destroy an indestructible land")
     void destroyModeDoesNotDestroyIndestructibleLand() {
-        harness.addToBattlefield(player2, new DarksteelCitadel());
-        Permanent land = findPermanent(player2, "Darksteel Citadel");
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new DarksteelCitadel());
         harness.setHand(player1, List.of(new ReapAndSow()));
         addMana(false);
 
@@ -116,6 +111,66 @@ class ReapAndSowTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Darksteel Citadel");
         harness.assertNotInGraveyard(player2, "Darksteel Citadel");
+    }
+
+    @Test
+    @DisplayName("Search may fail to find even when a land is available")
+    void searchMayFailToFindAvailableLand() {
+        prepareCast(false, List.of(new BlinkmothNexus()));
+        harness.castModalSorceryWithModes(player1, 0, 1, 2, new int[]{1}, List.of(), null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        harness.assertNotOnBattlefield(player1, "Blinkmoth Nexus");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Reap and Sow");
+    }
+
+    @Test
+    @DisplayName("Search resolves with an empty library")
+    void searchResolvesWithEmptyLibrary() {
+        prepareCast(false, List.of());
+        harness.castModalSorceryWithModes(player1, 0, 1, 2, new int[]{1}, List.of(), null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Reap and Sow");
+    }
+
+    @Test
+    @DisplayName("Entwine still searches when the targeted land is indestructible")
+    void entwineSearchesDespiteIndestructibleTarget() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new DarksteelCitadel());
+        prepareCast(true, List.of(new BlinkmothNexus()));
+
+        harness.castModalSorceryWithModes(player1, 0, 1, 2, new int[]{0, 1}, List.of(land.getId()), null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player2, "Darksteel Citadel");
+        harness.assertNotInGraveyard(player2, "Darksteel Citadel");
+        harness.assertOnBattlefield(player1, "Blinkmoth Nexus");
+        assertThat(findPermanent(player1, "Blinkmoth Nexus").isTapped()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Reap and Sow");
+    }
+
+    @Test
+    @DisplayName("Entwine does not search when its only target leaves the battlefield")
+    void entwineDoesNotSearchWithIllegalTarget() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new BlinkmothNexus());
+        prepareCast(true, List.of(new DarksteelCitadel()));
+
+        harness.castModalSorceryWithModes(player1, 0, 1, 2, new int[]{0, 1}, List.of(land.getId()), null);
+        gd.playerBattlefields.get(player2.getId()).remove(land);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Darksteel Citadel");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Reap and Sow");
     }
 
     private void prepareCast(boolean entwined, List<Card> library) {
