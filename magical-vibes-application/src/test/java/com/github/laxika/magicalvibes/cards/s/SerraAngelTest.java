@@ -65,4 +65,29 @@ class SerraAngelTest extends BaseCardTest {
 
         assertThat(blocker.isBlocking()).isTrue();
     }
+
+    @Test
+    @DisplayName("Serra Angel can block a creature without flying")
+    void canBlockGroundCreature() {
+        addCreatureReady(player1, new GrizzlyBears());
+        Permanent angel = addCreatureReady(player2, new SerraAngel());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(angel.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Vigilance does not allow an already tapped Serra Angel to attack")
+    void tappedAngelCannotAttack() {
+        Permanent angel = addCreatureReady(player1, new SerraAngel());
+        angel.tap();
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(angel.isTapped()).isTrue();
+        assertThat(angel.isAttacking()).isFalse();
+    }
 }
