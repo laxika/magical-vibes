@@ -67,6 +67,38 @@ class SinewSliverTest extends BaseCardTest {
     }
 
     @Test
+    void boostsSliverEnteringAfterSource() {
+        harness.enterBattlefieldAndReturn(player1, new SinewSliver());
+
+        Permanent laterSliver = harness.enterBattlefieldAndReturn(player2, new PoulticeSliver());
+
+        assertThat(gqs.getEffectivePower(gd, laterSliver)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, laterSliver)).isEqualTo(3);
+    }
+
+    @Test
+    void opposingSinewSliversStackAndOnlyDepartingSourcesBonusEnds() {
+        Permanent first = harness.enterBattlefieldAndReturn(player1, new SinewSliver());
+        Permanent second = harness.enterBattlefieldAndReturn(player2, new SinewSliver());
+        Permanent otherSliver = harness.enterBattlefieldAndReturn(player2, new PoulticeSliver());
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, otherSliver)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, otherSliver)).isEqualTo(4);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, first));
+
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, otherSliver)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, otherSliver)).isEqualTo(3);
+    }
+
+    @Test
     void stopsBoostingWhenSourceLeavesBattlefield() {
         Permanent otherSliver = addCreatureReady(player1, new PoulticeSliver());
         int basePower = gqs.getEffectivePower(gd, otherSliver);
