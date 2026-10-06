@@ -88,7 +88,6 @@ class SiftTest extends BaseCardTest {
         GrizzlyBears firstDraw = new GrizzlyBears();
         GrizzlyBears secondDraw = new GrizzlyBears();
         Sift discardedDraw = new Sift();
-        harness.setHand(player1, List.of(sift));
         harness.setLibrary(player1, List.of(firstDraw, secondDraw, discardedDraw));
         harness.castFromHand(player1, sift, "{3}{U}");
         harness.passBothPriorities();
@@ -111,13 +110,45 @@ class SiftTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(firstDraw, secondDraw, thirdDraw));
         harness.addMana(player1, ManaColor.BLUE, 4);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw, thirdDraw);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(sift, preexistingCard);
+    }
+
+    @Test
+    @DisplayName("Only the spell's controller draws and discards")
+    void onlyControllerDrawsAndDiscards() {
+        Sift sift = new Sift();
+        GrizzlyBears firstDraw = new GrizzlyBears();
+        GrizzlyBears secondDraw = new GrizzlyBears();
+        GrizzlyBears discardedDraw = new GrizzlyBears();
+        GrizzlyBears opponentCard = new GrizzlyBears();
+        harness.setHand(player1, List.of(opponentCard));
+        int opponentLibrarySize = gd.playerDecks.get(player1.getId()).size();
+        harness.setLibrary(player2, List.of(firstDraw, secondDraw, discardedDraw));
+        harness.forceActivePlayer(player2);
+
+        harness.castFromHand(player2, sift, "{3}{U}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId()))
+                .containsExactly(firstDraw, secondDraw, discardedDraw);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId())
+                .isEqualTo(player2.getId());
+
+        harness.handleCardChosen(player2, 2);
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(firstDraw, secondDraw);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(sift, discardedDraw);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(opponentCard);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(opponentLibrarySize);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
     }
 }
 
