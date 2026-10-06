@@ -28,8 +28,7 @@ class ShieldDancerTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player2, new FaultRiders());
         TestCards.mutableCard(attacker).setToughness(5);
 
-        declareAttackers(player2, List.of(battlefieldIndex(player2, attacker)));
-        prepareDeclareBlockers(player2);
+        declareAttackersAndPrepareBlockers(player2, List.of(battlefieldIndex(player2, attacker)));
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(
@@ -101,9 +100,56 @@ class ShieldDancerTest extends BaseCardTest {
 
         harness.activateAbility(player1, battlefieldIndex(player1, dancer), null, attacker.getId());
         attacker.setAttacking(false);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> harness.passBothPriorities());
 
-        assertThat(dancer.getMarkedDamage()).isZero();
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(player1.getId());
+        prepareDeclareBlockers(player2);
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(
+                battlefieldIndex(player1, dancer), battlefieldIndex(player2, attacker))));
+        resolveCombat(player2);
+
+        assertThat(dancer.getMarkedDamage()).isEqualTo(2);
+        assertThat(attacker.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Does not redirect damage from a different attacker")
+    void doesNotRedirectDamageFromDifferentAttacker() {
+        Permanent dancer = addCreatureReady(player1, new ShieldDancer());
+        Permanent chosenAttacker = addCreatureReady(player2, new FaultRiders());
+        Permanent blockedAttacker = addCreatureReady(player2, new FaultRiders());
+
+        declareAttackersAndPrepareBlockers(player2, List.of(
+                battlefieldIndex(player2, chosenAttacker), battlefieldIndex(player2, blockedAttacker)));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(
+                battlefieldIndex(player1, dancer), battlefieldIndex(player2, blockedAttacker))));
+
+        harness.activateAbility(player1, battlefieldIndex(player1, dancer), null, chosenAttacker.getId());
+        harness.passBothPriorities();
+        resolveCombat(player2);
+
+        assertThat(dancer.getMarkedDamage()).isEqualTo(2);
+        assertThat(blockedAttacker.getMarkedDamage()).isEqualTo(1);
+        assertThat(chosenAttacker.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Cannot activate without paying the full mana cost")
+    void cannotActivateWithInsufficientMana() {
+        Permanent dancer = addCreatureReady(player1, new ShieldDancer());
+        Permanent attacker = addCreatureReady(player2, new FaultRiders());
+        declareAttackersAndPrepareBlockers(player2, List.of(battlefieldIndex(player2, attacker)));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(
+                battlefieldIndex(player1, dancer), battlefieldIndex(player2, attacker))));
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, battlefieldIndex(player1, dancer), null, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     private int battlefieldIndex(Player player, Permanent permanent) {
