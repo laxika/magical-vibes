@@ -64,6 +64,62 @@ class RevekaWizardSavantTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Reveka untaps normally after skipping one untap step")
+    void untapsAfterRestrictionExpires() {
+        Permanent reveka = setUpReveka();
+        harness.activateAbility(player1, indexOf(reveka), 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        advanceToUpkeep(player2);
+        advanceToUpkeep(player1);
+        assertThat(reveka.isTapped()).isTrue();
+
+        advanceToUpkeep(player2);
+        advanceToUpkeep(player1);
+        assertThat(reveka.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Changing control does not prevent Reveka from untapping for its new controller")
+    void newControllerCanUntapReveka() {
+        Permanent reveka = setUpReveka();
+        harness.activateAbility(player1, indexOf(reveka), 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        gd.playerBattlefields.get(player1.getId()).remove(reveka);
+        gd.playerBattlefields.get(player2.getId()).add(reveka);
+        advanceToUpkeep(player2);
+
+        assertThat(reveka.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An illegal sole target prevents the untap restriction from taking effect")
+    void illegalTargetDoesNotLockUntap() {
+        Permanent reveka = setUpReveka();
+        Permanent target = addCreatureReady(player2, new AnabaShaman());
+        harness.activateAbility(player1, indexOf(reveka), 0, null, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerGraveyards.get(player2.getId()).add(target.getCard());
+        harness.passBothPriorities();
+
+        advanceToUpkeep(player1);
+        assertThat(reveka.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The ability still deals damage after Reveka leaves the battlefield")
+    void damageResolvesWithoutSource() {
+        Permanent reveka = setUpReveka();
+        harness.activateAbility(player1, indexOf(reveka), 0, null, player2.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(reveka);
+        gd.playerGraveyards.get(player1.getId()).add(reveka.getCard());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+    }
+
     private Permanent setUpReveka() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
