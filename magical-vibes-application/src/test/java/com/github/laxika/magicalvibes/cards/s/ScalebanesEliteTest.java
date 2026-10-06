@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.a.AkuDjinn;
+import com.github.laxika.magicalvibes.cards.c.CryptRats;
 import com.github.laxika.magicalvibes.cards.d.DarkPrivilege;
 import com.github.laxika.magicalvibes.cards.h.HopeCharm;
 import com.github.laxika.magicalvibes.cards.w.Warthog;
 import com.github.laxika.magicalvibes.cards.w.WickedReward;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -19,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({ScalebanesElite.class, AkuDjinn.class, DarkPrivilege.class, HopeCharm.class,
-        Warthog.class, WickedReward.class})
+        Warthog.class, WickedReward.class, CryptRats.class})
 class ScalebanesEliteTest extends BaseCardTest {
 
     @Test
@@ -28,7 +30,7 @@ class ScalebanesEliteTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new ScalebanesElite());
         attacker.setAttacking(true);
 
-        Permanent blocker = addCreatureReady(player2, new AkuDjinn());
+        addCreatureReady(player2, new AkuDjinn());
 
         prepareDeclareBlockers();
 
@@ -109,5 +111,69 @@ class ScalebanesEliteTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, elite.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("protection from black");
+    }
+
+    @Test
+    @DisplayName("Protection does not prevent combat damage from a green creature")
+    void takesCombatDamageFromGreenCreature() {
+        Permanent attacker = addCreatureReady(player1, new Warthog());
+        attacker.setAttacking(true);
+        Permanent elite = addCreatureReady(player2, new ScalebanesElite());
+        elite.setBlocking(true);
+        elite.addBlockingTarget(0);
+
+        resolveCombat();
+
+        assertThat(elite.getMarkedDamage()).isEqualTo(3);
+        harness.assertOnBattlefield(player2, "Scalebane's Elite");
+        harness.assertInGraveyard(player1, "Warthog");
+    }
+
+    @Test
+    @DisplayName("Black trample damage to the defending player is not prevented")
+    void blackTrampleDamageReachesDefendingPlayer() {
+        harness.setLife(player2, 20);
+        Permanent attacker = addCreatureReady(player1, new AkuDjinn());
+        attacker.setAttacking(true);
+        Permanent elite = addCreatureReady(player2, new ScalebanesElite());
+        elite.setBlocking(true);
+        elite.addBlockingTarget(0);
+
+        resolveCombat();
+
+        assertThat(elite.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Scalebane's Elite");
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Protection does not stop a black ability that does not target")
+    void blackNontargetedAbilityStillAffectsElite() {
+        harness.addToBattlefield(player1, new AkuDjinn());
+        Permanent elite = harness.addToBattlefieldAndReturn(player2, new ScalebanesElite());
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(elite.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Protection prevents nontargeted damage from a black activated ability")
+    void preventsNontargetedBlackAbilityDamage() {
+        harness.addToBattlefield(player1, new CryptRats());
+        Permanent elite = harness.addToBattlefieldAndReturn(player2, new ScalebanesElite());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.activateAbility(player1, 0, 4, null);
+        harness.passBothPriorities();
+
+        assertThat(elite.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Scalebane's Elite");
+        harness.assertInGraveyard(player1, "Crypt Rats");
+        harness.assertLife(player1, 16);
+        harness.assertLife(player2, 16);
     }
 }
