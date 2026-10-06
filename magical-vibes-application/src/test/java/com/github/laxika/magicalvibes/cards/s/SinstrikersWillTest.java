@@ -148,6 +148,55 @@ class SinstrikersWillTest extends BaseCardTest {
         assertThat(source.isTapped()).isTrue();
     }
 
+    @Test
+    @DisplayName("Damage uses the enchanted creature's power at resolution")
+    void usesPowerAtResolution() {
+        Permanent source = addAttachedAura();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GruulScrapper());
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 5);
+        target.setAttacking(true);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        assertThat(target.getMarkedDamage()).isEqualTo(5);
+        assertThat(source.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A summoning-sick creature cannot activate the granted tap ability")
+    void summoningSicknessPreventsActivation() {
+        Permanent source = addAttachedAura();
+        source.setSummoningSick(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GruulScrapper());
+        target.setAttacking(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(source.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(target.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("The granted ability can target a friendly blocking creature")
+    void canTargetFriendlyBlockingCreature() {
+        Permanent source = addAttachedAura();
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GruulScrapper());
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        target.setBlocking(true);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+        assertThat(target.getMarkedDamage()).isEqualTo(3);
+        assertThat(source.isTapped()).isTrue();
+    }
+
     private Permanent addAttachedAura() {
         Permanent enchantedCreature = addCreatureReady(player1, new GruulScrapper());
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new SinstrikersWill());
