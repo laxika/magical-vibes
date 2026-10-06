@@ -90,10 +90,8 @@ class RancorTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Rancor");
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Rancor"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Rancor"));
+        harness.assertInHand(player1, "Rancor");
+        harness.assertNotInGraveyard(player1, "Rancor");
     }
 
     @Test
@@ -105,9 +103,59 @@ class RancorTest extends BaseCardTest {
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, aura));
         resolveAllTriggers();
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Rancor"));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Rancor"));
+        harness.assertInHand(player1, "Rancor");
+        harness.assertNotInGraveyard(player1, "Rancor");
+    }
+
+    @Test
+    void canEnchantOpponentsCreatureAndReturnsToAuraOwnersHand() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GiantCockroach());
+        harness.setHand(player1, List.of(new Rancor()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Rancor").getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(6);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, creature));
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Rancor");
+        harness.assertNotInHand(player2, "Rancor");
+        harness.assertNotInGraveyard(player1, "Rancor");
+    }
+
+    @Test
+    void doesNotReturnWhenTargetLeavesBeforeAuraResolves() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GiantCockroach());
+        harness.setHand(player1, List.of(new Rancor()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, creature));
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Rancor");
+        harness.assertInGraveyard(player1, "Rancor");
+        harness.assertNotInHand(player1, "Rancor");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void doesNotReturnWhenAuraIsExiledFromBattlefield() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GiantCockroach());
+        Permanent aura = attachRancor(player1, creature);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToExile(gd, aura));
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Rancor");
+        harness.assertNotInGraveyard(player1, "Rancor");
+        harness.assertNotInHand(player1, "Rancor");
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isFalse();
     }
 }
