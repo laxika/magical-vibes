@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.Pyroclasm;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RionyaFireDancer.class, GrizzlyBears.class, Shock.class})
+@CardUsed({RionyaFireDancer.class, GrizzlyBears.class, Shock.class, Pyroclasm.class})
 class RionyaFireDancerTest extends BaseCardTest {
 
     @Test
@@ -48,10 +49,8 @@ class RionyaFireDancerTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player1, List.of(new Shock(), new Shock()));
         harness.addMana(player1, ManaColor.RED, 2);
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         advanceToBeginningOfCombat(player1);
         chooseTarget(target);
@@ -95,6 +94,81 @@ class RionyaFireDancerTest extends BaseCardTest {
 
         assertThat(findPermanents(player1, "Grizzly Bears").stream()
                 .filter(permanent -> permanent.getCard().isToken())).isEmpty();
+    }
+
+    @Test
+    void countsSpellsCastInResponse() {
+        addCreatureReady(player1, new RionyaFireDancer());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        advanceToBeginningOfCombat(player1);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        assertThat(findPermanents(player1, "Grizzly Bears").stream()
+                .filter(permanent -> permanent.getCard().isToken())).hasSize(2);
+    }
+
+    @Test
+    void doesNotCopyRemovedTarget() {
+        addCreatureReady(player1, new RionyaFireDancer());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        advanceToBeginningOfCombat(player1);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, target.getId());
+        harness.passBothPriorities();
+        assertThat(findPermanents(player1, "Grizzly Bears")).isEmpty();
+    }
+
+    @Test
+    void doesNotCountOpponentsSpells() {
+        addCreatureReady(player1, new RionyaFireDancer());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        advanceToBeginningOfCombat(player1);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        harness.passBothPriorities();
+        assertThat(findPermanents(player1, "Grizzly Bears").stream()
+                .filter(permanent -> permanent.getCard().isToken())).hasSize(1);
+    }
+
+    @Test
+    void doesNotTriggerOnOpponentsCombat() {
+        addCreatureReady(player1, new RionyaFireDancer());
+        addCreatureReady(player1, new GrizzlyBears());
+        advanceToBeginningOfCombat(player2);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        assertThat(countPermanents(player1, "Grizzly Bears")).isEqualTo(1);
+    }
+
+    @Test
+    void countsSorceryCastBeforeRionyaEnteredAndExilesCopiesWithOneTrigger() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new Pyroclasm()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveSorcery(player1, 0, 0);
+        Permanent rionya = addCreatureReady(player1, new RionyaFireDancer());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        advanceToBeginningOfCombat(player1);
+        chooseTarget(target);
+        assertThat(findPermanents(player1, "Grizzly Bears").stream()
+                .filter(permanent -> permanent.getCard().isToken())).hasSize(2);
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.END_STEP);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(rionya.getId());
+        harness.passBothPriorities();
+        assertThat(findPermanents(player1, "Grizzly Bears")).containsExactly(target);
     }
 
     private void chooseTarget(Permanent target) {
