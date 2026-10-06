@@ -1,12 +1,15 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.f.FieryTemper;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LayClaim;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +18,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RestorationAngel.class, GrizzlyBears.class, LayClaim.class, SerraAngel.class, FieryTemper.class})
 class RestorationAngelTest extends BaseCardTest {
 
     @Test
@@ -78,7 +82,7 @@ class RestorationAngelTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Angel you control is not a legal target — ETB never triggers")
+    @DisplayName("With only Angels available, no targeted ETB ability remains on the stack")
     void cannotTargetAngelYouControl() {
         harness.addToBattlefield(player1, new SerraAngel());
         harness.setHand(player1, List.of(new RestorationAngel()));
@@ -94,7 +98,7 @@ class RestorationAngelTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Opponent's non-Angel is not a legal target — ETB never triggers")
+    @DisplayName("With only an opponent's non-Angel available, no targeted ETB ability remains on the stack")
     void cannotTargetOpponentCreature() {
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new RestorationAngel()));
@@ -112,8 +116,7 @@ class RestorationAngelTest extends BaseCardTest {
     @Test
     @DisplayName("Flickering a stolen creature returns it under your control permanently")
     void flickersStolenCreatureUnderYourControl() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).getFirst();
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new LayClaim()));
         harness.addMana(player1, ManaColor.BLUE, 7);
 
@@ -134,5 +137,53 @@ class RestorationAngelTest extends BaseCardTest {
         Permanent returned = findPermanent(player1, "Grizzly Bears");
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.stolenCreatures).containsEntry(returned.getId(), player2.getId());
+    }
+
+    @Test
+    @DisplayName("Flickering removes counters, damage, and tapped status")
+    void returnsAsFreshUntappedPermanent() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        bears.tap();
+        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.setHand(player2, List.of(new FieryTemper()));
+        harness.addMana(player2, ManaColor.RED, 3);
+        harness.castAndResolveInstant(player2, 0, bears.getId());
+        assertThat(bears.getMarkedDamage()).isEqualTo(3);
+
+        harness.setHand(player1, List.of(new RestorationAngel()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        Permanent returned = findPermanent(player1, "Grizzly Bears");
+        assertThat(returned.getId()).isNotEqualTo(bears.getId());
+        assertThat(returned.isTapped()).isFalse();
+        assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(returned.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("A target removed in response cannot be returned")
+    void targetRemovedBeforeResolution() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
+        harness.setHand(player1, List.of(new RestorationAngel()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, bearsId);
+
+        harness.setHand(player2, List.of(new FieryTemper()));
+        harness.addMana(player2, ManaColor.RED, 3);
+        harness.castAndResolveInstant(player2, 0, bearsId);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }
