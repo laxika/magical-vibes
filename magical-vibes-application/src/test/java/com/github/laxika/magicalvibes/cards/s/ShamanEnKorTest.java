@@ -30,8 +30,7 @@ class ShamanEnKorTest extends BaseCardTest {
 
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, shaman.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, shaman.getId());
 
         assertThat(shaman.getMarkedDamage()).isEqualTo(1);
         assertThat(destination.getMarkedDamage()).isEqualTo(1);
@@ -154,6 +153,125 @@ class ShamanEnKorTest extends BaseCardTest {
 
         assertThat(shaman.getMarkedDamage()).isEqualTo(2);
         assertThat(protectedCreature.getMarkedDamage()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Multiple free activations can redirect more damage than the destination's toughness")
+    void multipleFreeActivationsRedirectEntireDamageEvent() {
+        Permanent shaman = addCreatureReady(player1, new ShamanEnKor());
+        Permanent destination = addCreatureReady(player1, new HonorGuard());
+
+        for (int i = 0; i < 2; i++) {
+            harness.activateAbility(player1, indexOf(player1, shaman), null, destination.getId());
+            harness.passBothPriorities();
+        }
+
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, shaman.getId());
+
+        assertThat(shaman.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player1, "Shaman en-Kor");
+        harness.assertInGraveyard(player1, "Honor Guard");
+    }
+
+    @Test
+    @DisplayName("Damage redirected by the paid ability can be redirected again by the free ability")
+    void paidRedirectionCanChainIntoFreeRedirection() {
+        Permanent shaman = addCreatureReady(player1, new ShamanEnKor());
+        Permanent destination = addCreatureReady(player1, new ShamanEnKor());
+        Permanent protectedCreature = addCreatureReady(player2, new ShamanEnKor());
+        Permanent bullwhip = harness.addToBattlefieldAndReturn(player1, new Bullwhip());
+
+        harness.activateAbility(player1, indexOf(player1, shaman), null, destination.getId());
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, indexOf(player1, shaman), 1, null, protectedCreature.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, bullwhip.getId());
+
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, indexOf(player1, bullwhip), null, protectedCreature.getId());
+        harness.passBothPriorities();
+
+        assertThat(protectedCreature.getMarkedDamage()).isZero();
+        assertThat(shaman.getMarkedDamage()).isZero();
+        assertThat(destination.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Redirected combat damage can be redirected again by the free ability")
+    void combatRedirectionCanChainIntoFreeRedirection() {
+        Permanent shaman = addCreatureReady(player1, new ShamanEnKor());
+        Permanent destination = addCreatureReady(player1, new ShamanEnKor());
+        Permanent protectedCreature = addCreatureReady(player1, new HonorGuard());
+        Permanent attacker = addCreatureReady(player2, new HonorGuard());
+
+        harness.activateAbility(player1, indexOf(player1, shaman), null, destination.getId());
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, indexOf(player1, shaman), 1, null, protectedCreature.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, attacker.getId());
+
+        attacker.setAttacking(true);
+        prepareDeclareBlockers(player2);
+        gs.declareBlockers(gd, player1,
+                List.of(new BlockerAssignment(indexOf(player1, protectedCreature), indexOf(player2, attacker))));
+        harness.passBothPriorities();
+
+        assertThat(protectedCreature.getMarkedDamage()).isZero();
+        assertThat(shaman.getMarkedDamage()).isZero();
+        assertThat(destination.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Damage from a different source does not consume the paid redirection")
+    void differentSourceDoesNotConsumePaidRedirection() {
+        Permanent shaman = addCreatureReady(player1, new ShamanEnKor());
+        Permanent protectedCreature = addCreatureReady(player2, new ShamanEnKor());
+        Permanent chosenBullwhip = harness.addToBattlefieldAndReturn(player1, new Bullwhip());
+        Permanent otherBullwhip = harness.addToBattlefieldAndReturn(player1, new Bullwhip());
+
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, indexOf(player1, shaman), 1, null, protectedCreature.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, chosenBullwhip.getId());
+
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.activateAbility(player1, indexOf(player1, otherBullwhip), null, protectedCreature.getId());
+        harness.passBothPriorities();
+        assertThat(shaman.getMarkedDamage()).isZero();
+        assertThat(protectedCreature.getMarkedDamage()).isEqualTo(1);
+
+        harness.activateAbility(player1, indexOf(player1, chosenBullwhip), null, protectedCreature.getId());
+        harness.passBothPriorities();
+        assertThat(shaman.getMarkedDamage()).isEqualTo(1);
+        assertThat(protectedCreature.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A self-redirection does not prevent another shield from redirecting that damage")
+    void selfRedirectionStillAllowsAnotherShieldToApply() {
+        Permanent shaman = addCreatureReady(player1, new ShamanEnKor());
+        Permanent destination = addCreatureReady(player1, new HonorGuard());
+
+        harness.activateAbility(player1, indexOf(player1, shaman), null, shaman.getId());
+        harness.passBothPriorities();
+        for (int i = 0; i < 2; i++) {
+            harness.activateAbility(player1, indexOf(player1, shaman), null, destination.getId());
+            harness.passBothPriorities();
+        }
+
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, shaman.getId());
+
+        assertThat(shaman.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player1, "Honor Guard");
     }
 
     private int indexOf(Player player, Permanent perm) {
