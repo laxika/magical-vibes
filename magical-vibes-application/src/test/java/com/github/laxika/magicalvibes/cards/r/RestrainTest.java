@@ -13,9 +13,10 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Restrain.class, SamiteArcher.class, HolyDay.class})
+@CardUsed({Restrain.class, SamiteArcher.class, HolyDay.class, Repulse.class})
 class RestrainTest extends BaseCardTest {
 
     @Test
@@ -62,10 +63,75 @@ class RestrainTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Does not draw when the target leaves the battlefield before resolution")
+    void doesNotDrawWhenTargetLeavesBattlefield() {
+        Permanent attacker = addAttacker(player1, player2, 1, 1);
+        harness.setLibrary(player1, List.of(new HolyDay()));
+        harness.setLibrary(player2, List.of(new HolyDay()));
+        prepareRestrain();
+        harness.castInstant(player2, 0, attacker.getId());
+
+        harness.setHand(player1, List.of(new Repulse()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castAndResolveInstant(player1, 0, attacker.getId());
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Samite Archer");
+        harness.assertNotInHand(player2, "Holy Day");
+        harness.assertInGraveyard(player2, "Restrain");
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Does not draw when the target is no longer attacking at resolution")
+    void doesNotDrawWhenTargetStopsAttacking() {
+        Permanent attacker = addAttacker(player1, player2, 1, 1);
+        harness.setLibrary(player2, List.of(new HolyDay()));
+        prepareRestrain();
+        harness.castInstant(player2, 0, attacker.getId());
+
+        attacker.setAttacking(false);
+        harness.passBothPriorities();
+
+        harness.assertNotInHand(player2, "Holy Day");
+        harness.assertInGraveyard(player2, "Restrain");
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Draws even when the attacking creature has zero power")
+    void drawsEvenWhenNoDamageWouldBeDealt() {
+        Permanent attacker = addAttacker(player1, player2, 0, 1);
+        harness.setLibrary(player2, List.of(new HolyDay()));
+
+        castRestrain(attacker);
+
+        harness.assertInHand(player2, "Holy Day");
+        harness.assertInGraveyard(player2, "Restrain");
+    }
+
+    @Test
+    @DisplayName("Prevents damage to a blocker but does not protect the targeted attacker")
+    void preventsDamageToBlockerButNotToAttacker() {
+        Permanent attacker = addAttacker(player1, player2, 1, 1);
+        Permanent blocker = addCreatureReady(player2, new SamiteArcher());
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+        harness.setLibrary(player2, List.of(new HolyDay()));
+
+        castRestrain(attacker);
+        resolveCombat();
+
+        harness.assertInGraveyard(player1, "Samite Archer");
+        harness.assertOnBattlefield(player2, "Samite Archer");
+        assertThat(blocker.getMarkedDamage()).isZero();
+    }
+
     private void castRestrain(Permanent target) {
         prepareRestrain();
-        harness.castInstant(player2, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, target.getId());
     }
 
     private void prepareRestrain() {
