@@ -41,7 +41,7 @@ class RestoreBalanceTest extends BaseCardTest {
         harness.setHand(player1, List.of(card, new AshcoatBear(), new AshcoatBear()));
         harness.setHand(player2, List.of(new Forest()));
         harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addToBattlefield(player1, new AshcoatBear());
+        Permanent sacrificedCreature = harness.addToBattlefieldAndReturn(player1, new AshcoatBear());
         harness.addToBattlefield(player1, new AshcoatBear());
         harness.addToBattlefield(player2, new AshcoatBear());
 
@@ -60,13 +60,25 @@ class RestoreBalanceTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
         assertThat(creatureChoice).isNotNull();
         assertThat(creatureChoice.maxCount()).isEqualTo(1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+
+        harness.handleMultiplePermanentsChosen(player1, List.of(sacrificedCreature.getId()));
+
+        assertThat(countCreatures(player1)).isEqualTo(1);
+        assertThat(countCreatures(player2)).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test
     @DisplayName("The suspended card free-casts and balances lands, hands, and creatures")
     void freeCastBalancesAllCategories() {
         RestoreBalance card = new RestoreBalance();
-        harness.setHand(player1, new ArrayList<>(List.of(card, new AshcoatBear(), new Forest())));
+        harness.setHand(player1, List.of(card, new AshcoatBear(), new Forest()));
         harness.setHand(player2, List.of(new Forest()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         List<Permanent> player1Lands = addForests(player1, 3);
@@ -92,6 +104,7 @@ class RestoreBalanceTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, player1Lands.subList(0, 2).stream()
                 .map(Permanent::getId).toList());
 
+        assertThat(countCreatures(player1)).isZero();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         harness.handleCardChosen(player1, 0);
 
@@ -99,6 +112,69 @@ class RestoreBalanceTest extends BaseCardTest {
         assertThat(landCount(player1)).isEqualTo(1);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(countCreatures(player1)).isZero();
+    }
+
+    @Test
+    @DisplayName("Suspend removes counters only on its owner's upkeep and casting may be declined")
+    void suspendCountsOwnerUpkeepsAndCastingMayBeDeclined() {
+        RestoreBalance card = new RestoreBalance();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateHandAbility(player1, 0, null);
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 6);
+
+        for (int remaining = 5; remaining >= 1; remaining--) {
+            advanceToUpkeep(player1);
+            resolveAllTriggers();
+            assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), remaining);
+            assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
+        }
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
+        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        assertThat(gd.stack).isEmpty();
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
+    }
+
+    @Test
+    @DisplayName("An opponent with the excess lands, creatures, and cards loses them all when the minimum is zero")
+    void opponentBalancesDownToZero() {
+        RestoreBalance card = new RestoreBalance();
+        harness.setHand(player1, List.of(card));
+        harness.setHand(player2, List.of(new Forest()));
+        harness.addToBattlefield(player2, new Forest());
+        harness.addToBattlefield(player2, new AshcoatBear());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateHandAbility(player1, 0, null);
+
+        for (int i = 0; i < 6; i++) {
+            advanceToUpkeep(player1);
+            resolveAllTriggers();
+        }
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(landCount(player2)).isZero();
+        assertThat(countCreatures(player2)).isZero();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
     }
 
     private List<Permanent> addForests(com.github.laxika.magicalvibes.model.Player player, int count) {
