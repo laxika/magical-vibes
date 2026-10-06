@@ -71,11 +71,87 @@ class SigardaFontOfBlessingsTest extends BaseCardTest {
         addSigardaAndPrepareMainPhase();
         GrizzlyBears bears = new GrizzlyBears();
         harness.setLibrary(player1, List.of(bears));
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
 
         assertThatThrownBy(() -> harness.castFromLibraryTop(player1))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(bears);
+    }
+
+    @Test
+    void topCardIsVisibleOnlyToControllerDuringOpponentsTurn() {
+        harness.addToBattlefield(player1, new SigardaFontOfBlessings());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearMessages();
+
+        harness.publishState();
+
+        assertThat(harness.getConn1().getSentMessages())
+                .anyMatch(message -> message.contains("\"revealedLibraryTopCards\":[[{"));
+        assertThat(harness.getConn2().getSentMessages())
+                .anyMatch(message -> message.contains("\"revealedLibraryTopCards\":[[],[]]"));
+    }
+
+    @Test
+    void sigardaInLibraryDoesNotRevealHerselfWithoutBattlefieldPermission() {
+        harness.setLibrary(player1, List.of(new SigardaFontOfBlessings()));
+        harness.clearMessages();
+
+        harness.publishState();
+
+        assertThat(harness.getConn1().getSentMessages())
+                .anyMatch(message -> message.contains("\"revealedLibraryTopCards\":[[],[]]"));
+        assertThat(harness.getConn1().getSentMessages())
+                .noneMatch(message -> message.contains("\"revealedLibraryTopCards\":[[{"));
+    }
+
+    @Test
+    void leavingBattlefieldRemovesHexproofVisibilityAndCastingPermission() {
+        addSigardaAndPrepareMainPhase();
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        ChampionOfTheParish human = new ChampionOfTheParish();
+        harness.setLibrary(player1, List.of(human));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        gd.playerBattlefields.get(player1.getId()).removeIf(
+                permanent -> permanent.getCard() instanceof SigardaFontOfBlessings);
+        harness.clearMessages();
+
+        harness.publishState();
+
+        assertThat(gqs.hasKeyword(gd, forest, Keyword.HEXPROOF)).isFalse();
+        assertThat(harness.getConn1().getSentMessages())
+                .anyMatch(message -> message.contains("\"revealedLibraryTopCards\":[[],[]]"));
+        assertThatThrownBy(() -> harness.castFromLibraryTop(player1))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(human);
+    }
+
+    @Test
+    void libraryCastingStillRequiresCorrectMana() {
+        addSigardaAndPrepareMainPhase();
+        ChampionOfTheParish human = new ChampionOfTheParish();
+        harness.setLibrary(player1, List.of(human));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.castFromLibraryTop(player1))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(human);
+    }
+
+    @Test
+    void libraryCastingDoesNotGrantFlashToHumanCreatures() {
+        addSigardaAndPrepareMainPhase();
+        ChampionOfTheParish human = new ChampionOfTheParish();
+        harness.setLibrary(player1, List.of(human));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        assertThatThrownBy(() -> harness.castFromLibraryTop(player1))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(human);
     }
 
     private void addSigardaAndPrepareMainPhase() {
