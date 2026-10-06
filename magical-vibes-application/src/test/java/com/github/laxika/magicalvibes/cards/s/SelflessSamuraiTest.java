@@ -117,4 +117,67 @@ class SelflessSamuraiTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("another creature you control");
     }
+
+    @Test
+    @CardUsed({SelflessSamurai.class})
+    @DisplayName("Selfless Samurai gains lifelink when it attacks alone")
+    void selfAttackingAloneGainsLifelink() {
+        Permanent samurai = addCreatureReady(player1, new SelflessSamurai());
+
+        declareAttackers(player1, List.of(0));
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, samurai, Keyword.LIFELINK)).isTrue();
+    }
+
+    @Test
+    @CardUsed({SelflessSamurai.class})
+    @DisplayName("Neither Samurai gains lifelink when two creatures attack")
+    void multipleAttackersDoNotGainLifelink() {
+        Permanent first = addCreatureReady(player1, new SelflessSamurai());
+        Permanent second = addCreatureReady(player1, new SelflessSamurai());
+
+        declareAttackers(player1, List.of(0, 1));
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, first, Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.LIFELINK)).isFalse();
+    }
+
+    @Test
+    @CardUsed({SelflessSamurai.class})
+    @DisplayName("Only the attacking player's Samurai triggers for their lone attacker")
+    void opposingSamuraiDoesNotTriggerAbility() {
+        harness.addToBattlefield(player1, new SelflessSamurai());
+        Permanent attacker = addCreatureReady(player2, new SelflessSamurai());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(player2, List.of(0)));
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.LIFELINK)).isTrue();
+    }
+
+    @Test
+    @CardUsed({SelflessSamurai.class})
+    @DisplayName("Sacrifice is paid immediately and indestructible expires at end of turn")
+    void sacrificeIsImmediateAndIndestructibleExpires() {
+        harness.addToBattlefield(player1, new SelflessSamurai());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new SelflessSamurai());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        harness.assertInGraveyard(player1, "Selfless Samurai");
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isFalse();
+
+        harness.passBothPriorities();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isFalse();
+    }
 }
