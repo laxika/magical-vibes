@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.c.CacklingImp;
 import com.github.laxika.magicalvibes.cards.c.Condescend;
 import com.github.laxika.magicalvibes.cards.c.ConjurersBauble;
+import com.github.laxika.magicalvibes.cards.m.MyrServitor;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ShatteredDreams.class, ConjurersBauble.class, Condescend.class, CacklingImp.class})
+@CardUsed({ShatteredDreams.class, ConjurersBauble.class, Condescend.class, CacklingImp.class, MyrServitor.class})
 class ShatteredDreamsTest extends BaseCardTest {
 
     @Test
@@ -77,6 +78,77 @@ class ShatteredDreamsTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("An empty hand resolves without a choice or discard")
+    void emptyHandDoesNotPrompt() {
+        harness.setHand(player2, List.of());
+        castShatteredDreams();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Shattered Dreams");
+    }
+
+    @Test
+    @DisplayName("The caster chooses exactly one of several artifacts")
+    void choosesOnlyOneArtifact() {
+        harness.setHand(player2, List.of(new ConjurersBauble(), new MyrServitor(), new Condescend()));
+        castShatteredDreams();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class).validIndices())
+                .containsExactly(0, 1);
+        harness.handleCardChosen(player1, 1);
+
+        harness.assertInGraveyard(player2, "Myr Servitor");
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).extracting(Card::getName)
+                .containsExactly("Conjurer's Bauble", "Condescend");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Shattered Dreams");
+    }
+
+    @Test
+    @DisplayName("An artifact choice is mandatory when an artifact is present")
+    void cannotDeclineArtifactChoice() {
+        harness.setHand(player2, List.of(new ConjurersBauble()));
+        castShatteredDreams();
+
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, -1))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInHand(player2, "Conjurer's Bauble");
+        harness.handleCardChosen(player1, 0);
+        harness.assertInGraveyard(player2, "Conjurer's Bauble");
+    }
+
+    @Test
+    @DisplayName("A non-artifact cannot be selected from a mixed hand")
+    void rejectsNonArtifactChoice() {
+        harness.setHand(player2, List.of(new Condescend(), new ConjurersBauble()));
+        castShatteredDreams();
+
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+        harness.handleCardChosen(player1, 1);
+        harness.assertInGraveyard(player2, "Conjurer's Bauble");
+        harness.assertInHand(player2, "Condescend");
+    }
+
+    @Test
+    @DisplayName("The opponent cannot choose which artifact to discard")
+    void opponentCannotChoose() {
+        harness.setHand(player2, List.of(new ConjurersBauble(), new MyrServitor()));
+        castShatteredDreams();
+
+        assertThatThrownBy(() -> harness.handleCardChosen(player2, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+        harness.handleCardChosen(player1, 1);
+        harness.assertInGraveyard(player2, "Myr Servitor");
+        harness.assertInHand(player2, "Conjurer's Bauble");
     }
 
     private void castShatteredDreams() {
