@@ -110,6 +110,45 @@ class ReitoLanternTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()).get(lanternIdx).isTapped()).isFalse();
     }
 
+    @Test
+    @DisplayName("A tapped Lantern can put a noncreature card into an empty library")
+    void tappedLanternTucksArtifactIntoEmptyLibrary() {
+        int lanternIdx = addLantern();
+        gd.playerBattlefields.get(player1.getId()).get(lanternIdx).setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        Card target = new ReitoLantern();
+        harness.setGraveyard(player2, List.of(target));
+        harness.setLibrary(player2, List.of());
+
+        harness.activateAbilityWithGraveyardTargets(player1, lanternIdx, 0, List.of(target.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(target);
+        assertThat(gd.playerBattlefields.get(player1.getId()).get(lanternIdx).isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Two pending activations targeting the same card move it only once")
+    void pendingActivationsTuckSameCardOnlyOnce() {
+        int lanternIdx = addLantern();
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        Card target = new HumbleBudoka();
+        Card remaining = new HumbleBudoka();
+        Card top = new HumbleBudoka();
+        harness.setGraveyard(player2, List.of(target, remaining));
+        harness.setLibrary(player2, List.of(top));
+
+        harness.activateAbilityWithGraveyardTargets(player1, lanternIdx, 0, List.of(target.getId()));
+        harness.activateAbilityWithGraveyardTargets(player1, lanternIdx, 0, List.of(target.getId()));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(remaining);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(top, target);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private int addLantern() {
         Permanent lantern = harness.addToBattlefieldAndReturn(player1, new ReitoLantern());
         lantern.setSummoningSick(false);
