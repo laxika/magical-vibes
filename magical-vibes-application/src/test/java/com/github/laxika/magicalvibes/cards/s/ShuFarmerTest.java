@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -18,9 +20,11 @@ class ShuFarmerTest extends BaseCardTest {
         setupFarmerOnMyTurn(TurnStep.PRECOMBAT_MAIN);
 
         harness.activateAbility(player1, 0, null, null);
+        harness.assertLife(player1, 20);
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(21);
+        harness.assertLife(player2, 20);
     }
 
     @Test
@@ -74,6 +78,69 @@ class ShuFarmerTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("during your turn");
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = TurnStep.class, names = {"UPKEEP", "DRAW"})
+    void canActivateDuringBeginningPhase(TurnStep step) {
+        setupFarmerOnMyTurn(step);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 21);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = TurnStep.class, names = {"DECLARE_BLOCKERS", "COMBAT_DAMAGE",
+            "END_OF_COMBAT", "POSTCOMBAT_MAIN", "END_STEP"})
+    void cannotActivateLaterInTurn(TurnStep step) {
+        setupFarmerOnMyTurn(step);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("before attackers are declared");
+
+        assertThat(findPermanent(player1, "Shu Farmer").isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    void cannotActivateAgainWhileTapped() {
+        setupFarmerOnMyTurn(TurnStep.PRECOMBAT_MAIN);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 21);
+    }
+
+    @Test
+    void abilityResolvesAfterFarmerLeavesBattlefield() {
+        setupFarmerOnMyTurn(TurnStep.PRECOMBAT_MAIN);
+        harness.activateAbility(player1, 0, null, null);
+        var farmer = findPermanent(player1, "Shu Farmer");
+        gd.playerBattlefields.get(player1.getId()).remove(farmer);
+        gd.playerGraveyards.get(player1.getId()).add(farmer.getCard());
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void cannotActivateBeforeAttackersInAnAdditionalCombat() {
+        setupFarmerOnMyTurn(TurnStep.BEGINNING_OF_COMBAT);
+        gd.combatPhasesThisTurn = 2;
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("before attackers are declared");
     }
 
     private void setupFarmerOnMyTurn(TurnStep step) {
