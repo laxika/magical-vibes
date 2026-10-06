@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.d.DrainLife;
 import com.github.laxika.magicalvibes.cards.f.FemerefArchers;
 import com.github.laxika.magicalvibes.cards.i.Incinerate;
 import com.github.laxika.magicalvibes.cards.k.KaerveksPurge;
@@ -26,7 +27,9 @@ import static org.assertj.core.api.Assertions.assertThat;
         TalruumMinotaur.class,
         FemerefArchers.class,
         Incinerate.class,
-        KaerveksPurge.class
+        KaerveksPurge.class,
+        SubterraneanSpirit.class,
+        DrainLife.class
 })
 class ShadowbaneTest extends BaseCardTest {
 
@@ -182,6 +185,64 @@ class ShadowbaneTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player1, 22);
+    }
+
+    @Test
+    @DisplayName("Prevents simultaneous damage to every creature you control")
+    void preventsSimultaneousDamageToMultipleControlledCreatures() {
+        Permanent first = addCreatureReady(player1, new FemerefArchers());
+        Permanent second = addCreatureReady(player1, new UrborgPanther());
+        Permanent spirit = addCreatureReady(player2, new SubterraneanSpirit());
+        harness.activateAbility(player2, 0, null, null);
+        castShadowbane(player1);
+
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, spirit.getId());
+        harness.passBothPriorities();
+
+        assertThat(first.getMarkedDamage()).isZero();
+        assertThat(second.getMarkedDamage()).isZero();
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Gains life for black spell damage prevented to a controlled creature")
+    void gainsLifeForBlackSpellDamagePreventedToCreature() {
+        Permanent archers = addCreatureReady(player1, new FemerefArchers());
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new DrainLife(), new Shadowbane()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castSorcery(player1, 0, 2, archers.getId());
+        StackEntry drainEntry = gd.stack.getLast();
+        harness.castInstant(player1, 0);
+
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, drainEntry.getCard().getId());
+        harness.passBothPriorities();
+
+        assertThat(archers.getMarkedDamage()).isZero();
+        harness.assertLife(player1, 22);
+    }
+
+    @Test
+    @DisplayName("The chosen source's later damage is not prevented")
+    void doesNotPreventLaterDamageFromSameSource() {
+        Permanent archers = addCreatureReady(player1, new FemerefArchers());
+        Permanent spirit = addCreatureReady(player2, new SubterraneanSpirit());
+        harness.activateAbility(player2, 0, null, null);
+        castShadowbane(player1);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, spirit.getId());
+        harness.passBothPriorities();
+        assertThat(archers.getMarkedDamage()).isZero();
+
+        spirit.setTapped(false);
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(archers.getMarkedDamage()).isEqualTo(1);
     }
 
     private void castShadowbane(Player player) {
