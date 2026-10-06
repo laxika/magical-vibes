@@ -75,6 +75,48 @@ class SavedByTheShellTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An opponent's Turtle does not reduce the cost")
+    void opponentsTurtleDoesNotReduceCost() {
+        harness.addToBattlefield(player2, new HornedTurtle());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SavedByTheShell()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("Multiple Turtles do not reduce the green mana requirement")
+    void multipleTurtlesStillRequireGreenMana() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new HornedTurtle());
+        harness.addToBattlefield(player1, new HornedTurtle());
+        harness.setHand(player1, List.of(new SavedByTheShell()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("The Turtle providing the discount can itself be the target")
+    void canTargetTurtleProvidingDiscount() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new HornedTurtle());
+        harness.setHand(player1, List.of(new SavedByTheShell()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(target.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(target.hasKeyword(Keyword.HEXPROOF)).isTrue();
+        assertThat(target.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
     @DisplayName("Cannot target a creature an opponent controls")
     void cannotTargetOpponentsCreature() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
@@ -91,7 +133,6 @@ class SavedByTheShellTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SavedByTheShell()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 }
