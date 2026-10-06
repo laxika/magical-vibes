@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({ShelobDreadWeaver.class, GrizzlyBears.class, Murder.class, Forest.class})
 class ShelobDreadWeaverTest extends BaseCardTest {
@@ -61,6 +62,9 @@ class ShelobDreadWeaverTest extends BaseCardTest {
         assertThat(choice.validCardIds()).containsExactlyInAnyOrder(creature.getId(), secondCreature.getId());
 
         harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(creature);
+        assertThat(shelob.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(drawn);
         harness.passBothPriorities();
 
         assertThat(shelob.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
@@ -81,10 +85,48 @@ class ShelobDreadWeaverTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, 2, creature.getId(), Zone.EXILE);
         harness.passBothPriorities();
 
-        Permanent returned = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().getId().equals(creature.getId()))
-                .findFirst().orElseThrow();
+        Permanent returned = findPermanent(player1, "Grizzly Bears");
         assertThat(returned.isTapped()).isTrue();
+        assertThat(gd.getCardsExiledByPermanent(shelob.getId())).isEmpty();
+    }
+
+    @Test
+    void rejectsTargetWhoseManaValueDoesNotEqualX() {
+        Permanent shelob = harness.addToBattlefieldAndReturn(player1, new ShelobDreadWeaver());
+        Card creature = new GrizzlyBears();
+        gd.addToExile(player2.getId(), creature, shelob.getId());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, 3, creature.getId(), Zone.EXILE))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void rejectsCreatureExiledWithAnotherPermanent() {
+        harness.addToBattlefield(player1, new ShelobDreadWeaver());
+        Permanent otherSource = harness.addToBattlefieldAndReturn(player2, new ShelobDreadWeaver());
+        Card creature = new GrizzlyBears();
+        gd.addToExile(player2.getId(), creature, otherSource.getId());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, 2, creature.getId(), Zone.EXILE))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void doesNotExileItsControllersCreature() {
+        Permanent shelob = harness.addToBattlefieldAndReturn(player1, new ShelobDreadWeaver());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Murder()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(gd.getCardsExiledByPermanent(shelob.getId())).isEmpty();
     }
 }
