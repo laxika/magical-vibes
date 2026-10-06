@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CylianElf;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,9 +15,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SigilOfDistinction.class, CylianElf.class})
 class SigilOfDistinctionTest extends BaseCardTest {
-
-    // ===== Enters with X charge counters =====
 
     @Test
     @DisplayName("Casting Sigil of Distinction with X=3 enters with 3 charge counters")
@@ -27,21 +27,18 @@ class SigilOfDistinctionTest extends BaseCardTest {
         gs.playCard(gd, player1, 0, 3, null, null);
         harness.passBothPriorities();
 
-        Permanent sigil = findSigil(player1);
+        Permanent sigil = findPermanent(player1, "Sigil of Distinction");
         assertThat(sigil).isNotNull();
         assertThat(sigil.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
     }
 
-    // ===== Static boost scales with charge counters =====
-
     @Test
     @DisplayName("Equipped creature gets +1/+1 for each charge counter")
     void equippedCreatureBoostedPerChargeCounter() {
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-        Permanent sigil = new Permanent(new SigilOfDistinction());
+        Permanent bears = addCreatureReady(player1, new CylianElf());
+        Permanent sigil = harness.addToBattlefieldAndReturn(player1, new SigilOfDistinction());
         sigil.setCounterCount(CounterType.CHARGE, 3);
         sigil.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(sigil);
 
         // 2/2 base + 3 charge counters = 5/5
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(5);
@@ -51,26 +48,21 @@ class SigilOfDistinctionTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature gets no boost with zero charge counters")
     void noBoostWithZeroChargeCounters() {
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-        Permanent sigil = new Permanent(new SigilOfDistinction());
+        Permanent bears = addCreatureReady(player1, new CylianElf());
+        Permanent sigil = harness.addToBattlefieldAndReturn(player1, new SigilOfDistinction());
         sigil.setCounterCount(CounterType.CHARGE, 0);
         sigil.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(sigil);
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
-    // ===== Equip cost removes a charge counter =====
-
     @Test
     @DisplayName("Equipping removes a charge counter and attaches to the target")
     void equipRemovesChargeCounterAndAttaches() {
-        Permanent sigil = new Permanent(new SigilOfDistinction());
-        sigil.setSummoningSick(false);
+        Permanent sigil = harness.addToBattlefieldAndReturn(player1, new SigilOfDistinction());
         sigil.setCounterCount(CounterType.CHARGE, 3);
-        gd.playerBattlefields.get(player1.getId()).add(sigil);
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new CylianElf());
 
         harness.activateAbility(player1, 0, null, bears.getId());
         harness.passBothPriorities();
@@ -86,39 +78,96 @@ class SigilOfDistinctionTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot equip with no charge counters to remove")
     void cannotEquipWithoutChargeCounters() {
-        Permanent sigil = new Permanent(new SigilOfDistinction());
-        sigil.setSummoningSick(false);
+        Permanent sigil = harness.addToBattlefieldAndReturn(player1, new SigilOfDistinction());
         sigil.setCounterCount(CounterType.CHARGE, 0);
-        gd.playerBattlefields.get(player1.getId()).add(sigil);
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new CylianElf());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Illegal target =====
-
     @Test
     @DisplayName("Cannot equip a creature an opponent controls")
     void cannotEquipOpponentCreature() {
-        Permanent sigil = new Permanent(new SigilOfDistinction());
-        sigil.setSummoningSick(false);
+        Permanent sigil = harness.addToBattlefieldAndReturn(player1, new SigilOfDistinction());
         sigil.setCounterCount(CounterType.CHARGE, 3);
-        gd.playerBattlefields.get(player1.getId()).add(sigil);
 
-        Permanent opponentBears = new Permanent(new GrizzlyBears());
-        opponentBears.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(opponentBears);
+        Permanent opponentBears = addCreatureReady(player2, new CylianElf());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, opponentBears.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Helpers =====
+    @Test
+    void castingWithZeroXEntersWithoutCounters() {
+        harness.setHand(player1, List.of(new SigilOfDistinction()));
 
-    private Permanent findSigil(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Sigil of Distinction"))
-                .findFirst().orElse(null);
+        gs.playCard(gd, player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Sigil of Distinction")
+                .getCounterCount(CounterType.CHARGE)).isZero();
+    }
+
+    @Test
+    void enteringWithoutBeingCastHasZeroChargeCounters() {
+        Permanent sigil = harness.enterBattlefieldAndReturn(player1, new SigilOfDistinction());
+
+        assertThat(sigil.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void spendingLastCounterStillEquipsAndImmediatelyRemovesBoost() {
+        Permanent sigil = harness.addToBattlefieldAndReturn(player1, new SigilOfDistinction());
+        sigil.setCounterCount(CounterType.CHARGE, 1);
+        Permanent first = addCreatureReady(player1, new CylianElf());
+        Permanent second = addCreatureReady(player1, new CylianElf());
+        sigil.setAttachedTo(first.getId());
+
+        harness.activateAbility(player1, 0, null, second.getId());
+
+        assertThat(sigil.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(sigil.getAttachedTo()).isEqualTo(first.getId());
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(2);
+
+        harness.passBothPriorities();
+
+        assertThat(sigil.getAttachedTo()).isEqualTo(second.getId());
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(2);
+    }
+
+    @Test
+    void disappearingEquipTargetDoesNotRefundCounterOrDetachEquipment() {
+        Permanent sigil = harness.addToBattlefieldAndReturn(player1, new SigilOfDistinction());
+        sigil.setCounterCount(CounterType.CHARGE, 3);
+        Permanent first = addCreatureReady(player1, new CylianElf());
+        Permanent second = addCreatureReady(player1, new CylianElf());
+        sigil.setAttachedTo(first.getId());
+
+        harness.activateAbility(player1, 0, null, second.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(second);
+        gd.playerGraveyards.get(player1.getId()).add(second.getCard());
+        harness.passBothPriorities();
+
+        assertThat(sigil.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
+        assertThat(sigil.getAttachedTo()).isEqualTo(first.getId());
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(4);
+    }
+
+    @Test
+    void equipCannotBeActivatedOutsideMainPhase() {
+        Permanent sigil = harness.addToBattlefieldAndReturn(player1, new SigilOfDistinction());
+        sigil.setCounterCount(CounterType.CHARGE, 3);
+        Permanent creature = addCreatureReady(player1, new CylianElf());
+        harness.forceStep(TurnStep.UPKEEP);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(sigil.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
+        assertThat(sigil.getAttachedTo()).isNull();
     }
 }
