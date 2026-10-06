@@ -28,8 +28,7 @@ class RandomEncounterTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .extracting(permanent -> permanent.getCard().getId())
@@ -58,12 +57,57 @@ class RandomEncounterTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .extracting(Card::getName)
                 .contains("Forest", "Forest", "Forest", "Forest");
+    }
+
+    @Test
+    @DisplayName("Returns all reanimated creatures through one delayed trigger from the spell")
+    void returnsCreaturesTogetherThroughOneSpellTrigger() {
+        Card firstCreature = new GrizzlyBears();
+        Card secondCreature = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(firstCreature, secondCreature));
+        harness.setHand(player1, List.of(new RandomEncounter()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_STEP);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isInstanceOf(RandomEncounter.class);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId()))
+                .extracting(Card::getId)
+                .containsExactlyInAnyOrder(firstCreature.getId(), secondCreature.getId());
+    }
+
+    @Test
+    @DisplayName("Flashback reanimates milled creatures and exiles the spell")
+    void flashbackReanimatesAndExilesSpell() {
+        Card creature = new GrizzlyBears();
+        Card spell = new RandomEncounter();
+        harness.setLibrary(player1, List.of(creature));
+        harness.setGraveyard(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.castAndResolveFlashback(player1, 0, null);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(permanent -> permanent.getCard().getId())
+                .containsExactly(creature.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .allMatch(permanent -> permanent.getGrantedKeywords().contains(Keyword.HASTE));
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(spell);
+        assertThat(gd.findExiledCard(spell.getId())).isNotNull();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 }
