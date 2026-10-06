@@ -115,12 +115,71 @@ class SengirNosferatuTest extends BaseCardTest {
 
         harness.handleMultipleCardsChosen(player1, List.of(exiledIds.getFirst()));
 
-        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().getName().equals("Sengir Nosferatu")))
-                .hasSize(1);
+        assertThat(findPermanents(player1, "Sengir Nosferatu")).hasSize(1);
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .extracting(Card::getName)
                 .containsExactly("Sengir Nosferatu");
+    }
+
+    @Test
+    @DisplayName("Exile and sacrifice are paid before the abilities resolve")
+    void paysCostsBeforeResolution() {
+        harness.addToBattlefield(player1, new SengirNosferatu());
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Sengir Nosferatu");
+        harness.assertNotOnBattlefield(player1, "Bat");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(1);
+
+        harness.passBothPriorities();
+        Permanent bat = findPermanent(player1, "Bat");
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(bat), 0, null);
+
+        harness.assertNotOnBattlefield(player1, "Bat");
+        harness.assertNotOnBattlefield(player1, "Sengir Nosferatu");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(1);
+
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Sengir Nosferatu");
+    }
+
+    @Test
+    @DisplayName("A Bat can return an opponent's Nosferatu exiled independently")
+    void returnsOpponentsCopyRatherThanItsSource() {
+        activateNosferatu();
+        SengirNosferatu opponentsCard = new SengirNosferatu();
+        harness.setExile(player2, List.of(opponentsCard));
+        Permanent bat = findPermanent(player1, "Bat");
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(bat), 0, null);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(opponentsCard.getId()));
+
+        harness.assertOnBattlefield(player2, "Sengir Nosferatu");
+        harness.assertNotOnBattlefield(player1, "Sengir Nosferatu");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A Bat can be sacrificed when no matching card remains in exile")
+    void sacrificesBatWithNoMatchingExiledCard() {
+        activateNosferatu();
+        harness.inMutationScope(() -> gd.removeFromExile(
+                gd.getPlayerExiledCards(player1.getId()).getFirst().getId()));
+        Permanent bat = findPermanent(player1, "Bat");
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(bat), 0, null);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Bat");
+        harness.assertNotOnBattlefield(player1, "Sengir Nosferatu");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ExiledCardChoice.class)).isNull();
+        assertThat(gd.stack).isEmpty();
     }
 
     private void activateNosferatu() {
