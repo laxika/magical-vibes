@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -10,6 +11,7 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -62,6 +64,81 @@ class SkinthinnerTest extends BaseCardTest {
         assertThat(skinthinner.isFaceDown()).isFalse();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(island);
+    }
+
+    @Test
+    void castingFaceUpDoesNotDestroyCreature() {
+        Permanent wizard = harness.addToBattlefieldAndReturn(player2, new FugitiveWizard());
+        harness.setHand(player1, List.of(new Skinthinner()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Skinthinner");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(wizard);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void turningFaceUpCanDestroyYourOwnNonblackCreature() {
+        Permanent wizard = harness.addToBattlefieldAndReturn(player1, new FugitiveWizard());
+        Permanent skinthinner = castFaceDown();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(skinthinner));
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactly(wizard.getId());
+        harness.handlePermanentChosen(player1, wizard.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(wizard);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Fugitive Wizard");
+        harness.assertOnBattlefield(player1, "Skinthinner");
+    }
+
+    @Test
+    void faceDownBlackCardIsALegalNonblackTarget() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Skinthinner());
+        target.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        Permanent skinthinner = castFaceDown();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(skinthinner));
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactly(target.getId());
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Skinthinner");
+        harness.assertOnBattlefield(player1, "Skinthinner");
+    }
+
+    @Test
+    void targetThatTurnsFaceUpAndBecomesBlackSurvivesResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Skinthinner());
+        target.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        Permanent skinthinner = castFaceDown();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(skinthinner));
+        harness.handlePermanentChosen(player1, target.getId());
+
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.turnFaceUp(player2, gd.playerBattlefields.get(player2.getId()).indexOf(target));
+        harness.passBothPriorities();
+
+        assertThat(target.isFaceDown()).isFalse();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        harness.assertNotInGraveyard(player2, "Skinthinner");
+        assertThat(gd.stack).isEmpty();
     }
 
     private Permanent castFaceDown() {
