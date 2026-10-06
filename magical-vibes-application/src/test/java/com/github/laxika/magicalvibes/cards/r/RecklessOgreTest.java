@@ -10,7 +10,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(RecklessOgre.class)
+@CardUsed({RecklessOgre.class})
 class RecklessOgreTest extends BaseCardTest {
 
     @Test
@@ -34,6 +34,34 @@ class RecklessOgreTest extends BaseCardTest {
 
         assertThat(ogre.getPowerModifier()).isZero();
         assertThat(ogre.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    void attackingAloneWithAnotherOgreStayingBackBoostsOnlyAttacker() {
+        Permanent attacker = addCreatureReady(player1, new RecklessOgre());
+        Permanent nonattacker = addCreatureReady(player1, new RecklessOgre());
+
+        declareAttackers(player1, List.of(0));
+        harness.passBothPriorities();
+
+        assertThat(attacker.getPowerModifier()).isEqualTo(3);
+        assertThat(attacker.getToughnessModifier()).isZero();
+        assertThat(nonattacker.getPowerModifier()).isZero();
+        assertThat(nonattacker.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    void opponentAttackingAloneBoostsOnlyTheirOgre() {
+        Permanent defendingOgre = addCreatureReady(player1, new RecklessOgre());
+        Permanent attackingOgre = addCreatureReady(player2, new RecklessOgre());
+
+        declareAttackers(player2, List.of(0));
+        harness.passBothPriorities();
+
+        assertThat(attackingOgre.getPowerModifier()).isEqualTo(3);
+        assertThat(attackingOgre.getToughnessModifier()).isZero();
+        assertThat(defendingOgre.getPowerModifier()).isZero();
+        assertThat(defendingOgre.getToughnessModifier()).isZero();
     }
 
     @Test
