@@ -83,6 +83,53 @@ class RenataCalledToTheHuntTest extends BaseCardTest {
                 .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
+    @Test
+    @DisplayName("Casting Renata does not give her a counter or affect creatures already present")
+    void castRenataDoesNotAddCountersToHerselfOrExistingCreatures() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new RenataCalledToTheHunt()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent renata = findPermanent(player1, "Renata, Called to the Hunt");
+        assertThat(renata.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.getEffectivePower(gd, renata)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, renata)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Renata's characteristic power applies in the graveyard without counting her own mana cost")
+    void powerInGraveyardEqualsBattlefieldDevotion() {
+        RenataCalledToTheHunt renata = new RenataCalledToTheHunt();
+        harness.setGraveyard(player1, List.of(renata));
+        harness.setHand(player1, List.of(new LlanowarElves()));
+        harness.addToBattlefield(player2, new LlanowarElves());
+
+        assertThat(gqs.getEffectiveCardPower(gd, renata)).isZero();
+
+        harness.addToBattlefield(player1, new LlanowarElves());
+
+        assertThat(gqs.getEffectiveCardPower(gd, renata)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Counters modify Renata's devotion-based power and fixed toughness")
+    void countersApplyAfterDevotionBasedPower() {
+        Permanent renata = addRenata();
+        renata.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        assertThat(gqs.getEffectivePower(gd, renata)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, renata)).isEqualTo(4);
+
+        harness.addToBattlefield(player1, new LlanowarElves());
+
+        assertThat(gqs.getEffectivePower(gd, renata)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, renata)).isEqualTo(4);
+    }
+
     private Permanent addRenata() {
         return harness.addToBattlefieldAndReturn(player1, new RenataCalledToTheHunt());
     }
