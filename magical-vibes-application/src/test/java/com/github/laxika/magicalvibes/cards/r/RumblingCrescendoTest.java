@@ -108,6 +108,67 @@ class RumblingCrescendoTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Island");
     }
 
+    @Test
+    void opponentsUpkeepDoesNotAddVerseCounter() {
+        Permanent crescendo = addCrescendo(1);
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(crescendo.getCounterCount(CounterType.VERSE)).isEqualTo(1);
+    }
+
+    @Test
+    void mayChooseNoTargetsEvenWithVerseCounters() {
+        addCrescendo(2);
+        harness.addToBattlefield(player2, new Island());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of());
+
+        harness.assertInGraveyard(player1, "Rumbling Crescendo");
+        harness.assertOnBattlefield(player2, "Island");
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Island");
+    }
+
+    @Test
+    void mayDestroyOwnLandAndSacrificesSourceBeforeResolution() {
+        addCrescendo(1);
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(land.getId()));
+
+        harness.assertInGraveyard(player1, "Rumbling Crescendo");
+        harness.assertOnBattlefield(player1, "Mountain");
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Mountain");
+    }
+
+    @Test
+    void mayTargetMoreThanOneHundredLandsWhenEnoughVerseCountersExist() {
+        addCrescendo(101);
+        List<Permanent> lands = new java.util.ArrayList<>();
+        for (int i = 0; i < 101; i++) {
+            lands.add(harness.addToBattlefieldAndReturn(player2, new Island()));
+        }
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0,
+                lands.stream().map(Permanent::getId).toList());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(101);
+        harness.assertInGraveyard(player1, "Rumbling Crescendo");
+    }
+
     private Permanent addCrescendo(int verseCounters) {
         Permanent crescendo = harness.addToBattlefieldAndReturn(player1, new RumblingCrescendo());
         crescendo.setCounterCount(CounterType.VERSE, verseCounters);
