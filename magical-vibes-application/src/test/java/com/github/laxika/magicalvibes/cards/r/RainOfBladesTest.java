@@ -3,10 +3,7 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HowlingMine;
-import com.github.laxika.magicalvibes.cards.s.SilverKnight;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -17,7 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RainOfBlades.class, GrizzlyBears.class, FugitiveWizard.class, HowlingMine.class, SilverKnight.class})
+@CardUsed({RainOfBlades.class, GrizzlyBears.class, FugitiveWizard.class, HowlingMine.class})
 class RainOfBladesTest extends BaseCardTest {
 
     @Test
@@ -55,10 +52,11 @@ class RainOfBladesTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Does not damage attacking noncreature permanents")
-    void doesNotDamageAttackingNoncreatures() {
+    @DisplayName("Does not damage noncreature permanents")
+    void doesNotDamageNoncreatures() {
         harness.forceActivePlayer(player1);
-        Permanent artifact = addAttacker(player1, player2, new HowlingMine());
+        addAttacker(player1, player2, new GrizzlyBears());
+        Permanent artifact = addCreatureReady(player1, new HowlingMine());
         castRainOfBlades(player2);
 
         assertThat(artifact.getMarkedDamage()).isZero();
@@ -78,8 +76,7 @@ class RainOfBladesTest extends BaseCardTest {
     }
 
     private void castRainOfBlades(Player caster) {
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.castFromHand(caster, new RainOfBlades(), "{W}");
+        castRainOfBladesWithoutResolving(caster);
         harness.passBothPriorities();
     }
 
@@ -96,26 +93,62 @@ class RainOfBladesTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Damages every attacking creature regardless of its controller")
-    void damagesAttackingCreaturesOnBothBattlefields() {
+    @DisplayName("Damages the caster's own attacking creatures")
+    void damagesCastersOwnAttackingCreatures() {
         harness.forceActivePlayer(player1);
-        Permanent player1Attacker = addAttacker(player1, player2, new SilverKnight());
-        Permanent player2Attacker = addAttacker(player2, player1, new SilverKnight());
+        Permanent attacker = addAttacker(player1, player2, new GrizzlyBears());
+
+        castRainOfBlades(player1);
+
+        assertThat(attacker.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Resolves without any attacking creatures")
+    void resolvesWithoutAttackers() {
+        Permanent idle = addCreatureReady(player1, new FugitiveWizard());
 
         castRainOfBlades(player2);
 
-        assertThat(player1Attacker.getMarkedDamage()).isEqualTo(1);
-        assertThat(player2Attacker.getMarkedDamage()).isEqualTo(1);
+        assertThat(idle.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player1, "Fugitive Wizard");
+        harness.assertInGraveyard(player2, "Rain of Blades");
+        assertThat(gd.stack).isEmpty();
     }
 
-    private Card makeCreature(String name, int power, int toughness) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{R}");
-        card.setColor(CardColor.RED);
-        card.setPower(power);
-        card.setToughness(toughness);
-        return card;
+    @Test
+    @DisplayName("Two copies accumulate lethal damage on attacking creatures")
+    void damageAccumulatesAcrossSpells() {
+        harness.forceActivePlayer(player1);
+        Permanent attacker = addAttacker(player1, player2, new GrizzlyBears());
+        attacker.setTapped(true);
+
+        castRainOfBlades(player2);
+        assertThat(attacker.getMarkedDamage()).isEqualTo(1);
+
+        castRainOfBlades(player2);
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Damages blocked attackers but not blocking creatures or players")
+    void damagesBlockedAttackersOnly() {
+        harness.forceActivePlayer(player1);
+        Permanent attacker = addAttacker(player1, player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new FugitiveWizard());
+        blocker.setBlocking(true);
+        blocker.addBlockingTargetId(attacker.getId());
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.castFromHand(player2, new RainOfBlades(), "{W}");
+
+        harness.passBothPriorities();
+
+        assertThat(attacker.getMarkedDamage()).isEqualTo(1);
+        assertThat(blocker.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Fugitive Wizard");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
     }
 }
