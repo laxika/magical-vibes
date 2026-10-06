@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -57,6 +58,62 @@ class SkulkingKillerTest extends BaseCardTest {
 
         assertThat(target.getEffectivePower()).isEqualTo(3);
         assertThat(target.getEffectiveToughness()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Applies the penalty when the other creature leaves before resolution")
+    void appliesPenaltyAfterOtherCreatureLeaves() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        castSkulkingKiller(target);
+        gd.playerBattlefields.get(player2.getId()).remove(other);
+        gd.playerGraveyards.get(player2.getId()).add(other.getCard());
+        harness.passBothPriorities();
+
+        assertThat(target.getEffectivePower()).isEqualTo(1);
+        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The penalty expires at the end of the turn")
+    void penaltyExpiresAtEndOfTurn() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+
+        castSkulkingKiller(target);
+        harness.passBothPriorities();
+        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(target.getEffectivePower()).isEqualTo(3);
+        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("A creature entering after resolution does not undo the penalty")
+    void penaltyPersistsAfterAnotherCreatureEnters() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+
+        castSkulkingKiller(target);
+        harness.passBothPriorities();
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        assertThat(target.getEffectivePower()).isEqualTo(1);
+        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("An opponent's only creature dies when its toughness is reduced to zero")
+    void killsOnlyCreatureWithTwoToughness() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SkulkingKiller());
+
+        castSkulkingKiller(target);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Skulking Killer");
+        harness.assertInGraveyard(player2, "Skulking Killer");
+        harness.assertOnBattlefield(player1, "Skulking Killer");
     }
 
     private void castSkulkingKiller(Permanent target) {
