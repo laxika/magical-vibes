@@ -85,10 +85,84 @@ class RecklessStormseekerTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
     }
 
+    @Test
+    void frontFaceCanTargetItself() {
+        Permanent source = harness.enterBattlefieldAndReturn(player1, new RecklessStormseeker());
+
+        assertThat(gd.dayNight).isEqualTo(DayNight.DAY);
+        advanceToCombat(player1);
+        harness.handlePermanentChosen(player1, source.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, source, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, source, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    void backFaceCanTargetItselfAndEffectsExpire() {
+        gd.dayNight = DayNight.NIGHT;
+        Permanent source = harness.enterBattlefieldAndReturn(player1, new RecklessStormseeker());
+
+        advanceToCombat(player1);
+        harness.handlePermanentChosen(player1, source.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, source, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, source, Keyword.HASTE)).isTrue();
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, source, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, source, Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    void neitherFaceTriggersDuringOpponentsCombat() {
+        for (DayNight designation : new DayNight[]{DayNight.DAY, DayNight.NIGHT}) {
+            gd.dayNight = designation;
+            Permanent source = harness.enterBattlefieldAndReturn(player1, new RecklessStormseeker());
+
+            advanceToCombat(player2);
+
+            assertThat(gd.stack).isEmpty();
+            assertThat(gd.interaction.isAwaitingInput()).isFalse();
+            assertThat(gqs.hasKeyword(gd, source, Keyword.HASTE)).isFalse();
+            gd.playerBattlefields.get(player1.getId()).clear();
+        }
+    }
+
+    @Test
+    void dayAndNightTransformBothFacesAtUntap() {
+        Permanent source = harness.enterBattlefieldAndReturn(player1, new RecklessStormseeker());
+        gd.previousTurnActivePlayerId = player1.getId();
+        gd.spellsCastLastTurn.put(player1.getId(), 0);
+
+        harness.performUntapStep(player2);
+
+        assertThat(gd.dayNight).isEqualTo(DayNight.NIGHT);
+        assertThat(source.isTransformed()).isTrue();
+
+        gd.previousTurnActivePlayerId = player2.getId();
+        gd.spellsCastLastTurn.put(player2.getId(), 2);
+        harness.performUntapStep(player1);
+
+        assertThat(gd.dayNight).isEqualTo(DayNight.DAY);
+        assertThat(source.isTransformed()).isFalse();
+        advanceToCombat(player1);
+        harness.handlePermanentChosen(player1, source.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, source, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, source, Keyword.TRAMPLE)).isFalse();
+    }
+
     private void advanceToCombat(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.BEGINNING_OF_COMBAT);
     }
 }
