@@ -126,10 +126,9 @@ class ReparationsTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 1);
 
         UUID reparationsId = harness.getPermanentId(player1, "Reparations");
-        harness.castInstant(player2, 0, reparationsId);
+        harness.castAndResolveInstant(player2, 0, reparationsId);
 
         assertThat(gd.pendingMayAbilities).isEmpty();
-        harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Reparations");
     }
@@ -144,6 +143,46 @@ class ReparationsTest extends BaseCardTest {
 
         assertThat(gd.pendingMayAbilities).isEmpty();
         harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("Two Reparations each allow a draw from the same opponent spell")
+    void twoCopiesEachTrigger() {
+        harness.addToBattlefield(player1, new Reparations());
+        harness.addToBattlefield(player1, new Reparations());
+        setUpOpponentTurn();
+        harness.setHand(player2, List.of(new Incinerate()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.castInstant(player2, 0, player1.getId());
+
+        assertThat(gd.pendingMayAbilities).hasSize(2);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 2);
+    }
+
+    @Test
+    @DisplayName("Opponent spell targeting you triggers during your turn too")
+    void opponentSpellOnYourTurnTriggers() {
+        harness.addToBattlefield(player1, new Reparations());
+        harness.setHand(player2, List.of(new Incinerate()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.castInstant(player2, 0, player1.getId());
+
+        assertThat(gd.pendingMayAbilities).hasSize(1);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
     }
 
     private void setUpOpponentTurn() {
