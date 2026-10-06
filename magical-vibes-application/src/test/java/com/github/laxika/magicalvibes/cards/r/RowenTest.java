@@ -162,17 +162,47 @@ class RowenTest extends BaseCardTest {
 
         harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.passUntil(TurnStep.CLEANUP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
         harness.passUntil(player2, TurnStep.CLEANUP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
         harness.passUntil(player1, TurnStep.DRAW);
         resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
         assertThat(gd.stack).isEmpty();
         assertThat(gameLogContains("reveals Forest")).isTrue();
+    }
+
+    @Test
+    @DisplayName("An extra basic land draw does not reveal or trigger again")
+    void extraBasicLandDoesNotTriggerAgain() {
+        harness.addToBattlefield(player1, new Rowen());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new GrizzlyBears()));
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.gameLog.stream()
+                .filter(entry -> entry.plainText().contains("reveals Forest"))).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Rowen entering after the first draw does not reveal the next draw")
+    void enteringAfterFirstDrawDoesNotRevealNextDraw() {
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new Forest(), new GrizzlyBears()));
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+        harness.addToBattlefield(player1, new Rowen());
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gameLogContains("reveals Forest")).isFalse();
     }
 }
