@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ReachOfBranches.class, Forest.class, Island.class})
 class ReachOfBranchesTest extends BaseCardTest {
 
     private void prepareMain(com.github.laxika.magicalvibes.model.Player active) {
@@ -30,8 +32,7 @@ class ReachOfBranchesTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4); // {4}{G}
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         List<Permanent> tokens = findPermanents(player1, "Treefolk Shaman");
         assertThat(tokens).hasSize(1);
@@ -47,7 +48,7 @@ class ReachOfBranchesTest extends BaseCardTest {
         prepareMain(player1);
 
         harness.setHand(player1, List.of(new Forest()));
-        harness.castCreature(player1, 0); // play the Forest
+        harness.playLand(player1, 0);
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
         assertThat(gd.stack).hasSize(1);
@@ -69,7 +70,7 @@ class ReachOfBranchesTest extends BaseCardTest {
         prepareMain(player1);
 
         harness.setHand(player1, List.of(new Forest()));
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -85,7 +86,7 @@ class ReachOfBranchesTest extends BaseCardTest {
         prepareMain(player1);
 
         harness.setHand(player1, List.of(new Island()));
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         assertThat(gd.stack).isEmpty();
     }
@@ -97,8 +98,48 @@ class ReachOfBranchesTest extends BaseCardTest {
         prepareMain(player2);
 
         harness.setHand(player2, List.of(new Forest()));
-        harness.castCreature(player2, 0);
+        harness.playLand(player2, 0);
 
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Each graveyard copy triggers independently and returns only itself")
+    void multipleCopiesReturnIndependently() {
+        ReachOfBranches first = new ReachOfBranches();
+        ReachOfBranches second = new ReachOfBranches();
+        harness.setGraveyard(player1, List.of(first, second));
+        prepareMain(player1);
+        harness.setHand(player1, List.of(new Forest()));
+
+        harness.playLand(player1, 0);
+        assertThat(gd.stack).hasSize(2);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId()))
+                .allMatch(card -> card.getId().equals(first.getId()) || card.getId().equals(second.getId()));
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .noneMatch(card -> card.getId().equals(gd.playerHands.get(player1.getId()).getFirst().getId()));
+    }
+
+    @Test
+    @DisplayName("A Forest entering does not trigger Reach of Branches in hand")
+    void doesNotTriggerFromHand() {
+        ReachOfBranches reach = new ReachOfBranches();
+        prepareMain(player1);
+        harness.setHand(player1, List.of(new Forest(), reach));
+
+        harness.playLand(player1, 0);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(reach);
     }
 }
