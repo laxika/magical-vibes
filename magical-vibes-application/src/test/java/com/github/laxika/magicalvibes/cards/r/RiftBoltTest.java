@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.a.AshcoatBear;
+import com.github.laxika.magicalvibes.cards.p.PithingNeedle;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -14,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RiftBolt.class, AshcoatBear.class})
+@CardUsed({RiftBolt.class, AshcoatBear.class, PithingNeedle.class})
 class RiftBoltTest extends BaseCardTest {
 
     @Test
@@ -25,8 +26,7 @@ class RiftBoltTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(17);
     }
@@ -39,8 +39,7 @@ class RiftBoltTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castSorcery(player1, 0, harness.getPermanentId(player2, "Ashcoat Bear"));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, harness.getPermanentId(player2, "Ashcoat Bear"));
 
         harness.assertNotOnBattlefield(player2, "Ashcoat Bear");
         harness.assertInGraveyard(player2, "Ashcoat Bear");
@@ -116,6 +115,55 @@ class RiftBoltTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
         assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
         harness.assertNotInGraveyard(player1, "Rift Bolt");
+    }
+
+    @Test
+    @DisplayName("Pithing Needle does not stop the suspend special action")
+    void canSuspendDespitePithingNeedle() {
+        harness.castFromHand(player1, new PithingNeedle(), "{1}");
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "Rift Bolt");
+
+        RiftBolt card = suspendCard();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Suspend requires red mana and leaves the card in hand when unpaid")
+    void cannotSuspendWithOnlyColorlessMana() {
+        RiftBolt card = new RiftBolt();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(card);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(card);
+        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A suspended Rift Bolt can target its owner's creature without mana")
+    void suspendedSpellCanTargetOwnCreature() {
+        harness.addToBattlefield(player1, new AshcoatBear());
+        RiftBolt card = suspendCard();
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Ashcoat Bear"));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Ashcoat Bear");
+        harness.assertInGraveyard(player1, "Ashcoat Bear");
+        harness.assertInGraveyard(player1, "Rift Bolt");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(card);
     }
 
     private RiftBolt suspendCard() {
