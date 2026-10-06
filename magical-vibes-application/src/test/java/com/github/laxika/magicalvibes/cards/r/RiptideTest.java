@@ -41,4 +41,31 @@ class RiptideTest extends BaseCardTest {
 
         assertThat(blueNoncreature.isTapped()).isFalse();
     }
+
+    @Test
+    @DisplayName("Taps blue creatures that enter before resolution, including when none were present at casting")
+    void checksCreaturesAtResolution() {
+        harness.castFromHand(player1, new Riptide(), "{U}");
+
+        Permanent blueCreature = addCreatureReady(player2, new GhostShip());
+        Permanent nonblueCreature = addCreatureReady(player1, new Squire());
+        harness.passBothPriorities();
+
+        assertThat(blueCreature.isTapped()).isTrue();
+        assertThat(nonblueCreature.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Resolves with no blue creatures without tapping other permanents")
+    void resolvesWithNoBlueCreatures() {
+        Permanent nonblueCreature = addCreatureReady(player2, new Squire());
+        Permanent blueNoncreature = harness.addToBattlefieldAndReturn(player1, new DeepWater());
+
+        harness.castFromHand(player1, new Riptide(), "{U}");
+        harness.passBothPriorities();
+
+        assertThat(nonblueCreature.isTapped()).isFalse();
+        assertThat(blueNoncreature.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
 }
