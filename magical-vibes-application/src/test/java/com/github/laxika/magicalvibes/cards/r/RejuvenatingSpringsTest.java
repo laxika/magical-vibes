@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed(RejuvenatingSprings.class)
 class RejuvenatingSpringsTest extends BaseCardTest {
@@ -57,18 +58,59 @@ class RejuvenatingSpringsTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("Cannot produce mana while tapped after entering")
+    void cannotProduceManaWhileTapped() {
+        playRejuvenatingSprings();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Can immediately produce mana when entering untapped")
+    void canProduceManaImmediatelyWithTwoOpponents() {
+        addThirdPlayer();
+        playRejuvenatingSprings();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(findPermanent(player1, "Rejuvenating Springs").isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Enters tapped when put onto the battlefield in a two-player game")
+    void entersTappedWithoutLandPlay() {
+        Permanent permanent = harness.enterBattlefieldAndReturn(player1, new RejuvenatingSprings());
+
+        assertThat(permanent.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Enters untapped when put onto the battlefield with two opponents")
+    void entersUntappedWithoutLandPlayWithTwoOpponents() {
+        addThirdPlayer();
+
+        Permanent permanent = harness.enterBattlefieldAndReturn(player1, new RejuvenatingSprings());
+
+        assertThat(permanent.isTapped()).isFalse();
+    }
+
     private void playRejuvenatingSprings() {
         harness.setHand(player1, List.of(new RejuvenatingSprings()));
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
     }
 
     private Permanent addReadyRejuvenatingSprings() {
-        Permanent permanent = new Permanent(new RejuvenatingSprings());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(permanent);
-        return permanent;
+        return addCreatureReady(player1, new RejuvenatingSprings());
     }
 
     private void addThirdPlayer() {
