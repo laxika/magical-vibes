@@ -40,8 +40,7 @@ class SkeletonCrewTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Disentomb()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castSorcery(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, bears.getId());
         harness.passBothPriorities();
 
         List<Permanent> tokens = findPermanents(player1, "Skeleton Pirate");
@@ -63,5 +62,82 @@ class SkeletonCrewTest extends BaseCardTest {
         Permanent returned = findPermanent(player1, "Skeleton Crew");
         assertThat(returned.isTapped()).isTrue();
         harness.assertNotInGraveyard(player1, "Skeleton Crew");
+    }
+
+    @Test
+    void returningItselfDoesNotTriggerItsOwnTokenAbility() {
+        harness.setGraveyard(player1, List.of(new SkeletonCrew()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Skeleton Crew");
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanents(player1, "Skeleton Pirate")).isEmpty();
+    }
+
+    @Test
+    void boostsAnotherCrewOnlyOnceDespiteBothMatchingSubtypes() {
+        Permanent first = addCreatureReady(player1, new SkeletonCrew());
+        Permanent second = addCreatureReady(player1, new SkeletonCrew());
+        Permanent opponent = addCreatureReady(player2, new SkeletonCrew());
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, opponent)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, opponent)).isEqualTo(3);
+    }
+
+    @Test
+    void onlyCrewAlreadyOnBattlefieldTriggersWhenAnotherCrewReturns() {
+        harness.addToBattlefield(player1, new SkeletonCrew());
+        harness.setGraveyard(player1, List.of(new SkeletonCrew()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.stack).isEmpty();
+        List<Permanent> tokens = findPermanents(player1, "Skeleton Pirate");
+        assertThat(tokens).hasSize(1);
+        assertThat(gqs.getEffectivePower(gd, tokens.getFirst())).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, tokens.getFirst())).isEqualTo(4);
+    }
+
+    @Test
+    void doesNotTriggerForAnOpponentsGraveyard() {
+        harness.addToBattlefield(player1, new SkeletonCrew());
+        SkeletonCrew card = new SkeletonCrew();
+        harness.setGraveyard(player2, List.of(card));
+        harness.setHand(player2, List.of(new Disentomb()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.forceActivePlayer(player2);
+
+        harness.castAndResolveSorcery(player2, 0, card.getId());
+
+        harness.assertInHand(player2, "Skeleton Crew");
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanents(player1, "Skeleton Pirate")).isEmpty();
+    }
+
+    @Test
+    void abilityDoesNotTriggerWhileCrewIsInGraveyard() {
+        SkeletonCrew crew = new SkeletonCrew();
+        SkeletonCrew other = new SkeletonCrew();
+        harness.setGraveyard(player1, List.of(crew, other));
+        harness.setHand(player1, List.of(new Disentomb()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveSorcery(player1, 0, other.getId());
+
+        harness.assertInHand(player1, "Skeleton Crew");
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(crew);
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanents(player1, "Skeleton Pirate")).isEmpty();
     }
 }
