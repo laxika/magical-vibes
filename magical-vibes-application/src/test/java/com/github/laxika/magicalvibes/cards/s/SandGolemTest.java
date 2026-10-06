@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.Gravedigger;
 import com.github.laxika.magicalvibes.cards.m.MindRot;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SandGolem.class, GrizzlyBears.class, MindRot.class, Sift.class})
+@CardUsed({SandGolem.class, GrizzlyBears.class, MindRot.class, Sift.class, Gravedigger.class})
 class SandGolemTest extends BaseCardTest {
 
     @Test
@@ -25,8 +26,7 @@ class SandGolemTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MindRot()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         harness.handleCardChosen(player2, 0); // discard Sand Golem
         harness.handleCardChosen(player2, 0); // discard Grizzly Bears
@@ -36,7 +36,7 @@ class SandGolemTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Sand Golem");
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.passBothPriorities(); // advance to end step and put the delayed trigger on the stack
+        harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities(); // resolve the delayed return
 
         Permanent returned = findPermanent(player2, "Sand Golem");
@@ -53,8 +53,7 @@ class SandGolemTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MindRot()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         harness.handleCardChosen(player2, 0);
         harness.handleCardChosen(player2, 0);
@@ -64,7 +63,7 @@ class SandGolemTest extends BaseCardTest {
         gd.playerGraveyards.get(player2.getId()).clear();
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.passBothPriorities(); // advance to end step and put the delayed trigger on the stack
+        harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities(); // resolve the delayed trigger
 
         harness.assertNotOnBattlefield(player2, "Sand Golem");
@@ -77,8 +76,7 @@ class SandGolemTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MindRot()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         harness.handleCardChosen(player2, 0);
         harness.handleCardChosen(player2, 0);
@@ -86,8 +84,7 @@ class SandGolemTest extends BaseCardTest {
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        gs.advanceStep(gd);
+        harness.passUntil(TurnStep.END_STEP);
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
         assertThat(gd.stack).isNotEmpty();
@@ -101,15 +98,12 @@ class SandGolemTest extends BaseCardTest {
     @Test
     @DisplayName("Does not return when its own controller discards it")
     void doesNotReturnOnSelfDiscard() {
-        gd.playerDecks.get(player1.getId()).add(new GrizzlyBears());
-        gd.playerDecks.get(player1.getId()).add(new GrizzlyBears());
-        gd.playerDecks.get(player1.getId()).add(new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
 
         harness.setHand(player1, List.of(new Sift(), new SandGolem()));
         harness.addMana(player1, ManaColor.BLUE, 4);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities(); // Sift draws 3 and prompts for the discard
+        harness.castAndResolveSorcery(player1, 0, 0);
         harness.handleCardChosen(player1, 0); // discard Sand Golem
 
         harness.assertInGraveyard(player1, "Sand Golem");
@@ -119,5 +113,41 @@ class SandGolemTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Sand Golem");
         harness.assertInGraveyard(player1, "Sand Golem");
+    }
+
+    @Test
+    @DisplayName("Does not return an incarnation discarded again after leaving the graveyard")
+    void doesNotReturnAfterLeavingAndReenteringGraveyard() {
+        SandGolem golem = new SandGolem();
+        harness.setHand(player2, List.of(golem, new GrizzlyBears()));
+        harness.setHand(player1, List.of(new MindRot()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, 0);
+        harness.passBothPriorities();
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player2, new Gravedigger(), "{3}{B}");
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player2, List.of(golem.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.assertInHand(player2, "Sand Golem");
+
+        harness.setLibrary(player2, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        gd.playerHands.get(player2.getId()).addFirst(new Sift());
+        harness.addMana(player2, ManaColor.BLUE, 4);
+        harness.castAndResolveSorcery(player2, 0, 0);
+        harness.handleCardChosen(player2, 0);
+        harness.assertInGraveyard(player2, "Sand Golem");
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Sand Golem");
+        harness.assertInGraveyard(player2, "Sand Golem");
     }
 }
