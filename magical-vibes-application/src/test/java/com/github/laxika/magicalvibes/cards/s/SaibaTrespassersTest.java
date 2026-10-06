@@ -64,4 +64,104 @@ class SaibaTrespassersTest extends BaseCardTest {
         harness.assertInHand(player1, "Saiba Trespassers");
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(4);
     }
+
+    @Test
+    void channelCanChooseZeroTargetsAndStillPaysItsCosts() {
+        Permanent untouched = harness.addToBattlefieldAndReturn(player2, new SaibaTrespassers());
+        prepareChannel();
+
+        harness.activateHandAbilityWithMultiTargets(player1, 0, List.of());
+
+        harness.assertInGraveyard(player1, "Saiba Trespassers");
+        harness.assertNotInHand(player1, "Saiba Trespassers");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.passBothPriorities();
+        assertThat(untouched.isTapped()).isFalse();
+        assertThat(untouched.getSkipUntapCount()).isZero();
+    }
+
+    @Test
+    void alreadyTappedCreatureSkipsOnlyItsControllersNextUntap() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SaibaTrespassers());
+        target.setTapped(true);
+        prepareChannel();
+
+        harness.activateHandAbilityWithMultiTargets(player1, 0, List.of(target.getId()));
+        harness.passBothPriorities();
+
+        harness.performUntapStep(player1);
+        assertThat(target.isTapped()).isTrue();
+        assertThat(target.getSkipUntapCount()).isEqualTo(1);
+        harness.performUntapStep(player2);
+        assertThat(target.isTapped()).isTrue();
+        assertThat(target.getSkipUntapCount()).isZero();
+        harness.performUntapStep(player2);
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    void channelCannotChooseTheSameCreatureTwice() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SaibaTrespassers());
+        prepareChannel();
+
+        assertThatThrownBy(() -> harness.activateHandAbilityWithMultiTargets(
+                player1, 0, List.of(target.getId(), target.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInHand(player1, "Saiba Trespassers");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(4);
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    void channelCannotChooseThreeCreatures() {
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new SaibaTrespassers());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new SaibaTrespassers());
+        Permanent third = harness.addToBattlefieldAndReturn(player2, new SaibaTrespassers());
+        prepareChannel();
+
+        assertThatThrownBy(() -> harness.activateHandAbilityWithMultiTargets(
+                player1, 0, List.of(first.getId(), second.getId(), third.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInHand(player1, "Saiba Trespassers");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(4);
+    }
+
+    @Test
+    void channelStillAffectsRemainingTargetWhenAnotherLeavesBattlefield() {
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new SaibaTrespassers());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new SaibaTrespassers());
+        prepareChannel();
+        harness.activateHandAbilityWithMultiTargets(player1, 0, List.of(first.getId(), second.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(first);
+
+        harness.passBothPriorities();
+
+        assertThat(second.isTapped()).isTrue();
+        harness.performUntapStep(player2);
+        assertThat(second.isTapped()).isTrue();
+        harness.performUntapStep(player2);
+        assertThat(second.isTapped()).isFalse();
+    }
+
+    @Test
+    void channelRequiresBlueManaAndDoesNotDiscardWhenCostCannotBePaid() {
+        harness.setHand(player1, List.of(new SaibaTrespassers()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateHandAbilityWithMultiTargets(player1, 0, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInHand(player1, "Saiba Trespassers");
+        harness.assertNotInGraveyard(player1, "Saiba Trespassers");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(4);
+    }
+
+    private void prepareChannel() {
+        harness.setHand(player1, List.of(new SaibaTrespassers()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+    }
 }
