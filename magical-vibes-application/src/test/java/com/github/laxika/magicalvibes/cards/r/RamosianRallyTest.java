@@ -37,9 +37,7 @@ class RamosianRallyTest extends BaseCardTest {
         Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new FreshVolunteers());
 
         castForMana();
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(ownCreature.getEffectivePower()).isEqualTo(2);
         assertThat(ownCreature.getEffectiveToughness()).isEqualTo(2);
@@ -102,6 +100,65 @@ class RamosianRallyTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("A tapped Plains and a summoning-sick creature allow the alternate cost")
+    void alternateCostAllowsTappedPlainsAndSummoningSickCreature() {
+        Permanent plains = harness.addToBattlefieldAndReturn(player1, new Plains());
+        plains.tap();
+        Permanent paymentCreature = harness.addToBattlefieldAndReturn(player1, new FreshVolunteers());
+        paymentCreature.setSummoningSick(true);
+        harness.setHand(player1, List.of(new RamosianRally()));
+
+        harness.castWithAlternateCost(player1, 0, List.of(paymentCreature.getId()));
+
+        assertThat(paymentCreature.isTapped()).isTrue();
+        assertThat(paymentCreature.getEffectivePower()).isEqualTo(2);
+        harness.passBothPriorities();
+        assertThat(paymentCreature.getEffectivePower()).isEqualTo(3);
+        assertThat(paymentCreature.getEffectiveToughness()).isEqualTo(3);
+        harness.assertInGraveyard(player1, "Ramosian Rally");
+    }
+
+    @Test
+    @DisplayName("An opponent's Plains does not enable the alternate cost")
+    void opponentPlainsDoesNotEnableAlternateCost() {
+        harness.addToBattlefield(player2, new Plains());
+        Permanent paymentCreature = harness.addToBattlefieldAndReturn(player1, new FreshVolunteers());
+        harness.setHand(player1, List.of(new RamosianRally()));
+
+        assertThatThrownBy(() -> harness.castWithAlternateCost(
+                player1, 0, List.of(paymentCreature.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("condition is not met");
+        assertThat(paymentCreature.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An opponent's creature cannot pay the alternate cost")
+    void opponentCreatureCannotPayAlternateCost() {
+        harness.addToBattlefield(player1, new Plains());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new FreshVolunteers());
+        harness.setHand(player1, List.of(new RamosianRally()));
+
+        assertThatThrownBy(() -> harness.castWithAlternateCost(
+                player1, 0, List.of(opponentCreature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(opponentCreature.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Only creatures present when the spell resolves receive the boost")
+    void boostAppliesToCreaturesAtResolutionOnly() {
+        harness.castFromHand(player1, new RamosianRally(), "{3}{W}");
+        Permanent beforeResolution = harness.addToBattlefieldAndReturn(player1, new FreshVolunteers());
+        harness.passBothPriorities();
+        Permanent afterResolution = harness.addToBattlefieldAndReturn(player1, new FreshVolunteers());
+
+        assertThat(beforeResolution.getEffectivePower()).isEqualTo(3);
+        assertThat(beforeResolution.getEffectiveToughness()).isEqualTo(3);
+        assertThat(afterResolution.getEffectivePower()).isEqualTo(2);
+        assertThat(afterResolution.getEffectiveToughness()).isEqualTo(2);
+    }
     private void castForMana() {
         harness.castFromHand(player1, new RamosianRally(), "{3}{W}");
         harness.passBothPriorities();
