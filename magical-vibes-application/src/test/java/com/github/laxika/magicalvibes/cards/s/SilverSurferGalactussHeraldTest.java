@@ -28,8 +28,7 @@ class SilverSurferGalactussHeraldTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(galactus));
         harness.castFromHand(player1, new SilverSurferGalactussHerald(), "{5}");
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
@@ -40,6 +39,121 @@ class SilverSurferGalactussHeraldTest extends BaseCardTest {
 
         harness.assertInHand(player1, "Galactus, Devourer of Worlds");
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void mayDeclineSearchWithoutMovingOrShufflingCards() {
+        Card galactus = new GalactusDevourerOfWorlds();
+        Card otherCard = new SilverSurferGalactussHerald();
+        harness.setLibrary(player1, List.of(galactus, otherCard));
+        harness.castFromHand(player1, new SilverSurferGalactussHerald(), "{5}");
+        resolveAllTriggers();
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(galactus, otherCard);
+        harness.assertNotInHand(player1, "Galactus, Devourer of Worlds");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void mayFailToFindEvenWhenGalactusIsInLibrary() {
+        Card galactus = new GalactusDevourerOfWorlds();
+        harness.setLibrary(player1, List.of(galactus));
+        harness.castFromHand(player1, new SilverSurferGalactussHerald(), "{5}");
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(galactus);
+        harness.assertNotInHand(player1, "Galactus, Devourer of Worlds");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void searchingWithoutMatchingCardCompletesNormally() {
+        Card otherCard = new SilverSurferGalactussHerald();
+        harness.setLibrary(player1, List.of(otherCard));
+        harness.castFromHand(player1, new SilverSurferGalactussHerald(), "{5}");
+        resolveAllTriggers();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(otherCard);
+        harness.assertNotInHand(player1, "Galactus, Devourer of Worlds");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void ableCreatureCannotBeOmittedFromAttackers() {
+        Permanent surfer = addCreatureReady(player1, new SilverSurferGalactussHerald());
+        Permanent target = addCreatureReady(player1, new GalactusDevourerOfWorlds());
+        surfer.setAttacking(true);
+        resolveCombat();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        surfer.setTapped(true);
+
+        assertThatThrownBy(() -> declareAttackers(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("too few attack requirements");
+    }
+
+    @Test
+    void tappedTargetIsNotRequiredToAttack() {
+        Permanent surfer = addCreatureReady(player1, new SilverSurferGalactussHerald());
+        Permanent target = addCreatureReady(player1, new GalactusDevourerOfWorlds());
+        surfer.setAttacking(true);
+        resolveCombat();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        surfer.setTapped(true);
+        target.setTapped(true);
+
+        declareAttackers(player1, List.of());
+
+        assertThat(target.isAttacking()).isFalse();
+    }
+
+    @Test
+    void creatureControlledByDamagedPlayerMayDeclineToAttack() {
+        Permanent surfer = addCreatureReady(player1, new SilverSurferGalactussHerald());
+        Permanent target = addCreatureReady(player2, new SilverSurferGalactussHerald());
+        surfer.setAttacking(true);
+        resolveCombat();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .contains(target.getId());
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        declareAttackers(player2, List.of());
+
+        assertThat(target.isAttacking()).isFalse();
+    }
+
+    @Test
+    void requirementLastsThroughControllersNextTurnThenExpires() {
+        Permanent surfer = addCreatureReady(player1, new SilverSurferGalactussHerald());
+        Permanent target = addCreatureReady(player1, new GalactusDevourerOfWorlds());
+        surfer.setAttacking(true);
+        resolveCombat();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
+        assertThatThrownBy(() -> declareAttackers(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("too few attack requirements");
+
+        target.setTapped(true);
+        declareAttackers(player1, List.of());
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
+
+        declareAttackers(player1, List.of());
+
+        assertThat(target.isAttacking()).isFalse();
     }
 
     @Test
