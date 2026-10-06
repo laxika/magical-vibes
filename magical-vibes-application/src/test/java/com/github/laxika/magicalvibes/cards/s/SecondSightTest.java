@@ -115,6 +115,60 @@ class SecondSightTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Second Sight");
     }
 
+    @Test
+    @DisplayName("Both modes require the additional blue mana")
+    void bothModesCannotBeCastWithoutEntwineMana() {
+        harness.setHand(player1, List.of(new SecondSight()));
+        addMana(false);
+
+        assertThatThrownBy(() -> harness.castModalInstantWithModes(
+                player1, 0, 1, 2, new int[]{0, 1}, List.of(player2.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        harness.assertInHand(player1, "Second Sight");
+    }
+
+    @Test
+    @DisplayName("Entwine still reorders your library when the opponent's library is empty")
+    void entwineContinuesPastEmptyOpponentsLibrary() {
+        List<Card> ownTopCards = cards(2);
+        harness.setLibrary(player1, ownTopCards);
+        harness.setLibrary(player2, List.of());
+        cast(new int[]{0, 1}, List.of(player2.getId()), true);
+
+        PendingInteraction.LibraryReorder reorder =
+                gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class);
+        assertThat(reorder.playerId()).isEqualTo(player1.getId());
+        assertThat(reorder.deckOwnerId()).isEqualTo(player1.getId());
+        assertThat(reorder.cards()).containsExactlyElementsOf(ownTopCards);
+
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(1, 0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(ownTopCards.get(1), ownTopCards.get(0));
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Second Sight");
+    }
+
+    @Test
+    @DisplayName("The targeted opponent cannot choose the library order")
+    void opponentCannotAnswerControllersReorder() {
+        List<Card> topCards = cards(2);
+        harness.setLibrary(player2, topCards);
+        cast(new int[]{0}, List.of(player2.getId()), false);
+
+        assertThatThrownBy(() -> gs.handleInteractionAnswer(
+                gd, player2, new InteractionAnswer.CardOrder(List.of(1, 0))))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).playerId())
+                .isEqualTo(player1.getId());
+
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(1, 0)));
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(topCards.get(1), topCards.get(0));
+    }
+
     private void cast(int[] modes, List<java.util.UUID> targetIds, boolean entwined) {
         harness.setHand(player1, List.of(new SecondSight()));
         addMana(entwined);
