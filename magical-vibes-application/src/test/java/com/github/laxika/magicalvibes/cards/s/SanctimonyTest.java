@@ -122,4 +122,44 @@ class SanctimonyTest extends BaseCardTest {
         assertThat(mountain.isTapped()).isTrue();
         harness.assertLife(player1, 20);
     }
+
+    @Test
+    @DisplayName("Multiple Sanctimonies allow independent choices for the same Mountain tap")
+    void multipleSanctimoniesAllowIndependentChoices() {
+        harness.addToBattlefield(player1, new Sanctimony());
+        harness.addToBattlefield(player1, new Sanctimony());
+        harness.addToBattlefield(player2, new Mountain());
+        harness.setLife(player1, 20);
+
+        harness.tapPermanent(player2, 0);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.assertLife(player1, 20);
+
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, 21);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A Sanctimony controlled by the Mountain's controller does not trigger")
+    void onlyOpposingSanctimonyTriggers() {
+        harness.addToBattlefield(player1, new Sanctimony());
+        harness.addToBattlefield(player2, new Sanctimony());
+        harness.addToBattlefield(player2, new Mountain());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.tapPermanent(player2, 1);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
 }
