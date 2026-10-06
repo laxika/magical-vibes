@@ -93,8 +93,7 @@ class ShiftingBordersTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        assertThatThrownBy(() -> gs.playCardWithSplice(gd, player1, 0, 0, null, null,
-                List.of(), List.of(1)))
+        assertThatThrownBy(() -> harness.castWithSplice(player1, 0, null, List.of(1)))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -122,6 +121,50 @@ class ShiftingBordersTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Plains");
         harness.assertOnBattlefield(player1, "Island");
         harness.assertOnBattlefield(player1, "Mountain");
+    }
+
+    @Test
+    @DisplayName("Exchanges lands when the opponent's land is the first target")
+    void exchangesLandsWithOpponentLandFirst() {
+        harness.setHand(player1, List.of(new ShiftingBorders()));
+        addManaForShiftingBorders();
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new Island());
+
+        harness.castAndResolveInstant(player1, 0, List.of(opponent.getId(), own.getId()));
+
+        harness.assertOnBattlefield(player2, "Forest");
+        harness.assertNotOnBattlefield(player1, "Forest");
+        harness.assertOnBattlefield(player1, "Island");
+        harness.assertNotOnBattlefield(player2, "Island");
+    }
+
+    @Test
+    @DisplayName("An incomplete host exchange does not prevent the spliced exchange")
+    void splicedExchangeResolvesWhenHostTargetLeaves() {
+        Permanent ownFirst = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent opponentFirst = harness.addToBattlefieldAndReturn(player2, new Island());
+        Permanent ownSecond = harness.addToBattlefieldAndReturn(player1, new Plains());
+        Permanent opponentSecond = harness.addToBattlefieldAndReturn(player2, new Mountain());
+        ShiftingBorders spliced = new ShiftingBorders();
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new ShiftingBorders(), spliced));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        gs.playCardWithSplice(gd, player1, 0, 0, null, null,
+                List.of(ownFirst.getId(), opponentFirst.getId(), ownSecond.getId(), opponentSecond.getId()),
+                List.of(1));
+        gd.playerBattlefields.get(player2.getId()).remove(opponentFirst);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Forest");
+        harness.assertNotOnBattlefield(player2, "Forest");
+        harness.assertOnBattlefield(player2, "Plains");
+        harness.assertNotOnBattlefield(player1, "Plains");
+        harness.assertOnBattlefield(player1, "Mountain");
+        harness.assertNotOnBattlefield(player2, "Mountain");
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(spliced);
     }
 
     private void addManaForShiftingBorders() {
