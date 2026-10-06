@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
+import com.github.laxika.magicalvibes.cards.d.DarksteelGargoyle;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ShrivelingRot.class, GiantSpider.class, HillGiant.class, Shock.class})
+@CardUsed({ShrivelingRot.class, GiantSpider.class, HillGiant.class, Shock.class, DarksteelGargoyle.class})
 class ShrivelingRotTest extends BaseCardTest {
 
     @Test
@@ -28,8 +29,7 @@ class ShrivelingRotTest extends BaseCardTest {
         harness.castModalInstantWithModes(player1, 0, 1, 2, new int[]{0}, List.of());
         harness.passBothPriorities();
 
-        harness.castInstant(player1, 0, harness.getPermanentId(player2, "Hill Giant"));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Hill Giant"));
 
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
@@ -68,8 +68,7 @@ class ShrivelingRotTest extends BaseCardTest {
         harness.castModalInstantWithModes(player1, 0, 1, 2, new int[]{0, 1}, List.of());
         harness.passBothPriorities();
 
-        harness.castInstant(player1, 0, harness.getPermanentId(player2, "Hill Giant"));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Hill Giant"));
         assertThat(gd.stack).hasSize(1);
 
         harness.passBothPriorities();
@@ -137,6 +136,108 @@ class ShrivelingRotTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player2, "Hill Giant");
+    }
+
+    @Test
+    @DisplayName("Damage dealt before resolution does not trigger destruction retroactively")
+    void earlierDamageDoesNotTrigger() {
+        Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.setHand(player1, List.of(new Shock(), new ShrivelingRot()));
+        addMana(false);
+
+        harness.castAndResolveInstant(player1, 0, giant.getId());
+        harness.castModalInstantWithModes(player1, 0, 1, 2, new int[]{0}, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player2, "Hill Giant");
+    }
+
+    @Test
+    @DisplayName("Damage mode continues to trigger for subsequent damage events")
+    void damageModeTriggersMoreThanOnce() {
+        Permanent ownGiant = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        Permanent opposingGiant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new ShrivelingRot(), new Shock(), new Shock()));
+        addMana(false);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castModalInstantWithModes(player1, 0, 1, 2, new int[]{0}, List.of());
+        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, ownGiant.getId());
+        resolveAllTriggers();
+        harness.castAndResolveInstant(player1, 0, opposingGiant.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Hill Giant");
+        harness.assertInGraveyard(player2, "Hill Giant");
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Death mode affects each dying creature's controller without destroying damaged survivors")
+    void deathModeAffectsBothControllers() {
+        Permanent ownGiant = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        Permanent opposingSpider = harness.addToBattlefieldAndReturn(player2, new GiantSpider());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new ShrivelingRot(), new Shock()));
+        addMana(false);
+
+        harness.castModalInstantWithModes(player1, 0, 1, 2, new int[]{1}, List.of());
+        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, ownGiant.getId());
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Hill Giant");
+
+        ownGiant.setMarkedDamage(3);
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+        opposingSpider.setMarkedDamage(4);
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(17);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(16);
+    }
+
+    @Test
+    @DisplayName("Entwined destruction respects indestructible and causes no death life loss")
+    void entwineDoesNotDestroyIndestructibleCreature() {
+        Permanent gargoyle = harness.addToBattlefieldAndReturn(player2, new DarksteelGargoyle());
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new ShrivelingRot(), new Shock()));
+        addMana(true);
+
+        harness.castModalInstantWithModes(player1, 0, 1, 2, new int[]{0, 1}, List.of());
+        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, gargoyle.getId());
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player2, "Darksteel Gargoyle");
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Death mode uses modified toughness immediately before death")
+    void deathModeUsesLastKnownModifiedToughness() {
+        Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        giant.setToughnessModifier(2);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new ShrivelingRot()));
+        addMana(false);
+
+        harness.castModalInstantWithModes(player1, 0, 1, 2, new int[]{1}, List.of());
+        harness.passBothPriorities();
+        giant.setMarkedDamage(5);
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Hill Giant");
+        assertThat(gd.getLife(player2.getId())).isEqualTo(15);
     }
 
     private void addMana(boolean entwined) {
