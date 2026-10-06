@@ -4,10 +4,12 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.cards.p.PsychogenicProbe;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ReapIntellect.class, GrizzlyBears.class, Forest.class, LightningBolt.class, SerraAngel.class, PsychogenicProbe.class})
 class ReapIntellectTest extends BaseCardTest {
 
     private void castReapIntellect(int xValue) {
@@ -23,8 +26,7 @@ class ReapIntellectTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 5);
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, xValue, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, xValue, player2.getId());
     }
 
     @Test
@@ -135,4 +137,70 @@ class ReapIntellectTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
     }
+
+    @Test
+    @DisplayName("The search offers a choice instead of automatically exiling every matching copy")
+    void matchingCopiesAreOptional() {
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.setGraveyard(player2, List.of(new GrizzlyBears()));
+        harness.setLibrary(player2, List.of(new GrizzlyBears(), new Forest()));
+
+        castReapIntellect(1);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .extracting(Card::getName).containsExactly("Grizzly Bears");
+        assertThat(gd.playerDecks.get(player2.getId()))
+                .extracting(Card::getName).containsExactly("Grizzly Bears", "Forest");
+    }
+
+    @Test
+    @DisplayName("X=0 still causes the opponent to shuffle")
+    void xZeroStillShuffles() {
+        harness.addToBattlefield(player1, new PsychogenicProbe());
+        harness.setLife(player2, 20);
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.setLibrary(player2, List.of(new Forest()));
+
+        castReapIntellect(0);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Choosing zero cards still causes the opponent to shuffle")
+    void decliningAllCardsStillShuffles() {
+        harness.addToBattlefield(player1, new PsychogenicProbe());
+        harness.setLife(player2, 20);
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.setLibrary(player2, List.of(new Forest()));
+
+        castReapIntellect(1);
+        harness.handleCardChosen(player1, -1);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        assertThat(gd.playerHands.get(player2.getId()))
+                .extracting(Card::getName).containsExactly("Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An empty hand still causes the opponent to shuffle")
+    void emptyHandStillShuffles() {
+        harness.addToBattlefield(player1, new PsychogenicProbe());
+        harness.setLife(player2, 20);
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(new Forest()));
+
+        castReapIntellect(1);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
 }
+
