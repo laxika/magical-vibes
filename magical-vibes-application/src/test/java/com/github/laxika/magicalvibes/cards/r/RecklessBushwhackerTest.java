@@ -28,8 +28,7 @@ class RecklessBushwhackerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
         harness.castWithAlternateCost(player1, 0, List.of());
         harness.passBothPriorities();
 
@@ -73,5 +72,83 @@ class RecklessBushwhackerTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castWithAlternateCost(player1, 0, List.of()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Casting another spell does not grant the bonus when the normal cost is paid")
+    void normalCostAfterAnotherSpellDoesNotBoostCreatures() {
+        Permanent ally = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Shock(), new RecklessBushwhacker()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(ally.getPowerModifier()).isZero();
+        assertThat(ally.hasKeyword(Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("An opponent's spell does not enable surge")
+    void opponentsSpellDoesNotEnableSurge() {
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        harness.setHand(player1, List.of(new RecklessBushwhacker()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castWithAlternateCost(player1, 0, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The surge bonus resolves even if Bushwhacker leaves the battlefield")
+    void surgeBonusResolvesAfterSourceDies() {
+        Permanent ally = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Shock(), new RecklessBushwhacker()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.castWithAlternateCost(player1, 0, List.of());
+        harness.passBothPriorities();
+
+        Permanent bushwhacker = findPermanent(player1, "Reckless Bushwhacker");
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, bushwhacker.getId());
+        harness.assertInGraveyard(player1, "Reckless Bushwhacker");
+        harness.passBothPriorities();
+
+        assertThat(ally.getPowerModifier()).isEqualTo(1);
+        assertThat(ally.hasKeyword(Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Creatures entering after the surge ability resolves do not receive its bonus")
+    void laterCreaturesDoNotReceiveSurgeBonus() {
+        Permanent ally = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Shock(), new RecklessBushwhacker(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.castWithAlternateCost(player1, 0, List.of());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent laterCreature = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> !permanent.getId().equals(ally.getId()))
+                .filter(permanent -> permanent.getCard() instanceof GrizzlyBears)
+                .findFirst().orElseThrow();
+        assertThat(ally.getPowerModifier()).isEqualTo(1);
+        assertThat(ally.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(laterCreature.getPowerModifier()).isZero();
+        assertThat(laterCreature.hasKeyword(Keyword.HASTE)).isFalse();
     }
 }
