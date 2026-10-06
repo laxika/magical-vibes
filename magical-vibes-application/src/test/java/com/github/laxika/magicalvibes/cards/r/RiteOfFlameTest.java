@@ -59,8 +59,44 @@ class RiteOfFlameTest extends BaseCardTest {
     }
 
     private void castRiteOfFlame() {
-        harness.setHand(player1, List.of(new RiteOfFlame()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new RiteOfFlame(), "{R}");
+        harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("Counts copies that enter a graveyard after casting")
+    void countsCopiesAtResolution() {
+        harness.castFromHand(player1, new RiteOfFlame(), "{R}");
+        harness.setGraveyard(player2, List.of(new RiteOfFlame(), new RiteOfFlame()));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Does not count copies removed from a graveyard before resolution")
+    void ignoresCopiesRemovedBeforeResolution() {
+        RiteOfFlame graveyardCopy = new RiteOfFlame();
+        harness.setGraveyard(player2, List.of(graveyardCopy));
+        harness.castFromHand(player1, new RiteOfFlame(), "{R}");
+        harness.setGraveyard(player2, List.of());
+        harness.setExile(player2, List.of(graveyardCopy));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Does not count copies in hand or exile")
+    void ignoresCopiesOutsideGraveyards() {
+        harness.setHand(player2, List.of(new RiteOfFlame()));
+        harness.setExile(player1, List.of(new RiteOfFlame()));
+        harness.setExile(player2, List.of(new RiteOfFlame()));
+
+        castRiteOfFlame();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(2);
     }
 }
