@@ -68,4 +68,53 @@ class RavenousVampireTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Ravenous Vampire");
         harness.assertOnBattlefield(player1, "Igneous Golem");
     }
+
+    @Test
+    @DisplayName("The Vampire may sacrifice itself, but cannot sacrifice an opponent's creature")
+    void selfSacrificeDoesNotUseOpponentsCreature() {
+        harness.addToBattlefield(player1, new RavenousVampire());
+        harness.addToBattlefield(player2, new FeralShadow());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "Ravenous Vampire");
+        harness.assertInGraveyard(player1, "Ravenous Vampire");
+        harness.assertOnBattlefield(player2, "Feral Shadow");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The Vampire does not trigger during its opponent's upkeep")
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        harness.addToBattlefield(player1, new RavenousVampire());
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(findPermanent(player1, "Ravenous Vampire").isTapped()).isFalse();
+        assertThat(findPermanent(player1, "Ravenous Vampire")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Sacrificing a creature adds a counter without untapping an already tapped Vampire")
+    void sacrificeDoesNotUntapVampire() {
+        harness.addToBattlefield(player1, new RavenousVampire());
+        harness.addToBattlefield(player1, new FeralShadow());
+        UUID shadow = harness.getPermanentId(player1, "Feral Shadow");
+
+        advanceToUpkeep(player1);
+        findPermanent(player1, "Ravenous Vampire").tap();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, shadow);
+
+        harness.assertInGraveyard(player1, "Feral Shadow");
+        assertThat(findPermanent(player1, "Ravenous Vampire").isTapped()).isTrue();
+        assertThat(findPermanent(player1, "Ravenous Vampire")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
 }
