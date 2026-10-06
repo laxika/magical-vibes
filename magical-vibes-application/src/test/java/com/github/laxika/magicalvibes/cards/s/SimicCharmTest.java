@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SimicCharm.class, GrizzlyBears.class, Murder.class, Spellbook.class})
 class SimicCharmTest extends BaseCardTest {
 
     // Mode indices: 0 = target creature gets +3/+3, 1 = permanents you control gain hexproof,
@@ -100,8 +102,7 @@ class SimicCharmTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(card -> "Grizzly Bears".equals(card.getName()));
+        harness.assertInHand(player2, "Grizzly Bears");
     }
 
     @Test
@@ -116,5 +117,112 @@ class SimicCharmTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, 0, spellbookId))
                 .hasMessageContaining("creature");
+    }
+
+    @Test
+    @DisplayName("Hexproof applies to existing noncreature permanents but not opponents or later arrivals")
+    void modeOneAffectsOnlyPermanentsControlledAtResolution() {
+        harness.addToBattlefield(player1, new Spellbook());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SimicCharm()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castInstant(player1, 0, 1, null);
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Spellbook").hasKeyword(Keyword.HEXPROOF)).isTrue();
+        assertThat(findPermanent(player1, "Grizzly Bears").hasKeyword(Keyword.HEXPROOF)).isTrue();
+        assertThat(findPermanent(player2, "Grizzly Bears").hasKeyword(Keyword.HEXPROOF)).isFalse();
+
+        harness.addToBattlefield(player1, new Spellbook());
+        Permanent lateArrival = gd.playerBattlefields.get(player1.getId()).getLast();
+        assertThat(lateArrival.hasKeyword(Keyword.HEXPROOF)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Hexproof mode resolves with no permanents and no target")
+    void modeOneResolvesOnEmptyBattlefield() {
+        harness.setHand(player1, List.of(new SimicCharm()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castInstant(player1, 0, 1, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Simic Charm");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("You may target your own hexproof creature with the bounce mode")
+    void modeTwoCanTargetOwnHexproofCreature() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SimicCharm(), new SimicCharm()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castInstant(player1, 0, 1, null);
+        harness.passBothPriorities();
+        UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
+        harness.castInstant(player1, 0, 2, targetId);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Bounce mode cannot target a noncreature permanent")
+    void modeTwoRejectsNoncreatureTarget() {
+        harness.addToBattlefield(player1, new Spellbook());
+        harness.setHand(player1, List.of(new SimicCharm()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        UUID targetId = harness.getPermanentId(player1, "Spellbook");
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, 2, targetId))
+                .hasMessageContaining("creature");
+    }
+
+    @Test
+    @DisplayName("Bounce returns a stolen creature to its owner rather than its controller")
+    void modeTwoReturnsStolenCreatureToOwner() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
+        gd.stolenCreatures.put(targetId, player2.getId());
+        harness.setHand(player1, List.of(new SimicCharm()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castInstant(player1, 0, 2, targetId);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertNotInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Opponent hexproof gained in response makes the bounce target illegal")
+    void modeTwoFailsWhenTargetGainsHexproof() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SimicCharm()));
+        harness.setHand(player2, List.of(new SimicCharm()));
+        for (var player : List.of(player1, player2)) {
+            harness.addMana(player, ManaColor.GREEN, 1);
+            harness.addMana(player, ManaColor.BLUE, 1);
+        }
+
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.castInstant(player1, 0, 2, targetId);
+        harness.castInstant(player2, 0, 1, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotInHand(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Simic Charm");
     }
 }
