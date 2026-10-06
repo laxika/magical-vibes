@@ -29,8 +29,7 @@ class ShieldBrokerTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, target.getId());
-        resolveAllTriggers();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(target.getCounterCount(CounterType.SHIELD)).isZero();
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
@@ -45,8 +44,7 @@ class ShieldBrokerTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Murder()));
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castInstant(player1, 0, target.getId());
-        resolveAllTriggers();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(target.getCounterCount(CounterType.SHIELD)).isZero();
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
@@ -63,6 +61,55 @@ class ShieldBrokerTest extends BaseCardTest {
         gd.playerCommanders.put(player2.getId(), List.of(commander.getCard()));
         assertThatThrownBy(() -> castShieldBroker(commander))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void controlContinuesUntilAllShieldCountersAreRemoved() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        target.setCounterCount(CounterType.SHIELD, 1);
+
+        castShieldBroker(target);
+
+        assertThat(target.getCounterCount(CounterType.SHIELD)).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(target.getCounterCount(CounterType.SHIELD)).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+        assertThat(target.getMarkedDamage()).isZero();
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(target.getCounterCount(CounterType.SHIELD)).isZero();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        assertThat(target.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void controlContinuesAfterShieldBrokerLeavesTheBattlefield() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        castShieldBroker(target);
+
+        Permanent broker = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard() instanceof ShieldBroker)
+                .findFirst().orElseThrow();
+        harness.setHand(player1, List.of(new Murder()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, broker.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(broker).contains(target);
+        assertThat(target.getCounterCount(CounterType.SHIELD)).isEqualTo(1);
+
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(target.getCounterCount(CounterType.SHIELD)).isZero();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
     }
 
     private void castShieldBroker(Permanent target) {
