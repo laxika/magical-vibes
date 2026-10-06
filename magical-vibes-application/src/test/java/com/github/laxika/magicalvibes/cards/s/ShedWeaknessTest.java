@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +19,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ShedWeakness.class, AirElemental.class, GrizzlyBears.class, Forest.class})
 class ShedWeaknessTest extends BaseCardTest {
 
     @Test
@@ -85,12 +87,50 @@ class ShedWeaknessTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("The caster may remove a counter from an opponent's creature without affecting another creature")
+    void canRemoveCounterFromOpponentsCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        target.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 2);
+        target.setCounterCount(CounterType.CHARGE, 1);
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new AirElemental());
+        other.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+
+        castTargeting(target);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(target.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+        assertThat(target.getEffectivePower()).isEqualTo(5);
+        assertThat(target.getEffectiveToughness()).isEqualTo(5);
+        assertThat(other.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(other.getEffectivePower()).isEqualTo(3);
+        assertThat(other.getEffectiveToughness()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("A target that leaves before resolution prevents both the boost and the optional removal")
+    void removedTargetDoesNotResolve() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AirElemental());
+        target.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+        harness.setHand(player1, List.of(new ShedWeakness()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castInstant(player1, 0, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Shed Weakness");
+        assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(target.getEffectivePower()).isEqualTo(3);
+        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+    }
 
     private void castTargeting(Permanent target) {
         harness.setHand(player1, List.of(new ShedWeakness()));
         harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 }
