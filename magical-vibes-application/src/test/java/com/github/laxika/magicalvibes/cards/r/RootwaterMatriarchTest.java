@@ -168,13 +168,62 @@ class RootwaterMatriarchTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLACK, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 2);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, matriarch.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, matriarch.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getId().equals(matriarch.getId()));
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getId().equals(creature.getId()));
+    }
+
+    @Test
+    @DisplayName("Ability resolves after Rootwater Matriarch is destroyed in response")
+    void gainsControlAfterMatriarchIsDestroyedInResponse() {
+        Permanent matriarch = addReadyMatriarch(player1);
+        Permanent creature = addCreatureReady(player2, new TrainedArmodon());
+        Permanent aura = attachAura(player2, creature, new Pacifism());
+
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.setHand(player2, List.of(new DarkBanishing()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.castAndResolveInstant(player2, 0, matriarch.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(matriarch);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(aura).doesNotContain(creature);
+
+        destroyWithDisenchant(player2, aura);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(creature);
+    }
+
+    @Test
+    @DisplayName("Newest Matriarch control effect wins and both end when the last Aura leaves")
+    void competingMatriarchEffectsEndWhenLastAuraLeaves() {
+        addReadyMatriarch(player1);
+        addReadyMatriarch(player2);
+        Permanent creature = addCreatureReady(player2, new TrainedArmodon());
+        Permanent aura = attachAura(player1, creature, new Pacifism());
+
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
+
+        harness.activateAbility(player2, 0, null, creature.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(creature);
+
+        destroyWithDisenchant(player1, aura);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(creature);
+        assertThat(gd.controlEffectsFor(creature.getId())).isEmpty();
     }
 
     // ===== Not enchanted: ability does nothing =====
