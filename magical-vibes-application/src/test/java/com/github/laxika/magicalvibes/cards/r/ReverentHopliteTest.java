@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.s.SavannahLions;
+import com.github.laxika.magicalvibes.cards.a.AlseidOfLifesBounty;
+import com.github.laxika.magicalvibes.cards.d.DaxosBlessedByTheSun;
+import com.github.laxika.magicalvibes.cards.s.SternDismissal;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -14,7 +16,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ReverentHoplite.class, SavannahLions.class})
+@CardUsed({ReverentHoplite.class, AlseidOfLifesBounty.class, DaxosBlessedByTheSun.class,
+        SternDismissal.class})
 class ReverentHopliteTest extends BaseCardTest {
 
     @Test
@@ -28,7 +31,7 @@ class ReverentHopliteTest extends BaseCardTest {
     @Test
     @DisplayName("Entering the battlefield creates Human Soldiers equal to white devotion")
     void createsTokensEqualToWhiteDevotion() {
-        harness.addToBattlefield(player1, new SavannahLions());
+        harness.addToBattlefield(player1, new AlseidOfLifesBounty());
 
         castReverentHoplite();
 
@@ -43,12 +46,63 @@ class ReverentHopliteTest extends BaseCardTest {
         });
     }
 
-    private void castReverentHoplite() {
-        harness.setHand(player1, List.of(new ReverentHoplite()));
-        harness.addMana(player1, ManaColor.WHITE, 5);
+    @Test
+    void countsEachWhiteSymbolAndIgnoresOpponentsPermanents() {
+        harness.addToBattlefield(player1, new DaxosBlessedByTheSun());
+        harness.addToBattlefield(player2, new DaxosBlessedByTheSun());
 
-        harness.castCreature(player1, 0);
+        castReverentHoplite();
+
+        assertThat(findPermanents(player1, "Human Soldier")).hasSize(3);
+        assertThat(findPermanents(player2, "Human Soldier")).isEmpty();
+    }
+
+    @Test
+    void createsNoTokensWhenHopliteLeavesBeforeTriggerResolves() {
+        harness.castFromHand(player1, new ReverentHoplite(), "{4}{W}");
         harness.passBothPriorities();
+        harness.setHand(player2, List.of(new SternDismissal()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.ensurePriority(player2);
+        harness.castInstant(player2, 0, findPermanent(player1, "Reverent Hoplite").getId());
         harness.passBothPriorities();
+        harness.assertInHand(player1, "Reverent Hoplite");
+
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Human Soldier")).isEmpty();
+    }
+
+    @Test
+    void triggerStillCreatesTokensFromRemainingDevotionAfterHopliteLeaves() {
+        harness.addToBattlefield(player1, new DaxosBlessedByTheSun());
+        harness.castFromHand(player1, new ReverentHoplite(), "{4}{W}");
+        harness.passBothPriorities();
+        harness.setHand(player2, List.of(new SternDismissal()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.ensurePriority(player2);
+        harness.castInstant(player2, 0, findPermanent(player1, "Reverent Hoplite").getId());
+        harness.passBothPriorities();
+        harness.assertInHand(player1, "Reverent Hoplite");
+
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Human Soldier")).hasSize(2);
+    }
+
+    @Test
+    void generatedWhiteTokensDoNotIncreaseDevotionForAnotherHoplite() {
+        castReverentHoplite();
+        assertThat(findPermanents(player1, "Human Soldier")).hasSize(1);
+
+        castReverentHoplite();
+
+        assertThat(findPermanents(player1, "Human Soldier")).hasSize(3);
+    }
+
+    private void castReverentHoplite() {
+        harness.castFromHand(player1, new ReverentHoplite(), "{4}{W}");
+        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 }
