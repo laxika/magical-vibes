@@ -88,4 +88,34 @@ class ResetTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
     }
+
+    @Test
+    @DisplayName("Can be cast during an opponent's end step")
+    void canBeCastDuringOpponentsEndStep() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Karakas());
+        land.tap();
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.castFromHand(player1, new Reset(), "{U}{U}");
+        harness.passBothPriorities();
+
+        assertThat(land.isTapped()).isFalse();
+        harness.assertInGraveyard(player1, "Reset");
+    }
+
+    @Test
+    @DisplayName("Resolves with no lands controlled by its caster")
+    void resolvesWithoutControlledLands() {
+        Permanent opponentLand = harness.addToBattlefieldAndReturn(player2, new Karakas());
+        opponentLand.tap();
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player1, new Reset(), "{U}{U}");
+        harness.passBothPriorities();
+
+        assertThat(opponentLand.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Reset");
+    }
 }
