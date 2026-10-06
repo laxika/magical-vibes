@@ -48,17 +48,103 @@ class SkaabWranglerTest extends BaseCardTest {
         addCreatureReady(player1, new SkaabWrangler());
         addCreatureReady(player1, new GrizzlyBears());
         addCreatureReady(player1, new GrizzlyBears());
-        Permanent land = addPermanentReady(player2, new Forest());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+        land.setSummoningSick(false);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, land.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private Permanent addPermanentReady(com.github.laxika.magicalvibes.model.Player player,
-                                        com.github.laxika.magicalvibes.model.Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    void summoningSickCreaturesCanPayCostAndActivate() {
+        Permanent wrangler = harness.addToBattlefieldAndReturn(player1, new SkaabWrangler());
+        Permanent creatureA = harness.addToBattlefieldAndReturn(player1, new SkaabWrangler());
+        Permanent creatureB = harness.addToBattlefieldAndReturn(player1, new SkaabWrangler());
+        wrangler.setSummoningSick(true);
+        creatureA.setSummoningSick(true);
+        creatureB.setSummoningSick(true);
+        Permanent target = addCreatureReady(player2, new SkaabWrangler());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        assertThat(wrangler.isTapped()).isTrue();
+        assertThat(creatureA.isTapped()).isTrue();
+        assertThat(creatureB.isTapped()).isTrue();
+        assertThat(target.isTapped()).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    void tappedWranglerCanActivateUsingThreeOtherCreatures() {
+        Permanent wrangler = addCreatureReady(player1, new SkaabWrangler());
+        wrangler.tap();
+        Permanent creatureA = addCreatureReady(player1, new SkaabWrangler());
+        Permanent creatureB = addCreatureReady(player1, new SkaabWrangler());
+        Permanent creatureC = addCreatureReady(player1, new SkaabWrangler());
+        Permanent target = addCreatureReady(player2, new SkaabWrangler());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(creatureA.isTapped()).isTrue();
+        assertThat(creatureB.isTapped()).isTrue();
+        assertThat(creatureC.isTapped()).isTrue();
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    void tappedCreaturesAndOpponentsCreaturesCannotPayCost() {
+        Permanent wrangler = addCreatureReady(player1, new SkaabWrangler());
+        Permanent creatureA = addCreatureReady(player1, new SkaabWrangler());
+        Permanent creatureB = addCreatureReady(player1, new SkaabWrangler());
+        creatureB.tap();
+        Permanent target = addCreatureReady(player2, new SkaabWrangler());
+        addCreatureReady(player2, new SkaabWrangler());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(wrangler.isTapped()).isFalse();
+        assertThat(creatureA.isTapped()).isFalse();
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    void canChooseThreeOtherCreaturesWithoutTappingWrangler() {
+        Permanent wrangler = addCreatureReady(player1, new SkaabWrangler());
+        Permanent creatureA = addCreatureReady(player1, new SkaabWrangler());
+        Permanent creatureB = addCreatureReady(player1, new SkaabWrangler());
+        Permanent creatureC = addCreatureReady(player1, new SkaabWrangler());
+        Permanent target = addCreatureReady(player2, new SkaabWrangler());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.handlePermanentChosen(player1, creatureA.getId());
+        harness.handlePermanentChosen(player1, creatureB.getId());
+        harness.handlePermanentChosen(player1, creatureC.getId());
+        harness.passBothPriorities();
+
+        assertThat(wrangler.isTapped()).isFalse();
+        assertThat(creatureA.isTapped()).isTrue();
+        assertThat(creatureB.isTapped()).isTrue();
+        assertThat(creatureC.isTapped()).isTrue();
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    void canTargetItselfWhileTappingItselfToPayCost() {
+        Permanent wrangler = addCreatureReady(player1, new SkaabWrangler());
+        Permanent creatureA = addCreatureReady(player1, new SkaabWrangler());
+        Permanent creatureB = addCreatureReady(player1, new SkaabWrangler());
+
+        harness.activateAbility(player1, 0, null, wrangler.getId());
+        harness.passBothPriorities();
+
+        assertThat(wrangler.isTapped()).isTrue();
+        assertThat(creatureA.isTapped()).isTrue();
+        assertThat(creatureB.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
     }
 }
