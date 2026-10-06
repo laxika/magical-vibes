@@ -94,6 +94,69 @@ class RecklessEmbermageTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Reckless Embermage");
     }
 
+    @Test
+    @DisplayName("Can activate while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent embermage = harness.addToBattlefieldAndReturn(player1, new RecklessEmbermage());
+        embermage.setSummoningSick(true);
+        embermage.setTapped(true);
+        addRedMana(player1);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+        assertThat(embermage.getMarkedDamage()).isEqualTo(1);
+        assertThat(embermage.isTapped()).isTrue();
+        harness.assertOnBattlefield(player1, "Reckless Embermage");
+    }
+
+    @Test
+    @DisplayName("Illegal sole target prevents self-damage as well")
+    void illegalTargetPreventsSelfDamage() {
+        Permanent embermage = addCreatureReady(player1, new RecklessEmbermage());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new RagingGoblin());
+        addRedMana(player1);
+        addRedMana(player1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Raging Goblin");
+        assertThat(embermage.getMarkedDamage()).isEqualTo(1);
+
+        harness.passBothPriorities();
+
+        assertThat(embermage.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Reckless Embermage");
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Already activated ability deals damage after its source dies")
+    void stackedAbilityResolvesAfterSourceDies() {
+        addCreatureReady(player1, new RecklessEmbermage());
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        harness.assertInGraveyard(player1, "Reckless Embermage");
+        harness.assertNotOnBattlefield(player1, "Reckless Embermage");
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 17);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void addRedMana(Player player) {
         harness.addMana(player, ManaColor.RED, 1);
         harness.addMana(player, ManaColor.COLORLESS, 1);
