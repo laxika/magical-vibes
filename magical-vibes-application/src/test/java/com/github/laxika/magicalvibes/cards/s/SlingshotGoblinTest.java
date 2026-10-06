@@ -75,4 +75,61 @@ class SlingshotGoblinTest extends BaseCardTest {
         assertThat(goblin.isTapped()).isFalse();
         assertThat(target.getMarkedDamage()).isZero();
     }
+
+    @Test
+    @DisplayName("Cannot activate while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        harness.addToBattlefield(player1, new SlingshotGoblin());
+        Permanent target = addCreatureReady(player2, new SeaSnidd());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(target.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Cannot activate while tapped")
+    void cannotActivateWhileTapped() {
+        Permanent goblin = addCreatureReady(player1, new SlingshotGoblin());
+        goblin.tap();
+        Permanent target = addCreatureReady(player2, new SeaSnidd());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(target.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Ability resolves after its source leaves the battlefield")
+    void resolvesAfterSourceLeavesBattlefield() {
+        Permanent goblin = addCreatureReady(player1, new SlingshotGoblin());
+        Permanent target = addCreatureReady(player2, new SeaSnidd());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(goblin);
+        gd.playerGraveyards.get(player1.getId()).add(goblin.getCard());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Ability does not damage a target that left the battlefield")
+    void doesNotDamageTargetThatLeftBattlefield() {
+        Permanent goblin = addCreatureReady(player1, new SlingshotGoblin());
+        Permanent target = addCreatureReady(player2, new SeaSnidd());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerGraveyards.get(player2.getId()).add(target.getCard());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(goblin.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
 }
