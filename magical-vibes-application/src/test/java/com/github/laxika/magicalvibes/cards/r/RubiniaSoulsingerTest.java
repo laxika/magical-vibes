@@ -1,9 +1,12 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.b.BarbaryApes;
+import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.p.Pendelhaven;
+import com.github.laxika.magicalvibes.cards.t.Twiddle;
 import com.github.laxika.magicalvibes.cards.w.WillowSatyr;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -16,7 +19,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RubiniaSoulsinger.class, BarbaryApes.class, Pendelhaven.class, WillowSatyr.class})
+@CardUsed({RubiniaSoulsinger.class, BarbaryApes.class, Pendelhaven.class, WillowSatyr.class, Boomerang.class,
+        Twiddle.class})
 class RubiniaSoulsingerTest extends BaseCardTest {
 
     @Test
@@ -98,6 +102,103 @@ class RubiniaSoulsingerTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(rubinia, apes);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(rubinia, apes);
+    }
+
+    @Test
+    @DisplayName("Control ends when Rubinia leaves the battlefield")
+    void controlEndsWhenRubiniaLeavesBattlefield() {
+        Permanent rubinia = addCreatureReady(player1, new RubiniaSoulsinger());
+        Permanent apes = addCreatureReady(player2, new BarbaryApes());
+
+        harness.activateAbility(player1, 0, null, apes.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(apes);
+
+        harness.setHand(player2, List.of(new Boomerang()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player2, 0, rubinia.getId());
+
+        harness.assertInHand(player1, "Rubinia Soulsinger");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(apes);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(rubinia, apes);
+    }
+
+    @Test
+    @DisplayName("No control is gained if Rubinia leaves before her ability resolves")
+    void sourceLeavingBeforeResolutionPreventsControl() {
+        Permanent rubinia = addCreatureReady(player1, new RubiniaSoulsinger());
+        Permanent apes = addCreatureReady(player2, new BarbaryApes());
+
+        harness.activateAbility(player1, 0, null, apes.getId());
+        harness.setHand(player2, List.of(new Boomerang()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player2, 0, rubinia.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInHand(player1, "Rubinia Soulsinger");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(apes);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(apes);
+    }
+
+    @Test
+    @DisplayName("No control is gained if Rubinia changes controllers before resolution")
+    void sourceChangingControllersBeforeResolutionPreventsControl() {
+        Permanent rubinia = addCreatureReady(player1, new RubiniaSoulsinger());
+        Permanent apes = addCreatureReady(player2, new BarbaryApes());
+        Permanent satyr = addCreatureReady(player2, new WillowSatyr());
+
+        harness.activateAbility(player1, 0, null, apes.getId());
+        harness.activateAbility(player2, gd.playerBattlefields.get(player2.getId()).indexOf(satyr),
+                null, rubinia.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(rubinia);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(rubinia, apes);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(rubinia, apes);
+    }
+
+    @Test
+    @DisplayName("A creature returned to hand in response is not gained")
+    void targetLeavingBeforeResolutionIsNotGained() {
+        Permanent rubinia = addCreatureReady(player1, new RubiniaSoulsinger());
+        Permanent apes = addCreatureReady(player2, new BarbaryApes());
+
+        harness.activateAbility(player1, 0, null, apes.getId());
+        harness.setHand(player2, List.of(new Boomerang()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player2, 0, apes.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInHand(player2, "Barbary Apes");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(rubinia).doesNotContain(apes);
+        assertThat(rubinia.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Untapping and retapping Rubinia before resolution does not restore the duration")
+    void untappingAndRetappingBeforeResolutionPreventsControl() {
+        Permanent rubinia = addCreatureReady(player1, new RubiniaSoulsinger());
+        Permanent apes = addCreatureReady(player2, new BarbaryApes());
+
+        harness.activateAbility(player1, 0, null, apes.getId());
+        harness.setHand(player2, List.of(new Twiddle(), new Twiddle()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player2, 0, rubinia.getId());
+        harness.handleMayAbilityChosen(player2, true);
+        assertThat(rubinia.isTapped()).isFalse();
+
+        harness.castAndResolveInstant(player2, 0, rubinia.getId());
+        harness.handleMayAbilityChosen(player2, true);
+        assertThat(rubinia.isTapped()).isTrue();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(apes);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(rubinia).doesNotContain(apes);
     }
 
     private void advanceToNextTurn(Player currentActivePlayer) {
