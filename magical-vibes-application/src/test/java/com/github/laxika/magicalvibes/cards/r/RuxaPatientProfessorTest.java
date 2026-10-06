@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -16,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({RuxaPatientProfessor.class, GrizzlyBears.class, LlanowarElves.class})
 class RuxaPatientProfessorTest extends BaseCardTest {
@@ -94,11 +94,83 @@ class RuxaPatientProfessorTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
     }
 
+    @Test
+    void graveyardChoiceExcludesCreaturesWithAbilitiesAndOpponentsCards() {
+        Card bear = new GrizzlyBears();
+        Card elf = new LlanowarElves();
+        Card opposingBear = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(bear, elf));
+        harness.setGraveyard(player2, List.of(opposingBear));
+
+        castRuxa();
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.validCardIds()).containsExactly(bear.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(bear.getId()));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Llanowar Elves");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void returnDoesNothingWhenChosenCardLeavesGraveyardBeforeResolution() {
+        Card bear = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(bear));
+        castRuxa();
+        harness.handleMultipleCardsChosen(player1, List.of(bear.getId()));
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(bear));
+
+        harness.passBothPriorities();
+
+        harness.assertNotInHand(player1, "Grizzly Bears");
+        assertThat(gd.findExiledCard(bear.getId())).isNotNull();
+    }
+
+    @Test
+    void vanillaCreatureMayAssignDamageToItsBlockerInstead() {
+        harness.setLife(player2, 20);
+        addCreatureReady(player1, new RuxaPatientProfessor());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        declareAttackersAndPrepareBlockers(List.of(1));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
+        resolveCombat();
+
+        harness.handleCombatDamageAssigned(player1, 1, Map.of(blocker.getId(), 3));
+
+        harness.assertLife(player2, 20);
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(attacker.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    void cannotSplitDamageBetweenBlockerAndDefendingPlayer() {
+        harness.setLife(player2, 20);
+        addCreatureReady(player1, new RuxaPatientProfessor());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        declareAttackersAndPrepareBlockers(List.of(1));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
+        resolveCombat();
+
+        assertThatThrownBy(() -> harness.handleCombatDamageAssigned(player1, 1,
+                Map.of(blocker.getId(), 2, player2.getId(), 1)))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleCombatDamageAssigned(player1, 1, Map.of(player2.getId(), 3));
+
+        harness.assertLife(player2, 17);
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(blocker.getMarkedDamage()).isZero();
+        assertThat(attacker.getMarkedDamage()).isEqualTo(2);
+    }
+
     private void castRuxa() {
-        harness.setHand(player1, List.of(new RuxaPatientProfessor()));
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new RuxaPatientProfessor(), "{2}{G}{G}");
         harness.passBothPriorities();
     }
 }
