@@ -2,8 +2,10 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HigureTheStillWind;
+import com.github.laxika.magicalvibes.cards.m.MoonsnareSpecialist;
 import com.github.laxika.magicalvibes.cards.n.NinjaOfTheDeepHours;
 import com.github.laxika.magicalvibes.cards.t.ThievesGuildEnforcer;
+import com.github.laxika.magicalvibes.cards.t.TamiyosCompleation;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -20,6 +22,87 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({SilverFurMaster.class, NinjaOfTheDeepHours.class, GrizzlyBears.class,
         HigureTheStillWind.class, ThievesGuildEnforcer.class})
 class SilverFurMasterTest extends BaseCardTest {
+
+    @Test
+    void ownNinjutsuEntersTappedAndAttacking() {
+        Permanent attacker = addCreatureReady(player1, new SilverFurMaster());
+        declareAttackersAndPrepareBlockers(List.of(0));
+        harness.setHand(player1, List.of(new SilverFurMaster()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateHandAbility(player1, 0, attacker.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        harness.passBothPriorities();
+
+        Permanent ninja = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(ninja.isTapped()).isTrue();
+        assertThat(ninja.isAttacking()).isTrue();
+        assertThat(ninja.getAttackTarget()).isEqualTo(player2.getId());
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void ninjutsuReductionDoesNotRemoveColoredMana() {
+        Permanent attacker = addCreatureReady(player1, new SilverFurMaster());
+        declareAttackersAndPrepareBlockers(List.of(0));
+        harness.setHand(player1, List.of(new SilverFurMaster()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void multipleMastersBoostEachOtherOnce() {
+        Permanent first = addCreatureReady(player1, new SilverFurMaster());
+        Permanent second = addCreatureReady(player1, new SilverFurMaster());
+        assertThat(gqs.computeStaticBonus(gd, first).power()).isEqualTo(1);
+        assertThat(gqs.computeStaticBonus(gd, first).toughness()).isEqualTo(1);
+        assertThat(gqs.computeStaticBonus(gd, second).power()).isEqualTo(1);
+        assertThat(gqs.computeStaticBonus(gd, second).toughness()).isEqualTo(1);
+    }
+
+    @Test
+    @CardUsed({MoonsnareSpecialist.class, TamiyosCompleation.class})
+    void losingAbilitiesStopsNinjutsuReduction() {
+        Permanent master = addCreatureReady(player1, new SilverFurMaster());
+        Permanent attacker = addCreatureReady(player1, new SilverFurMaster());
+        harness.setHand(player1, List.of(new TamiyosCompleation()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castEnchantment(player1, 0, master.getId());
+        resolveAllTriggers();
+        declareAttackersAndPrepareBlockers(List.of(1));
+        harness.setHand(player1, List.of(new MoonsnareSpecialist()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
+    }
+
+    @Test
+    @CardUsed({MoonsnareSpecialist.class})
+    void multipleMastersStackNinjutsuReductions() {
+        Permanent attacker = addCreatureReady(player1, new SilverFurMaster());
+        addCreatureReady(player1, new SilverFurMaster());
+        declareAttackersAndPrepareBlockers(List.of(0));
+        harness.setHand(player1, List.of(new MoonsnareSpecialist()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateHandAbility(player1, 0, attacker.getId());
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
+    }
 
     @Test
     @DisplayName("Reduces the generic cost of ninjutsu abilities by one")
