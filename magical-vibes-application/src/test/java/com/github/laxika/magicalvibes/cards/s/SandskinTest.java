@@ -70,8 +70,7 @@ class SandskinTest extends BaseCardTest {
         Permanent aura = harness.addToBattlefieldAndReturn(player2, new Sandskin());
         aura.setAttachedTo(blocker.getId());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
 
@@ -109,5 +108,42 @@ class SandskinTest extends BaseCardTest {
 
         harness.assertInGraveyard(player2, "Sparksmith");
         harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("Sandskin can enchant an opponent's attacker and prevents damage in both directions")
+    void preventsDamageForOpponentsEnchantedAttacker() {
+        Permanent attacker = addCreatureReady(player2, new GlorySeeker());
+        Permanent blocker = addCreatureReady(player1, new GlorySeeker());
+        harness.setHand(player1, List.of(new Sandskin()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castEnchantment(player1, 0, attacker.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Sandskin").getAttachedTo()).isEqualTo(attacker.getId());
+
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat(player2);
+
+        harness.assertOnBattlefield(player2, "Glory Seeker");
+        harness.assertOnBattlefield(player1, "Glory Seeker");
+        assertThat(attacker.getMarkedDamage()).isZero();
+        assertThat(blocker.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Sandskin does not prevent combat damage from another attacker")
+    void doesNotPreventOtherAttackersDamage() {
+        harness.setLife(player2, 20);
+        Permanent enchanted = addCreatureReady(player1, new GlorySeeker());
+        addCreatureReady(player1, new GlorySeeker());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Sandskin());
+        aura.setAttachedTo(enchanted.getId());
+
+        declareAttackers(List.of(0, 1));
+        resolveCombat();
+
+        harness.assertLife(player2, 18);
     }
 }
