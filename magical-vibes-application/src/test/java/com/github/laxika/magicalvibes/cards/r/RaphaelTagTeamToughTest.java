@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -11,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({RaphaelTagTeamTough.class, GrizzlyBears.class})
 class RaphaelTagTeamToughTest extends BaseCardTest {
@@ -53,5 +55,83 @@ class RaphaelTagTeamToughTest extends BaseCardTest {
 
         assertThat(raphael.isTapped()).isTrue();
         assertThat(gd.combatPhasesThisTurn).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Another creature dealing combat damage does not trigger Raphael")
+    void anotherCreatureDealingCombatDamageDoesNotTriggerRaphael() {
+        Permanent raphael = addCreatureReady(player1, new RaphaelTagTeamTough());
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
+        raphael.tap();
+        gd.combatPhasesThisTurn = 1;
+
+        declareAttackers(List.of(1));
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(raphael.isTapped()).isTrue();
+        assertThat(bear.isTapped()).isTrue();
+        assertThat(gd.additionalCombatPhasesOnly).isZero();
+        assertThat(gd.combatPhasesThisTurn).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Menace prevents a single creature from blocking Raphael")
+    void menacePreventsSingleBlocker() {
+        addCreatureReady(player1, new RaphaelTagTeamTough());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked except by two or more creatures");
+    }
+
+    @Test
+    @DisplayName("Damage to blockers does not create an additional combat")
+    void damageToBlockersDoesNotCreateAdditionalCombat() {
+        Permanent raphael = addCreatureReady(player1, new RaphaelTagTeamTough());
+        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+        gd.combatPhasesThisTurn = 1;
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(raphael.isTapped()).isTrue();
+        assertThat(gd.additionalCombatPhasesOnly).isZero();
+        assertThat(gd.combatPhasesThisTurn).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Regaining the ability after the first combat damage does not trigger it on later damage")
+    void regainingAbilityAfterFirstDamageDoesNotTriggerOnLaterDamage() {
+        Permanent raphael = addCreatureReady(player1, new RaphaelTagTeamTough());
+        raphael.setLosesAllAbilitiesUntilEndOfTurn(true);
+        gd.combatPhasesThisTurn = 1;
+        int initialLife = gd.playerLifeTotals.get(player2.getId());
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isLessThan(initialLife);
+        assertThat(gd.additionalCombatPhasesOnly).isZero();
+
+        raphael.setLosesAllAbilitiesUntilEndOfTurn(false);
+        raphael.untap();
+        gd.combatPhasesThisTurn = 2;
+        declareAttackers(List.of(0));
+        resolveCombat();
+
+        assertThat(gd.stack).isEmpty();
+        resolveAllTriggers();
+        assertThat(raphael.isTapped()).isTrue();
+        assertThat(gd.additionalCombatPhasesOnly).isZero();
     }
 }
