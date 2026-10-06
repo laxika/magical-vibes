@@ -178,4 +178,47 @@ class RayOfRevelationTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castFlashback(player1, 0, targetId))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Flashback requires green mana even when white mana is available")
+    void flashbackFailsWithOnlyWhiteMana() {
+        harness.addToBattlefield(player2, new MirarisWake());
+        harness.setGraveyard(player1, List.of(new RayOfRevelation()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        UUID targetId = harness.getPermanentId(player2, "Mirari's Wake");
+        assertThatThrownBy(() -> harness.castFlashback(player1, 0, targetId))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInGraveyard(player1, "Ray of Revelation");
+        harness.assertOnBattlefield(player2, "Mirari's Wake");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The same card can destroy an enchantment normally and another through flashback")
+    void normalCastThenFlashback() {
+        harness.addToBattlefield(player1, new MirarisWake());
+        harness.addToBattlefield(player2, new MirarisWake());
+        harness.setHand(player1, List.of(new RayOfRevelation()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        UUID opposingTargetId = harness.getPermanentId(player2, "Mirari's Wake");
+        UUID ownTargetId = harness.getPermanentId(player1, "Mirari's Wake");
+        harness.castAndResolveInstant(player1, 0, opposingTargetId);
+
+        harness.assertInGraveyard(player1, "Ray of Revelation");
+        harness.assertInGraveyard(player2, "Mirari's Wake");
+        harness.assertOnBattlefield(player1, "Mirari's Wake");
+
+        harness.castAndResolveFlashback(player1, 0, ownTargetId);
+
+        harness.assertNotOnBattlefield(player1, "Mirari's Wake");
+        harness.assertInGraveyard(player1, "Mirari's Wake");
+        harness.assertNotInGraveyard(player1, "Ray of Revelation");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(c -> c.getName().equals("Ray of Revelation"));
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
 }
