@@ -36,4 +36,52 @@ class SavageVentmawTest extends BaseCardTest {
         assertThat(pool.get(ManaColor.GREEN)).isEqualTo(3);
         assertThat(pool.get(ManaColor.COLORLESS)).isZero();
     }
+
+    @Test
+    void manaExpiresAtTheEndOfTheTurn() {
+        addCreatureReady(player1, new SavageVentmaw());
+        declareAttackers(player1, List.of(0));
+        resolveAllTriggers();
+
+        harness.passUntil(player1, TurnStep.END_STEP);
+        ManaPool pool = gd.playerManaPools.get(player1.getId());
+        assertThat(pool.get(ManaColor.RED)).isEqualTo(3);
+        assertThat(pool.get(ManaColor.GREEN)).isEqualTo(3);
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        assertThat(pool.get(ManaColor.RED)).isZero();
+        assertThat(pool.get(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
+    void attackingOnTheOtherPlayersTurnAwardsManaToThatController() {
+        addCreatureReady(player2, new SavageVentmaw());
+        declareAttackers(player2, List.of(0));
+        resolveAllTriggers();
+
+        ManaPool attackerPool = gd.playerManaPools.get(player2.getId());
+        ManaPool defenderPool = gd.playerManaPools.get(player1.getId());
+        assertThat(attackerPool.get(ManaColor.RED)).isEqualTo(3);
+        assertThat(attackerPool.get(ManaColor.GREEN)).isEqualTo(3);
+        assertThat(defenderPool.get(ManaColor.RED)).isZero();
+        assertThat(defenderPool.get(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
+    void attackTriggerResolvesAfterTheSourceLeavesTheBattlefield() {
+        var ventmaw = addCreatureReady(player1, new SavageVentmaw());
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(player1, List.of(0)));
+        assertThat(gd.stack).hasSize(1);
+        ManaPool pool = gd.playerManaPools.get(player1.getId());
+        assertThat(pool.get(ManaColor.RED)).isZero();
+        assertThat(pool.get(ManaColor.GREEN)).isZero();
+
+        gd.playerBattlefields.get(player1.getId()).remove(ventmaw);
+        gd.playerGraveyards.get(player1.getId()).add(ventmaw.getCard());
+        resolveAllTriggers();
+
+        assertThat(pool.get(ManaColor.RED)).isEqualTo(3);
+        assertThat(pool.get(ManaColor.GREEN)).isEqualTo(3);
+    }
 }
