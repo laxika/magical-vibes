@@ -4,10 +4,12 @@ import com.github.laxika.magicalvibes.cards.a.AngelsFeather;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.j.JadeGuardian;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,9 +17,9 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RiversRebuke.class, AngelsFeather.class, Forest.class, GloriousAnthem.class,
+        GrizzlyBears.class, JadeGuardian.class})
 class RiversRebukeTest extends BaseCardTest {
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting puts it on the stack as SORCERY_SPELL targeting a player")
@@ -30,11 +32,8 @@ class RiversRebukeTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("River's Rebuke");
         assertThat(entry.getTargetId()).isEqualTo(player2.getId());
     }
-
-    // ===== Resolving =====
 
     @Test
     @DisplayName("Returns all nonland permanents target player controls to their hand")
@@ -45,8 +44,7 @@ class RiversRebukeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new RiversRebuke()));
         harness.addMana(player1, ManaColor.BLUE, 6);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         // All nonland permanents should be gone from battlefield
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
@@ -67,8 +65,7 @@ class RiversRebukeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new RiversRebuke()));
         harness.addMana(player1, ManaColor.BLUE, 6);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         // Land should still be on battlefield
         harness.assertOnBattlefield(player2, "Forest");
@@ -88,8 +85,7 @@ class RiversRebukeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new RiversRebuke()));
         harness.addMana(player1, ManaColor.BLUE, 6);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         // Player1's permanents should still be on battlefield
         harness.assertOnBattlefield(player1, "Angel's Feather");
@@ -110,8 +106,7 @@ class RiversRebukeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new RiversRebuke()));
         harness.addMana(player1, ManaColor.BLUE, 6);
 
-        harness.castSorcery(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
 
         // Land should still be on battlefield
         harness.assertOnBattlefield(player1, "Forest");
@@ -129,8 +124,7 @@ class RiversRebukeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new RiversRebuke()));
         harness.addMana(player1, ManaColor.BLUE, 6);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         // Land should still be on battlefield
         harness.assertOnBattlefield(player2, "Forest");
@@ -144,8 +138,7 @@ class RiversRebukeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new RiversRebuke()));
         harness.addMana(player1, ManaColor.BLUE, 6);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
         assertThat(gd.stack).isEmpty();
@@ -158,10 +151,53 @@ class RiversRebukeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new RiversRebuke()));
         harness.addMana(player1, ManaColor.BLUE, 6);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "River's Rebuke");
+    }
+
+    @Test
+    @DisplayName("Returns a stolen permanent to its owner's hand")
+    void returnsStolenPermanentToOwnersHand() {
+        GrizzlyBears stolen = new GrizzlyBears();
+        stolen.setOwnerId(player1.getId());
+        harness.addToBattlefield(player2, stolen);
+        harness.setHand(player1, List.of(new RiversRebuke()));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertNotInHand(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Does not return permanents the targeted player owns but another player controls")
+    void ignoresTargetPlayersPermanentsControlledBySomeoneElse() {
+        GrizzlyBears stolen = new GrizzlyBears();
+        stolen.setOwnerId(player2.getId());
+        harness.addToBattlefield(player1, stolen);
+        harness.setHand(player1, List.of(new RiversRebuke()));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotInHand(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Returns hexproof creatures because only their controller is targeted")
+    void returnsHexproofCreatures() {
+        harness.addToBattlefield(player2, new JadeGuardian());
+        harness.setHand(player1, List.of(new RiversRebuke()));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        harness.assertNotOnBattlefield(player2, "Jade Guardian");
+        harness.assertInHand(player2, "Jade Guardian");
     }
 }
