@@ -68,4 +68,59 @@ class RiptideManglerTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, land.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Self-targeting includes power bonuses, which still apply after setting base power")
+    void selfTargetingRetainsPowerBonus() {
+        Permanent mangler = addCreatureReady(player1, new RiptideMangler());
+        mangler.setPowerModifier(2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, mangler.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, mangler)).isEqualTo(4);
+
+        harness.activateAbility(player1, 0, null, mangler.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, mangler)).isEqualTo(6);
+
+        mangler.setPowerModifier(0);
+        assertThat(gqs.getEffectivePower(gd, mangler)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Copies negative power without changing toughness or the target")
+    void copiesNegativePower() {
+        Permanent mangler = addCreatureReady(player1, new RiptideMangler());
+        Permanent target = addCreatureReady(player2, new NeedleshotGourna());
+        target.setPowerModifier(-5);
+        int originalToughness = gqs.getEffectiveToughness(gd, mangler);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, mangler)).isEqualTo(-2);
+        assertThat(gqs.getEffectiveToughness(gd, mangler)).isEqualTo(originalToughness);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(-2);
+    }
+
+    @Test
+    @DisplayName("Can activate while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent mangler = harness.addToBattlefieldAndReturn(player1, new RiptideMangler());
+        mangler.setSummoningSick(true);
+        mangler.tap();
+        Permanent target = addCreatureReady(player1, new NeedleshotGourna());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, mangler)).isEqualTo(3);
+        assertThat(mangler.isTapped()).isTrue();
+    }
 }
