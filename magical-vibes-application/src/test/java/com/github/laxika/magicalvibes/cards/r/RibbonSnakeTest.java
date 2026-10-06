@@ -9,9 +9,56 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(RibbonSnake.class)
+@CardUsed({RibbonSnake.class})
 class RibbonSnakeTest extends BaseCardTest {
+
+    @Test
+    void flyingIsRemovedOnlyWhenAbilityResolvesAndOnlyFromItsSource() {
+        Permanent snake = harness.addToBattlefieldAndReturn(player1, new RibbonSnake());
+        Permanent otherSnake = harness.addToBattlefieldAndReturn(player1, new RibbonSnake());
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player2, 0, null, null);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.hasKeyword(gd, snake, Keyword.FLYING)).isTrue();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, snake, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, otherSnake, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    void tappedSnakeCanActivateRepeatedlyAfterLosingFlying() {
+        Permanent snake = harness.addToBattlefieldAndReturn(player1, new RibbonSnake());
+        snake.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, snake, Keyword.FLYING)).isFalse();
+        assertThat(snake.isTapped()).isTrue();
+    }
+
+    @Test
+    void opponentMustPayUsingTheirOwnMana() {
+        Permanent snake = harness.addToBattlefieldAndReturn(player1, new RibbonSnake());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.hasKeyword(gd, snake, Keyword.FLYING)).isTrue();
+    }
 
     @Test
     void anyPlayerMayPayToRemoveFlying() {
