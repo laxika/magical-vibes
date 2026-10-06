@@ -25,8 +25,7 @@ class RecalibrateTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Recalibrate()));
         addMana();
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInHand(player2, "Grizzly Bears");
@@ -43,8 +42,7 @@ class RecalibrateTest extends BaseCardTest {
         gd.cardsDiscardedThisTurn.put(player1.getId(), 1);
         addMana();
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         harness.assertInHand(player2, "Grizzly Bears");
         assertThat(gd.playerHands.get(player1.getId()))
@@ -63,6 +61,64 @@ class RecalibrateTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("An opponent's discard does not cause a draw")
+    void doesNotDrawAfterOpponentDiscards() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new Recalibrate()));
+        gd.cardsDiscardedThisTurn.put(player2.getId(), 1);
+        addMana();
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertInHand(player2, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Multiple discards still draw exactly one card")
+    void multipleDiscardsDrawOnlyOneCard() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player1, List.of(new Recalibrate()));
+        gd.cardsDiscardedThisTurn.put(player1.getId(), 3);
+        addMana();
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertInHand(player2, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player1.getId()))
+                .extracting(card -> card.getName())
+                .containsExactly("Grizzly Bears");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Does not draw when its only target leaves before resolution")
+    void doesNotDrawWhenTargetLeaves() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new Recalibrate()));
+        harness.setHand(player2, List.of(new Recalibrate()));
+        gd.cardsDiscardedThisTurn.put(player1.getId(), 1);
+        addMana();
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.castInstant(player2, 0, target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Recalibrate");
+        harness.assertInGraveyard(player2, "Recalibrate");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }
 
     private void addMana() {
