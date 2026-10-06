@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -68,6 +67,49 @@ class RipplesOfPotentialTest extends BaseCardTest {
         assertThat(ownReceived.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
+    @Test
+    void choosingNoPermanentsToProliferateSkipsPhasing() {
+        Permanent bear = addCounteredBear(player1);
+
+        cast();
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of());
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(bear);
+        assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void canPhaseOutOnlyASubsetOfPermanentsThatReceivedCounters() {
+        Permanent chosen = addCounteredBear(player1);
+        Permanent unchosen = addCounteredBear(player1);
+
+        cast();
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of(chosen.getId(), unchosen.getId()));
+        harness.handleMultiplePermanentsChosen(player1, List.of(chosen.getId()));
+
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).containsExactly(chosen);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(unchosen).doesNotContain(chosen);
+        assertThat(unchosen.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void phasesOutBeforeZeroToughnessStateBasedAction() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        bear.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+
+        cast();
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of(bear.getId()));
+        harness.handleMultiplePermanentsChosen(player1, List.of(bear.getId()));
+
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(bear);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(bear.getCard());
+        assertThat(bear.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
+    }
+
     private Permanent addCounteredBear(com.github.laxika.magicalvibes.model.Player player) {
         Permanent bear = harness.addToBattlefieldAndReturn(player, new GrizzlyBears());
         bear.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
@@ -75,9 +117,6 @@ class RipplesOfPotentialTest extends BaseCardTest {
     }
 
     private void cast() {
-        harness.setHand(player1, List.of(new RipplesOfPotential()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new RipplesOfPotential(), "{1}{U}");
     }
 }
