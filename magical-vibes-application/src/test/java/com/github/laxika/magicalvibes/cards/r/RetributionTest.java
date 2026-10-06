@@ -23,8 +23,7 @@ class RetributionTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Retribution()));
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castSorcery(player1, 0, List.of(first.getId(), second.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(first.getId(), second.getId()));
     }
 
     @Test
@@ -119,6 +118,67 @@ class RetributionTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(own.getId(), theirs.getId())))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("An illegal first target is unaffected and the legal second target is sacrificed")
+    void firstTargetGainingHexproofLeavesSecondToBeSacrificed() {
+        Permanent bodyguard = addCreatureReady(player2, new AnabaBodyguard());
+        Permanent faerie = addCreatureReady(player2, new WillowFaerie());
+
+        harness.setHand(player1, List.of(new Retribution()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castSorcery(player1, 0, List.of(bodyguard.getId(), faerie.getId()));
+        bodyguard.setCounterCount(CounterType.HEXPROOF, 1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(bodyguard);
+        assertThat(bodyguard.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        harness.assertInGraveyard(player2, "Willow Faerie");
+    }
+
+    @Test
+    @DisplayName("An illegal second target is unaffected and the legal first target is sacrificed")
+    void secondTargetGainingHexproofLeavesFirstToBeSacrificed() {
+        Permanent bodyguard = addCreatureReady(player2, new AnabaBodyguard());
+        Permanent faerie = addCreatureReady(player2, new WillowFaerie());
+
+        harness.setHand(player1, List.of(new Retribution()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castSorcery(player1, 0, List.of(bodyguard.getId(), faerie.getId()));
+        faerie.setCounterCount(CounterType.HEXPROOF, 1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(faerie);
+        assertThat(faerie.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        harness.assertInGraveyard(player2, "Anaba Bodyguard");
+    }
+
+    @Test
+    @DisplayName("When both targets become illegal, neither is sacrificed or receives a counter")
+    void bothTargetsGainingHexproofPreventResolution() {
+        Permanent bodyguard = addCreatureReady(player2, new AnabaBodyguard());
+        Permanent faerie = addCreatureReady(player2, new WillowFaerie());
+
+        harness.setHand(player1, List.of(new Retribution()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castSorcery(player1, 0, List.of(bodyguard.getId(), faerie.getId()));
+        bodyguard.setCounterCount(CounterType.HEXPROOF, 1);
+        faerie.setCounterCount(CounterType.HEXPROOF, 1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .containsExactlyInAnyOrder(bodyguard, faerie);
+        assertThat(bodyguard.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        assertThat(faerie.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        harness.assertInGraveyard(player1, "Retribution");
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
