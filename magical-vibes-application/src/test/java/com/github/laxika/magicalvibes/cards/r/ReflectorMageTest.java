@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.b.BlindingDrone;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -10,11 +12,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ReflectorMage.class, GrizzlyBears.class})
+@CardUsed({ReflectorMage.class, GrizzlyBears.class, BlindingDrone.class})
 class ReflectorMageTest extends BaseCardTest {
 
     @Test
@@ -103,6 +106,63 @@ class ReflectorMageTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Returning a nameless face-down creature does not prohibit its printed name")
+    void faceDownCreatureCanBeCastFaceUpAfterReturning() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BlindingDrone());
+        target.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        castAndResolveReflectorMage(target);
+
+        assertThat(gd.playerHands.get(player2.getId())).contains(target.getOriginalCard());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castCreature(player2, 0);
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The casting restriction survives Reflector Mage leaving the battlefield")
+    void restrictionSurvivesSourceLeaving() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BlindingDrone());
+        castAndResolveReflectorMage(target);
+        Permanent mage = gd.playerBattlefields.get(player1.getId()).getFirst();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, mage));
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        assertThatThrownBy(() -> harness.castCreature(player2, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("A target that leaves before resolution creates no casting restriction")
+    void absentTargetCreatesNoRestriction() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BlindingDrone());
+        harness.setHand(player1, List.of(new ReflectorMage()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castCreature(player1, 0, target.getId());
+        harness.passBothPriorities();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, target));
+        harness.passBothPriorities();
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castCreature(player2, 0);
+        assertThat(gd.stack).hasSize(1);
     }
 
     private void castAndResolveReflectorMage(Permanent target) {
