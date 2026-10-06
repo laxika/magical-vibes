@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -11,7 +10,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RakdosHeadliner.class, GrizzlyBears.class})
+@CardUsed({RakdosHeadliner.class})
 class RakdosHeadlinerTest extends BaseCardTest {
 
     @Test
@@ -27,7 +26,7 @@ class RakdosHeadlinerTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         harness.assertOnBattlefield(player1, "Rakdos Headliner");
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Rakdos Headliner");
     }
 
     @Test
@@ -41,7 +40,7 @@ class RakdosHeadlinerTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Rakdos Headliner");
         harness.assertInGraveyard(player1, "Rakdos Headliner");
-        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Rakdos Headliner");
     }
 
     @Test
@@ -57,15 +56,63 @@ class RakdosHeadlinerTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Rakdos Headliner");
     }
 
-    private void castAndResolveHeadliner(boolean includeDiscardCard) {
-        harness.setHand(player1, includeDiscardCard
-                ? List.of(new RakdosHeadliner(), new GrizzlyBears())
-                : List.of(new RakdosHeadliner()));
+    @Test
+    @DisplayName("Echo does not create an enter-the-battlefield trigger")
+    void enteringDoesNotCreateEchoRegistrationTrigger() {
+        harness.setHand(player1, List.of(new RakdosHeadliner()));
         harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.BLACK, 1);
         harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.RED, 1);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Rakdos Headliner");
+        assertThat(gd.stack).isEmpty();
+
+        advanceToUpkeep(player1);
         harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Rakdos Headliner");
+    }
+
+    @Test
+    @DisplayName("Paid echo does not trigger again on later upkeeps")
+    void paidEchoDoesNotTriggerAgain() {
+        castAndResolveHeadliner(true);
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        advanceToUpkeep(player2);
+        assertThat(gd.stack).isEmpty();
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Rakdos Headliner");
+    }
+
+    @Test
+    @DisplayName("The opponent's upkeep does not require paying echo")
+    void opponentUpkeepDoesNotRequireEchoPayment() {
+        castAndResolveHeadliner(false);
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Rakdos Headliner");
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Rakdos Headliner");
+    }
+
+    private void castAndResolveHeadliner(boolean includeDiscardCard) {
+        harness.setHand(player1, includeDiscardCard
+                ? List.of(new RakdosHeadliner(), new RakdosHeadliner())
+                : List.of(new RakdosHeadliner()));
+        harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.BLACK, 1);
+        harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.RED, 1);
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
         harness.assertOnBattlefield(player1, "Rakdos Headliner");
     }
 }
