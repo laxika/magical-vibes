@@ -16,7 +16,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(SeaOfClouds.class)
+@CardUsed({SeaOfClouds.class})
 class SeaOfCloudsTest extends BaseCardTest {
 
     @Test
@@ -57,18 +57,47 @@ class SeaOfCloudsTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("Enters tapped when put directly onto the battlefield with one opponent")
+    void entersTappedWithoutBeingPlayed() {
+        Permanent permanent = harness.enterBattlefieldAndReturn(player1, new SeaOfClouds());
+
+        assertThat(permanent.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Enters untapped when put directly onto the battlefield with two opponents")
+    void entersUntappedWithoutBeingPlayedWithTwoOpponents() {
+        addThirdPlayer();
+
+        Permanent permanent = harness.enterBattlefieldAndReturn(player1, new SeaOfClouds());
+
+        assertThat(permanent.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Can produce mana immediately after entering untapped")
+    void canProduceManaOnTheTurnItEnters() {
+        addThirdPlayer();
+        playSeaOfClouds();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(findPermanent(player1, "Sea of Clouds").isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void playSeaOfClouds() {
         harness.setHand(player1, List.of(new SeaOfClouds()));
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
     }
 
     private Permanent addReadySeaOfClouds() {
-        Permanent permanent = new Permanent(new SeaOfClouds());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(permanent);
-        return permanent;
+        return addCreatureReady(player1, new SeaOfClouds());
     }
 
     private void addThirdPlayer() {
