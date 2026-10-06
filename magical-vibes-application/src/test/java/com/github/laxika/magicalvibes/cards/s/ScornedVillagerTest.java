@@ -1,48 +1,45 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.m.MoonscarredWerewolf;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
+
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.util.List;
+
+@CardUsed({ScornedVillager.class})
 class ScornedVillagerTest extends BaseCardTest {
 
-    
 
-    
 
     @Test
     @DisplayName("Tapping Scorned Villager produces one green mana")
     void tappingFrontFaceProducesOneGreenMana() {
-        Permanent perm = new Permanent(new ScornedVillager());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(perm);
+        Permanent perm = addCreatureReady(player1, new ScornedVillager());
 
         gs.tapPermanent(gd, player1, 0);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
-        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
+        assertThat(perm.isTapped()).isTrue();
     }
 
     @Test
     @DisplayName("Tapping Moonscarred Werewolf produces two green mana")
     void tappingBackFaceProducesTwoGreenMana() {
-        Permanent perm = new Permanent(new MoonscarredWerewolf());
-        perm.setSummoningSick(false);
-        perm.setTransformed(true);
-        gd.playerBattlefields.get(player1.getId()).add(perm);
+        Permanent perm = addCreatureReady(player1, new ScornedVillager());
+        advanceFromUntapToResolveUpkeepTrigger(player1);
 
         gs.tapPermanent(gd, player1, 0);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
-        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
+        assertThat(perm.isTapped()).isTrue();
     }
 
     @Test
@@ -68,10 +65,7 @@ class ScornedVillagerTest extends BaseCardTest {
 
         gd.spellsCastLastTurn.put(player1.getId(), 1);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        advanceToUpkeep(player1);
 
         assertThat(villager.isTransformed()).isFalse();
         assertThat(villager.getCard().getName()).isEqualTo("Scorned Villager");
@@ -112,10 +106,7 @@ class ScornedVillagerTest extends BaseCardTest {
         gd.spellsCastLastTurn.put(player1.getId(), 1);
         gd.spellsCastLastTurn.put(player2.getId(), 1);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        advanceToUpkeep(player2);
 
         assertThat(villager.isTransformed()).isTrue();
         assertThat(villager.getCard().getName()).isEqualTo("Moonscarred Werewolf");
@@ -144,14 +135,56 @@ class ScornedVillagerTest extends BaseCardTest {
         advanceFromUntapToResolveUpkeepTrigger(player1);
 
         assertThat(villager.isTransformed()).isTrue();
-        assertThat(gqs.hasKeyword(gd, villager, Keyword.VIGILANCE)).isTrue();
+        declareAttackersAndPrepareBlockers(List.of(0));
+        assertThat(villager.isTapped()).isFalse();
+        harness.tapPermanent(player1, 0);
+        assertThat(villager.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Summoning sickness persists through transformation on the opponent's upkeep")
+    void summoningSicknessPersistsThroughTransformation() {
+        Permanent villager = harness.addToBattlefieldAndReturn(player1, new ScornedVillager());
+
+        assertThatThrownBy(() -> harness.tapPermanent(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        advanceFromUntapToResolveUpkeepTrigger(player2);
+
+        assertThat(villager.isTransformed()).isTrue();
+        assertThatThrownBy(() -> harness.tapPermanent(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
+    @DisplayName("Transforming on the opponent's upkeep preserves the tapped state")
+    void transformationPreservesTappedState() {
+        Permanent villager = addCreatureReady(player1, new ScornedVillager());
+        harness.tapPermanent(player1, 0);
+
+        advanceFromUntapToResolveUpkeepTrigger(player2);
+
+        assertThat(villager.isTransformed()).isTrue();
+        assertThat(villager.isTapped()).isTrue();
+        assertThatThrownBy(() -> harness.tapPermanent(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Werewolf stays transformed when no spells were cast last turn")
+    void backFaceRemainsWithNoSpellsCast() {
+        Permanent villager = harness.addToBattlefieldAndReturn(player1, new ScornedVillager());
+        advanceFromUntapToResolveUpkeepTrigger(player1);
+
+        advanceFromUntapToResolveUpkeepTrigger(player2);
+
+        assertThat(villager.isTransformed()).isTrue();
+        assertThat(gd.stack).isEmpty();
     }
 
     private void advanceFromUntapToResolveUpkeepTrigger(Player activePlayer) {
-        harness.forceActivePlayer(activePlayer);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        advanceToUpkeep(activePlayer);
+        resolveAllTriggers();
     }
 }
