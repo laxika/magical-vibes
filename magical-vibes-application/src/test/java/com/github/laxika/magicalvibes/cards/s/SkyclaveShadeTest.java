@@ -1,13 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -19,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SkyclaveShade.class, Forest.class, GrizzlyBears.class})
+@CardUsed({SkyclaveShade.class, Forest.class})
 class SkyclaveShadeTest extends BaseCardTest {
 
     @Test
@@ -33,7 +31,7 @@ class SkyclaveShadeTest extends BaseCardTest {
         harness.castKickedCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent permanent = battlefieldPermanent(player1, shade);
+        Permanent permanent = findPermanent(player1, "Skyclave Shade");
         assertThat(permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
@@ -41,7 +39,7 @@ class SkyclaveShadeTest extends BaseCardTest {
     @DisplayName("Skyclave Shade cannot block")
     void cannotBlock() {
         Permanent shade = addCreatureReady(player2, new SkyclaveShade());
-        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new SkyclaveShade());
         attacker.setAttacking(true);
 
         prepareDeclareBlockers();
@@ -75,7 +73,7 @@ class SkyclaveShadeTest extends BaseCardTest {
         harness.castFromGraveyard(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(battlefieldPermanent(player1, shade)).isNotNull();
+        harness.assertOnBattlefield(player1, "Skyclave Shade");
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .noneMatch(card -> card.getId().equals(shade.getId()));
     }
@@ -108,10 +106,74 @@ class SkyclaveShadeTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
-    private Permanent battlefieldPermanent(Player player, Card card) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(permanent -> permanent.getCard().getId().equals(card.getId()))
-                .findFirst()
-                .orElseThrow();
+    @Test
+    @DisplayName("An unkicked Skyclave Shade enters without counters")
+    void unkickedEntersWithoutCounters() {
+        harness.setHand(player1, List.of(new SkyclaveShade()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Skyclave Shade")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("A land entering under your control on an opponent's turn does not trigger")
+    void ownLandOnOpponentsTurnDoesNotTrigger() {
+        harness.setGraveyard(player1, List.of(new SkyclaveShade()));
+        harness.forceActivePlayer(player2);
+
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Landfall does not grant permission to a Shade outside the graveyard")
+    void shadeInHandDoesNotTrigger() {
+        harness.setHand(player1, List.of(new Forest(), new SkyclaveShade()));
+
+        harness.playLand(player1, 0);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Landfall permission does not bypass creature casting timing")
+    void graveyardCastRequiresMainPhase() {
+        harness.setGraveyard(player1, List.of(new SkyclaveShade()));
+        harness.setHand(player1, List.of(new Forest()));
+        harness.playLand(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Cannot cast sorcery-speed spell");
+        harness.assertInGraveyard(player1, "Skyclave Shade");
+    }
+
+    @Test
+    @DisplayName("Declining landfall does not allow a graveyard cast even with enough mana")
+    void declinedPermissionDoesNotAllowCasting() {
+        harness.setGraveyard(player1, List.of(new SkyclaveShade()));
+        harness.setHand(player1, List.of(new Forest()));
+        harness.playLand(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Skyclave Shade");
     }
 }
