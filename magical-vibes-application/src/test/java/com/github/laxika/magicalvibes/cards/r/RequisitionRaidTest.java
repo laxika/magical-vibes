@@ -82,6 +82,67 @@ class RequisitionRaidTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("The counter mode can target its controller")
+    void putsCountersOnOwnCreatures() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        cast(new int[]{2}, List.of(player1.getId()), 2);
+
+        assertThat(ownCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(opposingCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("The counter mode can target a player with no creatures")
+    void resolvesForPlayerWithNoCreatures() {
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        cast(new int[]{2}, List.of(player1.getId()), 2);
+
+        assertThat(opposingCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertInGraveyard(player1, "Requisition Raid");
+    }
+
+    @Test
+    @DisplayName("The enchantment mode rejects an artifact that is not an enchantment")
+    void rejectsNonEnchantmentTarget() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+
+        assertThatThrownBy(() -> cast(new int[]{1}, List.of(artifact.getId()), 2))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Selecting two modes requires both additional mana costs")
+    void rejectsInsufficientManaForTwoModes() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+
+        assertThatThrownBy(() -> cast(new int[]{0, 2}, List.of(artifact.getId(), player1.getId()), 2))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player2, "Fountain of Youth");
+    }
+
+    @Test
+    @DisplayName("The counter mode still resolves when the artifact target leaves the battlefield")
+    void resolvesRemainingLegalMode() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new RequisitionRaid()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castModalSorceryWithModes(player1, 0, 1, 3, new int[]{0, 2},
+                List.of(artifact.getId(), player1.getId()), null);
+
+        gd.playerBattlefields.get(player2.getId()).remove(artifact);
+        gd.playerGraveyards.get(player2.getId()).add(artifact.getCard());
+        harness.passBothPriorities();
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Requisition Raid");
+    }
+
     private void cast(int[] modes, List<java.util.UUID> targets, int mana) {
         harness.setHand(player1, List.of(new RequisitionRaid()));
         harness.addMana(player1, ManaColor.WHITE, 1);
