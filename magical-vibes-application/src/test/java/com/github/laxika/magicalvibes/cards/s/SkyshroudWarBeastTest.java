@@ -78,4 +78,46 @@ class SkyshroudWarBeastTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, warBeast)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, warBeast)).isEqualTo(2);
     }
+
+    @Test
+    @DisplayName("Opponent is chosen during spell resolution before state-based actions")
+    void survivesSpellResolutionWithOpponentNonbasicLand() {
+        harness.addToBattlefield(player2, new AdarkarWastes());
+        harness.addToBattlefield(player2, new DominatingLicid());
+
+        harness.castFromHand(player1, new SkyshroudWarBeast(), "{1}{G}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Skyshroud War Beast");
+        Permanent warBeast = findPermanent(player1, "Skyshroud War Beast");
+        assertThat(gqs.getEffectivePower(gd, warBeast)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, warBeast)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("War Beast dies after resolving when only its controller has nonbasic lands")
+    void diesWithoutChosenOpponentNonbasicLands() {
+        harness.addToBattlefield(player1, new AdarkarWastes());
+        harness.addToBattlefield(player2, new Forest());
+
+        harness.castFromHand(player1, new SkyshroudWarBeast(), "{1}{G}");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Skyshroud War Beast");
+        harness.assertInGraveyard(player1, "Skyshroud War Beast");
+    }
+
+    @Test
+    @DisplayName("Losing the chosen opponent's last nonbasic land makes War Beast die")
+    void diesWhenLastOpponentNonbasicLandLeaves() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new AdarkarWastes());
+        Permanent warBeast = harness.enterBattlefieldAndReturn(player1, new SkyshroudWarBeast());
+
+        gd.playerBattlefields.get(player2.getId()).remove(land);
+        harness.runStateBasedActions();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(warBeast);
+        harness.assertInGraveyard(player1, "Skyshroud War Beast");
+    }
 }
