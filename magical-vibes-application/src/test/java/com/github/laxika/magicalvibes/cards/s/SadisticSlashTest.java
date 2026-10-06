@@ -28,8 +28,7 @@ class SadisticSlashTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SadisticSlash()));
         addNormalMana();
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(target.getPowerModifier()).isEqualTo(-5);
         assertThat(target.getToughnessModifier()).isEqualTo(-5);
@@ -42,8 +41,7 @@ class SadisticSlashTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SadisticSlash()));
         addNormalMana();
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
@@ -91,6 +89,65 @@ class SadisticSlashTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Mayhem cannot recast the resolved spell without another discard")
+    void mayhemCannotRecastAfterResolution() {
+        SadisticSlash card = new SadisticSlash();
+        Permanent firstTarget = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent secondTarget = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setGraveyard(player1, List.of(card));
+        gd.cardsDiscardedOrCycledThisTurn.put(player1.getId(), new HashSet<>(Set.of(card.getId())));
+        prepareMainPhase();
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castFromGraveyardTargeting(player1, 0, firstTarget.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(firstTarget);
+        assertThatThrownBy(() -> harness.castFromGraveyardTargeting(player1, 0, secondTarget.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Mayhem can cast the instant during the opponent's upkeep")
+    void mayhemWorksDuringOpponentsTurn() {
+        SadisticSlash card = new SadisticSlash();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setGraveyard(player1, List.of(card));
+        gd.cardsDiscardedOrCycledThisTurn.put(player1.getId(), new HashSet<>(Set.of(card.getId())));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castFromGraveyardTargeting(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
+    }
+
+    @Test
+    @DisplayName("Mayhem eligibility expires when the turn ends")
+    void mayhemExpiresAtEndOfTurn() {
+        SadisticSlash card = new SadisticSlash();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setGraveyard(player1, List.of(card));
+        gd.cardsDiscardedOrCycledThisTurn.put(player1.getId(), new HashSet<>(Set.of(card.getId())));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castFromGraveyardTargeting(player1, 0, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
