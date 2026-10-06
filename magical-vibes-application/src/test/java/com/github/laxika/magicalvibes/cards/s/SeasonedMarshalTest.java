@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.t.Telepathy;
-import com.github.laxika.magicalvibes.cards.w.WindDrake;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -124,5 +123,37 @@ class SeasonedMarshalTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Attack trigger still taps its target after the Marshal leaves the battlefield")
+    void attackTriggerResolvesAfterMarshalLeaves() {
+        Permanent marshal = addCreatureReady(player1, new SeasonedMarshal());
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, bears.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(marshal);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(bears.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Another creature attacking does not trigger a Marshal that stays back")
+    void anotherCreatureAttackingDoesNotTriggerMarshal() {
+        Permanent marshal = addCreatureReady(player1, new SeasonedMarshal());
+        addCreatureReady(player1, new GrizzlyBears());
+        Permanent opposingBears = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(player1, List.of(1));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(marshal.isTapped()).isFalse();
+        assertThat(opposingBears.isTapped()).isFalse();
     }
 }
