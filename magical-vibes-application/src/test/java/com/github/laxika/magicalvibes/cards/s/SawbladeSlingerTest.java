@@ -23,7 +23,7 @@ class SawbladeSlingerTest extends BaseCardTest {
         Permanent artifact = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
 
         castSlinger(0, artifact.getId());
-        resolveCreatureAndEtb();
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(artifact);
         harness.assertInGraveyard(player2, "Ornithopter");
@@ -35,7 +35,7 @@ class SawbladeSlingerTest extends BaseCardTest {
         Permanent zombie = harness.addToBattlefieldAndReturn(player2, new Gravecrawler());
 
         castSlinger(1, zombie.getId());
-        resolveCreatureAndEtb();
+        resolveAllTriggers();
 
         harness.assertInGraveyard(player2, "Gravecrawler");
         Permanent slinger = gd.playerBattlefields.get(player1.getId()).getFirst();
@@ -73,8 +73,79 @@ class SawbladeSlingerTest extends BaseCardTest {
         }
     }
 
-    private void resolveCreatureAndEtb() {
+    @Test
+    @DisplayName("Entering without being cast still allows choosing the fight mode")
+    void canChooseFightWhenEnteringWithoutBeingCast() {
+        Permanent zombie = harness.addToBattlefieldAndReturn(player2, new Gravecrawler());
+        Permanent slinger = harness.enterBattlefieldAndReturn(player1, new SawbladeSlinger());
+        harness.inMutationScope(() -> harness.getTriggerCollectionService()
+                .processNextTriggeredModalTrigger(gd));
+
+        harness.handleListChoice(player1, "This creature fights target Zombie an opponent controls");
+        harness.handlePermanentChosen(player1, zombie.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Gravecrawler");
+        assertThat(slinger.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Fight mode cannot target its controller's Zombie")
+    void cannotFightOwnZombie() {
+        Permanent zombie = harness.addToBattlefieldAndReturn(player1, new Gravecrawler());
+
+        assertThatThrownBy(() -> castSlinger(1, zombie.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("opponent controls");
+    }
+
+    @Test
+    @DisplayName("Fight mode cannot target an opposing non-Zombie")
+    void cannotFightNonZombie() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new SawbladeSlinger());
+
+        assertThatThrownBy(() -> castSlinger(1, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Artifact mode cannot target an opposing nonartifact Zombie")
+    void cannotDestroyNonArtifact() {
+        Permanent zombie = harness.addToBattlefieldAndReturn(player2, new Gravecrawler());
+
+        assertThatThrownBy(() -> castSlinger(0, zombie.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("No fight damage is dealt if the Slinger leaves before its trigger resolves")
+    void noFightWhenSourceLeaves() {
+        Permanent zombie = harness.addToBattlefieldAndReturn(player2, new Gravecrawler());
+        castSlinger(1, zombie.getId());
         harness.passBothPriorities();
+        Permanent slinger = gd.playerBattlefields.get(player1.getId()).getFirst();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToHand(gd, slinger));
+
         harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Gravecrawler");
+        assertThat(zombie.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Artifact destruction still resolves after the Slinger leaves")
+    void destroysArtifactWhenSourceLeaves() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
+        castSlinger(0, artifact.getId());
+        harness.passBothPriorities();
+        Permanent slinger = gd.playerBattlefields.get(player1.getId()).getFirst();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToHand(gd, slinger));
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Ornithopter");
+        harness.assertNotOnBattlefield(player2, "Ornithopter");
     }
 }
