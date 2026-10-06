@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.a.AltarsReap;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -17,15 +18,14 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SerpentineSpike.class, AirElemental.class, GiantSpider.class, GrizzlyBears.class})
+@CardUsed({SerpentineSpike.class, AirElemental.class, AltarsReap.class, GiantSpider.class, GrizzlyBears.class})
 class SerpentineSpikeTest extends BaseCardTest {
 
     private void addManaAndCast(List<UUID> targets) {
         harness.setHand(player1, List.of(new SerpentineSpike()));
         harness.addMana(player1, ManaColor.COLORLESS, 5);
         harness.addMana(player1, ManaColor.RED, 2);
-        harness.castSorcery(player1, 0, targets);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targets);
     }
 
     @Test
@@ -86,5 +86,50 @@ class SerpentineSpikeTest extends BaseCardTest {
                 List.of(firstTarget, secondTarget, firstTarget)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("All targets must be different");
+    }
+
+    @Test
+    @DisplayName("Remaining targets retain their damage amounts when the middle target is sacrificed in response")
+    void resolvesWithAnIllegalMiddleTarget() {
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new GiantSpider());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent third = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setHand(player1, List.of(new SerpentineSpike(), new AltarsReap()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GiantSpider()));
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castSorcery(player1, 0, List.of(first.getId(), second.getId(), third.getId()));
+        harness.castInstantWithSacrifice(player1, 0, null, second.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(first.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player2, "Giant Spider");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Air Elemental");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .extracting(card -> card.getName()).containsExactly("Air Elemental");
+    }
+
+    @Test
+    @DisplayName("A creature that survives the damage is exiled if sacrificed later that turn")
+    void exilesSurvivorSacrificedLaterThatTurn() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GiantSpider());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        Permanent third = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        addManaAndCast(List.of(first.getId(), second.getId(), third.getId()));
+        harness.setHand(player1, List.of(new AltarsReap()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castInstantWithSacrifice(player1, 0, null, first.getId());
+
+        harness.assertNotOnBattlefield(player1, "Giant Spider");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .extracting(card -> card.getName()).containsExactly("Giant Spider");
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .noneMatch(card -> card.getName().equals("Giant Spider"));
     }
 }
