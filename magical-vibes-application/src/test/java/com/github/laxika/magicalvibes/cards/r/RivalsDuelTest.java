@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.o.OrderOfTheGoldenCricket;
 import com.github.laxika.magicalvibes.cards.p.PricklyBoggart;
+import com.github.laxika.magicalvibes.cards.s.StinkdrinkerBandit;
 import com.github.laxika.magicalvibes.cards.w.WarSpikeChangeling;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -19,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({RivalsDuel.class, OrderOfTheGoldenCricket.class, PricklyBoggart.class,
-        WarSpikeChangeling.class})
+        WarSpikeChangeling.class, StinkdrinkerBandit.class})
 class RivalsDuelTest extends BaseCardTest {
 
     @Test
@@ -32,8 +33,7 @@ class RivalsDuelTest extends BaseCardTest {
 
         UUID cricketId = harness.getPermanentId(player1, "Order of the Golden Cricket");
         UUID boggartId = harness.getPermanentId(player2, "Prickly Boggart");
-        harness.castSorcery(player1, 0, List.of(cricketId, boggartId));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(cricketId, boggartId));
 
         // Cricket (2/2) deals 2 to Boggart (1/1) which dies; Boggart's 1 damage leaves the Cricket alive.
         harness.assertInGraveyard(player2, "Prickly Boggart");
@@ -123,8 +123,7 @@ class RivalsDuelTest extends BaseCardTest {
 
         UUID cricketId = harness.getPermanentId(player1, "Order of the Golden Cricket");
         UUID boggartId = harness.getPermanentId(player1, "Prickly Boggart");
-        harness.castSorcery(player1, 0, List.of(cricketId, boggartId));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(cricketId, boggartId));
 
         harness.assertOnBattlefield(player1, "Order of the Golden Cricket");
         harness.assertInGraveyard(player1, "Prickly Boggart");
@@ -147,5 +146,41 @@ class RivalsDuelTest extends BaseCardTest {
         assertThat(cricket.getMarkedDamage()).isZero();
         assertThat(boggart.getMarkedDamage()).isZero();
         assertThat(gameLogContains("fizzles (illegal target)")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Fight damage is simultaneous even when a creature has first strike")
+    void firstStrikeDoesNotPreventMutualLethalFightDamage() {
+        Permanent cricket = harness.addToBattlefieldAndReturn(player1, new OrderOfTheGoldenCricket());
+        Permanent bandit = harness.addToBattlefieldAndReturn(player2, new StinkdrinkerBandit());
+        cricket.getGrantedKeywords().add(Keyword.FIRST_STRIKE);
+        harness.setHand(player1, List.of(new RivalsDuel()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castAndResolveSorcery(player1, 0, List.of(cricket.getId(), bandit.getId()));
+
+        harness.assertInGraveyard(player1, "Order of the Golden Cricket");
+        harness.assertInGraveyard(player2, "Stinkdrinker Bandit");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Neither creature fights when the first target gains shroud")
+    void creaturesDoNotFightWhenFirstTargetGainsShroud() {
+        Permanent cricket = harness.addToBattlefieldAndReturn(player1, new OrderOfTheGoldenCricket());
+        Permanent boggart = harness.addToBattlefieldAndReturn(player2, new PricklyBoggart());
+        harness.setHand(player1, List.of(new RivalsDuel()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castSorcery(player1, 0, List.of(cricket.getId(), boggart.getId()));
+        cricket.getGrantedKeywords().add(Keyword.SHROUD);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Order of the Golden Cricket");
+        harness.assertOnBattlefield(player2, "Prickly Boggart");
+        assertThat(cricket.getMarkedDamage()).isZero();
+        assertThat(boggart.getMarkedDamage()).isZero();
+        assertThat(gameLogContains("fizzles (illegal target)")).isFalse();
     }
 }
