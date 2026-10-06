@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.q.QuickDrawDagger;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SlipOutTheBack.class, GrizzlyBears.class, Island.class})
+@CardUsed({SlipOutTheBack.class, GrizzlyBears.class, Island.class, QuickDrawDagger.class})
 class SlipOutTheBackTest extends BaseCardTest {
 
     @Test
@@ -56,6 +57,51 @@ class SlipOutTheBackTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Can target your own creature, which stays phased out through the opponent's turn")
+    void ownCreatureWaitsForItsControllersTurn() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        castSlipOutTheBack(creature);
+        advanceTurn();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+
+        harness.forceStep(TurnStep.CLEANUP);
+        harness.passUntil(player1, TurnStep.UPKEEP);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("An opponent's attached Equipment phases out and returns with its host")
+    void attachedEquipmentReturnsWithHostRatherThanItsOwnControllersTurn() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player2, new QuickDrawDagger());
+        equipment.setAttachedTo(creature.getId());
+
+        castSlipOutTheBack(creature);
+
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(creature);
+        assertThat(gd.phasedOutPermanents.get(player2.getId())).contains(equipment);
+        harness.assertNotOnBattlefield(player2, "Quick-Draw Dagger");
+
+        advanceTurn();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Quick-Draw Dagger");
+
+        harness.forceStep(TurnStep.CLEANUP);
+        harness.passUntil(player1, TurnStep.UPKEEP);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(equipment);
+        assertThat(equipment.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
     private void castSlipOutTheBack(Permanent target) {
         harness.setHand(player1, List.of(new SlipOutTheBack()));
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -65,7 +111,6 @@ class SlipOutTheBackTest extends BaseCardTest {
 
     private void advanceTurn() {
         harness.forceStep(TurnStep.CLEANUP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
     }
 }
