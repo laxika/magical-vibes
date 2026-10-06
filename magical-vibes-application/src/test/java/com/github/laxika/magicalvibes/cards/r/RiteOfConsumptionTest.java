@@ -123,4 +123,68 @@ class RiteOfConsumptionTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("sacrifice");
     }
+
+    @Test
+    @DisplayName("Partial prevention reduces the life gained to the damage actually dealt")
+    void partialPreventionReducesLifeGain() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new SafeholdSentry());
+        gd.playerDamagePreventionShields.put(player2.getId(), 1);
+        harness.setHand(player1, List.of(new RiteOfConsumption()));
+        addMana();
+
+        harness.castSorceryWithSacrifice(player1, 0, player2.getId(), sacrifice.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+        harness.assertLife(player1, 21);
+    }
+
+    @Test
+    @DisplayName("Uses the sacrificed creature's power on the battlefield including continuous bonuses")
+    void usesPowerBeforeSacrifice() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new BriarberryCohort());
+        harness.addToBattlefield(player1, new BriarberryCohort());
+        harness.setHand(player1, List.of(new RiteOfConsumption()));
+        addMana();
+
+        harness.castSorceryWithSacrifice(player1, 0, player2.getId(), sacrifice.getId());
+        harness.assertInGraveyard(player1, "Briarberry Cohort");
+        harness.assertLife(player2, 20);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 22);
+    }
+
+    @Test
+    @DisplayName("Cannot sacrifice an opponent's creature to pay the additional cost")
+    void cannotSacrificeOpponentsCreature() {
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player2, new SafeholdSentry());
+        harness.setHand(player1, List.of(new RiteOfConsumption()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castSorceryWithSacrifice(
+                player1, 0, player2.getId(), sacrifice.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player2, "Safehold Sentry");
+    }
+
+    @Test
+    @DisplayName("Life gain completes before checking whether self-inflicted damage is lethal")
+    void survivesTemporarilyLethalSelfDamage() {
+        harness.setLife(player1, 1);
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new SafeholdSentry());
+        harness.setHand(player1, List.of(new RiteOfConsumption()));
+        addMana();
+
+        harness.castSorceryWithSacrifice(player1, 0, player1.getId(), sacrifice.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 1);
+        assertThat(gd.gameResult).isNull();
+    }
 }
