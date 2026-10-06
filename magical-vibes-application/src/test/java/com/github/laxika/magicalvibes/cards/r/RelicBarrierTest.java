@@ -77,10 +77,50 @@ class RelicBarrierTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("A noncreature Relic Barrier can activate on the turn it enters")
+    void canActivateImmediately() {
+        Permanent barrier = harness.addToBattlefieldAndReturn(player1, new RelicBarrier());
+        Permanent artifact = addArtifact(player2);
+
+        harness.activateAbility(player1, 0, null, artifact.getId());
+
+        assertThat(barrier.isTapped()).isTrue();
+        assertThat(artifact.isTapped()).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(artifact.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Relic Barrier can target itself despite tapping to pay its cost")
+    void canTargetItself() {
+        Permanent barrier = addReadyBarrier(player1);
+
+        harness.activateAbility(player1, 0, null, barrier.getId());
+        harness.passBothPriorities();
+
+        assertThat(barrier.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped Relic Barrier cannot pay its tap cost")
+    void cannotActivateWhileTapped() {
+        Permanent barrier = addReadyBarrier(player1);
+        Permanent artifact = addArtifact(player2);
+        barrier.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, artifact.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(artifact.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addReadyBarrier(Player player) {
-        Permanent perm = harness.addToBattlefieldAndReturn(player, new RelicBarrier());
-        perm.setSummoningSick(false);
-        return perm;
+        return addCreatureReady(player, new RelicBarrier());
     }
 
     private Permanent addArtifact(Player player) {
