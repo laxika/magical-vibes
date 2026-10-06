@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.a.AlexisCloak;
 import com.github.laxika.magicalvibes.cards.r.RushingRiver;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({SleepingPotion.class, SeaSnidd.class, Singe.class, SlingshotGoblin.class,
-        StarCompass.class, RushingRiver.class})
+        StarCompass.class, RushingRiver.class, AlexisCloak.class})
 class SleepingPotionTest extends BaseCardTest {
 
     @Test
@@ -27,8 +28,7 @@ class SleepingPotionTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.castEnchantment(player1, 0, creature.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(creature.isTapped()).isTrue();
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -127,10 +127,50 @@ class SleepingPotionTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
     }
 
+    @Test
+    @CardUsed({SleepingPotion.class, SeaSnidd.class, AlexisCloak.class})
+    @DisplayName("The enters ability still taps the creature if it gains shroud before resolution")
+    void entersAbilityTapsCreatureThatGainsShroud() {
+        Permanent creature = addCreatureReady(player2, new SeaSnidd());
+        harness.setHand(player1, List.of(new SleepingPotion(), new AlexisCloak()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isFalse();
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Sleeping Potion");
+        harness.passBothPriorities();
+        assertThat(creature.isTapped()).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isTrue();
+        harness.assertOnBattlefield(player1, "Alexi's Cloak");
+    }
+
+    @Test
+    @DisplayName("Targeting another creature does not sacrifice Sleeping Potion")
+    void targetingAnotherCreatureDoesNotSacrificePotion() {
+        Permanent enchanted = addCreatureReady(player2, new SeaSnidd());
+        Permanent other = addCreatureReady(player2, new SeaSnidd());
+        attachPotion(player1, enchanted);
+        harness.setHand(player1, List.of(new Singe()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, other.getId());
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Sleeping Potion");
+        harness.assertNotInGraveyard(player1, "Sleeping Potion");
+    }
+
     private Permanent attachPotion(Player controller, Permanent creature) {
-        Permanent potion = new Permanent(new SleepingPotion());
+        Permanent potion = harness.addToBattlefieldAndReturn(controller, new SleepingPotion());
         potion.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(controller.getId()).add(potion);
         return potion;
     }
 }
