@@ -57,4 +57,59 @@ class RoughTumbleTest extends BaseCardTest {
         assertThat(undamagedCreature.getMarkedDamage()).isZero();
         assertThat(damagedCreature.getMarkedDamage()).isEqualTo(6);
     }
+
+    @Test
+    @DisplayName("Tumble kills flying creatures controlled by either player and leaves other permanents alone")
+    void tumbleKillsFlyingCreaturesOnBothSides() {
+        harness.addToBattlefield(player1, new SerraSphinx());
+        harness.addToBattlefield(player2, new SerraSphinx());
+        Permanent groundCreature = harness.addToBattlefieldAndReturn(player2, new BloodKnight());
+        harness.addToBattlefield(player1, new GaeasAnthem());
+        harness.setHand(player1, List.of(new RoughTumble()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.castModalSorcery(player1, 0, 1, List.of());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Serra Sphinx");
+        harness.assertNotOnBattlefield(player2, "Serra Sphinx");
+        harness.assertOnBattlefield(player2, "Blood Knight");
+        harness.assertOnBattlefield(player1, "Gaea's Anthem");
+        assertThat(groundCreature.getMarkedDamage()).isZero();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Rough can resolve without creatures and does not damage players")
+    void roughResolvesOnEmptyBattlefield() {
+        harness.setHand(player1, List.of(new RoughTumble()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castModalSorcery(player1, 0, 0, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Rough // Tumble");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Tumble can resolve without creatures and does not damage players")
+    void tumbleResolvesOnEmptyBattlefield() {
+        harness.setHand(player1, List.of(new RoughTumble()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.castModalSorcery(player1, 0, 1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Rough // Tumble");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
 }
