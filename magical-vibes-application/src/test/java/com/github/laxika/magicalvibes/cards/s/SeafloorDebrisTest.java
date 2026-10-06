@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import java.util.List;
 
@@ -79,5 +81,42 @@ class SeafloorDebrisTest extends BaseCardTest {
         harness.handleListChoice(player1, "RED");
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ManaColor.class, names = {"WHITE", "BLUE", "BLACK", "RED", "GREEN"})
+    @DisplayName("Sacrifice mana ability produces exactly one mana of any chosen color without using the stack")
+    void sacrificeProducesEachColorImmediately(ManaColor color) {
+        harness.addToBattlefield(player1, new SeafloorDebris());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Seafloor Debris");
+        harness.assertInGraveyard(player1, "Seafloor Debris");
+
+        harness.handleListChoice(player1, color.name());
+
+        for (ManaColor manaColor : ManaColor.values()) {
+            assertThat(gd.playerManaPools.get(player1.getId()).get(manaColor))
+                    .isEqualTo(manaColor == color ? 1 : 0);
+            assertThat(gd.playerManaPools.get(player2.getId()).get(manaColor)).isZero();
+        }
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A land played tapped can produce blue mana after its controller's untap step")
+    void playedLandProducesManaAfterUntapping() {
+        harness.setHand(player1, List.of(new SeafloorDebris()));
+        harness.playLand(player1, 0);
+
+        harness.performUntapStep(player1);
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(findPermanent(player1, "Seafloor Debris").isTapped()).isTrue();
+        harness.assertNotInGraveyard(player1, "Seafloor Debris");
+        assertThat(gd.stack).isEmpty();
     }
 }
