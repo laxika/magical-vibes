@@ -15,6 +15,50 @@ import static org.assertj.core.api.Assertions.assertThat;
 class RangerSquadronTest extends BaseCardTest {
 
     @Test
+    void laterAttacksByTheOriginalAndConjuredSquadronDoNotConjureAgain() {
+        Permanent original = addCreatureReady(player1, new RangerSquadron());
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        Card duplicate = gd.playerHands.get(player1.getId()).getFirst();
+        gd.playerHands.get(player1.getId()).remove(duplicate);
+        Permanent conjured = harness.enterBattlefieldAndReturn(player1, duplicate);
+        harness.performUntapStep(player1);
+        conjured.setSummoningSick(false);
+
+        declareAttackers(List.of(0, 1));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gqs.hasKeyword(gd, original, Keyword.DOUBLE_TEAM)).isFalse();
+        assertThat(gqs.hasKeyword(gd, conjured, Keyword.DOUBLE_TEAM)).isFalse();
+    }
+
+    @Test
+    void eachAttackingSquadronConjuresItsOwnDuplicate() {
+        Permanent first = addCreatureReady(player1, new RangerSquadron());
+        Permanent second = addCreatureReady(player1, new RangerSquadron());
+
+        declareAttackers(List.of(0, 1));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2)
+                .allSatisfy(card -> {
+                    assertThat(card).isInstanceOf(RangerSquadron.class);
+                    assertThat(card.getKeywords()).doesNotContain(Keyword.DOUBLE_TEAM);
+                    assertThat(card.getId()).isNotEqualTo(first.getCard().getId())
+                            .isNotEqualTo(second.getCard().getId());
+                });
+        assertThat(gd.playerHands.get(player1.getId()).get(0).getId())
+                .isNotEqualTo(gd.playerHands.get(player1.getId()).get(1).getId());
+        assertThat(gqs.hasKeyword(gd, first, Keyword.DOUBLE_TEAM)).isFalse();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.DOUBLE_TEAM)).isFalse();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
+
+    @Test
     void doubleTeamConjuresADuplicateAndRemovesDoubleTeamFromBothCards() {
         Permanent squadron = addCreatureReady(player1, new RangerSquadron());
 
