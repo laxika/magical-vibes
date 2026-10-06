@@ -37,8 +37,7 @@ class SearchElementalTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
         harness.handleCardChosen(player1, 0);
 
         harness.passBothPriorities();
@@ -78,9 +77,116 @@ class SearchElementalTest extends BaseCardTest {
     }
 
     private Permanent readyPermanent(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, card);
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
+    }
+
+    @Test
+    @DisplayName("Scrying an empty library still triggers Search Elemental")
+    void scryingEmptyLibraryTriggers() {
+        Permanent elemental = harness.addToBattlefieldAndReturn(player1, new SearchElemental());
+        harness.setLibrary(player1, List.of());
+
+        harness.enterBattlefieldAndReturn(player1, new ZhalfirinVoid());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(elemental.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Each scry triggers every Search Elemental, including when bottoming no cards")
+    void repeatedScryTriggersEachElemental() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new SearchElemental());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new SearchElemental());
+        harness.setLibrary(player1, List.of(new SearchElemental()));
+
+        for (int i = 0; i < 2; i++) {
+            harness.enterBattlefieldAndReturn(player1, new ZhalfirinVoid());
+            harness.passBothPriorities();
+            gs.handleInteractionAnswer(gd, player1,
+                    new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+        }
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("An opponent's scry does not trigger Search Elemental")
+    void opponentsScryDoesNotTrigger() {
+        Permanent elemental = harness.addToBattlefieldAndReturn(player1, new SearchElemental());
+        harness.setLibrary(player2, List.of(new SearchElemental()));
+
+        harness.enterBattlefieldAndReturn(player2, new ZhalfirinVoid());
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player2,
+                new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(elemental.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Searching an empty library still causes scry and the counter trigger")
+    void searchingEmptyLibraryTriggersBothAbilities() {
+        Permanent elemental = harness.addToBattlefieldAndReturn(player1, new SearchElemental());
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new DemonicCounsel()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(elemental.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("An opponent's library search does not trigger Search Elemental")
+    void opponentsSearchDoesNotTrigger() {
+        Permanent elemental = harness.addToBattlefieldAndReturn(player1, new SearchElemental());
+        harness.setLibrary(player2, List.of(new YawgmothDemon()));
+        harness.setHand(player2, List.of(new DemonicCounsel()));
+        harness.forceActivePlayer(player2);
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveSorcery(player2, 0, 0);
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();
+        assertThat(elemental.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("The counter persists but the blocking restriction expires at end of turn")
+    void blockingRestrictionExpiresButCounterRemains() {
+        Permanent elemental = readyPermanent(player1, new SearchElemental());
+        Permanent blocker = readyPermanent(player2, new SearchElemental());
+        harness.setLibrary(player1, List.of());
+        harness.enterBattlefieldAndReturn(player1, new ZhalfirinVoid());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(TurnStep.UPKEEP);
+
+        assertThat(elemental.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        elemental.setAttacking(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.beginBlockerDeclarationInput();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(elemental))));
+
+        assertThat(blocker.isBlocking()).isTrue();
     }
 }
