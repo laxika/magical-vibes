@@ -96,4 +96,65 @@ class RavingOniSlaveTest extends BaseCardTest {
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
     }
+
+    @Test
+    @DisplayName("An opponent's Demon does not prevent the entering life loss")
+    void opponentsDemonDoesNotPreventEnteringLifeLoss() {
+        harness.addToBattlefield(player2, new RazorjawOni());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.castFromHand(player1, new RavingOniSlave(), "{1}{B}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Entering still triggers with a Demon, and loses life if that Demon leaves before resolution")
+    void enteringWithDemonRemovedBeforeResolutionCausesLifeLoss() {
+        Permanent demon = harness.addToBattlefieldAndReturn(player1, new RazorjawOni());
+        harness.setLife(player1, 20);
+
+        harness.castFromHand(player1, new RavingOniSlave(), "{1}{B}");
+        harness.passBothPriorities();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, demon));
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 17);
+    }
+
+    @Test
+    @DisplayName("Leaving still triggers with a Demon, and loses life if that Demon leaves before resolution")
+    void leavingWithDemonRemovedBeforeResolutionCausesLifeLoss() {
+        Permanent slave = harness.addToBattlefieldAndReturn(player1, new RavingOniSlave());
+        Permanent demon = harness.addToBattlefieldAndReturn(player1, new RazorjawOni());
+        harness.setLife(player1, 20);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, slave));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, demon));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 17);
+    }
+
+    @Test
+    @DisplayName("Exile triggers the leaving life loss just like death")
+    void exileCausesLeavingLifeLoss() {
+        Permanent slave = harness.addToBattlefieldAndReturn(player1, new RavingOniSlave());
+        harness.setLife(player1, 20);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToExile(gd, slave));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 17);
+    }
 }
