@@ -60,6 +60,77 @@ class SkyCycleTest extends BaseCardTest {
         assertThat(crew.isTapped()).isTrue();
     }
 
+    @Test
+    void countsItselfButNotOpponentsVehicles() {
+        Permanent target = addOpponentBear();
+        harness.addToBattlefield(player2, new SkyCycle());
+
+        castSkyCycle(target.getId());
+
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    void canTargetAControlledCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        castSkyCycle(target.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(target.getCard());
+    }
+
+    @Test
+    void countsVehiclesAddedAfterTheTriggerIsPutOnTheStack() {
+        Permanent target = addOpponentBear();
+        harness.setHand(player1, List.of(new SkyCycle()));
+        addCastingMana();
+        harness.castArtifact(player1, 0, target.getId());
+        harness.passBothPriorities();
+        harness.addToBattlefield(player1, new SkyCycle());
+
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(4);
+    }
+
+    @Test
+    void doesNotCountTheSourceAfterItLeavesTheBattlefield() {
+        Permanent target = addOpponentBear();
+        harness.setHand(player1, List.of(new SkyCycle()));
+        addCastingMana();
+        harness.castArtifact(player1, 0, target.getId());
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player1.getId()).clear();
+
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void summoningSickCreatureCanCrew() {
+        Permanent skyCycle = harness.addToBattlefieldAndReturn(player1, new SkyCycle());
+        Permanent crew = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        crew.setSummoningSick(true);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, skyCycle)).isTrue();
+        assertThat(crew.isTapped()).isTrue();
+    }
+
+    @Test
+    void cannotCrewWithoutEnoughUntappedPower() {
+        harness.addToBattlefield(player1, new SkyCycle());
+        Permanent crew = addCreatureReady();
+        crew.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
     private Permanent addOpponentBear() {
         GrizzlyBears bear = new GrizzlyBears();
         bear.setToughness(8);
@@ -67,9 +138,7 @@ class SkyCycleTest extends BaseCardTest {
     }
 
     private Permanent addCreatureReady() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        creature.setSummoningSick(false);
-        return creature;
+        return addCreatureReady(player1, new GrizzlyBears());
     }
 
     private void castSkyCycle(java.util.UUID targetId) {
