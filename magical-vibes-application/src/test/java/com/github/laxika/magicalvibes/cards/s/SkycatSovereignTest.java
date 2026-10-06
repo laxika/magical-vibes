@@ -16,6 +16,50 @@ import static org.assertj.core.api.Assertions.assertThat;
 class SkycatSovereignTest extends BaseCardTest {
 
     @Test
+    void doesNotCountItselfOrOpponentsFlyingCreatures() {
+        Permanent sovereign = harness.addToBattlefieldAndReturn(player1, new SkycatSovereign());
+        harness.addToBattlefield(player2, new SkycatSovereign());
+
+        assertThat(gqs.getEffectivePower(gd, sovereign)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, sovereign)).isEqualTo(1);
+    }
+
+    @Test
+    void multipleSovereignsCountEachOther() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new SkycatSovereign());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new SkycatSovereign());
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(2);
+    }
+
+    @Test
+    void canActivateRepeatedlyWhileTappedAndSummoningSickAndCountsCreatedTokens() {
+        Permanent sovereign = harness.addToBattlefieldAndReturn(player1, new SkycatSovereign());
+        sovereign.setSummoningSick(true);
+        sovereign.tap();
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, sovereign)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, sovereign)).isEqualTo(2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(3);
+        assertThat(gqs.getEffectivePower(gd, sovereign)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, sovereign)).isEqualTo(3);
+    }
+
+    @Test
     @DisplayName("Gets +1/+1 for each other flying creature you control")
     void boostsForOtherFlyingCreaturesYouControl() {
         Permanent sovereign = harness.addToBattlefieldAndReturn(player1, new SkycatSovereign());
