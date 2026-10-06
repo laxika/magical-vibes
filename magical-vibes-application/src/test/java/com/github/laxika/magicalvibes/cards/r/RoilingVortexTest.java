@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.a.AsForetold;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.ScaleTheHeights;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -16,8 +17,79 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RoilingVortex.class, AsForetold.class, GrizzlyBears.class})
+@CardUsed({RoilingVortex.class, AsForetold.class, GrizzlyBears.class, ScaleTheHeights.class})
 class RoilingVortexTest extends BaseCardTest {
+
+    @Test
+    void damagesControllerOnTheirUpkeep() {
+        harness.addToBattlefield(player1, new RoilingVortex());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void damagesControllerCastingFreeSpell() {
+        harness.addToBattlefield(player1, new RoilingVortex());
+        var asForetold = harness.addToBattlefieldAndReturn(player1, new AsForetold());
+        asForetold.setCounterCount(CounterType.TIME, 2);
+        harness.setHand(player1, List.of(new RoilingVortex()));
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 15);
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(3);
+    }
+
+    @Test
+    void resolvedRestrictionPreventsOpponentLifeGainAfterSourceLeaves() {
+        harness.addToBattlefield(player1, new RoilingVortex());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player1.getId()).clear();
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new ScaleTheHeights()));
+        harness.setLibrary(player2, List.of(new RoilingVortex()));
+        harness.addMana(player2, ManaColor.GREEN, 3);
+        harness.castAndResolveSorcery(player2, 0, (java.util.UUID) null);
+
+        harness.assertLife(player2, 20);
+        harness.assertInHand(player2, "Roiling Vortex");
+    }
+
+    @Test
+    void restrictionDoesNotPreventControllerLifeGain() {
+        harness.addToBattlefield(player1, new RoilingVortex());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new ScaleTheHeights()));
+        harness.setLibrary(player1, List.of(new RoilingVortex()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castAndResolveSorcery(player1, 0, (java.util.UUID) null);
+
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 20);
+    }
 
     @Test
     @DisplayName("Deals 1 damage to the active player during each upkeep")
