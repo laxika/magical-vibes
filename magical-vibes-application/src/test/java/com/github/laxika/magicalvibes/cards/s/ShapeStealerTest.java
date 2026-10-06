@@ -141,4 +141,72 @@ class ShapeStealerTest extends BaseCardTest {
         assertThat(shapeStealer.getEffectivePower()).isEqualTo(3);
         assertThat(shapeStealer.getEffectiveToughness()).isEqualTo(2);
     }
+
+    @Test
+    @DisplayName("Uses the opponent's modified power and toughness immediately before it leaves")
+    void usesModifiedLastKnownPowerAndToughness() {
+        Permanent shapeStealer = addCreatureReady(player1, new ShapeStealer());
+        shapeStealer.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new AkutaBornOfAsh());
+        harness.setHand(player2, List.of(new InnerCalmOuterStrength(), new GhostLitRaider()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 5);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.castInstant(player2, 0, blocker.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(3);
+
+        harness.activateHandAbility(player2, 0, blocker.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Akuta, Born of Ash");
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, shapeStealer)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, shapeStealer)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Later changes to the opponent do not change Shape Stealer's resolved base power and toughness")
+    void laterOpponentChangesDoNotChangeResolvedBasePowerAndToughness() {
+        Permanent shapeStealer = addCreatureReady(player1, new ShapeStealer());
+        shapeStealer.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new KamiOfTheCrescentMoon());
+        harness.setHand(player2, List.of(new InnerCalmOuterStrength(), new GnatMiser()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveAllTriggers();
+        harness.castInstant(player2, 0, blocker.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, shapeStealer)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, shapeStealer)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Shape Stealer keeps its own power and toughness bonuses after its base values change")
+    void ownBonusesApplyAfterBasePowerAndToughnessChange() {
+        Permanent shapeStealer = addCreatureReady(player1, new ShapeStealer());
+        shapeStealer.setAttacking(true);
+        addCreatureReady(player2, new KamiOfTheCrescentMoon());
+        harness.setHand(player1, List.of(new InnerCalmOuterStrength(), new GnatMiser()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.castInstant(player1, 0, shapeStealer.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, shapeStealer)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, shapeStealer)).isEqualTo(4);
+    }
 }
