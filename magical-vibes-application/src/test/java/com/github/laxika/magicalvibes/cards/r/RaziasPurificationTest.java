@@ -78,6 +78,45 @@ class RaziasPurificationTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(player2Signet);
     }
 
+    @Test
+    @DisplayName("An opponent sacrifices excess permanents even when the caster controls none")
+    void onlyOpponentHasExcessPermanents() {
+        Permanent recruit = harness.addToBattlefieldAndReturn(player2, new BorosRecruit());
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        Permanent signet = harness.addToBattlefieldAndReturn(player2, new BorosSignet());
+        Permanent secondRecruit = harness.addToBattlefieldAndReturn(player2, new BorosRecruit());
+        Permanent secondForest = harness.addToBattlefieldAndReturn(player2, new Forest());
+
+        castRaziasPurification();
+
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        assertThat(choice.maxCount()).isEqualTo(2);
+        assertThat(choice.validIds()).containsExactly(
+                recruit.getId(), forest.getId(), signet.getId(), secondRecruit.getId(), secondForest.getId());
+
+        harness.handleMultiplePermanentsChosen(player2, List.of(recruit.getId(), secondRecruit.getId()));
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(forest, signet, secondForest);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+        harness.assertInGraveyard(player2, "Boros Recruit");
+        harness.assertInGraveyard(player1, "Razia's Purification");
+    }
+
+    @Test
+    @DisplayName("Empty battlefields need no choices and the spell finishes resolving")
+    void emptyBattlefieldsNeedNoChoices() {
+        castRaziasPurification();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Razia's Purification");
+    }
+
     private void castRaziasPurification() {
         harness.castFromHand(player1, new RaziasPurification(), "{4}{R}{W}");
         harness.passBothPriorities();
