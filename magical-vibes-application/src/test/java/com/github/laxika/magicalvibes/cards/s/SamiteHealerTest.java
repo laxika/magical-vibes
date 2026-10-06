@@ -277,6 +277,88 @@ class SamiteHealerTest extends BaseCardTest {
     }
 
     @Test
+    void summoningSickHealerCannotActivate() {
+        harness.addToBattlefield(player1, new SamiteHealer());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void twoHealersPreventTwoDamageToTheSamePlayer() {
+        addReadyHealer(player1);
+        addReadyHealer(player1);
+        harness.setLife(player2, 20);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Incinerate()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    void consumedShieldDoesNotPreventASecondDamageEvent() {
+        addReadyHealer(player1);
+        harness.setLife(player2, 20);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Incinerate(), new Incinerate()));
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.assertLife(player2, 18);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.assertLife(player2, 15);
+    }
+
+    @Test
+    void creatureShieldExpiresAtEndOfTurn() {
+        addReadyHealer(player1);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        assertThat(target.getDamagePreventionShield()).isEqualTo(1);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(target.getDamagePreventionShield()).isZero();
+    }
+
+    @Test
+    void abilityResolvesAfterHealerIsDestroyed() {
+        Permanent healer = addReadyHealer(player1);
+        harness.setLife(player2, 20);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        harness.setHand(player1, List.of(new Incinerate(), new Incinerate()));
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.castAndResolveInstant(player1, 0, healer.getId());
+        resolveAllTriggers();
+        harness.assertNotOnBattlefield(player1, "Samite Healer");
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
     void tappedHealerCannotActivateAgain() {
         addReadyHealer(player1);
         harness.forceActivePlayer(player1);
