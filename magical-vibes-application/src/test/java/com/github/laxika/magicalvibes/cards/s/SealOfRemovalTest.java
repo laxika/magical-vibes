@@ -95,4 +95,34 @@ class SealOfRemovalTest extends BaseCardTest {
         harness.assertNotInHand(player2, "Mogg Toady");
         harness.assertInGraveyard(player1, "Seal of Removal");
     }
+
+    @Test
+    @DisplayName("Two activations targeting the same creature return it only once")
+    void twoActivationsReturnTheSameCreatureOnlyOnce() {
+        harness.addToBattlefield(player1, new SealOfRemoval());
+        harness.addToBattlefield(player1, new SealOfRemoval());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new MoggToady());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        assertThat(gd.stack).hasSize(2);
+        harness.assertNotOnBattlefield(player1, "Seal of Removal");
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Mogg Toady");
+        harness.assertInHand(player2, "Mogg Toady");
+        assertThat(gd.playerHands.get(player2.getId()))
+                .filteredOn(card -> card.getId().equals(target.getCard().getId())).hasSize(1);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId()))
+                .filteredOn(card -> card.getId().equals(target.getCard().getId())).hasSize(1);
+        assertThat(gameLogContains("fizzles")).isTrue();
+    }
 }
