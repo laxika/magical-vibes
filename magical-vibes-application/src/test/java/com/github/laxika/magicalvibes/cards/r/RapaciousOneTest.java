@@ -1,15 +1,18 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.u.UlamogsCrusher;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RapaciousOne.class, UlamogsCrusher.class, ReinforcedBulwark.class})
 class RapaciousOneTest extends BaseCardTest {
 
     @Test
@@ -47,7 +50,7 @@ class RapaciousOneTest extends BaseCardTest {
     void doesNotTriggerWithoutCombatDamageToPlayer() {
         Permanent rapaciousOne = addCreatureReady(player1, new RapaciousOne());
         rapaciousOne.setAttacking(true);
-        Permanent blocker = addCreatureReady(player2, creature("Great Wall", 0, 6));
+        Permanent blocker = addCreatureReady(player2, new UlamogsCrusher());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
@@ -57,13 +60,90 @@ class RapaciousOneTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Eldrazi Spawn")).isEmpty();
     }
 
-    private static Card creature(String name, int power, int toughness) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{1}");
-        card.setPower(power);
-        card.setToughness(toughness);
-        return card;
+    @Test
+    @DisplayName("Created Spawn are untapped colorless 0/1 Eldrazi Spawn creatures")
+    void createsCorrectSpawnTokens() {
+        Permanent rapaciousOne = addCreatureReady(player1, new RapaciousOne());
+        rapaciousOne.setAttacking(true);
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Eldrazi Spawn")).hasSize(5).allSatisfy(spawn -> {
+            assertThat(spawn.getCard().isToken()).isTrue();
+            assertThat(spawn.getCard().getType()).isEqualTo(CardType.CREATURE);
+            assertThat(spawn.getCard().getColors()).isEmpty();
+            assertThat(spawn.getCard().getPower()).isZero();
+            assertThat(spawn.getCard().getToughness()).isEqualTo(1);
+            assertThat(spawn.getCard().getSubtypes()).containsExactlyInAnyOrder(CardSubtype.ELDRAZI, CardSubtype.SPAWN);
+            assertThat(spawn.isTapped()).isFalse();
+            assertThat(spawn.isAttacking()).isFalse();
+        });
+    }
+
+    @Test
+    @DisplayName("The combat damage trigger creates Spawn even after Rapacious One leaves")
+    void triggerResolvesAfterSourceLeavesBattlefield() {
+        Permanent rapaciousOne = addCreatureReady(player1, new RapaciousOne());
+        rapaciousOne.setAttacking(true);
+
+        resolveCombat();
+        assertThat(gd.stack).isNotEmpty();
+        gd.playerBattlefields.get(player1.getId()).remove(rapaciousOne);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Eldrazi Spawn")).hasSize(5);
+    }
+
+    @Test
+    @DisplayName("Only trample damage dealt to the player creates Spawn")
+    void createsTokensForTrampleDamageOnly() {
+        Permanent rapaciousOne = addCreatureReady(player1, new RapaciousOne());
+        rapaciousOne.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new ReinforcedBulwark());
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        assertThat(findPermanents(player1, "Eldrazi Spawn")).hasSize(1);
+        assertThat(findPermanents(player2, "Eldrazi Spawn")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Prevented combat damage does not contribute to the Spawn count")
+    void createsTokensForUnpreventedDamageOnly() {
+        addCreatureReady(player2, new ReinforcedBulwark());
+        harness.activateAbility(player2, 0, null, null);
+        resolveAllTriggers();
+        Permanent rapaciousOne = addCreatureReady(player1, new RapaciousOne());
+        rapaciousOne.setAttacking(true);
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
+        assertThat(findPermanents(player1, "Eldrazi Spawn")).hasSize(4);
+    }
+
+    @Test
+    @DisplayName("Fully preventing the trample damage creates no Spawn")
+    void fullyPreventedTrampleDamageDoesNotTrigger() {
+        Permanent blocker = addCreatureReady(player2, new ReinforcedBulwark());
+        addCreatureReady(player2, new ReinforcedBulwark());
+        harness.activateAbility(player2, 1, null, null);
+        resolveAllTriggers();
+        Permanent rapaciousOne = addCreatureReady(player1, new RapaciousOne());
+        rapaciousOne.setAttacking(true);
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(findPermanents(player1, "Eldrazi Spawn")).isEmpty();
     }
 }
