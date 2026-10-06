@@ -23,8 +23,7 @@ class ScreechingHarpyTest extends BaseCardTest {
         Permanent harpy = addCreatureReady(player1, new ScreechingHarpy());
         Permanent blocker = addCreatureReady(player2, new LowlandGiant());
 
-        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(harpy)));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(harpy)));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(
@@ -88,5 +87,61 @@ class ScreechingHarpyTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Screeching Harpy");
         harness.assertInGraveyard(player1, "Screeching Harpy");
+    }
+
+    @Test
+    @DisplayName("Regeneration can be activated while tapped and summoning sick")
+    void regenerationCanBeActivatedWhileTappedAndSummoningSick() {
+        Permanent harpy = addCreatureReady(player1, new ScreechingHarpy());
+        harpy.setSummoningSick(true);
+        harpy.setTapped(true);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(harpy.getRegenerationShield()).isEqualTo(1);
+        assertThat(harpy.isTapped()).isTrue();
+        harness.assertOnBattlefield(player1, "Screeching Harpy");
+    }
+
+    @Test
+    @DisplayName("Each activation grants a separate shield without tapping or healing the creature")
+    void repeatedActivationsCreateSeparateShields() {
+        Permanent harpy = addCreatureReady(player1, new ScreechingHarpy());
+        harpy.setMarkedDamage(1);
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(harpy.getRegenerationShield()).isEqualTo(2);
+        assertThat(harpy.isTapped()).isFalse();
+        assertThat(harpy.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("An activated shield replaces lethal damage, clears damage, and removes the Harpy from combat")
+    void activatedShieldReplacesLethalCombatDamage() {
+        Permanent harpy = addCreatureReady(player1, new ScreechingHarpy());
+        Permanent attacker = addCreatureReady(player2, new LowlandGiant());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harpy.setBlocking(true);
+        harpy.addBlockingTarget(0);
+        attacker.setAttacking(true);
+        resolveCombat(player2);
+
+        harness.assertOnBattlefield(player1, "Screeching Harpy");
+        harness.assertNotInGraveyard(player1, "Screeching Harpy");
+        assertThat(harpy.isTapped()).isTrue();
+        assertThat(harpy.getRegenerationShield()).isZero();
+        assertThat(harpy.getMarkedDamage()).isZero();
+        assertThat(harpy.isBlocking()).isFalse();
+        assertThat(harpy.getBlockingTargets()).isEmpty();
     }
 }
