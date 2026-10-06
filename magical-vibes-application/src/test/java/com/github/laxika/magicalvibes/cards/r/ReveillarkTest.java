@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.b.BallyrushBanneret;
 import com.github.laxika.magicalvibes.cards.c.CennsTactician;
 import com.github.laxika.magicalvibes.cards.c.ChangelingSentinel;
+import com.github.laxika.magicalvibes.cards.n.Negate;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Reveillark.class, BallyrushBanneret.class, CennsTactician.class, ChangelingSentinel.class})
+@CardUsed({Reveillark.class, BallyrushBanneret.class, CennsTactician.class, ChangelingSentinel.class, Negate.class})
 class ReveillarkTest extends BaseCardTest {
 
     private void killReveillark(Permanent reveillark) {
@@ -25,7 +26,6 @@ class ReveillarkTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance the trigger to its target-choice interaction
     }
 
     @Test
@@ -85,12 +85,13 @@ class ReveillarkTest extends BaseCardTest {
 
         killReveillark(reveillark);
 
+        resolveAllTriggers();
         assertThat(countPermanents(player1, "Reveillark")).isZero();
         harness.assertInGraveyard(player1, "Reveillark");
     }
 
     @Test
-    @DisplayName("With more than two eligible creatures, controller chooses exactly two")
+    @DisplayName("With more than two eligible creatures, controller can choose two")
     void choosesTwoOfThree() {
         CennsTactician first = new CennsTactician();
         BallyrushBanneret middle = new BallyrushBanneret();
@@ -147,7 +148,9 @@ class ReveillarkTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 5);
 
         harness.castCreatureWithEvoke(player1, 0, null);
-        resolveAllTriggers();
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Reveillark");
+        harness.passBothPriorities();
 
         PendingInteraction.MultiGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
@@ -161,5 +164,70 @@ class ReveillarkTest extends BaseCardTest {
         assertThat(countPermanents(player1, "Reveillark")).isZero();
         assertThat(countPermanents(player1, "Ballyrush Banneret")).isEqualTo(1);
         harness.assertInGraveyard(player1, "Reveillark");
+    }
+
+    @Test
+    @DisplayName("Normal casting does not sacrifice Reveillark")
+    void normalCastingDoesNotSacrifice() {
+        harness.setHand(player1, List.of(new Reveillark()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Reveillark");
+        harness.assertNotInGraveyard(player1, "Reveillark");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Noncreature cards cannot be targeted")
+    void noncreatureCardsCannotBeTargeted() {
+        Negate noncreature = new Negate();
+        BallyrushBanneret eligible = new BallyrushBanneret();
+        harness.setGraveyard(player1, List.of(noncreature, eligible));
+        Permanent reveillark = harness.addToBattlefieldAndReturn(player1, new Reveillark());
+
+        killReveillark(reveillark);
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactly(eligible.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(eligible.getId()));
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Ballyrush Banneret");
+        harness.assertInGraveyard(player1, "Negate");
+    }
+
+    @Test
+    @DisplayName("Leaving through exile still triggers, and only the controller's graveyard is eligible")
+    void exileTriggersAndCanReturnOnlyOneCreature() {
+        BallyrushBanneret eligible = new BallyrushBanneret();
+        CennsTactician unchosen = new CennsTactician();
+        CennsTactician opposing = new CennsTactician();
+        harness.setGraveyard(player1, List.of(eligible, unchosen));
+        harness.setGraveyard(player2, List.of(opposing));
+        Permanent reveillark = harness.addToBattlefieldAndReturn(player1, new Reveillark());
+
+        harness.inMutationScope(
+                () -> harness.getPermanentRemovalService().removePermanentToExile(gd, reveillark));
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactly(eligible.getId(), unchosen.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(eligible.getId()));
+        harness.assertNotOnBattlefield(player1, "Ballyrush Banneret");
+
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Ballyrush Banneret");
+        harness.assertInGraveyard(player1, "Cenn's Tactician");
+        harness.assertInGraveyard(player2, "Cenn's Tactician");
+        harness.assertNotOnBattlefield(player1, "Reveillark");
+        harness.assertNotInGraveyard(player1, "Reveillark");
     }
 }
