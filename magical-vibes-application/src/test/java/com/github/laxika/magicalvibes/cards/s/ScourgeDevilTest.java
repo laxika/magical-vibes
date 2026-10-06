@@ -1,24 +1,27 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DregscapeZombie;
+import com.github.laxika.magicalvibes.cards.e.ExecutionersCapsule;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ScourgeDevil.class, DregscapeZombie.class, ExecutionersCapsule.class})
 @DisplayName("Scourge Devil")
 class ScourgeDevilTest extends BaseCardTest {
 
     private void castDevil() {
-        harness.setHand(player1, new ArrayList<>(List.of(new ScourgeDevil())));
+        harness.setHand(player1, List.of(new ScourgeDevil()));
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castCreature(player1, 0);
@@ -27,7 +30,7 @@ class ScourgeDevilTest extends BaseCardTest {
     @Test
     @DisplayName("ETB gives creatures you control +1/+0 until end of turn")
     void etbBoostsOwnCreatures() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new DregscapeZombie());
 
         castDevil();
         harness.passBothPriorities(); // resolve creature spell
@@ -44,7 +47,7 @@ class ScourgeDevilTest extends BaseCardTest {
     @Test
     @DisplayName("Does not boost creatures an opponent controls")
     void doesNotBoostOpponents() {
-        Permanent opponentBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent opponentBears = harness.addToBattlefieldAndReturn(player2, new DregscapeZombie());
 
         castDevil();
         harness.passBothPriorities();
@@ -56,15 +59,13 @@ class ScourgeDevilTest extends BaseCardTest {
     @Test
     @DisplayName("ETB boost wears off at end of turn")
     void boostWearsOff() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new DregscapeZombie());
 
         castDevil();
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
 
         assertThat(bears.getPowerModifier()).isEqualTo(0);
     }
@@ -81,7 +82,7 @@ class ScourgeDevilTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent perm = findPermanent(player1, "Scourge Devil");
-        assertThat(perm.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(gqs.hasKeyword(gd, perm, Keyword.HASTE)).isTrue();
         harness.assertNotInGraveyard(player1, "Scourge Devil");
     }
 
@@ -97,13 +98,91 @@ class ScourgeDevilTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve unearth (devil enters)
         harness.passBothPriorities(); // resolve ETB boost trigger
 
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
 
         harness.passBothPriorities();
         harness.assertNotOnBattlefield(player1, "Scourge Devil");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Scourge Devil"));
+    }
+
+    @Test
+    void unearthAlsoTriggersBoost() {
+        Permanent zombie = harness.addToBattlefieldAndReturn(player1, new DregscapeZombie());
+        harness.setGraveyard(player1, List.of(new ScourgeDevil()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+        assertThat(zombie.getPowerModifier()).isZero();
+        harness.passBothPriorities();
+
+        assertThat(zombie.getPowerModifier()).isEqualTo(1);
+        assertThat(findPermanent(player1, "Scourge Devil").getPowerModifier()).isEqualTo(1);
+    }
+
+    @Test
+    void creaturesEnteringAfterResolutionDoNotReceiveBoost() {
+        castDevil();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new DregscapeZombie()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Dregscape Zombie").getPowerModifier()).isZero();
+        assertThat(findPermanent(player1, "Scourge Devil").getPowerModifier()).isEqualTo(1);
+    }
+
+    @Test
+    void destroyedUnearthedDevilIsExiledInsteadOfDying() {
+        Permanent capsule = harness.addToBattlefieldAndReturn(player1, new ExecutionersCapsule());
+        harness.setGraveyard(player1, List.of(new ScourgeDevil()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(capsule),
+                null, findPermanent(player1, "Scourge Devil").getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Scourge Devil");
+        harness.assertNotInGraveyard(player1, "Scourge Devil");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(c -> c.getName().equals("Scourge Devil"));
+    }
+
+    @Test
+    void unearthCannotBeActivatedDuringEndStep() {
+        harness.setGraveyard(player1, List.of(new ScourgeDevil()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.forceStep(TurnStep.END_STEP);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery speed");
+        harness.assertInGraveyard(player1, "Scourge Devil");
+    }
+
+    @Test
+    void unearthCannotBeActivatedWhileSpellIsOnStack() {
+        harness.setGraveyard(player1, List.of(new ScourgeDevil()));
+        castDevil();
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("stack is empty");
+        harness.assertInGraveyard(player1, "Scourge Devil");
     }
 }
