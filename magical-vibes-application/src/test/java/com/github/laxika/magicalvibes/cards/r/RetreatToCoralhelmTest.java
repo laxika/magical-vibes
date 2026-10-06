@@ -61,6 +61,63 @@ class RetreatToCoralhelmTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(topCard);
     }
 
+    @Test
+    void landfallCanUntapOpponentsCreature() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        bears.tap();
+        harness.addToBattlefield(player1, new RetreatToCoralhelm());
+        playLand();
+
+        harness.handleListChoice(player1, "You may tap or untap target creature.");
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(bears.isTapped()).isFalse();
+    }
+
+    @Test
+    void landfallScryCanPutTopCardOnBottomWithoutCreatures() {
+        Card topCard = new GrizzlyBears();
+        Card nextCard = new Forest();
+        harness.setLibrary(player1, List.of(topCard, nextCard));
+        harness.addToBattlefield(player1, new RetreatToCoralhelm());
+        playLand();
+
+        harness.handleListChoice(player1, "Scry 1.");
+        harness.passBothPriorities();
+        harness.getGameService().handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nextCard, topCard);
+    }
+
+    @Test
+    void landfallScryWithEmptyLibraryCompletesWithoutChoice() {
+        harness.setLibrary(player1, List.of());
+        harness.addToBattlefield(player1, new RetreatToCoralhelm());
+        playLand();
+
+        harness.handleListChoice(player1, "Scry 1.");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void opponentsLandEnteringDoesNotTriggerLandfall() {
+        harness.addToBattlefield(player1, new RetreatToCoralhelm());
+
+        harness.enterBattlefieldAndReturn(player2, new Forest());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
     private void playLand() {
         harness.setHand(player1, List.of(new Forest()));
         harness.playLand(player1, 0);
