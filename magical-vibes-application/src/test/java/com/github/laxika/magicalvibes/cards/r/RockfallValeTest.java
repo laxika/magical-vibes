@@ -2,12 +2,12 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RockfallVale.class, Mountain.class, LlanowarElves.class})
 class RockfallValeTest extends BaseCardTest {
 
     @Test
@@ -50,7 +51,7 @@ class RockfallValeTest extends BaseCardTest {
     @DisplayName("Non-land permanents do not count toward the land check")
     void nonLandPermanentsDoNotCount() {
         for (int i = 0; i < 3; i++) {
-            gd.playerBattlefields.get(player1.getId()).add(new Permanent(new LlanowarElves()));
+            harness.addToBattlefield(player1, new LlanowarElves());
         }
 
         playVale();
@@ -92,23 +93,49 @@ class RockfallValeTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
     }
 
+    @Test
+    void tappedLandsStillCount() {
+        harness.addToBattlefieldAndReturn(player1, new Mountain()).tap();
+        harness.addToBattlefieldAndReturn(player1, new Mountain()).tap();
+
+        playVale();
+
+        assertThat(findVale().isTapped()).isFalse();
+    }
+
+    @Test
+    void entersTappedThroughAnEffectWithOneOtherLand() {
+        addBasicLand(player1);
+
+        Permanent vale = harness.enterBattlefieldAndReturn(player1, new RockfallVale());
+
+        assertThat(vale.isTapped()).isTrue();
+    }
+
+    @Test
+    void entersUntappedThroughAnEffectWithTwoOtherLands() {
+        addBasicLand(player1);
+        addBasicLand(player1);
+
+        Permanent vale = harness.enterBattlefieldAndReturn(player1, new RockfallVale());
+
+        assertThat(vale.isTapped()).isFalse();
+    }
+
     private void playVale() {
         harness.setHand(player1, List.of(new RockfallVale()));
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
     }
 
     private void addValeReady(Player player) {
-        Permanent perm = new Permanent(new RockfallVale());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
+        addCreatureReady(player, new RockfallVale());
     }
 
     private void addBasicLand(Player player) {
-        Card land = new Mountain();
-        gd.playerBattlefields.get(player.getId()).add(new Permanent(land));
+        harness.addToBattlefield(player, new Mountain());
     }
 
     private Permanent findVale() {
