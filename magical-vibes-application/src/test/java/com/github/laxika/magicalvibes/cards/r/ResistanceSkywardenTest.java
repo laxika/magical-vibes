@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ResistanceSkywarden.class, CloudSprite.class, GrizzlyBears.class})
 class ResistanceSkywardenTest extends BaseCardTest {
 
     @Test
@@ -23,11 +25,11 @@ class ResistanceSkywardenTest extends BaseCardTest {
         attacker.setAttacking(true);
         Permanent blocker = addCreatureReady(player2, new ResistanceSkywarden());
 
-        beginDeclareBlockers();
+        prepareDeclareBlockers();
 
-        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
-                gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
+                gd.playerBattlefields.get(player1.getId()).indexOf(attacker)))));
 
         assertThat(blocker.isBlocking()).isTrue();
     }
@@ -39,7 +41,7 @@ class ResistanceSkywardenTest extends BaseCardTest {
         attacker.setAttacking(true);
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
-        beginDeclareBlockers();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
@@ -55,21 +57,51 @@ class ResistanceSkywardenTest extends BaseCardTest {
         Permanent blocker1 = addCreatureReady(player2, new GrizzlyBears());
         Permanent blocker2 = addCreatureReady(player2, new GrizzlyBears());
 
-        beginDeclareBlockers();
+        prepareDeclareBlockers();
 
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
-        gs.declareBlockers(gd, player2, List.of(
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(gd.playerBattlefields.get(player2.getId()).indexOf(blocker1), attackerIndex),
-                new BlockerAssignment(gd.playerBattlefields.get(player2.getId()).indexOf(blocker2), attackerIndex)));
+                new BlockerAssignment(gd.playerBattlefields.get(player2.getId()).indexOf(blocker2), attackerIndex))));
 
         assertThat(blocker1.isBlocking()).isTrue();
         assertThat(blocker2.isBlocking()).isTrue();
     }
 
-    private void beginDeclareBlockers() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+    @Test
+    @DisplayName("Menace does not require the opponent to block")
+    void menaceAllowsNoBlockers() {
+        Permanent attacker = addCreatureReady(player1, new ResistanceSkywarden());
+        attacker.setAttacking(true);
+        Permanent potentialBlocker = addCreatureReady(player2, new ResistanceSkywarden());
+
+        prepareDeclareBlockers();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> gs.declareBlockers(gd, player2, List.of()));
+        resolveCombat();
+
+        assertThat(potentialBlocker.isBlocking()).isFalse();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
+    }
+
+    @Test
+    @DisplayName("Menace allows three blockers and does not restrict creatures while blocking")
+    void menaceAllowsThreeBlockers() {
+        Permanent attacker = addCreatureReady(player1, new ResistanceSkywarden());
+        attacker.setAttacking(true);
+        Permanent blocker1 = addCreatureReady(player2, new ResistanceSkywarden());
+        Permanent blocker2 = addCreatureReady(player2, new ResistanceSkywarden());
+        Permanent blocker3 = addCreatureReady(player2, new ResistanceSkywarden());
+
+        prepareDeclareBlockers();
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, attackerIndex),
+                new BlockerAssignment(1, attackerIndex),
+                new BlockerAssignment(2, attackerIndex))));
+
+        assertThat(blocker1.isBlocking()).isTrue();
+        assertThat(blocker2.isBlocking()).isTrue();
+        assertThat(blocker3.isBlocking()).isTrue();
     }
 }
