@@ -70,6 +70,67 @@ class RetreatToValakutTest extends BaseCardTest {
     }
 
     @Test
+    void boostModeCanTargetOwnCreatureAndDoesNotApplyBeforeResolution() {
+        harness.addToBattlefield(player1, new RetreatToValakut());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Forest()));
+
+        harness.playLand(player1, 0);
+        harness.handleListChoice(player1, BOOST_MODE);
+        harness.handlePermanentChosen(player1, bears.getId());
+
+        assertThat(bears.getEffectivePower()).isEqualTo(2);
+        assertThat(bears.isCantBlockThisTurn()).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(bears.getEffectivePower()).isEqualTo(4);
+        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        assertThat(bears.isCantBlockThisTurn()).isFalse();
+    }
+
+    @Test
+    void cantBlockModeAffectsOnlyChosenCreatureAndExpiresAtEndOfTurn() {
+        harness.addToBattlefield(player1, new RetreatToValakut());
+        Permanent chosen = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Forest()));
+
+        harness.playLand(player1, 0);
+        harness.handleListChoice(player1, CANT_BLOCK_MODE);
+        harness.handlePermanentChosen(player1, chosen.getId());
+
+        assertThat(chosen.isCantBlockThisTurn()).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(chosen.isCantBlockThisTurn()).isTrue();
+        assertThat(chosen.getEffectivePower()).isEqualTo(2);
+        assertThat(other.isCantBlockThisTurn()).isFalse();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+
+        assertThat(chosen.isCantBlockThisTurn()).isFalse();
+        assertThat(other.isCantBlockThisTurn()).isFalse();
+    }
+
+    @Test
+    void cantBlockModeCannotTargetNoncreaturePermanent() {
+        harness.addToBattlefield(player1, new RetreatToValakut());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Forest()));
+
+        harness.playLand(player1, 0);
+        harness.handleListChoice(player1, CANT_BLOCK_MODE);
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1,
+                harness.getPermanentId(player1, "Forest")))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
     void opponentLandDoesNotTriggerLandfall() {
         harness.addToBattlefield(player1, new RetreatToValakut());
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
