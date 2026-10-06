@@ -1,8 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BrindleBoar;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -10,8 +9,8 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,6 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RingOfThreeWishes.class, Swamp.class, BrindleBoar.class})
 class RingOfThreeWishesTest extends BaseCardTest {
 
     @Test
@@ -56,7 +56,7 @@ class RingOfThreeWishesTest extends BaseCardTest {
         assertThat(search.params().canFailToFind()).isFalse();
 
         String chosenName = search.params().cards().getFirst().getName();
-        harness.getGameService().handleInteractionAnswer(gameData, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(ring.isTapped()).isTrue();
         assertThat(ring.getCounterCount(CounterType.WISH)).isEqualTo(2);
@@ -86,6 +86,81 @@ class RingOfThreeWishesTest extends BaseCardTest {
                 .hasMessageContaining("already tapped");
     }
 
+    @Test
+    void paysCostsBeforeSearching() {
+        Permanent ring = addReadyRing(player1);
+        ring.setCounterCount(CounterType.WISH, 1);
+        harness.setHand(player1, List.of());
+        setupLibrary();
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(ring.isTapped()).isTrue();
+        assertThat(ring.getCounterCount(CounterType.WISH)).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId()).getFirst()).isInstanceOf(BrindleBoar.class);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+        assertThat(ring.getCounterCount(CounterType.WISH)).isZero();
+    }
+
+    @Test
+    void cannotActivateWithOnlyFourMana() {
+        Permanent ring = addReadyRing(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(ring.isTapped()).isFalse();
+        assertThat(ring.getCounterCount(CounterType.WISH)).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void resolvesWithEmptyLibrary() {
+        Permanent ring = addReadyRing(player1);
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(ring.getCounterCount(CounterType.WISH)).isEqualTo(2);
+        assertThat(ring.isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void canActivateOnOpponentsTurnWhileSummoningSick() {
+        Permanent ring = addReadyRing(player2);
+        ring.setSummoningSick(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setLibrary(player2, List.of(new Swamp()));
+        harness.setHand(player2, List.of());
+        harness.addMana(player2, ManaColor.COLORLESS, 5);
+        harness.passPriority(player1);
+
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(ring.getCounterCount(CounterType.WISH)).isEqualTo(2);
+        assertThat(ring.isTapped()).isTrue();
+    }
+
     private Permanent addReadyRing(Player player) {
         Permanent perm = harness.addToBattlefieldAndReturn(player, new RingOfThreeWishes());
         perm.setCounterCount(CounterType.WISH, 3);
@@ -94,8 +169,6 @@ class RingOfThreeWishesTest extends BaseCardTest {
     }
 
     private void setupLibrary() {
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new Swamp(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Swamp(), new BrindleBoar(), new BrindleBoar()));
     }
 }
