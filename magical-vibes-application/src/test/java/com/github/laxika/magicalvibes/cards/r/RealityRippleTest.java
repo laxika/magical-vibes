@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Millstone;
+import com.github.laxika.magicalvibes.cards.p.Pacifism;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -18,7 +20,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RealityRipple.class, AngelicChorus.class, GrizzlyBears.class, Island.class, Millstone.class})
+@CardUsed({RealityRipple.class, AngelicChorus.class, GrizzlyBears.class, Island.class, Millstone.class, Pacifism.class})
 class RealityRippleTest extends BaseCardTest {
 
     @Test
@@ -90,15 +92,77 @@ class RealityRippleTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target an enchantment")
     void cannotTargetEnchantment() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent enchantment = new Permanent(new AngelicChorus());
-        gd.playerBattlefields.get(player2.getId()).add(enchantment);
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new AngelicChorus());
         harness.setHand(player1, List.of(new RealityRipple()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, enchantment.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be an artifact, creature, or land");
+    }
+
+    @Test
+    @DisplayName("A permanent stays phased out through the other player's untap step")
+    void waitsForControllersUntapStep() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        castRealityRipple(creature.getId());
+        harness.performUntapStep(player2);
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.performUntapStep(player1);
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(harness.getPermanentId(player1, "Grizzly Bears")).isEqualTo(creature.getId());
+    }
+
+    @Test
+    @DisplayName("Phasing preserves counters and does not trigger entering the battlefield")
+    void preservesCountersWithoutEnteringAgain() {
+        harness.addToBattlefield(player2, new AngelicChorus());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        creature.tap();
+        harness.setLife(player2, 20);
+
+        castRealityRipple(creature.getId());
+        harness.runStateBasedActions();
+        harness.performUntapStep(player2);
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(harness.getPermanentId(player2, "Grizzly Bears")).isEqualTo(creature.getId());
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(creature.isTapped()).isFalse();
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opposing Aura phases out and returns with its enchanted creature")
+    void opposingAuraReturnsWithHost() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Pacifism()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        UUID auraId = harness.getPermanentId(player1, "Pacifism");
+
+        castRealityRipple(creature.getId());
+        harness.runStateBasedActions();
+        harness.assertNotOnBattlefield(player1, "Pacifism");
+        harness.assertNotInGraveyard(player1, "Pacifism");
+        harness.performUntapStep(player1);
+        harness.assertNotOnBattlefield(player1, "Pacifism");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+
+        harness.performUntapStep(player2);
+
+        harness.assertOnBattlefield(player1, "Pacifism");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anySatisfy(aura -> {
+                    assertThat(aura.getId()).isEqualTo(auraId);
+                    assertThat(aura.getAttachedTo()).isEqualTo(creature.getId());
+                });
     }
 
     private void castRealityRipple(UUID targetId) {
