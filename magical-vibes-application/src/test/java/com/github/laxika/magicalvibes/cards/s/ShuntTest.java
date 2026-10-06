@@ -115,8 +115,7 @@ class ShuntTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, bears1PermId);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, boomerang.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, boomerang.getId());
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
@@ -149,15 +148,14 @@ class ShuntTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, bearsPermId);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, boomerang.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, boomerang.getId());
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
 
         StackEntry boomerangEntry = gd.stack.getLast();
         assertThat(boomerangEntry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
-        assertThat(boomerangEntry.getCard().getName()).isEqualTo("Boomerang");
+        assertThat(boomerangEntry.getCard()).isSameAs(boomerang);
         assertThat(boomerangEntry.getTargetId()).isEqualTo(bearsPermId);
     }
 
@@ -177,8 +175,7 @@ class ShuntTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, player2.getId());
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, lavaAxe.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, lavaAxe.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).contains(player1.getId());
@@ -214,8 +211,7 @@ class ShuntTest extends BaseCardTest {
         harness.castInstant(player1, 0, bears2PermId);
         harness.passPriority(player1);
         harness.castInstant(player2, 0, boomerangA.getId());
-        harness.castInstant(player2, 0, cancel.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, cancel.getId());
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
@@ -232,6 +228,63 @@ class ShuntTest extends BaseCardTest {
                 .anyMatch(p -> p.getId().equals(bears2PermId));
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
                 .anyMatch(log -> log.contains("Boomerang") && log.contains("is countered"));
+    }
+
+    @Test
+    @DisplayName("Shunt can redirect Cancel to the resolving Shunt and save the original spell")
+    void canRedirectCounterspellToResolvingShunt() {
+        UUID bearId = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears()).getId();
+        Boomerang boomerang = new Boomerang();
+        Shunt shunt = new Shunt();
+        Cancel cancel = new Cancel();
+        harness.setHand(player1, List.of(boomerang, shunt));
+        harness.setHand(player2, List.of(cancel));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        harness.castInstant(player1, 0, bearId);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, boomerang.getId());
+        harness.passPriority(player2);
+        harness.castAndResolveInstant(player1, 0, cancel.getId());
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).contains(shunt.getId()).doesNotContain(cancel.getId());
+        harness.handlePermanentChosen(player1, shunt.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Cancel");
+    }
+
+    @Test
+    @DisplayName("Shunt can replace a spell's now-illegal target with a legal target")
+    void canReplaceNowIllegalTarget() {
+        UUID originalId = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears()).getId();
+        UUID replacementId = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()).getId();
+        Boomerang original = new Boomerang();
+        harness.setHand(player1, List.of(original, new Boomerang()));
+        harness.setHand(player2, List.of(new Shunt()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.addMana(player2, ManaColor.RED, 3);
+
+        harness.castInstant(player1, 0, originalId);
+        harness.castAndResolveInstant(player1, 0, originalId);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, original.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .contains(replacementId).doesNotContain(originalId);
+        harness.handlePermanentChosen(player2, replacementId);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Boomerang");
     }
 }
 
