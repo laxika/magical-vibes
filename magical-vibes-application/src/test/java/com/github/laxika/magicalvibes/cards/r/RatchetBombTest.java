@@ -2,23 +2,28 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.d.DarksteelAxe;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.g.GoldMyr;
+import com.github.laxika.magicalvibes.cards.g.GlintHawk;
 import com.github.laxika.magicalvibes.cards.m.Memnite;
-import com.github.laxika.magicalvibes.cards.p.Pacifism;
+import com.github.laxika.magicalvibes.cards.a.Arrest;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.cards.c.ChimericMass;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.Set;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({RatchetBomb.class, DarksteelAxe.class, Forest.class, GoldMyr.class,
+        GlintHawk.class, Memnite.class, Arrest.class, ChimericMass.class})
 class RatchetBombTest extends BaseCardTest {
-
-    // ===== Ability 0: Put a charge counter =====
 
     @Test
     @DisplayName("Tapping Ratchet Bomb puts a charge counter on it")
@@ -61,8 +66,6 @@ class RatchetBombTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Ability 1: Sacrifice and destroy by mana value =====
-
     @Test
     @DisplayName("Sacrificing with 2 counters destroys MV 2 creatures")
     void destroysManaValue2Permanents() {
@@ -70,7 +73,7 @@ class RatchetBombTest extends BaseCardTest {
         bomb.setCounterCount(CounterType.CHARGE, 2);
 
         // MV 2 creature on opponent's battlefield
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GoldMyr());
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
@@ -79,15 +82,15 @@ class RatchetBombTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Ratchet Bomb");
         harness.assertNotOnBattlefield(player1, "Ratchet Bomb");
 
-        // Grizzly Bears (MV 2) should be destroyed
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        // Gold Myr (MV 2) should be destroyed
+        harness.assertNotOnBattlefield(player2, "Gold Myr");
+        harness.assertInGraveyard(player2, "Gold Myr");
     }
 
     @Test
-    @DisplayName("Sacrificing with 0 counters destroys MV 0 nonland permanents (tokens, Memnite)")
+    @DisplayName("Sacrificing with 0 counters destroys Memnite")
     void destroysManaValue0Permanents() {
-        Permanent bomb = addReadyBomb(player1);
+        addReadyBomb(player1);
         // 0 charge counters — targets MV 0
 
         // MV 0 artifact creature
@@ -107,20 +110,20 @@ class RatchetBombTest extends BaseCardTest {
         Permanent bomb = addReadyBomb(player1);
         bomb.setCounterCount(CounterType.CHARGE, 2);
 
-        // MV 1 creature (Llanowar Elves = {G})
-        harness.addToBattlefield(player2, new LlanowarElves());
+        // MV 1 creature (Glint Hawk = {W})
+        harness.addToBattlefield(player2, new GlintHawk());
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        // Llanowar Elves (MV 1) should survive
-        harness.assertOnBattlefield(player2, "Llanowar Elves");
+        // Glint Hawk (MV 1) should survive
+        harness.assertOnBattlefield(player2, "Glint Hawk");
     }
 
     @Test
     @DisplayName("Does not destroy lands even if mana value matches")
     void doesNotDestroyLands() {
-        Permanent bomb = addReadyBomb(player1);
+        addReadyBomb(player1);
         // 0 charge counters — lands have MV 0 but should be excluded
 
         harness.addToBattlefield(player2, new Forest());
@@ -139,38 +142,35 @@ class RatchetBombTest extends BaseCardTest {
         bomb.setCounterCount(CounterType.CHARGE, 2);
 
         // MV 2 creatures on both sides
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GoldMyr());
+        harness.addToBattlefield(player2, new GoldMyr());
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
         // Both should be destroyed
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Gold Myr");
+        harness.assertNotOnBattlefield(player2, "Gold Myr");
     }
 
     @Test
     @DisplayName("Destroys enchantments with matching mana value")
     void destroysEnchantments() {
         Permanent bomb = addReadyBomb(player1);
-        bomb.setCounterCount(CounterType.CHARGE, 2);
+        bomb.setCounterCount(CounterType.CHARGE, 3);
 
-        // Pacifism is an enchantment with MV 2 ({1}{W})
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent bears = findPermanent(player2, "Grizzly Bears");
+        // The creature survives, so the Aura must be destroyed by the ability itself.
+        Permanent myr = harness.addToBattlefieldAndReturn(player2, new GoldMyr());
 
-        Pacifism pacifism = new Pacifism();
-        Permanent pacifismPerm = new Permanent(pacifism);
-        pacifismPerm.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player2.getId()).add(pacifismPerm);
+        Permanent arrestPerm = harness.addToBattlefieldAndReturn(player2, new Arrest());
+        arrestPerm.setAttachedTo(myr.getId());
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        // Both Pacifism (MV 2) and Grizzly Bears (MV 2) should be destroyed
-        harness.assertNotOnBattlefield(player2, "Pacifism");
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Arrest");
+        harness.assertInGraveyard(player2, "Arrest");
+        harness.assertOnBattlefield(player2, "Gold Myr");
     }
 
     @Test
@@ -203,9 +203,9 @@ class RatchetBombTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Cannot use both abilities in same turn (both require tap)")
+    @DisplayName("Cannot use the second ability while tapped after the first")
     void cannotUseBothAbilitiesInSameTurn() {
-        Permanent bomb = addReadyBomb(player1);
+        addReadyBomb(player1);
 
         // Use ability 0 first (tap to add counter)
         harness.activateAbility(player1, 0, null, null);
@@ -238,24 +238,92 @@ class RatchetBombTest extends BaseCardTest {
         bomb.untap();
 
         // Put a MV 2 creature on opponent's side
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GoldMyr());
 
         // Sacrifice to destroy MV 2 permanents
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Gold Myr");
+        harness.assertInGraveyard(player2, "Gold Myr");
         harness.assertInGraveyard(player1, "Ratchet Bomb");
     }
 
-    // ===== Helper methods =====
+    @Test
+    @DisplayName("A newly entered noncreature Bomb can tap immediately")
+    void newlyEnteredBombCanAddCounter() {
+        Permanent bomb = harness.addToBattlefieldAndReturn(player1, new RatchetBomb());
+
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(bomb.isTapped()).isTrue();
+        assertThat(bomb.getCounterCount(CounterType.CHARGE)).isZero();
+        harness.passBothPriorities();
+
+        assertThat(bomb.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Destruction uses the sacrificed Bomb's counters, not another Bomb's")
+    void destructionUsesSacrificedBombCounters() {
+        Permanent bomb = addReadyBomb(player1);
+        bomb.setCounterCount(CounterType.CHARGE, 2);
+        Permanent otherBomb = harness.addToBattlefieldAndReturn(player1, new RatchetBomb());
+        otherBomb.setCounterCount(CounterType.CHARGE, 1);
+        harness.addToBattlefield(player2, new GoldMyr());
+        harness.addToBattlefield(player2, new GlintHawk());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.assertOnBattlefield(player2, "Gold Myr");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Ratchet Bomb");
+        harness.assertInGraveyard(player2, "Gold Myr");
+        harness.assertOnBattlefield(player2, "Glint Hawk");
+    }
+
+    @Test
+    @DisplayName("X in a permanent's mana cost is zero regardless of its counters")
+    void destroysChimericMassWithZeroCountersOnBomb() {
+        addReadyBomb(player1);
+        Permanent mass = harness.addToBattlefieldAndReturn(player2, new ChimericMass());
+        mass.setCounterCount(CounterType.CHARGE, 5);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Chimeric Mass");
+        harness.assertInGraveyard(player2, "Chimeric Mass");
+    }
+
+    @Test
+    @DisplayName("A face-down creature has mana value zero")
+    void zeroCountersDestroyFaceDownCreature() {
+        addReadyBomb(player1);
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GoldMyr());
+        creature.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(creature);
+        harness.assertInGraveyard(player2, "Gold Myr");
+    }
+
+    @Test
+    @DisplayName("A face-down creature does not use its face-up mana value")
+    void twoCountersSpareFaceDownCreature() {
+        Permanent bomb = addReadyBomb(player1);
+        bomb.setCounterCount(CounterType.CHARGE, 2);
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GoldMyr());
+        creature.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
+    }
 
     private Permanent addReadyBomb(Player player) {
-        RatchetBomb card = new RatchetBomb();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new RatchetBomb());
     }
 }
