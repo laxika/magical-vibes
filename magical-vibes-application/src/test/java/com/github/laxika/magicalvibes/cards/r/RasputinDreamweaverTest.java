@@ -122,9 +122,80 @@ class RasputinDreamweaverTest extends BaseCardTest {
         harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, List.of(new DrownInIchor()));
         harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.castSorcery(player1, 0, rasputin.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, rasputin.getId());
         harness.handleMultiplePermanentsChosen(player1, List.of(rasputin.getId()));
+
+        assertThat(rasputin.getCounterCount(CounterType.DREAM)).isEqualTo(7);
+    }
+
+    @Test
+    void tappedRasputinCanActivateItsManaAbilityWithoutUsingTheStack() {
+        Permanent rasputin = addCreatureReady(player1, new RasputinDreamweaver());
+        rasputin.setCounterCount(CounterType.DREAM, 2);
+        rasputin.tap();
+        rasputin.setSummoningSick(true);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(rasputin.getCounterCount(CounterType.DREAM)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotActivatePreventionWithoutDreamCounters() {
+        addCreatureReady(player1, new RasputinDreamweaver());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough counters to remove");
+    }
+
+    @Test
+    void preventionAbilitiesUseTheStackAndTheirShieldsAccumulate() {
+        Permanent rasputin = addCreatureReady(player1, new RasputinDreamweaver());
+        rasputin.setCounterCount(CounterType.DREAM, 2);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        assertThat(rasputin.getCounterCount(CounterType.DREAM)).isEqualTo(1);
+        assertThat(rasputin.getDamagePreventionShield()).isZero();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Pyrotechnics()));
+        harness.addMana(player1, ManaColor.RED, 5);
+        harness.castSorcery(player1, 0, Map.of(rasputin.getId(), 2, player2.getId(), 2));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(rasputin);
+        assertThat(rasputin.getMarkedDamage()).isZero();
+        assertThat(rasputin.getDamagePreventionShield()).isZero();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    void doesNotGetDreamCounterDuringOpponentsUpkeep() {
+        Permanent rasputin = addCreatureReady(player1, new RasputinDreamweaver());
+        rasputin.setCounterCount(CounterType.DREAM, 3);
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(rasputin.getCounterCount(CounterType.DREAM)).isEqualTo(3);
+    }
+
+    @Test
+    void upkeepCanRefillCounterSpentInResponseAtTheLimit() {
+        Permanent rasputin = addCreatureReady(player1, new RasputinDreamweaver());
+        rasputin.setCounterCount(CounterType.DREAM, 7);
+
+        advanceToUpkeep(player1);
+        harness.activateAbility(player1, 0, 0, null, null);
+        assertThat(rasputin.getCounterCount(CounterType.DREAM)).isEqualTo(6);
+        harness.passBothPriorities();
 
         assertThat(rasputin.getCounterCount(CounterType.DREAM)).isEqualTo(7);
     }
