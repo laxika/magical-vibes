@@ -67,4 +67,47 @@ class RivalryTest extends BaseCardTest {
 
         harness.assertLife(player1, 20);
     }
+
+    @Test
+    @DisplayName("Does not trigger when neither player controls a land")
+    void doesNotTriggerWithNoLands() {
+        harness.addToBattlefield(player1, new Rivalry());
+
+        advanceToUpkeep(player1);
+
+        org.assertj.core.api.Assertions.assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Gaining the land lead after upkeep begins does not create a trigger")
+    void gainingLandLeadAfterUpkeepDoesNotTrigger() {
+        harness.addToBattlefield(player1, new Rivalry());
+        harness.addToBattlefield(player1, new FaerieConclave());
+        harness.addToBattlefield(player2, new FaerieConclave());
+
+        advanceToUpkeep(player1);
+        org.assertj.core.api.Assertions.assertThat(gd.stack).isEmpty();
+        harness.addToBattlefield(player1, new FaerieConclave());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("An upkeep trigger still deals damage after Rivalry leaves the battlefield")
+    void triggerResolvesAfterSourceLeavesBattlefield() {
+        harness.addToBattlefield(player1, new Rivalry());
+        harness.addToBattlefield(player2, new FaerieConclave());
+
+        advanceToUpkeep(player2);
+        org.assertj.core.api.Assertions.assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 20);
+    }
 }
