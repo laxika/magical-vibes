@@ -3,24 +3,25 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RuinRat.class, GrizzlyBears.class, WrathOfGod.class})
 class RuinRatTest extends BaseCardTest {
 
     /** Wraths the board so Ruin Rat (player1's only creature) dies, firing its ON_DEATH trigger. */
     private void wrathToKillRuinRat() {
-        harness.setHand(player1, List.of(new WrathOfGod()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
-        harness.getGameService().playCard(gd, player1, 0, 0, null, null);
+        harness.castFromHand(player1, new WrathOfGod(), "{2}{W}{W}");
         harness.passBothPriorities(); // Wrath resolves — Ruin Rat dies, graveyard-target choice presented
     }
 
@@ -29,7 +30,7 @@ class RuinRatTest extends BaseCardTest {
     void deathExilesOpponentGraveyardCard() {
         harness.addToBattlefield(player1, new RuinRat());
         Card bears = new GrizzlyBears();
-        harness.setGraveyard(player2, new ArrayList<>(List.of(bears)));
+        harness.setGraveyard(player2, List.of(bears));
 
         wrathToKillRuinRat();
 
@@ -50,8 +51,8 @@ class RuinRatTest extends BaseCardTest {
         harness.addToBattlefield(player1, new RuinRat());
         Card ownCard = new GrizzlyBears();
         Card opponentCard = new GrizzlyBears();
-        harness.setGraveyard(player1, new ArrayList<>(List.of(ownCard)));
-        harness.setGraveyard(player2, new ArrayList<>(List.of(opponentCard)));
+        harness.setGraveyard(player1, List.of(ownCard));
+        harness.setGraveyard(player2, List.of(opponentCard));
 
         wrathToKillRuinRat();
 
@@ -75,10 +76,89 @@ class RuinRatTest extends BaseCardTest {
     void noOpponentGraveyardCardNoChoice() {
         harness.addToBattlefield(player1, new RuinRat());
         // Only the controller's own graveyard has a card → no legal opponent target.
-        harness.setGraveyard(player1, new ArrayList<>(List.of(new GrizzlyBears())));
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
 
         wrathToKillRuinRat();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
+    }
+
+    @Test
+    void canTargetCreatureThatDiesAtTheSameTime() {
+        harness.addToBattlefield(player1, new RuinRat());
+        Card opponentCreature = new GrizzlyBears();
+        harness.addToBattlefield(player2, opponentCreature);
+
+        wrathToKillRuinRat();
+
+        var choice = gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).contains(opponentCreature.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(opponentCreature.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(opponentCreature);
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void mustChooseExactlyOneCardAndCanExileNoncreature() {
+        harness.addToBattlefield(player1, new RuinRat());
+        Card target = new WrathOfGod();
+        Card other = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(target, other));
+
+        wrathToKillRuinRat();
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(target.getId(), other.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(target);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void targetLeavingGraveyardDoesNotExileAnotherCard() {
+        harness.addToBattlefield(player1, new RuinRat());
+        Card target = new GrizzlyBears();
+        Card other = new WrathOfGod();
+        harness.setGraveyard(player2, List.of(target, other));
+
+        wrathToKillRuinRat();
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.setGraveyard(player2, List.of(other));
+        harness.setHand(player2, List.of(target));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Wrath of God");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void deathtouchKillsTougherBlockerAndDeathTriggerCanExileIt() {
+        addCreatureReady(player1, new RuinRat());
+        Card blocker = new GrizzlyBears();
+        addCreatureReady(player2, blocker);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))));
+        harness.resolveCombatDamage();
+        harness.runStateBasedActions();
+
+        harness.assertInGraveyard(player1, "Ruin Rat");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(blocker.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(blocker);
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
     }
 }
