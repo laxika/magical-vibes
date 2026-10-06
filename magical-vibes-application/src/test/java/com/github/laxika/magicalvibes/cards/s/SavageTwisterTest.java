@@ -85,4 +85,29 @@ class SavageTwisterTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Feral Shadow");
     }
+
+    @Test
+    @DisplayName("Savage Twister marks exactly X damage on surviving creatures of both players")
+    void marksExactlyXDamageOnSurvivors() {
+        var minotaur = harness.addToBattlefieldAndReturn(player1, new TalruumMinotaur());
+        var dragon = harness.addToBattlefieldAndReturn(player2, new VolcanicDragon());
+
+        castTwister(2);
+
+        harness.assertOnBattlefield(player1, "Talruum Minotaur");
+        harness.assertOnBattlefield(player2, "Volcanic Dragon");
+        assertThat(minotaur.getMarkedDamage()).isEqualTo(2);
+        assertThat(dragon.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Savage Twister with X=0 does not mark damage on creatures")
+    void xZeroDoesNotMarkDamage() {
+        var shadow = harness.addToBattlefieldAndReturn(player2, new FeralShadow());
+
+        castTwister(0);
+
+        harness.assertOnBattlefield(player2, "Feral Shadow");
+        assertThat(shadow.getMarkedDamage()).isZero();
+    }
 }
