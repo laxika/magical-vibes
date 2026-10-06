@@ -5,10 +5,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
-import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -24,6 +22,7 @@ class SapphireCharmTest extends BaseCardTest {
 
     @Nested
     @DisplayName("Mode 0: Target player draws a card at the beginning of the next turn's upkeep")
+    @CardUsed({SapphireCharm.class})
     class DelayedDrawMode {
 
         @Test
@@ -57,19 +56,70 @@ class SapphireCharmTest extends BaseCardTest {
             int handBefore = gd.playerHands.get(player2.getId()).size();
             int deckBefore = gd.playerDecks.get(player2.getId()).size();
 
-            StepTriggerService stepTriggerService = GameTestEngineContext.get().getBean(StepTriggerService.class);
-            gd.activePlayerId = player2.getId();
-            harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gd));
+            advanceToUpkeep(player2);
             harness.passBothPriorities();
 
             assertThat(gd.playerHands.get(player2.getId())).hasSize(handBefore + 1);
             assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckBefore - 1);
             assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
         }
+
+        @Test
+        @DisplayName("The caster controls the delayed trigger even when an opponent draws")
+        void casterControlsDelayedTrigger() {
+            harness.setHand(player1, List.of(new SapphireCharm()));
+            harness.addMana(player1, ManaColor.BLUE, 1);
+            harness.castInstant(player1, 0, 0, player2.getId());
+            harness.passBothPriorities();
+
+            advanceToUpkeep(player2);
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
+        }
+
+        @Test
+        @DisplayName("Casting during upkeep waits for the next turn rather than drawing immediately")
+        void castingDuringUpkeepWaitsForNextTurn() {
+            advanceToUpkeep(player1);
+            harness.setHand(player1, List.of(new SapphireCharm()));
+            harness.addMana(player1, ManaColor.BLUE, 1);
+            harness.castInstant(player1, 0, 0, player1.getId());
+            harness.passBothPriorities();
+            int handBefore = gd.playerHands.get(player1.getId()).size();
+
+            assertThat(gd.stack).isEmpty();
+            assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+            assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).hasSize(1);
+
+            advanceToUpkeep(player2);
+            harness.passBothPriorities();
+
+            assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+            assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
+        }
+
+        @Test
+        @DisplayName("An opponent draws on the next turn even when the caster is active")
+        void drawsRegardlessOfWhoseUpkeepBegins() {
+            harness.forceActivePlayer(player2);
+            harness.setHand(player1, List.of(new SapphireCharm()));
+            harness.addMana(player1, ManaColor.BLUE, 1);
+            harness.castInstant(player1, 0, 0, player2.getId());
+            harness.passBothPriorities();
+            int handBefore = gd.playerHands.get(player2.getId()).size();
+
+            advanceToUpkeep(player1);
+            harness.passBothPriorities();
+
+            assertThat(gd.playerHands.get(player2.getId())).hasSize(handBefore + 1);
+            assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
+        }
     }
 
     @Nested
     @DisplayName("Mode 1: Target creature gains flying until end of turn")
+    @CardUsed({SapphireCharm.class, GiantMantis.class})
     class FlyingMode {
 
         @Test
@@ -121,6 +171,7 @@ class SapphireCharmTest extends BaseCardTest {
 
     @Nested
     @DisplayName("Mode 2: Target creature an opponent controls phases out")
+    @CardUsed({SapphireCharm.class, GiantMantis.class})
     class PhaseOutMode {
 
         @Test
@@ -168,6 +219,35 @@ class SapphireCharmTest extends BaseCardTest {
             UUID targetId = harness.getPermanentId(player1, "Giant Mantis");
 
             assertThatThrownBy(() -> harness.castInstant(player1, 0, 2, targetId))
+                    .hasMessageContaining("Target");
+        }
+
+        @Test
+        @DisplayName("The creature stays phased out through the caster's untap step")
+        void staysPhasedOutDuringOtherPlayersUntap() {
+            var creature = harness.addToBattlefieldAndReturn(player2, new GiantMantis());
+            harness.setHand(player1, List.of(new SapphireCharm()));
+            harness.addMana(player1, ManaColor.BLUE, 1);
+            harness.castInstant(player1, 0, 2, creature.getId());
+            harness.passBothPriorities();
+
+            advanceToUpkeep(player1);
+
+            harness.assertNotOnBattlefield(player2, "Giant Mantis");
+            assertThat(gd.phasedOutPermanents.get(player2.getId())).contains(creature);
+            harness.assertNotInGraveyard(player2, "Giant Mantis");
+        }
+
+        @Test
+        @DisplayName("A phased-out creature cannot be targeted by the flying mode")
+        void phasedOutCreatureCannotBeTargeted() {
+            var creature = harness.addToBattlefieldAndReturn(player2, new GiantMantis());
+            harness.setHand(player1, List.of(new SapphireCharm(), new SapphireCharm()));
+            harness.addMana(player1, ManaColor.BLUE, 2);
+            harness.castInstant(player1, 0, 2, creature.getId());
+            harness.passBothPriorities();
+
+            assertThatThrownBy(() -> harness.castInstant(player1, 0, 1, creature.getId()))
                     .hasMessageContaining("Target");
         }
     }
