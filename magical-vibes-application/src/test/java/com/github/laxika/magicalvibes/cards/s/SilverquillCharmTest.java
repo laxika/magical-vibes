@@ -25,31 +25,65 @@ class SilverquillCharmTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
     }
 
-    
-
     @Nested
     @DisplayName("Mode 0: Two +1/+1 counters on target creature")
+    @CardUsed({SilverquillCharm.class, GrizzlyBears.class})
     class CounterMode {
 
         @Test
         @DisplayName("Puts two +1/+1 counters on target creature")
         void putsTwoCounters() {
-            harness.addToBattlefield(player1, new GrizzlyBears());
+            Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
             harness.setHand(player1, List.of(new SilverquillCharm()));
             addWB();
 
-            UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
+            UUID targetId = bears.getId();
             harness.castInstant(player1, 0, 0, targetId);
             harness.passBothPriorities();
 
-            Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getId().equals(targetId)).findFirst().orElseThrow();
             assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         }
     }
 
+    @Test
+    void countersCanTargetAnOpponentsCreatureWithoutDrainingLife() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SilverquillCharm()));
+        addWB();
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.castInstant(player1, 0, 0, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void exileFailsIfPowerIncreasesAboveTwoBeforeResolution() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SilverquillCharm(), new SilverquillCharm()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castInstant(player1, 0, 1, bears.getId());
+        harness.castInstant(player1, 0, 0, bears.getId());
+        harness.passBothPriorities();
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.exiledCards).noneMatch(e -> e.card().getName().equals("Grizzly Bears"));
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Silverquill Charm");
+    }
+
     @Nested
     @DisplayName("Mode 1: Exile target creature with power 2 or less")
+    @CardUsed({SilverquillCharm.class, GrizzlyBears.class, EnormousBaloth.class})
     class ExileMode {
 
         @Test
@@ -83,6 +117,7 @@ class SilverquillCharmTest extends BaseCardTest {
 
     @Nested
     @DisplayName("Mode 2: Each opponent loses 3 life and you gain 3 life")
+    @CardUsed({SilverquillCharm.class})
     class DrainMode {
 
         @Test
@@ -96,8 +131,8 @@ class SilverquillCharmTest extends BaseCardTest {
             harness.castInstant(player1, 0, 2, null);
             harness.passBothPriorities();
 
-            assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(opponentBefore - 3);
-            assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(controllerBefore + 3);
+            harness.assertLife(player2, opponentBefore - 3);
+            harness.assertLife(player1, controllerBefore + 3);
         }
     }
 }
