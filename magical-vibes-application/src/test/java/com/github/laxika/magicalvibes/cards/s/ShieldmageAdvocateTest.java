@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -190,8 +191,8 @@ class ShieldmageAdvocateTest extends BaseCardTest {
     @Test
     void preventsAllDamageToTargetBattle() {
         addCreatureReady(player1, new ShieldmageAdvocate());
-        Permanent battle = harness.addToBattlefieldAndReturn(player1, new InvasionOfTolvada());
-        battle.setProtectorPlayerId(player2.getId());
+        Permanent battle = harness.addToBattlefieldAndReturn(player2, new InvasionOfTolvada());
+        battle.setProtectorPlayerId(player1.getId());
         battle.setCounterCount(CounterType.DEFENSE, 5);
         Card returnedCard = new BattlewiseAven();
         Permanent source = addReadyCreatureWithStatsForJudReview(player2, 3, 3);
@@ -229,6 +230,82 @@ class ShieldmageAdvocateTest extends BaseCardTest {
         resolveCombat(player2);
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+    }
+
+    @Test
+    void cannotActivateWhileSummoningSick() {
+        harness.addToBattlefield(player1, new ShieldmageAdvocate());
+        Card returnedCard = new BorderPatrol();
+        harness.setGraveyard(player2, List.of(returnedCard));
+
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(
+                player1, 0, 0, List.of(returnedCard.getId(), player1.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void doesNotResolveWhenBothTargetsLeaveTheirZones() {
+        addCreatureReady(player1, new ShieldmageAdvocate());
+        Permanent target = addCreatureReady(player1, new BorderPatrol());
+        Card returnedCard = new BattlewiseAven();
+        harness.setGraveyard(player2, List.of(returnedCard));
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0,
+                List.of(returnedCard.getId(), target.getId()));
+        gd.playerGraveyards.get(player2.getId()).clear();
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId()))
+                .noneMatch(card -> card.getId().equals(returnedCard.getId()));
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void preventionExpiresAtEndOfTurn() {
+        addCreatureReady(player1, new ShieldmageAdvocate());
+        Permanent source = addCreatureReady(player2, new BorderPatrol());
+        Card returnedCard = new BattlewiseAven();
+        harness.setGraveyard(player2, List.of(returnedCard));
+        harness.setLife(player1, 20);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_STEP);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0,
+                List.of(returnedCard.getId(), player1.getId()));
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
+            harness.passBothPriorities();
+            harness.handlePermanentChosen(player1, source.getId());
+        });
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+
+        source.setAttacking(true);
+        resolveCombat(player2);
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
+    }
+
+    @Test
+    void doesNotPreventChosenSourcesDamageToAnotherRecipient() {
+        addCreatureReady(player1, new ShieldmageAdvocate());
+        Card returnedCard = new BattlewiseAven();
+        EmberShot emberShot = new EmberShot();
+        harness.setGraveyard(player2, List.of(returnedCard));
+        harness.setHand(player2, List.of(emberShot));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 6);
+        harness.setLife(player1, 20);
+
+        harness.forceActivePlayer(player2);
+        harness.castInstant(player2, 0, player1.getId());
+        harness.activateAbilityWithMultiTargets(player1, 0, 0,
+                List.of(returnedCard.getId(), player2.getId()));
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, emberShot.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
     }
 
     private Permanent addReadyCreatureWithStatsForJudReview(Player player, int power, int toughness) {
