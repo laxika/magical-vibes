@@ -1,21 +1,23 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.j.JungleDelver;
+import com.github.laxika.magicalvibes.model.BlockerAssignment;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
-
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({RiggingRunner.class, JungleDelver.class})
 class RiggingRunnerTest extends BaseCardTest {
-
-    // ===== Casting without raid =====
 
     @Test
     @DisplayName("Cast without raid — enters as 1/1 with no counters")
@@ -26,7 +28,7 @@ class RiggingRunnerTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent runner = findRunner(player1);
+        Permanent runner = findPermanent(player1, "Rigging Runner");
         assertThat(runner).isNotNull();
         assertThat(runner.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
     }
@@ -43,8 +45,6 @@ class RiggingRunnerTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Rigging Runner");
     }
 
-    // ===== Casting with raid =====
-
     @Test
     @DisplayName("Cast with raid — enters as 2/2 with one +1/+1 counter")
     void castWithRaid() {
@@ -55,7 +55,7 @@ class RiggingRunnerTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent runner = findRunner(player1);
+        Permanent runner = findPermanent(player1, "Rigging Runner");
         assertThat(runner).isNotNull();
         assertThat(runner.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
@@ -73,8 +73,6 @@ class RiggingRunnerTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log ->
                 log.contains("Rigging Runner") && log.contains("+1/+1 counter"));
     }
-
-    // ===== No ETB trigger on the stack =====
 
     @Test
     @DisplayName("Raid counter is a replacement effect — no ETB trigger on stack")
@@ -101,20 +99,53 @@ class RiggingRunnerTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent runner = findRunner(player1);
+        Permanent runner = findPermanent(player1, "Rigging Runner");
         assertThat(runner).isNotNull();
         assertThat(runner.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("First strike kills a blocker before it can deal combat damage")
+    void firstStrikeKillsBlockerBeforeRegularDamage() {
+        harness.setHand(player1, List.of(new RiggingRunner()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        findPermanent(player1, "Rigging Runner").setSummoningSick(false);
+        harness.addToBattlefield(player2, new JungleDelver());
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertInGraveyard(player2, "Jungle Delver");
+        harness.assertOnBattlefield(player1, "Rigging Runner");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Raid still counts when the attacking creature dies in combat")
+    void raidCountsAfterAttackerDies() {
+        addCreatureReady(player1, new JungleDelver());
+        harness.addToBattlefield(player2, new RiggingRunner());
+        harness.setHand(player1, List.of(new RiggingRunner()));
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+        harness.assertInGraveyard(player1, "Jungle Delver");
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Rigging Runner")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
 
     private void markAttackedThisTurn() {
         gd.playersDeclaredAttackersThisTurn.add(player1.getId());
-    }
-
-    private Permanent findRunner(com.github.laxika.magicalvibes.model.Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Rigging Runner"))
-                .findFirst().orElse(null);
     }
 }
