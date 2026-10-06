@@ -28,8 +28,7 @@ class ReigningVictorTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 6);
 
         harness.castCreature(player1, 0, List.of(bears.getId()));
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(bears.getPowerModifier()).isEqualTo(1);
         assertThat(bears.getToughnessModifier()).isZero();
@@ -48,15 +47,19 @@ class ReigningVictorTest extends BaseCardTest {
     void attackingCreatesTappedAndAttackingWarriorToken() {
         addCreatureReady(player1, new ReigningVictor());
 
-        declareAttackers(List.of(0));
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            resolveAllTriggers();
+        });
 
         List<Permanent> tokens = findPermanents(player1, "Warrior").stream()
                 .filter(permanent -> permanent.getCard().isToken())
                 .toList();
         assertThat(tokens).hasSize(1);
         assertThat(tokens.getFirst().isTapped()).isTrue();
-        assertThat(tokens.getFirst().isAttackedThisTurn()).isTrue();
+        assertThat(tokens.getFirst().isAttacking()).isTrue();
+        assertThat(tokens.getFirst().getAttackTarget()).isEqualTo(player2.getId());
+        assertThat(tokens.getFirst().isAttackedThisTurn()).isFalse();
     }
 
     @Test
@@ -92,5 +95,68 @@ class ReigningVictorTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castCreature(player1, 0, List.of(targetId)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature");
+    }
+
+    @Test
+    @DisplayName("The entering Victor can target itself")
+    void etbCanTargetItself() {
+        harness.setHand(player1, List.of(new ReigningVictor()));
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent victor = findPermanent(player1, "Reigning Victor");
+        harness.handlePermanentChosen(player1, victor.getId());
+        resolveAllTriggers();
+
+        assertThat(victor.getPowerModifier()).isEqualTo(1);
+        assertThat(victor.getToughnessModifier()).isZero();
+        assertThat(gqs.hasKeyword(gd, victor, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(findPermanents(player1, "Warrior")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("ETB does not transfer its effects when the target leaves")
+    void etbDoesNotAffectSourceWhenTargetLeaves() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ReigningVictor());
+        harness.setHand(player1, List.of(new ReigningVictor()));
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.castCreature(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToHand(gd, target));
+        resolveAllTriggers();
+
+        Permanent victor = findPermanent(player1, "Reigning Victor");
+        assertThat(victor.getPowerModifier()).isZero();
+        assertThat(gqs.hasKeyword(gd, victor, Keyword.INDESTRUCTIBLE)).isFalse();
+        harness.assertInHand(player2, "Reigning Victor");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Mobilize resolves and sacrifices its token even after Victor leaves")
+    void mobilizeSurvivesSourceLeaving() {
+        Permanent victor = addCreatureReady(player1, new ReigningVictor());
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                    .removePermanentToHand(gd, victor));
+            resolveAllTriggers();
+        });
+
+        assertThat(findPermanents(player1, "Warrior")).hasSize(1);
+        Permanent token = findPermanent(player1, "Warrior");
+        assertThat(token.isTapped()).isTrue();
+        assertThat(token.isAttacking()).isTrue();
+        harness.assertInHand(player1, "Reigning Victor");
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Warrior")).isEmpty();
     }
 }
