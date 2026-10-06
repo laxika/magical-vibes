@@ -1,15 +1,16 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GiantSpider;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GraniticTitan;
+import com.github.laxika.magicalvibes.cards.h.HarrierNaga;
+import com.github.laxika.magicalvibes.cards.r.RampagingHippo;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,17 +20,14 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Sandblast.class, HarrierNaga.class, GraniticTitan.class, RampagingHippo.class})
 class SandblastTest extends BaseCardTest {
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting Sandblast targeting an attacking creature puts it on the stack")
     void castingTargetingAttackingCreature() {
-        Permanent attacker = new Permanent(new GrizzlyBears());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new HarrierNaga());
         attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(attacker);
 
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
@@ -49,13 +47,11 @@ class SandblastTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a creature that is not attacking or blocking")
     void cannotTargetNonCombatCreature() {
-        Permanent attacker = new Permanent(new GrizzlyBears());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new GraniticTitan());
         attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(attacker);
 
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
+        harness.addToBattlefield(player1, new HarrierNaga());
+        UUID targetId = harness.getPermanentId(player1, "Harrier Naga");
 
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
@@ -71,10 +67,8 @@ class SandblastTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a player")
     void cannotTargetPlayer() {
-        Permanent attacker = new Permanent(new GrizzlyBears());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new HarrierNaga());
         attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(attacker);
 
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
@@ -87,15 +81,11 @@ class SandblastTest extends BaseCardTest {
                 .hasMessageContaining("This spell cannot target players");
     }
 
-    // ===== Resolving =====
-
     @Test
     @DisplayName("Resolving deals 5 damage to a blocking creature, killing it")
     void resolvingDeals5DamageToBlockingCreature() {
-        Permanent blocker = new Permanent(new GiantSpider());
-        blocker.setSummoningSick(false);
+        Permanent blocker = addCreatureReady(player2, new GraniticTitan());
         blocker.setBlocking(true);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(blocker);
 
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
@@ -103,23 +93,18 @@ class SandblastTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.WHITE, 3);
         harness.passPriority(player1);
 
-        harness.castInstant(player2, 0, blocker.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, blocker.getId());
 
-        // Giant Spider is 2/4, 5 damage kills it
-        harness.assertNotOnBattlefield(player1, "Giant Spider");
-        harness.assertInGraveyard(player1, "Giant Spider");
+        // Granitic Titan has 4 toughness, so 5 damage kills it
+        harness.assertNotOnBattlefield(player2, "Granitic Titan");
+        harness.assertInGraveyard(player2, "Granitic Titan");
     }
-
-    // ===== Fizzle =====
 
     @Test
     @DisplayName("Sandblast fizzles if target creature is removed before resolution")
     void fizzlesIfTargetRemoved() {
-        Permanent attacker = new Permanent(new GrizzlyBears());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new HarrierNaga());
         attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(attacker);
 
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
@@ -134,7 +119,66 @@ class SandblastTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+        assertThat(gameLogContains("fizzles")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Sandblast deals exactly five damage to an attacking creature")
+    void dealsExactlyFiveDamageToAttacker() {
+        Permanent attacker = addCreatureReady(player1, new RampagingHippo());
+        attacker.setAttacking(true);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Sandblast()));
+        harness.addMana(player2, ManaColor.WHITE, 3);
+        harness.passPriority(player1);
+
+        harness.castAndResolveInstant(player2, 0, attacker.getId());
+
+        harness.assertOnBattlefield(player1, "Rampaging Hippo");
+        assertThat(attacker.getMarkedDamage()).isEqualTo(5);
+        harness.assertInGraveyard(player2, "Sandblast");
+    }
+
+    @Test
+    @DisplayName("Sandblast does not damage a creature that stops attacking before resolution")
+    void targetStopsAttackingBeforeResolution() {
+        Permanent attacker = addCreatureReady(player1, new HarrierNaga());
+        attacker.setAttacking(true);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Sandblast()));
+        harness.addMana(player2, ManaColor.WHITE, 3);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, attacker.getId());
+
+        attacker.setAttacking(false);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Harrier Naga");
+        assertThat(attacker.getMarkedDamage()).isZero();
+        assertThat(gameLogContains("fizzles")).isTrue();
+        harness.assertInGraveyard(player2, "Sandblast");
+    }
+
+    @Test
+    @DisplayName("Sandblast does not damage a creature that stops blocking before resolution")
+    void targetStopsBlockingBeforeResolution() {
+        Permanent blocker = addCreatureReady(player2, new HarrierNaga());
+        blocker.setBlocking(true);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Sandblast()));
+        harness.addMana(player2, ManaColor.WHITE, 3);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, blocker.getId());
+
+        blocker.setBlocking(false);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Harrier Naga");
+        assertThat(blocker.getMarkedDamage()).isZero();
+        assertThat(gameLogContains("fizzles")).isTrue();
+        harness.assertInGraveyard(player2, "Sandblast");
     }
 }
