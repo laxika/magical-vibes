@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(SkyshroudRidgeback.class)
+@CardUsed({SkyshroudRidgeback.class})
 class SkyshroudRidgebackTest extends BaseCardTest {
 
     @Test
@@ -70,5 +70,51 @@ class SkyshroudRidgebackTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Skyshroud Ridgeback");
+    }
+
+    @Test
+    @DisplayName("Fading checks fade counters when the upkeep ability resolves")
+    void removesCounterAddedAfterTriggering() {
+        Permanent ridgeback = addCreatureReady(player1, new SkyshroudRidgeback());
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        ridgeback.setCounterCount(CounterType.FADE, 1);
+        resolveAllTriggers();
+
+        assertThat(ridgeback.getCounterCount(CounterType.FADE)).isZero();
+        harness.assertOnBattlefield(player1, "Skyshroud Ridgeback");
+        harness.assertNotInGraveyard(player1, "Skyshroud Ridgeback");
+    }
+
+    @Test
+    @DisplayName("Fading sacrifices the creature if its last counter disappears before resolution")
+    void sacrificesWhenCounterRemovedAfterTriggering() {
+        Permanent ridgeback = addCreatureReady(player1, new SkyshroudRidgeback());
+        ridgeback.setCounterCount(CounterType.FADE, 1);
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        ridgeback.setCounterCount(CounterType.FADE, 0);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Skyshroud Ridgeback");
+        harness.assertInGraveyard(player1, "Skyshroud Ridgeback");
+    }
+
+    @Test
+    @DisplayName("Each Skyshroud Ridgeback fades independently")
+    void multipleCopiesFadeIndependently() {
+        Permanent expiring = addCreatureReady(player1, new SkyshroudRidgeback());
+        Permanent surviving = addCreatureReady(player1, new SkyshroudRidgeback());
+        surviving.setCounterCount(CounterType.FADE, 2);
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .contains(surviving).doesNotContain(expiring);
+        assertThat(surviving.getCounterCount(CounterType.FADE)).isEqualTo(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(expiring.getCard());
     }
 }
