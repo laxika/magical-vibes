@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed(RainveilRejuvenator.class)
 class RainveilRejuvenatorTest extends BaseCardTest {
@@ -18,12 +19,9 @@ class RainveilRejuvenatorTest extends BaseCardTest {
     @Test
     @DisplayName("ETB may mill three cards")
     void etbMayMillThreeCards() {
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(new RainveilRejuvenator(), new RainveilRejuvenator(), new RainveilRejuvenator()));
+        harness.setLibrary(player1, List.of(new RainveilRejuvenator(), new RainveilRejuvenator(), new RainveilRejuvenator()));
 
-        harness.setHand(player1, List.of(new RainveilRejuvenator()));
-        harness.addMana(player1, ManaColor.GREEN, 4);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new RainveilRejuvenator(), "{3}{G}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -40,9 +38,7 @@ class RainveilRejuvenatorTest extends BaseCardTest {
         int deckSize = gd.playerDecks.get(player1.getId()).size();
         int graveyardSize = gd.playerGraveyards.get(player1.getId()).size();
 
-        harness.setHand(player1, List.of(new RainveilRejuvenator()));
-        harness.addMana(player1, ManaColor.GREEN, 4);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new RainveilRejuvenator(), "{3}{G}");
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
@@ -54,13 +50,77 @@ class RainveilRejuvenatorTest extends BaseCardTest {
     @Test
     @DisplayName("Tap ability produces green mana equal to power")
     void tapAbilityProducesGreenManaEqualToPower() {
-        harness.addToBattlefield(player1, new RainveilRejuvenator());
-        var rejuvenator = gd.playerBattlefields.get(player1.getId()).getFirst();
+        var rejuvenator = harness.addToBattlefieldAndReturn(player1, new RainveilRejuvenator());
         rejuvenator.setSummoningSick(false);
         rejuvenator.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
 
         harness.activateAbility(player1, 0, 0, null, null);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(4);
+        assertThat(rejuvenator.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void millsOnlyAvailableCardsFromShortLibrary() {
+        var remaining = new RainveilRejuvenator();
+        harness.setLibrary(player1, List.of(remaining));
+        int opponentLibrarySize = gd.playerDecks.get(player2.getId()).size();
+        harness.castFromHand(player1, new RainveilRejuvenator(), "{3}{G}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(remaining);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(opponentLibrarySize);
+    }
+
+    @Test
+    void zeroPowerProducesNoManaButStillTaps() {
+        var rejuvenator = harness.addToBattlefieldAndReturn(player1, new RainveilRejuvenator());
+        rejuvenator.setSummoningSick(false);
+        rejuvenator.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 2);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(rejuvenator.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void negativePowerProducesNoMana() {
+        var rejuvenator = harness.addToBattlefieldAndReturn(player1, new RainveilRejuvenator());
+        rejuvenator.setSummoningSick(false);
+        rejuvenator.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 3);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(rejuvenator.isTapped()).isTrue();
+    }
+
+    @Test
+    void summoningSicknessPreventsActivation() {
+        var rejuvenator = harness.addToBattlefieldAndReturn(player1, new RainveilRejuvenator());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(rejuvenator.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
+    void cannotActivateAgainWhileTapped() {
+        var rejuvenator = harness.addToBattlefieldAndReturn(player1, new RainveilRejuvenator());
+        rejuvenator.setSummoningSick(false);
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
     }
 }
