@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.e.Errantry;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.n.NetherShadow;
 import com.github.laxika.magicalvibes.cards.w.WallOfAir;
@@ -43,8 +44,7 @@ class SirensCallTest extends BaseCardTest {
         Permanent bear = addCreatureReady(player2, new GrizzlyBears());
         primeCall();
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThatThrownBy(() -> declareAttackers(player2, List.of()))
                 .isInstanceOf(IllegalStateException.class);
@@ -64,8 +64,7 @@ class SirensCallTest extends BaseCardTest {
         Permanent fresh = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         primeCall();
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         runEndStep();
         harness.passBothPriorities();
@@ -84,8 +83,7 @@ class SirensCallTest extends BaseCardTest {
         tapped.tap();
         primeCall();
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         runEndStep();
         harness.passBothPriorities();
@@ -100,8 +98,7 @@ class SirensCallTest extends BaseCardTest {
         Permanent lazy = addCreatureReady(player2, new GrizzlyBears());
         primeCall();
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         runEndStep();
 
@@ -114,8 +111,7 @@ class SirensCallTest extends BaseCardTest {
     void requiresLaterCreatureToAttackIfAble() {
         primeCall();
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
         harness.addToBattlefieldAndReturn(player2, new NetherShadow());
 
         assertThatThrownBy(() -> declareAttackers(player2, List.of()))
@@ -146,5 +142,93 @@ class SirensCallTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("Cannot be cast before attackers in a later combat phase")
+    void cannotCastDuringAdditionalCombat() {
+        primeCall();
+        gd.combatPhasesThisTurn = 2;
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("The spell's controller controls its delayed destruction ability")
+    void casterControlsDelayedDestruction() {
+        Permanent lazy = addCreatureReady(player2, new GrizzlyBears());
+        primeCall();
+        harness.castAndResolveInstant(player1, 0);
+
+        runEndStep();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getLast().getControllerId()).isEqualTo(player1.getId());
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(lazy);
+    }
+
+    @Test
+    @DisplayName("A creature with haste entering after resolution is spared even if it did not attack")
+    void sparesNewHastyNonAttacker() {
+        primeCall();
+        harness.castAndResolveInstant(player1, 0);
+        Permanent shadow = harness.addToBattlefieldAndReturn(player2, new NetherShadow());
+        shadow.tap();
+
+        runEndStep();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(shadow);
+        harness.assertNotInGraveyard(player2, "Nether Shadow");
+    }
+
+    @Test
+    @DisplayName("Does not destroy the caster's creatures that did not attack")
+    void sparesOtherPlayersCreatures() {
+        Permanent casterCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent activeCreature = addCreatureReady(player2, new GrizzlyBears());
+        activeCreature.tap();
+        primeCall();
+        harness.castAndResolveInstant(player1, 0);
+
+        runEndStep();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(casterCreature);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(activeCreature);
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Allows no attackers when only a defender and a summoning-sick creature are present")
+    void doesNotRequireUnableCreaturesToAttack() {
+        addCreatureReady(player2, new WallOfAir());
+        harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        primeCall();
+        harness.castAndResolveInstant(player1, 0);
+
+        declareAttackers(player2, List.of());
+
+        harness.assertOnBattlefield(player2, "Wall of Air");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @CardUsed(Errantry.class)
+    @DisplayName("When the original creature can only attack alone, a later hasty creature may attack instead")
+    void canChooseLaterHastyCreatureUnderAttackLimit() {
+        Permanent bear = addCreatureReady(player2, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Errantry());
+        aura.setAttachedTo(bear.getId());
+        primeCall();
+        harness.castAndResolveInstant(player1, 0);
+        Permanent shadow = harness.addToBattlefieldAndReturn(player2, new NetherShadow());
+
+        declareAttackers(player2, List.of(1));
+
+        assertThat(shadow.isAttackedThisTurn()).isTrue();
+        assertThat(bear.isAttackedThisTurn()).isFalse();
     }
 }
