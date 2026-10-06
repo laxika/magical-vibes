@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.c.Clockspinning;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -12,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RavagingRiftwurm.class})
+@CardUsed({RavagingRiftwurm.class, Clockspinning.class})
 class RavagingRiftwurmTest extends BaseCardTest {
 
     @Test
@@ -92,5 +93,51 @@ class RavagingRiftwurmTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Ravaging Riftwurm");
+    }
+
+    @Test
+    @DisplayName("Vanishing does not trigger at upkeep without time counters")
+    void counterlessWurmDoesNotCreateUpkeepTrigger() {
+        addCreatureReady(player1, new RavagingRiftwurm());
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Ravaging Riftwurm");
+    }
+
+    @Test
+    @DisplayName("Removing the last time counter with another spell triggers sacrifice")
+    void externalLastCounterRemovalTriggersSacrifice() {
+        Permanent wurm = addCreatureReady(player1, new RavagingRiftwurm());
+        wurm.setCounterCount(CounterType.TIME, 1);
+        harness.setHand(player2, List.of(new Clockspinning()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player2, 0, wurm.getId());
+        harness.handleListChoice(player2, "time counters");
+        harness.handleListChoice(player2, "REMOVE");
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Ravaging Riftwurm");
+        harness.assertInGraveyard(player1, "Ravaging Riftwurm");
+    }
+
+    @Test
+    @DisplayName("Removing a nonlast time counter with another spell does not sacrifice the Wurm")
+    void externalNonlastCounterRemovalDoesNotSacrifice() {
+        Permanent wurm = addCreatureReady(player1, new RavagingRiftwurm());
+        wurm.setCounterCount(CounterType.TIME, 2);
+        harness.setHand(player2, List.of(new Clockspinning()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player2, 0, wurm.getId());
+        harness.handleListChoice(player2, "time counters");
+        harness.handleListChoice(player2, "REMOVE");
+        resolveAllTriggers();
+
+        assertThat(wurm.getCounterCount(CounterType.TIME)).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Ravaging Riftwurm");
+        harness.assertNotInGraveyard(player1, "Ravaging Riftwurm");
     }
 }
