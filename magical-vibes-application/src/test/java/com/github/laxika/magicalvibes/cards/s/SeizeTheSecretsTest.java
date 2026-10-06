@@ -21,8 +21,7 @@ class SeizeTheSecretsTest extends BaseCardTest {
     void costsOneLessAfterCommittingCrime() {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         harness.setHand(player1, List.of(new SeizeTheSecrets()));
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -54,9 +53,62 @@ class SeizeTheSecretsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castSorcery(player1, 0, List.of());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of());
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstCard, secondCard);
+    }
+
+    @Test
+    @DisplayName("Targeting yourself does not enable the cost reduction")
+    void targetingYourselfDoesNotReduceCost() {
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+
+        harness.setHand(player1, List.of(new SeizeTheSecrets()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Targeting an opponent's creature enables the reduction even after it dies")
+    void targetingOpponentsCreatureReducesCost() {
+        var creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+
+        Card firstCard = new GrizzlyBears();
+        Card secondCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(firstCard, secondCard));
+        harness.setHand(player1, List.of(new SeizeTheSecrets()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveSorcery(player1, 0, List.of());
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstCard, secondCard);
+    }
+
+    @Test
+    @DisplayName("Multiple crimes reduce only one generic mana and do not remove the blue cost")
+    void multipleCrimesDoNotIncreaseReductionOrRemoveBlueCost() {
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.setHand(player1, List.of(new SeizeTheSecrets()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+
+        gd.playerManaPools.get(player1.getId()).clear();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of()))
+                .isInstanceOf(IllegalStateException.class);
     }
 }
