@@ -2,11 +2,13 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RuthlessCullblade.class})
 class RuthlessCullbladeTest extends BaseCardTest {
 
     @Test
@@ -46,6 +48,39 @@ class RuthlessCullbladeTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new RuthlessCullblade());
 
         assertPowerAndToughness(creature, 4, 2);
+    }
+
+    @Test
+    @DisplayName("Gains the bonus immediately when the opponent drops below 10 life")
+    void bonusAppearsWhenOpponentLifeFalls() {
+        harness.setLife(player2, 11);
+        Permanent creature = putOnBattlefield();
+        assertPowerAndToughness(creature, 2, 1);
+
+        harness.setLife(player2, 9);
+        assertPowerAndToughness(creature, 4, 2);
+    }
+
+    @Test
+    @DisplayName("The controller's own low life does not grant the bonus")
+    void controllerLowLifeDoesNotGrantBonus() {
+        harness.setLife(player1, 9);
+        harness.setLife(player2, 20);
+        Permanent creature = putOnBattlefield();
+
+        assertPowerAndToughness(creature, 2, 1);
+    }
+
+    @Test
+    @DisplayName("Each Cullblade checks its own controller and boosts only itself")
+    void bonusAppliesOnlyToTheQualifyingCullblade() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 9);
+        Permanent creature = putOnBattlefield();
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new RuthlessCullblade());
+
+        assertPowerAndToughness(creature, 4, 2);
+        assertPowerAndToughness(opposingCreature, 2, 1);
     }
 
     private Permanent putOnBattlefield() {
