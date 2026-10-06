@@ -1,19 +1,23 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GraspingDunes;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.Abrade;
+import com.github.laxika.magicalvibes.cards.f.FeralProwler;
+import com.github.laxika.magicalvibes.cards.i.IfnirDeadlands;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ScavengerGrounds.class, Abrade.class, FeralProwler.class, IfnirDeadlands.class})
 class ScavengerGroundsTest extends BaseCardTest {
 
     @Test
@@ -31,8 +35,8 @@ class ScavengerGroundsTest extends BaseCardTest {
     @DisplayName("{2}, {T}, Sacrifice a Desert: exiles all graveyards")
     void exileAbilityClearsAllGraveyards() {
         Permanent grounds = addReadyGrounds(player1);
-        harness.setGraveyard(player1, List.of(new Shock()));
-        harness.setGraveyard(player2, List.of(new GrizzlyBears()));
+        harness.setGraveyard(player1, List.of(new Abrade()));
+        harness.setGraveyard(player2, List.of(new FeralProwler()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         // Sole Desert — auto-sacrificed as cost.
@@ -42,9 +46,9 @@ class ScavengerGroundsTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Shock"));
+                .anyMatch(c -> c.getName().equals("Abrade"));
         assertThat(gd.getPlayerExiledCards(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+                .anyMatch(c -> c.getName().equals("Feral Prowler"));
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getId().equals(grounds.getId()));
         // Sacrificed as cost into GY, then exiled when the ability resolves.
@@ -56,10 +60,9 @@ class ScavengerGroundsTest extends BaseCardTest {
     @DisplayName("With multiple Deserts, controller chooses which to sacrifice")
     void choosesWhichDesertToSacrifice() {
         Permanent grounds = addReadyGrounds(player1);
-        Permanent otherDesert = new Permanent(new GraspingDunes());
+        Permanent otherDesert = harness.addToBattlefieldAndReturn(player1, new IfnirDeadlands());
         otherDesert.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(otherDesert);
-        harness.setGraveyard(player2, List.of(new GrizzlyBears()));
+        harness.setGraveyard(player2, List.of(new FeralProwler()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, 1, null, null);
@@ -73,10 +76,74 @@ class ScavengerGroundsTest extends BaseCardTest {
                 .noneMatch(p -> p.getId().equals(otherDesert.getId()));
     }
 
+    @Test
+    @DisplayName("Sacrifice is paid before resolution, and cards arriving later are also exiled")
+    void paysSacrificeBeforeExilingCurrentGraveyards() {
+        Permanent grounds = addReadyGrounds(player1);
+        Abrade initialCard = new Abrade();
+        FeralProwler laterCard = new FeralProwler();
+        harness.setGraveyard(player1, List.of(initialCard));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(grounds);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .containsExactlyInAnyOrder(initialCard, grounds.getCard());
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+        gd.playerGraveyards.get(player2.getId()).add(laterCard);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .containsExactlyInAnyOrder(initialCard, grounds.getCard());
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(laterCard);
+    }
+
+    @Test
+    @DisplayName("An already tapped Desert can pay the sacrifice cost with initially empty graveyards")
+    void sacrificesTappedDesertWithEmptyGraveyards() {
+        Permanent grounds = addReadyGrounds(player1);
+        Permanent desert = harness.addToBattlefieldAndReturn(player1, new IfnirDeadlands());
+        desert.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handlePermanentChosen(player1, desert.getId());
+
+        assertThat(grounds.isTapped()).isTrue();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(desert.getCard());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(grounds);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(desert.getCard());
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Exiling requires two mana in addition to tapping and sacrificing")
+    void cannotActivateWithoutEnoughMana() {
+        Permanent grounds = addReadyGrounds(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(grounds);
+        assertThat(grounds.isTapped()).isFalse();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addReadyGrounds(Player player) {
-        Permanent perm = new Permanent(new ScavengerGrounds());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new ScavengerGrounds());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
