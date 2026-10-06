@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.s.SculptingSteel;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -12,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,6 +22,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RestlessBloodseeker.class, SculptingSteel.class})
 class RestlessBloodseekerTest extends BaseCardTest {
 
     @Test
@@ -130,6 +133,66 @@ class RestlessBloodseekerTest extends BaseCardTest {
         assertThat(bloodTokenCount(player1)).isEqualTo(1);
     }
 
+    @Test
+    void cannotSacrificeNontokenBloodCopyToTransform() {
+        Permanent seeker = harness.addToBattlefieldAndReturn(player1, new RestlessBloodseeker());
+        addBloodToken(player1);
+        Permanent blood = findPermanent(player1, "Blood");
+        forceMainPhase(player1);
+        harness.setHand(player1, List.of(new SculptingSteel()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, blood.getId());
+        forceMainPhase(player1);
+
+        assertThat(findPermanents(player1, "Blood")).hasSize(2);
+        assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(player1, seeker), null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(seeker.isTransformed()).isFalse();
+        assertThat(findPermanents(player1, "Blood")).hasSize(2);
+    }
+
+    @Test
+    void cannotTransformOutsideMainPhase() {
+        Permanent seeker = harness.addToBattlefieldAndReturn(player1, new RestlessBloodseeker());
+        addBloodToken(player1);
+        addBloodToken(player1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(player1, seeker), null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(seeker.isTransformed()).isFalse();
+        assertThat(bloodTokenCount(player1)).isEqualTo(2);
+    }
+
+    @Test
+    void cannotSacrificeOpponentsBloodToTransform() {
+        Permanent seeker = harness.addToBattlefieldAndReturn(player1, new RestlessBloodseeker());
+        addBloodToken(player1);
+        addBloodToken(player2);
+        forceMainPhase(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(player1, seeker), null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(bloodTokenCount(player1)).isEqualTo(1);
+        assertThat(bloodTokenCount(player2)).isEqualTo(1);
+    }
+
+    @Test
+    void multipleLifeGainsStillCreateOnlyOneBlood() {
+        harness.addToBattlefield(player1, new RestlessBloodseeker());
+        gd.lifeGainedThisTurn.put(player1.getId(), 8);
+
+        advanceToEndStep(player1);
+        harness.passBothPriorities();
+
+        assertThat(bloodTokenCount(player1)).isEqualTo(1);
+    }
+
     private void advanceToEndStep(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
@@ -165,8 +228,6 @@ class RestlessBloodseekerTest extends BaseCardTest {
                 List.of(new DiscardCardTypeCost(null, null), new SacrificeSelfCost(), new DrawCardEffect()),
                 "{1}, {T}, Discard a card, Sacrifice this token: Draw a card."
         ));
-        Permanent blood = new Permanent(bloodCard);
-        blood.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(blood);
+        addCreatureReady(player, bloodCard);
     }
 }
