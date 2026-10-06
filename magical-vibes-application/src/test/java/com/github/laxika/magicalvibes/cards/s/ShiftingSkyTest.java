@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -135,5 +137,53 @@ class ShiftingSkyTest extends BaseCardTest {
 
         Permanent goblin = findPermanent(player1, "Red Goblin");
         assertThat(gqs.getEffectiveColors(gd, goblin)).containsExactly(CardColor.WHITE);
+    }
+
+    @ParameterizedTest
+    @EnumSource(CardColor.class)
+    @DisplayName("Each color can be chosen and replaces both colored and colorless permanents")
+    void canChooseEachColor(CardColor color) {
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent millstone = harness.addToBattlefieldAndReturn(player1, new Millstone());
+        harness.castFromHand(player1, new ShiftingSky(), "{2}{U}");
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, color.name());
+
+        assertThat(gqs.getEffectiveColors(gd, bear)).containsExactly(color);
+        assertThat(gqs.getEffectiveColors(gd, millstone)).containsExactly(color);
+        assertThat(gqs.getEffectiveColors(gd, findPermanent(player1, "Shifting Sky")))
+                .containsExactly(color);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The newest Shifting Sky wins until it leaves, restoring the older color")
+    void newestCopyWinsUntilItLeaves() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.castFromHand(player1, new ShiftingSky(), "{2}{U}");
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "WHITE");
+        Permanent olderSky = findPermanent(player1, "Shifting Sky");
+
+        harness.castFromHand(player1, new ShiftingSky(), "{2}{U}");
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "BLACK");
+        Permanent newerSky = findPermanents(player1, "Shifting Sky").get(1);
+
+        assertThat(gqs.getEffectiveColors(gd, bear)).containsExactly(CardColor.BLACK);
+        assertThat(gqs.getEffectiveColors(gd, olderSky)).containsExactly(CardColor.BLACK);
+        assertThat(gqs.getEffectiveColors(gd, newerSky)).containsExactly(CardColor.BLACK);
+
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToGraveyard(gd, newerSky));
+
+        assertThat(gqs.getEffectiveColors(gd, bear)).containsExactly(CardColor.WHITE);
+        assertThat(gqs.getEffectiveColors(gd, olderSky)).containsExactly(CardColor.WHITE);
+
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToGraveyard(gd, olderSky));
+
+        assertThat(gqs.getEffectiveColors(gd, bear)).containsExactly(CardColor.GREEN);
     }
 }
