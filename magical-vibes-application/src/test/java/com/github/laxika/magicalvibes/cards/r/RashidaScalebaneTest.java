@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.PlatinumEmperion;
 import com.github.laxika.magicalvibes.cards.s.ShivanDragon;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -13,8 +15,69 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RashidaScalebane.class, ShivanDragon.class, GrizzlyBears.class})
+@CardUsed({RashidaScalebane.class, ShivanDragon.class, GrizzlyBears.class, PlatinumEmperion.class})
 class RashidaScalebaneTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Destroys a Dragon before gaining life after its life-total restriction ends")
+    void destroysDragonBeforeGainingLife() {
+        addCreatureReady(player1, new RashidaScalebane());
+        Permanent dragon = addCreatureReady(player1, new PlatinumEmperion());
+        dragon.getGrantedSubtypes().add(CardSubtype.DRAGON);
+        dragon.setAttacking(true);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        harness.activateAbility(player1, 0, null, dragon.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Platinum Emperion");
+        harness.assertInGraveyard(player1, "Platinum Emperion");
+        harness.assertLife(player1, lifeBefore + 8);
+    }
+
+    @Test
+    @DisplayName("A Dragon with negative power does not cause life loss")
+    void negativePowerDoesNotCauseLifeLoss() {
+        addCreatureReady(player1, new RashidaScalebane());
+        Permanent dragon = addCreatureReady(player2, new ShivanDragon());
+        dragon.setAttacking(true);
+        dragon.setPowerModifier(-6);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        harness.activateAbility(player1, 0, null, dragon.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Shivan Dragon");
+        harness.assertLife(player1, lifeBefore);
+    }
+
+    @Test
+    @DisplayName("Uses the Dragon's power at resolution rather than activation")
+    void usesPowerAtResolution() {
+        addCreatureReady(player1, new RashidaScalebane());
+        Permanent dragon = addCreatureReady(player2, new ShivanDragon());
+        dragon.setAttacking(true);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        harness.activateAbility(player1, 0, null, dragon.getId());
+        dragon.setPowerModifier(2);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Shivan Dragon");
+        harness.assertLife(player1, lifeBefore + 7);
+    }
 
     @Test
     @DisplayName("Destroys an attacking Dragon and gains life equal to its power")
