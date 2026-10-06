@@ -13,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Serenity.class, SerrasBlessing.class, Warthog.class})
+@CardUsed({Opalescence.class, Serenity.class, SerrasBlessing.class, Warthog.class})
 class SerrasBlessingTest extends BaseCardTest {
 
     @Test
@@ -76,7 +76,6 @@ class SerrasBlessingTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(Opalescence.class)
     @DisplayName("An animated Serra's Blessing also gains vigilance")
     void animatedBlessingGainsVigilance() {
         harness.addToBattlefield(player1, new Opalescence());
@@ -84,5 +83,33 @@ class SerrasBlessingTest extends BaseCardTest {
 
         assertThat(gqs.isCreature(gd, blessing)).isTrue();
         assertThat(gqs.hasKeyword(gd, blessing, Keyword.VIGILANCE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Gaining vigilance does not untap an already tapped creature")
+    void gainingVigilanceDoesNotUntapCreature() {
+        Permanent warthog = addCreatureReady(player1, new Warthog());
+        warthog.tap();
+
+        harness.addToBattlefield(player1, new SerrasBlessing());
+
+        assertThat(gqs.hasKeyword(gd, warthog, Keyword.VIGILANCE)).isTrue();
+        assertThat(warthog.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Vigilance remains until the last Serra's Blessing leaves")
+    void vigilanceRemainsWhileAnotherCopyIsPresent() {
+        Permanent warthog = addCreatureReady(player1, new Warthog());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new SerrasBlessing());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new SerrasBlessing());
+
+        gd.playerBattlefields.get(player1.getId()).remove(first);
+
+        assertThat(gqs.hasKeyword(gd, warthog, Keyword.VIGILANCE)).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).remove(second);
+
+        assertThat(gqs.hasKeyword(gd, warthog, Keyword.VIGILANCE)).isFalse();
     }
 }
