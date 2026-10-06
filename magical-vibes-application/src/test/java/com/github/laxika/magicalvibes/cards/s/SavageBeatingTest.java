@@ -116,6 +116,72 @@ class SavageBeatingTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    @DisplayName("Double strike affects creatures present at resolution, not later arrivals")
+    void doubleStrikeUsesCreaturesAtResolution() {
+        Permanent originalCreature = addCreature(player1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        prepareManaAndHand(2, 3);
+        harness.castModalInstantWithModes(player1, 0, 1, 2, new int[]{0}, List.of());
+        Permanent beforeResolution = addCreature(player1);
+
+        harness.passBothPriorities();
+        Permanent afterResolution = addCreature(player1);
+
+        assertThat(gqs.hasKeyword(gd, originalCreature, Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, beforeResolution, Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, afterResolution, Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gd.additionalCombatPhasesOnly).isZero();
+    }
+
+    @Test
+    @DisplayName("Untapping happens at resolution and does not repeat when the extra combat begins")
+    void extraCombatDoesNotUntapAgain() {
+        Permanent creature = addTappedCreature(player1);
+        cast(new int[]{1}, 2, 3);
+        assertThat(creature.isTapped()).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.DOUBLE_STRIKE)).isFalse();
+        creature.tap();
+
+        harness.forceStep(TurnStep.END_OF_COMBAT);
+        gs.advanceStep(gd);
+
+        assertThat(gd.currentStep).isEqualTo(TurnStep.BEGINNING_OF_COMBAT);
+        assertThat(creature.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Two casts create two consecutive extra combats without an extra main phase")
+    void multipleCastsAddMultipleCombats() {
+        cast(new int[]{1}, 2, 3);
+        cast(new int[]{1}, 2, 3);
+
+        for (int i = 0; i < 2; i++) {
+            harness.forceStep(TurnStep.END_OF_COMBAT);
+            gs.advanceStep(gd);
+            assertThat(gd.currentStep).isEqualTo(TurnStep.BEGINNING_OF_COMBAT);
+        }
+        harness.forceStep(TurnStep.END_OF_COMBAT);
+        gs.advanceStep(gd);
+
+        assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
+    }
+
+    @Test
+    @DisplayName("The extra-combat mode works at end of combat even with no creatures")
+    void extraCombatWithoutCreaturesAtEndOfCombat() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_OF_COMBAT);
+        prepareManaAndHand(2, 3);
+        harness.castModalInstantWithModes(player1, 0, 1, 2, new int[]{1}, List.of());
+        harness.passBothPriorities();
+
+        gs.advanceStep(gd);
+
+        assertThat(gd.currentStep).isEqualTo(TurnStep.BEGINNING_OF_COMBAT);
+    }
+
     private Permanent addCreature(Player player) {
         return addCreatureReady(player, new AuriokGlaivemaster());
     }
