@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.t.TrynnChampionOfFreedom;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -21,7 +22,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SilvarDevourerOfTheFree.class, GrizzlyBears.class})
+@CardUsed({SilvarDevourerOfTheFree.class, GrizzlyBears.class, TrynnChampionOfFreedom.class})
 class SilvarDevourerOfTheFreeTest extends BaseCardTest {
 
     @Test
@@ -100,10 +101,74 @@ class SilvarDevourerOfTheFreeTest extends BaseCardTest {
     }
 
     private Permanent addReadySilvar() {
-        Permanent silvar = new Permanent(new SilvarDevourerOfTheFree());
-        silvar.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(silvar);
-        return silvar;
+        return addCreatureReady(player1, new SilvarDevourerOfTheFree());
+    }
+
+    @Test
+    void partnerSearchCanFindRealTrynnInControllersLibrary() {
+        Card partner = new TrynnChampionOfFreedom();
+        harness.setLibrary(player1, List.of(partner));
+        harness.setHand(player1, List.of(new SilvarDevourerOfTheFree()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0, player1.getId());
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(partner);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void targetPlayerCanDeclinePartnerSearch() {
+        Card partner = new TrynnChampionOfFreedom();
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(partner));
+        harness.setHand(player1, List.of(new SilvarDevourerOfTheFree()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0, player2.getId());
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(partner);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void summoningSickSilvarPaysSacrificeBeforeReceivingEffects() {
+        Permanent silvar = harness.addToBattlefieldAndReturn(player1, new SilvarDevourerOfTheFree());
+        silvar.setSummoningSick(true);
+        harness.addToBattlefield(player1, new TrynnChampionOfFreedom());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        harness.assertInGraveyard(player1, "Trynn, Champion of Freedom");
+        harness.assertNotOnBattlefield(player1, "Trynn, Champion of Freedom");
+        assertThat(silvar.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(silvar.getGrantedKeywords()).doesNotContain(Keyword.INDESTRUCTIBLE);
+
+        harness.passBothPriorities();
+
+        assertThat(silvar.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(silvar.getGrantedKeywords()).contains(Keyword.INDESTRUCTIBLE);
+    }
+
+    @Test
+    void cannotSacrificeOpponentsHuman() {
+        addReadySilvar();
+        harness.addToBattlefield(player2, new TrynnChampionOfFreedom());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player2, "Trynn, Champion of Freedom");
     }
 
     private Card createHuman() {
