@@ -85,10 +85,78 @@ class ShadowspearTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, opponentIndestructiblePermanent, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
+    @Test
+    @DisplayName("Permanents entering after resolution keep their keywords")
+    void laterPermanentsKeepKeywords() {
+        addShadowspearReady(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        Permanent hexproof = harness.addToBattlefieldAndReturn(player2, new CarnageTyrant());
+        Permanent indestructible = harness.addToBattlefieldAndReturn(player2, new DarksteelCitadel());
+
+        assertThat(gqs.hasKeyword(gd, hexproof, Keyword.HEXPROOF)).isTrue();
+        assertThat(gqs.hasKeyword(gd, indestructible, Keyword.INDESTRUCTIBLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("The affected permanents are determined when the ability resolves")
+    void permanentsEnteringBeforeResolutionLoseKeywords() {
+        addShadowspearReady(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        Permanent hexproof = harness.addToBattlefieldAndReturn(player2, new CarnageTyrant());
+        Permanent indestructible = harness.addToBattlefieldAndReturn(player2, new DarksteelCitadel());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, hexproof, Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasKeyword(gd, indestructible, Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, hexproof, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("The ability resolves even if Shadowspear leaves the battlefield")
+    void resolvesWithoutShadowspear() {
+        Permanent spear = addShadowspearReady(player1);
+        Permanent hexproof = harness.addToBattlefieldAndReturn(player2, new CarnageTyrant());
+        Permanent indestructible = harness.addToBattlefieldAndReturn(player2, new DarksteelCitadel());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.getPermanentRemovalService().destroyPermanentToGraveyard(gd, spear);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, hexproof, Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasKeyword(gd, indestructible, Keyword.INDESTRUCTIBLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Moving Shadowspear removes bonuses from the old creature")
+    void movingEquipmentTransfersBonuses() {
+        Permanent spear = addShadowspearReady(player1);
+        Permanent oldCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent newCreature = addCreatureReady(player1, new GrizzlyBears());
+        spear.setAttachedTo(oldCreature.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 1, null, newCreature.getId());
+        harness.passBothPriorities();
+
+        assertThat(spear.getAttachedTo()).isEqualTo(newCreature.getId());
+        assertThat(gqs.getEffectivePower(gd, oldCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, oldCreature)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, oldCreature, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, oldCreature, Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, newCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, newCreature)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, newCreature, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, newCreature, Keyword.LIFELINK)).isTrue();
+    }
+
     private Permanent addShadowspearReady(Player player) {
-        Permanent permanent = new Permanent(new Shadowspear());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        return addCreatureReady(player, new Shadowspear());
     }
 }
