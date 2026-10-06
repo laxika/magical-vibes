@@ -71,10 +71,77 @@ class RavingVisionaryTest extends BaseCardTest {
                 .hasMessageContaining("four or more card types");
     }
 
+    @Test
+    @DisplayName("Can discard the card just drawn instead of a card already in hand")
+    void canDiscardDrawnCard() {
+        Permanent visionary = addReadyVisionary();
+        harness.setHand(player1, List.of(new Shock()));
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, battlefieldIndex(visionary), 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player1, 1);
+
+        harness.assertInHand(player1, "Shock");
+        harness.assertInGraveyard(player1, "Forest");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Delirium is checked on activation and not again on resolution")
+    void drawsAfterLosingDelirium() {
+        Permanent visionary = addReadyVisionary();
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new Forest(), new Shock(), new Millstone()));
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, battlefieldIndex(visionary), 1, null, null);
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Forest");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Four cards with only three card types do not enable delirium")
+    void duplicateTypesDoNotEnableDelirium() {
+        Permanent visionary = addReadyVisionary();
+        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new RavingVisionary(), new Forest(), new Shock()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(visionary), 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("four or more card types");
+        assertThat(visionary.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Card types in an opponent's graveyard do not enable delirium")
+    void opponentsGraveyardDoesNotEnableDelirium() {
+        Permanent visionary = addReadyVisionary();
+        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new Forest(), new Shock()));
+        harness.setGraveyard(player2, List.of(new Millstone()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(visionary), 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("four or more card types");
+        assertThat(visionary.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addReadyVisionary() {
-        Permanent visionary = harness.addToBattlefieldAndReturn(player1, new RavingVisionary());
-        visionary.setSummoningSick(false);
-        return visionary;
+        return addCreatureReady(player1, new RavingVisionary());
     }
 
     private int battlefieldIndex(Permanent permanent) {
