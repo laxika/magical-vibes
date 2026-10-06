@@ -72,6 +72,61 @@ class SkarrganSkybreakerTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Ghor-Clan Savage");
     }
 
+    @Test
+    @DisplayName("Damage to its controller does not enable bloodthirst")
+    void controllerDamageDoesNotEnableBloodthirst() {
+        gd.recordDamageToPlayer(player1.getId(), 3);
+        castSkybreaker();
+
+        assertThat(findPermanent(player1, "Skarrgan Skybreaker")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Skybreaker can sacrifice itself and deal six damage after bloodthirst")
+    void bloodthirstPowerIsUsedAfterSacrifice() {
+        gd.recordDamageToPlayer(player2.getId(), 1);
+        castSkybreaker();
+        findPermanent(player1, "Skarrgan Skybreaker").tap();
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        harness.assertInGraveyard(player1, "Skarrgan Skybreaker");
+        harness.assertLife(player2, 20);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 14);
+    }
+
+    @Test
+    @DisplayName("Its controller is a legal damage target")
+    void canDealDamageToItsController() {
+        addCreatureReady(player1, new SkarrganSkybreaker());
+        harness.setLife(player1, 20);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 17);
+        harness.assertInGraveyard(player1, "Skarrgan Skybreaker");
+    }
+
+    @Test
+    @DisplayName("A creature controlled by its controller is a legal damage target")
+    void canDealDamageToOwnCreature() {
+        addCreatureReady(player1, new SkarrganSkybreaker());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GhorClanSavage());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Ghor-Clan Savage");
+        harness.assertInGraveyard(player1, "Skarrgan Skybreaker");
+    }
+
     private void castSkybreaker() {
         harness.castFromHand(player1, new SkarrganSkybreaker(), "{4}{R}{R}{G}");
         resolveAllTriggers();
