@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -77,9 +76,77 @@ class RampagingSpiketailTest extends BaseCardTest {
                 .extracting(Card::getName)
                 .containsExactly("Swamp");
 
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         harness.assertInHand(player1, "Swamp");
+    }
+
+    @Test
+    @DisplayName("Swampcycling discards the source before the search resolves")
+    void swampcyclingDiscardsAsCost() {
+        harness.setHand(player1, List.of(new RampagingSpiketail()));
+        harness.setLibrary(player1, List.of(new Swamp()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertInGraveyard(player1, "Rampaging Spiketail");
+        harness.assertNotInHand(player1, "Rampaging Spiketail");
+        harness.assertNotInHand(player1, "Swamp");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInHand(player1, "Swamp");
+    }
+
+    @Test
+    @DisplayName("Swampcycling cannot be activated with only one mana")
+    void swampcyclingRequiresTwoMana() {
+        harness.setHand(player1, List.of(new RampagingSpiketail()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Rampaging Spiketail");
+        harness.assertNotInGraveyard(player1, "Rampaging Spiketail");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Swampcycling resolves when the library contains no Swamp")
+    void swampcyclingWithNoSwamp() {
+        harness.setHand(player1, List.of(new RampagingSpiketail()));
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Rampaging Spiketail");
+        harness.assertNotInHand(player1, "Forest");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Swampcycling may fail to find even when a Swamp is available")
+    void swampcyclingMayFailToFind() {
+        harness.setHand(player1, List.of(new RampagingSpiketail()));
+        harness.setLibrary(player1, List.of(new Swamp()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        harness.assertInGraveyard(player1, "Rampaging Spiketail");
+        harness.assertNotInHand(player1, "Swamp");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     private void castWithTarget(Permanent target) {
