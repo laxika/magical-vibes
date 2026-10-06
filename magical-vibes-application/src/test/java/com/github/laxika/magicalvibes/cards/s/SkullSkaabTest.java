@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -10,7 +9,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -75,6 +73,40 @@ class SkullSkaabTest extends BaseCardTest {
         assertThat(zombieTokens()).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("Each surviving Skull Skaab triggers when another controlled creature exploits")
+    void anotherControlledCreatureExploitingTriggersBothSkaabs() {
+        harness.addToBattlefield(player1, new SkullSkaab());
+        Permanent fodder = harness.addToBattlefieldAndReturn(player1, new SkullSkaab());
+
+        castSkullSkaab();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, fodder.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(zombieTokens()).isEqualTo(2);
+        harness.assertInGraveyard(player1, "Skull Skaab");
+    }
+
+    @Test
+    @DisplayName("An opponent exploiting does not trigger your Skull Skaab")
+    void opponentExploitingDoesNotTriggerYourSkaab() {
+        harness.addToBattlefield(player1, new SkullSkaab());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player2, new SkullSkaab(), "{U}{B}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        Permanent opponentSkaab = findPermanent(player2, "Skull Skaab");
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handlePermanentChosen(player2, opponentSkaab.getId());
+        harness.passBothPriorities();
+
+        assertThat(zombieTokens()).isZero();
+        assertThat(findPermanents(player2, "Zombie")).hasSize(1);
+    }
+
     private long zombieTokens() {
         return gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken())
@@ -85,10 +117,7 @@ class SkullSkaabTest extends BaseCardTest {
     private void castSkullSkaab() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new SkullSkaab()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SkullSkaab(), "{U}{B}");
         harness.passBothPriorities();
         harness.passBothPriorities();
     }
