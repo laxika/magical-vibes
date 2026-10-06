@@ -95,4 +95,56 @@ class RainbowEfreetTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
+    @Test
+    @DisplayName("Rainbow Efreet can phase out while summoning sick")
+    void canActivateWhileSummoningSick() {
+        Permanent efreet = harness.addToBattlefieldAndReturn(player1, new RainbowEfreet());
+        efreet.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(efreet);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(efreet);
+    }
+
+    @Test
+    @DisplayName("A second stacked activation does nothing once Rainbow Efreet has phased out")
+    void stackedActivationsPhaseOutOnlyOnce() {
+        Permanent efreet = addCreatureReady(player1, new RainbowEfreet());
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(gd.stack).hasSize(2);
+        resolveAllTriggers();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).containsExactly(efreet);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(efreet);
+    }
+
+    @Test
+    @DisplayName("A tapped Rainbow Efreet phases in before untapping and can attack that turn")
+    void phasesInBeforeUntappingWithoutSummoningSickness() {
+        Permanent efreet = addCreatureReady(player1, new RainbowEfreet());
+        efreet.tap();
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        advanceToUpkeep(player2);
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(efreet);
+        assertThat(efreet.isTapped()).isTrue();
+
+        advanceToUpkeep(player1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(efreet);
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).doesNotContain(efreet);
+        assertThat(efreet.isTapped()).isFalse();
+        assertThat(efreet.isSummoningSick()).isFalse();
+        declareAttackersAndPrepareBlockers(java.util.List.of(0));
+        assertThat(efreet.isAttacking()).isTrue();
+    }
+
 }
