@@ -1,9 +1,8 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
+import com.github.laxika.magicalvibes.cards.d.Disfigure;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -13,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -21,6 +21,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SiegeVeteran.class, EliteVanguard.class, GrizzlyBears.class, Shock.class, Disfigure.class})
 class SiegeVeteranTest extends BaseCardTest {
 
     private void advanceToCombat(Player activePlayer) {
@@ -38,8 +39,7 @@ class SiegeVeteranTest extends BaseCardTest {
         harness.addMana(caster, ManaColor.RED, 1);
 
         UUID targetId = harness.getPermanentId(targetController, targetName);
-        harness.castInstant(caster, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(caster, 0, targetId);
     }
 
     private List<Permanent> soldierTokens(Player player) {
@@ -132,5 +132,76 @@ class SiegeVeteranTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(soldierTokens(player1)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Siege Veteran can put its combat counter on itself")
+    void canTargetItselfAtBeginningOfCombat() {
+        Permanent veteran = harness.addToBattlefieldAndReturn(player1, new SiegeVeteran());
+
+        advanceToCombat(player1);
+        harness.handlePermanentChosen(player1, veteran.getId());
+        harness.passBothPriorities();
+
+        assertThat(veteran.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Siege Veteran does not trigger at the beginning of an opponent's combat")
+    void doesNotTriggerOnOpponentCombat() {
+        Permanent veteran = harness.addToBattlefieldAndReturn(player1, new SiegeVeteran());
+
+        advanceToCombat(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(veteran.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Siege Veteran's own death does not create a token")
+    void doesNotTriggerForItsOwnDeath() {
+        harness.addToBattlefield(player1, new SiegeVeteran());
+        harness.setHand(player1, List.of(new Disfigure()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Siege Veteran"));
+
+        harness.assertNotOnBattlefield(player1, "Siege Veteran");
+        assertThat(gd.stack).isEmpty();
+        assertThat(soldierTokens(player1)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Another Siege Veteran dying creates a token")
+    void triggersForAnotherVeteran() {
+        Permanent survivor = harness.addToBattlefieldAndReturn(player1, new SiegeVeteran());
+        Permanent dying = harness.addToBattlefieldAndReturn(player1, new SiegeVeteran());
+        harness.setHand(player1, List.of(new Disfigure()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveInstant(player1, 0, dying.getId());
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(survivor).doesNotContain(dying);
+        assertThat(soldierTokens(player1)).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Two Siege Veterans dying simultaneously each see the other's death")
+    void triggersForSimultaneousVeteranDeaths() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new SiegeVeteran());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new SiegeVeteran());
+        first.setMarkedDamage(2);
+        second.setMarkedDamage(2);
+
+        harness.runStateBasedActions();
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Siege Veteran");
+        assertThat(soldierTokens(player1)).hasSize(2);
     }
 }
