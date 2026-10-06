@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.b.BenalishKnight;
+import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.y.YouthfulKnight;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -15,43 +16,59 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SkyhunterSkirmisher.class, GrizzlyBears.class, BenalishKnight.class})
+@CardUsed({SkyhunterSkirmisher.class, GrizzlyBears.class, SuntailHawk.class,
+        AirElemental.class, YouthfulKnight.class})
 class SkyhunterSkirmisherTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Double strike deals damage twice to a blocker, totaling double power")
+    @DisplayName("Double strike blocker deals damage twice to an attacker, totaling double power")
     void doubleStrikeDealsDamageTwiceToBlocker() {
-        Permanent attacker = addReadySkirmisher(player1);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
 
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blocker = addReadySkirmisher(player2);
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
         resolveCombat();
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
-        harness.assertNotOnBattlefield(player1, "Skyhunter Skirmisher");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Skyhunter Skirmisher");
     }
 
     @Test
     @DisplayName("Double strike kills 1/1 blocker in first strike phase, Skirmisher survives")
     void doubleStrikeKillsSmallBlockerInFirstStrikePhase() {
+        harness.setLife(player2, 20);
         Permanent attacker = addReadySkirmisher(player1);
         attacker.setAttacking(true);
 
-        GrizzlyBears smallCreature = new GrizzlyBears();
-        smallCreature.setPower(1);
-        smallCreature.setToughness(1);
-        Permanent blocker = addCreatureReady(player2, smallCreature);
+        Permanent blocker = addCreatureReady(player2, new SuntailHawk());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
         resolveCombat();
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Suntail Hawk");
         harness.assertOnBattlefield(player1, "Skyhunter Skirmisher");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("A flying creature can legally block Skirmisher and prevents player damage")
+    void flyingCreatureCanBlockSkirmisher() {
+        harness.setLife(player2, 20);
+        addReadySkirmisher(player1);
+        addCreatureReady(player2, new SuntailHawk());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertInGraveyard(player2, "Suntail Hawk");
+        harness.assertOnBattlefield(player1, "Skyhunter Skirmisher");
+        harness.assertLife(player2, 20);
     }
 
     @Test
@@ -85,36 +102,30 @@ class SkyhunterSkirmisherTest extends BaseCardTest {
         Permanent attacker = addReadySkirmisher(player1);
         attacker.setAttacking(true);
 
-        GrizzlyBears bigCreature = new GrizzlyBears();
-        bigCreature.setPower(3);
-        bigCreature.setToughness(3);
-        Permanent blocker = addCreatureReady(player2, bigCreature);
+        Permanent blocker = addCreatureReady(player2, new AirElemental());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
         resolveCombat();
 
         harness.assertNotOnBattlefield(player1, "Skyhunter Skirmisher");
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Air Elemental");
     }
 
     @Test
-    @DisplayName("Double strike trades with equal-power first strike creature")
+    @DisplayName("Double strike blocker trades with a first strike attacker")
     void doubleStrikeTradesWithFirstStrike() {
-        Permanent attacker = addReadySkirmisher(player1);
+        Permanent attacker = addCreatureReady(player1, new YouthfulKnight());
         attacker.setAttacking(true);
 
-        BenalishKnight firstStrikeCreature = new BenalishKnight();
-        firstStrikeCreature.setPower(1);
-        firstStrikeCreature.setToughness(1);
-        Permanent blocker = addCreatureReady(player2, firstStrikeCreature);
+        Permanent blocker = addReadySkirmisher(player2);
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
         resolveCombat();
 
-        harness.assertNotOnBattlefield(player1, "Skyhunter Skirmisher");
-        harness.assertNotOnBattlefield(player2, "Benalish Knight");
+        harness.assertNotOnBattlefield(player2, "Skyhunter Skirmisher");
+        harness.assertNotOnBattlefield(player1, "Youthful Knight");
     }
 
     private Permanent addReadySkirmisher(Player player) {
