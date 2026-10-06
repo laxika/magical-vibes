@@ -78,6 +78,163 @@ class SeedshipBroodtenderTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Forest");
     }
 
+    @Test
+    void millsOnlyThreeCardsFromItsControllersLibrary() {
+        Card first = new Forest();
+        Card second = new Forest();
+        Card third = new Forest();
+        Card fourth = new Forest();
+        Card opponentsCard = new Forest();
+        harness.setLibrary(player1, List.of(first, second, third, fourth));
+        harness.setLibrary(player2, List.of(opponentsCard));
+
+        castSeedshipBroodtender();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(first, second, third);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(fourth);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentsCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void millsAllRemainingCardsWhenLibraryHasFewerThanThree() {
+        Card card = new Forest();
+        harness.setLibrary(player1, List.of(card));
+
+        castSeedshipBroodtender();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(card);
+        harness.assertOnBattlefield(player1, "Seedship Broodtender");
+    }
+
+    @Test
+    void sacrificesAsACostBeforeReturningTarget() {
+        Permanent broodtender = harness.addToBattlefieldAndReturn(player1, new SeedshipBroodtender());
+        Card spacecraft = new LumenClassFrigate();
+        harness.setGraveyard(player1, List.of(spacecraft));
+        addActivationMana();
+
+        harness.activateAbility(player1, battlefieldIndex(broodtender), 0, null, spacecraft.getId(), Zone.GRAVEYARD);
+
+        harness.assertNotOnBattlefield(player1, "Seedship Broodtender");
+        harness.assertInGraveyard(player1, "Seedship Broodtender");
+        harness.assertNotOnBattlefield(player1, "Lumen-Class Frigate");
+        harness.assertInGraveyard(player1, "Lumen-Class Frigate");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Lumen-Class Frigate");
+        harness.assertInGraveyard(player1, "Seedship Broodtender");
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(spacecraft);
+    }
+
+    @Test
+    void rejectsOpponentsGraveyardTarget() {
+        Permanent broodtender = harness.addToBattlefieldAndReturn(player1, new SeedshipBroodtender());
+        Card spacecraft = new LumenClassFrigate();
+        harness.setGraveyard(player2, List.of(spacecraft));
+        addActivationMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, battlefieldIndex(broodtender), 0, null, spacecraft.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Seedship Broodtender");
+        harness.assertInGraveyard(player2, "Lumen-Class Frigate");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotTargetItselfBeforePayingSacrificeCost() {
+        SeedshipBroodtender card = new SeedshipBroodtender();
+        Permanent broodtender = harness.addToBattlefieldAndReturn(player1, card);
+        harness.setGraveyard(player1, List.of());
+        addActivationMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, battlefieldIndex(broodtender), 0, null, card.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Seedship Broodtender");
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotActivateOutsideMainPhase() {
+        Permanent broodtender = harness.addToBattlefieldAndReturn(player1, new SeedshipBroodtender());
+        Card spacecraft = new LumenClassFrigate();
+        harness.setGraveyard(player1, List.of(spacecraft));
+        addActivationMana();
+        harness.forceStep(TurnStep.UPKEEP);
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, battlefieldIndex(broodtender), 0, null, spacecraft.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Seedship Broodtender");
+        harness.assertInGraveyard(player1, "Lumen-Class Frigate");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotActivateWhileAnotherSpellIsOnStack() {
+        Permanent broodtender = harness.addToBattlefieldAndReturn(player1, new SeedshipBroodtender());
+        Card spacecraft = new LumenClassFrigate();
+        harness.setGraveyard(player1, List.of(spacecraft));
+        harness.setHand(player1, List.of(new SeedshipBroodtender()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreature(player1, 0);
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, battlefieldIndex(broodtender), 0, null, spacecraft.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Seedship Broodtender");
+        harness.assertInGraveyard(player1, "Lumen-Class Frigate");
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    void doesNotReturnTargetThatLeavesGraveyardBeforeResolution() {
+        Permanent broodtender = harness.addToBattlefieldAndReturn(player1, new SeedshipBroodtender());
+        Card spacecraft = new LumenClassFrigate();
+        harness.setGraveyard(player1, List.of(spacecraft));
+        addActivationMana();
+        harness.activateAbility(player1, battlefieldIndex(broodtender), 0, null, spacecraft.getId(), Zone.GRAVEYARD);
+
+        harness.setGraveyard(player1, List.of(broodtender.getCard()));
+        harness.setExile(player1, List.of(spacecraft));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Lumen-Class Frigate");
+        harness.assertInGraveyard(player1, "Seedship Broodtender");
+        assertThat(gd.findExiledCard(spacecraft.getId())).isNotNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotActivateDuringOpponentsMainPhase() {
+        Permanent broodtender = harness.addToBattlefieldAndReturn(player1, new SeedshipBroodtender());
+        Card spacecraft = new LumenClassFrigate();
+        harness.setGraveyard(player1, List.of(spacecraft));
+        addActivationMana();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, battlefieldIndex(broodtender), 0, null, spacecraft.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Seedship Broodtender");
+        harness.assertInGraveyard(player1, "Lumen-Class Frigate");
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void castSeedshipBroodtender() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -86,8 +243,7 @@ class SeedshipBroodtenderTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
     private void addActivationMana() {
