@@ -29,8 +29,7 @@ class SisaysIngenuityTest extends BaseCardTest {
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
         harness.castEnchantment(player1, 0, List.of(enchantedCreature.getId()));
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard() instanceof SisaysIngenuity
@@ -104,6 +103,70 @@ class SisaysIngenuityTest extends BaseCardTest {
         harness.handleListChoice(player2, "WHITE");
 
         assertThat(gqs.getEffectiveColors(gd, target)).containsExactly(CardColor.WHITE);
+    }
+
+    @Test
+    @DisplayName("A tapped creature with summoning sickness can activate the ability targeting itself")
+    void tappedNewCreatureCanChangeItsOwnColorRepeatedly() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new MoggSentry());
+        creature.setSummoningSick(true);
+        creature.setTapped(true);
+        attachAuraTo(player1, creature);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "GREEN");
+        assertThat(gqs.getEffectiveColors(gd, creature)).containsExactly(CardColor.GREEN);
+
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "BLACK");
+
+        assertThat(gqs.getEffectiveColors(gd, creature)).containsExactly(CardColor.BLACK);
+        assertThat(creature.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An activated ability still resolves after the granting Aura leaves")
+    void abilityResolvesAfterAuraLeaves() {
+        Permanent creature = addCreatureReady(player1, new MoggSentry());
+        Permanent target = addCreatureReady(player2, new MoggSentry());
+        attachAuraTo(player1, creature);
+        Permanent aura = findPermanent(player1, "Sisay's Ingenuity");
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, aura);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(gqs.getEffectiveColors(gd, target)).containsExactly(CardColor.GREEN);
+        harness.assertInGraveyard(player1, "Sisay's Ingenuity");
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("An illegal target on resolution prevents both the Aura entering and the draw")
+    void auraDoesNotDrawWhenTargetLeavesBeforeResolution() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new MoggSentry());
+        harness.setHand(player1, List.of(new SisaysIngenuity()));
+        harness.setLibrary(player1, List.of(new ManaCylix()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, creature);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Sisay's Ingenuity");
+        harness.assertInGraveyard(player1, "Sisay's Ingenuity");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }
 
     private void attachAuraTo(com.github.laxika.magicalvibes.model.Player auraController,
