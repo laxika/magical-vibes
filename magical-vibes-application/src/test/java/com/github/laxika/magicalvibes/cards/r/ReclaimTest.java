@@ -77,4 +77,39 @@ class ReclaimTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).noneMatch(c -> c.getId().equals(target.getId()));
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
     }
+
+    @Test
+    @DisplayName("Returns only the targeted noncreature card, leaving other graveyard cards alone")
+    void returnsOnlyTargetedNoncreatureCard() {
+        Card target = new Reclaim();
+        Card other = new GrizzlyBears();
+        Card existingTop = new Reclaim();
+        Card spell = new Reclaim();
+        harness.setGraveyard(player1, List.of(other, target));
+        harness.setLibrary(player1, List.of(existingTop));
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(target, existingTop);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(other, spell);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can put a card on top of an empty library")
+    void returnsCardToEmptyLibrary() {
+        Card target = new Reclaim();
+        Card spell = new Reclaim();
+        harness.setGraveyard(player1, List.of(target));
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(target);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(spell);
+    }
 }
