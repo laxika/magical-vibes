@@ -121,4 +121,39 @@ class RingOfImmortalsTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, potion.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Can counter your own instant targeting your permanent")
+    void countersYourOwnInstant() {
+        UUID targetId = harness.addToBattlefieldAndReturn(player1, new TundraWolves()).getId();
+        harness.addToBattlefield(player1, new RingOfImmortals());
+        Boomerang boomerang = new Boomerang();
+        harness.setHand(player1, List.of(boomerang));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castInstant(player1, 0, targetId);
+        harness.activateAbility(player1, 1, null, boomerang.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Boomerang");
+        harness.assertOnBattlefield(player1, "Tundra Wolves");
+    }
+
+    @Test
+    @DisplayName("Cannot counter an Aura targeting an opponent's permanent")
+    void cannotTargetAuraTargetingOpponentsPermanent() {
+        UUID targetId = harness.addToBattlefieldAndReturn(player1, new TundraWolves()).getId();
+        GiantStrength aura = new GiantStrength();
+        harness.setHand(player1, List.of(aura));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addToBattlefield(player2, new RingOfImmortals());
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+
+        harness.castEnchantment(player1, 0, targetId);
+        harness.passPriority(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, aura.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
 }
