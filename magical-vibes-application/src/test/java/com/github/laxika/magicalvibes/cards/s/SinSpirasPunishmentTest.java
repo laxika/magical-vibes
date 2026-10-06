@@ -3,7 +3,9 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.v.ViviOrnitier;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SinSpirasPunishment.class, GrizzlyBears.class, Plains.class, Shock.class})
+@CardUsed({SinSpirasPunishment.class, GrizzlyBears.class, Plains.class, Shock.class, ViviOrnitier.class})
 class SinSpirasPunishmentTest extends BaseCardTest {
 
     @Test
@@ -64,9 +66,8 @@ class SinSpirasPunishmentTest extends BaseCardTest {
     void triggersWhenAttacking() {
         GrizzlyBears bears = new GrizzlyBears();
         harness.setGraveyard(player1, List.of(bears));
-        Permanent sin = new Permanent(new SinSpirasPunishment());
+        Permanent sin = harness.addToBattlefieldAndReturn(player1, new SinSpirasPunishment());
         sin.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(sin);
 
         declareAttackers(List.of(0));
         resolveAllTriggers();
@@ -75,7 +76,76 @@ class SinSpirasPunishmentTest extends BaseCardTest {
         assertThat(tokensNamed(player1, bears.getName())).hasSize(1);
     }
 
+    @Test
+    void emptyGraveyardCreatesNoTokenAndDoesNotUseOpponentsGraveyard() {
+        ViviOrnitier opponentCard = new ViviOrnitier();
+        harness.setGraveyard(player2, List.of(opponentCard));
+
+        resolveEnterTrigger(List.of());
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentCard);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().isToken());
+    }
+
+    @Test
+    void graveyardWithOnlyInstantsCreatesNoToken() {
+        Shock shock = new Shock();
+
+        resolveEnterTrigger(List.of(shock));
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(shock);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().isToken());
+    }
+
+    @Test
+    void stopsAfterOneNonlandEvenWhenMorePermanentsRemain() {
+        GrizzlyBears first = new GrizzlyBears();
+        GrizzlyBears second = new GrizzlyBears();
+
+        resolveEnterTrigger(List.of(first, second));
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(tokensNamed(player1, first.getName())).hasSize(1);
+    }
+
+    @Test
+    void choosesFromGraveyardAtResolution() {
+        GrizzlyBears removed = new GrizzlyBears();
+        ViviOrnitier remaining = new ViviOrnitier();
+        castSin(List.of(removed));
+        harness.passBothPriorities();
+        harness.setGraveyard(player1, List.of(remaining));
+
+        resolveAllTriggers();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(remaining);
+        assertThat(tokensNamed(player1, remaining.getName())).hasSize(1);
+        assertThat(tokensNamed(player1, removed.getName())).isEmpty();
+    }
+
+    @Test
+    void tokenCopyPreservesAllColorsOfMulticoloredCard() {
+        ViviOrnitier vivi = new ViviOrnitier();
+
+        resolveEnterTrigger(List.of(vivi));
+
+        List<Permanent> tokens = tokensNamed(player1, vivi.getName());
+        assertThat(tokens).hasSize(1);
+        assertThat(gqs.getEffectiveColors(gd, tokens.getFirst()))
+                .containsExactlyInAnyOrder(CardColor.BLUE, CardColor.RED);
+    }
+
     private void resolveEnterTrigger(List<Card> graveyard) {
+        castSin(graveyard);
+        resolveAllTriggers();
+    }
+
+    private void castSin(List<Card> graveyard) {
         harness.setGraveyard(player1, graveyard);
         harness.setHand(player1, List.of(new SinSpirasPunishment()));
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -84,8 +154,6 @@ class SinSpirasPunishmentTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
     }
 
     private List<Permanent> tokensNamed(com.github.laxika.magicalvibes.model.Player player, String name) {
