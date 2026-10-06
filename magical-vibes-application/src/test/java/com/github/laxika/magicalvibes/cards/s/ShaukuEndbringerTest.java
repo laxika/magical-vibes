@@ -106,6 +106,73 @@ class ShaukuEndbringerTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, shauku)).isEqualTo(5);
     }
 
+    @Test
+    @DisplayName("Shauku cannot attack while its controller controls another creature")
+    void cannotAttackWithAnotherFriendlyCreature() {
+        Permanent shauku = addCreatureReady(player1, new ShaukuEndbringer());
+        harness.addToBattlefield(player1, new BayFalcon());
+
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(findIndex(player1, shauku))))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Shauku does not cause life loss during its opponent's upkeep")
+    void noLifeLossOnOpponentsUpkeep() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addToBattlefield(player1, new ShaukuEndbringer());
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Shauku can exile its controller's creature")
+    void canExileFriendlyCreature() {
+        Permanent shauku = addCreatureReady(player1, new ShaukuEndbringer());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new BayFalcon());
+
+        harness.activateAbility(player1, findIndex(player1, shauku), null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Bay Falcon");
+        harness.assertNotInGraveyard(player1, "Bay Falcon");
+        assertThat(gd.exiledCards).extracting(entry -> entry.card()).contains(target.getCard());
+        assertThat(gqs.getEffectivePower(gd, shauku)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, shauku)).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("Shauku can target itself and is exiled without receiving a counter")
+    void canExileItself() {
+        Permanent shauku = addCreatureReady(player1, new ShaukuEndbringer());
+
+        harness.activateAbility(player1, findIndex(player1, shauku), null, shauku.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Shauku, Endbringer");
+        assertThat(gd.exiledCards).extracting(entry -> entry.card()).contains(shauku.getCard());
+        assertThat(shauku.getCounters()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The exile ability still resolves after Shauku leaves the battlefield")
+    void exilesTargetAfterSourceLeaves() {
+        Permanent shauku = addCreatureReady(player1, new ShaukuEndbringer());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BayFalcon());
+
+        harness.activateAbility(player1, findIndex(player1, shauku), null, target.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToExile(gd, shauku));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Bay Falcon");
+        assertThat(gd.exiledCards).extracting(entry -> entry.card()).contains(target.getCard());
+        assertThat(shauku.getCounters()).isEmpty();
+    }
     private int findIndex(com.github.laxika.magicalvibes.model.Player player, Permanent target) {
         List<Permanent> bf = gd.playerBattlefields.get(player.getId());
         for (int i = 0; i < bf.size(); i++) {
