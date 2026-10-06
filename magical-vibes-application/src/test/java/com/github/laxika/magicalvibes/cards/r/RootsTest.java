@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.a.AbbeyGargoyles;
 import com.github.laxika.magicalvibes.cards.a.AysenAbbey;
 import com.github.laxika.magicalvibes.cards.f.FolkOfAnHavva;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -28,8 +29,7 @@ class RootsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 4);
 
         harness.castEnchantment(player1, 0, creature.getId());
-        harness.passBothPriorities(); // resolve enchantment spell
-        harness.passBothPriorities(); // resolve ETB tap trigger
+        resolveAllTriggers();
 
         assertThat(creature.isTapped()).isTrue();
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -96,5 +96,55 @@ class RootsTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, land.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature without flying");
+    }
+
+    @Test
+    @DisplayName("The entry ability still taps the enchanted creature after it gains shroud")
+    void entryAbilityDoesNotTargetEnchantedCreature() {
+        Permanent creature = addCreatureReady(player2, new FolkOfAnHavva());
+        harness.setHand(player1, List.of(new Roots()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        assertThat(creature.isTapped()).isFalse();
+        assertThat(gd.stack).hasSize(1);
+
+        creature.getGrantedKeywords().add(Keyword.SHROUD);
+        resolveAllTriggers();
+
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(findPermanent(player1, "Roots").getAttachedTo()).isEqualTo(creature.getId());
+    }
+
+    @Test
+    @DisplayName("Roots goes to the graveyard when its enchanted creature gains flying")
+    void gainingFlyingMakesAttachmentIllegal() {
+        Permanent creature = addCreatureReady(player2, new FolkOfAnHavva());
+        harness.setHand(player1, List.of(new Roots()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.castEnchantment(player1, 0, creature.getId());
+        resolveAllTriggers();
+
+        creature.getGrantedKeywords().add(Keyword.FLYING);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Roots")).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof Roots);
+    }
+
+    @Test
+    @DisplayName("Roots can tap and prevent untapping of its controller's own creature")
+    void canEnchantOwnCreature() {
+        Permanent creature = addCreatureReady(player1, new FolkOfAnHavva());
+        harness.setHand(player1, List.of(new Roots()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.castEnchantment(player1, 0, creature.getId());
+        resolveAllTriggers();
+
+        assertThat(creature.isTapped()).isTrue();
+        advanceToUpkeep(player1);
+        assertThat(creature.isTapped()).isTrue();
     }
 }
