@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.c.CoilingOracle;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SimicGrowthChamber.class, Island.class})
+@CardUsed({SimicGrowthChamber.class, Island.class, CoilingOracle.class})
 class SimicGrowthChamberTest extends BaseCardTest {
 
     @Test
@@ -74,5 +75,43 @@ class SimicGrowthChamberTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
         assertThat(chamber.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Only lands controlled by the trigger's controller can be returned")
+    void excludesOpponentsLandsAndNonlands() {
+        harness.addToBattlefield(player1, new CoilingOracle());
+        harness.addToBattlefield(player2, new SimicGrowthChamber());
+        harness.setHand(player1, List.of(new SimicGrowthChamber()));
+        harness.playLand(player1, 0);
+        Permanent chamber = findPermanent(player1, "Simic Growth Chamber");
+
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).containsExactly(chamber.getId());
+        harness.handlePermanentChosen(player1, chamber.getId());
+
+        harness.assertInHand(player1, "Simic Growth Chamber");
+        harness.assertOnBattlefield(player1, "Coiling Oracle");
+        harness.assertOnBattlefield(player2, "Simic Growth Chamber");
+    }
+
+    @Test
+    @DisplayName("A borrowed land is returned to its owner rather than its controller")
+    void returnsBorrowedLandToItsOwner() {
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        gd.stolenCreatures.put(island.getId(), player2.getId());
+        harness.setHand(player1, List.of(new SimicGrowthChamber()));
+        harness.playLand(player1, 0);
+        harness.passBothPriorities();
+
+        harness.handlePermanentChosen(player1, island.getId());
+
+        harness.assertNotOnBattlefield(player1, "Island");
+        harness.assertNotInHand(player1, "Island");
+        harness.assertInHand(player2, "Island");
+        harness.assertOnBattlefield(player1, "Simic Growth Chamber");
     }
 }
