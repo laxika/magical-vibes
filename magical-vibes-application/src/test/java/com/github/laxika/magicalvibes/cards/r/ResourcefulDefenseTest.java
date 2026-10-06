@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HardenedScales;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -110,6 +111,106 @@ class ResourcefulDefenseTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(player1, 0, 0,
                 List.of(source.getId(), opponentPermanent.getId())))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @CardUsed(HardenedScales.class)
+    void counterReplacementDoesNotIncreaseTheNumberRemovedFromTheSource() {
+        harness.addToBattlefieldAndReturn(player1, new ResourcefulDefense());
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent destination = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new HardenedScales());
+        source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0,
+                List.of(source.getId(), destination.getId()));
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "1");
+
+        assertThat(source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(destination.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void mayChooseToMoveZeroCounters() {
+        harness.addToBattlefieldAndReturn(player1, new ResourcefulDefense());
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent destination = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0,
+                List.of(source.getId(), destination.getId()));
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "0");
+
+        assertThat(source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(destination.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void canActivateWithACounterlessSource() {
+        harness.addToBattlefieldAndReturn(player1, new ResourcefulDefense());
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent destination = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0,
+                List.of(source.getId(), destination.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(destination.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void activatedAbilityRequiresTwoDifferentPermanents() {
+        harness.addToBattlefieldAndReturn(player1, new ResourcefulDefense());
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(player1, 0, 0,
+                List.of(source.getId(), source.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void doesNotRemoveCountersWhenTheDestinationLeavesBeforeResolution() {
+        harness.addToBattlefieldAndReturn(player1, new ResourcefulDefense());
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent destination = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0,
+                List.of(source.getId(), destination.getId()));
+        removePermanent(destination);
+
+        assertThat(source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void transfersCountersToAnEnchantmentWhenAPermanentIsExiled() {
+        Permanent defense = harness.addToBattlefieldAndReturn(player1, new ResourcefulDefense());
+        Permanent leaving = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        leaving.setCounterCount(CounterType.CHARGE, 3);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToExile(gd, leaving));
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, defense.getId());
+        harness.passBothPriorities();
+
+        assertThat(defense.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
     }
 
     private void removePermanent(Permanent permanent) {
