@@ -2,9 +2,10 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -21,7 +22,7 @@ class SecretTunnelTest extends BaseCardTest {
     @Test
     @DisplayName("Tapping Secret Tunnel adds one colorless mana")
     void tapsForColorlessMana() {
-        Permanent tunnel = addReadyPermanent(new SecretTunnel());
+        Permanent tunnel = harness.addToBattlefieldAndReturn(player1, new SecretTunnel());
 
         harness.activateAbility(player1, 0, 0, null, null);
 
@@ -32,9 +33,9 @@ class SecretTunnelTest extends BaseCardTest {
     @Test
     @DisplayName("Two controlled creatures sharing a type can't be blocked this turn")
     void makesTwoCreaturesUnblockable() {
-        addReadyPermanent(new SecretTunnel());
-        Permanent first = addReadyPermanent(new GrizzlyBears());
-        Permanent second = addReadyPermanent(new GrizzlyBears());
+        harness.addToBattlefieldAndReturn(player1, new SecretTunnel());
+        Permanent first = addCreatureReady(player1, new GrizzlyBears());
+        Permanent second = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.activateAbilityWithMultiTargets(player1, 0, 1, List.of(first.getId(), second.getId()));
@@ -47,9 +48,9 @@ class SecretTunnelTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target two controlled creatures that share no creature type")
     void rejectsCreaturesWithoutSharedType() {
-        addReadyPermanent(new SecretTunnel());
-        Permanent first = addReadyPermanent(new GrizzlyBears());
-        Permanent second = addReadyPermanent(new LlanowarElves());
+        harness.addToBattlefieldAndReturn(player1, new SecretTunnel());
+        Permanent first = addCreatureReady(player1, new GrizzlyBears());
+        Permanent second = addCreatureReady(player1, new LlanowarElves());
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(
@@ -61,9 +62,9 @@ class SecretTunnelTest extends BaseCardTest {
     @Test
     @DisplayName("The Secret Tunnel ability only targets creatures you control")
     void rejectsOpponentCreature() {
-        addReadyPermanent(new SecretTunnel());
-        Permanent first = addReadyPermanent(new GrizzlyBears());
-        Permanent opponent = addReadyPermanent(player2, new GrizzlyBears());
+        harness.addToBattlefieldAndReturn(player1, new SecretTunnel());
+        Permanent first = addCreatureReady(player1, new GrizzlyBears());
+        Permanent opponent = addCreatureReady(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(
@@ -72,14 +73,97 @@ class SecretTunnelTest extends BaseCardTest {
                 .hasMessageContaining("you control");
     }
 
-    private Permanent addReadyPermanent(Card card) {
-        return addReadyPermanent(player1, card);
+    @Test
+    void animatedTunnelCannotBeBlocked() {
+        Permanent tunnel = harness.addToBattlefieldAndReturn(player1, new SecretTunnel());
+        tunnel.setAnimatedUntilEndOfTurn(true);
+        tunnel.setAnimatedPower(2);
+        tunnel.setAnimatedToughness(2);
+
+        assertThat(gqs.isCreature(gd, tunnel)).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, tunnel)).isTrue();
     }
 
-    private Permanent addReadyPermanent(com.github.laxika.magicalvibes.model.Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    void requiresTwoDistinctTargets() {
+        harness.addToBattlefield(player1, new SecretTunnel());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(
+                player1, 0, 1, List.of(creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(
+                player1, 0, 1, List.of(creature.getId(), creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(creature.isCantBeBlocked()).isFalse();
+    }
+
+    @Test
+    void unblockabilityExpiresAtEndOfTurn() {
+        Permanent tunnel = harness.addToBattlefieldAndReturn(player1, new SecretTunnel());
+        Permanent first = addCreatureReady(player1, new GrizzlyBears());
+        Permanent second = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 1, List.of(first.getId(), second.getId()));
+        assertThat(tunnel.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        harness.passBothPriorities();
+        assertThat(gqs.hasCantBeBlocked(gd, first)).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, second)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.hasCantBeBlocked(gd, first)).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, second)).isFalse();
+    }
+
+    @Test
+    void remainingTargetStillBecomesUnblockableWhenOtherTargetLeaves() {
+        harness.addToBattlefield(player1, new SecretTunnel());
+        Permanent first = addCreatureReady(player1, new GrizzlyBears());
+        Permanent second = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 1, List.of(first.getId(), second.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(second);
+        gd.playerGraveyards.get(player1.getId()).add(second.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasCantBeBlocked(gd, first)).isTrue();
+    }
+
+    @Test
+    void doesNotResolveWhenTargetsNoLongerShareCreatureType() {
+        harness.addToBattlefield(player1, new SecretTunnel());
+        Permanent first = addCreatureReady(player1, new GrizzlyBears());
+        Permanent second = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 1, List.of(first.getId(), second.getId()));
+        second.setTransientCreatureTypeOverride(CardSubtype.FROG);
+        assertThat(gqs.shareCreatureType(gd, first, second)).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasCantBeBlocked(gd, first)).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, second)).isFalse();
+    }
+    @Test
+    void remainingTargetMustStillShareDepartedTargetsLastKnownType() {
+        harness.addToBattlefield(player1, new SecretTunnel());
+        Permanent first = addCreatureReady(player1, new GrizzlyBears());
+        Permanent second = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 1, List.of(first.getId(), second.getId()));
+        second.setLastKnownSubtypes(java.util.Set.of(CardSubtype.BEAR));
+        gd.playerBattlefields.get(player1.getId()).remove(second);
+        gd.playerGraveyards.get(player1.getId()).add(second.getCard());
+        first.setTransientCreatureTypeOverride(CardSubtype.FROG);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasCantBeBlocked(gd, first)).isFalse();
     }
 }
