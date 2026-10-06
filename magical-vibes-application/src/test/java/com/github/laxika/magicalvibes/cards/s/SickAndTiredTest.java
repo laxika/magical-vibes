@@ -15,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SickAndTired.class, GiantCockroach.class, ThranLens.class})
+@CardUsed({SickAndTired.class, GiantCockroach.class, ThranLens.class, Snap.class})
 class SickAndTiredTest extends BaseCardTest {
 
     private void giveMana() {
@@ -31,8 +31,7 @@ class SickAndTiredTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SickAndTired()));
         giveMana();
 
-        harness.castInstant(player1, 0, List.of(first.getId(), second.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, List.of(first.getId(), second.getId()));
 
         assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(1);
@@ -48,8 +47,7 @@ class SickAndTiredTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SickAndTired()));
         giveMana();
 
-        harness.castInstant(player1, 0, List.of(first.getId(), second.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, List.of(first.getId(), second.getId()));
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
@@ -90,5 +88,42 @@ class SickAndTiredTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of(creature.getId(), creature.getId())))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void stillWeakensRemainingTargetWhenOtherTargetLeaves() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GiantCockroach());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GiantCockroach());
+        harness.setHand(player1, List.of(new SickAndTired()));
+        harness.setHand(player2, List.of(new Snap()));
+        giveMana();
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player1, 0, List.of(first.getId(), second.getId()));
+        harness.castAndResolveInstant(player2, 0, second.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(1);
+        harness.assertNotOnBattlefield(player2, "Giant Cockroach");
+        harness.assertInHand(player2, "Giant Cockroach");
+        harness.assertInGraveyard(player1, "Sick and Tired");
+    }
+
+    @Test
+    void repeatedDebuffsPutBothCreaturesWithZeroToughnessIntoGraveyards() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GiantCockroach());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GiantCockroach());
+        harness.setHand(player1, List.of(new SickAndTired(), new SickAndTired()));
+        giveMana();
+        harness.castAndResolveInstant(player1, 0, List.of(first.getId(), second.getId()));
+        giveMana();
+        harness.castAndResolveInstant(player1, 0, List.of(first.getId(), second.getId()));
+
+        harness.assertNotOnBattlefield(player1, "Giant Cockroach");
+        harness.assertNotOnBattlefield(player2, "Giant Cockroach");
+        harness.assertInGraveyard(player1, "Giant Cockroach");
+        harness.assertInGraveyard(player2, "Giant Cockroach");
     }
 }
