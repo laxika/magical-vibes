@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.p.PsychogenicProbe;
 import com.github.laxika.magicalvibes.cards.s.SleightOfHand;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -152,6 +153,91 @@ class RenewingTouchTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).extracting(Card::getId)
                 .contains(nonCreature.getId());
+        harness.assertInGraveyard(player1, "Renewing Touch");
+    }
+
+    @Test
+    @CardUsed(PsychogenicProbe.class)
+    void selectingZeroTargetsStillShufflesLibrary() {
+        harness.addToBattlefield(player2, new PsychogenicProbe());
+        RiverBear creature = new RiverBear();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setHand(player1, List.of(new RenewingTouch()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.setLife(player1, 20);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 18);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(creature);
+        harness.assertInGraveyard(player1, "Renewing Touch");
+    }
+
+    @Test
+    @CardUsed(PsychogenicProbe.class)
+    void noCreatureCardsStillShufflesLibrary() {
+        harness.addToBattlefield(player2, new PsychogenicProbe());
+        SleightOfHand nonCreature = new SleightOfHand();
+        harness.setGraveyard(player1, List.of(nonCreature));
+        harness.setHand(player1, List.of(new RenewingTouch()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.setLife(player1, 20);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 18);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(nonCreature);
+        harness.assertInGraveyard(player1, "Renewing Touch");
+    }
+
+    @Test
+    void resolvesForRemainingLegalTarget() {
+        RiverBear removed = new RiverBear();
+        RiverBear remaining = new RiverBear();
+        harness.setGraveyard(player1, List.of(removed, remaining));
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new RenewingTouch()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(removed.getId(), remaining.getId()));
+        harness.setGraveyard(player1, List.of(remaining));
+        harness.setExile(player1, List.of(removed));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remaining);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(removed);
+        harness.assertInGraveyard(player1, "Renewing Touch");
+    }
+
+    @Test
+    @CardUsed(PsychogenicProbe.class)
+    void allTargetsIllegalDoesNotShuffleLibrary() {
+        RiverBear target = new RiverBear();
+        SleightOfHand libraryCard = new SleightOfHand();
+        harness.addToBattlefield(player2, new PsychogenicProbe());
+        harness.setGraveyard(player1, List.of(target));
+        harness.setLibrary(player1, List.of(libraryCard));
+        harness.setHand(player1, List.of(new RenewingTouch()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.setLife(player1, 20);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(target));
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(target);
         harness.assertInGraveyard(player1, "Renewing Touch");
     }
 }
