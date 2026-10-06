@@ -37,13 +37,12 @@ class SealedFateTest extends BaseCardTest {
         Card c3 = new SealedFate();
         harness.setLibrary(player2, List.of(c0, c1, c2, c3));
 
-        harness.castSorcery(player1, 0, 3, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 3, player2.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
 
         // Exile the second of the three looked-at cards.
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(1));
+        harness.handleCardChosen(player1, 1);
 
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getId().equals(c1.getId()));
@@ -67,8 +66,7 @@ class SealedFateTest extends BaseCardTest {
 
         harness.setLibrary(player2, List.of(new Island(), new Forest()));
 
-        harness.castSorcery(player1, 0, 2, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 2, player2.getId());
 
         PendingInteraction.LibrarySearch search =
                 gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
@@ -84,10 +82,9 @@ class SealedFateTest extends BaseCardTest {
         Card only = new Island();
         harness.setLibrary(player2, List.of(only));
 
-        harness.castSorcery(player1, 0, 4, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 4, player2.getId());
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getId().equals(only.getId()));
@@ -119,6 +116,46 @@ class SealedFateTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("X=1 exiles only the top card and leaves the rest of the library untouched")
+    void xOneLeavesUnexaminedCardsUntouched() {
+        harness.setHand(player1, List.of(new SealedFate()));
+        giveMana(1);
+
+        Card top = new Island();
+        Card second = new Forest();
+        Card third = new Mountain();
+        harness.setLibrary(player2, List.of(top, second, third));
+
+        harness.castAndResolveSorcery(player1, 0, 1, player2.getId());
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(top);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(second, third);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Sealed Fate");
+    }
+
+    @Test
+    @DisplayName("X=2 returns the single remaining card to the top without a reorder prompt")
+    void xTwoReturnsSingleRemainingCardToTop() {
+        harness.setHand(player1, List.of(new SealedFate()));
+        giveMana(2);
+
+        Card top = new Island();
+        Card second = new Forest();
+        Card third = new Mountain();
+        harness.setLibrary(player2, List.of(top, second, third));
+
+        harness.castAndResolveSorcery(player1, 0, 2, player2.getId());
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(top);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(second, third);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test
