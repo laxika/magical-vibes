@@ -94,6 +94,50 @@ class ShivanSandMageTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 
+    @Test
+    void removalCanTargetPermanentWithoutTimeCounters() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BlindPhantasm());
+
+        cast(0, target.getId());
+
+        assertThat(target.getCounterCount(CounterType.TIME)).isZero();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+    }
+
+    @Test
+    void removesOnlyAvailableTimeCounterFromPermanent() {
+        Permanent target = permanentWithTimeCounters(player2, 1);
+
+        cast(0, target.getId());
+
+        assertThat(target.getCounterCount(CounterType.TIME)).isZero();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+    }
+
+    @Test
+    void removalCannotTargetExiledCardWithTimeCountersButWithoutSuspend() {
+        BlindPhantasm target = new BlindPhantasm();
+        harness.setExile(player2, List.of(target));
+        gd.exiledCardTimeCounters.put(target.getId(), 3);
+        gd.exiledCardsWithNonSuspendTimeCounters.add(target.getId());
+
+        assertThatThrownBy(() -> castAtTriggerTime(0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.exiledCardTimeCounters).containsEntry(target.getId(), 3);
+    }
+
+    @Test
+    void additionCannotTargetExiledCardWithTimeCountersButWithoutSuspend() {
+        BlindPhantasm target = new BlindPhantasm();
+        harness.setExile(player2, List.of(target));
+        gd.exiledCardTimeCounters.put(target.getId(), 3);
+        gd.exiledCardsWithNonSuspendTimeCounters.add(target.getId());
+
+        assertThatThrownBy(() -> castAtTriggerTime(1, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.exiledCardTimeCounters).containsEntry(target.getId(), 3);
+    }
+
     private Permanent permanentWithTimeCounters(com.github.laxika.magicalvibes.model.Player player, int count) {
         Permanent permanent = harness.addToBattlefieldAndReturn(player, new BlindPhantasm());
         permanent.setCounterCount(CounterType.TIME, count);
