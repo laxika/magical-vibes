@@ -76,12 +76,71 @@ class SeedTheLandTest extends BaseCardTest {
     @DisplayName("A nonland permanent entering does not create a Snake token")
     void nonlandDoesNotCreateSnake() {
         harness.addToBattlefield(player1, new SeedTheLand());
-        harness.setHand(player1, List.of(new SakuraTribeScout()));
-        harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.GREEN, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SakuraTribeScout(), "{G}");
         harness.passBothPriorities();
 
         assertThat(findPermanents(player1, "Snake")).isEmpty();
+    }
+
+    @Test
+    void landPutOntoBattlefieldByAbilityCreatesSnake() {
+        harness.addToBattlefield(player1, new SeedTheLand());
+        addCreatureReady(player1, new SakuraTribeScout());
+        harness.setHand(player1, List.of(new OboroPalaceInTheClouds()));
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Snake")).hasSize(1);
+        assertThat(findPermanents(player2, "Snake")).isEmpty();
+    }
+
+    @Test
+    void eachEnchantmentCreatesSnakeForLandController() {
+        harness.addToBattlefield(player1, new SeedTheLand());
+        harness.addToBattlefield(player2, new SeedTheLand());
+        harness.setHand(player1, List.of(new OboroPalaceInTheClouds()));
+
+        harness.playLand(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Snake")).hasSize(2);
+        assertThat(findPermanents(player2, "Snake")).isEmpty();
+    }
+
+    @Test
+    void ownLandChangingControllerBeforeResolutionCreatesSnakeForNewController() {
+        harness.addToBattlefield(player1, new SeedTheLand());
+        harness.setHand(player1, List.of(new OboroPalaceInTheClouds()));
+        harness.playLand(player1, 0);
+
+        Permanent land = findPermanent(player1, "Oboro, Palace in the Clouds");
+        gd.playerBattlefields.get(player1.getId()).remove(land);
+        gd.playerBattlefields.get(player2.getId()).add(land);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Snake")).isEmpty();
+        assertThat(findPermanents(player2, "Snake")).hasSize(1);
+    }
+
+    @Test
+    void opponentsLandChangingControllerBeforeResolutionCreatesSnakeForNewController() {
+        harness.addToBattlefield(player1, new SeedTheLand());
+        harness.setHand(player2, List.of(new OboroPalaceInTheClouds()));
+        harness.forceActivePlayer(player2);
+        harness.playLand(player2, 0);
+
+        Permanent land = findPermanent(player2, "Oboro, Palace in the Clouds");
+        gd.playerBattlefields.get(player2.getId()).remove(land);
+        gd.playerBattlefields.get(player1.getId()).add(land);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Snake")).hasSize(1);
+        assertThat(findPermanents(player2, "Snake")).isEmpty();
     }
 }
