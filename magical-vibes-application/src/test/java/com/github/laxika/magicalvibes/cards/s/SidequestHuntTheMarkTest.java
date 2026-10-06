@@ -140,6 +140,87 @@ class SidequestHuntTheMarkTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Three Treasures do not cause a transformation without an opponent's creature dying")
+    void doesNotTransformWithoutOpponentCreatureDeath() {
+        Permanent source = addSidequest(player1);
+        for (int i = 0; i < 3; i++) {
+            harness.addToBattlefield(player1, createTreasureToken());
+        }
+
+        advanceToEndStep(player1);
+
+        assertThat(findPermanents(player1, "Treasure")).hasSize(3);
+        assertThat(source.isTransformed()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An opponent's end step does not trigger the quest")
+    void doesNotTriggerDuringOpponentsEndStep() {
+        Permanent source = addSidequest(player1);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        destroyWithLightningBolt(player1, target);
+
+        advanceToEndStep(player2);
+
+        assertThat(findPermanents(player1, "Treasure")).isEmpty();
+        assertThat(source.isTransformed()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Multiple opposing creature deaths produce only one Treasure")
+    void multipleDeathsCreateOnlyOneTreasure() {
+        addSidequest(player1);
+        Permanent first = addCreatureReady(player2, new GrizzlyBears());
+        Permanent second = addCreatureReady(player2, new GrizzlyBears());
+        destroyWithLightningBolt(player1, first);
+        destroyWithLightningBolt(player1, second);
+
+        advanceToEndStep(player1);
+
+        assertThat(findPermanents(player1, "Treasure")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Yiazmat can activate while tapped and summoning sick")
+    void yiazmatCanActivateWhileTappedAndSummoningSick() {
+        Permanent yiazmat = addTransformedYiazmat(player1);
+        yiazmat.setTapped(true);
+        yiazmat.setSummoningSick(true);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, battlefieldIndex(player1, yiazmat), null, null);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(artifact.getCard());
+        assertThat(gqs.hasKeyword(gd, yiazmat, Keyword.INDESTRUCTIBLE)).isFalse();
+        harness.passBothPriorities();
+        assertThat(gqs.hasKeyword(gd, yiazmat, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(yiazmat.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Yiazmat survives lethal damage while indestructible and loses the grant after cleanup")
+    void indestructibleProtectsUntilEndOfTurn() {
+        Permanent yiazmat = addTransformedYiazmat(player1);
+        harness.addToBattlefield(player1, new LeoninScimitar());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, battlefieldIndex(player1, yiazmat), null, null);
+        harness.passBothPriorities();
+
+        destroyWithLightningBolt(player1, yiazmat);
+        destroyWithLightningBolt(player1, yiazmat);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(yiazmat);
+        assertThat(gqs.hasKeyword(gd, yiazmat, Keyword.INDESTRUCTIBLE)).isTrue();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(yiazmat);
+        assertThat(gqs.hasKeyword(gd, yiazmat, Keyword.INDESTRUCTIBLE)).isFalse();
+    }
+
     private Permanent addSidequest(Player player) {
         return harness.addToBattlefieldAndReturn(player, new SidequestHuntTheMark());
     }
@@ -157,15 +238,14 @@ class SidequestHuntTheMarkTest extends BaseCardTest {
     private void destroyWithLightningBolt(Player caster, Permanent target) {
         harness.setHand(caster, List.of(new LightningBolt()));
         harness.addMana(caster, ManaColor.RED, 1);
-        harness.castInstant(caster, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(caster, 0, target.getId());
     }
 
     private void advanceToEndStep(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.END_STEP);
         harness.passBothPriorities();
     }
 
