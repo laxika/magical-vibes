@@ -89,9 +89,7 @@ class SamuraiEnforcersTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, samurai)).isEqualTo(6);
         assertThat(gqs.getEffectiveToughness(gd, samurai)).isEqualTo(6);
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.getEffectivePower(gd, samurai)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, samurai)).isEqualTo(4);
@@ -117,5 +115,28 @@ class SamuraiEnforcersTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, samurai)).isEqualTo(6);
         assertThat(gqs.getEffectiveToughness(gd, samurai)).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("Both Samurai Enforcers get their own Bushido bonus only after their triggers resolve")
+    void opposingSamuraiBonusesWaitForTriggerResolution() {
+        Permanent attacker = addCreatureReady(player1, new SamuraiEnforcers());
+        Permanent blocker = addCreatureReady(player2, new SamuraiEnforcers());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () ->
+                gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))));
+
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(4);
+
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, this::resolveAllTriggers);
+
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(6);
     }
 }
