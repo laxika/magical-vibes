@@ -55,4 +55,41 @@ class SerendibEfreetTest extends BaseCardTest {
         assertThat(gd.stack).noneMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY);
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
     }
+
+    @Test
+    void eachEfreetTriggersSeparatelyDuringItsControllersUpkeep() {
+        addCreatureReady(player1, new SerendibEfreet());
+        addCreatureReady(player1, new SerendibEfreet());
+        addCreatureReady(player2, new SerendibEfreet());
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(19);
+
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    void secondPlayersEfreetDamagesOnlyTheSecondPlayer() {
+        addCreatureReady(player2, new SerendibEfreet());
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(19);
+    }
 }
