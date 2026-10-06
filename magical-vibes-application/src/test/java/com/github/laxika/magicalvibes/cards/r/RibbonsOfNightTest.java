@@ -102,6 +102,62 @@ class RibbonsOfNightTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A single blue mana spent draws exactly one card")
+    void drawsWithExactlyOneBlueMana() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GoliathSpider());
+        harness.setLife(player1, 15);
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        harness.setHand(player1, List.of(new RibbonsOfNight()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        assertThat(target.getMarkedDamage()).isEqualTo(4);
+        harness.assertLife(player1, 19);
+        assertThat(gd.playerHands.get(player1.getId())).singleElement().isInstanceOf(Forest.class);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Can damage your own creature while gaining life and drawing")
+    void canTargetOwnCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GoliathSpider());
+        harness.setLife(player1, 15);
+        harness.setLife(player2, 12);
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setHand(player1, List.of(new RibbonsOfNight()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        assertThat(target.getMarkedDamage()).isEqualTo(4);
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 12);
+        assertThat(gd.playerHands.get(player1.getId())).singleElement().isInstanceOf(Forest.class);
+    }
+
+    @Test
+    @DisplayName("Lethal damage still gains four life and draws a card")
+    void lethalDamageStillGainsLifeAndDraws() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GoliathSpider());
+        target.setMarkedDamage(2);
+        harness.setLife(player1, 15);
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setHand(player1, List.of(new RibbonsOfNight()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        harness.assertNotOnBattlefield(player2, "Goliath Spider");
+        harness.assertInGraveyard(player2, "Goliath Spider");
+        harness.assertLife(player1, 19);
+        assertThat(gd.playerHands.get(player1.getId())).singleElement().isInstanceOf(Forest.class);
+    }
+    @Test
     @DisplayName("Cannot target a land")
     void cannotTargetLand() {
         Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
