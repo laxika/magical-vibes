@@ -2,18 +2,22 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({ShrineOfLoyalLegions.class, SuntailHawk.class, GrizzlyBears.class})
 class ShrineOfLoyalLegionsTest extends BaseCardTest {
 
     private Permanent getShrine() {
@@ -25,8 +29,6 @@ class ShrineOfLoyalLegionsTest extends BaseCardTest {
         Permanent shrine = getShrine();
         return battlefield.indexOf(shrine);
     }
-
-    // ===== Upkeep trigger =====
 
     @Test
     @DisplayName("Upkeep trigger puts a charge counter on Shrine")
@@ -64,8 +66,6 @@ class ShrineOfLoyalLegionsTest extends BaseCardTest {
         assertThat(getShrine().getCounterCount(CounterType.CHARGE)).isEqualTo(0);
     }
 
-    // ===== White spell cast trigger =====
-
     @Test
     @DisplayName("Casting a white spell puts a charge counter on Shrine")
     void whiteSpellAddsChargeCounter() {
@@ -74,8 +74,7 @@ class ShrineOfLoyalLegionsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve charge counter trigger
-        harness.passBothPriorities(); // resolve creature spell
+        resolveAllTriggers();
 
         assertThat(getShrine().getCounterCount(CounterType.CHARGE)).isEqualTo(1);
     }
@@ -106,8 +105,6 @@ class ShrineOfLoyalLegionsTest extends BaseCardTest {
 
         assertThat(getShrine().getCounterCount(CounterType.CHARGE)).isEqualTo(0);
     }
-
-    // ===== Activated ability: token creation =====
 
     @Test
     @DisplayName("Sacrificing with charge counters creates 1/1 Myr tokens")
@@ -163,8 +160,6 @@ class ShrineOfLoyalLegionsTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Myr");
     }
 
-    // ===== Combined: upkeep + spell + sacrifice =====
-
     @Test
     @DisplayName("Accumulate counters via upkeep and white spells, then sacrifice for tokens")
     void fullLifecycle() {
@@ -181,8 +176,7 @@ class ShrineOfLoyalLegionsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SuntailHawk()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve charge counter trigger
-        harness.passBothPriorities(); // resolve creature spell
+        resolveAllTriggers();
         assertThat(getShrine().getCounterCount(CounterType.CHARGE)).isEqualTo(2);
 
         // Sacrifice shrine with 2 counters
@@ -192,5 +186,87 @@ class ShrineOfLoyalLegionsTest extends BaseCardTest {
 
         long myrCount = countPermanents(player1, "Myr");
         assertThat(myrCount).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Sacrifice is paid immediately, before token creation resolves")
+    void sacrificeIsAnActivationCost() {
+        harness.addToBattlefield(player1, new ShrineOfLoyalLegions());
+        getShrine().setCounterCount(CounterType.CHARGE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, getShrineIndex(), null, null);
+
+        harness.assertNotOnBattlefield(player1, "Shrine of Loyal Legions");
+        harness.assertInGraveyard(player1, "Shrine of Loyal Legions");
+        harness.assertNotOnBattlefield(player1, "Myr");
+
+        harness.passBothPriorities();
+        assertThat(countPermanents(player1, "Myr")).isEqualTo(2);
+        assertThat(countPermanents(player2, "Myr")).isZero();
+        assertThat(findPermanents(player1, "Myr")).allSatisfy(token -> {
+            assertThat(token.getCard().isToken()).isTrue();
+            assertThat(token.getCard().getPower()).isEqualTo(1);
+            assertThat(token.getCard().getToughness()).isEqualTo(1);
+            assertThat(token.getCard().getColors()).isEmpty();
+            assertThat(token.getCard().hasType(CardType.CREATURE)).isTrue();
+            assertThat(token.getCard().hasType(CardType.ARTIFACT)).isTrue();
+            assertThat(token.getCard().getSubtypes())
+                    .containsExactlyInAnyOrder(CardSubtype.PHYREXIAN, CardSubtype.MYR);
+            assertThat(token.isTapped()).isFalse();
+        });
+    }
+
+    @Test
+    @DisplayName("A pending upkeep trigger cannot increase tokens after sacrifice")
+    void sacrificeInResponseToUpkeepUsesExistingCounters() {
+        harness.addToBattlefield(player1, new ShrineOfLoyalLegions());
+        getShrine().setCounterCount(CounterType.CHARGE, 2);
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, getShrineIndex(), null, null);
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Myr")).isEqualTo(2);
+        harness.assertInGraveyard(player1, "Shrine of Loyal Legions");
+    }
+
+    @Test
+    @DisplayName("A tapped Shrine cannot pay the activation's tap cost")
+    void tappedShrineCannotActivate() {
+        harness.addToBattlefield(player1, new ShrineOfLoyalLegions());
+        getShrine().tap();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, getShrineIndex(), null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Shrine of Loyal Legions");
+        harness.assertNotOnBattlefield(player1, "Myr");
+    }
+
+    @Test
+    @DisplayName("Activation requires three mana")
+    void insufficientManaCannotActivate() {
+        harness.addToBattlefield(player1, new ShrineOfLoyalLegions());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, getShrineIndex(), null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(getShrine().isTapped()).isFalse();
+        harness.assertNotOnBattlefield(player1, "Myr");
+    }
+
+    @Test
+    @DisplayName("A white creature entering without being cast does not trigger Shrine")
+    void whiteCreatureEnteringDoesNotTrigger() {
+        harness.addToBattlefield(player1, new ShrineOfLoyalLegions());
+        harness.addToBattlefield(player1, new SuntailHawk());
+
+        resolveAllTriggers();
+
+        assertThat(getShrine().getCounterCount(CounterType.CHARGE)).isZero();
     }
 }
