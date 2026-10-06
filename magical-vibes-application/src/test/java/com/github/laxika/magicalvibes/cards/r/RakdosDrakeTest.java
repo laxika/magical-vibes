@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RakdosDrake.class})
 class RakdosDrakeTest extends BaseCardTest {
 
     @Test
@@ -41,11 +42,9 @@ class RakdosDrakeTest extends BaseCardTest {
     void unleashedCantBlock() {
         Permanent drake = addCreatureReady(player1, new RakdosDrake());
         drake.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new RakdosDrake());
 
-        declareAttackers(player2, List.of(0));
-
-        harness.beginBlockerDeclarationInput();
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
         assertThatThrownBy(() -> gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class);
     }
@@ -54,11 +53,9 @@ class RakdosDrakeTest extends BaseCardTest {
     @DisplayName("Without a +1/+1 counter it blocks normally")
     void blocksWithoutCounter() {
         addCreatureReady(player1, new RakdosDrake());
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new RakdosDrake());
 
-        declareAttackers(player2, List.of(0));
-
-        harness.beginBlockerDeclarationInput();
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(findPermanent(player1, "Rakdos Drake").isBlocking()).isTrue();
@@ -74,6 +71,34 @@ class RakdosDrakeTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Removing the last unleash counter allows blocking again")
+    void blocksAfterUnleashCounterRemoved() {
+        castDrake(true);
+        Permanent drake = findPermanent(player1, "Rakdos Drake");
+        drake.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+        addCreatureReady(player2, new RakdosDrake());
+
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(drake.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A counter added after declining unleash still prevents blocking")
+    void laterCounterPreventsBlocking() {
+        castDrake(false);
+        Permanent drake = findPermanent(player1, "Rakdos Drake");
+        drake.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        addCreatureReady(player2, new RakdosDrake());
+
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     private void castDrake(boolean unleash) {
