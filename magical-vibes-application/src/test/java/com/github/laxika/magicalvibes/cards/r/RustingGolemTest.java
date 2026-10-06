@@ -12,7 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(RustingGolem.class)
+@CardUsed({RustingGolem.class})
 class RustingGolemTest extends BaseCardTest {
 
     @Test
@@ -73,10 +73,49 @@ class RustingGolemTest extends BaseCardTest {
     @DisplayName("Sacrifices itself during upkeep when it has no fade counters")
     void sacrificesWithoutFadeCounters() {
         Permanent golem = addCreatureReady(player1, new RustingGolem());
+        golem.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Rusting Golem");
+    }
+
+    @Test
+    @DisplayName("A boosted Golem survives removal of its last fade counter until the next upkeep")
+    void survivesLastCounterRemovalWhenBoostedThenSacrificesNextUpkeep() {
+        Permanent golem = addCreatureReady(player1, new RustingGolem());
+        golem.setCounterCount(CounterType.FADE, 1);
+        golem.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Rusting Golem");
+        assertThat(golem.getCounterCount(CounterType.FADE)).isZero();
+        assertThat(gqs.getEffectivePower(gd, golem)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, golem)).isEqualTo(1);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Rusting Golem");
+        harness.assertInGraveyard(player1, "Rusting Golem");
+    }
+
+    @Test
+    @DisplayName("Power and toughness track fade counters immediately and ignore unrelated counters")
+    void tracksFadeCountersOutsideUpkeep() {
+        Permanent golem = addCreatureReady(player1, new RustingGolem());
+        golem.setCounterCount(CounterType.FADE, 3);
+        golem.setCounterCount(CounterType.CHARGE, 2);
+
+        assertThat(gqs.getEffectivePower(gd, golem)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, golem)).isEqualTo(3);
+
+        golem.setCounterCount(CounterType.FADE, 6);
+
+        assertThat(gqs.getEffectivePower(gd, golem)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, golem)).isEqualTo(6);
     }
 }
