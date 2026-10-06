@@ -12,7 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(ShalaisAcolyte.class)
+@CardUsed({ShalaisAcolyte.class})
 class ShalaisAcolyteTest extends BaseCardTest {
 
     @Test
@@ -24,7 +24,7 @@ class ShalaisAcolyteTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent acolyte = findAcolyte();
+        Permanent acolyte = findPermanent(player1, "Shalai's Acolyte");
         assertThat(acolyte.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
@@ -38,14 +38,16 @@ class ShalaisAcolyteTest extends BaseCardTest {
         harness.castKickedCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent acolyte = findAcolyte();
+        Permanent acolyte = findPermanent(player1, "Shalai's Acolyte");
         assertThat(acolyte.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
-    private Permanent findAcolyte() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard() instanceof ShalaisAcolyte)
-                .findFirst()
-                .orElseThrow();
+    @Test
+    @DisplayName("Entering without being cast does not grant kicker counters")
+    void entersWithoutBeingCast() {
+        Permanent acolyte = harness.enterBattlefieldAndReturn(player1, new ShalaisAcolyte());
+
+        assertThat(acolyte.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
     }
 }
