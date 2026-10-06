@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.XValue;
+import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
@@ -65,6 +66,7 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
     private final GraveyardService graveyardService;
     private final LifeSupport lifeSupport;
     private final CoinFlipCostSupport coinFlipCostSupport;
+    private AwardManaEffectHandler awardManaEffectHandler;
 
     @Autowired
     public ForcedCostOrElseEffectHandler(DestructionSupport destructionSupport,
@@ -105,6 +107,11 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
                 interactionHandlerRegistry, drawService, amountEvaluationService, graveyardService, null, null);
     }
 
+    @Autowired
+    void setAwardManaEffectHandler(AwardManaEffectHandler awardManaEffectHandler) {
+        this.awardManaEffectHandler = awardManaEffectHandler;
+    }
+
     @Override
     public Class<? extends CardEffect> handledEffect() {
         return ForcedCostOrElseEffect.class;
@@ -134,13 +141,32 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
         if (paidEffects.isEmpty()) {
             return;
         }
+        boolean cumulativeUpkeep = forcedCost instanceof PayManaCost manaCost && manaCost.forCumulativeUpkeep();
+        if (cumulativeUpkeep && awardManaEffectHandler != null) {
+            // "Cumulative upkeep — Add {R}" (Braid of Fire): adding the mana is the payment itself,
+            // not a triggered ability, so it happens immediately instead of using the stack.
+            StackEntry payment = new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard, controllerId,
+                    sourceCard.getName() + "'s cumulative upkeep", new ArrayList<>(), xValue, sourcePermanentId);
+            payment.setSourcePermanentSnapshot(sourcePermanentSnapshot);
+            for (CardEffect effect : paidEffects) {
+                if (effect instanceof AwardManaEffect) {
+                    awardManaEffectHandler.resolve(gameData, payment, effect);
+                }
+            }
+            paidEffects = paidEffects.stream()
+                    .filter(effect -> !(effect instanceof AwardManaEffect))
+                    .toList();
+            if (paidEffects.isEmpty()) {
+                return;
+            }
+        }
         List<CardEffect> snapshottedPaidEffects = paidEffects.stream()
                 .map(effect -> snapshotPaidEffectXValue(effect, xValue))
                 .toList();
         StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
         int pendingIndex = gameData.pendingEffectResolutionIndex;
         if (pendingEntry != null
-                && !(forcedCost instanceof PayManaCost manaCost && manaCost.forCumulativeUpkeep())
+                && !cumulativeUpkeep
                 && pendingEntry.getControllerId().equals(controllerId)
                 && pendingEntry.getCard().getId().equals(sourceCard.getId())
                 && pendingIndex >= 0

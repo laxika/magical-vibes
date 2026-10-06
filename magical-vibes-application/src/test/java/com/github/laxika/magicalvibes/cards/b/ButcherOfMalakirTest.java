@@ -57,7 +57,7 @@ class ButcherOfMalakirTest extends BaseCardTest {
         butcher.setMarkedDamage(4);
         harness.runStateBasedActions();
         resolveAllTriggers();
-        harness.handlePermanentChosen(player2, chosen.getId());
+        harness.handleMultiplePermanentsChosen(player2, List.of(chosen.getId()));
         resolveAllTriggers();
 
         harness.assertInGraveyard(player2, "Grizzly Bears");
@@ -84,8 +84,8 @@ class ButcherOfMalakirTest extends BaseCardTest {
         for (int i = 0; i < 3; i++) {
             resolveAllTriggers();
             if (gd.interaction.isAwaitingInput()) {
-                harness.handlePermanentChosen(player2,
-                        findPermanent(player2, "Grizzly Bears").getId());
+                harness.handleMultiplePermanentsChosen(player2,
+                        List.of(findPermanent(player2, "Grizzly Bears").getId()));
             }
         }
 

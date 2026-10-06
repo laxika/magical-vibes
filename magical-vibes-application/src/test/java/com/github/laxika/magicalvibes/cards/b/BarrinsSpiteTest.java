@@ -94,8 +94,8 @@ class BarrinsSpiteTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("A target that changes controllers before resolution is not affected")
-    void targetChangingControllerBeforeResolutionIsNotAffected() {
+    @DisplayName("Neither target is affected once they no longer share a controller")
+    void targetsWithDifferentControllersOnResolutionAreBothIllegal() {
         addCreatureReady(player1, new EmpressGalina());
         Permanent sisay = addCreatureReady(player2, new CaptainSisay());
         Permanent kavu = addCreatureReady(player2, new KavuAggressor());
@@ -113,9 +113,10 @@ class BarrinsSpiteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        harness.assertOnBattlefield(player1, "Empress Galina");
-        harness.assertInGraveyard(player2, "Kavu Aggressor");
-        harness.assertNotInHand(player2, "Kavu Aggressor");
+        harness.assertInGraveyard(player1, "Barrin's Spite");
+        harness.assertOnBattlefield(player1, "Captain Sisay");
+        harness.assertOnBattlefield(player2, "Kavu Aggressor");
+        harness.assertNotInHand(player2, "Captain Sisay");
     }
 
     @Test

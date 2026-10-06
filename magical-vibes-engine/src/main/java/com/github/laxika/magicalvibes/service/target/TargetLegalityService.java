@@ -3398,16 +3398,35 @@ public class TargetLegalityService {
             }
             if (multiTargetConstraint == MultiTargetConstraint.CONTROLLED_BY_FIRST_TARGET
                     && targetLegal.length > 0) {
-                UUID requiredControllerId = controllerForMultiTargetConstraint(
-                        gameData, declaredTargetIds.getFirst());
-                if (requiredControllerId == null) {
-                    requiredControllerId = entry.getRequiredTargetControllerId();
-                }
-                for (int i = 0; i < declaredTargetIds.size(); i++) {
-                    UUID targetControllerId = controllerForMultiTargetConstraint(gameData, declaredTargetIds.get(i));
-                    if (targetLegal[i] && !java.util.Objects.equals(requiredControllerId, targetControllerId)) {
-                        targetLegal[i] = false;
-                        entry.markTargetIllegal(i);
+                if (gameData.playerIds.contains(declaredTargetIds.getFirst())) {
+                    // A targeted player anchors "that player": only a permanent that has since
+                    // changed controllers becomes illegal, the player stays a legal target.
+                    UUID requiredControllerId = declaredTargetIds.getFirst();
+                    for (int i = 0; i < declaredTargetIds.size(); i++) {
+                        UUID targetControllerId = controllerForMultiTargetConstraint(gameData, declaredTargetIds.get(i));
+                        if (targetLegal[i] && !java.util.Objects.equals(requiredControllerId, targetControllerId)) {
+                            targetLegal[i] = false;
+                            entry.markTargetIllegal(i);
+                        }
+                    }
+                } else {
+                    // "Target creatures controlled by the same player" is a relation between the
+                    // targets: when the ones still around no longer share a controller, none of them
+                    // satisfies it and all are illegal (Cannibalize, Barrin's Spite).
+                    Set<UUID> legalTargetControllers = new HashSet<>();
+                    for (int i = 0; i < declaredTargetIds.size(); i++) {
+                        if (targetLegal[i]) {
+                            legalTargetControllers.add(
+                                    controllerForMultiTargetConstraint(gameData, declaredTargetIds.get(i)));
+                        }
+                    }
+                    if (legalTargetControllers.size() > 1) {
+                        for (int i = 0; i < declaredTargetIds.size(); i++) {
+                            if (targetLegal[i]) {
+                                targetLegal[i] = false;
+                                entry.markTargetIllegal(i);
+                            }
+                        }
                     }
                 }
             }

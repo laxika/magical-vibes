@@ -43,6 +43,10 @@ public class LockTargetPermanentEffectHandler implements NormalEffectHandlerBean
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         LockTargetPermanentEffect lock = (LockTargetPermanentEffect) effect;
+        if (entry.getDeclaredTargetIds().isEmpty()) {
+            lockOne(gameData, entry, lock, entry.getTargetId());
+            return;
+        }
         for (UUID targetId : entry.targetsForEffect(lock)) {
             lockOne(gameData, entry, lock, targetId);
         }
@@ -87,12 +91,21 @@ public class LockTargetPermanentEffectHandler implements NormalEffectHandlerBean
     }
 
     private String describe(LockTargetPermanentEffect lock) {
-        if (lock.locksActivatedAbilities()) {
-            return "can't attack or block and its activated abilities can't be activated";
+        String combat;
+        if (lock.locksAttacking() && lock.locksBlocking()) {
+            combat = "can't attack or block";
+        } else if (lock.locksBlocking()) {
+            combat = "can't block";
+        } else if (lock.locksAttacking()) {
+            combat = "can't attack";
+        } else {
+            combat = null;
         }
-        if (lock.locksBlocking()) {
-            return lock.locksAttacking() ? "can't attack or block" : "can't block";
+        if (!lock.locksActivatedAbilities()) {
+            return combat == null ? "is locked" : combat;
         }
-        return "can't attack this turn";
+        return combat == null
+                ? "can't have its activated abilities activated"
+                : combat + " and its activated abilities can't be activated";
     }
 }
