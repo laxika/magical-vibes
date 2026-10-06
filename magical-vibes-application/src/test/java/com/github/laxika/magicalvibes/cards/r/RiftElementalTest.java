@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RiftElemental.class, ArcBlade.class, BlindPhantasm.class})
+@CardUsed({RiftElemental.class, ArcBlade.class, BlindPhantasm.class, RavagingRiftwurm.class})
 class RiftElementalTest extends BaseCardTest {
 
     @Test
@@ -75,8 +76,14 @@ class RiftElementalTest extends BaseCardTest {
         harness.activateAbility(player1, battlefieldIndex(source), null, null);
 
         assertThat(gd.exiledCardTimeCounters).doesNotContainKey(target.getId());
+        assertThat(source.getPowerModifier()).isZero();
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+        assertThat(source.getPowerModifier()).isEqualTo(2);
+        assertThat(gd.findExiledCard(target.getId())).isNotNull();
     }
 
     @Test
@@ -120,7 +127,9 @@ class RiftElementalTest extends BaseCardTest {
     @Test
     void cannotActivateUsingNonSuspendTimeCounterOnExiledCard() {
         Permanent source = readySource();
-        ArcBlade target = suspendedCard(player1, 1);
+        BlindPhantasm target = new BlindPhantasm();
+        harness.setExile(player1, List.of(target));
+        gd.exiledCardTimeCounters.put(target.getId(), 1);
         gd.exiledCardsWithNonSuspendTimeCounters.add(target.getId());
         addActivationMana();
 
@@ -129,6 +138,55 @@ class RiftElementalTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("time counter");
         assertThat(gd.exiledCardTimeCounters).containsEntry(target.getId(), 1);
+    }
+
+    @Test
+    void nativeSuspendCardWithCountersFromAnotherEffectCanPayCost() {
+        Permanent source = readySource();
+        ArcBlade target = suspendedCard(player1, 2);
+        gd.exiledCardsWithNonSuspendTimeCounters.add(target.getId());
+        addActivationMana();
+
+        activate(source);
+
+        assertThat(gd.exiledCardTimeCounters).containsEntry(target.getId(), 1);
+        assertThat(source.getPowerModifier()).isEqualTo(2);
+    }
+
+    @Test
+    void removingLastCounterFromVanishingPermanentTriggersSacrifice() {
+        Permanent source = readySource();
+        Permanent target = harness.enterBattlefieldAndReturn(player1, new RavagingRiftwurm());
+        addActivationMana();
+        activate(source);
+        assertThat(target.getCounterCount(CounterType.TIME)).isEqualTo(1);
+        addActivationMana();
+
+        harness.activateAbility(player1, battlefieldIndex(source), null, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Ravaging Riftwurm");
+        harness.assertNotOnBattlefield(player1, "Ravaging Riftwurm");
+        harness.passBothPriorities();
+        assertThat(source.getPowerModifier()).isEqualTo(4);
+    }
+
+    @Test
+    void summoningSickTappedSourceCanActivateAndBoostsExpireAtEndOfTurn() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new RiftElemental());
+        source.tap();
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new BlindPhantasm());
+        target.setCounterCount(CounterType.TIME, 2);
+        addActivationMana();
+        activate(source);
+        addActivationMana();
+        activate(source);
+
+        assertThat(target.getCounterCount(CounterType.TIME)).isZero();
+        assertThat(source.getPowerModifier()).isEqualTo(4);
+        assertThat(source.getToughnessModifier()).isZero();
+        harness.passUntil(TurnStep.CLEANUP);
+        assertThat(source.getPowerModifier()).isZero();
     }
 
     private Permanent readySource() {
