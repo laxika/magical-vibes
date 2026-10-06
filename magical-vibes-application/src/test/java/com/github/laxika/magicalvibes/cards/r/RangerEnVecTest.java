@@ -1,18 +1,22 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.d.DarkBanishing;
 import com.github.laxika.magicalvibes.cards.h.HeartwoodTreefolk;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RangerEnVec.class, HeartwoodTreefolk.class})
+@CardUsed({RangerEnVec.class, HeartwoodTreefolk.class, DarkBanishing.class})
 class RangerEnVecTest extends BaseCardTest {
 
     @Test
@@ -87,6 +91,94 @@ class RangerEnVecTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Ranger en-Vec");
         harness.assertNotOnBattlefield(player2, "Heartwood Treefolk");
+    }
+
+    @Test
+    @DisplayName("Regeneration can be activated while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent ranger = harness.addToBattlefieldAndReturn(player1, new RangerEnVec());
+        ranger.setTapped(true);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(ranger.getRegenerationShield()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(ranger.getRegenerationShield()).isEqualTo(1);
+        assertThat(ranger.isTapped()).isTrue();
+        assertThat(ranger.isSummoningSick()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Each regeneration activation creates a separate shield")
+    void repeatedActivationsCreateSeparateShields() {
+        Permanent ranger = addCreatureReady(player1, new RangerEnVec());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(ranger.getRegenerationShield()).isEqualTo(2);
+        assertThat(ranger.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An unused regeneration shield expires at end of turn")
+    void unusedShieldExpiresAtEndOfTurn() {
+        Permanent ranger = addCreatureReady(player1, new RangerEnVec());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(ranger.getRegenerationShield()).isEqualTo(1);
+
+        harness.passUntil(TurnStep.UPKEEP);
+
+        assertThat(ranger.getRegenerationShield()).isZero();
+        harness.assertOnBattlefield(player1, "Ranger en-Vec");
+    }
+
+    @Test
+    @DisplayName("An activated shield replaces lethal-damage destruction and removes damage and combat status")
+    void activatedShieldSavesFromCombatAndRemovesDamage() {
+        Permanent ranger = addCreatureReady(player1, new RangerEnVec());
+        Permanent attacker = addCreatureReady(player2, new HeartwoodTreefolk());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        ranger.setBlocking(true);
+        ranger.addBlockingTarget(0);
+        attacker.setAttacking(true);
+
+        resolveCombat(player2);
+
+        harness.assertOnBattlefield(player1, "Ranger en-Vec");
+        harness.assertNotInGraveyard(player1, "Ranger en-Vec");
+        assertThat(ranger.isTapped()).isTrue();
+        assertThat(ranger.isBlocking()).isFalse();
+        assertThat(ranger.getBlockingTargets()).isEmpty();
+        assertThat(ranger.getMarkedDamage()).isZero();
+        assertThat(ranger.getRegenerationShield()).isZero();
+    }
+
+    @Test
+    @DisplayName("Dark Banishing destroys Ranger en-Vec despite a regeneration shield")
+    void cannotRegenerateFromDarkBanishing() {
+        Permanent ranger = addCreatureReady(player1, new RangerEnVec());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.setHand(player2, List.of(new DarkBanishing()));
+        harness.addMana(player2, ManaColor.BLACK, 3);
+
+        harness.castAndResolveInstant(player2, 0, ranger.getId());
+
+        harness.assertNotOnBattlefield(player1, "Ranger en-Vec");
+        harness.assertInGraveyard(player1, "Ranger en-Vec");
     }
 
     private Permanent addHeartwoodTreefolkReady(Player player, int power, int toughness) {
