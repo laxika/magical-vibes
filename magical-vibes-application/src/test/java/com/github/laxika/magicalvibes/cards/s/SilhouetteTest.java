@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.b.BarbaryApes;
-import com.github.laxika.magicalvibes.cards.f.FallingStar;
 import com.github.laxika.magicalvibes.cards.p.PsionicEntity;
 import com.github.laxika.magicalvibes.cards.p.PsychicPurge;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Silhouette.class, BarbaryApes.class, FallingStar.class, PsionicEntity.class, PsychicPurge.class})
+@CardUsed({Silhouette.class, BarbaryApes.class, PsionicEntity.class, PsychicPurge.class})
 class SilhouetteTest extends BaseCardTest {
 
     @Test
@@ -46,16 +45,51 @@ class SilhouetteTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Does not prevent damage from a spell that does not target the creature")
-    void doesNotPreventUntargetedSpellDamage() {
-        protectCreature();
+    @DisplayName("Does not prevent self-damage when the ability targets a player")
+    void doesNotPreventUntargetedAbilityDamage() {
+        Permanent entity = addCreatureReady(player1, new PsionicEntity());
+        harness.setHand(player1, List.of(new Silhouette()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, entity.getId());
 
-        harness.setHand(player1, List.of(new FallingStar()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castAndResolveSorcery(player1, 0, List.of());
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Barbary Apes");
+        harness.assertInGraveyard(player1, "Psionic Entity");
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Prevents both targeted and self-damage when the ability targets its protected source")
+    void preventsAllDamageFromAbilityTargetingProtectedSource() {
+        Permanent entity = addCreatureReady(player1, new PsionicEntity());
+        harness.setHand(player1, List.of(new Silhouette()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, entity.getId());
+
+        harness.activateAbility(player1, 0, null, entity.getId());
+        harness.passBothPriorities();
+
+        assertThat(entity.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player1, "Psionic Entity");
+    }
+
+    @Test
+    @DisplayName("Prevents multiple damage events but does not protect another creature")
+    void protectsOnlyChosenCreatureForEveryDamageEvent() {
+        Permanent protectedApes = protectCreature();
+        Permanent otherApes = addCreatureReady(player2, new BarbaryApes());
+        harness.setHand(player1, List.of(new PsychicPurge(), new PsychicPurge(), new PsychicPurge()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castAndResolveSorcery(player1, 0, protectedApes.getId());
+        harness.castAndResolveSorcery(player1, 0, protectedApes.getId());
+        harness.castAndResolveSorcery(player1, 0, otherApes.getId());
+
+        assertThat(protectedApes.getMarkedDamage()).isZero();
+        assertThat(otherApes.getMarkedDamage()).isEqualTo(1);
     }
 
     @Test
@@ -70,9 +104,7 @@ class SilhouetteTest extends BaseCardTest {
 
         harness.setHand(player2, List.of());
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        harness.passUntil(player2, TurnStep.DECLARE_ATTACKERS);
-        declareAttackers(player2, List.of());
-        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
 
         harness.setHand(player1, List.of(new PsychicPurge()));
         harness.addMana(player1, ManaColor.BLUE, 1);
