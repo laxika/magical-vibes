@@ -70,8 +70,108 @@ class RampantRejuvenatorTest extends BaseCardTest {
         harness.setHand(caster, List.of(new FlameJavelin()));
         harness.addMana(caster, ManaColor.RED, 6);
 
-        harness.castInstant(caster, 0, target.getId());
+        harness.castAndResolveInstant(caster, 0, target.getId());
         harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("The death search can stop after finding fewer lands than its power")
+    void canChooseFewerLands() {
+        Permanent rejuvenator = harness.enterBattlefieldAndReturn(player1, new RampantRejuvenator());
+        Card forest = new Forest();
+        Card plains = new Plains();
+        harness.setLibrary(player1, List.of(forest, plains));
+
+        killWithFlameJavelin(player2, rejuvenator);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(Permanent::getCard).containsExactly(forest);
+        assertThat(gd.playerBattlefields.get(player1.getId())).allMatch(permanent -> !permanent.isTapped());
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(plains);
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The death search can find zero lands even when basic lands are available")
+    void canChooseZeroLands() {
+        Permanent rejuvenator = harness.enterBattlefieldAndReturn(player1, new RampantRejuvenator());
+        Card forest = new Forest();
+        harness.setLibrary(player1, List.of(forest));
+
+        killWithFlameJavelin(player2, rejuvenator);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest);
+    }
+
+    @Test
+    @DisplayName("The death search excludes nonland cards and finishes when fewer basics exist")
+    void excludesNonlandsAndFindsOnlyAvailableBasics() {
+        Permanent rejuvenator = harness.enterBattlefieldAndReturn(player1, new RampantRejuvenator());
+        Card forest = new Forest();
+        Card nonland = new RampantRejuvenator();
+        harness.setLibrary(player1, List.of(nonland, forest));
+
+        killWithFlameJavelin(player2, rejuvenator);
+
+        PendingInteraction.LibrarySearch search =
+                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search).isNotNull();
+        assertThat(search.params().cards()).containsExactly(forest);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(Permanent::getCard).containsExactly(forest);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nonland);
+    }
+
+    @Test
+    @DisplayName("A death at zero power finds no lands")
+    void zeroPowerFindsNoLands() {
+        Permanent rejuvenator = harness.enterBattlefieldAndReturn(player1, new RampantRejuvenator());
+        Card forest = new Forest();
+        harness.setLibrary(player1, List.of(forest));
+        rejuvenator.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+
+        harness.runStateBasedActions();
         harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Rampant Rejuvenator");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest);
+    }
+
+    @Test
+    @DisplayName("The death search finishes with an empty library")
+    void emptyLibraryFinishesSearch() {
+        Permanent rejuvenator = harness.enterBattlefieldAndReturn(player1, new RampantRejuvenator());
+        harness.setLibrary(player1, List.of());
+
+        killWithFlameJavelin(player2, rejuvenator);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The death search finishes when the library contains no basic lands")
+    void noMatchingCardsFinishesSearch() {
+        Permanent rejuvenator = harness.enterBattlefieldAndReturn(player1, new RampantRejuvenator());
+        Card nonland = new RampantRejuvenator();
+        harness.setLibrary(player1, List.of(nonland));
+
+        killWithFlameJavelin(player2, rejuvenator);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nonland);
     }
 }
