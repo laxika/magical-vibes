@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.c.Conspiracy;
 import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ShadesBreath.class, GlorySeeker.class})
+@CardUsed({ShadesBreath.class, GlorySeeker.class, Conspiracy.class})
 class ShadesBreathTest extends BaseCardTest {
 
     @Test
@@ -117,11 +118,75 @@ class ShadesBreathTest extends BaseCardTest {
         }).isInstanceOf(IllegalStateException.class);
     }
 
-    private void castShadesBreath() {
+    @Test
+    @DisplayName("The granted ability can be activated repeatedly without tapping")
+    void repeatedActivationsStackAndWearOff() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GlorySeeker());
+        creature.setTapped(true);
+
+        castShadesBreath();
+
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Creatures entering before resolution receive all effects")
+    void affectsCreaturesPresentAtResolution() {
         harness.setHand(player1, List.of(new ShadesBreath()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castInstant(player1, 0);
+
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GlorySeeker());
         harness.passBothPriorities();
+
+        assertThat(gqs.hasColor(gd, creature, CardColor.BLACK)).isTrue();
+        assertThat(gqs.effectiveCreatureSubtypes(gd, creature)).containsExactly(CardSubtype.SHADE);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("A later Conspiracy replaces the Shade creature type")
+    void laterConspiracyOverridesShadeType() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GlorySeeker());
+        castShadesBreath();
+
+        harness.castFromHand(player1, new Conspiracy(), "{3}{B}{B}");
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, CardSubtype.GOBLIN.name());
+
+        assertThat(gqs.effectiveCreatureSubtypes(gd, creature)).containsExactly(CardSubtype.GOBLIN);
+        assertThat(gqs.hasColor(gd, creature, CardColor.BLACK)).isTrue();
+
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+    }
+
+    private void castShadesBreath() {
+        harness.setHand(player1, List.of(new ShadesBreath()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0);
     }
 }
