@@ -23,15 +23,14 @@ class ScreechingGriffinTest extends BaseCardTest {
     @Test
     @DisplayName("Targeted creature can't block Screeching Griffin after the ability resolves")
     void targetedCreatureCannotBlockScreechingGriffin() {
-        Permanent griffin = addCreatureReady(player1, new ScreechingGriffin());
+        addCreatureReady(player1, new ScreechingGriffin());
         Permanent blocker = addCreatureReady(player2, new CourierHawk());
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, blocker.getId());
         harness.passBothPriorities();
 
-        griffin.setAttacking(true);
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class);
@@ -41,15 +40,14 @@ class ScreechingGriffinTest extends BaseCardTest {
     @DisplayName("Targeted creature can still block another creature")
     void targetedCreatureCanBlockAnotherCreature() {
         addCreatureReady(player1, new ScreechingGriffin());
-        Permanent otherAttacker = addCreatureReady(player1, new DromadPurebred());
+        addCreatureReady(player1, new DromadPurebred());
         Permanent blocker = addCreatureReady(player2, new CourierHawk());
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, blocker.getId());
         harness.passBothPriorities();
 
-        otherAttacker.setAttacking(true);
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(1));
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
         assertThat(blocker.isBlocking()).isTrue();
@@ -65,6 +63,64 @@ class ScreechingGriffinTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, land.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature");
+    }
+
+    @Test
+    @DisplayName("The restriction does not apply to another Screeching Griffin")
+    void targetedCreatureCanBlockAnotherGriffin() {
+        addCreatureReady(player1, new ScreechingGriffin());
+        addCreatureReady(player1, new ScreechingGriffin());
+        Permanent blocker = addCreatureReady(player2, new CourierHawk());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, blocker.getId());
+        harness.passBothPriorities();
+
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Repeated activations restrict each targeted creature")
+    void multipleCreaturesCannotBlockSource() {
+        addCreatureReady(player1, new ScreechingGriffin());
+        Permanent firstBlocker = addCreatureReady(player2, new CourierHawk());
+        Permanent secondBlocker = addCreatureReady(player2, new CourierHawk());
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, firstBlocker.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, secondBlocker.getId());
+        harness.passBothPriorities();
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(1, 0))))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A tapped summoning-sick Griffin can activate its ability")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent griffin = harness.addToBattlefieldAndReturn(player1, new ScreechingGriffin());
+        griffin.setSummoningSick(true);
+        griffin.setTapped(true);
+        Permanent blocker = addCreatureReady(player2, new CourierHawk());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, blocker.getId());
+        harness.passBothPriorities();
+
+        griffin.setTapped(false);
+        griffin.setSummoningSick(false);
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
