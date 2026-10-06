@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.b.BogRats;
 import com.github.laxika.magicalvibes.cards.d.DiabolicMachine;
+import com.github.laxika.magicalvibes.cards.f.Fissure;
 import com.github.laxika.magicalvibes.cards.n.NiallSilvain;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Runesword.class, BogRats.class, DiabolicMachine.class, NiallSilvain.class})
+@CardUsed({Runesword.class, BogRats.class, DiabolicMachine.class, NiallSilvain.class, Fissure.class})
 class RuneswordTest extends BaseCardTest {
 
     @Test
@@ -116,9 +117,101 @@ class RuneswordTest extends BaseCardTest {
     void requiresAttackingCreature() {
         Permanent sword = addSwordReady();
         Permanent creature = addCreatureReady(player1, new NiallSilvain());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(sword), 0, null, creature.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Exile replacement persists after the targeted attacker dies")
+    void exileReplacementPersistsAfterAttackerDies() {
+        Permanent sword = addSwordReady();
+        Permanent attacker = addBogRatsAttacker();
+        Permanent blocker = addCreatureReady(player2, new DiabolicMachine());
+
+        activate(sword, attacker);
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, indexOf(attacker))));
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Bog Rats");
+        harness.assertOnBattlefield(player2, "Diabolic Machine");
+        harness.setHand(player1, List.of(new Fissure()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player1, 0, blocker.getId());
+
+        harness.assertNotInGraveyard(player2, "Diabolic Machine");
+        assertThat(gd.exiledCards.stream().anyMatch(e -> e.card() == blocker.getCard())).isTrue();
+    }
+
+    @Test
+    @DisplayName("A damaged creature cannot regenerate after the targeted attacker dies")
+    void regenerationRemainsForbiddenAfterAttackerDies() {
+        Permanent sword = addSwordReady();
+        Permanent attacker = addBogRatsAttacker();
+        Permanent blocker = addCreatureReady(player2, new DiabolicMachine());
+
+        activate(sword, attacker);
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, indexOf(attacker))));
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Bog Rats");
+        harness.assertOnBattlefield(player2, "Diabolic Machine");
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player2, 0, 0, null, null);
+        harness.passBothPriorities();
+        blocker.setMarkedDamage(4);
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player2, "Diabolic Machine");
+        harness.assertNotInGraveyard(player2, "Diabolic Machine");
+        assertThat(gd.exiledCards.stream().anyMatch(e -> e.card() == blocker.getCard())).isTrue();
+    }
+
+    @Test
+    @DisplayName("The delayed sacrifice expires at end of turn")
+    void delayedSacrificeExpiresAtEndOfTurn() {
+        Permanent sword = addSwordReady();
+        Permanent attacker = addAttacker();
+
+        activate(sword, attacker);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, attacker));
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Runesword");
+    }
+
+    @Test
+    @DisplayName("The damage exile replacement expires at end of turn")
+    void exileReplacementExpiresAtEndOfTurn() {
+        Permanent sword = addSwordReady();
+        Permanent attacker = addBogRatsAttacker();
+        Permanent blocker = addCreatureReady(player2, new DiabolicMachine());
+
+        activate(sword, attacker);
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, indexOf(attacker))));
+        harness.passBothPriorities();
+        resolveAllTriggers();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new Fissure()));
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player2, 0, blocker.getId());
+
+        harness.assertInGraveyard(player2, "Diabolic Machine");
+        assertThat(gd.exiledCards.stream().noneMatch(e -> e.card() == blocker.getCard())).isTrue();
     }
 
     private Permanent addSwordReady() {
