@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ScoutTheBorders.class, GrizzlyBears.class, Shock.class, Forest.class, HillGiant.class})
 class ScoutTheBordersTest extends BaseCardTest {
 
     @Test
@@ -72,17 +73,64 @@ class ScoutTheBordersTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(6);
     }
 
+    @Test
+    void takingALandLeavesCardsBelowTheTopFiveUntouched() {
+        Card forest = new Forest();
+        Card bears = new GrizzlyBears();
+        Card giant = new HillGiant();
+        Card shock = new Shock();
+        Card secondShock = new Shock();
+        Card sixth = new Forest();
+        Card seventh = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(shock, forest, bears, giant, secondShock, sixth, seventh));
+
+        resolveScout();
+        chooseCard(0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(forest);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .contains(bears, giant, shock, secondShock).hasSize(5);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(sixth, seventh);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void withFewerThanFiveCardsUsesAllRemainingCards() {
+        Card forest = new Forest();
+        Card shock = new Shock();
+        harness.setLibrary(player1, List.of(shock, forest));
+
+        resolveScout();
+        chooseCard(0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(forest);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(shock).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void withAnEmptyLibraryResolvesWithoutAChoice() {
+        harness.setLibrary(player1, List.of());
+
+        resolveScout();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Scout the Borders");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void resolveScout() {
         harness.setHand(player1, List.of(new ScoutTheBorders()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
     }
 
     private void chooseCard(int index) {
-        harness.getGameService().handleInteractionAnswer(
-                harness.getGameData(), player1, new InteractionAnswer.LibraryCardChosen(index));
+        harness.handleCardChosen(player1, index);
     }
 
     private List<String> searchCards(GameData data) {
@@ -91,8 +139,6 @@ class ScoutTheBordersTest extends BaseCardTest {
     }
 
     private void setupTopFive(Card... cards) {
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(cards));
+        harness.setLibrary(player1, List.of(cards));
     }
 }
