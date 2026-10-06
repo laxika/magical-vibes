@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -61,14 +62,84 @@ class RavenerTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Ravenous draw and the attack requirement trigger separately")
+    void ravenousDrawIsAnIndependentTrigger() {
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new Ravener()));
+        harness.setHand(player1, List.of(new Ravener()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.castInstantForX(player1, 0, 5, List.of(bear.getId(), player2.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(2);
+        resolveAllTriggers();
+        harness.assertInHand(player1, "Ravener");
+    }
+
+    @Test
+    @DisplayName("Ravener can be cast during an opponent's upkeep")
+    void flashAllowsCastingDuringOpponentsTurn() {
+        Permanent bear = addCreatureReady(player2, new GrizzlyBears());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        castRavener(1, bear.getId(), player2.getId());
+
+        harness.assertOnBattlefield(player1, "Ravener");
+        declareAttackers(player2, List.of());
+        assertThat(bear.isAttackedThisTurn()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A tapped target is not required to attack")
+    void tappedTargetCannotAttack() {
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
+        bear.setTapped(true);
+
+        castRavener(1, bear.getId(), player2.getId());
+
+        declareAttackers(List.of());
+        assertThat(bear.isAttackedThisTurn()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A summoning-sick target is not required to attack")
+    void summoningSickTargetCannotAttack() {
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
+        bear.setSummoningSick(true);
+
+        castRavener(1, bear.getId(), player2.getId());
+
+        declareAttackers(List.of());
+        assertThat(bear.isAttackedThisTurn()).isFalse();
+    }
+
+    @Test
+    @DisplayName("At X=0 Ravener dies but its attack trigger still resolves")
+    void zeroCountersDoesNotPreventAttackTrigger() {
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
+
+        castRavener(0, bear.getId(), player2.getId());
+
+        harness.assertNotOnBattlefield(player1, "Ravener");
+        harness.assertInGraveyard(player1, "Ravener");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThatThrownBy(() -> declareAttackers(List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must attack");
+    }
+
     private void castRavener(int x, java.util.UUID creatureTarget, java.util.UUID playerTarget) {
         harness.setHand(player1, List.of(new Ravener()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, x);
 
-        gs.playCard(gd, player1, 0, x, null, null,
-                List.of(creatureTarget, playerTarget), List.of());
+        harness.castInstantForX(player1, 0, x, List.of(creatureTarget, playerTarget));
         resolveAllTriggers();
     }
 }
