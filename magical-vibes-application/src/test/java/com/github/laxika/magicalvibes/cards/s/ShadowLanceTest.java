@@ -44,14 +44,14 @@ class ShadowLanceTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Enchanted creature can activate the pump ability")
-    void enchantedCreatureCanActivatePumpAbility() {
+    @DisplayName("Shadow Lance can activate the pump ability")
+    void auraCanActivatePumpAbility() {
         Permanent griffin = addCreatureReady(player1, new HarrierGriffin());
         addAttachedAura(griffin);
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.activateAbility(player1, 0, 0, null, null);
+        harness.activateAbility(player1, 1, 0, null, null);
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, griffin)).isEqualTo(5);
@@ -66,7 +66,7 @@ class ShadowLanceTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.activateAbility(player1, 0, 0, null, null);
+        harness.activateAbility(player1, 1, 0, null, null);
         harness.passBothPriorities();
         harness.forceStep(TurnStep.END_STEP);
         harness.passBothPriorities();
@@ -80,11 +80,9 @@ class ShadowLanceTest extends BaseCardTest {
     @Test
     @DisplayName("Shadow Lance cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
-        harness.addToBattlefield(player1, new OrzhovSignet());
+        Permanent signet = harness.addToBattlefieldAndReturn(player1, new OrzhovSignet());
         harness.setHand(player1, List.of(new ShadowLance()));
         harness.addMana(player1, ManaColor.WHITE, 1);
-
-        Permanent signet = gd.playerBattlefields.get(player1.getId()).getFirst();
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, signet.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -92,8 +90,8 @@ class ShadowLanceTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("The enchanted creature's controller can activate the pump ability")
-    void enchantedCreatureControllerCanActivatePumpAbility() {
+    @DisplayName("The Aura controller can pump an opponent's enchanted creature")
+    void auraControllerCanPumpOpponentsCreature() {
         Permanent griffin = addCreatureReady(player2, new HarrierGriffin());
         harness.setHand(player1, List.of(new ShadowLance()));
         harness.addMana(player1, ManaColor.WHITE, 1);
@@ -101,9 +99,9 @@ class ShadowLanceTest extends BaseCardTest {
         harness.castEnchantment(player1, 0, griffin.getId());
         harness.passBothPriorities();
 
-        harness.addMana(player2, ManaColor.BLACK, 1);
-        harness.addMana(player2, ManaColor.COLORLESS, 1);
-        harness.activateAbility(player2, 0, 0, null, null);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, griffin, Keyword.FIRST_STRIKE)).isTrue();
@@ -118,8 +116,9 @@ class ShadowLanceTest extends BaseCardTest {
         addAttachedAura(griffin);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
-                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
 
         assertThat(gqs.getEffectivePower(gd, griffin)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, griffin)).isEqualTo(3);
@@ -139,6 +138,36 @@ class ShadowLanceTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("no activated ability");
+    }
+
+    @Test
+    @DisplayName("An opponent cannot activate an ability through the enchanted creature")
+    void opponentCannotActivatePumpThroughCreature() {
+        Permanent griffin = addCreatureReady(player2, new HarrierGriffin());
+        addAttachedAura(griffin);
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("no activated ability");
+    }
+
+    @Test
+    @DisplayName("Repeated Aura activations accumulate their bonuses")
+    void repeatedActivationsAccumulate() {
+        Permanent griffin = addCreatureReady(player1, new HarrierGriffin());
+        addAttachedAura(griffin);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, griffin)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, griffin)).isEqualTo(7);
     }
 
     private Permanent addAttachedAura(Permanent enchantedCreature) {
