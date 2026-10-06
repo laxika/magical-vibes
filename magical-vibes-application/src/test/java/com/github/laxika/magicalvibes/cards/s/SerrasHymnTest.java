@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -108,10 +109,68 @@ class SerrasHymnTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void damageBeyondAssignedPreventionStillGetsThrough() {
+        Permanent hymn = addReadyHymn(player1);
+        hymn.setCounterCount(CounterType.VERSE, 1);
+
+        harness.activateAbilityWithDamageAssignments(player1, 0, 0, null,
+                Map.of(player2.getId(), 1));
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new ArcLightning()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castSorcery(player1, 0, Map.of(player2.getId(), 3));
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
+    }
+
+    @Test
+    void unusedPreventionExpiresAtEndOfTurn() {
+        Permanent hymn = addReadyHymn(player1);
+        hymn.setCounterCount(CounterType.VERSE, 3);
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new ArgothianSwine());
+
+        harness.activateAbilityWithDamageAssignments(player1, 0, 0, null,
+                Map.of(creature.getId(), 2, player2.getId(), 1));
+        harness.passBothPriorities();
+        assertThat(creature.getDamagePreventionShield()).isEqualTo(2);
+        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(creature.getDamagePreventionShield()).isZero();
+        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
+    }
+
+    @Test
+    void eachChosenTargetMustReceivePositivePrevention() {
+        Permanent hymn = addReadyHymn(player1);
+        hymn.setCounterCount(CounterType.VERSE, 3);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithDamageAssignments(player1, 0, 0, null,
+                Map.of(player1.getId(), 0, player2.getId(), 3)))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(hymn);
+    }
+
+    @Test
+    void cannotTargetAnOrdinaryEnchantment() {
+        Permanent hymn = addReadyHymn(player1);
+        hymn.setCounterCount(CounterType.VERSE, 1);
+        Permanent otherHymn = addReadyHymn(player2);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithDamageAssignments(player1, 0, 0, null,
+                Map.of(otherHymn.getId(), 1)))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(hymn);
+    }
+
     private Permanent addReadyHymn(Player owner) {
-        Permanent hymn = new Permanent(new SerrasHymn());
+        Permanent hymn = harness.addToBattlefieldAndReturn(owner, new SerrasHymn());
         hymn.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(owner.getId()).add(hymn);
         return hymn;
     }
 }
