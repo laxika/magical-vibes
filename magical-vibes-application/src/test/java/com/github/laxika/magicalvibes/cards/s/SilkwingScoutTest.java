@@ -91,6 +91,65 @@ class SilkwingScoutTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("The ability resolves normally with an empty library")
+    void resolvesWithEmptyLibrary() {
+        activateSearch(List.of());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Silkwing Scout");
+    }
+
+    @Test
+    @DisplayName("A tapped Scout can activate its ability the turn it enters")
+    void tappedSummoningSickScoutCanActivate() {
+        harness.castFromHand(player1, new SilkwingScout(), "{2}{U}");
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player1.getId()).getFirst().tap();
+        Plains plains = new Plains();
+        harness.setLibrary(player1, List.of(plains));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player1, "Silkwing Scout");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .singleElement().satisfies(permanent -> {
+                    assertThat(permanent.getCard()).isSameAs(plains);
+                    assertThat(permanent.isTapped()).isTrue();
+                });
+    }
+
+    @Test
+    @DisplayName("The search takes exactly one land from its controller's library")
+    void takesOnlyOneLandFromControllersLibrary() {
+        Plains chosen = new Plains();
+        Plains remaining = new Plains();
+        Plains opponentsLand = new Plains();
+        harness.setLibrary(player2, List.of(opponentsLand));
+        activateSearch(List.of(chosen, remaining));
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remaining);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentsLand);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .singleElement().satisfies(permanent -> {
+                    assertThat(permanent.getCard()).isSameAs(chosen);
+                    assertThat(permanent.isTapped()).isTrue();
+                });
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void addScout() {
         harness.addToBattlefield(player1, new SilkwingScout());
     }
