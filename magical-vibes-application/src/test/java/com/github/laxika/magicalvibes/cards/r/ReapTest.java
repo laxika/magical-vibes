@@ -22,6 +22,71 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class ReapTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Reap still resolves when its graveyard target leaves but its opponent target remains legal")
+    void legalOpponentPreventsFizzlingWhenGraveyardTargetLeaves() {
+        harness.addToBattlefield(player2, new DarklingStalker());
+        TrainedArmodon creature = new TrainedArmodon();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setHand(player1, List.of(new Reap()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(creature));
+        harness.passBothPriorities();
+
+        assertThat(gd.gameLog).noneMatch(entry -> entry.plainText().contains("Reap fizzles"));
+        harness.assertNotInHand(player1, "Trained Armodon");
+        harness.assertInGraveyard(player1, "Reap");
+    }
+
+    @Test
+    @DisplayName("Multiple cards return even if the opponent's black permanents leave before resolution")
+    void returnsMultipleCardsAfterBlackPermanentsLeave() {
+        harness.addToBattlefield(player2, new DarklingStalker());
+        harness.addToBattlefield(player2, new DreadOfNight());
+        TrainedArmodon creature = new TrainedArmodon();
+        DarkRitual instant = new DarkRitual();
+        harness.setGraveyard(player1, List.of(creature, instant));
+        harness.setHand(player1, List.of(new Reap()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId(), instant.getId()));
+        gd.playerBattlefields.get(player2.getId()).clear();
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Trained Armodon");
+        harness.assertInHand(player1, "Dark Ritual");
+        harness.assertNotInGraveyard(player1, "Trained Armodon");
+        harness.assertNotInGraveyard(player1, "Dark Ritual");
+        harness.assertInGraveyard(player1, "Reap");
+    }
+
+    @Test
+    @DisplayName("A target that leaves the graveyard does not prevent returning the other target")
+    void returnsRemainingLegalGraveyardTarget() {
+        harness.addToBattlefield(player2, new DarklingStalker());
+        harness.addToBattlefield(player2, new DreadOfNight());
+        TrainedArmodon creature = new TrainedArmodon();
+        DarkRitual instant = new DarkRitual();
+        harness.setGraveyard(player1, List.of(creature, instant));
+        harness.setHand(player1, List.of(new Reap()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId(), instant.getId()));
+        harness.setGraveyard(player1, List.of(instant));
+        harness.setExile(player1, List.of(creature));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Dark Ritual");
+        harness.assertNotInHand(player1, "Trained Armodon");
+        harness.assertInGraveyard(player1, "Reap");
+    }
+
+    @Test
     @DisplayName("X counts every black permanent the targeted opponent controls, not just creatures")
     void xCountsAllBlackPermanents() {
         harness.addToBattlefield(player1, new DarklingStalker());
