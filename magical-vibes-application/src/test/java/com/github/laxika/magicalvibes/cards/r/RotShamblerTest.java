@@ -49,11 +49,63 @@ class RotShamblerTest extends BaseCardTest {
         assertThat(shambler.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
+    @Test
+    void doesNotTriggerForItsOwnDeath() {
+        Permanent shambler = harness.addToBattlefieldAndReturn(player1, new RotShambler());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player2, 0, shambler.getId());
+
+        harness.assertInGraveyard(player1, "Rot Shambler");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void anotherRotShamblerCountsAsAnotherCreature() {
+        Permanent survivor = harness.addToBattlefieldAndReturn(player1, new RotShambler());
+        Permanent dying = harness.addToBattlefieldAndReturn(player1, new RotShambler());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player2, 0, dying.getId());
+
+        assertThat(survivor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(survivor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void pendingTriggerDoesNotPutCountersOnAnotherShamblerAfterSourceDies() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new RotShambler());
+        Permanent survivor = harness.addToBattlefieldAndReturn(player1, new RotShambler());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player2, List.of(new Shock(), new Shock()));
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player2, 0, harness.getPermanentId(player1, "Grizzly Bears"));
+        assertThat(gd.stack).hasSize(2);
+        assertThat(source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(survivor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+
+        harness.castAndResolveInstant(player2, 0, source.getId());
+        harness.assertInGraveyard(player1, "Rot Shambler");
+        assertThat(gd.stack).hasSize(3);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(survivor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void killWithShock(Player caster, Player targetPlayer, String targetName) {
         harness.setHand(caster, List.of(new Shock()));
         harness.addMana(caster, ManaColor.RED, 1);
-        harness.castInstant(caster, 0, harness.getPermanentId(targetPlayer, targetName));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(caster, 0, harness.getPermanentId(targetPlayer, targetName));
         harness.passBothPriorities();
     }
 }
