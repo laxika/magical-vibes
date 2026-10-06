@@ -1,7 +1,5 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.h.HornedTurtle;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -114,8 +112,7 @@ class SeekerOfSkybreakTest extends BaseCardTest {
     @DisplayName("Fizzles if target creature is removed before resolution")
     void fizzlesIfTargetRemoved() {
         addCreatureReady(player1, new SeekerOfSkybreak());
-        harness.addToBattlefield(player2, new HornedTurtle());
-        Permanent target = gd.playerBattlefields.get(player2.getId()).get(0);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HornedTurtle());
 
         harness.activateAbility(player1, 0, null, target.getId());
         gd.playerBattlefields.get(player2.getId()).clear();
@@ -123,6 +120,38 @@ class SeekerOfSkybreakTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+        assertThat(gameLogContains("fizzles")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Ability still untaps its target after the Seeker leaves the battlefield")
+    void resolvesAfterSourceLeavesBattlefield() {
+        Permanent seeker = addCreatureReady(player1, new SeekerOfSkybreak());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HornedTurtle());
+        target.tap();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(seeker);
+        gd.playerGraveyards.get(player1.getId()).add(seeker.getCard());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Untapping a summoning-sick Seeker does not let it activate its tap ability")
+    void untappingDoesNotRemoveSummoningSickness() {
+        addCreatureReady(player1, new SeekerOfSkybreak());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new SeekerOfSkybreak());
+        target.tap();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isFalse();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
     }
 }
