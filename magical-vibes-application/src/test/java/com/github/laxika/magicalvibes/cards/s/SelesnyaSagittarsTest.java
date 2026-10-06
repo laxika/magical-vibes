@@ -85,6 +85,44 @@ class SelesnyaSagittarsTest extends BaseCardTest {
                 .hasMessageContaining("too many times");
     }
 
+    @Test
+    @DisplayName("Selesnya Sagittars can block two flying attackers")
+    void canBlockTwoFlyingAttackers() {
+        Permanent sagittars = addSagittars();
+        int sagittarsIndex = gd.playerBattlefields.get(player2.getId()).indexOf(sagittars);
+        for (int i = 0; i < 2; i++) {
+            Permanent flyer = addCreatureReady(player1, new CourierHawk());
+            flyer.setAttacking(true);
+        }
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(sagittarsIndex, 0),
+                new BlockerAssignment(sagittarsIndex, 1)
+        ));
+
+        assertThat(sagittars.isBlocking()).isTrue();
+        assertThat(sagittars.getBlockingTargets()).containsExactlyInAnyOrder(0, 1);
+    }
+
+    @Test
+    @DisplayName("A second Selesnya Sagittars does not increase the first one's blocking limit")
+    void secondSagittarsDoesNotIncreaseBlockingLimit() {
+        Permanent sagittars = addSagittars();
+        int sagittarsIndex = gd.playerBattlefields.get(player2.getId()).indexOf(sagittars);
+        addSagittars();
+        addAttackers(3);
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(sagittarsIndex, 0),
+                new BlockerAssignment(sagittarsIndex, 1),
+                new BlockerAssignment(sagittarsIndex, 2)
+        )))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("too many times");
+    }
+
     private Permanent addSagittars() {
         return addCreatureReady(player2, new SelesnyaSagittars());
     }
