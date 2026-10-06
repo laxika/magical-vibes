@@ -120,6 +120,61 @@ class SinkingFeelingTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("Granted ability can be activated while the creature is untapped and summoning sick")
+    void canActivateWhileUntappedAndSummoningSick() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new BallynockCohort());
+        creature.setSummoningSick(true);
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new SinkingFeeling());
+        aura.setAttachedTo(creature.getId());
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player2, 0, null, null);
+
+        assertThat(creature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isFalse();
+        assertThat(creature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Activated untap ability still resolves after Sinking Feeling leaves")
+    void activatedAbilitySurvivesAuraRemoval() {
+        Permanent creature = addCreatureReady(player2, new BallynockCohort());
+        creature.tap();
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new SinkingFeeling());
+        aura.setAttachedTo(creature.getId());
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player2, 0, null, null);
+
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(creature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        gd.playerBattlefields.get(player1.getId()).remove(aura);
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isFalse();
+        assertThat(creature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Granted ability cannot be activated without paying mana")
+    void cannotActivateWithoutMana() {
+        Permanent creature = addCreatureReady(player2, new BallynockCohort());
+        creature.tap();
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new SinkingFeeling());
+        aura.setAttachedTo(creature.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(creature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
     // ===== Ability is lost when the aura leaves =====
 
     @Test
