@@ -83,6 +83,41 @@ class RhysticShieldTest extends BaseCardTest {
         assertThat(ownCreature.getEffectiveToughness()).isEqualTo(1);
     }
 
+    @Test
+    void boostsEveryControlledCreatureOnOpponentsTurnWhenNobodyPays() {
+        Permanent firstCreature = harness.addToBattlefieldAndReturn(player1, new PygmyRazorback());
+        Permanent secondCreature = harness.addToBattlefieldAndReturn(player1, new PygmyRazorback());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new PygmyRazorback());
+        harness.forceActivePlayer(player2);
+
+        castShield();
+        harness.handleMayAbilityChosen(player2, false);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(firstCreature.getEffectiveToughness()).isEqualTo(4);
+        assertThat(secondCreature.getEffectiveToughness()).isEqualTo(4);
+        assertThat(opponentCreature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(firstCreature.getEffectivePower()).isEqualTo(2);
+        assertThat(secondCreature.getEffectivePower()).isEqualTo(2);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void opponentCanPayWithColoredManaOnTheirTurn() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new PygmyRazorback());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new PygmyRazorback());
+        harness.forceActivePlayer(player2);
+        harness.addMana(player2, ManaColor.GREEN, 2);
+
+        castShield();
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(ownCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(opponentCreature.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     private void castShield() {
         harness.castFromHand(player1, new RhysticShield(), "{1}{W}");
         harness.passBothPriorities();
