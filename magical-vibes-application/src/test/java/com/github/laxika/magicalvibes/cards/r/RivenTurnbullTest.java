@@ -33,4 +33,40 @@ class RivenTurnbullTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("summoning sickness");
     }
+
+    @Test
+    @DisplayName("Mana ability resolves immediately without using the stack")
+    void manaAbilityResolvesImmediately() {
+        addCreatureReady(player1, new RivenTurnbull());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A tapped Riven Turnbull cannot produce mana again")
+    void cannotActivateAgainWhileTapped() {
+        addCreatureReady(player1, new RivenTurnbull());
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Riven Turnbull adds mana to its controller's pool")
+    void addsManaToControllersPool() {
+        addCreatureReady(player2, new RivenTurnbull());
+        harness.forceActivePlayer(player2);
+
+        harness.activateAbility(player2, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+    }
 }
