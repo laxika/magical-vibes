@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.h.HeroInTraining;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
@@ -56,6 +57,71 @@ class ScarletWitchChaoticAvengerTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(divination);
         assertThat(gd.findExiledCard(creature.getId())).isNotNull();
+    }
+
+    @Test
+    void canCastHeroWithoutManaAndLeavesOtherCardExiled() {
+        addAttackingScarletWitch();
+        HeroInTraining hero = new HeroInTraining();
+        Forest land = new Forest();
+        harness.setLibrary(player1, List.of(hero, land, new Forest()));
+
+        resolveCombatAndTrigger();
+
+        PendingInteraction.ImprovisationCapstoneCastChoice interaction =
+                (PendingInteraction.ImprovisationCapstoneCastChoice) gd.interaction.activeInteraction();
+        assertThat(interaction.validCardIds()).containsExactly(hero.getId());
+        assertThat(interaction.maxCount()).isEqualTo(1);
+        harness.handleMultipleCardsChosen(player1, List.of(hero.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(p -> p.getCard().getId()).contains(hero.getId());
+        assertThat(gd.findExiledCard(hero.getId())).isNull();
+        assertThat(gd.findExiledCard(land.getId()).faceDown()).isTrue();
+    }
+
+    @Test
+    void laterTriggerOffersPreviouslyExiledSpellAlongsideNewSpell() {
+        Permanent scarletWitch = addAttackingScarletWitch();
+        HeroInTraining earlierHero = new HeroInTraining();
+        HeroInTraining laterHero = new HeroInTraining();
+        harness.setLibrary(player1, List.of(earlierHero, new Forest(), laterHero, new Forest()));
+
+        resolveCombatAndTrigger();
+        harness.handleMultipleCardsChosen(player1, List.of());
+        assertThat(gd.findExiledCard(earlierHero.getId()).faceDown()).isTrue();
+
+        scarletWitch.setAttacking(true);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        resolveCombatAndTrigger();
+
+        PendingInteraction.ImprovisationCapstoneCastChoice interaction =
+                (PendingInteraction.ImprovisationCapstoneCastChoice) gd.interaction.activeInteraction();
+        assertThat(interaction.validCardIds())
+                .containsExactlyInAnyOrder(earlierHero.getId(), laterHero.getId());
+        assertThat(interaction.maxCount()).isEqualTo(1);
+    }
+
+    @Test
+    void emptyLibraryStillAllowsCastingPreviouslyExiledSpell() {
+        Permanent scarletWitch = addAttackingScarletWitch();
+        HeroInTraining hero = new HeroInTraining();
+        harness.setLibrary(player1, List.of(hero));
+
+        resolveCombatAndTrigger();
+        harness.handleMultipleCardsChosen(player1, List.of());
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+
+        scarletWitch.setAttacking(true);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        resolveCombatAndTrigger();
+
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.ImprovisationCapstoneCastChoice.class);
+        PendingInteraction.ImprovisationCapstoneCastChoice interaction =
+                (PendingInteraction.ImprovisationCapstoneCastChoice) gd.interaction.activeInteraction();
+        assertThat(interaction.validCardIds()).containsExactly(hero.getId());
     }
 
     private Permanent addAttackingScarletWitch() {
