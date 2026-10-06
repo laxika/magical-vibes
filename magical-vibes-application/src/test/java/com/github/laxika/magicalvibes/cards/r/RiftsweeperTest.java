@@ -16,6 +16,61 @@ import static org.assertj.core.api.Assertions.assertThat;
 class RiftsweeperTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Can shuffle its controller's own exiled card into their library")
+    void shufflesOwnExiledCardIntoLibrary() {
+        BlindPhantasm exiledCard = new BlindPhantasm();
+        harness.setExile(player1, List.of(exiledCard));
+        harness.setHand(player1, List.of(new Riftsweeper()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(exiledCard.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.findExiledCard(exiledCard.getId())).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).contains(exiledCard);
+        assertThat(gd.playerDecks.get(player2.getId())).doesNotContain(exiledCard);
+    }
+
+    @Test
+    @DisplayName("Enters normally when exile contains no cards")
+    void entersWithNoExiledCards() {
+        harness.setHand(player1, List.of(new Riftsweeper()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Riftsweeper");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Does not move a target that has left exile before resolution")
+    void doesNotMoveTargetThatLeftExile() {
+        BlindPhantasm exiledCard = new BlindPhantasm();
+        harness.setExile(player2, List.of(exiledCard));
+        harness.setHand(player1, List.of(new Riftsweeper()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(exiledCard.getId()));
+        assertThat(gd.stack).hasSize(1);
+
+        assertThat(gd.removeFromExile(exiledCard.getId())).isTrue();
+        harness.setHand(player2, List.of(exiledCard));
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).contains(exiledCard);
+        assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(exiledCard);
+        assertThat(gd.playerDecks.get(player2.getId())).doesNotContain(exiledCard);
+    }
+
+    @Test
     @DisplayName("Shuffles a face-up exiled card into its owner's library")
     void shufflesFaceUpExiledCardIntoOwnersLibrary() {
         BlindPhantasm exiledCard = new BlindPhantasm();
