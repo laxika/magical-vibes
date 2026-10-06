@@ -62,20 +62,65 @@ class SlicerHiredMuscleTest extends BaseCardTest {
     @Test
     void combatDamageWithConvertedSlicerConvertsItBack() {
         Permanent slicer = castConvertedSlicer();
-        slicer.setSummoningSick(false);
-        slicer.setAttacking(true);
-        slicer.setAttackTarget(player2.getId());
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.COMBAT_DAMAGE);
-        harness.clearPriorityPassed();
-        gd.interaction.clearAwaitingInput();
-
-        harness.resolveCombatDamage();
+        declareAttackersAndPrepareBlockers(List.of(0));
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, this::resolveCombat);
         harness.assertLife(player2, 17);
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, this::resolveAllTriggers);
+
+        assertThat(slicer.isTransformed()).isTrue();
+        assertThat(slicer.getCard()).isInstanceOf(SlicerHighSpeedAntagonist.class);
+
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
+        harness.assertLife(player2, 17);
 
         assertThat(slicer.isTransformed()).isFalse();
         assertThat(slicer.getCard()).isInstanceOf(SlicerHiredMuscle.class);
+    }
+
+    @Test
+    void acceptingOpponentUpkeepChoiceGoadsSlicerUntilOwnersNextTurn() {
+        Permanent slicer = harness.addToBattlefieldAndReturn(player1, new SlicerHiredMuscle());
+
+        advanceToOpponentUpkeep();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gqs.isGoaded(gd, slicer)).isTrue();
+        assertThat(als.getMustAttackRequirementCount(gd, slicer)).isGreaterThan(0);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.CLEANUP);
+        assertThat(gqs.isGoaded(gd, slicer)).isTrue();
+
+        advanceToUpkeep(player1);
+        assertThat(gqs.isGoaded(gd, slicer)).isFalse();
+    }
+
+    @Test
+    void livingMetalDoesNotMakeConvertedSlicerACreatureDuringOpponentsTurn() {
+        Permanent slicer = castConvertedSlicer();
+
+        advanceToOpponentUpkeep();
+
+        assertThat(gqs.isCreature(gd, slicer)).isFalse();
+        assertThat(slicer.isTransformed()).isTrue();
+        assertThat(gd.stack).isEmpty();
+
+        advanceToUpkeep(player1);
+        assertThat(gqs.isCreature(gd, slicer)).isTrue();
+    }
+
+    @Test
+    void regularCastingKeepsFrontFaceAndDoesNotTriggerDuringControllersUpkeep() {
+        harness.castFromHand(player1, new SlicerHiredMuscle(), "{4}{R}");
+        resolveAllTriggers();
+        Permanent slicer = findPermanent(player1, "Slicer, Hired Muscle");
+
+        advanceToUpkeep(player1);
+
+        assertThat(slicer.isTransformed()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     private Permanent castConvertedSlicer() {
