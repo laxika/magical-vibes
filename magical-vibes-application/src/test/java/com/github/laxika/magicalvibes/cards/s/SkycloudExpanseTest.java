@@ -49,4 +49,41 @@ class SkycloudExpanseTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
     }
+
+    @Test
+    void coloredManaCanPayGenericCostAndManaGoesToController() {
+        Permanent expanse = harness.addToBattlefieldAndReturn(player2, new SkycloudExpanse());
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.activateAbility(player2, 0, 0, null, null);
+
+        var pool = gd.playerManaPools.get(player2.getId());
+        assertThat(pool.get(ManaColor.RED)).isZero();
+        assertThat(pool.get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(pool.get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(expanse.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void unaffordableActivationDoesNotTapLandOrProduceMana() {
+        Permanent expanse = harness.addToBattlefieldAndReturn(player1, new SkycloudExpanse());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(expanse.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(gd.stack).isEmpty();
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(expanse.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+    }
 }
