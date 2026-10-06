@@ -4,17 +4,18 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed(SharlayanNationOfScholars.class)
 class SharlayanNationOfScholarsTest extends BaseCardTest {
@@ -34,7 +35,7 @@ class SharlayanNationOfScholarsTest extends BaseCardTest {
     @Test
     @DisplayName("Activating the ability prompts a choice between white and blue")
     void activatingPromptsColorChoice() {
-        addSharlayanReady(player1);
+        addCreatureReady(player1, new SharlayanNationOfScholars());
         GameData gameData = harness.getGameData();
 
         harness.activateAbility(player1, 0, 0, null, null);
@@ -46,31 +47,53 @@ class SharlayanNationOfScholarsTest extends BaseCardTest {
         assertThat(choice.options()).containsExactlyInAnyOrder("WHITE", "BLUE");
     }
 
-    @Test
+    @ParameterizedTest
+    @EnumSource(value = ManaColor.class, names = {"WHITE", "BLUE"})
     @DisplayName("Choosing either color adds one mana and taps the land")
-    void choosingColorAddsMana() {
-        for (String color : new String[]{"WHITE", "BLUE"}) {
-            harness = new GameTestHarness();
-            player1 = harness.getPlayer1();
-            harness.skipMulligan();
+    void choosingColorAddsMana(ManaColor manaColor) {
+        Permanent sharlayan = addCreatureReady(player1, new SharlayanNationOfScholars());
+        GameData gameData = harness.getGameData();
 
-            Permanent sharlayan = addSharlayanReady(player1);
-            GameData gameData = harness.getGameData();
-            ManaColor manaColor = ManaColor.valueOf(color);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, manaColor.name());
 
-            harness.activateAbility(player1, 0, 0, null, null);
-            harness.handleListChoice(player1, color);
-
-            assertThat(gameData.playerManaPools.get(player1.getId()).get(manaColor)).isEqualTo(1);
-            assertThat(sharlayan.isTapped()).isTrue();
-            assertThat(gameData.interaction.activeInteraction()).isNull();
-        }
+        assertThat(gameData.playerManaPools.get(player1.getId()).get(manaColor)).isEqualTo(1);
+        assertThat(sharlayan.isTapped()).isTrue();
+        assertThat(gameData.interaction.activeInteraction()).isNull();
     }
 
-    private Permanent addSharlayanReady(Player player) {
-        Permanent permanent = new Permanent(new SharlayanNationOfScholars());
-        permanent.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    void entersTappedWhenPutOntoBattlefieldWithoutBeingPlayed() {
+        Permanent sharlayan = harness.enterBattlefieldAndReturn(player1, new SharlayanNationOfScholars());
+
+        assertThat(sharlayan.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotActivateWhileTapped() {
+        Permanent sharlayan = harness.enterBattlefieldAndReturn(player1, new SharlayanNationOfScholars());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+
+        assertThat(sharlayan.isTapped()).isTrue();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+    }
+
+    @Test
+    void canActivateOnTurnItEntersAfterBeingUntapped() {
+        Permanent sharlayan = harness.enterBattlefieldAndReturn(player1, new SharlayanNationOfScholars());
+        sharlayan.setTapped(false);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "BLUE");
+
+        assertThat(sharlayan.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
     }
 }
