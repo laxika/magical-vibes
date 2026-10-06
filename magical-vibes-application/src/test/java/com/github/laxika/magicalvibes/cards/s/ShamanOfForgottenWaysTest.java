@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -68,8 +70,79 @@ class ShamanOfForgottenWaysTest extends BaseCardTest {
     }
 
     private Permanent addReadyShaman() {
-        Permanent shaman = harness.addToBattlefieldAndReturn(player1, new ShamanOfForgottenWays());
-        shaman.setSummoningSick(false);
-        return shaman;
+        return addCreatureReady(player1, new ShamanOfForgottenWays());
+    }
+
+    @Test
+    void generatedManaCanPayForCreatureSpell() {
+        addReadyShaman();
+        harness.setHand(player1, List.of(new ShamanOfForgottenWays()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, "GREEN");
+        harness.handleListChoice(player1, "BLUE");
+        assertThat(gd.stack).isEmpty();
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).getCreatureSpellOnlyManaTotal()).isZero();
+    }
+
+    @Test
+    void generatedManaCannotPayForFormidableActivation() {
+        addReadyShaman();
+        addReadyShaman();
+        addReadyShaman();
+        addReadyShaman();
+        harness.addMana(player1, ManaColor.COLORLESS, 9);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, "GREEN");
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void formidableCountsCreaturesAtResolutionWithoutRecheckingPower() {
+        Permanent shaman = addReadyShaman();
+        addReadyShaman();
+        addReadyShaman();
+        addReadyShaman();
+        harness.addToBattlefield(player2, new ShamanOfForgottenWays());
+        harness.addMana(player1, ManaColor.COLORLESS, 9);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.setLife(player1, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        assertThat(shaman.isTapped()).isTrue();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, shaman));
+        harness.addToBattlefield(player2, new ShamanOfForgottenWays());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 3);
+        harness.assertLife(player2, 2);
+    }
+
+    @Test
+    void formidableSetsPlayerWithNoCreaturesToZeroLife() {
+        addReadyShaman();
+        addReadyShaman();
+        addReadyShaman();
+        addReadyShaman();
+        harness.addMana(player1, ManaColor.COLORLESS, 9);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 4);
+        harness.assertLife(player2, 0);
+        assertThat(gd.status).isEqualTo(com.github.laxika.magicalvibes.model.GameStatus.FINISHED);
     }
 }
