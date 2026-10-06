@@ -4,10 +4,13 @@ import com.github.laxika.magicalvibes.cards.h.HumbleBudoka;
 import com.github.laxika.magicalvibes.cards.o.OrochiSustainer;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -130,5 +133,38 @@ class SeshiroTheAnointedTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(handSize(player1)).isEqualTo(before + 2);
+    }
+
+    @Test
+    @DisplayName("An opponent's Snake dealing combat damage does not trigger Seshiro")
+    void opponentSnakeDoesNotTrigger() {
+        addSeshiro(player1);
+        addCreatureReady(player2, new OrochiSustainer()).setAttacking(true);
+        int before = handSize(player1);
+
+        resolveCombat(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(handSize(player1)).isEqualTo(before);
+    }
+
+    @Test
+    @DisplayName("A Snake dealing combat damage only to a blocker does not trigger the draw")
+    void damageToBlockerDoesNotTrigger() {
+        addSeshiro(player1);
+        addCreatureReady(player1, new OrochiSustainer()).setAttacking(true);
+        addCreatureReady(player2, new HumbleBudoka());
+        int before = handSize(player1);
+        int defenderLife = gd.playerLifeTotals.get(player2.getId());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(defenderLife);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(handSize(player1)).isEqualTo(before);
     }
 }
