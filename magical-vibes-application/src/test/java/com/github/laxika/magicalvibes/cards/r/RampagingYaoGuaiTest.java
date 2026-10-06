@@ -48,6 +48,96 @@ class RampagingYaoGuaiTest extends BaseCardTest {
                 .hasMessageContaining("total mana value");
     }
 
+    @Test
+    @DisplayName("X zero can destroy multiple zero-mana-value artifacts")
+    void zeroXDestroysZeroManaValueArtifacts() {
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+
+        castYaoGuai(0, List.of(first.getId(), second.getId()));
+
+        assertThat(findPermanent(player1, "Rampaging Yao Guai")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Targets with total mana value exactly X are destroyed")
+    void destroysTargetsAtExactManaValueLimit() {
+        Permanent arena = harness.addToBattlefieldAndReturn(player2, new PhyrexianArena());
+        Permanent anthem = harness.addToBattlefieldAndReturn(player2, new GloriousAnthem());
+
+        castYaoGuai(6, List.of(arena.getId(), anthem.getId()));
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player2, "Phyrexian Arena");
+        harness.assertInGraveyard(player2, "Glorious Anthem");
+    }
+
+    @Test
+    @DisplayName("Artifacts controlled by either player can be targeted")
+    void destroysOwnAndOpposingArtifacts() {
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
+        Permanent opposing = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+
+        castYaoGuai(0, List.of(own.getId(), opposing.getId()));
+
+        harness.assertNotOnBattlefield(player1, "Fountain of Youth");
+        harness.assertNotOnBattlefield(player2, "Fountain of Youth");
+        harness.assertInGraveyard(player1, "Fountain of Youth");
+        harness.assertInGraveyard(player2, "Fountain of Youth");
+        harness.assertOnBattlefield(player1, "Rampaging Yao Guai");
+    }
+
+    @Test
+    @DisplayName("Counters are present before the destruction trigger resolves")
+    void entersWithCountersBeforeDestruction() {
+        Permanent arena = harness.addToBattlefieldAndReturn(player2, new PhyrexianArena());
+        prepareCast(3);
+        gs.playCard(gd, player1, 0, 3, null, null, List.of(arena.getId()), List.of());
+
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Rampaging Yao Guai")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        harness.assertOnBattlefield(player2, "Phyrexian Arena");
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Phyrexian Arena");
+    }
+
+    @Test
+    @DisplayName("The controller can choose no targets even when legal targets exist")
+    void canChooseNoTargets() {
+        harness.addToBattlefield(player2, new FountainOfYouth());
+        prepareCast(2);
+        gs.playCard(gd, player1, 0, 2, null, null, List.of(), List.of());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Rampaging Yao Guai")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        harness.assertOnBattlefield(player2, "Fountain of Youth");
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Any number of targets includes more than ninety-nine artifacts")
+    void destroysOneHundredZeroManaValueArtifacts() {
+        List<java.util.UUID> targets = new java.util.ArrayList<>();
+        for (int i = 0; i < 100; i++) {
+            targets.add(harness.addToBattlefieldAndReturn(player2, new FountainOfYouth()).getId());
+        }
+
+        castYaoGuai(0, targets);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(100);
+        harness.assertOnBattlefield(player1, "Rampaging Yao Guai");
+    }
     private void castYaoGuai(int xValue, List<java.util.UUID> targetIds) {
         prepareCast(xValue);
         gs.playCard(gd, player1, 0, xValue, null, null, targetIds, List.of());
