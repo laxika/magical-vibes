@@ -59,8 +59,7 @@ class RimewallProtectorTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Unsummon()));
         harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.castInstant(player1, 0, wizard.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, wizard.getId());
 
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castCreature(player1, 0);
@@ -88,5 +87,65 @@ class RimewallProtectorTest extends BaseCardTest {
 
         harness.assertInGraveyard(player2, "Unsummon");
         harness.assertOnBattlefield(player1, "Fugitive Wizard");
+    }
+
+    @Test
+    void repeatedBattlefieldGrantsCreateSeparateWardTriggers() {
+        Permanent wizard = harness.addToBattlefieldAndReturn(player1, new FugitiveWizard());
+        harness.enterBattlefieldAndReturn(player1, new RimewallProtector());
+        resolveAllTriggers();
+        harness.enterBattlefieldAndReturn(player1, new RimewallProtector());
+        resolveAllTriggers();
+
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+        harness.castInstant(player2, 0, wizard.getId());
+
+        assertThat(gd.stack).hasSize(3);
+    }
+
+    @Test
+    void repeatedHandGrantsCreateSeparateWardTriggersAfterCasting() {
+        harness.setHand(player1, List.of(new FugitiveWizard()));
+        harness.enterBattlefieldAndReturn(player1, new RimewallProtector());
+        resolveAllTriggers();
+        harness.enterBattlefieldAndReturn(player1, new RimewallProtector());
+        resolveAllTriggers();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+        harness.castInstant(player2, 0, findPermanent(player1, "Fugitive Wizard").getId());
+
+        assertThat(gd.stack).hasSize(3);
+    }
+
+    @Test
+    void ownWardCanBePaidAndDoesNotGrantAnotherInstanceToItself() {
+        Permanent protector = harness.enterBattlefieldAndReturn(player1, new RimewallProtector());
+        resolveAllTriggers();
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.castInstant(player2, 0, protector.getId());
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Rimewall Protector");
+        harness.assertInHand(player1, "Rimewall Protector");
+    }
+
+    @Test
+    void doesNotGrantWardToOpponentsCreaturesOrLaterArrivals() {
+        Permanent opponentWizard = harness.addToBattlefieldAndReturn(player2, new FugitiveWizard());
+        harness.enterBattlefieldAndReturn(player1, new RimewallProtector());
+        resolveAllTriggers();
+        Permanent laterGiant = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+
+        assertThat(gqs.hasKeyword(gd, opponentWizard, Keyword.WARD)).isFalse();
+        assertThat(gqs.hasKeyword(gd, laterGiant, Keyword.WARD)).isFalse();
     }
 }
