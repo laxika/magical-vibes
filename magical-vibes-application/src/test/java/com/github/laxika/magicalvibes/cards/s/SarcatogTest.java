@@ -148,6 +148,43 @@ class SarcatogTest extends BaseCardTest {
     }
 
     @Test
+    void sacrificedArtifactCanPayGraveyardCostBeforeEitherBoostResolves() {
+        Permanent sarcatog = harness.addToBattlefieldAndReturn(player1, new Sarcatog());
+        CatalystStone artifact = new CatalystStone();
+        DuskImp graveyardCard = new DuskImp();
+        harness.addToBattlefield(player1, artifact);
+        harness.setGraveyard(player1, List.of(graveyardCard));
+        int powerBefore = gqs.getEffectivePower(gd, sarcatog);
+        int toughnessBefore = gqs.getEffectiveToughness(gd, sarcatog);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Catalyst Stone");
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(graveyardCard, artifact);
+        assertThat(gqs.getEffectivePower(gd, sarcatog)).isEqualTo(powerBefore);
+        assertThat(gqs.getEffectiveToughness(gd, sarcatog)).isEqualTo(toughnessBefore);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyInAnyOrder(graveyardCard, artifact);
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gqs.getEffectivePower(gd, sarcatog)).isEqualTo(powerBefore);
+        assertThat(gqs.getEffectiveToughness(gd, sarcatog)).isEqualTo(toughnessBefore);
+
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, sarcatog)).isEqualTo(powerBefore + 2);
+        assertThat(gqs.getEffectiveToughness(gd, sarcatog)).isEqualTo(toughnessBefore + 2);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.getEffectivePower(gd, sarcatog)).isEqualTo(powerBefore);
+        assertThat(gqs.getEffectiveToughness(gd, sarcatog)).isEqualTo(toughnessBefore);
+    }
+
+    @Test
     void boostsWearOffAtEndOfTurn() {
         Permanent sarcatog = harness.addToBattlefieldAndReturn(player1, new Sarcatog());
         harness.addToBattlefield(player1, new CatalystStone());
@@ -158,7 +195,6 @@ class SarcatogTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, sarcatog)).isEqualTo(powerBefore);
