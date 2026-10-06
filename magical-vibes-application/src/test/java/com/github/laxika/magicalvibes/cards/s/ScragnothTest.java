@@ -36,8 +36,7 @@ class ScragnothTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, scragnoth.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, scragnoth.getId());
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Scragnoth");
@@ -143,6 +142,48 @@ class ScragnothTest extends BaseCardTest {
         resolveCombat();
 
         harness.assertInGraveyard(player2, "Scragnoth");
+    }
+
+    @Test
+    @DisplayName("Protection also prevents its controller's blue spells from targeting Scragnoth")
+    void cannotBeTargetedByControllersBlueInstant() {
+        Permanent scragnoth = addScragnoth(player1);
+        harness.setHand(player1, List.of(new Capsize()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, scragnoth.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection from blue");
+    }
+
+    @Test
+    @DisplayName("A red creature can block and kill Scragnoth")
+    void redCreatureCanBlock() {
+        Permanent attacker = addScragnoth(player1);
+        attacker.setAttacking(true);
+        addCreatureReady(player2, new LowlandGiant());
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertInGraveyard(player1, "Scragnoth");
+        harness.assertInGraveyard(player2, "Lowland Giant");
+    }
+
+    @Test
+    @DisplayName("A green spell resolves normally on Scragnoth")
+    void greenPumpResolves() {
+        Permanent scragnoth = addScragnoth(player1);
+        harness.setHand(player1, List.of(new ElvishFury()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveInstant(player1, 0, scragnoth.getId());
+
+        assertThat(gqs.getEffectivePower(gd, scragnoth)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, scragnoth)).isEqualTo(6);
+        harness.assertInGraveyard(player1, "Elvish Fury");
     }
 
     private Permanent addScragnoth(com.github.laxika.magicalvibes.model.Player player) {
