@@ -119,4 +119,52 @@ class SamiteElderTest extends BaseCardTest {
         assertThat(gqs.hasProtectionFrom(gd, elder, CardColor.GREEN)).isFalse();
         assertThat(gqs.hasProtectionFrom(gd, kavu, CardColor.GREEN)).isFalse();
     }
+
+    @Test
+    @DisplayName("Can target itself and pays its tap cost")
+    void canTargetItself() {
+        Permanent elder = addCreatureReady(player1, new SamiteElder());
+        Permanent kavu = addCreatureReady(player1, new AlphaKavu());
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(elder), null, elder.getId());
+        assertThat(elder.isTapped()).isTrue();
+        assertThat(gqs.hasProtectionFrom(gd, kavu, CardColor.WHITE)).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasProtectionFrom(gd, elder, CardColor.WHITE)).isTrue();
+        assertThat(gqs.hasProtectionFrom(gd, kavu, CardColor.WHITE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Includes creatures that enter while the ability is on the stack")
+    void includesCreaturesEnteringBeforeResolution() {
+        Permanent elder = addCreatureReady(player1, new SamiteElder());
+        Permanent barrier = harness.addToBattlefieldAndReturn(player1, new LashknifeBarrier());
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(elder), null, barrier.getId());
+        Permanent kavu = harness.enterBattlefieldAndReturn(player1, new AlphaKavu());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasProtectionFrom(gd, kavu, CardColor.WHITE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Grants no protection when the target returns to hand in response")
+    void grantsNoProtectionWhenTargetLeavesBeforeResolution() {
+        Permanent elder = addCreatureReady(player1, new SamiteElder());
+        Permanent kavu = addCreatureReady(player1, new AlphaKavu());
+        Permanent harpy = addCreatureReady(player1, new CavernHarpy());
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(elder), null, harpy.getId());
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(harpy), null, null);
+        harness.passBothPriorities();
+        harness.assertInHand(player1, "Cavern Harpy");
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasProtectionFrom(gd, elder, CardColor.BLUE)).isFalse();
+        assertThat(gqs.hasProtectionFrom(gd, elder, CardColor.BLACK)).isFalse();
+        assertThat(gqs.hasProtectionFrom(gd, kavu, CardColor.BLUE)).isFalse();
+        assertThat(gqs.hasProtectionFrom(gd, kavu, CardColor.BLACK)).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
 }
