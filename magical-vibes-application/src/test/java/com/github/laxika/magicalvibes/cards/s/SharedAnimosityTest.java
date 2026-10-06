@@ -159,4 +159,67 @@ class SharedAnimosityTest extends BaseCardTest {
     private void addSharedAnimosity() {
         harness.addToBattlefield(player1, new SharedAnimosity());
     }
+
+    @Test
+    @DisplayName("Nonattacking creatures on either battlefield neither count nor receive a boost")
+    void ignoresNonattackingCreatures() {
+        addSharedAnimosity();
+        Permanent attacker = addCreatureReady(player1, new PricklyBoggart());
+        Permanent ally = addCreatureReady(player1, new PricklyBoggart());
+        Permanent opponent = addCreatureReady(player2, new PricklyBoggart());
+
+        declareAttackers(List.of(1));
+        resolveAllTriggers();
+
+        assertThat(attacker.getPowerModifier()).isZero();
+        assertThat(ally.getPowerModifier()).isZero();
+        assertThat(opponent.getPowerModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("An opponent's Shared Animosity does not boost your attackers")
+    void onlyTriggersForItsControllersAttackers() {
+        harness.addToBattlefield(player2, new SharedAnimosity());
+        Permanent goblin1 = addCreatureReady(player1, new PricklyBoggart());
+        Permanent goblin2 = addCreatureReady(player1, new PricklyBoggart());
+
+        declareAttackers(List.of(0, 1));
+        resolveAllTriggers();
+
+        assertThat(goblin1.getPowerModifier()).isZero();
+        assertThat(goblin2.getPowerModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Multiple Shared Animosities each boost every matching attacker")
+    void multipleCopiesStackTheirBoosts() {
+        addSharedAnimosity();
+        addSharedAnimosity();
+        Permanent goblin1 = addCreatureReady(player1, new PricklyBoggart());
+        Permanent goblin2 = addCreatureReady(player1, new PricklyBoggart());
+
+        declareAttackers(List.of(2, 3));
+        resolveAllTriggers();
+
+        assertThat(goblin1.getPowerModifier()).isEqualTo(2);
+        assertThat(goblin2.getPowerModifier()).isEqualTo(2);
+        assertThat(goblin1.getToughnessModifier()).isZero();
+        assertThat(goblin2.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Removing Shared Animosity does not stop its pending boosts")
+    void pendingTriggersSurviveSourceRemoval() {
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player1, new SharedAnimosity());
+        Permanent goblin1 = addCreatureReady(player1, new PricklyBoggart());
+        Permanent goblin2 = addCreatureReady(player1, new PricklyBoggart());
+
+        declareAttackers(List.of(1, 2));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, enchantment));
+        resolveAllTriggers();
+
+        assertThat(goblin1.getPowerModifier()).isEqualTo(1);
+        assertThat(goblin2.getPowerModifier()).isEqualTo(1);
+    }
 }
