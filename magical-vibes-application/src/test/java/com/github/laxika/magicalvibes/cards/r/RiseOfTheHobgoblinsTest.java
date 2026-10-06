@@ -3,17 +3,21 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RiseOfTheHobgoblins.class, HillGiant.class, EliteVanguard.class, FugitiveWizard.class,
+        Opalescence.class})
 class RiseOfTheHobgoblinsTest extends BaseCardTest {
 
     private void setupPlayer1Active() {
@@ -26,8 +30,6 @@ class RiseOfTheHobgoblinsTest extends BaseCardTest {
         return countPermanents(player1, "Goblin Soldier");
     }
 
-    // ===== ETB: pay {X} to create X tokens =====
-
     @Test
     @DisplayName("Resolving the enter trigger with mana prompts for X value choice")
     void enterTriggerPromptsForX() {
@@ -36,8 +38,7 @@ class RiseOfTheHobgoblinsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 4);
 
         harness.castEnchantment(player1, 0);
-        harness.passBothPriorities(); // resolve the enchantment → it enters → ETB trigger on stack
-        harness.passBothPriorities(); // resolve the ETB trigger → prompt for X
+        resolveAllTriggers();
 
         PendingInteraction.XValueChoice ctx =
                 gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class);
@@ -55,8 +56,7 @@ class RiseOfTheHobgoblinsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 4);
 
         harness.castEnchantment(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.handleXValueChosen(player1, 2);
 
@@ -75,8 +75,7 @@ class RiseOfTheHobgoblinsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 4);
 
         harness.castEnchantment(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.handleXValueChosen(player1, 0);
 
@@ -92,14 +91,11 @@ class RiseOfTheHobgoblinsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 2); // exactly the cast cost
 
         harness.castEnchantment(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(goblinTokenCount()).isZero();
     }
-
-    // ===== {R/W}: first strike for red and white creatures you control =====
 
     @Test
     @DisplayName("Ability grants first strike to red and white creatures you control, not others")
@@ -150,5 +146,54 @@ class RiseOfTheHobgoblinsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, red, Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("The ability grants first strike to Rise of the Hobgoblins when it is a creature")
+    void animatedEnchantmentGainsFirstStrike() {
+        harness.addToBattlefield(player1, new Opalescence());
+        Permanent rise = harness.addToBattlefieldAndReturn(player1, new RiseOfTheHobgoblins());
+        setupPlayer1Active();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, rise)).isTrue();
+        assertThat(gqs.hasKeyword(gd, rise, Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("The ability affects creatures present at resolution but not creatures entering afterward")
+    void firstStrikeAppliesOnlyToCreaturesPresentAtResolution() {
+        harness.addToBattlefield(player1, new RiseOfTheHobgoblins());
+        setupPlayer1Active();
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, 0, null, null);
+        Permanent beforeResolution = addCreatureReady(player1, new HillGiant());
+
+        harness.passBothPriorities();
+        Permanent afterResolution = addCreatureReady(player1, new HillGiant());
+
+        assertThat(gqs.hasKeyword(gd, beforeResolution, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, afterResolution, Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Created Goblin Soldier tokens gain first strike when the ability is activated")
+    void createdTokensGainFirstStrike() {
+        setupPlayer1Active();
+        harness.setHand(player1, java.util.List.of(new RiseOfTheHobgoblins()));
+        harness.addMana(player1, ManaColor.WHITE, 5);
+        harness.castEnchantment(player1, 0);
+        resolveAllTriggers();
+        harness.handleXValueChosen(player1, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Goblin Soldier")).hasSize(2).allSatisfy(token ->
+                assertThat(gqs.hasKeyword(gd, token, Keyword.FIRST_STRIKE)).isTrue());
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 }
