@@ -4,8 +4,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -31,9 +29,9 @@ class ScreamreachBrawlerTest extends BaseCardTest {
         Permanent brawler = findPermanent(player1, "Screamreach Brawler");
         assertThat(brawler.hasKeyword(Keyword.HASTE)).isFalse();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(findPermanent(player1, "Screamreach Brawler")).isSameAs(brawler);
     }
@@ -51,15 +49,29 @@ class ScreamreachBrawlerTest extends BaseCardTest {
 
         Permanent brawler = findPermanent(player1, "Screamreach Brawler");
         assertThat(brawler.hasKeyword(Keyword.HASTE)).isTrue();
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .anyMatch(action -> action.permanentId().equals(brawler.getId())
-                        && action.kind() == DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP);
-
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
+
+        harness.assertOnBattlefield(player1, "Screamreach Brawler");
+        harness.assertNotInHand(player1, "Screamreach Brawler");
+        assertThat(gd.stack).hasSize(1);
+        harness.passUntil(TurnStep.CLEANUP);
 
         harness.assertInHand(player1, "Screamreach Brawler");
         harness.assertNotOnBattlefield(player1, "Screamreach Brawler");
+    }
+
+    @Test
+    @DisplayName("Dash does not create an enters-the-battlefield triggered ability")
+    void dashDoesNotCreateAnEnterBattlefieldTrigger() {
+        harness.setHand(player1, List.of(new ScreamreachBrawler()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castWithAlternateCost(player1, 0, (java.util.UUID) null);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Screamreach Brawler");
+        assertThat(gd.stack).isEmpty();
     }
 }
