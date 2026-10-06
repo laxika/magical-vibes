@@ -58,15 +58,39 @@ class RaucousCarnivalTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
     }
 
+    @Test
+    void entersUntappedWhenControllerHasLessThan13Life() {
+        harness.setLife(player1, 12);
+        playCarnival();
+
+        assertThat(carnival().isTapped()).isFalse();
+    }
+
+    @Test
+    void entersUntappedWhenOpponentHasLessThan13Life() {
+        harness.setLife(player2, 12);
+        playCarnival();
+
+        assertThat(carnival().isTapped()).isFalse();
+    }
+
+    @Test
+    void checksLifeRelativeToTheEnteringLandsController() {
+        harness.setLife(player1, 13);
+        harness.setLife(player2, 20);
+
+        Permanent carnival = harness.enterBattlefieldAndReturn(player2, new RaucousCarnival());
+
+        assertThat(carnival.isTapped()).isFalse();
+    }
     private void playCarnival() {
         harness.setHand(player1, List.of(new RaucousCarnival()));
         harness.playLand(player1, 0);
     }
 
     private Permanent addReadyCarnival() {
-        Permanent carnival = new Permanent(new RaucousCarnival());
+        Permanent carnival = harness.addToBattlefieldAndReturn(player1, new RaucousCarnival());
         carnival.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(carnival);
         return carnival;
     }
 
