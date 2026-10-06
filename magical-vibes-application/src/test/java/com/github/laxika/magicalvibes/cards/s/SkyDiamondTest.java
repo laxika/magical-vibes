@@ -48,6 +48,53 @@ class SkyDiamondTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
     }
 
+    @Test
+    @DisplayName("Entering without being cast still enters tapped and cannot produce mana")
+    void enteringWithoutCastingStillPreventsManaActivation() {
+        Permanent diamond = harness.enterBattlefieldAndReturn(player1, new SkyDiamond());
+
+        assertThat(diamond.isTapped()).isTrue();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A newly entered noncreature artifact can produce exactly one blue immediately after untapping")
+    void newlyEnteredDiamondProducesManaImmediatelyAfterUntapping() {
+        Permanent diamond = harness.enterBattlefieldAndReturn(player1, new SkyDiamond());
+        diamond.untap();
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(diamond.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotalAllMana()).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The untap step allows the diamond to produce mana again")
+    void canProduceManaAgainAfterUntapStep() {
+        Permanent diamond = harness.enterBattlefieldAndReturn(player1, new SkyDiamond());
+        harness.performUntapStep(player1);
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(diamond.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+
+        harness.performUntapStep(player1);
+        assertThat(diamond.isTapped()).isFalse();
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(diamond.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent findDiamond(Player player) {
         return findPermanent(player, "Sky Diamond");
     }
