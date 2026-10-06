@@ -75,8 +75,85 @@ class SeethingPathblazerTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        // Pathblazer sacrificed itself; the ability is on the stack but will fizzle
+        // The ability still resolves, but its source is no longer on the battlefield.
         harness.assertNotOnBattlefield(player1, "Seething Pathblazer");
         harness.assertInGraveyard(player1, "Seething Pathblazer");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Sacrifice is paid immediately, while the boost waits for resolution")
+    void sacrificeIsPaidBeforeResolution() {
+        Permanent pathblazer = addCreatureReady(player1, new SeethingPathblazer());
+        Permanent elemental = addCreatureReady(player1, new BrighthearthBanneret());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, elemental.getId());
+
+        harness.assertInGraveyard(player1, "Brighthearth Banneret");
+        harness.assertNotOnBattlefield(player1, "Brighthearth Banneret");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.getEffectivePower(gd, pathblazer)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, pathblazer, Keyword.FIRST_STRIKE)).isFalse();
+
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, pathblazer)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, pathblazer, Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Repeated activations stack their power bonuses")
+    void repeatedActivationsStack() {
+        Permanent pathblazer = addCreatureReady(player1, new SeethingPathblazer());
+        Permanent first = addCreatureReady(player1, new BrighthearthBanneret());
+        Permanent second = addCreatureReady(player1, new BrighthearthBanneret());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, first.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, second.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, pathblazer)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, pathblazer)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, pathblazer, Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Tapped and summoning-sick creatures can activate and pay the sacrifice cost")
+    void tappedAndSummoningSickCreaturesAreAllowed() {
+        Permanent pathblazer = addCreatureReady(player1, new SeethingPathblazer());
+        Permanent elemental = addCreatureReady(player1, new BrighthearthBanneret());
+        pathblazer.setTapped(true);
+        pathblazer.setSummoningSick(true);
+        elemental.setTapped(true);
+        elemental.setSummoningSick(true);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, elemental.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Brighthearth Banneret");
+        assertThat(gqs.getEffectivePower(gd, pathblazer)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, pathblazer, Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("An opponent's Elemental cannot pay the sacrifice cost")
+    void opponentsElementalIsNotASacrificeChoice() {
+        Permanent pathblazer = addCreatureReady(player1, new SeethingPathblazer());
+        Permanent elemental = addCreatureReady(player1, new BrighthearthBanneret());
+        Permanent opposingElemental = addCreatureReady(player2, new BrighthearthBanneret());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(pathblazer.getId(), elemental.getId());
+        assertThat(choice.validIds()).doesNotContain(opposingElemental.getId());
     }
 }
