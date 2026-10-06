@@ -46,6 +46,154 @@ class ShriekwoodDevourerTest extends BaseCardTest {
         assertThat(thirdLand.isTapped()).isTrue();
     }
 
+    @Test
+    @DisplayName("May choose fewer lands than the greatest attacking power")
+    void mayUntapOnlyOneLand() {
+        addCreatureReady(player1, new ShriekwoodDevourer());
+        addCreatureReady(player1, new GrizzlyBears());
+        Permanent first = addTappedLand(player1);
+        Permanent second = addTappedLand(player1);
+        Permanent third = addTappedLand(player1);
+
+        declareAttackers(List.of(1));
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of(first.getId()));
+
+        assertThat(first.isTapped()).isFalse();
+        assertThat(second.isTapped()).isTrue();
+        assertThat(third.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("May choose zero lands to untap")
+    void mayDeclineToUntapLands() {
+        addCreatureReady(player1, new ShriekwoodDevourer());
+        addCreatureReady(player1, new GrizzlyBears());
+        Permanent first = addTappedLand(player1);
+        Permanent second = addTappedLand(player1);
+        Permanent third = addTappedLand(player1);
+
+        declareAttackers(List.of(1));
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of());
+
+        assertThat(first.isTapped()).isTrue();
+        assertThat(second.isTapped()).isTrue();
+        assertThat(third.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Still offers a choice when fewer lands exist than X")
+    void doesNotAutomaticallyUntapAllAvailableLands() {
+        addCreatureReady(player1, new ShriekwoodDevourer());
+        Permanent land = addTappedLand(player1);
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNotNull();
+        harness.handleMultiplePermanentsChosen(player1, List.of());
+        assertThat(land.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Creatures put onto the battlefield attacking do not increase X")
+    void ignoresCreaturesThatEnteredAttacking() {
+        addCreatureReady(player1, new ShriekwoodDevourer());
+        addCreatureReady(player1, new GrizzlyBears());
+        Permanent first = addTappedLand(player1);
+        Permanent second = addTappedLand(player1);
+        addTappedLand(player1);
+
+        declareAttackers(List.of(1));
+        Permanent laterAttacker = addCreatureReady(player1, new GrizzlyBears());
+        laterAttacker.setPowerModifier(5);
+        laterAttacker.setAttacking(true);
+        laterAttacker.tap();
+        harness.passBothPriorities();
+
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.maxCount()).isEqualTo(2);
+        harness.handleMultiplePermanentsChosen(player1, List.of(first.getId(), second.getId()));
+        assertThat(first.isTapped()).isFalse();
+        assertThat(second.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A declared attacker still contributes power after leaving combat")
+    void countsDeclaredAttackerRemovedFromCombat() {
+        addCreatureReady(player1, new ShriekwoodDevourer());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent first = addTappedLand(player1);
+        Permanent second = addTappedLand(player1);
+        addTappedLand(player1);
+
+        declareAttackers(List.of(1));
+        attacker.setAttacking(false);
+        harness.passBothPriorities();
+
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.maxCount()).isEqualTo(2);
+        harness.handleMultiplePermanentsChosen(player1, List.of(first.getId(), second.getId()));
+        assertThat(first.isTapped()).isFalse();
+        assertThat(second.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Uses last known power when a declared attacker leaves the battlefield")
+    void countsDeclaredAttackerThatDied() {
+        addCreatureReady(player1, new ShriekwoodDevourer());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent first = addTappedLand(player1);
+        Permanent second = addTappedLand(player1);
+        addTappedLand(player1);
+
+        declareAttackers(List.of(1));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, attacker));
+        harness.passBothPriorities();
+
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.maxCount()).isEqualTo(2);
+        harness.handleMultiplePermanentsChosen(player1, List.of(first.getId(), second.getId()));
+        assertThat(first.isTapped()).isFalse();
+        assertThat(second.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Uses the greatest current power and triggers once for multiple attackers")
+    void evaluatesGreatestPowerAtResolution() {
+        addCreatureReady(player1, new ShriekwoodDevourer());
+        Permanent firstAttacker = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        Permanent first = addTappedLand(player1);
+        Permanent second = addTappedLand(player1);
+        Permanent third = addTappedLand(player1);
+        Permanent fourth = addTappedLand(player1);
+
+        declareAttackers(List.of(1, 2));
+        firstAttacker.setPowerModifier(1);
+        harness.passBothPriorities();
+
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.maxCount()).isEqualTo(3);
+        harness.handleMultiplePermanentsChosen(player1, List.of(first.getId(), second.getId(), third.getId()));
+
+        assertThat(first.isTapped()).isFalse();
+        assertThat(second.isTapped()).isFalse();
+        assertThat(third.isTapped()).isFalse();
+        assertThat(fourth.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
+    }
+
     private Permanent addTappedLand(com.github.laxika.magicalvibes.model.Player player) {
         Permanent land = harness.addToBattlefieldAndReturn(player, new Forest());
         land.tap();
