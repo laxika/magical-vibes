@@ -5,26 +5,23 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.cards.a.AngelsFeather;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.Memnite;
+import com.github.laxika.magicalvibes.cards.c.CarapaceForger;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RustTick.class, Memnite.class, CarapaceForger.class})
 class RustTickTest extends BaseCardTest {
-
-    // ===== Activated ability: tap target artifact =====
 
     @Test
     @DisplayName("Activating ability puts it on the stack targeting an artifact")
     void activatingPutsOnStack() {
-        Permanent rustTick = addReadyRustTick(player1);
+        addReadyRustTick(player1);
         Permanent targetArtifact = addReadyArtifact(player2);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
@@ -65,15 +62,13 @@ class RustTickTest extends BaseCardTest {
     @DisplayName("Cannot target non-artifact permanents")
     void cannotTargetNonArtifact() {
         addReadyRustTick(player1);
-        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player2, new CarapaceForger());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be an artifact");
     }
-
-    // ===== Prevent untap while source tapped =====
 
     @Test
     @DisplayName("Locked artifact does not untap during controller's untap step while Rust Tick is tapped")
@@ -143,23 +138,13 @@ class RustTickTest extends BaseCardTest {
         assertThat(targetArtifact.isTapped()).isFalse();
     }
 
-    // ===== May not untap during untap step =====
-
     @Test
     @DisplayName("Controller is prompted whether to untap tapped Rust Tick during untap step")
     void controllerIsPromptedToUntapRustTick() {
         Permanent rustTick = addReadyRustTick(player1);
         rustTick.tap();
 
-        // Advance to player1's turn — should be prompted for may-not-untap
-        // The auto-pass cascade from END_STEP goes through CLEANUP into advanceTurn,
-        // which sets up the may ability prompt and stops.
-        harness.forceActivePlayer(player2);
-        harness.setHand(player1, List.of());
-        harness.setHand(player2, List.of());
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // Cascades: END_STEP -> CLEANUP -> advanceTurn -> may ability prompt
+        harness.performUntapStep(player1);
 
         // Game should be awaiting may ability choice
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
@@ -226,54 +211,116 @@ class RustTickTest extends BaseCardTest {
         assertThat(targetArtifact.isTapped()).isTrue();
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("An already tapped artifact can be targeted and locked")
+    void alreadyTappedArtifactIsLocked() {
+        addReadyRustTick(player1);
+        Permanent artifact = addReadyArtifact(player2);
+        artifact.tap();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, artifact.getId());
+        harness.passBothPriorities();
+        harness.performUntapStep(player2);
+
+        assertThat(artifact.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The ability still taps its target when Rust Tick leaves before resolution")
+    void sourceRemovedBeforeResolutionStillTapsWithoutLock() {
+        Permanent rustTick = addReadyRustTick(player1);
+        Permanent artifact = addReadyArtifact(player2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, artifact.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(rustTick);
+        harness.passBothPriorities();
+
+        assertThat(artifact.isTapped()).isTrue();
+        harness.performUntapStep(player2);
+        assertThat(artifact.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Untapping and retapping Rust Tick before resolution prevents the lock")
+    void sourceUntappedAndRetappedBeforeResolutionDoesNotLock() {
+        Permanent rustTick = addReadyRustTick(player1);
+        Permanent artifact = addReadyArtifact(player2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, artifact.getId());
+        rustTick.untap();
+        rustTick.tap();
+        harness.passBothPriorities();
+
+        assertThat(artifact.isTapped()).isTrue();
+        harness.performUntapStep(player2);
+        assertThat(artifact.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Independently untapping the target does not end Rust Tick's lock")
+    void independentlyUntappedTargetRemainsLockedWhenRetapped() {
+        Permanent rustTick = addReadyRustTick(player1);
+        Permanent artifact = addReadyArtifact(player2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, artifact.getId());
+        harness.passBothPriorities();
+        artifact.untap();
+        assertThat(artifact.isTapped()).isFalse();
+        artifact.tap();
+        harness.performUntapStep(player2);
+
+        assertThat(rustTick.isTapped()).isTrue();
+        assertThat(artifact.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A released lock does not resume when Rust Tick is tapped again")
+    void releasedLockDoesNotResumeWhenSourceIsRetapped() {
+        Permanent rustTick = addReadyRustTick(player1);
+        Permanent artifact = addReadyArtifact(player2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, artifact.getId());
+        harness.passBothPriorities();
+        harness.performUntapStep(player1);
+        harness.handleMayAbilityChosen(player1, true);
+        rustTick.tap();
+        harness.performUntapStep(player2);
+
+        assertThat(artifact.isTapped()).isFalse();
+    }
 
     private Permanent addReadyRustTick(Player player) {
-        Permanent perm = new Permanent(new RustTick());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new RustTick());
     }
 
     private Permanent addReadyArtifact(Player player) {
-        Permanent perm = new Permanent(new AngelsFeather());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new Memnite());
     }
 
     /**
-     * Advance turn from the given active player to the next player's turn.
+     * Perform the next player's untap step after the given active player.
      * Use when the next active player does NOT have may-not-untap permanents.
      */
     private void advanceToNextTurn(Player currentActivePlayer) {
-        harness.forceActivePlayer(currentActivePlayer);
-        harness.setHand(player1, List.of());
-        harness.setHand(player2, List.of());
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // END_STEP -> CLEANUP
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // CLEANUP -> next turn (advanceTurn)
+        Player nextActivePlayer = currentActivePlayer == player1 ? player2 : player1;
+        harness.performUntapStep(nextActivePlayer);
     }
 
     /**
-     * Advance turn from the given active player to the next player's turn,
+     * Perform the next player's untap step after the given active player,
      * handling a may-not-untap prompt for the next player.
      *
      * @param currentActivePlayer the player whose turn is ending
      * @param acceptUntap true to untap the permanent, false to keep it tapped
      */
     private void advanceToNextTurnWithMayChoice(Player currentActivePlayer, boolean acceptUntap) {
-        harness.forceActivePlayer(currentActivePlayer);
-        harness.setHand(player1, List.of());
-        harness.setHand(player2, List.of());
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // Cascades: END_STEP -> CLEANUP -> advanceTurn -> may ability prompt
-
-        // Determine which player is the new active player (the one receiving the prompt)
         Player newActivePlayer = currentActivePlayer == player1 ? player2 : player1;
+        harness.performUntapStep(newActivePlayer);
         harness.handleMayAbilityChosen(newActivePlayer, acceptUntap);
     }
 }
