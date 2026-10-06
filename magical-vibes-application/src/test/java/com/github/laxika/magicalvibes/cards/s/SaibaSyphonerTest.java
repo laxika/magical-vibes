@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.c.Cancel;
 import com.github.laxika.magicalvibes.cards.d.DoomBlade;
+import com.github.laxika.magicalvibes.cards.d.Divination;
+import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SaibaSyphoner.class, Shock.class, DoomBlade.class, Cancel.class})
+@CardUsed({SaibaSyphoner.class, Shock.class, DoomBlade.class, Cancel.class, Divination.class, TurnToFrog.class})
 class SaibaSyphonerTest extends BaseCardTest {
 
     @Test
@@ -89,12 +91,78 @@ class SaibaSyphonerTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLACK, 2);
 
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
-        harness.castInstant(player2, 0, saiba.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, saiba.getId());
 
         harness.assertNotOnBattlefield(player1, "Saiba Syphoner");
         harness.assertNotInGraveyard(player1, "Saiba Syphoner");
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore + 1);
         assertThat(gd.playerDecks.get(player1.getId())).contains(saiba.getCard());
+    }
+
+    @Test
+    void sorceryInHandPreventsCostReduction() {
+        harness.setHand(player1, List.of(new SaibaSyphoner(), new Divination()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castCreature(player1, 0);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void returnsSorceryFromGraveyard() {
+        Divination divination = new Divination();
+        harness.setGraveyard(player1, List.of(divination));
+        harness.setHand(player1, List.of(new SaibaSyphoner()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(divination.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(divination);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void cannotReturnCreatureOrOpponentsInstant() {
+        SaibaSyphoner creature = new SaibaSyphoner();
+        Shock opponentInstant = new Shock();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setGraveyard(player2, List.of(opponentInstant));
+        harness.setHand(player1, List.of(new SaibaSyphoner()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Saiba Syphoner");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(creature);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentInstant);
+    }
+
+    @Test
+    void goesToGraveyardWhenItHasLostAllAbilities() {
+        Permanent saiba = harness.addToBattlefieldAndReturn(player1, new SaibaSyphoner());
+        harness.setHand(player2, List.of(new TurnToFrog(), new DoomBlade()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
+
+        harness.castAndResolveInstant(player2, 0, saiba.getId());
+        harness.castAndResolveInstant(player2, 0, saiba.getId());
+
+        harness.assertNotOnBattlefield(player1, "Saiba Syphoner");
+        harness.assertInGraveyard(player1, "Saiba Syphoner");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore);
+        assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(saiba.getCard());
     }
 }
