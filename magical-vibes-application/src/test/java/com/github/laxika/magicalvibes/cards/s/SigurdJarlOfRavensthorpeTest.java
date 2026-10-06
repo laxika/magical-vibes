@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HistoryOfBenalia;
+import com.github.laxika.magicalvibes.cards.t.TheWeatherseedTreaty;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,7 +14,8 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SigurdJarlOfRavensthorpe.class, GrizzlyBears.class, HistoryOfBenalia.class})
+@CardUsed({SigurdJarlOfRavensthorpe.class, GrizzlyBears.class, HistoryOfBenalia.class,
+        TheWeatherseedTreaty.class})
 class SigurdJarlOfRavensthorpeTest extends BaseCardTest {
 
     @Test
@@ -89,10 +91,104 @@ class SigurdJarlOfRavensthorpeTest extends BaseCardTest {
                 .hasMessageContaining("once each turn");
     }
 
+    @Test
+    @DisplayName("Boast's add-or-remove choice is made on resolution")
+    void boastChoosesWhetherToAddOrRemoveOnResolution() {
+        Permanent saga = addSaga(1);
+        Permanent sigurd = addCreatureReady(player1, new SigurdJarlOfRavensthorpe());
+        sigurd.setAttackedThisTurn(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 1, 0, null, saga.getId());
+        assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(1);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "Remove a lore counter from target Saga you control");
+        resolveAllTriggers();
+
+        assertThat(saga.getCounterCount(CounterType.LORE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Sigurd can put a counter on an opponent's creature")
+    void triggeredAbilityCanTargetOpponentsCreature() {
+        Permanent saga = addSaga(0);
+        Permanent sigurd = addCreatureReady(player1, new SigurdJarlOfRavensthorpe());
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
+        sigurd.setAttackedThisTurn(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 1, 0, 0, saga.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, opponentCreature.getId());
+        resolveAllTriggers();
+
+        assertThat(opponentCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(sigurd.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("A Saga entering triggers Sigurd without activating boast")
+    void sagaEnteringTriggersSigurd() {
+        addCreatureReady(player1, new SigurdJarlOfRavensthorpe());
+        Permanent otherCreature = addCreatureReady(player1, new GrizzlyBears());
+
+        harness.enterBattlefieldAndReturn(player1, new HistoryOfBenalia());
+        harness.handlePermanentChosen(player1, otherCreature.getId());
+        resolveAllTriggers();
+
+        assertThat(otherCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Read ahead putting two lore counters triggers Sigurd twice")
+    void readAheadTriggersForEachLoreCounter() {
+        addCreatureReady(player1, new SigurdJarlOfRavensthorpe());
+        Permanent otherCreature = addCreatureReady(player1, new GrizzlyBears());
+
+        Permanent saga = harness.enterBattlefieldAndReturn(player1, new TheWeatherseedTreaty());
+        harness.handleXValueChosen(player1, 2);
+        assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(2);
+        harness.handlePermanentChosen(player1, otherCreature.getId());
+        harness.handlePermanentChosen(player1, otherCreature.getId());
+        resolveAllTriggers();
+
+        assertThat(otherCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Sigurd's controller may choose no creature for the trigger")
+    void triggeredAbilityCanChooseNoTarget() {
+        Permanent saga = addSaga(0);
+        Permanent sigurd = addCreatureReady(player1, new SigurdJarlOfRavensthorpe());
+        Permanent otherCreature = addCreatureReady(player1, new GrizzlyBears());
+        sigurd.setAttackedThisTurn(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 1, 0, 0, saga.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(1);
+        assertThat(otherCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("An opponent's Saga entering does not trigger Sigurd")
+    void opponentsSagaEnteringDoesNotTriggerSigurd() {
+        addCreatureReady(player1, new SigurdJarlOfRavensthorpe());
+        Permanent otherCreature = addCreatureReady(player1, new GrizzlyBears());
+
+        harness.enterBattlefieldAndReturn(player2, new HistoryOfBenalia());
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(otherCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
     private Permanent addSaga(int loreCounters) {
-        Permanent saga = new Permanent(new HistoryOfBenalia());
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new HistoryOfBenalia());
         saga.setCounterCount(CounterType.LORE, loreCounters);
-        gd.playerBattlefields.get(player1.getId()).add(saga);
         return saga;
     }
 
