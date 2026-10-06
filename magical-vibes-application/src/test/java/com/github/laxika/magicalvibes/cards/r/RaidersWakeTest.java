@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.cards.d.Distress;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.cards.s.Sift;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,9 +18,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RaidersWake.class, Distress.class, GrizzlyBears.class, Sift.class})
 class RaidersWakeTest extends BaseCardTest {
-
-    // ===== Discard trigger: opponent loses 2 life =====
 
     @Test
     @DisplayName("Opponent loses 2 life when they discard via Distress")
@@ -34,7 +35,11 @@ class RaidersWakeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Player1 chooses card from player2's revealed hand
-        harness.handleCardChosen(player1, 0);
+        harness.withAutoStop(gd.currentStep, () -> harness.handleCardChosen(player1, 0));
+
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
 
         // Raiders' Wake trigger: player2 loses 2 life
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
@@ -46,11 +51,9 @@ class RaidersWakeTest extends BaseCardTest {
         harness.addToBattlefield(player1, new RaidersWake());
         harness.setLife(player1, 20);
 
-        gd.playerDecks.get(player1.getId()).add(new GrizzlyBears());
-        gd.playerDecks.get(player1.getId()).add(new GrizzlyBears());
-        gd.playerDecks.get(player1.getId()).add(new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
 
-        harness.setHand(player1, List.of(new com.github.laxika.magicalvibes.cards.s.Sift()));
+        harness.setHand(player1, List.of(new Sift()));
         harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.BLUE, 4);
 
         harness.castSorcery(player1, 0, 0);
@@ -61,8 +64,6 @@ class RaidersWakeTest extends BaseCardTest {
         // Controller's life should be unchanged
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
     }
-
-    // ===== Raid trigger: target opponent discards at end step =====
 
     @Test
     @DisplayName("When raid met, target opponent discards a card at end step")
@@ -80,6 +81,8 @@ class RaidersWakeTest extends BaseCardTest {
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(((PendingInteraction.PermanentChoice) gd.interaction.activeInteraction()).validPermanentIds())
+                .containsExactly(player2.getId());
 
         // Select opponent as target
         harness.handlePermanentChosen(player1, player2.getId());
@@ -133,8 +136,6 @@ class RaidersWakeTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
     }
 
-    // ===== Both abilities interact: raid forces discard, which triggers life loss =====
-
     @Test
     @DisplayName("Raid-forced discard also triggers the life loss ability")
     void raidDiscardTriggersLifeLoss() {
@@ -156,8 +157,11 @@ class RaidersWakeTest extends BaseCardTest {
         // Resolve triggered ability
         harness.passBothPriorities();
 
-        // Opponent discards
-        harness.handleCardChosen(player2, 0);
+        // Opponent discards; the life loss waits for its own trigger to resolve.
+        harness.withAutoStop(TurnStep.END_STEP, () -> harness.handleCardChosen(player2, 0));
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
 
         // Discard triggered the life loss: opponent should lose 2 life
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
@@ -189,7 +193,28 @@ class RaidersWakeTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("no cards to discard"));
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Each Wake creates a separate life-loss trigger for an opponent's discard")
+    void multipleWakesCreateSeparateLifeLossTriggers() {
+        harness.addToBattlefield(player1, new RaidersWake());
+        harness.addToBattlefield(player1, new RaidersWake());
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new Distress()));
+        harness.setLife(player2, 20);
+        harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.BLACK, 2);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.withAutoStop(gd.currentStep, () -> harness.handleCardChosen(player1, 0));
+
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).hasSize(2);
+        harness.withAutoStop(gd.currentStep, () -> harness.passBothPriorities());
+        harness.assertLife(player2, 18);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 16);
+    }
 
     private void markAttackedThisTurn() {
         gd.playersDeclaredAttackersThisTurn.add(player1.getId());
