@@ -102,6 +102,57 @@ class SkeletonShardTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("The generic activation requires three mana")
+    void genericActivationRequiresThreeMana() {
+        Card target = new Ornithopter();
+        Permanent shard = addShardAndTarget(target);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() ->
+                harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(shard.isTapped()).isFalse();
+        harness.assertInGraveyard(player1, "Ornithopter");
+    }
+
+    @Test
+    @DisplayName("The black activation cannot be paid with colorless mana")
+    void blackActivationRequiresBlackMana() {
+        Card target = new Ornithopter();
+        Permanent shard = addShardAndTarget(target);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() ->
+                harness.activateAbilityWithGraveyardTargets(player1, 0, 1, List.of(target.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(shard.isTapped()).isFalse();
+        harness.assertInGraveyard(player1, "Ornithopter");
+    }
+
+    @Test
+    @DisplayName("A target that leaves the graveyard is not returned and no replacement is chosen")
+    void targetLeavingGraveyardIsNotReplaced() {
+        Card target = new Ornithopter();
+        Card other = new Ornithopter();
+        Permanent shard = harness.addToBattlefieldAndReturn(player1, new SkeletonShard());
+        harness.setGraveyard(player1, List.of(target, other));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 1, List.of(target.getId()));
+        harness.setGraveyard(player1, List.of(other));
+        harness.setExile(player1, List.of(target));
+        harness.passBothPriorities();
+
+        harness.assertNotInHand(player1, "Ornithopter");
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(other);
+        assertThat(gd.findExiledCard(target.getId())).isNotNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(shard.isTapped()).isTrue();
+    }
+
     private Permanent addShardAndTarget(Card target) {
         Permanent shard = harness.addToBattlefieldAndReturn(player1, new SkeletonShard());
         harness.setGraveyard(player1, List.of(target));
