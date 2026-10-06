@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LabyrinthOfSkophos;
+import com.github.laxika.magicalvibes.cards.u.UnderworldRageHound;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -20,7 +21,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SkophosMazeWarden.class, GrizzlyBears.class})
+@CardUsed({SkophosMazeWarden.class, UnderworldRageHound.class, LabyrinthOfSkophos.class})
 class SkophosMazeWardenTest extends BaseCardTest {
 
     @Test
@@ -46,7 +47,7 @@ class SkophosMazeWardenTest extends BaseCardTest {
     void mayFightCreatureTargetedByLabyrinthAbility() {
         Permanent warden = addWarden(player1);
         addLabyrinth(player1, "Labyrinth of Skophos");
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new UnderworldRageHound());
 
         harness.activateAbility(player1, 1, null, target.getId());
         harness.passBothPriorities();
@@ -62,7 +63,7 @@ class SkophosMazeWardenTest extends BaseCardTest {
     void decliningFightLeavesTargetOnBattlefield() {
         addWarden(player1);
         addLabyrinth(player1, "Labyrinth of Skophos");
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new UnderworldRageHound());
 
         harness.activateAbility(player1, 1, null, target.getId());
         harness.passBothPriorities();
@@ -76,7 +77,7 @@ class SkophosMazeWardenTest extends BaseCardTest {
         Permanent warden = addWarden(player1);
         addLabyrinth(player1, "Other Land");
         Permanent labyrinth = addLabyrinth(player1, "Labyrinth of Skophos");
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new UnderworldRageHound());
 
         harness.activateAbility(player1, 1, null, target.getId());
         harness.passBothPriorities();
@@ -94,7 +95,7 @@ class SkophosMazeWardenTest extends BaseCardTest {
     @Test
     void doesNotTriggerForLabyrinthControlledByAnotherPlayer() {
         addWarden(player1);
-        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        Permanent target = addCreatureReady(player1, new UnderworldRageHound());
         addLabyrinth(player2, "Labyrinth of Skophos");
 
         harness.forceActivePlayer(player2);
@@ -103,6 +104,63 @@ class SkophosMazeWardenTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(p -> p.getId().equals(target.getId()));
+    }
+
+    @Test
+    void realLabyrinthTriggersFightBeforeRemovingFriendlyAttackerFromCombat() {
+        Permanent warden = addWarden(player1);
+        harness.addToBattlefield(player1, new LabyrinthOfSkophos());
+        Permanent target = addCreatureReady(player1, new UnderworldRageHound());
+        declareAttackers(player1, List.of(2));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 1, 1, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(target.isAttacking()).isTrue();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(warden).doesNotContain(target);
+        assertThat(warden.getMarkedDamage()).isEqualTo(3);
+    }
+
+    @Test
+    void decliningRealLabyrinthFightStillRemovesAttackerFromCombat() {
+        Permanent warden = addWarden(player1);
+        harness.addToBattlefield(player1, new LabyrinthOfSkophos());
+        Permanent target = addCreatureReady(player1, new UnderworldRageHound());
+        declareAttackers(player1, List.of(2));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 1, 1, null, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(warden, target);
+        assertThat(target.isAttacking()).isFalse();
+        assertThat(warden.getMarkedDamage()).isZero();
+        assertThat(target.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void repeatedBoostsCanReduceWardensToughnessToZero() {
+        Permanent warden = addWarden(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        for (int i = 0; i < 3; i++) {
+            harness.activateAbility(player1, 0, null, null);
+            harness.passBothPriorities();
+        }
+        assertThat(gqs.getEffectivePower(gd, warden)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, warden)).isEqualTo(1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(warden);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(warden.getCard());
     }
 
     private Permanent addWarden(Player player) {
@@ -120,8 +178,6 @@ class SkophosMazeWardenTest extends BaseCardTest {
                 "Tap target creature.",
                 TargetFilters.creature()
         ));
-        Permanent land = new Permanent(card);
-        gd.playerBattlefields.get(player.getId()).add(land);
-        return land;
+        return harness.addToBattlefieldAndReturn(player, card);
     }
 }
