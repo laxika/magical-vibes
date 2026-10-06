@@ -53,6 +53,25 @@ class SlinkingSerpentTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A tapped Forest still prevents Slinking Serpent from being blocked")
+    void cannotBeBlockedWhenDefendersForestIsTapped() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        forest.setTapped(true);
+        Permanent blocker = addCreatureReady(player2, new RagingKavu());
+        Permanent serpent = addCreatureReady(player1, new SlinkingSerpent());
+        serpent.setAttacking(true);
+
+        prepareDeclareBlockers();
+
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(serpent);
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(blockerIdx, attackerIdx))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+    }
+
+    @Test
     @DisplayName("Slinking Serpent can be blocked when only the attacking player controls a Forest")
     void canBeBlockedWhenOnlyAttackingPlayerControlsForest() {
         Permanent blocker = addCreatureReady(player2, new RagingKavu());
