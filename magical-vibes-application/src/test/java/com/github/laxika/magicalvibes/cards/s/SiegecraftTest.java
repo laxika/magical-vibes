@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,13 +15,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Siegecraft.class, GrizzlyBears.class, FountainOfYouth.class})
 class SiegecraftTest extends BaseCardTest {
 
     @Test
     @DisplayName("Casting Siegecraft targeting a creature puts it on the stack")
     void castingPutsOnStack() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new Siegecraft()));
         harness.addMana(player1, ManaColor.WHITE, 4);
@@ -35,8 +36,7 @@ class SiegecraftTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Siegecraft attaches it to target creature")
     void resolvingAttachesToTarget() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new Siegecraft()));
         harness.addMana(player1, ManaColor.WHITE, 4);
@@ -53,12 +53,10 @@ class SiegecraftTest extends BaseCardTest {
     @Test
     @DisplayName("Enchanted creature gets +2/+4")
     void enchantedCreatureGetsBoost() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
-        Permanent aura = new Permanent(new Siegecraft());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Siegecraft());
         aura.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(6);
@@ -67,12 +65,10 @@ class SiegecraftTest extends BaseCardTest {
     @Test
     @DisplayName("Creature returns to base stats when Siegecraft is removed")
     void effectsStopWhenRemoved() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
-        Permanent aura = new Permanent(new Siegecraft());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Siegecraft());
         aura.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(6);
@@ -86,8 +82,7 @@ class SiegecraftTest extends BaseCardTest {
     @Test
     @DisplayName("Siegecraft fizzles if target creature is removed before resolution")
     void fizzlesIfTargetRemoved() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new Siegecraft()));
         harness.addMana(player1, ManaColor.WHITE, 4);
@@ -113,5 +108,57 @@ class SiegecraftTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Siegecraft boosts an opponent's creature without boosting other creatures")
+    void canEnchantOpponentsCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Siegecraft()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castEnchantment(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Siegecraft").getAttachedTo()).isEqualTo(target.getId());
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Multiple Siegecraft bonuses add together")
+    void multipleAurasStack() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Siegecraft(), new Siegecraft()));
+        harness.addMana(player1, ManaColor.WHITE, 8);
+
+        harness.castEnchantment(player1, 0, target.getId());
+        harness.passBothPriorities();
+        harness.castEnchantment(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Siegecraft")).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(10);
+    }
+
+    @Test
+    @DisplayName("Siegecraft goes to its owner's graveyard when its enchanted creature leaves")
+    void auraGoesToGraveyardWhenCreatureLeaves() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Siegecraft()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.castEnchantment(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Siegecraft");
+        harness.assertInGraveyard(player1, "Siegecraft");
+        harness.assertNotInGraveyard(player2, "Siegecraft");
     }
 }
