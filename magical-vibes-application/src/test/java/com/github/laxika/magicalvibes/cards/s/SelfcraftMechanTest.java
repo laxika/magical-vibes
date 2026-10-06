@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -24,7 +23,6 @@ class SelfcraftMechanTest extends BaseCardTest {
     void sacrificeArtifactCountersCreatureAndDrawsCard() {
         Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        harness.setHand(player1, List.of(new SelfcraftMechan()));
         harness.setLibrary(player1, List.of(new Forest()));
         castSelfcraftMechan();
 
@@ -43,7 +41,6 @@ class SelfcraftMechanTest extends BaseCardTest {
     void declineSacrifice() {
         Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        harness.setHand(player1, List.of(new SelfcraftMechan()));
         harness.setLibrary(player1, List.of(new Forest()));
         castSelfcraftMechan();
 
@@ -55,24 +52,66 @@ class SelfcraftMechanTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Only an artifact can be sacrificed for the ability")
-    void nonArtifactCannotBeSacrificed() {
-        Permanent nonArtifact = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        harness.setHand(player1, List.of(new SelfcraftMechan()));
+    @DisplayName("Selfcraft Mechan can sacrifice itself and target an opponent's creature")
+    void sacrificeItselfCountersOpponentsCreatureAndDrawsForController() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new Forest()));
+        castSelfcraftMechan();
+        Permanent mechan = gd.playerBattlefields.get(player1.getId()).getFirst();
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, mechan.getId());
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Selfcraft Mechan");
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.assertInHand(player1, "Forest");
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Sacrificing the only creature leaves no target and does not draw")
+    void sacrificeOnlyCreatureDoesNotDrawWithoutLegalTarget() {
+        harness.setLibrary(player1, List.of(new Forest()));
+        castSelfcraftMechan();
+        Permanent mechan = gd.playerBattlefields.get(player1.getId()).getFirst();
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, mechan.getId());
+
+        harness.assertInGraveyard(player1, "Selfcraft Mechan");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The reflexive trigger waits for priority before applying its effects")
+    void reflexiveTriggerDoesNotResolveDuringSacrifice() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setLibrary(player1, List.of(new Forest()));
         castSelfcraftMechan();
 
         harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, artifact.getId());
+        harness.handlePermanentChosen(player1, target.getId());
 
-        assertThat(gd.playerBattlefields.get(player1.getId())).contains(nonArtifact);
+        harness.assertInGraveyard(player1, "Ornithopter");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.assertInHand(player1, "Forest");
     }
 
     private void castSelfcraftMechan() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.addMana(player1, ManaColor.BLUE, 4);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SelfcraftMechan(), "{3}{U}");
         harness.passBothPriorities();
         harness.passBothPriorities();
     }
