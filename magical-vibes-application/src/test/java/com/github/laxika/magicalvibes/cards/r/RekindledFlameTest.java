@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MentalNote;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,9 +14,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RekindledFlame.class, GrizzlyBears.class, Reclaim.class, MentalNote.class})
 class RekindledFlameTest extends BaseCardTest {
-
-    // ===== Damage half =====
 
     @Test
     @DisplayName("Deals 4 damage to target player")
@@ -23,8 +24,7 @@ class RekindledFlameTest extends BaseCardTest {
         harness.setHand(player1, List.of(new RekindledFlame()));
         harness.addMana(player1, ManaColor.RED, 4);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
     }
@@ -37,14 +37,11 @@ class RekindledFlameTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 4);
 
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetId);
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Grizzly Bears");
     }
-
-    // ===== Graveyard recursion trigger =====
 
     @Test
     @DisplayName("Offers to return from graveyard when an opponent has no cards in hand")
@@ -103,5 +100,102 @@ class RekindledFlameTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
         assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(c -> c.getId().equals(flame.getId()));
+    }
+
+    @Test
+    @DisplayName("Does nothing if the opponent gains a card before the trigger resolves")
+    void rechecksOpponentHandAtResolution() {
+        RekindledFlame flame = new RekindledFlame();
+        harness.setGraveyard(player1, List.of(flame));
+        harness.setHand(player2, List.of());
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        harness.setHand(player2, List.of(new RekindledFlame()));
+        harness.passBothPriorities();
+
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(flame);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(flame);
+    }
+
+    @Test
+    @DisplayName("Emptying the opponent's hand after upkeep begins does not create a trigger")
+    void doesNotTriggerLateWhenOpponentHandBecomesEmpty() {
+        RekindledFlame flame = new RekindledFlame();
+        harness.setGraveyard(player1, List.of(flame));
+        harness.setHand(player2, List.of(new RekindledFlame()));
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).isEmpty();
+        harness.setHand(player2, List.of());
+
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(flame);
+    }
+
+    @Test
+    @DisplayName("Does not trigger during the opponent's upkeep")
+    void doesNotTriggerOnOpponentUpkeep() {
+        RekindledFlame flame = new RekindledFlame();
+        harness.setGraveyard(player1, List.of(flame));
+        harness.setHand(player2, List.of());
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(flame);
+    }
+
+    @Test
+    @DisplayName("Each graveyard copy returns only itself and may be declined independently")
+    void multipleCopiesReturnIndependently() {
+        RekindledFlame first = new RekindledFlame();
+        RekindledFlame second = new RekindledFlame();
+        harness.setGraveyard(player1, List.of(first, second));
+        harness.setHand(player2, List.of());
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        UUID declinedId = gd.pendingMayAbilities.getFirst().sourceCard().getId();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+        UUID acceptedId = gd.pendingMayAbilities.getFirst().sourceCard().getId();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(acceptedId).isNotEqualTo(declinedId);
+        assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getId().equals(acceptedId));
+        assertThat(gd.playerHands.get(player1.getId())).noneMatch(c -> c.getId().equals(declinedId));
+        assertThat(gd.playerGraveyards.get(player1.getId())).extracting(c -> c.getId()).containsExactly(declinedId);
+    }
+
+    @Test
+    @CardUsed({RekindledFlame.class, Reclaim.class, MentalNote.class})
+    @DisplayName("An old upkeep trigger cannot return a card that left and reentered the graveyard")
+    void doesNotReturnNewGraveyardObject() {
+        RekindledFlame flame = new RekindledFlame();
+        harness.setGraveyard(player1, List.of(flame));
+        harness.setHand(player1, List.of(new Reclaim(), new MentalNote()));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new RekindledFlame(), new RekindledFlame(), new RekindledFlame()));
+
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, flame.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(flame);
+        harness.castAndResolveInstant(player1, 0);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(flame);
+
+        harness.passBothPriorities();
+        if (gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class) != null) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(flame);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(flame);
     }
 }
