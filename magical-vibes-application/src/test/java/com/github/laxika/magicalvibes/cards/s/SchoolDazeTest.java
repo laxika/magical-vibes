@@ -64,6 +64,66 @@ class SchoolDazeTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Fight Crime requires a spell target")
+    void fightCrimeRequiresSpellTarget() {
+        harness.setHand(player1, List.of(new SchoolDaze()));
+        addMana(player1);
+
+        assertThatThrownBy(() -> harness.castModalInstantWithModes(
+                player1, 0, 1, new int[]{1}, null, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "School Daze");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Fight Crime can counter its controller's instant")
+    void fightCrimeCanCounterOwnInstant() {
+        SchoolDaze homework = new SchoolDaze();
+        SchoolDaze drawnCard = new SchoolDaze();
+        harness.setHand(player1, List.of(homework, new SchoolDaze()));
+        harness.setLibrary(player1, List.of(drawnCard, new SchoolDaze(), new SchoolDaze()));
+        addMana(player1);
+        addMana(player1);
+
+        harness.castModalInstant(player1, 0, 0, List.of());
+        harness.castModalInstantWithModes(player1, 0, 1, new int[]{1}, homework.getId(), List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(homework).hasSize(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Fight Crime does not draw if its only target leaves the stack")
+    void fightCrimeDoesNotDrawWhenTargetLeavesStack() {
+        SchoolDaze homework = new SchoolDaze();
+        SchoolDaze opponentDraw = new SchoolDaze();
+        harness.setHand(player1, List.of(homework, new SchoolDaze()));
+        harness.setLibrary(player1, List.of(new SchoolDaze(), new SchoolDaze(), new SchoolDaze()));
+        harness.setHand(player2, List.of(new SchoolDaze()));
+        harness.setLibrary(player2, List.of(opponentDraw));
+        addMana(player1);
+        addMana(player1);
+        addMana(player2);
+
+        harness.castModalInstant(player1, 0, 0, List.of());
+        harness.castModalInstantWithModes(player2, 0, 1, new int[]{1}, homework.getId(), List.of());
+        harness.castModalInstantWithModes(player1, 0, 1, new int[]{1}, homework.getId(), List.of());
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentDraw);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(homework).hasSize(2);
+        harness.assertInGraveyard(player2, "School Daze");
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void addMana(Player player) {
         harness.addMana(player, ManaColor.BLUE, 2);
         harness.addMana(player, ManaColor.COLORLESS, 3);
