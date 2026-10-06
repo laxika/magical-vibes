@@ -1,18 +1,20 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.a.AirElemental;
-import com.github.laxika.magicalvibes.cards.g.GraspingDunes;
+import com.github.laxika.magicalvibes.cards.r.RhonassStalwart;
+import com.github.laxika.magicalvibes.cards.d.DesertOfTheTrue;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ShefetDunes.class, RhonassStalwart.class, DesertOfTheTrue.class})
 class ShefetDunesTest extends BaseCardTest {
 
     @Test
@@ -43,8 +45,8 @@ class ShefetDunesTest extends BaseCardTest {
     @DisplayName("Pump ability sacrifices a Desert and gives creatures you control +1/+1 until end of turn")
     void pumpSacrificesDesertAndBoostsOwnCreatures() {
         Permanent dunes = addReadyDunes(player1);
-        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new AirElemental());
-        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new RhonassStalwart());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new RhonassStalwart());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.WHITE, 2);
 
@@ -65,10 +67,8 @@ class ShefetDunesTest extends BaseCardTest {
     @DisplayName("With multiple Deserts, controller chooses which to sacrifice")
     void choosesWhichDesertToSacrifice() {
         Permanent dunes = addReadyDunes(player1);
-        Permanent otherDesert = new Permanent(new GraspingDunes());
-        otherDesert.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(otherDesert);
-        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new AirElemental());
+        Permanent otherDesert = harness.addToBattlefieldAndReturn(player1, new DesertOfTheTrue());
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new RhonassStalwart());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.WHITE, 2);
 
@@ -87,7 +87,7 @@ class ShefetDunesTest extends BaseCardTest {
     @DisplayName("Pump wears off at end of turn")
     void pumpExpiresAtEndOfTurn() {
         addReadyDunes(player1);
-        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new AirElemental());
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new RhonassStalwart());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.WHITE, 2);
 
@@ -115,10 +115,83 @@ class ShefetDunesTest extends BaseCardTest {
                 .hasMessageContaining("sorcery speed");
     }
 
+    @Test
+    @DisplayName("Creatures present at resolution receive the boost, but later arrivals do not")
+    void boostAffectsCreaturesAtResolutionOnly() {
+        addReadyDunes(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.assertInGraveyard(player1, "Shefet Dunes");
+        assertThat(gd.stack).hasSize(1);
+        Permanent beforeResolution = harness.addToBattlefieldAndReturn(player1, new RhonassStalwart());
+        assertThat(beforeResolution.getPowerModifier()).isZero();
+
+        harness.passBothPriorities();
+        Permanent afterResolution = harness.addToBattlefieldAndReturn(player1, new RhonassStalwart());
+
+        assertThat(beforeResolution.getPowerModifier()).isEqualTo(1);
+        assertThat(beforeResolution.getToughnessModifier()).isEqualTo(1);
+        assertThat(afterResolution.getPowerModifier()).isZero();
+        assertThat(afterResolution.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("White mana cannot be produced when the life payment cannot be paid")
+    void cannotPayLifeAtZeroLife() {
+        Permanent dunes = addReadyDunes(player1);
+        harness.setLife(player1, 0);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough life");
+
+        assertThat(dunes.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+        harness.assertLife(player1, 0);
+    }
+
+    @Test
+    @DisplayName("Pump cannot be activated outside the controller's main phase")
+    void pumpCannotBeActivatedDuringCombat() {
+        Permanent dunes = addReadyDunes(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery speed");
+
+        assertThat(dunes.isTapped()).isFalse();
+        harness.assertOnBattlefield(player1, "Shefet Dunes");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Pump cannot be activated while another ability is on the stack")
+    void pumpRequiresEmptyStack() {
+        addReadyDunes(player1);
+        Permanent secondDunes = harness.addToBattlefieldAndReturn(player1, new ShefetDunes());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.handlePermanentChosen(player1, gd.playerBattlefields.get(player1.getId()).getFirst().getId());
+        assertThat(gd.stack).hasSize(1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("stack is empty");
+
+        assertThat(secondDunes.isTapped()).isFalse();
+        assertThat(gd.stack).hasSize(1);
+    }
+
     private Permanent addReadyDunes(Player player) {
-        Permanent perm = new Permanent(new ShefetDunes());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new ShefetDunes());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
