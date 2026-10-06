@@ -48,10 +48,8 @@ class RestlessDeadTest extends BaseCardTest {
         Permanent dead = addCreatureReady(player1, new RestlessDead());
         dead.setRegenerationShield(1);
 
-        Permanent attacker = addCreatureReady(player2, new StalkingTiger());
-        attacker.setAttacking(true);
-
-        prepareDeclareBlockers(player2);
+        addCreatureReady(player2, new StalkingTiger());
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
 
         harness.passBothPriorities();
@@ -68,10 +66,8 @@ class RestlessDeadTest extends BaseCardTest {
     void diesWithoutShield() {
         addCreatureReady(player1, new RestlessDead());
 
-        Permanent attacker = addCreatureReady(player2, new StalkingTiger());
-        attacker.setAttacking(true);
-
-        prepareDeclareBlockers(player2);
+        addCreatureReady(player2, new StalkingTiger());
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
 
         harness.passBothPriorities();
@@ -80,4 +76,45 @@ class RestlessDeadTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Restless Dead");
     }
 
+    @Test
+    @DisplayName("Activated regeneration protects the creature from lethal combat damage")
+    void activatedRegenerationProtectsFromCombatDamage() {
+        Permanent dead = addCreatureReady(player1, new RestlessDead());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(dead.isTapped()).isFalse();
+        addCreatureReady(player2, new StalkingTiger());
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Restless Dead");
+        harness.assertNotInGraveyard(player1, "Restless Dead");
+        assertThat(dead.isTapped()).isTrue();
+        assertThat(dead.isBlocking()).isFalse();
+        assertThat(dead.getMarkedDamage()).isZero();
+        assertThat(dead.getRegenerationShield()).isZero();
+    }
+
+    @Test
+    @DisplayName("A tapped summoning-sick creature can activate regeneration repeatedly")
+    void tappedSummoningSickCreatureCanActivateRepeatedly() {
+        Permanent dead = addCreatureReady(player1, new RestlessDead());
+        dead.setSummoningSick(true);
+        dead.setTapped(true);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(dead.getRegenerationShield()).isEqualTo(2);
+        assertThat(dead.isTapped()).isTrue();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
 }
