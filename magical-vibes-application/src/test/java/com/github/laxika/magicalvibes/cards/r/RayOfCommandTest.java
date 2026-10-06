@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.b.BindingGrasp;
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.f.FreyalisesWinds;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.OreskosSunGuide;
@@ -19,7 +20,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RayOfCommand.class, GrizzlyBears.class, BindingGrasp.class})
+@CardUsed({RayOfCommand.class, GrizzlyBears.class, BindingGrasp.class,
+        FreyalisesWinds.class, OreskosSunGuide.class, Disenchant.class})
 class RayOfCommandTest extends BaseCardTest {
 
     @Test
@@ -94,7 +96,7 @@ class RayOfCommandTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.castEnchantment(player2, 0, target.getId());
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).anyMatch(p -> p.getId().equals(target.getId()));
         assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(p -> p.getId().equals(target.getId()));
@@ -192,5 +194,63 @@ class RayOfCommandTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, enchantment.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature an opponent controls");
+    }
+
+    @Test
+    @DisplayName("The delayed tap survives cleanup while another effect maintains control")
+    void tapsWhenControlIsLostOnALaterTurn() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new RayOfCommand(), new BindingGrasp()));
+        harness.addMana(player1, ManaColor.BLUE, 8);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.castEnchantment(player1, 0, target.getId());
+        harness.passBothPriorities();
+        Permanent aura = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard() instanceof BindingGrasp)
+                .findFirst().orElseThrow();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player1, TurnStep.CLEANUP);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+        assertThat(target.isTapped()).isFalse();
+        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+
+        harness.setHand(player2, List.of(new Disenchant()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player2, 0, aura.getId());
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        assertThat(target.isTapped()).isFalse();
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Does not untap a target that is no longer controlled by an opponent at resolution")
+    void targetBecomingControlledByCasterMakesSpellFailToResolve() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new RayOfCommand(), new RayOfCommand()));
+        harness.addMana(player1, ManaColor.BLUE, 8);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+        target.tap();
+
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card instanceof RayOfCommand).hasSize(2);
     }
 }
