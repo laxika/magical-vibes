@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.c.ConjurersBauble;
 import com.github.laxika.magicalvibes.cards.d.DevourInShadow;
 import com.github.laxika.magicalvibes.cards.g.GuardianIdol;
 import com.github.laxika.magicalvibes.cards.m.MyrServitor;
+import com.github.laxika.magicalvibes.cards.p.ParadiseMantle;
 import com.github.laxika.magicalvibes.cards.w.WayfarersBauble;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -20,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({SalvagingStation.class, ConjurersBauble.class, WayfarersBauble.class, MyrServitor.class,
-        GuardianIdol.class, SkyhunterProwler.class, DevourInShadow.class})
+        GuardianIdol.class, SkyhunterProwler.class, DevourInShadow.class, ParadiseMantle.class})
 class SalvagingStationTest extends BaseCardTest {
 
     @Test
@@ -68,8 +69,7 @@ class SalvagingStationTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new DevourInShadow()));
         harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.castInstant(player1, 0, harness.getPermanentId(player2, "Skyhunter Prowler"));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Skyhunter Prowler"));
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
@@ -88,8 +88,7 @@ class SalvagingStationTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new DevourInShadow()));
         harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.castInstant(player1, 0, harness.getPermanentId(player2, "Skyhunter Prowler"));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Skyhunter Prowler"));
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
@@ -100,6 +99,82 @@ class SalvagingStationTest extends BaseCardTest {
         assertThat(station.isTapped()).isTrue();
     }
 
+    @Test
+    void returnsZeroManaArtifactUntappedAndPaysTapCost() {
+        Permanent station = harness.addToBattlefieldAndReturn(player1, new SalvagingStation());
+        Card artifact = new ParadiseMantle();
+        harness.setGraveyard(player1, List.of(artifact));
+
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(artifact.getId()));
+        assertThat(station.isTapped()).isTrue();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Paradise Mantle");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().getId().equals(artifact.getId()))
+                .allSatisfy(permanent -> assertThat(permanent.isTapped()).isFalse());
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void cannotActivateTappedStation() {
+        Permanent station = harness.addToBattlefieldAndReturn(player1, new SalvagingStation());
+        station.tap();
+        Card artifact = new WayfarersBauble();
+        harness.setGraveyard(player1, List.of(artifact));
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, 0, 0, List.of(artifact.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(artifact);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotTargetNonartifactCard() {
+        harness.addToBattlefield(player1, new SalvagingStation());
+        Card instant = new DevourInShadow();
+        harness.setGraveyard(player1, List.of(instant));
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, 0, 0, List.of(instant.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void mayUntapWhenItsControllersArtifactCreatureDies() {
+        Permanent station = harness.addToBattlefieldAndReturn(player1, new SalvagingStation());
+        station.tap();
+        harness.addToBattlefield(player1, new MyrServitor());
+        harness.setHand(player1, List.of(new DevourInShadow()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Myr Servitor"));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(station.isTapped()).isFalse();
+        harness.assertInGraveyard(player1, "Myr Servitor");
+    }
+    @Test
+    void doesNotReturnTargetThatAnotherStationAlreadyReturned() {
+        harness.addToBattlefield(player1, new SalvagingStation());
+        harness.addToBattlefield(player1, new SalvagingStation());
+        Card artifact = new WayfarersBauble();
+        harness.setGraveyard(player1, List.of(artifact));
+
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(artifact.getId()));
+        harness.activateAbilityWithGraveyardTargets(player1, 1, 0, List.of(artifact.getId()));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().getId().equals(artifact.getId()))
+                .hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
     private Permanent addReadyStation(Player player) {
         Permanent station = harness.addToBattlefieldAndReturn(player, new SalvagingStation());
         station.setSummoningSick(false);
