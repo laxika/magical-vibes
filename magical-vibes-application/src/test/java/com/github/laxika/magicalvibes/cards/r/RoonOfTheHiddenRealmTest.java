@@ -20,9 +20,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class RoonOfTheHiddenRealmTest extends BaseCardTest {
 
     private Permanent addReadyRoon(Player player) {
-        Permanent roon = new Permanent(new RoonOfTheHiddenRealm());
+        Permanent roon = harness.addToBattlefieldAndReturn(player, new RoonOfTheHiddenRealm());
         roon.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(roon);
         return roon;
     }
 
@@ -47,10 +46,102 @@ class RoonOfTheHiddenRealmTest extends BaseCardTest {
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_STEP);
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void returnsStolenCreatureToOwnerAfterRoonLeaves() {
+        Permanent roon = addReadyRoon(player1);
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        gd.stolenCreatures.put(bears.getId(), player2.getId());
+        addRoonMana(player1);
+
+        harness.activateAbility(player1, 0, 0, null, bears.getId());
+        assertThat(roon.isTapped()).isTrue();
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player1.getId()).remove(roon);
+        gd.playerGraveyards.get(player1.getId()).add(roon.getCard());
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void activationDuringEndStepWaitsForFollowingEndStep() {
+        addReadyRoon(player1);
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.forceStep(TurnStep.END_STEP);
+        addRoonMana(player1);
+        harness.activateAbility(player1, 0, 0, null,
+                harness.getPermanentId(player2, "Grizzly Bears"));
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.passUntilWithNoAttackers(player2, TurnStep.END_STEP);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void doesNotReturnCardThatLeftExileAndWasExiledAgainBeforeEndStep() {
+        addReadyRoon(player1);
+        GrizzlyBears bears = new GrizzlyBears();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, bears);
+        addRoonMana(player1);
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.removeFromExile(bears.getId())).isTrue();
+        gd.playerGraveyards.get(player2.getId()).add(bears);
+        gd.playerGraveyards.get(player2.getId()).remove(bears);
+        gd.addToExile(player2.getId(), bears);
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.exiledCards).anyMatch(entry -> entry.card().getId().equals(bears.getId()));
+    }
+
+    @Test
+    void cannotActivateWhileSummoningSick() {
+        harness.addToBattlefield(player1, new RoonOfTheHiddenRealm());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        addRoonMana(player1);
+        UUID target = harness.getPermanentId(player2, "Grizzly Bears");
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, target))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotActivateWithoutTwoMana() {
+        addReadyRoon(player1);
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        UUID target = harness.getPermanentId(player2, "Grizzly Bears");
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, target))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotActivateWhileTapped() {
+        addReadyRoon(player1).tap();
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        addRoonMana(player1);
+        UUID target = harness.getPermanentId(player2, "Grizzly Bears");
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, target))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
