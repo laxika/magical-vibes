@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({RazortideBridge.class, StoneRain.class})
 class RazortideBridgeTest extends BaseCardTest {
@@ -53,16 +54,25 @@ class RazortideBridgeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 4);
 
         UUID targetId = harness.getPermanentId(player2, "Razortide Bridge");
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetId);
 
         harness.assertOnBattlefield(player2, "Razortide Bridge");
     }
 
+    @Test
+    @DisplayName("Cannot activate mana ability while tapped after entering")
+    void cannotActivateWhileTapped() {
+        harness.setHand(player1, List.of(new RazortideBridge()));
+        harness.playLand(player1, 0);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+    }
+
     private Permanent addReadyBridge() {
-        Permanent bridge = new Permanent(new RazortideBridge());
-        bridge.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bridge);
-        return bridge;
+        return harness.addToBattlefieldAndReturn(player1, new RazortideBridge());
     }
 }
