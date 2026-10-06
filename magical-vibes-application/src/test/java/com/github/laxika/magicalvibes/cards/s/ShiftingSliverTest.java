@@ -71,4 +71,32 @@ class ShiftingSliverTest extends BaseCardTest {
 
         assertThat(blocker.isBlocking()).isTrue();
     }
+
+    @Test
+    @DisplayName("Shifting Sliver restricts other friendly Slivers")
+    void restrictsOtherFriendlySlivers() {
+        addCreatureReady(player1, new ShiftingSliver());
+        addCreatureReady(player1, new BladeSliver());
+        addCreatureReady(player2, new FugitiveWizard());
+
+        declareAttackersAndPrepareBlockers(List.of(1));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 1))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can only be blocked by Sliver creatures");
+    }
+
+    @Test
+    @DisplayName("Shifting Sliver in the graveyard does not restrict blocking")
+    void doesNotRestrictBlockingFromGraveyard() {
+        harness.setGraveyard(player1, List.of(new ShiftingSliver()));
+        addCreatureReady(player1, new BladeSliver());
+        Permanent blocker = addCreatureReady(player2, new FugitiveWizard());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
 }
