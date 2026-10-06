@@ -2,12 +2,14 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.a.AvatarOfMight;
 import com.github.laxika.magicalvibes.cards.d.DeepFreeze;
+import com.github.laxika.magicalvibes.cards.j.JolraelsCentaur;
 import com.github.laxika.magicalvibes.cards.w.WallOfWood;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
+import com.github.laxika.magicalvibes.model.action.DelayedEndOfCombatTrigger;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -18,7 +20,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RockBasilisk.class, AvatarOfMight.class, WallOfWood.class, DeepFreeze.class})
+@CardUsed({RockBasilisk.class, AvatarOfMight.class, WallOfWood.class, DeepFreeze.class, JolraelsCentaur.class})
 class RockBasiliskTest extends BaseCardTest {
 
     @Test
@@ -37,8 +39,8 @@ class RockBasiliskTest extends BaseCardTest {
                         && se.getTargetId().equals(avatar.getId()));
 
         harness.passBothPriorities();
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .anyMatch(a -> a.permanentId().equals(avatar.getId()));
+        assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class))
+                .anyMatch(a -> a.affectedPermanentId().equals(avatar.getId()));
     }
 
     @Test
@@ -54,8 +56,8 @@ class RockBasiliskTest extends BaseCardTest {
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player2, "Avatar of Might");
         harness.assertInGraveyard(player2, "Avatar of Might");
@@ -72,7 +74,7 @@ class RockBasiliskTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         harness.passBothPriorities();
-        assertThat(gd.hasDelayedAction(DelayedPermanentAction.class)).isFalse();
+        assertThat(gd.hasDelayedAction(DelayedEndOfCombatTrigger.class)).isFalse();
     }
 
     @Test
@@ -111,9 +113,9 @@ class RockBasiliskTest extends BaseCardTest {
 
         resolveAllTriggers();
 
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .anyMatch(a -> a.permanentId().equals(firstAvatar.getId()))
-                .anyMatch(a -> a.permanentId().equals(secondAvatar.getId()));
+        assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class))
+                .anyMatch(a -> a.affectedPermanentId().equals(firstAvatar.getId()))
+                .anyMatch(a -> a.affectedPermanentId().equals(secondAvatar.getId()));
     }
 
     @Test
@@ -130,12 +132,11 @@ class RockBasiliskTest extends BaseCardTest {
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-        Permanent deepFreeze = new Permanent(new DeepFreeze());
+        Permanent deepFreeze = harness.addToBattlefieldAndReturn(player2, new DeepFreeze());
         deepFreeze.setAttachedTo(avatar.getId());
-        gd.playerBattlefields.get(player2.getId()).add(deepFreeze);
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player2, "Avatar of Might");
         harness.assertInGraveyard(player2, "Avatar of Might");
@@ -157,8 +158,90 @@ class RockBasiliskTest extends BaseCardTest {
                         && se.getTargetId().equals(attacker.getId()));
 
         harness.passBothPriorities();
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .anyMatch(a -> a.permanentId().equals(attacker.getId()));
+        assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class))
+                .anyMatch(a -> a.affectedPermanentId().equals(attacker.getId()));
+    }
+
+    @Test
+    @DisplayName("Destruction uses a separate end-of-combat trigger even after Rock Basilisk dies")
+    void destructionWaitsForDelayedTriggerToResolve() {
+        Permanent basilisk = addReadyBasilisk(player1);
+        basilisk.setAttacking(true);
+        addReadyAvatar(player2);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+
+        harness.assertInGraveyard(player1, "Rock Basilisk");
+        harness.assertOnBattlefield(player2, "Avatar of Might");
+        assertThat(gd.stack).anyMatch(se ->
+                se.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                        && se.getCard().getName().equals("Rock Basilisk"));
+
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Avatar of Might");
+    }
+
+    @Test
+    @DisplayName("A Wall and a non-Wall blocking together trigger destruction only for the non-Wall")
+    void mixedBlockersOnlyScheduleNonWall() {
+        Permanent basilisk = addReadyBasilisk(player1);
+        basilisk.setAttacking(true);
+        Permanent avatar = addReadyAvatar(player2);
+        addReadyWall(player2);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+
+        assertThat(gd.stack)
+                .filteredOn(se -> se.getCard().getName().equals("Rock Basilisk"))
+                .extracting(se -> se.getTargetId())
+                .containsExactly(avatar.getId());
+
+        resolveAllTriggers();
+
+        assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class))
+                .extracting(DelayedEndOfCombatTrigger::affectedPermanentId)
+                .containsExactly(avatar.getId());
+    }
+
+    @Test
+    @DisplayName("Blocking a Wall does not trigger Rock Basilisk's ability")
+    void blocksWallDoesNotTrigger() {
+        Permanent attacker = addReadyAvatar(player1);
+        attacker.setAttacking(true);
+        Permanent deepFreeze = harness.addToBattlefieldAndReturn(player1, new DeepFreeze());
+        deepFreeze.setAttachedTo(attacker.getId());
+        addReadyBasilisk(player2);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(gd.stack).noneMatch(se -> se.getCard().getName().equals("Rock Basilisk"));
+    }
+
+    @Test
+    @DisplayName("Shroud does not prevent either the combat trigger or delayed destruction")
+    void destroysShroudedBlocker() {
+        Permanent basilisk = addReadyBasilisk(player1);
+        basilisk.setAttacking(true);
+        Permanent centaur = addCreatureReady(player2, new JolraelsCentaur());
+        centaur.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+        harness.assertOnBattlefield(player2, "Jolrael's Centaur");
+
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Jolrael's Centaur");
+        harness.assertInGraveyard(player2, "Jolrael's Centaur");
     }
 
     private Permanent addReadyBasilisk(Player player) {
