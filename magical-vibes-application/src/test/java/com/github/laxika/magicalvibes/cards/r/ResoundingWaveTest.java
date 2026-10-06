@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DregscapeZombie;
+import com.github.laxika.magicalvibes.cards.d.DeftDuelist;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,24 +15,22 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ResoundingWave.class, DregscapeZombie.class, Island.class, DeftDuelist.class})
 class ResoundingWaveTest extends BaseCardTest {
-
-    // ===== Main spell: return target permanent to owner's hand =====
 
     @Test
     @DisplayName("Returns the target creature to its owner's hand")
     void returnsTargetCreatureToHand() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new DregscapeZombie());
         harness.setHand(player1, List.of(new ResoundingWave()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        UUID targetId = harness.getPermanentId(player2, "Dregscape Zombie");
+        harness.castAndResolveInstant(player1, 0, targetId);
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Dregscape Zombie");
+        harness.assertInHand(player2, "Dregscape Zombie");
     }
 
     @Test
@@ -43,55 +42,87 @@ class ResoundingWaveTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         UUID targetId = harness.getPermanentId(player2, "Island");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.assertNotOnBattlefield(player2, "Island");
         harness.assertInHand(player2, "Island");
     }
 
-    // ===== Cycling reflexive trigger =====
-
     @Test
     @DisplayName("Cycling returns two chosen permanents to owners' hands and draws a card")
     void cyclingReturnsTwoPermanentsAndDraws() {
         harness.setHand(player1, List.of(new ResoundingWave()));
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new DregscapeZombie()));
+        harness.addToBattlefield(player2, new DregscapeZombie());
         harness.addToBattlefield(player2, new Island());
         addCyclingMana(player1);
 
-        UUID bearId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID zombieId = harness.getPermanentId(player2, "Dregscape Zombie");
         UUID islandId = harness.getPermanentId(player2, "Island");
 
         harness.activateHandAbility(player1, 0, null);
+        harness.handleMultiplePermanentsChosen(player1, List.of(zombieId, islandId));
+        assertThat(gd.stack).hasSize(2);
         harness.passBothPriorities();
-        harness.handleMultiplePermanentsChosen(player1, List.of(bearId, islandId));
 
-        GameData gd = harness.getGameData();
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
-        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertInHand(player2, "Dregscape Zombie");
         harness.assertInHand(player2, "Island");
-        // The cycling draw still happens: Resounding Wave is discarded, the library card drawn.
+        harness.assertNotInHand(player1, "Dregscape Zombie");
+        harness.passBothPriorities();
         harness.assertInGraveyard(player1, "Resounding Wave");
-        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Dregscape Zombie");
     }
 
     @Test
-    @DisplayName("Cycling may return fewer than two — choosing none still draws a card")
-    void cyclingMayReturnNone() {
+    @DisplayName("Cycling still draws when fewer than two legal targets exist")
+    void cyclingWithOnlyOneLegalTargetStillDraws() {
         harness.setHand(player1, List.of(new ResoundingWave()));
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new DregscapeZombie()));
+        harness.addToBattlefield(player2, new DregscapeZombie());
         addCyclingMana(player1);
 
         harness.activateHandAbility(player1, 0, null);
         harness.passBothPriorities();
-        harness.handleMultiplePermanentsChosen(player1, List.of());
 
-        // Nothing bounced, but the cycling draw resolves.
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Dregscape Zombie");
+        harness.assertInHand(player1, "Dregscape Zombie");
+        harness.assertInGraveyard(player1, "Resounding Wave");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Shroud cannot supply the second target for the cycling trigger")
+    void cyclingDoesNotCountShroudedPermanentAsLegalTarget() {
+        harness.setHand(player1, List.of(new ResoundingWave()));
+        harness.setLibrary(player1, List.of(new DregscapeZombie()));
+        harness.addToBattlefield(player2, new DeftDuelist());
+        harness.addToBattlefield(player2, new Island());
+        addCyclingMana(player1);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Deft Duelist");
+        harness.assertOnBattlefield(player2, "Island");
+        harness.assertInHand(player1, "Dregscape Zombie");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cycling with no permanents still draws a card")
+    void cyclingWithNoPermanentsStillDraws() {
+        harness.setHand(player1, List.of(new ResoundingWave()));
+        harness.setLibrary(player1, List.of(new DregscapeZombie()));
+        addCyclingMana(player1);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.assertInGraveyard(player1, "Resounding Wave");
+        harness.assertNotInHand(player1, "Dregscape Zombie");
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Dregscape Zombie");
+        assertThat(gd.stack).isEmpty();
     }
 
     private void addCyclingMana(Player player) {
