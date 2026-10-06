@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.a.ArgothianSwine;
 import com.github.laxika.magicalvibes.cards.l.Lull;
 import com.github.laxika.magicalvibes.cards.s.SerraZealot;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -127,8 +126,7 @@ class RuneOfProtectionGreenTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
         assertThat(gd.playerSourceNextDamageShields).isEmpty();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
-                .anyMatch(log -> log.contains("No permanents on the battlefield"));
+        assertThat(gameLogContains("No permanents on the battlefield")).isTrue();
     }
 
     @Test
@@ -167,6 +165,53 @@ class RuneOfProtectionGreenTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Rune of Protection: Green");
+        harness.assertInHand(player1, "Argothian Swine");
+    }
+
+    @Test
+    @DisplayName("A source referred to by a waiting prevention shield remains a legal choice after leaving the battlefield")
+    void canChooseSourceReferredToByWaitingShield() {
+        addReadyRune(player1);
+        Permanent swine = addReadyGreenCreature(player2);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, swine.getId());
+
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToGraveyard(gd, swine));
+        harness.assertInGraveyard(player2, "Argothian Swine");
+        assertThat(gd.playerSourceNextDamageShields).anyMatch(s -> s.sourceId().equals(swine.getId()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validPermanentIds()).contains(swine.getId());
+        harness.handlePermanentChosen(player1, swine.getId());
+    }
+
+    @Test
+    @DisplayName("Cycling discards immediately but draws only when the ability resolves")
+    void cyclingPaysDiscardBeforeDrawing() {
+        harness.setHand(player1, List.of(new RuneOfProtectionGreen()));
+        harness.setLibrary(player1, List.of(new ArgothianSwine()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertInGraveyard(player1, "Rune of Protection: Green");
+        harness.assertNotInHand(player1, "Argothian Swine");
+
+        harness.passBothPriorities();
+
         harness.assertInHand(player1, "Argothian Swine");
     }
 
