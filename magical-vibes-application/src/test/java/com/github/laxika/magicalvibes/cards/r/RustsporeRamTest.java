@@ -48,8 +48,8 @@ class RustsporeRamTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("ETB does not trigger without a legal Equipment target")
-    void etbDoesNotTriggerWithoutLegalTarget() {
+    @DisplayName("ETB ability is not put on the stack without a legal Equipment target")
+    void etbAbilityIsNotPutOnStackWithoutLegalTarget() {
         harness.addToBattlefield(player2, new CopperMyr());
         harness.setHand(player1, List.of(new RustsporeRam()));
         harness.addMana(player1, ManaColor.COLORLESS, 4);
@@ -78,5 +78,43 @@ class RustsporeRamTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gameLogContains("fizzles")).isTrue();
         harness.assertOnBattlefield(player1, "Rustspore Ram");
+    }
+
+    @Test
+    @DisplayName("ETB destroys your own Equipment when it is the only legal target")
+    void etbDestroysOwnEquipment() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+        harness.setHand(player1, List.of(new RustsporeRam()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castCreature(player1, 0, target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Rustspore Ram");
+        harness.assertNotOnBattlefield(player1, "Leonin Scimitar");
+        harness.assertInGraveyard(player1, "Leonin Scimitar");
+    }
+
+    @Test
+    @DisplayName("ETB destroys Equipment even after Rustspore Ram leaves the battlefield")
+    void etbResolvesAfterSourceLeavesBattlefield() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new LeoninScimitar());
+        harness.setHand(player1, List.of(new RustsporeRam()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castCreature(player1, 0, target.getId());
+        harness.passBothPriorities();
+        Permanent ram = harness.getGameQueryService().findPermanentById(
+                gd, harness.getPermanentId(player1, "Rustspore Ram"));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, ram));
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Rustspore Ram");
+        harness.assertNotOnBattlefield(player2, "Leonin Scimitar");
+        harness.assertInGraveyard(player2, "Leonin Scimitar");
     }
 }
