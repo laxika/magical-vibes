@@ -74,4 +74,58 @@ class SkullOfOrmTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, pacifism.getId(), Zone.GRAVEYARD))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    void cannotActivateWithOnlyFourMana() {
+        Permanent skull = harness.addToBattlefieldAndReturn(player1, new SkullOfOrm());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        Card pacifism = new Pacifism();
+        harness.setGraveyard(player1, List.of(pacifism));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, pacifism.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(skull.isTapped()).isFalse();
+        harness.assertInGraveyard(player1, "Pacifism");
+    }
+
+    @Test
+    void cannotActivateWhileTapped() {
+        Permanent skull = harness.addToBattlefieldAndReturn(player1, new SkullOfOrm());
+        skull.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        Card pacifism = new Pacifism();
+        harness.setGraveyard(player1, List.of(pacifism));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, pacifism.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotActivateWithoutTarget() {
+        harness.addToBattlefield(player1, new SkullOfOrm());
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null, Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void doesNotReturnAnotherEnchantmentWhenTargetLeavesGraveyard() {
+        Permanent skull = harness.addToBattlefieldAndReturn(player1, new SkullOfOrm());
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        Card target = new Pacifism();
+        Card other = new Pacifism();
+        harness.setGraveyard(player1, List.of(target, other));
+
+        harness.activateAbility(player1, 0, 0, null, target.getId(), Zone.GRAVEYARD);
+        harness.setGraveyard(player1, List.of(other));
+        harness.setHand(player1, List.of(target));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(other);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(target);
+        assertThat(skull.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
 }
