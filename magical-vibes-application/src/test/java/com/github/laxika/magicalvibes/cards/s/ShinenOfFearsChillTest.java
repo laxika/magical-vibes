@@ -96,4 +96,41 @@ class ShinenOfFearsChillTest extends BaseCardTest {
         harness.assertInHand(player1, "Shinen of Fear's Chill");
         assertThat(gd.stack).isEmpty();
     }
+
+    @Test
+    @DisplayName("Channel discards immediately and affects your own creature only on resolution")
+    void channelPaysDiscardBeforeResolutionAndCanTargetOwnCreature() {
+        harness.setHand(player1, List.of(new ShinenOfFearsChill()));
+        Permanent target = addCreatureReady(player1, new HandOfCruelty());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateHandAbility(player1, 0, target.getId());
+
+        harness.assertNotInHand(player1, "Shinen of Fear's Chill");
+        harness.assertInGraveyard(player1, "Shinen of Fear's Chill");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(bls.canBlock(gd, target)).isTrue();
+
+        harness.passBothPriorities();
+
+        assertThat(bls.canBlock(gd, target)).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Channel cannot be activated without its black mana cost")
+    void channelRequiresBlackMana() {
+        harness.setHand(player1, List.of(new ShinenOfFearsChill()));
+        Permanent target = addCreatureReady(player2, new HandOfCruelty());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Shinen of Fear's Chill");
+        harness.assertNotInGraveyard(player1, "Shinen of Fear's Chill");
+        assertThat(gd.stack).isEmpty();
+        assertThat(bls.canBlock(gd, target)).isTrue();
+    }
 }
