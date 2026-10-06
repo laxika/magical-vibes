@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.p.PaleBears;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -14,8 +13,6 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -26,11 +23,7 @@ class SkeletonShipTest extends BaseCardTest {
     @Test
     @DisplayName("Sacrificed when controller controls no Islands")
     void sacrificedWhenControllingNoIslands() {
-        harness.setHand(player1, List.of(new SkeletonShip()));
-        harness.addMana(player1, ManaColor.BLUE, 3);
-        harness.addMana(player1, ManaColor.BLACK, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SkeletonShip(), "{3}{U}{B}");
         harness.passBothPriorities();
 
         assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY);
@@ -44,11 +37,7 @@ class SkeletonShipTest extends BaseCardTest {
     @DisplayName("Survives while controller controls an Island")
     void survivesWhileControllingIsland() {
         harness.addToBattlefield(player1, new Island());
-        harness.setHand(player1, List.of(new SkeletonShip()));
-        harness.addMana(player1, ManaColor.BLUE, 3);
-        harness.addMana(player1, ManaColor.BLACK, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SkeletonShip(), "{3}{U}{B}");
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
@@ -112,6 +101,68 @@ class SkeletonShipTest extends BaseCardTest {
         harness.runStateBasedActions();
 
         assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Skeleton Ship");
+    }
+
+    @Test
+    @DisplayName("An opponent's Island does not prevent the sacrifice trigger")
+    void opponentsIslandDoesNotPreventSacrifice() {
+        harness.addToBattlefield(player2, new Island());
+        harness.castFromHand(player1, new SkeletonShip(), "{3}{U}{B}");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Skeleton Ship");
+        harness.assertInGraveyard(player1, "Skeleton Ship");
+    }
+
+    @Test
+    @DisplayName("Gaining an Island after the trigger fires does not prevent sacrifice")
+    void gainingIslandDoesNotStopPendingSacrifice() {
+        harness.castFromHand(player1, new SkeletonShip(), "{3}{U}{B}");
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.addToBattlefield(player1, new Island());
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Skeleton Ship");
+        harness.assertInGraveyard(player1, "Skeleton Ship");
+    }
+
+    @Test
+    @DisplayName("Losing the Island subtype triggers once while the ability is pending")
+    void losingIslandSubtypeTriggersOnlyOnce() {
+        addReadySkeletonShip(player1);
+        Permanent terrain = harness.addToBattlefieldAndReturn(player1, new IllusionaryTerrain());
+        terrain.setChosenSubtype(CardSubtype.ISLAND);
+        terrain.setSecondChosenSubtype(CardSubtype.FOREST);
+
+        harness.runStateBasedActions();
+        assertThat(gd.stack).hasSize(1);
+        harness.runStateBasedActions();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Skeleton Ship");
+        harness.assertInGraveyard(player1, "Skeleton Ship");
+    }
+
+    @Test
+    @DisplayName("Can target itself and pays the tap cost immediately")
+    void canTargetItself() {
+        Permanent ship = addReadySkeletonShip(player1);
+
+        harness.activateAbility(player1, 0, null, ship.getId());
+
+        assertThat(ship.isTapped()).isTrue();
+        assertThat(ship.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        harness.passBothPriorities();
+
+        assertThat(ship.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
         harness.assertOnBattlefield(player1, "Skeleton Ship");
     }
 
