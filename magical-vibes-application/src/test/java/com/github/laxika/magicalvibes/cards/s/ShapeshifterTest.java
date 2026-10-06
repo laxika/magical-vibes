@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.a.AnimateDead;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -14,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(Shapeshifter.class)
+@CardUsed({Shapeshifter.class, AnimateDead.class})
 class ShapeshifterTest extends BaseCardTest {
 
     private Permanent castAndChoose(String chosenNumber) {
@@ -110,5 +111,67 @@ class ShapeshifterTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, shifter)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, shifter)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Reanimation still requires the as-enters number choice")
+    void reanimationRequiresNumberChoice() {
+        Shapeshifter card = new Shapeshifter();
+        harness.setGraveyard(player1, List.of(card));
+        harness.setHand(player1, List.of(new AnimateDead()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castEnchantment(player1, 0, card.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.context()).isInstanceOf(ChoiceContext.NumberChoice.class);
+        assertThat(choice.options()).containsExactly("0", "1", "2", "3", "4", "5", "6", "7");
+        harness.handleListChoice(player1, "4");
+
+        Permanent shifter = findPermanent(player1, "Shapeshifter");
+        assertThat(gqs.getEffectivePower(gd, shifter)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, shifter)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Declining the first upkeep preserves the number chosen on entry")
+    void decliningFirstUpkeepPreservesEntryChoice() {
+        Permanent shifter = castAndChoose("6");
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gqs.getEffectivePower(gd, shifter)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, shifter)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Choosing seven at upkeep puts Shapeshifter into the graveyard")
+    void choosingSevenAtUpkeepPutsItIntoGraveyard() {
+        castAndChoose("3");
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleListChoice(player1, "7");
+
+        harness.assertNotOnBattlefield(player1, "Shapeshifter");
+        harness.assertInGraveyard(player1, "Shapeshifter");
+    }
+
+    @Test
+    @DisplayName("An opponent's upkeep does not offer a new number")
+    void opponentsUpkeepDoesNotOfferNumberChoice() {
+        Permanent shifter = castAndChoose("2");
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, shifter)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, shifter)).isEqualTo(5);
     }
 }
