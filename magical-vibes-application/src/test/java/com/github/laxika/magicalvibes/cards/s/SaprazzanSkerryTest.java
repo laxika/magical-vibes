@@ -13,7 +13,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(SaprazzanSkerry.class)
+@CardUsed({SaprazzanSkerry.class})
 class SaprazzanSkerryTest extends BaseCardTest {
 
     @Test
@@ -73,6 +73,58 @@ class SaprazzanSkerryTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
+    }
+
+    @Test
+    @DisplayName("A newly played Skerry cannot produce mana before it is untapped")
+    void newlyPlayedSkerryCannotActivate() {
+        harness.setHand(player1, List.of(new SaprazzanSkerry()));
+        harness.playLand(player1, 0);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+
+        assertThat(findPermanent(player1, "Saprazzan Skerry").getCounterCount(CounterType.DEPLETION))
+                .isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An untapped Skerry can activate on the turn it enters and is sacrificed on its second use")
+    void twoActivationsExhaustTheEnteredLand() {
+        harness.setHand(player1, List.of(new SaprazzanSkerry()));
+        harness.playLand(player1, 0);
+        Permanent skerry = findPermanent(player1, "Saprazzan Skerry");
+        skerry.setTapped(false);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(2);
+        assertThat(skerry.getCounterCount(CounterType.DEPLETION)).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Saprazzan Skerry");
+        assertThat(gd.stack).isEmpty();
+
+        harness.performUntapStep(player1);
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(4);
+        harness.assertNotOnBattlefield(player1, "Saprazzan Skerry");
+        harness.assertInGraveyard(player1, "Saprazzan Skerry");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Having no depletion counters does not sacrifice Skerry outside its mana ability")
+    void noCountersDoesNotCauseStateBasedSacrifice() {
+        addReadySkerry(0);
+
+        harness.runStateBasedActions();
+
+        harness.assertOnBattlefield(player1, "Saprazzan Skerry");
+        harness.assertNotInGraveyard(player1, "Saprazzan Skerry");
+        assertThat(gd.stack).isEmpty();
     }
 
     private Permanent addReadySkerry(int counters) {
