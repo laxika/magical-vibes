@@ -25,8 +25,7 @@ class ShredderUnrelentingTest extends BaseCardTest {
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         castShredder(bears.getId());
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(bears.getGrantedKeywords()).contains(Keyword.DEATHTOUCH);
     }
@@ -54,8 +53,7 @@ class ShredderUnrelentingTest extends BaseCardTest {
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         castShredder(bears.getId());
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         assertThat(bears.getGrantedKeywords()).contains(Keyword.DEATHTOUCH);
 
         harness.forceStep(TurnStep.END_STEP);
@@ -91,13 +89,10 @@ class ShredderUnrelentingTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.playerAutoStopSteps.computeIfAbsent(player1.getId(), ignored -> new java.util.HashSet<>())
-                .add(TurnStep.COMBAT_DAMAGE);
-        gd.playerAutoStopSteps.computeIfAbsent(player2.getId(), ignored -> new java.util.HashSet<>())
-                .add(TurnStep.COMBAT_DAMAGE);
-
-        harness.castWithAlternateCost(player1, 0, List.of(attacker.getId()));
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> {
+            harness.castWithAlternateCost(player1, 0, List.of(attacker.getId()));
+            harness.passBothPriorities();
+        });
 
         Permanent shredder = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().getClass() == ShredderUnrelenting.class)
@@ -107,6 +102,63 @@ class ShredderUnrelentingTest extends BaseCardTest {
         assertThat(shredder.getAttackTarget()).isEqualTo(player2.getId());
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)
                 .validPermanentIds()).containsExactly(ally.getId());
+        assertThat(gd.playerHands.get(player1.getId())).contains(attacker.getCard());
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> {
+            harness.handlePermanentChosen(player1, ally.getId());
+            resolveAllTriggers();
+        });
+        assertThat(ally.getGrantedKeywords()).contains(Keyword.DEATHTOUCH);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Shredder can enter when there is no other creature to target")
+    void entersWithoutAnotherCreature() {
+        harness.setHand(player1, List.of(new ShredderUnrelenting()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Shredder, Unrelenting");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Attack trigger does not grant deathtouch after its target leaves")
+    void attackTargetLeavesBeforeResolution() {
+        addCreatureReady(player1, new ShredderUnrelenting());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, bears.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(bears);
+        gd.playerGraveyards.get(player1.getId()).add(bears.getCard());
+
+        resolveAllTriggers();
+
+        assertThat(bears.getGrantedKeywords()).doesNotContain(Keyword.DEATHTOUCH);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Sneak timing does not allow paying the normal mana cost during combat")
+    void cannotCastForNormalCostDuringDeclareBlockers() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(player2.getId());
+        harness.setHand(player1, List.of(new ShredderUnrelenting()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 
     private void castShredder(java.util.UUID targetId) {
