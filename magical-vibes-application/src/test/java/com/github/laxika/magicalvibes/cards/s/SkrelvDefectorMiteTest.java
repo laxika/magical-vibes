@@ -1,15 +1,16 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HexgoldSlash;
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SkrelvDefectorMite.class, GrizzlyBears.class, RagingGoblin.class, HexgoldSlash.class})
 class SkrelvDefectorMiteTest extends BaseCardTest {
 
     @Test
@@ -39,10 +41,7 @@ class SkrelvDefectorMiteTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
         attacker.setAttacking(true);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers(player2);
 
         int blockerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(skrelv);
         int attackerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(attacker);
@@ -55,7 +54,7 @@ class SkrelvDefectorMiteTest extends BaseCardTest {
     @Test
     @DisplayName("Skrelv grants toxic and chosen-color evasion to another creature")
     void grantsToxicAndChosenColorEvasion() {
-        Permanent skrelv = addCreatureReady(player1, new SkrelvDefectorMite());
+        addCreatureReady(player1, new SkrelvDefectorMite());
         Permanent target = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.RED, 1);
 
@@ -69,10 +68,7 @@ class SkrelvDefectorMiteTest extends BaseCardTest {
 
         Permanent blocker = addCreatureReady(player2, new RagingGoblin());
         target.setAttacking(true);
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers(player1);
 
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(target);
@@ -96,5 +92,157 @@ class SkrelvDefectorMiteTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, target, Keyword.TOXIC)).isTrue();
         assertThat(gqs.hasHexproofFromColor(gd, target, CardColor.BLUE)).isTrue();
+    }
+
+    @Test
+    void printedToxicAppliesWithCombatDamageWithoutUsingTheStack() {
+        Permanent skrelv = addCreatureReady(player1, new SkrelvDefectorMite());
+        skrelv.setAttacking(true);
+        harness.forceActivePlayer(player1);
+
+        harness.resolveCombatDamage();
+
+        harness.assertLife(player2, 19);
+        assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void grantedToxicAppliesWithCombatDamageWithoutUsingTheStack() {
+        addCreatureReady(player1, new SkrelvDefectorMite());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "GREEN");
+        harness.assertLife(player1, 20);
+        target.setAttacking(true);
+        harness.forceActivePlayer(player1);
+
+        harness.resolveCombatDamage();
+
+        harness.assertLife(player2, 18);
+        assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotTargetItself() {
+        Permanent skrelv = addCreatureReady(player1, new SkrelvDefectorMite());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, skrelv.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotTargetOpponentsCreature() {
+        addCreatureReady(player1, new SkrelvDefectorMite());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void activationTapsSkrelvAndCannotBeRepeatedWhileTapped() {
+        Permanent skrelv = addCreatureReady(player1, new SkrelvDefectorMite());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        assertThat(skrelv.isTapped()).isTrue();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "WHITE");
+    }
+
+    @Test
+    void abilityDoesNotChooseAColorWhenItsTargetLeavesBattlefield() {
+        addCreatureReady(player1, new SkrelvDefectorMite());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void grantedAbilitiesExpireAtEndOfTurn() {
+        addCreatureReady(player1, new SkrelvDefectorMite());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "RED");
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TOXIC)).isFalse();
+        assertThat(gqs.hasHexproofFromColor(gd, target, CardColor.RED)).isFalse();
+        target.setAttacking(true);
+        harness.forceActivePlayer(player1);
+        harness.resolveCombatDamage();
+        assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void chosenColorHexproofRejectsOpponentsSpell() {
+        addCreatureReady(player1, new SkrelvDefectorMite());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "RED");
+        harness.setHand(player2, List.of(new HexgoldSlash()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void chosenColorHexproofAllowsControllersSpellAndDoesNotPreventDamage() {
+        addCreatureReady(player1, new SkrelvDefectorMite());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "RED");
+        harness.setHand(player1, List.of(new HexgoldSlash()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void creatureOfAnotherColorCanStillBlock() {
+        addCreatureReady(player1, new SkrelvDefectorMite());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "RED");
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        target.setAttacking(true);
+        prepareDeclareBlockers(player1);
+
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(target)))));
+
+        assertThat(blocker.isBlocking()).isTrue();
     }
 }
