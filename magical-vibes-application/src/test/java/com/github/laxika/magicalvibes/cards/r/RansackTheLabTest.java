@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({RansackTheLab.class, GrizzlyBears.class, LlanowarElves.class, Shock.class})
 class RansackTheLabTest extends BaseCardTest {
@@ -23,7 +24,6 @@ class RansackTheLabTest extends BaseCardTest {
         Card top2 = new LlanowarElves();
         Card top3 = new Shock();
         harness.setLibrary(player1, List.of(top1, top2, top3));
-        harness.setHand(player1, List.of(new RansackTheLab()));
 
         harness.castFromHand(player1, new RansackTheLab(), "{1}{B}");
         harness.passBothPriorities();
@@ -42,7 +42,6 @@ class RansackTheLabTest extends BaseCardTest {
         Card chosen = new GrizzlyBears();
         Card rest = new LlanowarElves();
         harness.setLibrary(player1, List.of(chosen, rest));
-        harness.setHand(player1, List.of(new RansackTheLab()));
 
         harness.castFromHand(player1, new RansackTheLab(), "{1}{B}");
         harness.passBothPriorities();
@@ -58,7 +57,6 @@ class RansackTheLabTest extends BaseCardTest {
     @DisplayName("With an empty library, Ransack the Lab simply goes to the graveyard")
     void worksWithEmptyLibrary() {
         harness.setLibrary(player1, List.of());
-        harness.setHand(player1, List.of(new RansackTheLab()));
 
         harness.castFromHand(player1, new RansackTheLab(), "{1}{B}");
         harness.passBothPriorities();
@@ -66,5 +64,63 @@ class RansackTheLabTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertInGraveyard(player1, "Ransack the Lab");
+    }
+
+    @Test
+    @DisplayName("A nonempty library requires choosing one card rather than putting all three into the graveyard")
+    void cannotDeclineToChooseACard() {
+        Card first = new RansackTheLab();
+        Card second = new RansackTheLab();
+        Card third = new RansackTheLab();
+        harness.setLibrary(player1, List.of(first, second, third));
+
+        harness.castFromHand(player1, new RansackTheLab(), "{1}{B}");
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.interaction.activeInteraction()).isNotNull();
+
+        harness.handleMultipleCardsChosen(player1, List.of(second.getId()));
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(second);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(first, third);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The only card in the library goes into hand without a choice")
+    void worksWithOneCardInLibrary() {
+        Card onlyCard = new RansackTheLab();
+        harness.setLibrary(player1, List.of(onlyCard));
+
+        harness.castFromHand(player1, new RansackTheLab(), "{1}{B}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(onlyCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(onlyCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Ransack the Lab");
+    }
+
+    @Test
+    @DisplayName("Cards below the top three remain in the library in their original order")
+    void leavesDeeperLibraryCardsUntouched() {
+        Card first = new RansackTheLab();
+        Card second = new RansackTheLab();
+        Card third = new RansackTheLab();
+        Card fourth = new RansackTheLab();
+        Card fifth = new RansackTheLab();
+        harness.setLibrary(player1, List.of(first, second, third, fourth, fifth));
+
+        harness.castFromHand(player1, new RansackTheLab(), "{1}{B}");
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(third.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(third);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(first, second)
+                .doesNotContain(third, fourth, fifth);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(fourth, fifth);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }
