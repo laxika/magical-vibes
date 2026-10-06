@@ -78,8 +78,7 @@ class ShanodinDryadsTest extends BaseCardTest {
         Permanent blockerPerm = addCreatureReady(player2, new GrizzlyBears());
         Permanent atkPerm = addCreatureReady(player1, new ShanodinDryads());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);
@@ -87,6 +86,23 @@ class ShanodinDryadsTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx)));
 
         assertThat(blockerPerm.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A creature with forestwalk cannot block Shanodin Dryads when its controller controls a Forest")
+    void forestwalkOnBlockerDoesNotCancelForestwalk() {
+        harness.addToBattlefield(player2, new Forest());
+        Permanent blockerPerm = addCreatureReady(player2, new ShanodinDryads());
+        Permanent atkPerm = addCreatureReady(player1, new ShanodinDryads());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm);
+        int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(atkPerm);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
     }
 
     @Test
