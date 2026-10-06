@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.a.AjanisPresence;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
-import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SatyrHoplite.class, GiantGrowth.class, Shock.class, AjanisPresence.class})
 class SatyrHopliteTest extends BaseCardTest {
 
     @Test
@@ -24,8 +26,7 @@ class SatyrHopliteTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         UUID hopliteId = harness.getPermanentId(player1, "Satyr Hoplite");
-        harness.castInstant(player1, 0, hopliteId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, hopliteId);
         harness.passBothPriorities();
 
         Permanent hoplite = findPermanent(player1, "Satyr Hoplite");
@@ -39,8 +40,7 @@ class SatyrHopliteTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         Permanent hoplite = findPermanent(player1, "Satyr Hoplite");
         assertThat(hoplite.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -55,10 +55,75 @@ class SatyrHopliteTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
 
         UUID hopliteId = harness.getPermanentId(player1, "Satyr Hoplite");
-        harness.castInstant(player2, 0, hopliteId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, hopliteId);
 
         harness.assertNotOnBattlefield(player1, "Satyr Hoplite");
         harness.assertInGraveyard(player1, "Satyr Hoplite");
+    }
+
+    @Test
+    void counterResolvesBeforeTargetingSpell() {
+        Permanent hoplite = harness.addToBattlefieldAndReturn(player1, new SatyrHoplite());
+        harness.setHand(player1, List.of(new AjanisPresence()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castInstant(player1, 0, hoplite.getId());
+
+        assertThat(hoplite.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+
+        assertThat(hoplite.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(hoplite.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void eachTargetedHopliteTriggersOnceForMultiTargetSpell() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new SatyrHoplite());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new SatyrHoplite());
+        harness.setHand(player1, List.of(new AjanisPresence()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castInstant(player1, 0, List.of(first.getId(), second.getId()));
+        assertThat(gd.stack).hasSize(3);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void separateTargetingSpellsEachAddCounter() {
+        Permanent hoplite = harness.addToBattlefieldAndReturn(player1, new SatyrHoplite());
+        harness.setHand(player1, List.of(new AjanisPresence(), new AjanisPresence()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castAndResolveInstant(player1, 0, hoplite.getId());
+        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, hoplite.getId());
+        harness.passBothPriorities();
+
+        assertThat(hoplite.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void targetingAnotherHopliteDoesNotTriggerUntargetedHoplite() {
+        Permanent targeted = harness.addToBattlefieldAndReturn(player1, new SatyrHoplite());
+        Permanent untargeted = harness.addToBattlefieldAndReturn(player1, new SatyrHoplite());
+        harness.setHand(player1, List.of(new AjanisPresence()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castAndResolveInstant(player1, 0, targeted.getId());
+        harness.passBothPriorities();
+
+        assertThat(targeted.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(untargeted.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 }
