@@ -8,11 +8,13 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RingOfKalonia.class, GrizzlyBears.class, FugitiveWizard.class})
 class RingOfKaloniaTest extends BaseCardTest {
 
     @Test
@@ -86,10 +88,82 @@ class RingOfKaloniaTest extends BaseCardTest {
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
+    @Test
+    @DisplayName("A non-green equipped creature still has trample")
+    void nonGreenCreatureHasTrample() {
+        Permanent creature = addCreatureReady(player1, new FugitiveWizard());
+        Permanent ring = addRingReady(player1);
+        ring.setAttachedTo(creature.getId());
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("The Ring does not trigger during its opponent's upkeep")
+    void opponentUpkeepDoesNotAddCounter() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent ring = addRingReady(player1);
+        ring.setAttachedTo(creature.getId());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("The upkeep ability uses the equipped creature at resolution")
+    void upkeepUsesCurrentAttachment() {
+        Permanent original = addCreatureReady(player1, new FugitiveWizard());
+        Permanent replacement = addCreatureReady(player1, new GrizzlyBears());
+        Permanent ring = addRingReady(player1);
+        ring.setAttachedTo(original.getId());
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        ring.setAttachedTo(replacement.getId());
+        harness.passBothPriorities();
+
+        assertThat(original.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(replacement.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, original, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, replacement, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Detaching the Ring before resolution prevents the counter")
+    void detachedBeforeResolutionAddsNoCounter() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent ring = addRingReady(player1);
+        ring.setAttachedTo(creature.getId());
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        ring.setAttachedTo(null);
+        harness.passBothPriorities();
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("The upkeep ability uses the last attachment when the Ring leaves")
+    void removedRingStillAddsCounter() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent ring = addRingReady(player1);
+        ring.setAttachedTo(creature.getId());
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(ring);
+        gd.playerGraveyards.get(player1.getId()).add(ring.getCard());
+        harness.passBothPriorities();
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isFalse();
+    }
+
     private Permanent addRingReady(Player player) {
-        Permanent perm = new Permanent(new RingOfKalonia());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new RingOfKalonia());
     }
 }
