@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -21,6 +22,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class SidarJabariTest extends BaseCardTest {
 
     @Nested
+    @CardUsed({SidarJabari.class, BayFalcon.class})
     @DisplayName("Attack trigger")
     class AttackTrigger {
 
@@ -41,8 +43,7 @@ class SidarJabariTest extends BaseCardTest {
         @DisplayName("Resolving the trigger taps the defending player's creature")
         void tapsDefendingCreature() {
             addReadyJabari(player1);
-            harness.addToBattlefield(player2, new BayFalcon());
-            Permanent falcon = gd.playerBattlefields.get(player2.getId()).getFirst();
+            Permanent falcon = harness.addToBattlefieldAndReturn(player2, new BayFalcon());
 
             declareAttackers(List.of(0));
             harness.handlePermanentChosen(player1, falcon.getId());
@@ -55,10 +56,8 @@ class SidarJabariTest extends BaseCardTest {
         @DisplayName("Own creatures are not tapped by the trigger")
         void leavesOwnCreatureUntapped() {
             addReadyJabari(player1);
-            harness.addToBattlefield(player1, new BayFalcon());
-            harness.addToBattlefield(player2, new BayFalcon());
-            Permanent ownFalcon = findPermanent(player1, "Bay Falcon");
-            Permanent opponentFalcon = gd.playerBattlefields.get(player2.getId()).getFirst();
+            Permanent ownFalcon = harness.addToBattlefieldAndReturn(player1, new BayFalcon());
+            Permanent opponentFalcon = harness.addToBattlefieldAndReturn(player2, new BayFalcon());
 
             declareAttackers(List.of(0));
             harness.handlePermanentChosen(player1, opponentFalcon.getId());
@@ -97,6 +96,55 @@ class SidarJabariTest extends BaseCardTest {
 
             assertThat(gd.hasPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class)).isFalse();
         }
+
+        @Test
+        @DisplayName("An already-tapped creature remains a legal attack-trigger target")
+        void canTargetTappedCreature() {
+            addReadyJabari(player1);
+            Permanent falcon = harness.addToBattlefieldAndReturn(player2, new BayFalcon());
+            falcon.setTapped(true);
+
+            declareAttackers(List.of(0));
+            harness.handlePermanentChosen(player1, falcon.getId());
+            harness.passBothPriorities();
+
+            assertThat(falcon.isTapped()).isTrue();
+            assertThat(gd.stack).isEmpty();
+            assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        }
+
+        @Test
+        @DisplayName("The attack trigger resolves after Jabari leaves the battlefield")
+        void triggerSurvivesSourceLeaving() {
+            Permanent jabari = addCreatureReady(player1, new SidarJabari());
+            Permanent falcon = harness.addToBattlefieldAndReturn(player2, new BayFalcon());
+
+            declareAttackers(List.of(0));
+            harness.handlePermanentChosen(player1, falcon.getId());
+            gd.playerBattlefields.get(player1.getId()).remove(jabari);
+            gd.playerGraveyards.get(player1.getId()).add(jabari.getCard());
+            harness.passBothPriorities();
+
+            assertThat(falcon.isTapped()).isTrue();
+        }
+    }
+
+    @Test
+    @DisplayName("A blocker with flanking does not trigger Jabari's flanking")
+    void flankingDoesNotShrinkFlankingBlocker() {
+        Permanent attacker = addCreatureReady(player1, new SidarJabari());
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new SidarJabari());
+        int powerBeforeBlocking = gqs.getEffectivePower(gd, blocker);
+        int toughnessBeforeBlocking = gqs.getEffectiveToughness(gd, blocker);
+
+        prepareDeclareBlockers();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(powerBeforeBlocking);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(toughnessBeforeBlocking);
     }
 
     @Test
