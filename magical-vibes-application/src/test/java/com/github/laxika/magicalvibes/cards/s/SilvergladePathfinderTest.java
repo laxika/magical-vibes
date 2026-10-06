@@ -101,6 +101,67 @@ class SilvergladePathfinderTest extends BaseCardTest {
         return addCreatureReady(player1, new SilvergladePathfinder());
     }
 
+    @Test
+    @DisplayName("May fail to find even when basic lands are available")
+    void mayFailToFindBasicLand() {
+        activateSearch();
+        harness.passBothPriorities();
+
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(5);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Silverglade Pathfinder");
+    }
+
+    @Test
+    @DisplayName("Cannot activate while tapped")
+    void cannotActivateWhileTapped() {
+        Permanent pathfinder = addReadyPathfinder();
+        pathfinder.setTapped(true);
+        harness.setHand(player1, List.of(new Forest()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Forest");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate with summoning sickness")
+    void cannotActivateWithSummoningSickness() {
+        Permanent pathfinder = addReadyPathfinder();
+        pathfinder.setSummoningSick(true);
+        harness.setHand(player1, List.of(new Forest()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Forest");
+        assertThat(pathfinder.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate without green mana")
+    void cannotActivateWithoutGreenMana() {
+        Permanent pathfinder = addReadyPathfinder();
+        harness.setHand(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Forest");
+        assertThat(pathfinder.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void activateSearch() {
         addReadyPathfinder();
         harness.setHand(player1, List.of(new SilvergladePathfinder()));
