@@ -76,16 +76,93 @@ class RavenousRobotsTest extends BaseCardTest {
     private Permanent addRobotToken() {
         Card tokenCard = new GrizzlyBears();
         tokenCard.setToken(true);
-        Permanent token = new Permanent(tokenCard);
-        gd.playerBattlefields.get(player1.getId()).add(token);
-        return token;
+        return harness.addToBattlefieldAndReturn(player1, tokenCard);
     }
 
     private Permanent addOpponentRobotToken() {
         Card tokenCard = new GrizzlyBears();
         tokenCard.setToken(true);
-        Permanent token = new Permanent(tokenCard);
-        gd.playerBattlefields.get(player2.getId()).add(token);
-        return token;
+        return harness.addToBattlefieldAndReturn(player2, tokenCard);
+    }
+
+    @Test
+    void tokenCopyGrantsHasteToItself() {
+        RavenousRobots tokenCard = new RavenousRobots();
+        tokenCard.setToken(true);
+        Permanent robots = harness.addToBattlefieldAndReturn(player1, tokenCard);
+        robots.setSummoningSick(false);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(robots.isTapped()).isTrue();
+        assertThat(robots.hasKeyword(Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    void castingRobotsDoesNotTriggerItsOwnAbility() {
+        harness.setHand(player1, List.of(new RavenousRobots()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Ravenous Robots");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().isToken());
+    }
+
+    @Test
+    void opponentCastingArtifactDoesNotCreateToken() {
+        harness.addToBattlefield(player1, new RavenousRobots());
+        harness.setHand(player2, List.of(new Spellbook()));
+        gd.activePlayerId = player2.getId();
+
+        harness.castArtifact(player2, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Spellbook");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().isToken());
+    }
+
+    @Test
+    void artifactCreatureCastCreatesTokenBeforeSpellResolves() {
+        harness.addToBattlefield(player1, new RavenousRobots());
+        harness.setHand(player1, List.of(new RavenousRobots()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken())
+                .singleElement().satisfies(permanent -> {
+                    assertThat(permanent.getCard().getName()).isEqualTo("Robot");
+                    assertThat(permanent.getCard().getPower()).isEqualTo(1);
+                    assertThat(permanent.getCard().getToughness()).isEqualTo(1);
+                    assertThat(permanent.getCard().hasType(CardType.CREATURE)).isTrue();
+                    assertThat(permanent.getCard().hasType(CardType.ARTIFACT)).isTrue();
+                    assertThat(permanent.getCard().getColor()).isNull();
+                });
+    }
+
+    @Test
+    void tokensCreatedAfterHasteAbilityResolvesDoNotGainHaste() {
+        Permanent robots = harness.addToBattlefieldAndReturn(player1, new RavenousRobots());
+        robots.setSummoningSick(false);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new Spellbook()));
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken())
+                .singleElement().satisfies(token -> assertThat(token.hasKeyword(Keyword.HASTE)).isFalse());
     }
 }
