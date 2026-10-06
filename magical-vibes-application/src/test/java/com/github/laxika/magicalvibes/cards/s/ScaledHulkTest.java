@@ -82,4 +82,55 @@ class ScaledHulkTest extends BaseCardTest {
         assertThat(hulk.getPowerModifier()).isZero();
         assertThat(hulk.getToughnessModifier()).isZero();
     }
+
+    @Test
+    @DisplayName("A Spirit cast boosts each controlled Hulk independently")
+    void spiritSpellBoostsEachControlledHulk() {
+        Permanent first = addCreatureReady(player1, new ScaledHulk());
+        Permanent second = addCreatureReady(player1, new ScaledHulk());
+        Permanent opposing = addCreatureReady(player2, new ScaledHulk());
+
+        harness.castFromHand(player1, new Frostling(), "{R}");
+        resolveAllTriggers();
+
+        assertThat(first.getPowerModifier()).isEqualTo(2);
+        assertThat(first.getToughnessModifier()).isEqualTo(2);
+        assertThat(second.getPowerModifier()).isEqualTo(2);
+        assertThat(second.getToughnessModifier()).isEqualTo(2);
+        assertThat(opposing.getPowerModifier()).isZero();
+        assertThat(opposing.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Casting Scaled Hulk boosts an existing Hulk but not the newly cast one")
+    void castingHulkOnlyBoostsExistingHulk() {
+        Permanent existing = addCreatureReady(player1, new ScaledHulk());
+
+        harness.castFromHand(player1, new ScaledHulk(), "{5}{G}");
+        resolveAllTriggers();
+
+        assertThat(existing.getPowerModifier()).isEqualTo(2);
+        assertThat(existing.getToughnessModifier()).isEqualTo(2);
+        assertThat(findPermanents(player1, "Scaled Hulk")).hasSize(2);
+        Permanent entering = findPermanents(player1, "Scaled Hulk").stream()
+                .filter(permanent -> permanent != existing)
+                .findFirst().orElseThrow();
+        assertThat(entering.getPowerModifier()).isZero();
+        assertThat(entering.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("An Arcane spell cast during an opponent's turn still boosts Scaled Hulk")
+    void arcaneSpellDuringOpponentTurnBoostsHulk() {
+        Permanent hulk = addCreatureReady(player1, new ScaledHulk());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castFromHand(player1, new RoarOfJukai(), "{2}{G}");
+        resolveAllTriggers();
+
+        assertThat(hulk.getPowerModifier()).isEqualTo(2);
+        assertThat(hulk.getToughnessModifier()).isEqualTo(2);
+    }
 }
