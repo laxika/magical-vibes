@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -97,6 +98,125 @@ class SecludedStarforgeTest extends BaseCardTest {
         assertThat(starforge.isTapped()).isFalse();
     }
 
+    @Test
+    void zeroXNeedsNoArtifactsButStillPaysManaAndTapsTheLand() {
+        Permanent starforge = addStarforge(player1);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        prepareMainPhase();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, battlefieldIndex(starforge), 1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+        assertThat(starforge.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    void newlyEnteredArtifactCreatureCanPayTheCostAndBeTheTarget() {
+        Permanent starforge = addStarforge(player1);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
+        artifact.setSummoningSick(true);
+        prepareMainPhase();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, battlefieldIndex(starforge), 1, 1, artifact.getId());
+        harness.passBothPriorities();
+
+        assertThat(artifact.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, artifact)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, artifact)).isEqualTo(2);
+    }
+
+    @Test
+    void choosingOneArtifactLeavesOtherArtifactsUntapped() {
+        Permanent starforge = addStarforge(player1);
+        Permanent chosen = addArtifact(player1);
+        Permanent other = addArtifact(player1);
+        prepareMainPhase();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, battlefieldIndex(starforge), 1, 1, other.getId());
+        harness.handlePermanentChosen(player1, chosen.getId());
+        harness.passBothPriorities();
+
+        assertThat(chosen.isTapped()).isTrue();
+        assertThat(other.isTapped()).isFalse();
+        assertThat(starforge.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(2);
+    }
+
+    @Test
+    void opponentsArtifactsCannotPayTheCost() {
+        Permanent starforge = addStarforge(player1);
+        Permanent artifact = addArtifact(player2);
+        prepareMainPhase();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, battlefieldIndex(starforge), 1, 1, artifact.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(starforge.isTapped()).isFalse();
+        assertThat(artifact.isTapped()).isFalse();
+    }
+
+    @Test
+    void powerBoostExpiresAtTurnCleanup() {
+        Permanent starforge = addStarforge(player1);
+        Permanent artifact = addArtifact(player1);
+        prepareMainPhase();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, battlefieldIndex(starforge), 1, 1, artifact.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, artifact)).isEqualTo(1);
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.getEffectivePower(gd, artifact)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, artifact)).isEqualTo(2);
+    }
+
+    @Test
+    void robotCreationCanBeActivatedOnOpponentsTurn() {
+        Permanent starforge = addStarforge(player1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.activateAbility(player1, battlefieldIndex(starforge), 2, null, null);
+        assertThat(countPermanents(player1, "Robot")).isZero();
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Robot")).isEqualTo(1);
+        assertThat(countPermanents(player2, "Robot")).isZero();
+        Permanent robot = findPermanent(player1, "Robot");
+        assertThat(robot.getCard().getSubtypes()).contains(CardSubtype.ROBOT);
+        assertThat(robot.isTapped()).isFalse();
+    }
+
+    @Test
+    void pumpingCannotBeActivatedWithAnAbilityOnTheStack() {
+        Permanent producer = addStarforge(player1);
+        Permanent starforge = addStarforge(player1);
+        Permanent creature = addArtifact(player1);
+        prepareMainPhase();
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
+        harness.activateAbility(player1, battlefieldIndex(producer), 2, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, battlefieldIndex(starforge), 1, 1, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(starforge.isTapped()).isFalse();
+        assertThat(creature.isTapped()).isFalse();
+        harness.passBothPriorities();
+    }
+
     private void prepareMainPhase() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -108,9 +228,7 @@ class SecludedStarforgeTest extends BaseCardTest {
     }
 
     private Permanent addArtifact(com.github.laxika.magicalvibes.model.Player player) {
-        Permanent artifact = harness.addToBattlefieldAndReturn(player, new Ornithopter());
-        artifact.setSummoningSick(false);
-        return artifact;
+        return addCreatureReady(player, new Ornithopter());
     }
 
     private int battlefieldIndex(Permanent permanent) {
