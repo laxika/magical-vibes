@@ -8,6 +8,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed(Scrubland.class)
 class ScrublandTest extends BaseCardTest {
@@ -38,5 +39,32 @@ class ScrublandTest extends BaseCardTest {
         Permanent scrubland = harness.addToBattlefieldAndReturn(player1, new Scrubland());
         scrubland.setSummoningSick(false);
         return scrubland;
+    }
+
+    @Test
+    @DisplayName("Scrubland can produce mana immediately after entering the battlefield")
+    void producesManaImmediatelyAfterEntering() {
+        Permanent scrubland = harness.enterBattlefieldAndReturn(player1, new Scrubland());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(scrubland.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Producing one color prevents producing the other without untapping")
+    void cannotProduceBothColorsFromOneTap() {
+        addScrublandReady();
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(gd.stack).isEmpty();
     }
 }
