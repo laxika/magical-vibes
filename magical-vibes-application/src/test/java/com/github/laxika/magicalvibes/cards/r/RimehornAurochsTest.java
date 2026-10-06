@@ -86,4 +86,65 @@ class RimehornAurochsTest extends BaseCardTest {
 
         gs.declareBlockers(gd, player2, List.of());
     }
+
+    @Test
+    @DisplayName("The same creature can be chosen for both target positions")
+    void allowsSameCreatureForBothTargets() {
+        Permanent rimehorn = addCreatureReady(player1, new RimehornAurochs());
+        gd.playerManaPools.get(player1.getId()).addSnowMana(ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(rimehorn.getId(), rimehorn.getId()));
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Nonsnow mana cannot pay the snow portion of the activation cost")
+    void requiresSnowMana() {
+        addCreatureReady(player1, new RimehornAurochs());
+        Permanent attacker = addCreatureReady(player1, new BorealCentaur());
+        Permanent blocker = addCreatureReady(player2, new BorealCentaur());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(
+                player1, 0, 0, List.of(blocker.getId(), attacker.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("No blocking requirement is created when the second target leaves before resolution")
+    void doesNothingWhenSecondTargetLeaves() {
+        addCreatureReady(player1, new RimehornAurochs());
+        Permanent attacker = addCreatureReady(player1, new BorealCentaur());
+        Permanent blocker = addCreatureReady(player2, new BorealCentaur());
+        gd.playerManaPools.get(player1.getId()).addSnowMana(ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(blocker.getId(), attacker.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(attacker);
+        gd.playerGraveyards.get(player1.getId()).add(attacker.getCard());
+        harness.passBothPriorities();
+
+        assertThat(blocker.getMustBlockIds()).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The attack bonus counts other Aurochs still attacking when the trigger resolves")
+    void countsAttackingAurochsAtResolution() {
+        Permanent rimehorn = addCreatureReady(player1, new RimehornAurochs());
+        Permanent bull = addCreatureReady(player1, new BullAurochs());
+
+        declareAttackers(List.of(0, 1));
+        gd.playerBattlefields.get(player1.getId()).remove(bull);
+        gd.playerGraveyards.get(player1.getId()).add(bull.getCard());
+        resolveAllTriggers();
+
+        assertThat(rimehorn.getPowerModifier()).isZero();
+        assertThat(rimehorn.getToughnessModifier()).isZero();
+    }
 }
