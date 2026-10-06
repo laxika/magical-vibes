@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.cards.h.Humble;
+import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.cards.d.Distress;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,6 +18,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Sangromancer.class, GrizzlyBears.class, Shock.class, Distress.class, Sift.class, WrathOfGod.class, Humble.class})
 class SangromancerTest extends BaseCardTest {
 
     // ===== Opponent creature dies — accept may =====
@@ -31,8 +35,7 @@ class SangromancerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castInstant(player1, 0, bearsId);
-        harness.passBothPriorities(); // Resolve Shock → bears die → MayEffect on stack
+        harness.castAndResolveInstant(player1, 0, bearsId);
         harness.passBothPriorities(); // Resolve MayEffect from stack → may prompt
 
         // May ability prompt for Sangromancer's controller
@@ -56,8 +59,7 @@ class SangromancerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castInstant(player1, 0, bearsId);
-        harness.passBothPriorities(); // Resolve Shock → bears die → MayEffect on stack
+        harness.castAndResolveInstant(player1, 0, bearsId);
         harness.passBothPriorities(); // Resolve MayEffect from stack → may prompt
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
@@ -85,8 +87,7 @@ class SangromancerTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
 
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castInstant(player2, 0, bearsId);
-        harness.passBothPriorities(); // Resolve Shock → player1's bears die
+        harness.castAndResolveInstant(player2, 0, bearsId);
 
         // No may prompt — Sangromancer doesn't trigger for own creatures
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
@@ -105,8 +106,7 @@ class SangromancerTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Distress()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities(); // Resolve Distress → reveals hand
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         // Player1 chooses card from player2's revealed hand
         harness.handleCardChosen(player1, 0);
@@ -134,8 +134,7 @@ class SangromancerTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Distress()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         harness.handleCardChosen(player1, 0);
 
@@ -165,6 +164,7 @@ class SangromancerTest extends BaseCardTest {
         gd.playerDecks.get(player2.getId()).add(new GrizzlyBears());
         gd.playerDecks.get(player2.getId()).add(new GrizzlyBears());
 
+
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -172,13 +172,79 @@ class SangromancerTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Sift()));
         harness.addMana(player2, ManaColor.BLUE, 4);
 
-        harness.castSorcery(player2, 0, 0);
-        harness.passBothPriorities(); // Resolve Sift — draws 3, prompts for discard
+        harness.castAndResolveSorcery(player2, 0, 0);
 
         harness.handleCardChosen(player2, 0);
 
         // Sangromancer does NOT trigger for controller's own discard
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @CardUsed({WrathOfGod.class})
+    @DisplayName("Sees every opposing creature die even when Sangromancer dies simultaneously")
+    void triggersForEachSimultaneousOpponentDeath() {
+        harness.addToBattlefield(player1, new Sangromancer());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new WrathOfGod()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        harness.assertNotOnBattlefield(player1, "Sangromancer");
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.assertLife(player1, 23);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.assertLife(player1, 26);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Opponent's voluntary discard triggers life gain")
+    void triggersWhenOpponentDiscardsToTheirOwnSpell() {
+        harness.addToBattlefield(player1, new Sangromancer());
+        harness.setLife(player1, 20);
+        harness.setLibrary(player2, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Sift()));
+        harness.addMana(player2, ManaColor.BLUE, 4);
+
+        harness.castAndResolveSorcery(player2, 0, 0);
+        harness.handleCardChosen(player2, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        harness.assertLife(player1, 23);
+    }
+
+    @Test
+    @CardUsed({Humble.class})
+    @DisplayName("Does not trigger on opponent discard after losing all abilities")
+    void doesNotTriggerOnDiscardAfterLosingAbilities() {
+        var sangromancer = harness.addToBattlefieldAndReturn(player1, new Sangromancer());
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new Humble(), new Distress()));
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveInstant(player1, 0, sangromancer.getId());
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        harness.assertLife(player1, 20);
     }
 }
