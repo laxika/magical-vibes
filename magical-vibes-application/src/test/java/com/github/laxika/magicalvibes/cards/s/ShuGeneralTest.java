@@ -29,10 +29,9 @@ class ShuGeneralTest extends BaseCardTest {
     @DisplayName("Shu General can't be blocked by a creature without horsemanship")
     void cannotBeBlockedByCreatureWithoutHorsemanship() {
         addCreatureReady(player2, new ShuFootSoldiers());
-        Permanent attacker = addCreatureReady(player1, new ShuGeneral());
-        attacker.setAttacking(true);
+        addCreatureReady(player1, new ShuGeneral());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0))))
@@ -44,10 +43,22 @@ class ShuGeneralTest extends BaseCardTest {
     @DisplayName("Shu General can be blocked by a creature with horsemanship")
     void canBeBlockedByCreatureWithHorsemanship() {
         Permanent blocker = addCreatureReady(player2, new ShuCavalry());
-        Permanent attacker = addCreatureReady(player1, new ShuGeneral());
-        attacker.setAttacking(true);
+        addCreatureReady(player1, new ShuGeneral());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Horsemanship does not prevent Shu General from blocking an ordinary creature")
+    void canBlockCreatureWithoutHorsemanship() {
+        addCreatureReady(player1, new ShuFootSoldiers());
+        Permanent blocker = addCreatureReady(player2, new ShuGeneral());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
