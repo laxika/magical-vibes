@@ -36,7 +36,6 @@ class RouseTest extends BaseCardTest {
         castForMana(creature.getId());
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(creature.getEffectivePower()).isEqualTo(2);
@@ -118,6 +117,49 @@ class RouseTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, targetId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Can boost an opponent's creature")
+    void boostsOpponentsCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new FreshVolunteers());
+        castForMana(creature.getId());
+
+        assertThat(creature.getEffectivePower()).isEqualTo(4);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Losing the Swamp after casting does not prevent resolution")
+    void resolvesAfterSwampLeavesBattlefield() {
+        Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new FreshVolunteers());
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new Rouse()));
+
+        harness.castWithAlternateCost(player1, 0, creature.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(swamp);
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+        assertThat(creature.getEffectivePower()).isEqualTo(4);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("An illegal target does not consume the alternate life cost")
+    void illegalTargetDoesNotSpendLife() {
+        Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
+        harness.addToBattlefield(player1, new FreshVolunteers());
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new Rouse()));
+
+        assertThatThrownBy(() -> harness.castWithAlternateCost(player1, 0, swamp.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
     }
 
     private void castForMana(UUID targetId) {
