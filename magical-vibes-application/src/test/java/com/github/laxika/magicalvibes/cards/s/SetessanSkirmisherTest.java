@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.n.NyleasForerunner;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SetessanSkirmisher.class, GloriousAnthem.class, GrizzlyBears.class})
+@CardUsed({SetessanSkirmisher.class, GloriousAnthem.class, GrizzlyBears.class, NyleasForerunner.class})
 class SetessanSkirmisherTest extends BaseCardTest {
 
     @Test
@@ -74,5 +75,56 @@ class SetessanSkirmisherTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, skirmisher)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, skirmisher)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("An enchantment creature triggers once and the boost waits for resolution")
+    void enchantmentCreatureTriggersOnceOnEntry() {
+        Permanent skirmisher = harness.addToBattlefieldAndReturn(player1, new SetessanSkirmisher());
+        harness.setHand(player1, List.of(new NyleasForerunner()));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.getEffectivePower(gd, skirmisher)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, skirmisher)).isEqualTo(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.getEffectivePower(gd, skirmisher)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, skirmisher)).isEqualTo(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, skirmisher)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, skirmisher)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Each enchantment entry boosts every Skirmisher independently")
+    void repeatedEntriesBoostEachSkirmisher() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new SetessanSkirmisher());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new SetessanSkirmisher());
+        harness.setHand(player1, List.of(new NyleasForerunner(), new NyleasForerunner()));
+        harness.addMana(player1, ManaColor.GREEN, 10);
+
+        for (int i = 0; i < 2; i++) {
+            harness.castCreature(player1, 0);
+            harness.passBothPriorities();
+
+            assertThat(gd.stack).hasSize(2);
+
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+
+            assertThat(gd.stack).isEmpty();
+            assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(3 + i);
+            assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(2 + i);
+            assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(3 + i);
+            assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(2 + i);
+        }
     }
 }
