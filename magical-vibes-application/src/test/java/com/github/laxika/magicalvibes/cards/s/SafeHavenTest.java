@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.f.Fissure;
 import com.github.laxika.magicalvibes.cards.g.GoblinHero;
 import com.github.laxika.magicalvibes.cards.p.Preacher;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -13,15 +14,14 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SafeHaven.class, GoblinHero.class, Preacher.class})
+@CardUsed({SafeHaven.class, GoblinHero.class, Preacher.class, Fissure.class})
 class SafeHavenTest extends BaseCardTest {
 
     @Test
     @DisplayName("{2}, {T}: Exile target creature you control, tracked with Safe Haven")
     void exileAbilityExilesOwnCreature() {
         Permanent haven = harness.addToBattlefieldAndReturn(player1, new SafeHaven());
-        harness.addToBattlefield(player1, new GoblinHero());
-        Permanent goblin = findPermanent(player1, "Goblin Hero");
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GoblinHero());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, null, goblin.getId());
@@ -36,8 +36,7 @@ class SafeHavenTest extends BaseCardTest {
     @DisplayName("{2}, {T} cannot target a creature you don't control")
     void exileAbilityCannotTargetOpponentCreature() {
         harness.addToBattlefieldAndReturn(player1, new SafeHaven());
-        harness.addToBattlefield(player2, new GoblinHero());
-        Permanent goblin = findPermanent(player2, "Goblin Hero");
+        Permanent goblin = harness.addToBattlefieldAndReturn(player2, new GoblinHero());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, goblin.getId()))
@@ -72,8 +71,7 @@ class SafeHavenTest extends BaseCardTest {
     @DisplayName("Accepting the upkeep trigger sacrifices Safe Haven and returns its exiled creature")
     void acceptingUpkeepTriggerSacrificesAndReturnsCreature() {
         Permanent haven = harness.addToBattlefieldAndReturn(player1, new SafeHaven());
-        harness.addToBattlefield(player1, new GoblinHero());
-        Permanent goblin = findPermanent(player1, "Goblin Hero");
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GoblinHero());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, null, goblin.getId());
@@ -93,8 +91,7 @@ class SafeHavenTest extends BaseCardTest {
     @DisplayName("Declining the upkeep trigger leaves Safe Haven and its exiled creature in place")
     void decliningUpkeepTriggerDoesNothing() {
         Permanent haven = harness.addToBattlefieldAndReturn(player1, new SafeHaven());
-        harness.addToBattlefield(player1, new GoblinHero());
-        Permanent goblin = findPermanent(player1, "Goblin Hero");
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GoblinHero());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, null, goblin.getId());
@@ -154,5 +151,66 @@ class SafeHavenTest extends BaseCardTest {
         harness.passUntil(player1, TurnStep.UNTAP);
         harness.handleMayAbilityChosen(player1, false);
         harness.passUntil(player1, TurnStep.UPKEEP);
+    }
+
+    @Test
+    @DisplayName("Safe Haven does not trigger during its opponent's upkeep")
+    void opponentUpkeepDoesNotTrigger() {
+        harness.addToBattlefield(player1, new SafeHaven());
+
+        gd.turnNumber = 2;
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Safe Haven");
+    }
+
+    @Test
+    @DisplayName("Sacrificing one Safe Haven returns only the cards linked to that land")
+    void separateSafeHavensKeepTheirExiledCardsSeparate() {
+        Permanent firstHaven = harness.addToBattlefieldAndReturn(player1, new SafeHaven());
+        Permanent secondHaven = harness.addToBattlefieldAndReturn(player2, new SafeHaven());
+        Permanent firstGoblin = harness.addToBattlefieldAndReturn(player1, new GoblinHero());
+        Permanent secondGoblin = harness.addToBattlefieldAndReturn(player2, new GoblinHero());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, firstGoblin.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player2, 0, null, secondGoblin.getId());
+        harness.passBothPriorities();
+
+        gd.turnNumber = 2;
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertOnBattlefield(player1, "Goblin Hero");
+        harness.assertNotOnBattlefield(player2, "Goblin Hero");
+        harness.assertOnBattlefield(player2, "Safe Haven");
+        assertThat(gd.getCardsExiledByPermanent(firstHaven.getId())).isEmpty();
+        assertThat(gd.getCardsExiledByPermanent(secondHaven.getId()))
+                .containsExactly(secondGoblin.getCard());
+    }
+
+    @Test
+    @DisplayName("A Safe Haven destroyed in response to its upkeep trigger cannot return its exiled cards")
+    void destroyedSourceCannotBeSacrificedByUpkeepTrigger() {
+        Permanent haven = harness.addToBattlefieldAndReturn(player1, new SafeHaven());
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GoblinHero());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, goblin.getId());
+        harness.passBothPriorities();
+
+        gd.turnNumber = 2;
+        advanceToUpkeep(player1);
+        harness.setHand(player2, java.util.List.of(new Fissure()));
+        harness.addMana(player2, ManaColor.RED, 5);
+        harness.castAndResolveInstant(player2, 0, haven.getId());
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInGraveyard(player1, "Safe Haven");
+        harness.assertNotOnBattlefield(player1, "Goblin Hero");
+        assertThat(gd.getCardsExiledByPermanent(haven.getId())).containsExactly(goblin.getCard());
     }
 }
