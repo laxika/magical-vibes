@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.d.DarkBanishing;
 import com.github.laxika.magicalvibes.cards.v.VolcanicHammer;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -17,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RukhEgg.class, VolcanicHammer.class})
+@CardUsed({RukhEgg.class, VolcanicHammer.class, DarkBanishing.class})
 class RukhEggTest extends BaseCardTest {
 
     @Test
@@ -69,5 +70,58 @@ class RukhEggTest extends BaseCardTest {
         assertThat(token.getCard().getKeywords()).contains(Keyword.FLYING);
         assertThat(token.getCard().isToken()).isTrue();
         assertThat(gd.getDelayedActions(DelayedCreateToken.class)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Death during an end step waits until the following player's end step")
+    void deathDuringEndStepWaitsForNextEndStep() {
+        harness.addToBattlefield(player1, new RukhEgg());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.END_STEP);
+
+        harness.setHand(player2, List.of(new DarkBanishing()));
+        harness.addMana(player2, ManaColor.BLACK, 3);
+        harness.castAndResolveInstant(player2, 0, harness.getPermanentId(player1, "Rukh Egg"));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Rukh Egg");
+        harness.assertNotOnBattlefield(player1, "Bird");
+        assertThat(gd.getDelayedActions(DelayedCreateToken.class)).hasSize(1);
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.END_STEP);
+        harness.assertNotOnBattlefield(player1, "Bird");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Bird");
+        harness.assertNotOnBattlefield(player2, "Bird");
+        assertThat(gd.getDelayedActions(DelayedCreateToken.class)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A death creates exactly one Bird and does not repeat on later end steps")
+    void delayedTriggerFiresOnlyOnce() {
+        harness.addToBattlefield(player1, new RukhEgg());
+        harness.setHand(player2, List.of(new VolcanicHammer()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castAndResolveSorcery(player2, 0, 0, harness.getPermanentId(player1, "Rukh Egg"));
+        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(p -> p.getCard().getName().equals("Bird")).hasSize(1);
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(p -> p.getCard().getName().equals("Bird")).hasSize(1);
     }
 }
