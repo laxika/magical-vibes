@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RuneflareTrap.class, Divination.class, GrizzlyBears.class})
 class RuneflareTrapTest extends BaseCardTest {
 
     @Test
@@ -37,16 +39,90 @@ class RuneflareTrapTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 4);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.castSorcery(player2, 0, 0);
-        harness.passBothPriorities();
-        harness.castSorcery(player2, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player2, 0, 0);
+        harness.castAndResolveSorcery(player2, 0, 0);
 
-        harness.passPriority(player2);
         harness.castInstantWithAlternateCost(player1, 0, player2.getId(), List.of());
         harness.passBothPriorities();
 
         harness.assertLife(player2, 15);
+    }
+
+    @Test
+    void normalCostDoesNotRequireOpponentDraws() {
+        harness.setHand(player1, List.of(new RuneflareTrap()));
+        harness.setHand(player2, List.of(new RuneflareTrap(), new RuneflareTrap()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 20);
+        harness.assertInGraveyard(player1, "Runeflare Trap");
+    }
+
+    @Test
+    void canTargetCasterAndDoesNotCountTheSpellOnTheStack() {
+        harness.setHand(player1, List.of(new RuneflareTrap(), new RuneflareTrap()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void damageUsesHandSizeAtResolutionAndEmptyHandTakesNoDamage() {
+        harness.setHand(player1, List.of(new RuneflareTrap()));
+        harness.setHand(player2, List.of(new RuneflareTrap(), new RuneflareTrap()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 4);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        harness.assertLife(player1, 20);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    void twoOpponentDrawsDoNotUnlockAlternateCost() {
+        harness.setHand(player1, List.of(new RuneflareTrap()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        gd.cardsDrawnThisTurn.put(player2.getId(), 2);
+
+        assertThatThrownBy(() -> harness.castInstantWithAlternateCost(
+                player1, 0, player2.getId(), List.of()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void casterDrawsDoNotUnlockAlternateCost() {
+        harness.setHand(player1, List.of(new RuneflareTrap()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        gd.cardsDrawnThisTurn.put(player1.getId(), 3);
+
+        assertThatThrownBy(() -> harness.castInstantWithAlternateCost(
+                player1, 0, player2.getId(), List.of()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void exactlyThreeOpponentDrawsAllowAlternateCostWhileTargetingCaster() {
+        harness.setHand(player1, List.of(new RuneflareTrap(), new RuneflareTrap()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        gd.cardsDrawnThisTurn.put(player2.getId(), 3);
+
+        harness.castInstantWithAlternateCost(player1, 0, player1.getId(), List.of());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 20);
     }
 }
