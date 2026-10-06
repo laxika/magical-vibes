@@ -95,13 +95,57 @@ class RazorfootGriffinTest extends BaseCardTest {
         addCreatureReady(player1, new RagingKavu());
         addCreatureReady(player2, new RazorfootGriffin());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
 
         harness.assertOnBattlefield(player2, "Razorfoot Griffin");
         harness.assertInGraveyard(player1, "Raging Kavu");
+    }
+
+    @Test
+    @DisplayName("Opposing first-strike Griffins deal lethal damage simultaneously")
+    void opposingFirstStrikersKillEachOther() {
+        addCreatureReady(player1, new RazorfootGriffin());
+        addCreatureReady(player2, new RazorfootGriffin());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertInGraveyard(player1, "Razorfoot Griffin");
+        harness.assertInGraveyard(player2, "Razorfoot Griffin");
+        harness.assertNotOnBattlefield(player1, "Razorfoot Griffin");
+        harness.assertNotOnBattlefield(player2, "Razorfoot Griffin");
+    }
+
+    @Test
+    @DisplayName("A reach blocker surviving first strike deals regular combat damage")
+    void survivingReachBlockerKillsGriffin() {
+        addCreatureReady(player1, new RazorfootGriffin());
+        addCreatureReady(player2, new GiantSpider());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertInGraveyard(player1, "Razorfoot Griffin");
+        harness.assertNotOnBattlefield(player1, "Razorfoot Griffin");
+        harness.assertOnBattlefield(player2, "Giant Spider");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("An unblocked Griffin deals damage only once despite two combat damage steps")
+    void unblockedFirstStrikerDealsDamageOnlyOnce() {
+        addCreatureReady(player1, new RazorfootGriffin());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat();
+
+        harness.assertLife(player2, 18);
+        harness.assertOnBattlefield(player1, "Razorfoot Griffin");
     }
 
 }
