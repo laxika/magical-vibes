@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.k.KrovikanScoundrel;
-import com.github.laxika.magicalvibes.cards.r.RimeboundDead;
 import com.github.laxika.magicalvibes.cards.s.SnowCoveredSwamp;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -134,6 +133,49 @@ class RimeTransfusionTest extends BaseCardTest {
                 .hasMessageContaining("Not enough mana");
     }
 
+    @Test
+    @DisplayName("The enchanted creature's controller can activate with mana from a snow land")
+    void opposingCreatureControllerCanActivateGrantedAbility() {
+        Permanent attacker = addCreatureReady(player2);
+        attachAura(attacker);
+        harness.addToBattlefield(player2, new SnowCoveredSwamp());
+        harness.forceActivePlayer(player2);
+        harness.clearPriorityPassed();
+        harness.tapPermanent(player2, 1);
+        harness.activateAbility(player2, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        Permanent blocker = addCreatureReady(player1);
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player1.getId()).indexOf(blocker), 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("snow creatures");
+    }
+
+    @Test
+    @DisplayName("The activated ability still resolves if the Aura leaves before resolution")
+    void abilityResolvesAfterAuraLeaves() {
+        Permanent attacker = addCreatureReady(player1);
+        Permanent aura = attachAura(attacker);
+        gd.playerManaPools.get(player1.getId()).addSnowMana(ManaColor.BLACK, 1);
+        harness.activateAbility(player1, 0, 0, null, null);
+        gd.playerBattlefields.get(player1.getId()).remove(aura);
+        gd.playerGraveyards.get(player1.getId()).add(aura.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(1);
+        Permanent blocker = addCreatureReady(player2);
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker), 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("snow creatures");
+    }
+
     private Permanent addCreatureReady(Player player) {
         return addCreatureReady(player, new KrovikanScoundrel());
     }
@@ -143,9 +185,8 @@ class RimeTransfusionTest extends BaseCardTest {
     }
 
     private Permanent attachAura(Permanent creature) {
-        Permanent aura = new Permanent(new RimeTransfusion());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new RimeTransfusion());
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
         return aura;
     }
 
