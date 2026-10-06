@@ -94,15 +94,14 @@ class ResuscitateTest extends BaseCardTest {
     @DisplayName("The granted regeneration ability saves a creature from lethal combat damage")
     void grantedRegenerationSavesCreatureFromLethalCombatDamage() {
         Permanent blocker = addCreatureReady(player1, new RagingGoblin());
-        Permanent attacker = addCreatureReady(player2, new RagingGoblin());
+        addCreatureReady(player2, new RagingGoblin());
 
         castResuscitate();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        attacker.setAttacking(true);
-        prepareDeclareBlockers(player2);
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
         resolveCombat(player2);
 
@@ -111,6 +110,52 @@ class ResuscitateTest extends BaseCardTest {
         assertThat(blocker.isBlocking()).isFalse();
         assertThat(blocker.getMarkedDamage()).isZero();
         assertThat(blocker.getRegenerationShield()).isZero();
+    }
+
+    @Test
+    @DisplayName("Every creature present at resolution can activate regeneration independently")
+    void grantsAbilityToEveryCreatureAtResolution() {
+        Permanent first = addCreatureReady(player1, new RagingGoblin());
+        harness.castFromHand(player1, new Resuscitate(), "{1}{G}");
+        Permanent second = harness.enterBattlefieldAndReturn(player1, new RagingGoblin());
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(first.getRegenerationShield()).isEqualTo(1);
+        assertThat(second.getRegenerationShield()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A tapped creature can activate the granted ability repeatedly")
+    void tappedCreatureCanActivateRepeatedly() {
+        Permanent creature = addCreatureReady(player1, new RagingGoblin());
+        creature.tap();
+        castResuscitate();
+
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(creature.getRegenerationShield()).isEqualTo(2);
+        assertThat(creature.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Opposing creatures do not gain the regeneration ability")
+    void opponentCannotActivateRegeneration() {
+        addCreatureReady(player2, new RagingGoblin());
+        castResuscitate();
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     private void castResuscitate() {
