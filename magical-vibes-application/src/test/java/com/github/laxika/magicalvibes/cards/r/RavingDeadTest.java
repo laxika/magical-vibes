@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -12,24 +11,23 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RavingDead.class, GrizzlyBears.class})
+@CardUsed({RavingDead.class})
 class RavingDeadTest extends BaseCardTest {
 
     @Test
     @DisplayName("At the beginning of combat, Raving Dead must attack the chosen opponent")
     void mustAttackChosenOpponent() {
-        Permanent ravingDead = addReadyRavingDead(player1);
+        Permanent ravingDead = addCreatureReady(player1, new RavingDead());
 
         advanceToBeginningOfCombat(player1);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(ravingDead.isMustAttackThisCombat()).isTrue();
         assertThat(ravingDead.getMustAttackTargetId()).isEqualTo(player2.getId());
-
-        beginDeclareAttackers(player1);
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of()))
+        assertThatThrownBy(() -> declareAttackers(player1, List.of()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("must attack");
     }
@@ -42,9 +40,9 @@ class RavingDeadTest extends BaseCardTest {
         ravingDead.setAttacking(true);
 
         resolveCombat();
+        resolveAllTriggers();
 
-        // Raving Dead deals 2 combat damage first: 23 -> 21.
-        // Half of 21 rounded down is 10: 21 -> 11.
+        // Combat damage leaves 21 life; losing 10 leaves 11.
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(11);
     }
 
@@ -54,33 +52,80 @@ class RavingDeadTest extends BaseCardTest {
         harness.setLife(player2, 22);
         Permanent ravingDead = addCreatureReady(player1, new RavingDead());
         ravingDead.setAttacking(true);
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new RavingDead());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
         resolveCombat();
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(22);
     }
 
-    private Permanent addReadyRavingDead(Player player) {
-        Permanent ravingDead = new Permanent(new RavingDead());
-        ravingDead.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(ravingDead);
-        return ravingDead;
+    @Test
+    void tappedCreatureIsNotRequiredToAttack() {
+        Permanent ravingDead = addCreatureReady(player1, new RavingDead());
+        ravingDead.setTapped(true);
+
+        advanceToBeginningOfCombat(player1);
+        resolveAllTriggers();
+
+        assertThatCode(() -> declareAttackers(player1, List.of())).doesNotThrowAnyException();
+    }
+
+    @Test
+    void summoningSickCreatureIsNotRequiredToAttack() {
+        harness.addToBattlefield(player1, new RavingDead());
+
+        advanceToBeginningOfCombat(player1);
+        resolveAllTriggers();
+
+        assertThatCode(() -> declareAttackers(player1, List.of())).doesNotThrowAnyException();
+    }
+
+    @Test
+    void doesNotTriggerAtBeginningOfOpponentsCombat() {
+        Permanent ravingDead = addCreatureReady(player1, new RavingDead());
+
+        advanceToBeginningOfCombat(player2);
+        resolveAllTriggers();
+
+        assertThat(ravingDead.isMustAttackThisCombat()).isFalse();
+        assertThat(ravingDead.getMustAttackTargetId()).isNull();
+    }
+
+    @Test
+    void lifeLossUsesLifeTotalAtResolutionEvenIfSourceLeaves() {
+        harness.setLife(player2, 22);
+        Permanent ravingDead = addCreatureReady(player1, new RavingDead());
+        ravingDead.setAttacking(true);
+
+        harness.resolveCombatDamage();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(ravingDead);
+        gd.playerGraveyards.get(player1.getId()).add(ravingDead.getCard());
+        harness.setLife(player2, 15);
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(8);
+    }
+
+    @Test
+    void combatDamageLeavesOneLifeWithoutAdditionalLifeLoss() {
+        harness.setLife(player2, 3);
+        Permanent ravingDead = addCreatureReady(player1, new RavingDead());
+        ravingDead.setAttacking(true);
+
+        harness.resolveCombatDamage();
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(1);
     }
 
     private void advanceToBeginningOfCombat(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-    }
-
-    private void beginDeclareAttackers(Player activePlayer) {
-        harness.forceActivePlayer(activePlayer);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
+        harness.passUntil(activePlayer, TurnStep.BEGINNING_OF_COMBAT);
     }
 }
