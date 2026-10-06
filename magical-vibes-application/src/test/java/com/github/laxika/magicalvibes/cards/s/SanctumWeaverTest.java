@@ -9,6 +9,10 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -55,5 +59,40 @@ class SanctumWeaverTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("summoning sickness");
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ManaColor.class, names = {"WHITE", "BLUE", "BLACK", "RED", "GREEN"})
+    @DisplayName("Mana resolves immediately in a single chosen color and tapping pays the cost")
+    void producesOnlyTheChosenColorWithoutUsingTheStack(ManaColor color) {
+        Permanent weaver = addCreatureReady(player1, new SanctumWeaver());
+        addCreatureReady(player1, new SanctumWeaver());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, color.name());
+
+        assertThat(weaver.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(color)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Enchantment cards outside the battlefield do not increase mana production")
+    void ignoresEnchantmentsInOtherZones() {
+        addCreatureReady(player1, new SanctumWeaver());
+        harness.setHand(player1, List.of(new SanctumWeaver()));
+        harness.setGraveyard(player1, List.of(new SanctumWeaver()));
+        harness.setExile(player1, List.of(new SanctumWeaver()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, ManaColor.GREEN.name());
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
     }
 }
