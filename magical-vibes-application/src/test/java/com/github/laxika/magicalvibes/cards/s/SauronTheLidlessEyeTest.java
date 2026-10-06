@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -29,12 +30,11 @@ class SauronTheLidlessEyeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SauronTheLidlessEye()));
         addSauronMana(player1);
         harness.castCreature(player1, 0, 0, target.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(p -> p.getId().equals(target.getId()));
         assertThat(target.isTapped()).isFalse();
-        assertThat(target.hasKeyword(com.github.laxika.magicalvibes.model.Keyword.HASTE)).isTrue();
+        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
         assertThat(gd.isStolenUntilEndOfTurn(target.getId())).isTrue();
     }
 
@@ -86,10 +86,72 @@ class SauronTheLidlessEyeTest extends BaseCardTest {
                 .hasMessageContaining("creature an opponent controls");
     }
 
+    @Test
+    @DisplayName("The stolen creature returns and loses haste at end of turn")
+    void stolenCreatureReturnsAndLosesHaste() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SauronTheLidlessEye()));
+        addSauronMana(player1);
+        harness.castCreature(player1, 0, target.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
+        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Repeated activations boost Sauron and stack, without boosting later creatures")
+    void activationsStackAndOnlyBoostCreaturesPresentAtResolution() {
+        Permanent sauron = harness.addToBattlefieldAndReturn(player1, new SauronTheLidlessEye());
+        sauron.tap();
+        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        Permanent laterCreature = addCreatureReady(player1, new GrizzlyBears());
+
+        assertThat(gqs.getEffectivePower(gd, sauron)).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, laterCreature)).isEqualTo(2);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 16);
+        assertThat(sauron.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An activated ability still makes opponents lose life after Sauron leaves")
+    void activatedAbilityResolvesWithoutSourceOrCreatures() {
+        Permanent sauron = addSauron(player1);
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, sauron);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        harness.assertLife(player2, 18);
+    }
+
     private Permanent addSauron(Player player) {
-        Permanent sauron = harness.addToBattlefieldAndReturn(player, new SauronTheLidlessEye());
-        sauron.setSummoningSick(false);
-        return sauron;
+        return addCreatureReady(player, new SauronTheLidlessEye());
     }
 
     private void addSauronMana(Player player) {
