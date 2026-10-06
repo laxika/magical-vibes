@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.d.DiscipleOfTheVault;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -15,7 +16,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Forest.class, GrizzlyBears.class, Island.class, IvoryCup.class, Millstone.class, Opposition.class, Reprocess.class})
+@CardUsed({DiscipleOfTheVault.class, Forest.class, GrizzlyBears.class, Island.class, IvoryCup.class,
+        Millstone.class, Opposition.class, Reprocess.class})
 class ReprocessTest extends BaseCardTest {
 
     @Test
@@ -145,6 +147,57 @@ class ReprocessTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Artifacts can be sacrificed along with creatures and lands, drawing for all three")
+    void sacrificesAllEligibleTypesAndDrawsForEach() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Millstone());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addToBattlefield(player1, new Opposition());
+        setupLibrary();
+        castReprocess();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(4);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1,
+                List.of(artifact.getId(), creature.getId(), land.getId()));
+
+        harness.assertInGraveyard(player1, "Millstone");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertOnBattlefield(player1, "Opposition");
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A creature sacrificed with an artifact still sees that artifact go to the graveyard")
+    @CardUsed({DiscipleOfTheVault.class})
+    void sacrificedDiscipleSeesSimultaneouslySacrificedArtifact() {
+        Permanent disciple = harness.addToBattlefieldAndReturn(player1, new DiscipleOfTheVault());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Millstone());
+        setupLibrary();
+        castReprocess();
+        harness.passBothPriorities();
+
+        harness.handleMultiplePermanentsChosen(player1, List.of(disciple.getId(), artifact.getId()));
+
+        harness.assertInGraveyard(player1, "Disciple of the Vault");
+        harness.assertInGraveyard(player1, "Millstone");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        PendingInteraction.PermanentChoice targetChoice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(targetChoice).isNotNull();
+        assertThat(targetChoice.validIds()).containsExactly(player2.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player2, 19);
     }
 
     private void setupLibrary() {
