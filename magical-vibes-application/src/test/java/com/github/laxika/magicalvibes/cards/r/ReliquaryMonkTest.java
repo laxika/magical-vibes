@@ -17,17 +17,14 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({ReliquaryMonk.class, MetathranSoldier.class, RecklessAbandon.class, Sanctimony.class,
-        ThranDynamo.class})
+        ThranDynamo.class, Rescue.class})
 class ReliquaryMonkTest extends BaseCardTest {
 
     @Test
     @DisplayName("When Reliquary Monk dies, it destroys target artifact")
     void diesDestroysTargetArtifact() {
-        harness.addToBattlefield(player1, new ReliquaryMonk());
-        harness.addToBattlefield(player2, new ThranDynamo());
-
-        UUID monkId = harness.getPermanentId(player1, "Reliquary Monk");
-        UUID artifactId = harness.getPermanentId(player2, "Thran Dynamo");
+        UUID monkId = harness.addToBattlefieldAndReturn(player1, new ReliquaryMonk()).getId();
+        UUID artifactId = harness.addToBattlefieldAndReturn(player2, new ThranDynamo()).getId();
 
         castRecklessAbandonAt(monkId);
         harness.passBothPriorities();
@@ -44,11 +41,8 @@ class ReliquaryMonkTest extends BaseCardTest {
     @Test
     @DisplayName("When Reliquary Monk dies, it destroys target enchantment")
     void diesDestroysTargetEnchantment() {
-        harness.addToBattlefield(player1, new ReliquaryMonk());
-        harness.addToBattlefield(player2, new Sanctimony());
-
-        UUID monkId = harness.getPermanentId(player1, "Reliquary Monk");
-        UUID enchantmentId = harness.getPermanentId(player2, "Sanctimony");
+        UUID monkId = harness.addToBattlefieldAndReturn(player1, new ReliquaryMonk()).getId();
+        UUID enchantmentId = harness.addToBattlefieldAndReturn(player2, new Sanctimony()).getId();
 
         castRecklessAbandonAt(monkId);
         harness.passBothPriorities();
@@ -65,14 +59,10 @@ class ReliquaryMonkTest extends BaseCardTest {
     @Test
     @DisplayName("Death trigger only offers artifacts and enchantments as valid targets")
     void targetFilterOnlyArtifactsAndEnchantments() {
-        harness.addToBattlefield(player1, new ReliquaryMonk());
-        harness.addToBattlefield(player2, new ThranDynamo());
-        harness.addToBattlefield(player2, new Sanctimony());
+        UUID monkId = harness.addToBattlefieldAndReturn(player1, new ReliquaryMonk()).getId();
+        UUID artifactId = harness.addToBattlefieldAndReturn(player2, new ThranDynamo()).getId();
+        UUID enchantmentId = harness.addToBattlefieldAndReturn(player2, new Sanctimony()).getId();
         harness.addToBattlefield(player2, new MetathranSoldier());
-
-        UUID monkId = harness.getPermanentId(player1, "Reliquary Monk");
-        UUID artifactId = harness.getPermanentId(player2, "Thran Dynamo");
-        UUID enchantmentId = harness.getPermanentId(player2, "Sanctimony");
 
         castRecklessAbandonAt(monkId);
         harness.passBothPriorities();
@@ -85,11 +75,8 @@ class ReliquaryMonkTest extends BaseCardTest {
     @Test
     @DisplayName("When Reliquary Monk dies, it can destroy an artifact its controller controls")
     void diesDestroysOwnArtifact() {
-        harness.addToBattlefield(player1, new ReliquaryMonk());
-        harness.addToBattlefield(player1, new ThranDynamo());
-
-        UUID monkId = harness.getPermanentId(player1, "Reliquary Monk");
-        UUID artifactId = harness.getPermanentId(player1, "Thran Dynamo");
+        UUID monkId = harness.addToBattlefieldAndReturn(player1, new ReliquaryMonk()).getId();
+        UUID artifactId = harness.addToBattlefieldAndReturn(player1, new ThranDynamo()).getId();
 
         castRecklessAbandonAt(monkId);
         harness.passBothPriorities();
@@ -104,15 +91,77 @@ class ReliquaryMonkTest extends BaseCardTest {
     @Test
     @DisplayName("When Reliquary Monk dies without a legal target, its death trigger is skipped")
     void deathTriggerIsSkippedWithoutLegalTarget() {
-        harness.addToBattlefield(player1, new ReliquaryMonk());
-
-        UUID monkId = harness.getPermanentId(player1, "Reliquary Monk");
+        UUID monkId = harness.addToBattlefieldAndReturn(player1, new ReliquaryMonk()).getId();
 
         castRecklessAbandonAt(monkId);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertInGraveyard(player1, "Reliquary Monk");
+    }
+
+    @Test
+    @DisplayName("Sacrificing Reliquary Monk triggers destruction before the sacrifice spell resolves")
+    void sacrificeTriggersDestruction() {
+        UUID monkId = harness.addToBattlefieldAndReturn(player1, new ReliquaryMonk()).getId();
+        UUID artifactId = harness.addToBattlefieldAndReturn(player2, new ThranDynamo()).getId();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new RecklessAbandon()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castSorceryWithSacrifice(player1, 0, player2.getId(), monkId);
+
+        harness.assertInGraveyard(player1, "Reliquary Monk");
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, artifactId);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Thran Dynamo");
+        harness.assertLife(player2, 20);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    @DisplayName("Returning Reliquary Monk to hand does not trigger destruction")
+    void returningToHandDoesNotTrigger() {
+        UUID monkId = harness.addToBattlefieldAndReturn(player1, new ReliquaryMonk()).getId();
+        harness.addToBattlefield(player2, new ThranDynamo());
+        harness.setHand(player1, List.of(new Rescue()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castInstant(player1, 0, monkId);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Reliquary Monk");
+        harness.assertNotInGraveyard(player1, "Reliquary Monk");
+        harness.assertOnBattlefield(player2, "Thran Dynamo");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Death trigger does not destroy another permanent when its target leaves")
+    void targetLeavesBeforeResolution() {
+        UUID monkId = harness.addToBattlefieldAndReturn(player1, new ReliquaryMonk()).getId();
+        UUID artifactId = harness.addToBattlefieldAndReturn(player2, new ThranDynamo()).getId();
+        harness.addToBattlefield(player2, new Sanctimony());
+
+        castRecklessAbandonAt(monkId);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, artifactId);
+        harness.setHand(player2, List.of(new Rescue()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.castInstant(player2, 0, artifactId);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Thran Dynamo");
+        harness.assertNotInGraveyard(player2, "Thran Dynamo");
+        harness.assertOnBattlefield(player2, "Sanctimony");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     private void castRecklessAbandonAt(UUID targetId) {
