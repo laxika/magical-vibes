@@ -17,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RavenousBaloth.class, KrosanGroundshaker.class, GoblinSledder.class})
+@CardUsed({RavenousBaloth.class, KrosanGroundshaker.class, GoblinSledder.class, MorcantsEyes.class})
 class RavenousBalothTest extends BaseCardTest {
 
     @Test
@@ -69,7 +69,6 @@ class RavenousBalothTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(MorcantsEyes.class)
     @DisplayName("Can sacrifice a noncreature Kindred permanent with the Beast type")
     void canSacrificeKindredBeastPermanent() {
         harness.addToBattlefield(player1, new RavenousBaloth());
@@ -86,6 +85,66 @@ class RavenousBalothTest extends BaseCardTest {
         harness.assertLife(player1, 14);
         harness.assertInGraveyard(player1, "Morcant's Eyes");
         harness.assertOnBattlefield(player1, "Ravenous Baloth");
+    }
+
+    @Test
+    @DisplayName("Sacrifice is paid immediately but life is gained only on resolution")
+    void sacrificeIsPaidBeforeLifeGainResolves() {
+        harness.addToBattlefield(player1, new RavenousBaloth());
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 8);
+        prepareMainPhase();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        harness.assertInGraveyard(player1, "Ravenous Baloth");
+        harness.assertNotOnBattlefield(player1, "Ravenous Baloth");
+        harness.assertLife(player1, 10);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 14);
+        harness.assertLife(player2, 8);
+    }
+
+    @Test
+    @DisplayName("Opponent's Beasts cannot be sacrificed to pay the cost")
+    void opponentBeastsAreNotSacrificeChoices() {
+        Permanent baloth = harness.addToBattlefieldAndReturn(player1, new RavenousBaloth());
+        Permanent ownBeast = harness.addToBattlefieldAndReturn(player1, new KrosanGroundshaker());
+        harness.addToBattlefield(player2, new KrosanGroundshaker());
+        harness.setLife(player1, 10);
+        prepareMainPhase();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        PendingInteraction.PermanentChoice choice =
+                (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
+        assertThat(choice.validPermanentIds()).containsExactlyInAnyOrder(baloth.getId(), ownBeast.getId());
+        harness.handlePermanentChosen(player1, ownBeast.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 14);
+        harness.assertInGraveyard(player1, "Krosan Groundshaker");
+        harness.assertOnBattlefield(player2, "Krosan Groundshaker");
+    }
+
+    @Test
+    @DisplayName("A tapped Baloth can activate during the opponent's turn")
+    void tappedBalothCanActivateDuringOpponentsTurn() {
+        Permanent baloth = harness.addToBattlefieldAndReturn(player1, new RavenousBaloth());
+        baloth.setTapped(true);
+        harness.setLife(player1, 10);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 14);
+        harness.assertInGraveyard(player1, "Ravenous Baloth");
     }
 
     private void prepareMainPhase() {
