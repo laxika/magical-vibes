@@ -14,6 +14,19 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class ScavengingScarabTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Scavenging Scarab can attack and deal combat damage")
+    void canAttackAndDealCombatDamage() {
+        addCreatureReady(player1, new ScavengingScarab());
+        harness.setLife(player2, 20);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat();
+
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
     @DisplayName("Scavenging Scarab cannot be declared as a blocker")
     void cannotBeDeclaredAsBlocker() {
         addCreatureReady(player2, new ScavengingScarab());
