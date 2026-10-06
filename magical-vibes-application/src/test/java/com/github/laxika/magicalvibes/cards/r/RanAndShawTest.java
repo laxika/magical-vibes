@@ -26,8 +26,7 @@ class RanAndShawTest extends BaseCardTest {
         addCastMana();
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         List<Permanent> permanents = gd.playerBattlefields.get(player1.getId());
         assertThat(permanents).hasSize(2);
@@ -45,8 +44,7 @@ class RanAndShawTest extends BaseCardTest {
         addCastMana();
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
     }
@@ -55,7 +53,7 @@ class RanAndShawTest extends BaseCardTest {
     void enteringWithoutBeingCastDoesNotCreateTokenCopy() {
         harness.setGraveyard(player1, List.of(
                 new AirbendingLesson(), new AirbendingLesson(), new DragonEgg()));
-        harness.addToBattlefield(player1, new RanAndShaw());
+        harness.enterBattlefieldAndReturn(player1, new RanAndShaw());
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
@@ -84,6 +82,117 @@ class RanAndShawTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, ranAndShaw)).isEqualTo(ranAndShawPower);
+    }
+
+    @Test
+    void enteringWithoutBeingCastDoesNotTriggerAtAll() {
+        harness.setGraveyard(player1, List.of(
+                new AirbendingLesson(), new AirbendingLesson(), new AirbendingLesson()));
+
+        harness.enterBattlefieldAndReturn(player1, new RanAndShaw());
+
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void copyConditionIsCheckedAgainWhenTriggerResolves() {
+        harness.setGraveyard(player1, List.of(
+                new AirbendingLesson(), new AirbendingLesson(), new AirbendingLesson()));
+        harness.setHand(player1, List.of(new RanAndShaw()));
+        addCastMana();
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+        harness.setGraveyard(player1, List.of(new AirbendingLesson(), new AirbendingLesson()));
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void opponentsGraveyardDoesNotSatisfyCopyCondition() {
+        harness.setGraveyard(player2, List.of(
+                new AirbendingLesson(), new AirbendingLesson(), new AirbendingLesson()));
+        harness.setHand(player1, List.of(new RanAndShaw()));
+        addCastMana();
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void threeDragonCardsSatisfyCopyCondition() {
+        harness.setGraveyard(player1, List.of(
+                new RanAndShaw(), new RanAndShaw(), new RanAndShaw()));
+        harness.setHand(player1, List.of(new RanAndShaw()));
+        addCastMana();
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    void firebendingAddsTwoRedManaThroughCombatOnly() {
+        addCreatureReady(player1, new RanAndShaw());
+
+        declareAttackers(List.of(0));
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(2);
+
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+    }
+
+    @Test
+    void tokenCopyCanActivateDragonBoostAndFirebend() {
+        harness.setGraveyard(player1, List.of(
+                new AirbendingLesson(), new AirbendingLesson(), new AirbendingLesson()));
+        harness.setHand(player1, List.of(new RanAndShaw()));
+        addCastMana();
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        List<Permanent> dragons = gd.playerBattlefields.get(player1.getId());
+        Permanent original = dragons.getFirst();
+        Permanent token = dragons.stream().filter(p -> p.getCard().isToken()).findFirst().orElseThrow();
+        int originalPower = gqs.getEffectivePower(gd, original);
+        int tokenPower = gqs.getEffectivePower(gd, token);
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.activateAbility(player1, dragons.indexOf(token), null, null);
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, original)).isEqualTo(originalPower + 2);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(tokenPower + 2);
+
+        token.setSummoningSick(false);
+        declareAttackers(List.of(dragons.indexOf(token)));
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(2);
+    }
+
+    @Test
+    void boostExcludesOpposingDragonsAndLaterEntrants() {
+        Permanent source = addCreatureReady(player1, new RanAndShaw());
+        Permanent opposingDragon = addCreatureReady(player2, new RanAndShaw());
+        int opposingPower = gqs.getEffectivePower(gd, opposingDragon);
+        int sourcePower = gqs.getEffectivePower(gd, source);
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+        Permanent laterDragon = addCreatureReady(player1, new DragonEgg());
+
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(sourcePower + 2);
+        assertThat(gqs.getEffectivePower(gd, opposingDragon)).isEqualTo(opposingPower);
+        assertThat(gqs.getEffectivePower(gd, laterDragon)).isZero();
     }
 
     private void addCastMana() {
