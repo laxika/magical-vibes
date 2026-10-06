@@ -103,6 +103,65 @@ class RootwallaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Activation limit applies before the first ability resolves")
+    void secondActivationBeforeResolutionIsRejected() {
+        Permanent rootwalla = addCreatureReady(player1, new Rootwalla());
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(rootwalla.getEffectivePower()).isEqualTo(2);
+        assertThat(rootwalla.getEffectiveToughness()).isEqualTo(2);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("only once each turn");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(rootwalla.getEffectivePower()).isEqualTo(4);
+        assertThat(rootwalla.getEffectiveToughness()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Each Rootwalla has its own activation limit and boosts only itself")
+    void separateCopiesHaveIndependentActivationLimits() {
+        Permanent first = addCreatureReady(player1, new Rootwalla());
+        Permanent second = addCreatureReady(player1, new Rootwalla());
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(first.getEffectivePower()).isEqualTo(4);
+        assertThat(first.getEffectiveToughness()).isEqualTo(4);
+        assertThat(second.getEffectivePower()).isEqualTo(2);
+        assertThat(second.getEffectiveToughness()).isEqualTo(2);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(first.getEffectivePower()).isEqualTo(4);
+        assertThat(first.getEffectiveToughness()).isEqualTo(4);
+        assertThat(second.getEffectivePower()).isEqualTo(4);
+        assertThat(second.getEffectiveToughness()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Summoning sickness does not prevent activating the ability")
+    void abilityCanBeActivatedWithSummoningSickness() {
+        Permanent rootwalla = harness.addToBattlefieldAndReturn(player1, new Rootwalla());
+        rootwalla.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(rootwalla.getEffectivePower()).isEqualTo(4);
+        assertThat(rootwalla.getEffectiveToughness()).isEqualTo(4);
+    }
+
+    @Test
     @DisplayName("The boost wears off at end of turn")
     void boostWearsOffAtEndOfTurn() {
         Permanent rootwalla = addCreatureReady(player1, new Rootwalla());
