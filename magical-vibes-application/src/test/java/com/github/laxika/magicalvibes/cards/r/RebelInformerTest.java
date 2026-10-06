@@ -104,7 +104,7 @@ class RebelInformerTest extends BaseCardTest {
     void cannotBeTargetedByWhiteSourceAbility() {
         Permanent informer = addCreatureReady(player1, new RebelInformer());
         informer.setAttacking(true);
-        informer.setAttackTarget(player1.getId());
+        informer.setAttackTarget(player2.getId());
         Permanent mineBearer = addCreatureReady(player2, new MineBearer());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -146,5 +146,45 @@ class RebelInformerTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard()).isSameAs(spell);
+    }
+
+    @Test
+    @DisplayName("Can target itself while tapped and summoning sick")
+    void canTargetItselfWhileTappedAndSummoningSick() {
+        Permanent informer = harness.addToBattlefieldAndReturn(player1, new RebelInformer());
+        informer.setSummoningSick(true);
+        informer.setTapped(true);
+        int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, informer.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(informer);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore + 1)
+                .last().isSameAs(informer.getCard());
+    }
+
+    @Test
+    @DisplayName("Does not move a Rebel that leaves the battlefield before resolution")
+    void doesNotMoveTargetThatLeavesBeforeResolution() {
+        addCreatureReady(player1, new RebelInformer());
+        Permanent rebel = addCreatureReady(player2, new RebelInformer());
+        int deckSizeBefore = gd.playerDecks.get(player2.getId()).size();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.setHand(player2, List.of(new SearingWind()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 8);
+
+        harness.activateAbility(player1, 0, null, rebel.getId());
+        harness.castInstant(player2, 0, rebel.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(rebel);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(rebel.getCard());
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckSizeBefore)
+                .doesNotContain(rebel.getCard());
+        assertThat(gd.stack).isEmpty();
     }
 }
