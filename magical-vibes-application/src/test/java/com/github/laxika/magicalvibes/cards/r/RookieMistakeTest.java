@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SilentDart;
+import com.github.laxika.magicalvibes.cards.a.AlpineWatchdog;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RookieMistake.class, AlpineWatchdog.class, SilentDart.class})
 class RookieMistakeTest extends BaseCardTest {
 
     @Test
@@ -46,8 +48,7 @@ class RookieMistakeTest extends BaseCardTest {
     @DisplayName("Cannot target a non-creature permanent")
     void cannotTargetNonCreature() {
         Permanent creature = addCreature(player2);
-        Permanent artifact = new Permanent(new FountainOfYouth());
-        gd.playerBattlefields.get(player2.getId()).add(artifact);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new SilentDart());
         harness.setHand(player1, List.of(new RookieMistake()));
         addManaCost();
 
@@ -80,14 +81,66 @@ class RookieMistakeTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
+    @Test
+    void canTargetCreaturesControlledByDifferentPlayers() {
+        Permanent first = addCreature(player1);
+        Permanent second = addCreature(player2);
+
+        castRookieMistake(List.of(first.getId(), second.getId()));
+
+        assertThat(first.getPowerModifier()).isZero();
+        assertThat(first.getToughnessModifier()).isEqualTo(2);
+        assertThat(second.getPowerModifier()).isEqualTo(-2);
+        assertThat(second.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    void cannotCastWithOnlyOneTarget() {
+        Permanent creature = addCreature(player2);
+        harness.setHand(player1, List.of(new RookieMistake()));
+        addManaCost();
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of(creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void stillReducesSecondTargetsPowerWhenFirstTargetLeaves() {
+        Permanent first = addCreature(player1);
+        Permanent second = addCreature(player2);
+        harness.setHand(player1, List.of(new RookieMistake()));
+        addManaCost();
+        harness.castInstant(player1, 0, List.of(first.getId(), second.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(first);
+        gd.playerGraveyards.get(player1.getId()).add(first.getCard());
+
+        harness.passBothPriorities();
+
+        assertThat(second.getPowerModifier()).isEqualTo(-2);
+        assertThat(second.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    void stillIncreasesFirstTargetsToughnessWhenSecondTargetLeaves() {
+        Permanent first = addCreature(player1);
+        Permanent second = addCreature(player2);
+        harness.setHand(player1, List.of(new RookieMistake()));
+        addManaCost();
+        harness.castInstant(player1, 0, List.of(first.getId(), second.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(second);
+        gd.playerGraveyards.get(player2.getId()).add(second.getCard());
+
+        harness.passBothPriorities();
+
+        assertThat(first.getPowerModifier()).isZero();
+        assertThat(first.getToughnessModifier()).isEqualTo(2);
+    }
+
     private void addManaCost() {
         harness.addMana(player1, ManaColor.BLUE, 1);
     }
 
     private Permanent addCreature(Player player) {
-        Permanent permanent = new Permanent(new GrizzlyBears());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        return addCreatureReady(player, new AlpineWatchdog());
     }
 }
