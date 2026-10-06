@@ -3,8 +3,10 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.g.GildedLight;
 import com.github.laxika.magicalvibes.cards.s.ScornfulEgotist;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -117,10 +119,7 @@ class RavenGuildMasterTest extends BaseCardTest {
     @Test
     @DisplayName("The combat-damage ability still resolves when the damaged player has shroud")
     void combatDamageTriggerIsNotStoppedByPlayerShroud() {
-        harness.setHand(player2, List.of(new GildedLight()));
-        harness.addMana(player2, ManaColor.WHITE, 1);
-        harness.addMana(player2, ManaColor.COLORLESS, 1);
-        harness.castInstant(player2, 0);
+        harness.castFromHand(player2, new GildedLight(), "{1}{W}");
         harness.passBothPriorities();
 
         addAttackingRaven();
@@ -132,6 +131,38 @@ class RavenGuildMasterTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .containsExactlyElementsOf(library);
+    }
+
+    @Test
+    @DisplayName("Exiling from an empty library does not make the damaged player lose")
+    void emptyLibraryDoesNotCauseLossDuringExile() {
+        addAttackingRaven();
+        harness.setLibrary(player2, List.of());
+
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, this::resolveAllTriggers);
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    @DisplayName("The combat-damage ability resolves after Raven Guild Master leaves the battlefield")
+    void triggerResolvesAfterSourceLeavesBattlefield() {
+        Permanent raven = addAttackingRaven();
+        List<Card> library = List.of(new ScornfulEgotist(), new ScornfulEgotist());
+        harness.setLibrary(player2, library);
+
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
+        gd.playerBattlefields.get(player1.getId()).remove(raven);
+        gd.playerGraveyards.get(player1.getId()).add(raven.getCard());
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, this::resolveAllTriggers);
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactlyElementsOf(library);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
     }
 
     private Permanent addAttackingRaven() {
