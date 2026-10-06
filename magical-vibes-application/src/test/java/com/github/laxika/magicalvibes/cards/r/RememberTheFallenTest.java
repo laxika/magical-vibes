@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
+import com.github.laxika.magicalvibes.cards.l.LoxodonConvert;
+import com.github.laxika.magicalvibes.cards.s.ShrineOfLoyalLegions;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.cards.p.PorcelainLegionnaire;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,16 +16,16 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({RememberTheFallen.class, LoxodonConvert.class, ShrineOfLoyalLegions.class, PorcelainLegionnaire.class})
 class RememberTheFallenTest extends BaseCardTest {
-
-    // ===== Mode 0: Return creature card =====
 
     @Test
     @DisplayName("Mode 0 — creature in graveyard prompts for creature target")
     void mode0PromptsForCreatureTarget() {
-        Card creature = new GrizzlyBears();
-        Card artifact = new LeoninScimitar();
+        Card creature = new LoxodonConvert();
+        Card artifact = new ShrineOfLoyalLegions();
         harness.setGraveyard(player1, List.of(creature, artifact));
         harness.setHand(player1, List.of(new RememberTheFallen()));
         harness.addMana(player1, ManaColor.WHITE, 3);
@@ -40,7 +42,7 @@ class RememberTheFallenTest extends BaseCardTest {
     @Test
     @DisplayName("Mode 0 — selecting creature returns it to hand")
     void mode0ReturnsCreatureToHand() {
-        Card creature = new GrizzlyBears();
+        Card creature = new LoxodonConvert();
         harness.setGraveyard(player1, List.of(creature));
         harness.setHand(player1, List.of(new RememberTheFallen()));
         harness.addMana(player1, ManaColor.WHITE, 3);
@@ -50,30 +52,26 @@ class RememberTheFallenTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, validIds);
         harness.passBothPriorities();
 
-        harness.assertInHand(player1, "Grizzly Bears");
-        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Loxodon Convert");
+        harness.assertNotInGraveyard(player1, "Loxodon Convert");
     }
 
     @Test
-    @DisplayName("Mode 0 — no creatures in graveyard skips prompt")
-    void mode0NoCreaturesSkipsPrompt() {
-        harness.setGraveyard(player1, List.of(new LeoninScimitar()));
+    @DisplayName("Mode 0 cannot be cast without a legal target")
+    void mode0CannotCastWithoutLegalTarget() {
+        harness.setGraveyard(player1, List.of(new ShrineOfLoyalLegions()));
         harness.setHand(player1, List.of(new RememberTheFallen()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        harness.castSorcery(player1, 0, 0);
-
-        assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.stack).hasSize(1);
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 0))
+                .isInstanceOf(IllegalStateException.class);
     }
-
-    // ===== Mode 1: Return artifact card =====
 
     @Test
     @DisplayName("Mode 1 — artifact in graveyard prompts for artifact target")
     void mode1PromptsForArtifactTarget() {
-        Card creature = new GrizzlyBears();
-        Card artifact = new LeoninScimitar();
+        Card creature = new LoxodonConvert();
+        Card artifact = new ShrineOfLoyalLegions();
         harness.setGraveyard(player1, List.of(creature, artifact));
         harness.setHand(player1, List.of(new RememberTheFallen()));
         harness.addMana(player1, ManaColor.WHITE, 3);
@@ -90,7 +88,7 @@ class RememberTheFallenTest extends BaseCardTest {
     @Test
     @DisplayName("Mode 1 — selecting artifact returns it to hand")
     void mode1ReturnsArtifactToHand() {
-        Card artifact = new LeoninScimitar();
+        Card artifact = new ShrineOfLoyalLegions();
         harness.setGraveyard(player1, List.of(artifact));
         harness.setHand(player1, List.of(new RememberTheFallen()));
         harness.addMana(player1, ManaColor.WHITE, 3);
@@ -100,30 +98,26 @@ class RememberTheFallenTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, validIds);
         harness.passBothPriorities();
 
-        harness.assertInHand(player1, "Leonin Scimitar");
-        harness.assertNotInGraveyard(player1, "Leonin Scimitar");
+        harness.assertInHand(player1, "Shrine of Loyal Legions");
+        harness.assertNotInGraveyard(player1, "Shrine of Loyal Legions");
     }
 
     @Test
-    @DisplayName("Mode 1 — no artifacts in graveyard skips prompt")
-    void mode1NoArtifactsSkipsPrompt() {
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+    @DisplayName("Mode 1 cannot be cast without a legal target")
+    void mode1CannotCastWithoutLegalTarget() {
+        harness.setGraveyard(player1, List.of(new LoxodonConvert()));
         harness.setHand(player1, List.of(new RememberTheFallen()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        harness.castSorcery(player1, 0, 1);
-
-        assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.stack).hasSize(1);
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 1))
+                .isInstanceOf(IllegalStateException.class);
     }
-
-    // ===== Mode 2: Return both creature and artifact =====
 
     @Test
     @DisplayName("Mode 2 — both creature and artifact in graveyard prompts with both valid")
     void mode2PromptsForBothTargets() {
-        Card creature = new GrizzlyBears();
-        Card artifact = new LeoninScimitar();
+        Card creature = new LoxodonConvert();
+        Card artifact = new ShrineOfLoyalLegions();
         harness.setGraveyard(player1, List.of(creature, artifact));
         harness.setHand(player1, List.of(new RememberTheFallen()));
         harness.addMana(player1, ManaColor.WHITE, 3);
@@ -140,8 +134,8 @@ class RememberTheFallenTest extends BaseCardTest {
     @Test
     @DisplayName("Mode 2 — selecting both creature and artifact returns them to hand")
     void mode2ReturnsBothToHand() {
-        Card creature = new GrizzlyBears();
-        Card artifact = new LeoninScimitar();
+        Card creature = new LoxodonConvert();
+        Card artifact = new ShrineOfLoyalLegions();
         harness.setGraveyard(player1, List.of(creature, artifact));
         harness.setHand(player1, List.of(new RememberTheFallen()));
         harness.addMana(player1, ManaColor.WHITE, 3);
@@ -151,35 +145,34 @@ class RememberTheFallenTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, validIds);
         harness.passBothPriorities();
 
-        harness.assertInHand(player1, "Grizzly Bears");
-        harness.assertInHand(player1, "Leonin Scimitar");
-        harness.assertNotInGraveyard(player1, "Grizzly Bears");
-        harness.assertNotInGraveyard(player1, "Leonin Scimitar");
+        harness.assertInHand(player1, "Loxodon Convert");
+        harness.assertInHand(player1, "Shrine of Loyal Legions");
+        harness.assertNotInGraveyard(player1, "Loxodon Convert");
+        harness.assertNotInGraveyard(player1, "Shrine of Loyal Legions");
     }
 
     @Test
     @DisplayName("Mode 2 — non-creature/non-artifact cards are excluded from targets")
     void mode2ExcludesNonCreatureNonArtifactCards() {
-        Card creature = new GrizzlyBears();
+        Card creature = new LoxodonConvert();
+        Card artifact = new ShrineOfLoyalLegions();
         Card sorcery = new RememberTheFallen();
-        harness.setGraveyard(player1, List.of(creature, sorcery));
+        harness.setGraveyard(player1, List.of(creature, artifact, sorcery));
         harness.setHand(player1, List.of(new RememberTheFallen()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castSorcery(player1, 0, 2);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
-        // Only creature qualifies — sorcery is neither creature nor artifact
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds()).hasSize(1);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds()).contains(creature.getId());
+        // The sorcery is neither a creature nor an artifact.
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds()).hasSize(2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds()).containsExactlyInAnyOrder(creature.getId(), artifact.getId());
     }
-
-    // ===== Spell goes to graveyard after resolution =====
 
     @Test
     @DisplayName("Remember the Fallen goes to graveyard after resolution")
     void spellGoesToGraveyardAfterResolution() {
-        Card creature = new GrizzlyBears();
+        Card creature = new LoxodonConvert();
         harness.setGraveyard(player1, List.of(creature));
         harness.setHand(player1, List.of(new RememberTheFallen()));
         harness.addMana(player1, ManaColor.WHITE, 3);
@@ -190,5 +183,127 @@ class RememberTheFallenTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Remember the Fallen");
+    }
+
+    @Test
+    void creatureModeRequiresOneTarget() {
+        harness.setGraveyard(player1, List.of(new LoxodonConvert()));
+        harness.setHand(player1, List.of(new RememberTheFallen()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.castSorcery(player1, 0, 0);
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void artifactModeRequiresOneTarget() {
+        harness.setGraveyard(player1, List.of(new ShrineOfLoyalLegions()));
+        harness.setHand(player1, List.of(new RememberTheFallen()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.castSorcery(player1, 0, 1);
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void bothModesRequireBothTargets() {
+        Card creature = new LoxodonConvert();
+        Card artifact = new ShrineOfLoyalLegions();
+        harness.setGraveyard(player1, List.of(creature, artifact));
+        harness.setHand(player1, List.of(new RememberTheFallen()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.castSorcery(player1, 0, 2);
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void bothModesCannotReturnTwoNonartifactCreatures() {
+        Card first = new LoxodonConvert();
+        Card second = new LoxodonConvert();
+        Card artifact = new ShrineOfLoyalLegions();
+        harness.setGraveyard(player1, List.of(first, second, artifact));
+        harness.setHand(player1, List.of(new RememberTheFallen()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.castSorcery(player1, 0, 2);
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void bothModesCannotReturnTwoNoncreatureArtifacts() {
+        Card first = new ShrineOfLoyalLegions();
+        Card second = new ShrineOfLoyalLegions();
+        Card creature = new LoxodonConvert();
+        harness.setGraveyard(player1, List.of(first, second, creature));
+        harness.setHand(player1, List.of(new RememberTheFallen()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.castSorcery(player1, 0, 2);
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void bothModesCanTargetTheSameArtifactCreature() {
+        Card artifactCreature = new PorcelainLegionnaire();
+        harness.setGraveyard(player1, List.of(artifactCreature));
+        harness.setHand(player1, List.of(new RememberTheFallen()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.castSorcery(player1, 0, 2);
+        harness.handleMultipleCardsChosen(player1, List.of(artifactCreature.getId(), artifactCreature.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(artifactCreature);
+        harness.assertNotInGraveyard(player1, "Porcelain Legionnaire");
+        harness.assertInGraveyard(player1, "Remember the Fallen");
+    }
+
+    @Test
+    void bothModesReturnTheRemainingLegalTarget() {
+        Card creature = new LoxodonConvert();
+        Card artifact = new ShrineOfLoyalLegions();
+        harness.setGraveyard(player1, List.of(creature, artifact));
+        harness.setHand(player1, List.of(new RememberTheFallen()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.castSorcery(player1, 0, 2);
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId(), artifact.getId()));
+        harness.setGraveyard(player1, List.of(artifact));
+        harness.setExile(player1, List.of(creature));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(artifact);
+        harness.assertInGraveyard(player1, "Remember the Fallen");
+    }
+
+    @Test
+    void bothModesExcludeOpponentsGraveyard() {
+        Card creature = new LoxodonConvert();
+        Card artifact = new ShrineOfLoyalLegions();
+        Card opposingCreature = new LoxodonConvert();
+        Card opposingArtifact = new ShrineOfLoyalLegions();
+        harness.setGraveyard(player1, List.of(creature, artifact));
+        harness.setGraveyard(player2, List.of(opposingCreature, opposingArtifact));
+        harness.setHand(player1, List.of(new RememberTheFallen()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.castSorcery(player1, 0, 2);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds())
+                .containsExactlyInAnyOrder(creature.getId(), artifact.getId());
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1,
+                List.of(opposingCreature.getId(), opposingArtifact.getId())))
+                .isInstanceOf(IllegalStateException.class);
     }
 }
