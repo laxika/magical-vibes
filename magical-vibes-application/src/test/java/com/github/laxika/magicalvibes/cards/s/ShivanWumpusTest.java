@@ -128,14 +128,65 @@ class ShivanWumpusTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Both players may sacrifice even after the Wumpus has left the battlefield")
+    void bothPlayersCanSacrifice() {
+        harness.addToBattlefield(player1, new Forest());
+        castAndResolveToChoice();
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertInGraveyard(player2, "Forest");
+        harness.assertNotOnBattlefield(player1, "Shivan Wumpus");
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .filteredOn(card -> card.getName().equals("Shivan Wumpus"))
+                .hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst().getName())
+                .isEqualTo("Shivan Wumpus");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The opponent may sacrifice after the active player declines")
+    void opponentSacrificesAfterActivePlayerDeclines() {
+        harness.addToBattlefield(player1, new Forest());
+        castAndResolveToChoice();
+
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertOnBattlefield(player1, "Forest");
+        harness.assertInGraveyard(player2, "Forest");
+        harness.assertNotOnBattlefield(player1, "Shivan Wumpus");
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst().getName())
+                .isEqualTo("Shivan Wumpus");
+    }
+
+    @Test
+    @DisplayName("A land sacrifice tucks only the Wumpus whose entry triggered the ability")
+    void sacrificeTucksOnlyTheEnteringWumpus() {
+        Permanent earlierWumpus = harness.addToBattlefieldAndReturn(player1, new ShivanWumpus());
+        castAndResolveToChoice();
+        Permanent enteringWumpus = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> !permanent.getId().equals(earlierWumpus.getId()))
+                .findFirst().orElseThrow();
+
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(earlierWumpus);
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(enteringWumpus.getCard());
+        harness.assertInGraveyard(player2, "Forest");
+    }
+
+    @Test
     @DisplayName("Trample assigns excess combat damage to the defending player")
     void trampleDealsExcessCombatDamage() {
         harness.setLife(player2, 20);
         Permanent attacker = addCreatureReady(player1, new ShivanWumpus());
         Permanent blocker = addCreatureReady(player2, new ReveredDead());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
 
