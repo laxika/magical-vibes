@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.f.FetidHeath;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -102,5 +103,78 @@ class RavensCrimeTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castRetrace(player1, 0, 0, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Raven's Crime can target its caster")
+    void canTargetCaster() {
+        harness.setHand(player1, List.of(new RavensCrime(), new FetidHeath()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castSorcery(player1, 0, player1.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Fetid Heath");
+        harness.assertInGraveyard(player1, "Raven's Crime");
+    }
+
+    @Test
+    @DisplayName("Retrace pays its land cost before resolution and can be used again")
+    void canRetraceRepeatedly() {
+        harness.setHand(player2, List.of());
+        harness.setGraveyard(player1, List.of(new RavensCrime()));
+        harness.setHand(player1, List.of(new FetidHeath(), new FetidHeath()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castRetrace(player1, 0, 0, player2.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Fetid Heath");
+        harness.assertNotInGraveyard(player1, "Raven's Crime");
+
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Raven's Crime");
+
+        harness.castRetrace(player1, 1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
+        harness.assertInGraveyard(player1, "Raven's Crime");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Retrace still requires paying the normal mana cost")
+    void retraceRequiresMana() {
+        harness.setGraveyard(player1, List.of(new RavensCrime()));
+        harness.setHand(player1, List.of(new FetidHeath()));
+
+        assertThatThrownBy(() -> harness.castRetrace(player1, 0, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Fetid Heath");
+        harness.assertInGraveyard(player1, "Raven's Crime");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Retrace does not allow Raven's Crime to be cast outside a main phase")
+    void retraceRequiresSorceryTiming() {
+        harness.setGraveyard(player1, List.of(new RavensCrime()));
+        harness.setHand(player1, List.of(new FetidHeath()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        assertThatThrownBy(() -> harness.castRetrace(player1, 0, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Fetid Heath");
+        harness.assertInGraveyard(player1, "Raven's Crime");
+        assertThat(gd.stack).isEmpty();
     }
 }
