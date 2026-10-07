@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.e.EverybodyLives;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(SteamVents.class)
+@CardUsed({SteamVents.class, EverybodyLives.class})
 class SteamVentsTest extends BaseCardTest {
 
     @Test
@@ -81,6 +82,38 @@ class SteamVentsTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
         assertThat(steamVents.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Steam Vents enters tapped when Everybody Lives prevents paying life")
+    void cannotPayLifeWhenLifeLossIsProhibited() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new EverybodyLives(), new SteamVents()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player1, 0);
+
+        harness.playLand(player1, 0);
+        if (gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class) != null) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        harness.assertLife(player1, 20);
+        assertThat(findSteamVents(player1).isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Steam Vents can produce mana immediately after paying its entry cost")
+    void canProduceManaImmediatelyAfterPayingLife() {
+        playSteamVents(20);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        harness.assertLife(player1, 18);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(findSteamVents(player1).isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
     }
 
     private void playSteamVents(int life) {
