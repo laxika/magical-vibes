@@ -2,9 +2,9 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,23 +13,19 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({TragicLesson.class, Forest.class, Plains.class})
 class TragicLessonTest extends BaseCardTest {
 
     private void castTragicLesson() {
         harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.setHand(player1, List.of(new TragicLesson()));
-
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new TragicLesson(), "{2}{U}");
         harness.passBothPriorities();
     }
 
     @Test
     @DisplayName("Draws two, then returning a land avoids the discard")
     void returningALandAvoidsDiscard() {
-        harness.addToBattlefield(player1, new Plains());
-        UUID landId = harness.getPermanentId(player1, "Plains");
+        UUID landId = harness.addToBattlefieldAndReturn(player1, new Plains()).getId();
 
         castTragicLesson();
 
@@ -82,5 +78,42 @@ class TragicLessonTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         harness.assertInGraveyard(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("An opponent's land cannot be returned to avoid discarding")
+    void opponentsLandDoesNotOfferReturn() {
+        harness.addToBattlefield(player2, new Plains());
+
+        castTragicLesson();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertOnBattlefield(player2, "Plains");
+    }
+
+    @Test
+    @DisplayName("A controlled land owned by the opponent returns to that owner's hand")
+    void borrowedLandReturnsToOwnerWithoutDiscard() {
+        Plains land = new Plains();
+        land.setOwnerId(player2.getId());
+        UUID landId = harness.addToBattlefieldAndReturn(player1, land).getId();
+        gd.stolenCreatures.put(landId, player2.getId());
+
+        castTragicLesson();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, landId);
+
+        harness.assertNotOnBattlefield(player1, "Plains");
+        harness.assertInHand(player2, "Plains");
+        harness.assertNotInHand(player1, "Plains");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        harness.assertNotInGraveyard(player1, "Forest");
+        harness.assertInGraveyard(player1, "Tragic Lesson");
     }
 }
