@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.a.AngelsMercy;
 import com.github.laxika.magicalvibes.cards.d.Divination;
+import com.github.laxika.magicalvibes.cards.f.FountainportBell;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +17,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({StormcatchMentor.class, AngelsMercy.class, Divination.class, GrizzlyBears.class, Shock.class})
+@CardUsed({StormcatchMentor.class, AngelsMercy.class, Divination.class, GrizzlyBears.class, Shock.class,
+        FountainportBell.class})
 class StormcatchMentorTest extends BaseCardTest {
 
     @Test
@@ -57,6 +59,7 @@ class StormcatchMentorTest extends BaseCardTest {
 
         harness.setHand(player2, List.of(new AngelsMercy()));
         harness.addMana(player2, ManaColor.WHITE, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
         assertThatThrownBy(() -> harness.castInstant(player2, 0))
                 .isInstanceOf(IllegalStateException.class);
     }
@@ -64,15 +67,13 @@ class StormcatchMentorTest extends BaseCardTest {
     @Test
     @DisplayName("Prowess boosts it when its controller casts a noncreature spell")
     void prowessBoostsAfterNoncreatureSpell() {
-        harness.addToBattlefield(player1, new StormcatchMentor());
-        Permanent mentor = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent mentor = harness.addToBattlefieldAndReturn(player1, new StormcatchMentor());
         int powerBeforeCast = gqs.getEffectivePower(gd, mentor);
         int toughnessBeforeCast = gqs.getEffectiveToughness(gd, mentor);
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, mentor)).isEqualTo(powerBeforeCast + 1);
@@ -95,5 +96,98 @@ class StormcatchMentorTest extends BaseCardTest {
         gs.declareAttackers(gd, player1, List.of(0));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+    }
+
+    @Test
+    void multipleMentorsReduceGenericCostButNotColoredCost() {
+        harness.addToBattlefield(player1, new StormcatchMentor());
+        harness.addToBattlefield(player1, new StormcatchMentor());
+        harness.setHand(player1, List.of(new AngelsMercy()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castInstant(player1, 0);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(27);
+    }
+
+    @Test
+    void creatureSpellsDoNotTriggerProwess() {
+        Permanent mentor = harness.addToBattlefieldAndReturn(player1, new StormcatchMentor());
+        int power = gqs.getEffectivePower(gd, mentor);
+        int toughness = gqs.getEffectiveToughness(gd, mentor);
+        harness.setHand(player1, List.of(new StormcatchMentor()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, mentor)).isEqualTo(power);
+        assertThat(gqs.getEffectiveToughness(gd, mentor)).isEqualTo(toughness);
+    }
+
+    @Test
+    void opponentsNoncreatureSpellsDoNotTriggerProwess() {
+        Permanent mentor = harness.addToBattlefieldAndReturn(player1, new StormcatchMentor());
+        int power = gqs.getEffectivePower(gd, mentor);
+        int toughness = gqs.getEffectiveToughness(gd, mentor);
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, mentor)).isEqualTo(power);
+        assertThat(gqs.getEffectiveToughness(gd, mentor)).isEqualTo(toughness);
+    }
+
+    @Test
+    void prowessStacksForEachSpellAndExpiresAtEndOfTurn() {
+        Permanent mentor = harness.addToBattlefieldAndReturn(player1, new StormcatchMentor());
+        int power = gqs.getEffectivePower(gd, mentor);
+        int toughness = gqs.getEffectiveToughness(gd, mentor);
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+
+        assertThat(gqs.getEffectivePower(gd, mentor)).isEqualTo(power + 2);
+        assertThat(gqs.getEffectiveToughness(gd, mentor)).isEqualTo(toughness + 2);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.getEffectivePower(gd, mentor)).isEqualTo(power);
+        assertThat(gqs.getEffectiveToughness(gd, mentor)).isEqualTo(toughness);
+    }
+
+    @Test
+    void artifactSpellsTriggerProwessWithoutReceivingCostReduction() {
+        Permanent mentor = harness.addToBattlefieldAndReturn(player1, new StormcatchMentor());
+        int power = gqs.getEffectivePower(gd, mentor);
+        int toughness = gqs.getEffectiveToughness(gd, mentor);
+        harness.setHand(player1, List.of(new FountainportBell()));
+
+        assertThatThrownBy(() -> harness.castArtifact(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castArtifact(player1, 0);
+
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, mentor)).isEqualTo(power + 1);
+        assertThat(gqs.getEffectiveToughness(gd, mentor)).isEqualTo(toughness + 1);
+        assertThat(gd.stack).hasSize(1);
     }
 }
