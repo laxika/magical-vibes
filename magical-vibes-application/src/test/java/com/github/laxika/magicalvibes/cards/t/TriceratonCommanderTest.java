@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.f.FrenziedRaptor;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.FrogButler;
+import com.github.laxika.magicalvibes.cards.z.ZogTriceratonCastaway;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -17,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TriceratonCommander.class, FrenziedRaptor.class, GrizzlyBears.class})
+@CardUsed({TriceratonCommander.class, ZogTriceratonCastaway.class, FrogButler.class})
 class TriceratonCommanderTest extends BaseCardTest {
 
     @Test
@@ -26,9 +26,8 @@ class TriceratonCommanderTest extends BaseCardTest {
         harness.setHand(player1, List.of(new TriceratonCommander()));
         harness.addMana(player1, ManaColor.WHITE, 6);
 
-        gs.playCard(gd, player1, 0, 2, null, null);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.castCreature(player1, 0, 2);
+        resolveAllTriggers();
 
         List<Permanent> tokens = findPermanents(player1, "Dinosaur Soldier");
         assertThat(tokens).hasSize(2);
@@ -45,27 +44,76 @@ class TriceratonCommanderTest extends BaseCardTest {
     @DisplayName("Attacking boosts and grants flying to other Dinosaurs only")
     void attackingBoostsOtherDinosaurs() {
         Permanent commander = addCreatureReady(player1, new TriceratonCommander());
-        Permanent dinosaur = addCreatureReady(player1, new FrenziedRaptor());
-        Permanent nonDinosaur = addCreatureReady(player1, new GrizzlyBears());
+        Permanent dinosaur = addCreatureReady(player1, new ZogTriceratonCastaway());
+        Permanent nonDinosaur = addCreatureReady(player1, new FrogButler());
 
         declareAttackers(List.of(0));
         resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, commander)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, commander)).isEqualTo(2);
-        assertThat(gqs.getEffectivePower(gd, dinosaur)).isEqualTo(5);
-        assertThat(gqs.getEffectiveToughness(gd, dinosaur)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, dinosaur)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, dinosaur)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, dinosaur, Keyword.FLYING)).isTrue();
-        assertThat(gqs.getEffectivePower(gd, nonDinosaur)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, nonDinosaur)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, nonDinosaur)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, nonDinosaur)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, nonDinosaur, Keyword.FLYING)).isFalse();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gqs.getEffectivePower(gd, dinosaur)).isEqualTo(4);
-        assertThat(gqs.getEffectiveToughness(gd, dinosaur)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, dinosaur)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, dinosaur)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, dinosaur, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Casting with X zero creates no tokens")
+    void zeroXCreatesNoTokens() {
+        harness.setHand(player1, List.of(new TriceratonCommander()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castCreature(player1, 0, 0);
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Triceraton Commander")).isEqualTo(1);
+        assertThat(findPermanents(player1, "Dinosaur Soldier")).isEmpty();
+        assertThat(findPermanents(player2, "Dinosaur Soldier")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Attack trigger boosts its tokens and another Commander but not opposing or later Dinosaurs")
+    void attackAffectsOnlyDinosaursControlledAtResolution() {
+        harness.setHand(player1, List.of(new TriceratonCommander()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.castCreature(player1, 0, 1);
+        resolveAllTriggers();
+        Permanent commander = findPermanent(player1, "Triceraton Commander");
+        commander.setSummoningSick(false);
+        Permanent token = findPermanent(player1, "Dinosaur Soldier");
+        Permanent otherCommander = addCreatureReady(player1, new TriceratonCommander());
+        Permanent opposingDinosaur = addCreatureReady(player2, new ZogTriceratonCastaway());
+
+        declareAttackers(List.of(0));
+        Permanent dinosaurBeforeResolution = addCreatureReady(player1, new ZogTriceratonCastaway());
+        resolveAllTriggers();
+        Permanent dinosaurAfterResolution = addCreatureReady(player1, new TriceratonCommander());
+
+        assertThat(gqs.getEffectivePower(gd, commander)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, commander)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, token, Keyword.FLYING)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, otherCommander)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, otherCommander)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, dinosaurBeforeResolution)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, dinosaurBeforeResolution)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, dinosaurBeforeResolution, Keyword.FLYING)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, opposingDinosaur)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, opposingDinosaur)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, opposingDinosaur, Keyword.FLYING)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, dinosaurAfterResolution)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, dinosaurAfterResolution)).isEqualTo(2);
     }
 }
