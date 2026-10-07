@@ -90,4 +90,32 @@ class StormWorldTest extends BaseCardTest {
 
         harness.assertLife(player1, 17);
     }
+
+    @Test
+    @DisplayName("Deals no damage if the hand grows past four cards before resolution")
+    void handGrowingPastFourPreventsDamage() {
+        harness.addToBattlefield(player1, new StormWorld());
+        harness.setHand(player1, cards(1));
+
+        advanceToUpkeep(player1);
+        harness.setHand(player1, cards(5));
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Uses the active player's hand even when the opponent controls Storm World")
+    void opponentControlledStormUsesActivePlayersHand() {
+        harness.addToBattlefield(player2, new StormWorld());
+        harness.setHand(player1, cards(1));
+        harness.setHand(player2, cards(5));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 20);
+    }
 }
