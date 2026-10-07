@@ -31,10 +31,7 @@ class SpellweaverHelixTest extends BaseCardTest {
         SylvanScrying second = new SylvanScrying();
         Annul instant = new Annul();
         harness.setGraveyard(player2, List.of(first, second, instant));
-        harness.setHand(player1, List.of(new SpellweaverHelix()));
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new SpellweaverHelix(), "{3}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -64,10 +61,7 @@ class SpellweaverHelixTest extends BaseCardTest {
         SylvanScrying second = new SylvanScrying();
         Annul instant = new Annul();
         harness.setGraveyard(player2, List.of(first, second, instant));
-        harness.setHand(player1, List.of(new SpellweaverHelix()));
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new SpellweaverHelix(), "{3}");
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
@@ -86,10 +80,7 @@ class SpellweaverHelixTest extends BaseCardTest {
     void etbCannotChooseOnlyOneSorcery() {
         Fabricate onlySorcery = new Fabricate();
         harness.setGraveyard(player2, List.of(onlySorcery));
-        harness.setHand(player1, List.of(new SpellweaverHelix()));
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new SpellweaverHelix(), "{3}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -104,10 +95,7 @@ class SpellweaverHelixTest extends BaseCardTest {
         SylvanScrying second = new SylvanScrying();
         harness.setGraveyard(player1, List.of(first, new SylvanScrying()));
         harness.setGraveyard(player2, List.of(second));
-        harness.setHand(player1, List.of(new SpellweaverHelix()));
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new SpellweaverHelix(), "{3}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -130,9 +118,7 @@ class SpellweaverHelixTest extends BaseCardTest {
 
         harness.forceActivePlayer(player2);
         Fabricate cast = new Fabricate();
-        harness.setHand(player2, List.of(cast));
-        harness.addMana(player2, ManaColor.BLUE, 3);
-        harness.castSorcery(player2, 0);
+        harness.castFromHand(player2, cast, "{2}{U}");
 
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -160,9 +146,7 @@ class SpellweaverHelixTest extends BaseCardTest {
 
         Fabricate cast = new Fabricate();
         harness.forceActivePlayer(player2);
-        harness.setHand(player2, List.of(cast));
-        harness.addMana(player2, ManaColor.BLUE, 3);
-        harness.castSorcery(player2, 0);
+        harness.castFromHand(player2, cast, "{2}{U}");
 
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
@@ -186,9 +170,7 @@ class SpellweaverHelixTest extends BaseCardTest {
         gd.addToExile(player1.getId(), other, helix.getId());
 
         harness.forceActivePlayer(player2);
-        harness.setHand(player2, List.of(new ThirstForKnowledge()));
-        harness.addMana(player2, ManaColor.BLUE, 3);
-        harness.castInstant(player2, 0);
+        harness.castFromHand(player2, new ThirstForKnowledge(), "{2}{U}");
 
         assertThat(gd.stack).noneMatch(entry -> entry.getCard().getName().equals("Spellweaver Helix"));
     }
@@ -221,5 +203,159 @@ class SpellweaverHelixTest extends BaseCardTest {
         assertThat(gd.stack)
                 .extracting(entry -> entry.getCard().getName() + ":" + entry.isCopy())
                 .contains("Fabricate:true");
+    }
+
+    @Test
+    @DisplayName("Declining to copy creates no spell and leaves both imprinted cards exiled")
+    void decliningToCopyLeavesBothCardsExiled() {
+        Permanent helix = harness.addToBattlefieldAndReturn(player1, new SpellweaverHelix());
+        Fabricate matching = new Fabricate();
+        SylvanScrying other = new SylvanScrying();
+        gd.addToExile(player1.getId(), matching, helix.getId());
+        gd.addToExile(player1.getId(), other, helix.getId());
+
+        harness.castFromHand(player1, new Fabricate(), "{2}{U}");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.stack).noneMatch(entry -> entry.isCopy());
+        assertThat(gd.getCardsExiledByPermanent(helix.getId()))
+                .extracting(Card::getId).containsExactly(matching.getId(), other.getId());
+    }
+
+    @Test
+    @DisplayName("Two imprinted cards with the same name produce one copy without retriggering")
+    void sameNamedImprintedCardsProduceOneCopy() {
+        Permanent helix = harness.addToBattlefieldAndReturn(player1, new SpellweaverHelix());
+        gd.addToExile(player1.getId(), new Fabricate(), helix.getId());
+        gd.addToExile(player1.getId(), new Fabricate(), helix.getId());
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, new Fabricate(), "{2}{U}");
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.stack.stream().filter(entry -> entry.isCopy()).toList())
+                .singleElement().satisfies(entry -> {
+                    assertThat(entry.getCard().getName()).isEqualTo("Fabricate");
+                    assertThat(entry.getControllerId()).isEqualTo(player1.getId());
+                });
+        assertThat(gd.stack).noneMatch(entry -> entry.getCard().getName().equals("Spellweaver Helix"));
+    }
+
+    @Test
+    @DisplayName("A single imprinted card still causes a matching cast to trigger, but cannot produce a copy")
+    void singleImprintedCardStillTriggersButCannotCopy() {
+        Permanent helix = harness.addToBattlefieldAndReturn(player1, new SpellweaverHelix());
+        gd.addToExile(player1.getId(), new Fabricate(), helix.getId());
+        harness.castFromHand(player1, new Fabricate(), "{2}{U}");
+
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard().getName().equals("Spellweaver Helix"));
+        harness.passBothPriorities();
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+        assertThat(gd.stack).noneMatch(entry -> entry.isCopy());
+    }
+
+    @Test
+    @DisplayName("No copy is made if the other imprinted card leaves exile before resolution")
+    void otherImprintedCardLeavingExilePreventsCopy() {
+        Permanent helix = harness.addToBattlefieldAndReturn(player1, new SpellweaverHelix());
+        Fabricate matching = new Fabricate();
+        SylvanScrying other = new SylvanScrying();
+        gd.addToExile(player1.getId(), matching, helix.getId());
+        gd.addToExile(player1.getId(), other, helix.getId());
+        harness.castFromHand(player1, new Fabricate(), "{2}{U}");
+        gd.removeFromExile(other.getId());
+        gd.playerHands.get(player1.getId()).add(other);
+
+        harness.passBothPriorities();
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        assertThat(gd.stack).noneMatch(entry -> entry.isCopy());
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.getCardsExiledByPermanent(helix.getId()))
+                .extracting(Card::getId).containsExactly(matching.getId());
+    }
+
+    @Test
+    @DisplayName("Matching cards from a second imprint trigger also trigger the Helix")
+    void matchingCardBeyondFirstImprintedPairTriggers() {
+        Permanent helix = harness.addToBattlefieldAndReturn(player1, new SpellweaverHelix());
+        gd.addToExile(player1.getId(), new Fabricate(), helix.getId());
+        gd.addToExile(player1.getId(), new Fabricate(), helix.getId());
+        gd.addToExile(player1.getId(), new SylvanScrying(), helix.getId());
+        gd.addToExile(player1.getId(), new SylvanScrying(), helix.getId());
+
+        harness.castFromHand(player1, new SylvanScrying(), "{1}{G}");
+
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard().getName().equals("Spellweaver Helix"));
+    }
+
+    @Test
+    @DisplayName("A copied imprint trigger allows copies of every other linked card")
+    void multipleImprintedPairsAllowCopiesOfAllOtherCards() {
+        Permanent helix = harness.addToBattlefieldAndReturn(player1, new SpellweaverHelix());
+        gd.addToExile(player1.getId(), new Fabricate(), helix.getId());
+        gd.addToExile(player1.getId(), new Fabricate(), helix.getId());
+        gd.addToExile(player1.getId(), new SylvanScrying(), helix.getId());
+        gd.addToExile(player1.getId(), new SylvanScrying(), helix.getId());
+        harness.castFromHand(player1, new Fabricate(), "{2}{U}");
+
+        harness.passBothPriorities();
+        for (int choices = 0; choices < 8
+                && gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice; choices++) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        assertThat(gd.stack.stream().filter(entry -> entry.isCopy()).toList())
+                .extracting(entry -> entry.getCard().getName())
+                .containsExactlyInAnyOrder("Fabricate", "Sylvan Scrying", "Sylvan Scrying");
+        assertThat(gd.getCardsExiledByPermanent(helix.getId())).hasSize(4);
+    }
+
+    @Test
+    @DisplayName("Imprint exiles its remaining legal target when the other target leaves the graveyard")
+    void imprintExilesRemainingLegalTarget() {
+        Fabricate first = new Fabricate();
+        SylvanScrying second = new SylvanScrying();
+        harness.setGraveyard(player2, List.of(first, second));
+        harness.castFromHand(player1, new SpellweaverHelix(), "{3}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
+        harness.setGraveyard(player2, List.of(second));
+        harness.setHand(player2, List.of(first));
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        Permanent helix = findPermanent(player1, "Spellweaver Helix");
+        assertThat(gd.getCardsExiledByPermanent(helix.getId()))
+                .extracting(Card::getId).containsExactly(second.getId());
+        harness.assertNotInGraveyard(player2, "Sylvan Scrying");
+    }
+
+    @Test
+    @DisplayName("Removing Helix after it triggers does not prevent copying the other card")
+    void copyAbilitySurvivesSourceLeavingBattlefield() {
+        Permanent helix = harness.addToBattlefieldAndReturn(player1, new SpellweaverHelix());
+        gd.addToExile(player1.getId(), new Fabricate(), helix.getId());
+        gd.addToExile(player1.getId(), new SylvanScrying(), helix.getId());
+        harness.castFromHand(player1, new Fabricate(), "{2}{U}");
+        gd.playerBattlefields.get(player1.getId()).remove(helix);
+        gd.playerGraveyards.get(player1.getId()).add(helix.getCard());
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.stack.stream().filter(entry -> entry.isCopy()).toList())
+                .singleElement().satisfies(entry ->
+                        assertThat(entry.getCard().getName()).isEqualTo("Sylvan Scrying"));
     }
 }
