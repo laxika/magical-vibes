@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.a.AuroraGriffin;
 import com.github.laxika.magicalvibes.cards.k.KavuRecluse;
 import com.github.laxika.magicalvibes.cards.m.MeteorCrater;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -18,6 +19,41 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({SteelLeafPaladin.class, AlphaKavu.class, AuroraGriffin.class, KavuRecluse.class,
         MeteorCrater.class})
 class SteelLeafPaladinTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("The trigger resolves without a choice when the Paladin leaves and no eligible creature remains")
+    void noEligibleCreatureWhenSourceLeavesBeforeResolution() {
+        harness.addToBattlefield(player1, new KavuRecluse());
+        harness.addToBattlefield(player2, new AuroraGriffin());
+        Permanent paladin = harness.enterBattlefieldAndReturn(player1, new SteelLeafPaladin());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, paladin));
+
+        resolveAllTriggers();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInHand(player1, "Steel Leaf Paladin");
+        harness.assertOnBattlefield(player1, "Kavu Recluse");
+        harness.assertOnBattlefield(player2, "Aurora Griffin");
+    }
+
+    @Test
+    @DisplayName("The return trigger still returns another eligible creature after the Paladin leaves")
+    void triggerSurvivesSourceLeavingBattlefield() {
+        UUID greenId = harness.addToBattlefieldAndReturn(player1, new AlphaKavu()).getId();
+        Permanent paladin = harness.enterBattlefieldAndReturn(player1, new SteelLeafPaladin());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, paladin));
+
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactly(greenId);
+        harness.handlePermanentChosen(player1, greenId);
+
+        harness.assertInHand(player1, "Alpha Kavu");
+        harness.assertNotOnBattlefield(player1, "Alpha Kavu");
+        harness.assertInHand(player1, "Steel Leaf Paladin");
+    }
 
     @Test
     @DisplayName("ETB allows choosing a green or white creature you control, including itself")
