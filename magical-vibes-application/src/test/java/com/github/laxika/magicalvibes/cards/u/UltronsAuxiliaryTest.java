@@ -23,8 +23,7 @@ class UltronsAuxiliaryTest extends BaseCardTest {
     @Test
     void anotherArtifactPutIntoYourGraveyardFromBattlefieldAddsCounter() {
         Permanent auxiliary = harness.addToBattlefieldAndReturn(player1, new UltronsAuxiliary());
-        harness.addToBattlefield(player1, new LeoninScimitar());
-        Permanent scimitar = findPermanent(player1, "Leonin Scimitar");
+        Permanent scimitar = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
 
         harness.setHand(player1, List.of(new Naturalize()));
         harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.GREEN, 2);
@@ -71,6 +70,38 @@ class UltronsAuxiliaryTest extends BaseCardTest {
         harness.castInstant(player1, 0, harness.getPermanentId(player2, "Leonin Scimitar"));
         harness.passBothPriorities();
 
+        assertThat(auxiliary.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void ownedArtifactControlledByOpponentStillAddsCounter() {
+        Permanent auxiliary = harness.addToBattlefieldAndReturn(player1, new UltronsAuxiliary());
+        LeoninScimitar scimitarCard = new LeoninScimitar();
+        scimitarCard.setOwnerId(player1.getId());
+        Permanent scimitar = harness.addToBattlefieldAndReturn(player2, scimitarCard);
+        harness.setHand(player1, List.of(new Naturalize()));
+        harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.GREEN, 2);
+
+        harness.castInstant(player1, 0, scimitar.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Leonin Scimitar");
+        assertThat(auxiliary.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void opponentsArtifactControlledByYouDoesNotAddCounter() {
+        Permanent auxiliary = harness.addToBattlefieldAndReturn(player1, new UltronsAuxiliary());
+        LeoninScimitar scimitarCard = new LeoninScimitar();
+        scimitarCard.setOwnerId(player2.getId());
+        Permanent scimitar = harness.addToBattlefieldAndReturn(player1, scimitarCard);
+        harness.setHand(player1, List.of(new Naturalize()));
+        harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.GREEN, 2);
+
+        harness.castInstant(player1, 0, scimitar.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Leonin Scimitar");
         assertThat(auxiliary.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 }
