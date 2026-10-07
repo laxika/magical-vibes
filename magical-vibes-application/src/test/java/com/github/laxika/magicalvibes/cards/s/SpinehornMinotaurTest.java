@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -43,6 +44,61 @@ class SpinehornMinotaurTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, minotaur, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 
+    @Test
+    @DisplayName("Draws before entering the battlefield count, including more than two draws")
+    void countsDrawsBeforeEnteringBattlefield() {
+        harness.setLibrary(player1, List.of(
+                new SpinehornMinotaur(), new SpinehornMinotaur(), new SpinehornMinotaur()));
+        draw(player1);
+        draw(player1);
+        draw(player1);
+
+        Permanent minotaur = addCreatureReady(player1, new SpinehornMinotaur());
+
+        assertThat(gqs.hasKeyword(gd, minotaur, Keyword.DOUBLE_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Loses double strike when the next turn begins")
+    void losesDoubleStrikeOnNextTurn() {
+        Permanent minotaur = addCreatureReady(player1, new SpinehornMinotaur());
+        harness.setLibrary(player1, List.of(new SpinehornMinotaur(), new SpinehornMinotaur()));
+        draw(player1);
+        draw(player1);
+        assertThat(gqs.hasKeyword(gd, minotaur, Keyword.DOUBLE_STRIKE)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.hasKeyword(gd, minotaur, Keyword.DOUBLE_STRIKE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Two draws on the opponent's turn also grant double strike")
+    void gainsDoubleStrikeDuringOpponentsTurn() {
+        harness.forceActivePlayer(player2);
+        Permanent minotaur = addCreatureReady(player1, new SpinehornMinotaur());
+        harness.setLibrary(player1, List.of(new SpinehornMinotaur(), new SpinehornMinotaur()));
+        draw(player1);
+        draw(player1);
+
+        assertThat(gqs.hasKeyword(gd, minotaur, Keyword.DOUBLE_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Deals damage in both combat damage steps after drawing two cards")
+    void dealsDoubleStrikeCombatDamage() {
+        addCreatureReady(player1, new SpinehornMinotaur());
+        harness.setLibrary(player1, List.of(new SpinehornMinotaur(), new SpinehornMinotaur()));
+        draw(player1);
+        draw(player1);
+        harness.setLife(player2, 20);
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
+    }
     private void draw(Player player) {
         harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player.getId()));
     }
