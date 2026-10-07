@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.cards.r.RhoxFaithmender;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,9 +13,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({TreeOfRedemption.class})
 class TreeOfRedemptionTest extends BaseCardTest {
 
-    // ===== Exchange behavior =====
 
     @Test
     @DisplayName("Exchange sets life to toughness and toughness to old life total")
@@ -34,7 +36,7 @@ class TreeOfRedemptionTest extends BaseCardTest {
     @DisplayName("Exchange when life is lower than toughness raises life")
     void exchangeWhenLifeLowerThanToughness() {
         Permanent tree = addReadyTree(player1);
-        gd.playerLifeTotals.put(player1.getId(), 5);
+        harness.setLife(player1, 5);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -48,7 +50,7 @@ class TreeOfRedemptionTest extends BaseCardTest {
     @DisplayName("Exchange when life equals toughness does nothing")
     void exchangeWhenLifeEqualsToughness() {
         Permanent tree = addReadyTree(player1);
-        gd.playerLifeTotals.put(player1.getId(), 13);
+        harness.setLife(player1, 13);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -113,7 +115,6 @@ class TreeOfRedemptionTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, tree)).isEqualTo(22);
     }
 
-    // ===== Stack behavior =====
 
     @Test
     @DisplayName("Activating ability puts it on the stack")
@@ -127,7 +128,6 @@ class TreeOfRedemptionTest extends BaseCardTest {
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Tree of Redemption");
     }
 
-    // ===== Tap cost =====
 
     @Test
     @DisplayName("Activating ability taps Tree of Redemption")
@@ -160,12 +160,94 @@ class TreeOfRedemptionTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Helpers =====
 
+    @Test
+    @DisplayName("Equal life and effective toughness still sets base toughness")
+    void equalValuesStillSetBaseToughness() {
+        Permanent tree = addReadyTree(player1);
+        tree.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.setLife(player1, 15);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 15);
+        assertThat(gqs.getEffectiveToughness(gd, tree)).isEqualTo(17);
+    }
+
+    @Test
+    @CardUsed({RhoxFaithmender.class})
+    @DisplayName("Life gain from the exchange is doubled by Rhox Faithmender")
+    void exchangeAppliesLifeGainReplacement() {
+        Permanent tree = addReadyTree(player1);
+        harness.addToBattlefield(player1, new RhoxFaithmender());
+        harness.setLife(player1, 5);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 21);
+        assertThat(gqs.getEffectiveToughness(gd, tree)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Exchange cannot lower life when life loss is prohibited")
+    void exchangeDoesNotOccurWhenLifeLossIsProhibited() {
+        Permanent tree = addReadyTree(player1);
+        gd.playersWhoCantLoseLifeThisTurn.add(player1.getId());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        assertThat(gqs.getEffectiveToughness(gd, tree)).isEqualTo(13);
+    }
+
+    @Test
+    @DisplayName("Exchange uses life and toughness at resolution")
+    void exchangeUsesValuesAtResolution() {
+        Permanent tree = addReadyTree(player1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.setLife(player1, 7);
+        tree.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 15);
+        assertThat(gqs.getEffectiveToughness(gd, tree)).isEqualTo(9);
+    }
+
+    @Test
+    @DisplayName("Exchange has no effect if the Tree leaves before resolution")
+    void exchangeDoesNotUseLastKnownToughness() {
+        Permanent tree = addReadyTree(player1);
+        harness.activateAbility(player1, 0, null, null);
+        gd.playerBattlefields.get(player1.getId()).remove(tree);
+        gd.playerGraveyards.get(player1.getId()).add(tree.getCard());
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertInGraveyard(player1, "Tree of Redemption");
+    }
+
+    @Test
+    @DisplayName("Exchange cannot raise life when life gain is prohibited")
+    void exchangeDoesNotOccurWhenLifeGainIsProhibited() {
+        Permanent tree = addReadyTree(player1);
+        harness.setLife(player1, 5);
+        gd.playersWhoCantGainLifeThisTurn.add(player1.getId());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 5);
+        assertThat(gqs.getEffectiveToughness(gd, tree)).isEqualTo(13);
+    }
     private Permanent addReadyTree(Player player) {
-        Permanent perm = new Permanent(new TreeOfRedemption());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new TreeOfRedemption());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
+
         return perm;
     }
 }
