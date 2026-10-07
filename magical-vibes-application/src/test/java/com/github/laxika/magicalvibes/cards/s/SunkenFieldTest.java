@@ -86,6 +86,63 @@ class SunkenFieldTest extends BaseCardTest {
         assertThat(land.isTapped()).isTrue();
     }
 
+    @Test
+    @DisplayName("Casting Sunken Field attaches it and grants the counter ability")
+    void castingAuraGrantsAbility() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new RhysticCave());
+        harness.setHand(player1, List.of(new SunkenField()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castEnchantment(player1, 0, land.getId());
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Sunken Field");
+
+        WellOfDiscovery spell = new WellOfDiscovery();
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, spell, "{6}");
+        harness.passPriority(player2);
+        harness.activateAbility(player1, 0, 1, null, spell.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Well of Discovery");
+        assertThat(land.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The spell is countered when its controller declines an affordable payment")
+    void countersSpellWhenControllerDeclinesPayment() {
+        addEnchantedLand();
+        WellOfDiscovery spell = new WellOfDiscovery();
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, spell, "{6}");
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.passPriority(player2);
+        harness.activateAbility(player1, 0, 1, null, spell.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+
+        harness.assertInGraveyard(player2, "Well of Discovery");
+        harness.assertNotOnBattlefield(player2, "Well of Discovery");
+    }
+
+    @Test
+    @DisplayName("A tapped enchanted land cannot activate the granted ability")
+    void tappedLandCannotActivateAbility() {
+        Permanent land = addEnchantedLand();
+        land.setTapped(true);
+        WellOfDiscovery spell = new WellOfDiscovery();
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, spell, "{6}");
+        harness.passPriority(player2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, spell.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Well of Discovery");
+    }
+
     private Permanent addEnchantedLand() {
         Permanent land = harness.addToBattlefieldAndReturn(player1, new RhysticCave());
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new SunkenField());
