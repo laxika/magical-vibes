@@ -1,72 +1,44 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.c.CrawWurm;
+import com.github.laxika.magicalvibes.cards.e.EthercasteKnight;
+import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
+import com.github.laxika.magicalvibes.cards.g.GiantSpider;
+import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.o.Oakenform;
+import com.github.laxika.magicalvibes.cards.p.Pyroclasm;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
+import com.github.laxika.magicalvibes.cards.w.WindDrake;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SphinxOfTheSteelWind.class, ShivanDragon.class, GiantSpider.class, WindDrake.class,
+        CrawWurm.class, AirElemental.class, LightningBolt.class, GiantGrowth.class, Unsummon.class,
+        EthercasteKnight.class, Pyroclasm.class, Oakenform.class})
 class SphinxOfTheSteelWindTest extends BaseCardTest {
-
-    private static Card createCreature(String name, int power, int toughness, CardColor color) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{1}");
-        card.setColor(color);
-        card.setPower(power);
-        card.setToughness(toughness);
-        return card;
-    }
-
-    private static Card createFlyer(String name, int power, int toughness, CardColor color) {
-        Card card = createCreature(name, power, toughness, color);
-        card.setKeywords(Set.of(Keyword.FLYING));
-        return card;
-    }
-
-    private static Card createTargetedInstant(String name, CardColor color, String manaCost) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.INSTANT);
-        card.setManaCost(manaCost);
-        card.setColor(color);
-        card.addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(1));
-        return card;
-    }
-
-    // ===== Protection - blocking =====
 
     @Test
     @DisplayName("Red creature cannot block Sphinx of the Steel Wind")
     void redCreatureCannotBlock() {
-        Permanent attacker = new Permanent(new SphinxOfTheSteelWind());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new SphinxOfTheSteelWind());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(createFlyer("Fire Elemental", 5, 5, CardColor.RED));
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        addCreatureReady(player2, new ShivanDragon());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -76,19 +48,12 @@ class SphinxOfTheSteelWindTest extends BaseCardTest {
     @Test
     @DisplayName("Green creature cannot block Sphinx of the Steel Wind")
     void greenCreatureCannotBlock() {
-        Permanent attacker = new Permanent(new SphinxOfTheSteelWind());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new SphinxOfTheSteelWind());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(createFlyer("Craw Wurm", 6, 4, CardColor.GREEN));
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        addCreatureReady(player2, new GiantSpider());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -98,118 +63,102 @@ class SphinxOfTheSteelWindTest extends BaseCardTest {
     @Test
     @DisplayName("Blue creature can block Sphinx of the Steel Wind")
     void blueCreatureCanBlock() {
-        Permanent attacker = new Permanent(new SphinxOfTheSteelWind());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new SphinxOfTheSteelWind());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(createFlyer("Wind Drake", 2, 2, CardColor.BLUE));
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        Permanent blocker = addCreatureReady(player2, new WindDrake());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(blocker.isBlocking()).isTrue();
     }
 
-    // ===== Protection - combat damage =====
-
     @Test
     @DisplayName("Sphinx takes no combat damage from red creature")
     void takesNoDamageFromRed() {
-        Permanent attacker = new Permanent(createCreature("Fire Elemental", 7, 7, CardColor.RED));
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new ShivanDragon());
+        attacker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(new SphinxOfTheSteelWind());
-        blocker.setSummoningSick(false);
+        Permanent blocker = addCreatureReady(player2, new SphinxOfTheSteelWind());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
 
         harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
 
-        harness.passBothPriorities();
-
-        // Sphinx deals 6 first strike (7/7 survives); red's 7 damage is prevented (protection)
+        harness.resolveCombatDamage();
+        assertThat(attacker.getMarkedDamage()).isEqualTo(6);
         harness.assertOnBattlefield(player2, "Sphinx of the Steel Wind");
+        harness.resolveCombatDamage();
+
+        harness.assertOnBattlefield(player2, "Sphinx of the Steel Wind");
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(26);
+        assertThat(blocker.getMarkedDamage()).isZero();
     }
 
     @Test
     @DisplayName("Sphinx takes no combat damage from green creature")
     void takesNoDamageFromGreen() {
-        Permanent attacker = new Permanent(createCreature("Craw Wurm", 7, 7, CardColor.GREEN));
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new CrawWurm());
+        attacker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(new SphinxOfTheSteelWind());
-        blocker.setSummoningSick(false);
+        Permanent blocker = addCreatureReady(player2, new SphinxOfTheSteelWind());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
 
         harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
 
-        harness.passBothPriorities();
-
-        // Sphinx deals 6 first strike (7/7 survives); green's 7 damage is prevented (protection)
+        harness.resolveCombatDamage();
+        assertThat(attacker.getMarkedDamage()).isEqualTo(6);
         harness.assertOnBattlefield(player2, "Sphinx of the Steel Wind");
+        harness.resolveCombatDamage();
+
+        harness.assertOnBattlefield(player2, "Sphinx of the Steel Wind");
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(26);
+        assertThat(blocker.getMarkedDamage()).isZero();
     }
 
     @Test
     @DisplayName("Sphinx takes normal combat damage from blue creature")
     void takesNormalDamageFromBlue() {
-        Permanent attacker = new Permanent(createCreature("Blue Ogre", 7, 7, CardColor.BLUE));
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new AirElemental());
+        attacker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(new SphinxOfTheSteelWind());
-        blocker.setSummoningSick(false);
+        Permanent blocker = addCreatureReady(player2, new SphinxOfTheSteelWind());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
 
         harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
 
-        harness.passBothPriorities();
+        harness.resolveCombatDamage();
+        assertThat(attacker.getMarkedDamage()).isEqualTo(6);
+        harness.assertOnBattlefield(player2, "Sphinx of the Steel Wind");
+        harness.resolveCombatDamage();
 
-        // Sphinx deals 6 first strike (7/7 survives); blue's 7 damage kills the 6/6 Sphinx (no protection)
         harness.assertNotOnBattlefield(player2, "Sphinx of the Steel Wind");
         harness.assertInGraveyard(player2, "Sphinx of the Steel Wind");
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(26);
     }
-
-    // ===== Protection - targeting =====
 
     @Test
     @DisplayName("Cannot be targeted by red instant")
     void cannotBeTargetedByRed() {
-        Permanent sphinx = new Permanent(new SphinxOfTheSteelWind());
-        sphinx.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(sphinx);
+        Permanent sphinx = addCreatureReady(player2, new SphinxOfTheSteelWind());
 
         // Add valid target so spell is playable
-        Permanent decoy = new Permanent(createCreature("Wind Drake", 2, 2, CardColor.BLUE));
-        decoy.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(decoy);
+        addCreatureReady(player2, new WindDrake());
 
-        harness.setHand(player1, List.of(createTargetedInstant("Lightning Bolt", CardColor.RED, "{R}")));
+        harness.setHand(player1, List.of(new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, sphinx.getId(), null))
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, sphinx.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("protection from red");
     }
@@ -217,19 +166,15 @@ class SphinxOfTheSteelWindTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot be targeted by green instant")
     void cannotBeTargetedByGreen() {
-        Permanent sphinx = new Permanent(new SphinxOfTheSteelWind());
-        sphinx.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(sphinx);
+        Permanent sphinx = addCreatureReady(player2, new SphinxOfTheSteelWind());
 
         // Add valid target so spell is playable
-        Permanent decoy = new Permanent(createCreature("Wind Drake", 2, 2, CardColor.BLUE));
-        decoy.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(decoy);
+        addCreatureReady(player2, new WindDrake());
 
-        harness.setHand(player1, List.of(createTargetedInstant("Prey Upon", CardColor.GREEN, "{G}")));
+        harness.setHand(player1, List.of(new GiantGrowth()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, sphinx.getId(), null))
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, sphinx.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("protection from green");
     }
@@ -237,16 +182,101 @@ class SphinxOfTheSteelWindTest extends BaseCardTest {
     @Test
     @DisplayName("Can be targeted by blue instant")
     void canBeTargetedByBlue() {
-        Permanent sphinx = new Permanent(new SphinxOfTheSteelWind());
-        sphinx.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(sphinx);
+        Permanent sphinx = addCreatureReady(player1, new SphinxOfTheSteelWind());
 
-        harness.setHand(player1, List.of(createTargetedInstant("Slice", CardColor.BLUE, "{U}")));
+        harness.setHand(player1, List.of(new Unsummon()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        gs.playCard(gd, player1, 0, 0, sphinx.getId(), null);
+        harness.castInstant(player1, 0, sphinx.getId());
 
-        assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Slice");
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Sphinx of the Steel Wind");
+        harness.assertInHand(player1, "Sphinx of the Steel Wind");
+    }
+
+    @Test
+    @DisplayName("A ground creature of an unprotected color cannot block the flying Sphinx")
+    void groundCreatureCannotBlock() {
+        addCreatureReady(player1, new SphinxOfTheSteelWind()).setAttacking(true);
+        addCreatureReady(player2, new EthercasteKnight());
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("flying");
+    }
+
+    @Test
+    @DisplayName("Attacking with vigilance does not tap Sphinx")
+    void attackingDoesNotTapSphinx() {
+        Permanent sphinx = addCreatureReady(player1, new SphinxOfTheSteelWind());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThat(sphinx.isAttacking()).isTrue();
+        assertThat(sphinx.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Unblocked Sphinx deals first-strike damage and gains life only once")
+    void unblockedFirstStrikeLifelink() {
+        addCreatureReady(player1, new SphinxOfTheSteelWind()).setAttacking(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+
+        harness.resolveCombatDamage();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(26);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(14);
+        harness.resolveCombatDamage();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(26);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(14);
+    }
+
+    @Test
+    @DisplayName("First strike kills a blue blocker before it deals damage")
+    void firstStrikeKillsBlockerBeforeRegularDamage() {
+        Permanent sphinx = addCreatureReady(player1, new SphinxOfTheSteelWind());
+        sphinx.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new AirElemental());
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+
+        harness.resolveCombatDamage();
+        harness.assertInGraveyard(player2, "Air Elemental");
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(26);
+        harness.resolveCombatDamage();
+        assertThat(sphinx.getMarkedDamage()).isZero();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Protection prevents damage from a nontargeted red spell")
+    void preventsNontargetedRedDamage() {
+        Permanent sphinx = addCreatureReady(player1, new SphinxOfTheSteelWind());
+        addCreatureReady(player2, new WindDrake());
+        harness.setHand(player1, List.of(new Pyroclasm()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(sphinx.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player1, "Sphinx of the Steel Wind");
+        harness.assertInGraveyard(player2, "Wind Drake");
+    }
+
+    @Test
+    @DisplayName("Protection prevents targeting Sphinx with a green Aura")
+    void cannotEnchantWithGreenAura() {
+        Permanent sphinx = addCreatureReady(player1, new SphinxOfTheSteelWind());
+        addCreatureReady(player1, new WindDrake());
+        harness.setHand(player1, List.of(new Oakenform()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, sphinx.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection");
     }
 }
