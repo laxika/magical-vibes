@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -37,10 +38,7 @@ class ThrasiosTritonHeroTest extends BaseCardTest {
         gs.handleInteractionAnswer(gd, player1,
                 new InteractionAnswer.ScryOrder(List.of(0), List.of()));
 
-        Permanent forest = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard() instanceof Forest)
-                .findFirst()
-                .orElseThrow();
+        Permanent forest = findPermanent(player1, "Forest");
         assertThat(forest.isTapped()).isTrue();
         assertThat(gd.playerDecks.get(player1.getId()))
                 .extracting(card -> card.getName())
@@ -100,10 +98,8 @@ class ThrasiosTritonHeroTest extends BaseCardTest {
         harness.getGameService().handleInteractionAnswer(
                 gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
 
-        Permanent landPermanent = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard() == land)
-                .findFirst()
-                .orElseThrow();
+        Permanent landPermanent = findPermanent(player1, "Forest");
+        assertThat(landPermanent.getCard()).isSameAs(land);
         assertThat(landPermanent.isTapped()).isTrue();
         assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(land);
     }
@@ -123,6 +119,63 @@ class ThrasiosTritonHeroTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).contains(nonland);
         assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(nonland);
+    }
+
+    @Test
+    @DisplayName("An empty library still requires a draw and causes a loss")
+    void emptyLibraryRequiresDraw() {
+        addThrasios();
+        harness.setLibrary(player1, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player2.getId());
+    }
+
+    @Test
+    @DisplayName("Putting the only card on the bottom still reveals that card")
+    void bottomingOnlyLandStillPutsItOntoBattlefield() {
+        addThrasios();
+        Card land = new Forest();
+        harness.setLibrary(player1, List.of(land));
+        harness.setHand(player1, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+
+        Permanent forest = findPermanent(player1, "Forest");
+        assertThat(forest.getCard()).isSameAs(land);
+        assertThat(forest.isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    @DisplayName("The ability can be activated while tapped and summoning sick")
+    void activatesWhileTappedAndSummoningSick() {
+        Permanent thrasios = addThrasios();
+        thrasios.tap();
+        thrasios.setSummoningSick(true);
+        Card card = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(card));
+        harness.setHand(player1, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(card);
+        assertThat(thrasios.isTapped()).isTrue();
     }
 
     private Permanent addThrasios() {
