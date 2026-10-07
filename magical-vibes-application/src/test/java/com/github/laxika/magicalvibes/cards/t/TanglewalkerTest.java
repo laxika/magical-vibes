@@ -3,7 +3,9 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.d.DarksteelCitadel;
 import com.github.laxika.magicalvibes.cards.d.DarksteelGargoyle;
 import com.github.laxika.magicalvibes.cards.d.DarksteelIngot;
+import com.github.laxika.magicalvibes.cards.e.EchoingTruth;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -17,7 +19,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Tanglewalker.class, DarksteelCitadel.class, DarksteelGargoyle.class, DarksteelIngot.class})
+@CardUsed({Tanglewalker.class, DarksteelCitadel.class, DarksteelGargoyle.class, DarksteelIngot.class,
+        EchoingTruth.class})
 class TanglewalkerTest extends BaseCardTest {
 
     @Test
@@ -93,6 +96,68 @@ class TanglewalkerTest extends BaseCardTest {
         Permanent tanglewalker = addAttackingCreature(player1, new Tanglewalker());
 
         prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(battlefieldIndex(player2, blocker),
+                        battlefieldIndex(player1, tanglewalker))));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A tapped artifact land still enables Tanglewalker's ability")
+    void tappedArtifactLandEnablesAbility() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new DarksteelCitadel());
+        land.setTapped(true);
+        Permanent blocker = addCreatureReady(player2, new DarksteelGargoyle());
+        Permanent tanglewalker = addAttackingCreature(player1, new Tanglewalker());
+
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(battlefieldIndex(player2, blocker),
+                        battlefieldIndex(player1, tanglewalker)))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+    }
+
+    @Test
+    @DisplayName("Creatures can be blocked after Tanglewalker leaves the battlefield")
+    void abilityEndsWhenTanglewalkerLeavesBattlefield() {
+        harness.addToBattlefield(player2, new DarksteelCitadel());
+        Permanent blocker = addCreatureReady(player2, new DarksteelGargoyle());
+        Permanent creature = addAttackingCreature(player1, new DarksteelGargoyle());
+        Permanent tanglewalker = harness.addToBattlefieldAndReturn(player1, new Tanglewalker());
+        harness.setHand(player1, List.of(new EchoingTruth()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0, tanglewalker.getId());
+        harness.assertNotOnBattlefield(player1, "Tanglewalker");
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(battlefieldIndex(player2, blocker),
+                        battlefieldIndex(player1, creature))));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Creatures can be blocked when the defender no longer controls an artifact land")
+    void abilityEndsWhenLastArtifactLandLeavesBattlefield() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new DarksteelCitadel());
+        Permanent blocker = addCreatureReady(player2, new DarksteelGargoyle());
+        Permanent tanglewalker = addAttackingCreature(player1, new Tanglewalker());
+
+        prepareDeclareBlockers();
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(battlefieldIndex(player2, blocker),
+                        battlefieldIndex(player1, tanglewalker)))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+
+        gd.playerBattlefields.get(player2.getId()).remove(land);
 
         gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(battlefieldIndex(player2, blocker),
