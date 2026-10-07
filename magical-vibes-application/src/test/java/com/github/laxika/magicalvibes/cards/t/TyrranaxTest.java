@@ -85,6 +85,46 @@ class TyrranaxTest extends BaseCardTest {
                 .hasMessageContaining("Not enough mana");
     }
 
+    @Test
+    @DisplayName("A tapped Tyrranax can activate its ability, which affects only itself on resolution")
+    void tappedSourceIsBoostedOnlyAfterResolution() {
+        Permanent source = addReadyTyrranax(player1);
+        Permanent other = addReadyTyrranax(player1);
+        Permanent opposing = addReadyTyrranax(player2);
+        source.tap();
+        addAbilityMana(player1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(source.getPowerModifier()).isZero();
+        assertThat(source.getToughnessModifier()).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(source.getPowerModifier()).isEqualTo(-1);
+        assertThat(source.getToughnessModifier()).isEqualTo(1);
+        assertThat(source.isTapped()).isTrue();
+        assertThat(other.getPowerModifier()).isZero();
+        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(opposing.getPowerModifier()).isZero();
+        assertThat(opposing.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Two colorless mana cannot pay the ability's green mana requirement")
+    void cannotActivateWithoutGreenMana() {
+        Permanent tyrranax = addReadyTyrranax(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(tyrranax.getPowerModifier()).isZero();
+        assertThat(tyrranax.getToughnessModifier()).isZero();
+    }
     private Permanent addReadyTyrranax(Player player) {
         return addCreatureReady(player, new Tyrranax());
     }
