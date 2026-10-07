@@ -16,7 +16,8 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(SyphonSoul.class)
+@CardUsed({SyphonSoul.class, CircleOfProtectionBlack.class, FurnaceOfRath.class,
+        GrizzlyBears.class, Pariah.class, PlatinumEmperion.class, UrzasArmor.class})
 class SyphonSoulTest extends BaseCardTest {
 
     private void castSyphonSoul() {
@@ -55,6 +56,27 @@ class SyphonSoulTest extends BaseCardTest {
 
         harness.assertLife(player2, 20);
         harness.assertLife(player1, 22);
+    }
+
+    @Test
+    void dealsDamageEvenWhenControllersLifeTotalCannotChange() {
+        harness.addToBattlefield(player1, new PlatinumEmperion());
+
+        castSyphonSoul();
+
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    void gainsFullDamageAmountWhenOpponentHasLessLifeThanDamage() {
+        harness.setLife(player2, 1);
+
+        castSyphonSoul();
+
+        harness.assertLife(player2, -1);
+        harness.assertLife(player1, 22);
+        harness.assertInGraveyard(player1, "Syphon Soul");
     }
 
     @Test
