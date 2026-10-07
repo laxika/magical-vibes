@@ -57,4 +57,32 @@ class StaunchDefendersTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         harness.assertLife(player1, 20);
     }
+
+    @Test
+    @DisplayName("Entering without being cast gains life for the entering creature's controller")
+    void entryWithoutCastingGainsLifeForController() {
+        harness.setLife(player1, 11);
+        harness.setLife(player2, 16);
+
+        harness.enterBattlefieldAndReturn(player2, new StaunchDefenders());
+
+        harness.assertLife(player2, 16);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 11);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Each entering copy triggers its own four life gain")
+    void eachEnteringCopyGainsFourLife() {
+        harness.enterBattlefieldAndReturn(player1, new StaunchDefenders());
+        harness.enterBattlefieldAndReturn(player1, new StaunchDefenders());
+
+        harness.assertLife(player1, 20);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 28);
+        harness.assertLife(player2, 20);
+    }
 }
