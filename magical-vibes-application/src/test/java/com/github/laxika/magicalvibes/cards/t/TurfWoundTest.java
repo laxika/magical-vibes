@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({TurfWound.class, Forest.class, NomadicElf.class})
 class TurfWoundTest extends BaseCardTest {
@@ -78,5 +79,33 @@ class TurfWoundTest extends BaseCardTest {
         assertThat(harness.getGameData().playerHands.get(player1.getId()))
                 .anyMatch(card -> card instanceof NomadicElf);
         assertThat(harness.getGameData().playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can target its controller and still draw exactly one card")
+    void canTargetController() {
+        harness.setLibrary(player1, List.of(new NomadicElf(), new Forest()));
+
+        castAt(player1);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.assertInHand(player1, "Nomadic Elf");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(playableCards(player1)).doesNotContain(0).contains(1);
+        assertThat(playableCards(player2)).contains(0);
+    }
+
+    @Test
+    @DisplayName("Restricted player cannot actually play a land but can cast a creature")
+    void rejectsLandPlayButAllowsCreatureCast() {
+        castAt(player2);
+        playableCards(player2);
+
+        assertThatThrownBy(() -> harness.playLand(player2, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInHand(player2, "Forest");
+        harness.castCreature(player2, 1);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Nomadic Elf");
     }
 }
