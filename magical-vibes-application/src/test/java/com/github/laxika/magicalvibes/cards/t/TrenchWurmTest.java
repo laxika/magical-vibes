@@ -120,6 +120,37 @@ class TrenchWurmTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Can activate during an opponent's turn and taps before resolution")
+    void canActivateDuringOpponentsTurn() {
+        Permanent wurm = addCreatureReady(player1, new TrenchWurm());
+        harness.addToBattlefield(player2, new CoastalTower());
+        addActivationMana();
+        harness.forceActivePlayer(player2);
+        UUID targetId = harness.getPermanentId(player2, "Coastal Tower");
+
+        harness.activateAbility(player1, 0, null, targetId);
+
+        assertThat(wurm.isTapped()).isTrue();
+        harness.assertOnBattlefield(player2, "Coastal Tower");
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Coastal Tower");
+        harness.assertInGraveyard(player2, "Coastal Tower");
+    }
+
+    @Test
+    @DisplayName("Cannot activate without choosing a target")
+    void cannotActivateWithoutTarget() {
+        addCreatureReady(player1, new TrenchWurm());
+        harness.addToBattlefield(player2, new CoastalTower());
+        addActivationMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
     private void addActivationMana() {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
