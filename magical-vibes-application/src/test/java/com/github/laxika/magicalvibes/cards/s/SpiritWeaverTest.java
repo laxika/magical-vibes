@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.d.DrudgeSkeletons;
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -20,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({SpiritWeaver.class, GrizzlyBears.class, FugitiveWizard.class, SteadfastGuard.class,
-        DrudgeSkeletons.class, Plains.class})
+        DrudgeSkeletons.class, Plains.class, Unsummon.class})
 class SpiritWeaverTest extends BaseCardTest {
 
     // ===== Activation =====
@@ -220,5 +221,65 @@ class SpiritWeaverTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a");
     }
 
+    @Test
+    @DisplayName("Can activate while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent weaver = harness.addToBattlefieldAndReturn(player1, new SpiritWeaver());
+        weaver.setSummoningSick(true);
+        weaver.setTapped(true);
+        Permanent target = addCreatureReady(player2, new FugitiveWizard());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(weaver.isTapped()).isTrue();
+        assertThat(target.getEffectivePower()).isEqualTo(1);
+        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Ability resolves after Spirit Weaver leaves the battlefield")
+    void abilityResolvesAfterSourceLeaves() {
+        Permanent weaver = addCreatureReady(player1, new SpiritWeaver());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.setHand(player2, java.util.List.of(new Unsummon()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.castInstant(player2, 0, weaver.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Spirit Weaver");
+        harness.assertInHand(player1, "Spirit Weaver");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(target.getEffectivePower()).isEqualTo(2);
+        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Ability does not resolve when its target leaves the battlefield")
+    void abilityDoesNotResolveAfterTargetLeaves() {
+        addCreatureReady(player1, new SpiritWeaver());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.setHand(player2, java.util.List.of(new Unsummon()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.castInstant(player2, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(findPermanent(player1, "Spirit Weaver").getToughnessModifier()).isZero();
+    }
 }
 
