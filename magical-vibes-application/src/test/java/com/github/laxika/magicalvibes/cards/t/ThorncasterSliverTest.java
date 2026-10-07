@@ -5,7 +5,9 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ThorncasterSliver.class, GaleriderSliver.class, GrizzlyBears.class})
 class ThorncasterSliverTest extends BaseCardTest {
 
     @Test
@@ -72,5 +75,70 @@ class ThorncasterSliverTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Opposing Slivers do not gain the attack trigger")
+    void opposingSliverGetsNoTrigger() {
+        addCreatureReady(player1, new ThorncasterSliver());
+        addCreatureReady(player2, new GaleriderSliver());
+
+        declareAttackers(player2, List.of(0));
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 19);
+    }
+
+    @Test
+    @DisplayName("Two Thorncasters grant two independent triggers with different targets")
+    void multipleCopiesGrantIndependentTriggers() {
+        addCreatureReady(player1, new GaleriderSliver());
+        addCreatureReady(player1, new ThorncasterSliver());
+        addCreatureReady(player1, new ThorncasterSliver());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            harness.handlePermanentChosen(player1, player1.getId());
+            assertThat(gd.interaction.permanentChoiceContext())
+                    .isInstanceOf(PermanentChoiceContext.AttackTriggerTarget.class);
+            harness.handlePermanentChosen(player1, player2.getId());
+            resolveAllTriggers();
+
+            harness.assertLife(player1, 19);
+            harness.assertLife(player2, 19);
+        });
+    }
+
+    @Test
+    @DisplayName("Every attacking Sliver triggers separately")
+    void eachAttackingSliverTriggers() {
+        addCreatureReady(player1, new GaleriderSliver());
+        addCreatureReady(player1, new ThorncasterSliver());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0, 1));
+            harness.handlePermanentChosen(player1, player2.getId());
+            harness.handlePermanentChosen(player1, player2.getId());
+            resolveAllTriggers();
+
+            harness.assertLife(player2, 18);
+        });
+    }
+
+    @Test
+    @DisplayName("A granted trigger still resolves after Thorncaster leaves the battlefield")
+    void grantedTriggerSurvivesGrantingSourceLeaving() {
+        addCreatureReady(player1, new GaleriderSliver());
+        Permanent thorncaster = addCreatureReady(player1, new ThorncasterSliver());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            harness.handlePermanentChosen(player1, player2.getId());
+            gd.playerBattlefields.get(player1.getId()).remove(thorncaster);
+            resolveAllTriggers();
+
+            harness.assertLife(player2, 19);
+        });
     }
 }
