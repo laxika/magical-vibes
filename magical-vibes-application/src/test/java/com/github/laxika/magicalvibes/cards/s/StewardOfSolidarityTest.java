@@ -6,12 +6,14 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({StewardOfSolidarity.class})
 class StewardOfSolidarityTest extends BaseCardTest {
 
     @Test
@@ -20,8 +22,7 @@ class StewardOfSolidarityTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.addToBattlefield(player1, new StewardOfSolidarity());
-        Permanent steward = findPermanent(player1, "Steward of Solidarity");
+        Permanent steward = harness.addToBattlefieldAndReturn(player1, new StewardOfSolidarity());
         steward.setSummoningSick(false);
 
         int stewardIdx = gd.playerBattlefields.get(player1.getId()).indexOf(steward);
@@ -42,8 +43,7 @@ class StewardOfSolidarityTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.addToBattlefield(player1, new StewardOfSolidarity());
-        Permanent steward = findPermanent(player1, "Steward of Solidarity");
+        Permanent steward = harness.addToBattlefieldAndReturn(player1, new StewardOfSolidarity());
         steward.setSummoningSick(false);
 
         int stewardIdx = gd.playerBattlefields.get(player1.getId()).indexOf(steward);
@@ -65,5 +65,61 @@ class StewardOfSolidarityTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void exertIsPaidBeforeResolutionAndExpiresAfterOneUntapStep() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Permanent steward = harness.addToBattlefieldAndReturn(player1, new StewardOfSolidarity());
+        steward.setSummoningSick(false);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(steward.isTapped()).isTrue();
+        assertThat(steward.getSkipUntapCount()).isEqualTo(1);
+        assertThat(findPermanents(player1, "Warrior")).isEmpty();
+        harness.passBothPriorities();
+        assertThat(findPermanents(player1, "Warrior")).hasSize(1);
+
+        harness.performUntapStep(player2);
+        assertThat(steward.isTapped()).isTrue();
+        harness.performUntapStep(player1);
+        assertThat(steward.isTapped()).isTrue();
+        harness.performUntapStep(player1);
+        assertThat(steward.isTapped()).isFalse();
+    }
+
+    @Test
+    void tappedStewardCannotActivateAgain() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Permanent steward = harness.addToBattlefieldAndReturn(player1, new StewardOfSolidarity());
+        steward.setSummoningSick(false);
+        steward.setTapped(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(findPermanents(player1, "Warrior")).isEmpty();
+    }
+
+    @Test
+    void repeatedExertionsBeforeNextUntapExpireTogether() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Permanent steward = harness.addToBattlefieldAndReturn(player1, new StewardOfSolidarity());
+        steward.setSummoningSick(false);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        steward.setTapped(false);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Warrior")).hasSize(2);
+        harness.performUntapStep(player1);
+        assertThat(steward.isTapped()).isTrue();
+        harness.performUntapStep(player1);
+        assertThat(steward.isTapped()).isFalse();
     }
 }
