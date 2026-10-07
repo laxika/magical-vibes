@@ -13,9 +13,100 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({SurgeOfBrilliance.class, GrizzlyBears.class})
 class SurgeOfBrillianceTest extends BaseCardTest {
+
+    @Test
+    void drawsNothingWithoutOutsideHandCasts() {
+        Card libraryCard = new SurgeOfBrilliance();
+        harness.setLibrary(player1, List.of(libraryCard));
+
+        harness.castFromHand(player1, new SurgeOfBrilliance(), "{1}{U}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
+    }
+
+    @Test
+    void countsOutsideHandSpellsCastInResponseAtResolution() {
+        Card firstDraw = new SurgeOfBrilliance();
+        Card secondDraw = new SurgeOfBrilliance();
+        harness.setLibrary(player1, List.of(firstDraw, secondDraw));
+        harness.castFromHand(player1, new SurgeOfBrilliance(), "{1}{U}");
+
+        SurgeOfBrilliance response = new SurgeOfBrilliance();
+        gd.addToExile(player1.getId(), response);
+        gd.exilePlayPermissions.put(response.getId(), player1.getId());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castFromExile(player1, response.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw);
+    }
+
+    @Test
+    void doesNotCountOpponentsOutsideHandCasts() {
+        Card ownLibraryCard = new SurgeOfBrilliance();
+        Card opponentDraw = new SurgeOfBrilliance();
+        harness.setLibrary(player1, List.of(ownLibraryCard));
+        harness.setLibrary(player2, List.of(opponentDraw));
+        SurgeOfBrilliance opponentSpell = new SurgeOfBrilliance();
+        gd.addToExile(player2.getId(), opponentSpell);
+        gd.exilePlayPermissions.put(opponentSpell.getId(), player2.getId());
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castFromExile(player2, opponentSpell.getId());
+        harness.passBothPriorities();
+
+        harness.castFromHand(player1, new SurgeOfBrilliance(), "{1}{U}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(ownLibraryCard);
+        assertThat(gd.playerHands.get(player2.getId())).contains(opponentDraw);
+    }
+
+    @Test
+    void cannotCastOnTheTurnItWasForetold() {
+        SurgeOfBrilliance spell = new SurgeOfBrilliance();
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.foretell(player1, 0);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, spell.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.findExiledCard(spell.getId())).isNotNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void drawsForEachOutsideHandCastIncludingUnresolvedSpells() {
+        Card firstDraw = new SurgeOfBrilliance();
+        Card secondDraw = new SurgeOfBrilliance();
+        Card remainingCard = new SurgeOfBrilliance();
+        harness.setLibrary(player1, List.of(firstDraw, secondDraw, remainingCard));
+        for (int i = 0; i < 2; i++) {
+            SurgeOfBrilliance spell = new SurgeOfBrilliance();
+            gd.addToExile(player1.getId(), spell);
+            gd.exilePlayPermissions.put(spell.getId(), player1.getId());
+            harness.addMana(player1, ManaColor.BLUE, 1);
+            harness.addMana(player1, ManaColor.COLORLESS, 1);
+            harness.castFromExile(player1, spell.getId());
+        }
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remainingCard);
+        assertThat(gd.stack).hasSize(1);
+    }
 
     @Test
     @DisplayName("Draws for spells cast from outside the hand, but not hand casts")
@@ -34,15 +125,10 @@ class SurgeOfBrillianceTest extends BaseCardTest {
         harness.castFromExile(player1, exiledSpell.getId());
         harness.passBothPriorities();
 
-        harness.setHand(player1, List.of(handSpell));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, handSpell, "{1}{G}");
         harness.passBothPriorities();
 
-        harness.setHand(player1, List.of(new SurgeOfBrilliance()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new SurgeOfBrilliance(), "{1}{U}");
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
