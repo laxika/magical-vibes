@@ -24,6 +24,48 @@ class TurbulentSpringsTest extends BaseCardTest {
     private Player thirdPlayer;
 
     @Test
+    @DisplayName("Enters tapped when opponents control no lands")
+    void entersTappedWithNoOpponentLands() {
+        playTurbulentSprings();
+
+        assertThat(findSprings(player1).isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Enters untapped when opponents control more than eight lands")
+    void entersUntappedWithMoreThanEightOpponentLands() {
+        addLands(player2, 9);
+
+        playTurbulentSprings();
+
+        assertThat(findSprings(player1).isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Controller lands cannot supplement seven opponent lands")
+    void controllerLandsCannotSupplementOpponentLands() {
+        addLands(player1, 8);
+        addLands(player2, 7);
+
+        playTurbulentSprings();
+
+        assertThat(findSprings(player1).isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Opponent land count is relative to the entering land's controller")
+    void countsOpponentLandsForSecondPlayer() {
+        addLands(player1, 8);
+        harness.setHand(player2, List.of(new TurbulentSprings()));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.playLand(player2, 0);
+
+        assertThat(findSprings(player2).isTapped()).isFalse();
+    }
+
+    @Test
     @DisplayName("Enters tapped when opponents control fewer than eight lands")
     void entersTappedWithFewerThanEightOpponentLands() {
         addLands(player2, 7);
@@ -91,13 +133,12 @@ class TurbulentSpringsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new TurbulentSprings()));
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
     }
 
     private Permanent addReadySprings(Player player) {
-        Permanent springs = new Permanent(new TurbulentSprings());
+        Permanent springs = harness.addToBattlefieldAndReturn(player, new TurbulentSprings());
         springs.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(springs);
         return springs;
     }
 
