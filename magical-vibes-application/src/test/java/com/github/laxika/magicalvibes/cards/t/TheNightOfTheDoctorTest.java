@@ -48,6 +48,88 @@ class TheNightOfTheDoctorTest extends BaseCardTest {
         assertChapterIICounter("Put a lifelink counter on it", CounterType.LIFELINK, Keyword.LIFELINK);
     }
 
+    @Test
+    void enteringTriggersChapterIAndLeavesNoncreaturesAlone() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent opposingSaga = harness.addToBattlefieldAndReturn(player2, new TheNightOfTheDoctor());
+
+        Permanent saga = harness.enterBattlefieldAndReturn(player1, new TheNightOfTheDoctor());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(saga).doesNotContain(ownCreature);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opposingSaga).doesNotContain(opposingCreature);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(ownCreature.getCard());
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(opposingCreature.getCard());
+    }
+
+    @Test
+    void chapterIIWithNoLegalTargetSacrificesSagaWithoutOfferingCounterChoice() {
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new TheNightOfTheDoctor());
+        saga.setCounterCount(CounterType.LORE, 1);
+        Card nonLegendaryCreature = new GrizzlyBears();
+        Card nonCreature = new TheNightOfTheDoctor();
+        Card opposingLegendaryCreature = new YargleGluttonOfUrborg();
+        harness.setGraveyard(player1, List.of(nonLegendaryCreature, nonCreature));
+        harness.setGraveyard(player2, List.of(opposingLegendaryCreature));
+
+        triggerNextChapter();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(saga);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .contains(nonLegendaryCreature, nonCreature, saga.getCard());
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opposingLegendaryCreature);
+    }
+
+    @Test
+    void chapterIIDoesNotResolveWhenTargetLeavesGraveyard() {
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new TheNightOfTheDoctor());
+        saga.setCounterCount(CounterType.LORE, 1);
+        Card legendaryCreature = new YargleGluttonOfUrborg();
+        harness.setGraveyard(player1, List.of(legendaryCreature));
+
+        triggerNextChapter();
+        harness.handleMultipleCardsChosen(player1, List.of(legendaryCreature.getId()));
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(legendaryCreature));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.findExiledCard(legendaryCreature.getId())).isNotNull();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(saga.getCard());
+    }
+
+    @Test
+    void sagaIsSacrificedOnlyAfterCounterChoiceCompletesChapterII() {
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new TheNightOfTheDoctor());
+        saga.setCounterCount(CounterType.LORE, 1);
+        Card legendaryCreature = new YargleGluttonOfUrborg();
+        harness.setGraveyard(player1, List.of(legendaryCreature));
+
+        triggerNextChapter();
+        harness.handleMultipleCardsChosen(player1, List.of(legendaryCreature.getId()));
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(saga);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(saga);
+        harness.handleListChoice(player1, "Put a vigilance counter on it");
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(saga)
+                .anySatisfy(permanent -> {
+                    assertThat(permanent.getCard()).isEqualTo(legendaryCreature);
+                    assertThat(permanent.isTapped()).isFalse();
+                    assertThat(permanent.getCounterCount(CounterType.VIGILANCE)).isEqualTo(1);
+                });
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(saga.getCard())
+                .doesNotContain(legendaryCreature);
+    }
+
     private void assertChapterIICounter(String choiceLabel, CounterType counterType, Keyword keyword) {
         Permanent saga = harness.addToBattlefieldAndReturn(player1, new TheNightOfTheDoctor());
         saga.setCounterCount(CounterType.LORE, 1);
@@ -76,7 +158,6 @@ class TheNightOfTheDoctorTest extends BaseCardTest {
     private void triggerNextChapter() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
     }
 }
