@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({UlrichOfTheKrallenhorde.class, UlrichUncontestedAlpha.class, GrizzlyBears.class,
+        KrallenhordeWantons.class})
 class UlrichOfTheKrallenhordeTest extends BaseCardTest {
 
     @Test
@@ -26,8 +29,9 @@ class UlrichOfTheKrallenhordeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.castCreature(player1, 0, 0, target.getId());
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(6);
@@ -54,9 +58,9 @@ class UlrichOfTheKrallenhordeTest extends BaseCardTest {
         gd.spellsCastLastTurn.clear();
 
         advanceToUpkeepAndResolveTransform(player1);
+        harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, target.getId());
 
         assertThat(target.getMarkedDamage()).isEqualTo(6);
         assertThat(ulrich.getMarkedDamage()).isEqualTo(2);
@@ -70,6 +74,7 @@ class UlrichOfTheKrallenhordeTest extends BaseCardTest {
         gd.spellsCastLastTurn.clear();
 
         advanceToUpkeepAndResolveTransform(player1);
+        harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
@@ -87,14 +92,14 @@ class UlrichOfTheKrallenhordeTest extends BaseCardTest {
         gd.spellsCastLastTurn.clear();
 
         advanceToUpkeepAndResolveTransform(player1);
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, werewolf.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, ownCreature.getId()))
                 .isInstanceOf(IllegalStateException.class);
         harness.handlePermanentChosen(player1, legalTarget.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
     }
 
     @Test
@@ -140,20 +145,102 @@ class UlrichOfTheKrallenhordeTest extends BaseCardTest {
         assertThat(ulrich.getCard().getName()).isEqualTo("Ulrich, Uncontested Alpha");
     }
 
+    @Test
+    void entersOnEmptyBattlefieldAndCanBoostItselfUntilCleanup() {
+        harness.setHand(player1, List.of(new UlrichOfTheKrallenhorde()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        Permanent ulrich = gd.playerBattlefields.get(player1.getId()).getFirst();
+        harness.handlePermanentChosen(player1, ulrich.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, ulrich)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, ulrich)).isEqualTo(8);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, ulrich)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, ulrich)).isEqualTo(4);
+    }
+
+    @Test
+    void frontFaceDoesNotTransformAfterOneSpellOnOpponentsUpkeep() {
+        Permanent ulrich = addReadyUlrich(player1);
+        gd.spellsCastLastTurn.clear();
+        gd.spellsCastLastTurn.put(player2.getId(), 1);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UNTAP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(ulrich.isTransformed()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void oneSpellFromEachPlayerDoesNotTransformBack() {
+        Permanent ulrich = addReadyBackFaceUlrich(player1);
+        gd.spellsCastLastTurn.clear();
+        gd.spellsCastLastTurn.put(player1.getId(), 1);
+        gd.spellsCastLastTurn.put(player2.getId(), 1);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UNTAP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(ulrich.isTransformed()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void fightDealsNoDamageIfUlrichLeavesBeforeResolution() {
+        Permanent ulrich = addReadyUlrich(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        gd.spellsCastLastTurn.clear();
+
+        advanceToUpkeepAndResolveTransform(player1);
+        harness.handlePermanentChosen(player1, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(ulrich);
+        gd.playerGraveyards.get(player1.getId()).add(ulrich.getOriginalCard());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+    }
+
+    @Test
+    void transformsOnOpponentsUpkeepWithoutAnyLegalFightTarget() {
+        Permanent ulrich = addReadyUlrich(player1);
+        gd.spellsCastLastTurn.clear();
+
+        advanceToUpkeepAndResolveTransform(player2);
+
+        assertThat(ulrich.isTransformed()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
     private Permanent addReadyUlrich(Player player) {
-        Permanent ulrich = new Permanent(new UlrichOfTheKrallenhorde());
+        Permanent ulrich = harness.addToBattlefieldAndReturn(player, new UlrichOfTheKrallenhorde());
         ulrich.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(ulrich);
         return ulrich;
     }
 
     private Permanent addReadyBackFaceUlrich(Player player) {
         UlrichOfTheKrallenhorde frontFace = new UlrichOfTheKrallenhorde();
-        Permanent ulrich = new Permanent(frontFace);
+        Permanent ulrich = harness.addToBattlefieldAndReturn(player, frontFace);
         ulrich.setCard(frontFace.getBackFaceCard());
         ulrich.setTransformed(true);
         ulrich.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(ulrich);
         return ulrich;
     }
 
