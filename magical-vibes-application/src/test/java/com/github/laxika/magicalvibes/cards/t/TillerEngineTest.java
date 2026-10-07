@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.a.ArcaneSanctum;
 import com.github.laxika.magicalvibes.cards.d.DismalBackwater;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -13,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TillerEngine.class, DismalBackwater.class, Forest.class, GrizzlyBears.class})
+@CardUsed({TillerEngine.class, DismalBackwater.class, Forest.class, GrizzlyBears.class, ArcaneSanctum.class})
 class TillerEngineTest extends BaseCardTest {
 
     private static final String UNTAP = "Untap that land.";
@@ -76,5 +77,47 @@ class TillerEngineTest extends BaseCardTest {
     private void playTappedLand() {
         harness.setHand(player1, List.of(new DismalBackwater()));
         harness.playLand(player1, 0);
+    }
+
+    @Test
+    void opponentsTappedLandDoesNotTrigger() {
+        harness.addToBattlefield(player1, new TillerEngine());
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new ArcaneSanctum()));
+
+        harness.playLand(player2, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void tapModeCannotTargetALand() {
+        harness.addToBattlefield(player1, new TillerEngine());
+        Permanent opposingLand = harness.addToBattlefieldAndReturn(player2, new ArcaneSanctum());
+        harness.addToBattlefield(player2, new TillerEngine());
+
+        playTappedLand();
+        harness.handleListChoice(player1, TAP);
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, opposingLand.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void tapModeLeavesTheEnteringLandTapped() {
+        harness.addToBattlefield(player1, new TillerEngine());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new TillerEngine());
+        harness.setHand(player1, List.of(new ArcaneSanctum()));
+
+        harness.playLand(player1, 0);
+        harness.handleListChoice(player1, TAP);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard() instanceof ArcaneSanctum)
+                .singleElement().satisfies(land -> assertThat(land.isTapped()).isTrue());
     }
 }
