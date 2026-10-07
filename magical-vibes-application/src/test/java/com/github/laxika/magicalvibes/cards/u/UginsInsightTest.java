@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.u;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HedronArchive;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({UginsInsight.class, AirElemental.class, Forest.class, GrizzlyBears.class})
+@CardUsed({UginsInsight.class, AirElemental.class, Forest.class, GrizzlyBears.class, HedronArchive.class})
 class UginsInsightTest extends BaseCardTest {
 
     @Test
@@ -48,11 +49,71 @@ class UginsInsightTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
     }
 
+    @Test
+    @DisplayName("Opponent permanents do not increase scry when you control only lands")
+    void ignoresOpponentManaValueWithOnlyLands() {
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new HedronArchive());
+
+        castUginInsight();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("Counts noncreature permanents and draws only after the scry choice")
+    void countsArtifactsAndDrawsAfterReordering() {
+        Forest first = new Forest();
+        Forest second = new Forest();
+        Forest third = new Forest();
+        Forest fourth = new Forest();
+        Forest fifth = new Forest();
+        Forest sixth = new Forest();
+        harness.setLibrary(player1, List.of(first, second, third, fourth, fifth, sixth));
+        harness.addToBattlefield(player1, new HedronArchive());
+
+        castUginInsight();
+
+        PendingInteraction.Scry scry = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
+        assertThat(scry).isNotNull();
+        assertThat(scry.cards()).containsExactly(first, second, third, fourth);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(
+                List.of(3, 1), List.of(2, 0)));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(fourth, second, fifth);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(sixth, third, first);
+    }
+
+    @Test
+    @DisplayName("Scry is limited to the available library cards and still draws three")
+    void scriesEntireShortLibrary() {
+        Forest first = new Forest();
+        Forest second = new Forest();
+        Forest third = new Forest();
+        harness.setLibrary(player1, List.of(first, second, third));
+        harness.addToBattlefield(player1, new HedronArchive());
+
+        castUginInsight();
+
+        PendingInteraction.Scry scry = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
+        assertThat(scry).isNotNull();
+        assertThat(scry.cards()).containsExactly(first, second, third);
+
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(
+                List.of(), List.of(2, 0, 1)));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(third, first, second);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
     private void castUginInsight() {
         harness.setHand(player1, List.of(new UginsInsight()));
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
     }
 }
