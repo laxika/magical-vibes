@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.k.KeeningStone;
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
 import com.github.laxika.magicalvibes.cards.w.WallOfStone;
+import com.github.laxika.magicalvibes.cards.w.Wiretapping;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -21,7 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({UnleashTheInferno.class, AladdinsRing.class, ChandraNalaar.class, DarksteelRelic.class,
-        FountainOfYouth.class, KeeningStone.class, RagingGoblin.class, WallOfStone.class})
+        FountainOfYouth.class, KeeningStone.class, RagingGoblin.class, WallOfStone.class, Wiretapping.class})
 class UnleashTheInfernoTest extends BaseCardTest {
 
     @Test
@@ -87,6 +88,93 @@ class UnleashTheInfernoTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void destroysEnchantmentButRejectsOwnArtifact() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new RagingGoblin());
+        Permanent ownArtifact = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new Wiretapping());
+
+        cast(creature);
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, ownArtifact.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handlePermanentChosen(player1, enchantment.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Wiretapping");
+        harness.assertOnBattlefield(player1, "Fountain of Youth");
+    }
+
+    @Test
+    void countsPreviouslyMarkedDamage() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new WallOfStone());
+        creature.setMarkedDamage(7);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new KeeningStone());
+
+        cast(creature);
+        harness.handlePermanentChosen(player1, artifact.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Wall of Stone");
+        harness.assertNotOnBattlefield(player2, "Keening Stone");
+    }
+
+    @Test
+    void exactLethalDamageDoesNotTriggerEvenForZeroManaValueArtifact() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new WallOfStone());
+        creature.setMarkedDamage(1);
+        harness.addToBattlefield(player2, new FountainOfYouth());
+
+        castAndResolve(creature);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotOnBattlefield(player2, "Wall of Stone");
+        harness.assertOnBattlefield(player2, "Fountain of Youth");
+    }
+
+    @Test
+    void shieldCounterPreventsDamageAndReflexiveTrigger() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new RagingGoblin());
+        creature.setCounterCount(CounterType.SHIELD, 1);
+        harness.addToBattlefield(player2, new KeeningStone());
+
+        castAndResolve(creature);
+
+        assertThat(creature.getMarkedDamage()).isZero();
+        assertThat(creature.getCounterCount(CounterType.SHIELD)).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player2, "Raging Goblin");
+        harness.assertOnBattlefield(player2, "Keening Stone");
+    }
+
+    @Test
+    void excessDamageWithNoEligibleTargetFinishesResolving() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new RagingGoblin());
+        harness.addToBattlefield(player2, new AladdinsRing());
+
+        castAndResolve(creature);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotOnBattlefield(player2, "Raging Goblin");
+        harness.assertOnBattlefield(player2, "Aladdin's Ring");
+    }
+
+    @Test
+    void indestructibleArtifactIsLegalButSurvives() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new RagingGoblin());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new DarksteelRelic());
+
+        cast(creature);
+        harness.handlePermanentChosen(player1, artifact.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Darksteel Relic");
+        assertThat(gd.stack).isEmpty();
     }
 
     private void cast(Permanent target) {
