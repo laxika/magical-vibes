@@ -69,6 +69,45 @@ class StrengthOfNightTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, ownZombie)).isEqualTo(toughness);
     }
 
+    @Test
+    @DisplayName("Creatures entering before resolution receive the boost, but later creatures do not")
+    void boostsOnlyCreaturesPresentAtResolution() {
+        harness.setHand(player1, java.util.List.of(new StrengthOfNight()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castKickedInstant(player1, 0);
+
+        Permanent earlyZombie = harness.enterBattlefieldAndReturn(player1, new MassOfGhouls());
+        int power = gqs.getEffectivePower(gd, earlyZombie);
+        int toughness = gqs.getEffectiveToughness(gd, earlyZombie);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, earlyZombie)).isEqualTo(power + 3);
+        assertThat(gqs.getEffectiveToughness(gd, earlyZombie)).isEqualTo(toughness + 3);
+
+        Permanent lateZombie = harness.enterBattlefieldAndReturn(player1, new MassOfGhouls());
+        assertThat(gqs.getEffectivePower(gd, lateZombie)).isEqualTo(power);
+        assertThat(gqs.getEffectiveToughness(gd, lateZombie)).isEqualTo(toughness);
+        assertThat(gqs.getEffectivePower(gd, earlyZombie)).isEqualTo(power + 3);
+        assertThat(gqs.getEffectiveToughness(gd, earlyZombie)).isEqualTo(toughness + 3);
+    }
+
+    @Test
+    @DisplayName("A kicked spell resolves even when its controller has no creatures")
+    void resolvesWithNoOwnCreatures() {
+        Permanent opponentZombie = harness.addToBattlefieldAndReturn(player2, new MassOfGhouls());
+        int power = gqs.getEffectivePower(gd, opponentZombie);
+        int toughness = gqs.getEffectiveToughness(gd, opponentZombie);
+
+        castStrengthOfNight(true);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Strength of Night");
+        assertThat(gqs.getEffectivePower(gd, opponentZombie)).isEqualTo(power);
+        assertThat(gqs.getEffectiveToughness(gd, opponentZombie)).isEqualTo(toughness);
+    }
+
     private void castStrengthOfNight(boolean kicked) {
         if (!kicked) {
             harness.castFromHand(player1, new StrengthOfNight(), "{2}{G}");
