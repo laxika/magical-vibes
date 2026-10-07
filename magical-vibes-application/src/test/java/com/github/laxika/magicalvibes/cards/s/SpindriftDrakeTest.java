@@ -78,4 +78,38 @@ class SpindriftDrakeTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Spindrift Drake");
     }
+
+    @Test
+    @DisplayName("Payment remains optional when blue mana is available")
+    void canDeclineWithBlueManaAvailable() {
+        harness.addToBattlefield(player1, new SpindriftDrake());
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertNotOnBattlefield(player1, "Spindrift Drake");
+        harness.assertInGraveyard(player1, "Spindrift Drake");
+    }
+
+    @Test
+    @DisplayName("Each Drake requires its own upkeep payment")
+    void twoDrakesRequireSeparatePayments() {
+        harness.addToBattlefield(player1, new SpindriftDrake());
+        harness.addToBattlefield(player1, new SpindriftDrake());
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(countPermanents(player1, "Spindrift Drake")).isEqualTo(2);
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(countPermanents(player1, "Spindrift Drake")).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Spindrift Drake");
+    }
 }
