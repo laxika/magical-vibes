@@ -166,12 +166,46 @@ class UktabiWildcatsTest extends BaseCardTest {
     }
 
     private int wildcatsIndex(Player player) {
-        var battlefield = gd.playerBattlefields.get(player.getId());
-        for (int i = 0; i < battlefield.size(); i++) {
-            if (battlefield.get(i).getCard().getName().equals("Uktabi Wildcats")) {
-                return i;
-            }
-        }
-        throw new IllegalStateException("Uktabi Wildcats not found");
+        return gd.playerBattlefields.get(player.getId()).indexOf(findPermanent(player, "Uktabi Wildcats"));
+    }
+
+    @Test
+    @DisplayName("Regeneration can be activated while tapped and summoning sick")
+    void canRegenerateWhileTappedAndSummoningSick() {
+        Permanent wildcats = harness.addToBattlefieldAndReturn(player1, new UktabiWildcats());
+        wildcats.setSummoningSick(true);
+        wildcats.setTapped(true);
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, wildcatsIndex(player1), null, null);
+        harness.handlePermanentChosen(player1, forest.getId());
+        harness.passBothPriorities();
+
+        assertThat(wildcats.getRegenerationShield()).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Uktabi Wildcats");
+        harness.assertInGraveyard(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("A Plains cannot be chosen to pay the Forest sacrifice cost")
+    void cannotChoosePlainsForSacrificeCost() {
+        Permanent wildcats = addWildcatsReady(player1);
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
+        Permanent plains = harness.addToBattlefieldAndReturn(player1, new Plains());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, wildcatsIndex(player1), null, null);
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, plains.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Plains");
+
+        harness.handlePermanentChosen(player1, forest.getId());
+        harness.passBothPriorities();
+
+        assertThat(wildcats.getRegenerationShield()).isEqualTo(1);
     }
 }
