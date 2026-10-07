@@ -7,6 +7,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed(ToothOfRamos.class)
 class ToothOfRamosTest extends BaseCardTest {
@@ -44,6 +45,35 @@ class ToothOfRamosTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(2);
+        harness.assertNotOnBattlefield(player1, "Tooth of Ramos");
+        harness.assertInGraveyard(player1, "Tooth of Ramos");
+    }
+    @Test
+    @DisplayName("Tap mana ability resolves immediately and cannot be activated again while tapped")
+    void tapAbilityRequiresUntappedArtifactAndDoesNotUseStack() {
+        var tooth = harness.addToBattlefieldAndReturn(player1, new ToothOfRamos());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(tooth.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Tooth of Ramos");
+    }
+
+    @Test
+    @DisplayName("Sacrifice mana ability resolves immediately without using the stack")
+    void sacrificeAbilityDoesNotUseStack() {
+        harness.addToBattlefield(player1, new ToothOfRamos());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
         harness.assertNotOnBattlefield(player1, "Tooth of Ramos");
         harness.assertInGraveyard(player1, "Tooth of Ramos");
     }
