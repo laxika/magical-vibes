@@ -20,6 +20,35 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class StealStrengthTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Both targets may be creatures controlled by the caster")
+    void bothTargetsMayHaveSameController() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new StealStrength()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveInstant(player1, 0, List.of(first.getId(), second.getId()));
+
+        assertThat(first.getPowerModifier()).isEqualTo(1);
+        assertThat(first.getToughnessModifier()).isEqualTo(1);
+        assertThat(second.getPowerModifier()).isEqualTo(-1);
+        assertThat(second.getToughnessModifier()).isEqualTo(-1);
+        harness.assertInGraveyard(player1, "Steal Strength");
+    }
+
+    @Test
+    @DisplayName("Cannot cast with only one target")
+    void requiresBothTargets() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new StealStrength()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of(creature.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("2 targets");
+    }
+
+    @Test
     @DisplayName("First target gets +1/+1 and second target gets -1/-1")
     void boostsFirstAndDebuffsSecond() {
         Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
@@ -27,8 +56,7 @@ class StealStrengthTest extends BaseCardTest {
         harness.setHand(player1, List.of(new StealStrength()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castInstant(player1, 0, List.of(first.getId(), second.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, List.of(first.getId(), second.getId()));
 
         assertThat(first.getPowerModifier()).isEqualTo(1);
         assertThat(first.getToughnessModifier()).isEqualTo(1);
@@ -44,8 +72,7 @@ class StealStrengthTest extends BaseCardTest {
         harness.setHand(player1, List.of(new StealStrength()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castInstant(player1, 0, List.of(boosted.getId(), weakened.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, List.of(boosted.getId(), weakened.getId()));
 
         assertThat(boosted.getPowerModifier()).isEqualTo(1);
         assertThat(boosted.getToughnessModifier()).isEqualTo(1);
@@ -87,8 +114,7 @@ class StealStrengthTest extends BaseCardTest {
         harness.setHand(player1, List.of(new StealStrength()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castInstant(player1, 0, List.of(first.getId(), second.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, List.of(first.getId(), second.getId()));
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
