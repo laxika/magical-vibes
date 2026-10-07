@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.g.GuerrillaTactics;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -13,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SpinyStarfish.class, Shock.class})
+@CardUsed({SpinyStarfish.class, GuerrillaTactics.class})
 class SpinyStarfishTest extends BaseCardTest {
 
     @Test
@@ -22,7 +23,7 @@ class SpinyStarfishTest extends BaseCardTest {
         Permanent starfish = addReadyStarfish(player1);
         starfish.setRegenerationShield(1);
 
-        shockStarfish(starfish);
+        damageStarfish(starfish);
 
         harness.assertOnBattlefield(player1, "Spiny Starfish");
         assertThat(starfish.getTimesRegeneratedThisTurn()).isEqualTo(1);
@@ -37,8 +38,8 @@ class SpinyStarfishTest extends BaseCardTest {
         Permanent starfish = addReadyStarfish(player1);
         starfish.setRegenerationShield(2);
 
-        shockStarfish(starfish);
-        shockStarfish(starfish);
+        damageStarfish(starfish);
+        damageStarfish(starfish);
 
         harness.assertOnBattlefield(player1, "Spiny Starfish");
         advanceToEndStepAndResolve();
@@ -83,7 +84,7 @@ class SpinyStarfishTest extends BaseCardTest {
     void triggersAtOpponentEndStep() {
         Permanent starfish = addReadyStarfish(player1);
         starfish.setRegenerationShield(1);
-        shockStarfish(starfish);
+        damageStarfish(starfish);
 
         advanceToEndStepAndResolve(player2);
 
@@ -95,13 +96,13 @@ class SpinyStarfishTest extends BaseCardTest {
     void usesLastKnownRegenerationCountAfterLeavingBattlefield() {
         Permanent starfish = addReadyStarfish(player1);
         starfish.setRegenerationShield(1);
-        shockStarfish(starfish);
+        damageStarfish(starfish);
 
         queueEndStepTrigger(player1);
         assertThat(gd.stack).hasSize(1);
 
-        harness.setHand(player2, List.of(new Shock()));
-        harness.addMana(player2, ManaColor.RED, 1);
+        harness.setHand(player2, List.of(new GuerrillaTactics()));
+        harness.addMana(player2, ManaColor.RED, 2);
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.castAndResolveInstant(player2, 0, starfish.getId());
@@ -112,10 +113,78 @@ class SpinyStarfishTest extends BaseCardTest {
         assertThat(countStarfishTokens()).isEqualTo(1);
     }
 
-    /** Player 2 Shocks the Starfish, which is lethal to its 0/1 body and consumes a shield. */
-    private void shockStarfish(Permanent starfish) {
-        harness.setHand(player2, List.of(new Shock()));
-        harness.addMana(player2, ManaColor.RED, 1);
+    @Test
+    @DisplayName("The activated regeneration ability saves the creature and creates a token")
+    void activatedShieldPreventsDestructionAndCreatesToken() {
+        Permanent starfish = addReadyStarfish(player1);
+        activateRegeneration(starfish);
+
+        damageStarfish(starfish);
+
+        harness.assertOnBattlefield(player1, "Spiny Starfish");
+        assertThat(starfish.isTapped()).isTrue();
+        assertThat(starfish.getMarkedDamage()).isZero();
+        assertThat(starfish.getRegenerationShield()).isZero();
+        advanceToEndStepAndResolve();
+
+        assertThat(countStarfishTokens()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Regeneration while the end-step trigger is pending increases the token count")
+    void regenerationCountIsEvaluatedAtResolution() {
+        Permanent starfish = addReadyStarfish(player1);
+        starfish.setRegenerationShield(2);
+        damageStarfish(starfish);
+        queueEndStepTrigger(player1);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.setHand(player2, List.of(new GuerrillaTactics()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player2, 0, starfish.getId());
+        resolveAllTriggers();
+
+        assertThat(countStarfishTokens()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("First regeneration after the end step begins does not create a token that end step")
+    void firstRegenerationDuringEndStepDoesNotTrigger() {
+        Permanent starfish = addReadyStarfish(player1);
+        starfish.setRegenerationShield(1);
+        queueEndStepTrigger(player1);
+        assertThat(gd.stack).isEmpty();
+
+        harness.setHand(player2, List.of(new GuerrillaTactics()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player2, 0, starfish.getId());
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Spiny Starfish");
+        assertThat(starfish.getTimesRegeneratedThisTurn()).isEqualTo(1);
+        assertThat(countStarfishTokens()).isZero();
+    }
+
+    @Test
+    @DisplayName("Regeneration from a previous turn does not create more tokens")
+    void regenerationCountResetsBetweenTurns() {
+        Permanent starfish = addReadyStarfish(player1);
+        starfish.setRegenerationShield(1);
+        damageStarfish(starfish);
+        advanceToEndStepAndResolve();
+        assertThat(countStarfishTokens()).isEqualTo(1);
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        assertThat(starfish.getTimesRegeneratedThisTurn()).isZero();
+        advanceToEndStepAndResolve(player2);
+
+        assertThat(countStarfishTokens()).isEqualTo(1);
+    }
+
+    /** Player 2 deals lethal damage to the Starfish's 0/1 body, consuming a shield. */
+    private void damageStarfish(Permanent starfish) {
+        harness.setHand(player2, List.of(new GuerrillaTactics()));
+        harness.addMana(player2, ManaColor.RED, 2);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -149,9 +218,7 @@ class SpinyStarfishTest extends BaseCardTest {
     }
 
     private long countStarfishTokens() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Starfish"))
-                .count();
+        return countPermanents(player1, "Starfish");
     }
 
     private Permanent addReadyStarfish(Player player) {
