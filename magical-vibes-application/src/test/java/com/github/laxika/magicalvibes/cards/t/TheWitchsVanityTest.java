@@ -12,8 +12,6 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({TheWitchsVanity.class, AirElemental.class, GrizzlyBears.class})
@@ -75,31 +73,94 @@ class TheWitchsVanityTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
+        harness.assertInGraveyard(player1, "The Witch's Vanity");
         Permanent role = findPermanent(player1, "Wicked");
         assertThat(role.getAttachedTo()).isEqualTo(target.getId());
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
-        assertThat(gqs.hasKeyword(gd, target, Keyword.MENACE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.MENACE)).isFalse();
 
         int opponentLife = gd.getLife(player2.getId());
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .removePermanentToGraveyard(gd, role));
         harness.passBothPriorities();
         assertThat(gd.getLife(player2.getId())).isEqualTo(opponentLife - 1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+    }
+
+    @Test
+    void sagaStillCreatesFoodWhenChapterIHasNoLegalTarget() {
+        castAndResolveSaga();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertOnBattlefield(player1, "The Witch's Vanity");
+
+        advanceToNextMainPhase();
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Food")).isEqualTo(1);
+    }
+
+    @Test
+    void chapterIIICreatesNoRoleWhenTargetLeavesBeforeResolution() {
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        addSagaWithLoreCounter(2);
+        advanceToNextMainPhase();
+        harness.handlePermanentChosen(player1, target.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, target));
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Wicked")).isZero();
+        harness.assertInGraveyard(player1, "The Witch's Vanity");
+    }
+
+    @Test
+    void newestWickedRoleReplacesOlderRoleAndTriggersLifeLoss() {
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        addSagaWithLoreCounter(2);
+        advanceToNextMainPhase();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        Permanent oldRole = findPermanent(player1, "Wicked");
+
+        addSagaWithLoreCounter(2);
+        advanceToNextMainPhase();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Wicked")).isEqualTo(1);
+        assertThat(findPermanent(player1, "Wicked").getId()).isNotEqualTo(oldRole.getId());
+        assertThat(findPermanent(player1, "Wicked").getAttachedTo()).isEqualTo(target.getId());
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    void chapterIIIWithoutControlledCreaturesCreatesNoRoleAndSagaIsSacrificed() {
+        addCreatureReady(player2, new GrizzlyBears());
+        addSagaWithLoreCounter(2);
+
+        advanceToNextMainPhase();
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(countPermanents(player1, "Wicked")).isZero();
+        harness.assertInGraveyard(player1, "The Witch's Vanity");
     }
 
     private void castAndResolveSaga() {
-        harness.setHand(player1, List.of(new TheWitchsVanity()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new TheWitchsVanity(), "{1}{B}");
         harness.passBothPriorities();
     }
 
     private void addSagaWithLoreCounter(int loreCounters) {
-        Permanent saga = new Permanent(new TheWitchsVanity());
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new TheWitchsVanity());
         saga.setCounterCount(CounterType.LORE, loreCounters);
-        gd.playerBattlefields.get(player1.getId()).add(saga);
     }
 
     private void advanceToNextMainPhase() {
