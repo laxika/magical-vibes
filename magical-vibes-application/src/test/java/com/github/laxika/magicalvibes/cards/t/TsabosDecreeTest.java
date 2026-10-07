@@ -1,11 +1,14 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.a.AvianChangeling;
+import com.github.laxika.magicalvibes.cards.c.Conspiracy;
+import com.github.laxika.magicalvibes.cards.d.Dodecapod;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.n.NamelessInversion;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -20,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({TsabosDecree.class, AvianChangeling.class, Forest.class, GrizzlyBears.class, HillGiant.class,
-        NamelessInversion.class})
+        NamelessInversion.class, Conspiracy.class, Dodecapod.class})
 class TsabosDecreeTest extends BaseCardTest {
 
     @Test
@@ -118,6 +121,72 @@ class TsabosDecreeTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Does not discard printed types or changeling types replaced by Conspiracy")
+    void respectsReplacedCreatureTypesInHand() {
+        Permanent conspiracy = harness.addToBattlefieldAndReturn(player2, new Conspiracy());
+        conspiracy.setChosenSubtype(CardSubtype.GOBLIN);
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player2, List.of(new GrizzlyBears(), new AvianChangeling()));
+
+        castDecree(player2.getId());
+        harness.handleListChoice(player1, "BEAR");
+
+        assertThat(gd.playerHands.get(player2.getId()))
+                .extracting(Card::getName)
+                .containsExactly("Grizzly Bears", "Avian Changeling");
+        assertThat(bear).isIn(gd.playerBattlefields.get(player2.getId()));
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Discards creatures whose chosen type is supplied by Conspiracy")
+    void discardsReplacedCreatureType() {
+        Permanent conspiracy = harness.addToBattlefieldAndReturn(player2, new Conspiracy());
+        conspiracy.setChosenSubtype(CardSubtype.GOBLIN);
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player2, List.of(new GrizzlyBears(), new AvianChangeling(), new Forest()));
+
+        castDecree(player2.getId());
+        harness.handleListChoice(player1, "GOBLIN");
+
+        assertThat(gd.playerHands.get(player2.getId())).extracting(Card::getName).containsExactly("Forest");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        assertThat(conspiracy).isIn(gd.playerBattlefields.get(player2.getId()));
+    }
+
+    @Test
+    @DisplayName("Destroys a matching creature put onto the battlefield by its discard replacement")
+    void destroysCreatureEnteringFromDiscardReplacement() {
+        harness.setHand(player2, List.of(new Dodecapod()));
+
+        castDecree(player2.getId());
+        harness.handleListChoice(player1, "GOLEM");
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player2, "Dodecapod");
+    }
+
+    @Test
+    @DisplayName("May target its controller and discard their creatures without an opponent-discard replacement")
+    void canTargetController() {
+        harness.addToBattlefield(player1, new Dodecapod());
+        Permanent opposingGolem = harness.addToBattlefieldAndReturn(player2, new Dodecapod());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.setHand(player1, List.of(new TsabosDecree(), new Dodecapod(), new Forest()));
+
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+        harness.handleListChoice(player1, "GOLEM");
+
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName).containsExactly("Forest");
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).extracting(Card::getName)
+                .containsSubsequence("Dodecapod", "Dodecapod");
+        assertThat(opposingGolem).isIn(gd.playerBattlefields.get(player2.getId()));
     }
 
     private void castDecree(java.util.UUID targetPlayerId) {
