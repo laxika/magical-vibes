@@ -155,6 +155,110 @@ class TrapDiggerTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void puttingTrapCounterPaysManaAndTapsTrapDigger() {
+        Permanent trapDigger = addTrapDigger();
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        forest.setCounterCount(CounterType.TRAP, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, forest.getId());
+
+        assertThat(trapDigger.isTapped()).isTrue();
+        assertThat(forest.getCounterCount(CounterType.TRAP)).isEqualTo(1);
+        harness.passBothPriorities();
+        assertThat(forest.getCounterCount(CounterType.TRAP)).isEqualTo(2);
+
+        trapDigger.setTapped(false);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, forest.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotPutTrapCounterWhileSummoningSick() {
+        harness.addToBattlefield(player1, new TrapDigger());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, forest.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(forest.getCounterCount(CounterType.TRAP)).isZero();
+    }
+
+    @Test
+    void canSacrificeTrappedLandWhileTappedAndSummoningSick() {
+        Permanent trapDigger = harness.addToBattlefieldAndReturn(player1, new TrapDigger());
+        trapDigger.setTapped(true);
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        forest.setCounterCount(CounterType.TRAP, 2);
+        forest.setTapped(true);
+        Permanent attacker = addCreatureReady(player2, new GiantSpider());
+        attacker.setAttacking(true);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+
+        harness.activateAbility(player1, 0, 1, null, attacker.getId());
+
+        harness.assertInGraveyard(player1, "Forest");
+        assertThat(attacker.getMarkedDamage()).isZero();
+        harness.passBothPriorities();
+        assertThat(attacker.getMarkedDamage()).isEqualTo(3);
+        assertThat(trapDigger.isTapped()).isTrue();
+    }
+
+    @Test
+    void cannotSacrificeOpponentTrappedLand() {
+        addTrapDigger();
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        forest.setCounterCount(CounterType.TRAP, 1);
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        attacker.setAttacking(true);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(forest);
+    }
+
+    @Test
+    void cannotSacrificeNonlandWithTrapCounter() {
+        Permanent trapDigger = addTrapDigger();
+        trapDigger.setCounterCount(CounterType.TRAP, 1);
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        attacker.setAttacking(true);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(trapDigger);
+    }
+
+    @Test
+    void trappedLandCanBeUsedByAnotherTrapDigger() {
+        Permanent firstDigger = addTrapDigger();
+        addTrapDigger();
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, forest.getId());
+        harness.passBothPriorities();
+        Permanent attacker = addCreatureReady(player2, new GiantSpider());
+        attacker.setAttacking(true);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+
+        harness.activateAbility(player1, 1, 1, null, attacker.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Forest");
+        assertThat(attacker.getMarkedDamage()).isEqualTo(3);
+        assertThat(firstDigger.isTapped()).isTrue();
+    }
+
     private Permanent addTrapDigger() {
         return addCreatureReady(player1, new TrapDigger());
     }
