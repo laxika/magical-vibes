@@ -106,6 +106,64 @@ class TerrainGeneratorTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
     }
 
+    @Test
+    @DisplayName("Chooses exactly one basic land when multiple basic lands are in hand")
+    void choosesOnlyOneBasicLand() {
+        addGenerator();
+        Forest first = new Forest();
+        Forest second = new Forest();
+        harness.setHand(player1, List.of(first, new KorHaven(), second));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        PendingInteraction.HandChoice choice = (PendingInteraction.HandChoice)
+                gd.interaction.activeInteraction();
+        assertThat(choice.validIndices()).containsExactly(0, 2);
+        harness.handleCardChosen(player1, 2);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2).contains(first).doesNotContain(second);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2)
+                .anySatisfy(permanent -> {
+                    assertThat(permanent.getCard()).isSameAs(second);
+                    assertThat(permanent.isTapped()).isTrue();
+                });
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can put a basic land onto its controller's battlefield during an opponent's turn")
+    void activatesDuringOpponentsTurn() {
+        addGenerator();
+        Forest land = new Forest();
+        KorHaven opponentsLand = new KorHaven();
+        harness.setHand(player1, List.of(land));
+        harness.setHand(player2, List.of(opponentsLand));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.forceActivePlayer(player2);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(opponentsLand);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2)
+                .anySatisfy(permanent -> {
+                    assertThat(permanent.getCard()).isSameAs(land);
+                    assertThat(permanent.isTapped()).isTrue();
+                });
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+    }
+
     private Permanent addGenerator() {
         Permanent generator = harness.addToBattlefieldAndReturn(player1, new TerrainGenerator());
         generator.setSummoningSick(false);
