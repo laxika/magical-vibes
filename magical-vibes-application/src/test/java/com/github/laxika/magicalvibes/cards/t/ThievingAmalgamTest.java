@@ -71,4 +71,110 @@ class ThievingAmalgamTest extends BaseCardTest {
         harness.assertLife(player1, 10);
         harness.assertLife(player2, 10);
     }
+
+    @Test
+    @DisplayName("A stolen Thieving Amalgam drains its owner when it dies itself")
+    void stolenAmalgamDeathDrainsItsOwner() {
+        Card stolenCard = new ThievingAmalgam();
+        stolenCard.setOwnerId(player2.getId());
+        Permanent amalgam = harness.addToBattlefieldAndReturn(player1, stolenCard);
+        gd.stolenCreatures.put(amalgam.getId(), player2.getId());
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 10);
+
+        amalgam.setMarkedDamage(7);
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Thieving Amalgam");
+        harness.assertLife(player1, 12);
+        harness.assertLife(player2, 8);
+    }
+
+    @Test
+    @DisplayName("A manifested opponent-owned creature dying drains its owner")
+    void manifestedCreatureDeathDrainsItsOwner() {
+        Card topCard = new ThievingAmalgam();
+        topCard.setOwnerId(player2.getId());
+        harness.setLibrary(player2, List.of(topCard));
+        harness.addToBattlefield(player1, new ThievingAmalgam());
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 10);
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+        Permanent manifested = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(Permanent::isManifested).findFirst().orElseThrow();
+        manifested.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Thieving Amalgam");
+        harness.assertLife(player1, 12);
+        harness.assertLife(player2, 8);
+    }
+
+    @Test
+    @DisplayName("Your own upkeep does not manifest a card")
+    void ownUpkeepDoesNotManifest() {
+        Card topCard = new ThievingAmalgam();
+        harness.setLibrary(player1, List.of(topCard));
+        harness.addToBattlefield(player1, new ThievingAmalgam());
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(Permanent::isManifested);
+    }
+
+    @Test
+    @DisplayName("An empty opponent library does not prevent the upkeep trigger resolving")
+    void emptyOpponentLibraryDoesNothing() {
+        harness.setLibrary(player2, List.of());
+        harness.addToBattlefield(player1, new ThievingAmalgam());
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The drain still triggers when Amalgam dies alongside a stolen creature")
+    void simultaneousDeathStillDrainsStolenCreaturesOwner() {
+        Permanent amalgam = harness.addToBattlefieldAndReturn(player1, new ThievingAmalgam());
+        Card stolenCard = new ThievingAmalgam();
+        stolenCard.setOwnerId(player2.getId());
+        Permanent stolen = harness.addToBattlefieldAndReturn(player1, stolenCard);
+        gd.stolenCreatures.put(stolen.getId(), player2.getId());
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 10);
+
+        amalgam.setMarkedDamage(7);
+        stolen.setMarkedDamage(7);
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        harness.assertLife(player1, 14);
+        harness.assertLife(player2, 6);
+    }
+
+    @Test
+    @DisplayName("An opponent-controlled creature dying does not trigger the drain")
+    void opponentControlledCreatureDeathDoesNotDrain() {
+        harness.addToBattlefield(player1, new ThievingAmalgam());
+        Permanent opposing = harness.addToBattlefieldAndReturn(player2, new ThievingAmalgam());
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 10);
+
+        opposing.setMarkedDamage(7);
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 10);
+        harness.assertLife(player2, 10);
+    }
 }
