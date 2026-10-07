@@ -35,7 +35,6 @@ class SteelingStanceTest extends BaseCardTest {
         assertThat(opposingCreature.getToughnessModifier()).isEqualTo(0);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(ownCreature.getPowerModifier()).isEqualTo(0);
@@ -122,7 +121,6 @@ class SteelingStanceTest extends BaseCardTest {
         assertThat(target.getToughnessModifier()).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(target.getPowerModifier()).isEqualTo(0);
@@ -152,5 +150,84 @@ class SteelingStanceTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isEqualTo(1);
         assertThat(target.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Forecast cannot be activated during an opponent's upkeep")
+    void forecastRejectsOpponentsUpkeep() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new MistralCharger());
+        SteelingStance stance = new SteelingStance();
+        harness.setHand(player1, List.of(stance));
+        advanceToUpkeep(player2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("during your upkeep");
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(stance);
+        assertThat(target.getPowerModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Each copy may forecast once during the same upkeep")
+    void separateCopiesCanForecastAndStackBoosts() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new MistralCharger());
+        SteelingStance first = new SteelingStance();
+        SteelingStance second = new SteelingStance();
+        harness.setHand(player1, List.of(first, second));
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateHandAbility(player1, 0, target.getId());
+        harness.passBothPriorities();
+        harness.activateHandAbility(player1, 1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getPowerModifier()).isEqualTo(2);
+        assertThat(target.getToughnessModifier()).isEqualTo(2);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(first, second);
+    }
+
+    @Test
+    @DisplayName("The spell affects creatures present at resolution, not later arrivals")
+    void spellBoostsOnlyCreaturesPresentAtResolution() {
+        harness.setHand(player1, List.of(new SteelingStance()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castInstant(player1, 0);
+        Permanent beforeResolution = harness.addToBattlefieldAndReturn(player1, new MistralCharger());
+
+        harness.passBothPriorities();
+        Permanent afterResolution = harness.addToBattlefieldAndReturn(player1, new MistralCharger());
+
+        assertThat(beforeResolution.getPowerModifier()).isEqualTo(1);
+        assertThat(beforeResolution.getToughnessModifier()).isEqualTo(1);
+        assertThat(afterResolution.getPowerModifier()).isZero();
+        assertThat(afterResolution.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Forecast keeps only its source revealed in hand until upkeep ends")
+    void forecastSourceRemainsPublicAfterResolutionUntilUpkeepEnds() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new MistralCharger());
+        harness.setHand(player1, List.of(new SteelingStance(), new AzoriusSignet()));
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateHandAbility(player1, 0, target.getId());
+        harness.clearMessages();
+
+        harness.passBothPriorities();
+
+        assertThat(harness.getConn2().getSentMessages())
+                .anyMatch(message -> message.contains("\"opponentHand\":[{")
+                        && message.contains("Steeling Stance"));
+        assertThat(harness.getConn2().getSentMessages())
+                .noneMatch(message -> message.contains("\"opponentHand\":[{")
+                        && message.contains("Azorius Signet"));
+
+        harness.clearMessages();
+        harness.passUntil(player1, TurnStep.DRAW);
+
+        assertThat(harness.getConn2().getSentMessages())
+                .anyMatch(message -> message.contains("\"opponentHand\":[]"));
     }
 }
