@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({TidewaterMinion.class, VotaryOfTheConclave.class, VituGhaziTheCityTree.class})
 class TidewaterMinionTest extends BaseCardTest {
@@ -56,5 +57,60 @@ class TidewaterMinionTest extends BaseCardTest {
 
         assertThat(target.isTapped()).isFalse();
         assertThat(minion.isTapped()).isTrue();
+    }
+
+    @Test
+    void canUntapItself() {
+        Permanent minion = addCreatureReady(player1, new TidewaterMinion());
+
+        harness.activateAbility(player1, 0, 1, null, minion.getId());
+
+        assertThat(minion.isTapped()).isTrue();
+
+        harness.passBothPriorities();
+
+        assertThat(minion.isTapped()).isFalse();
+    }
+
+    @Test
+    void canTargetAnUntappedPermanent() {
+        Permanent minion = addCreatureReady(player1, new TidewaterMinion());
+        Permanent target = addCreatureReady(player2, new VotaryOfTheConclave());
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(minion.isTapped()).isTrue();
+    }
+
+    @Test
+    void canLoseDefenderWhileTappedAndSummoningSick() {
+        Permanent minion = harness.addToBattlefieldAndReturn(player1, new TidewaterMinion());
+        minion.setSummoningSick(true);
+        minion.tap();
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(minion.hasKeyword(Keyword.DEFENDER)).isTrue();
+
+        harness.passBothPriorities();
+
+        assertThat(minion.hasKeyword(Keyword.DEFENDER)).isFalse();
+        assertThat(minion.isTapped()).isTrue();
+    }
+
+    @Test
+    void cannotPayTapCostWhileSummoningSick() {
+        Permanent minion = harness.addToBattlefieldAndReturn(player1, new TidewaterMinion());
+        minion.setSummoningSick(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, minion.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+
+        assertThat(minion.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 }
