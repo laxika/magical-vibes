@@ -13,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TetheredGriffin.class, Sanctimony.class, EnchantedEvening.class})
+@CardUsed({TetheredGriffin.class, Sanctimony.class, EnchantedEvening.class, TemporalAdept.class})
 class TetheredGriffinTest extends BaseCardTest {
 
     @Test
@@ -84,5 +84,60 @@ class TetheredGriffinTest extends BaseCardTest {
         harness.setHand(player1, List.of(new TetheredGriffin()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.castCreature(player1, 0);
+    }
+
+    @Test
+    @DisplayName("Losing the last enchantment triggers sacrifice of an established Griffin")
+    void sacrificesAfterLastEnchantmentLeaves() {
+        addCreatureReady(player1, new TemporalAdept());
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player1, new Sanctimony());
+        castGriffin();
+        resolveAllTriggers();
+        harness.assertOnBattlefield(player1, "Tethered Griffin");
+
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.activateAbility(player1, 0, null, enchantment.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Sanctimony");
+        harness.assertOnBattlefield(player1, "Tethered Griffin");
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Tethered Griffin");
+        harness.assertInGraveyard(player1, "Tethered Griffin");
+    }
+
+    @Test
+    @DisplayName("Losing one enchantment does not trigger sacrifice while another remains")
+    void survivesWhenAnotherEnchantmentRemains() {
+        addCreatureReady(player1, new TemporalAdept());
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player1, new Sanctimony());
+        harness.addToBattlefield(player1, new Sanctimony());
+        castGriffin();
+        resolveAllTriggers();
+
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.activateAbility(player1, 0, null, enchantment.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInHand(player1, "Sanctimony");
+        harness.assertOnBattlefield(player1, "Sanctimony");
+        harness.assertOnBattlefield(player1, "Tethered Griffin");
+    }
+
+    @Test
+    @DisplayName("Each Griffin sacrifices itself independently when no enchantments are controlled")
+    void multipleGriffinsTriggerIndependently() {
+        harness.addToBattlefield(player1, new TetheredGriffin());
+        harness.addToBattlefield(player1, new TetheredGriffin());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Tethered Griffin");
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card instanceof TetheredGriffin)
+                .hasSize(2);
     }
 }
