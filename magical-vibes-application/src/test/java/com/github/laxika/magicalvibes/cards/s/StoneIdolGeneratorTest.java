@@ -73,4 +73,49 @@ class StoneIdolGeneratorTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("sorcery speed");
     }
+
+    @Test
+    void opponentsAttacksDoNotGiveEnergy() {
+        harness.addToBattlefield(player1, new StoneIdolGenerator());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(player2, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gd.playerEnergyCounters.getOrDefault(player1.getId(), 0)).isZero();
+        assertThat(gd.playerEnergyCounters.getOrDefault(player2.getId(), 0)).isZero();
+    }
+
+    @Test
+    void energyAndTapArePaidBeforeTokenResolves() {
+        Permanent generator = harness.addToBattlefieldAndReturn(player1, new StoneIdolGenerator());
+        gd.playerEnergyCounters.put(player1.getId(), 8);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(2);
+        assertThat(generator.isTapped()).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().isToken());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken())).hasSize(1);
+    }
+
+    @Test
+    void tappedGeneratorCannotActivateEvenWithEnoughEnergy() {
+        Permanent generator = harness.addToBattlefieldAndReturn(player1, new StoneIdolGenerator());
+        generator.setTapped(true);
+        gd.playerEnergyCounters.put(player1.getId(), 6);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(6);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().isToken());
+    }
 }
