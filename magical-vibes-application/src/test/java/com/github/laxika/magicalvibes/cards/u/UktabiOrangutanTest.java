@@ -117,16 +117,51 @@ class UktabiOrangutanTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("ETB does not trigger when cast without a target")
-    void etbDoesNotTriggerWithoutTarget() {
-        harness.setHand(player1, List.of(new UktabiOrangutan()));
-        harness.addMana(player1, ManaColor.GREEN, 3);
-
-        harness.castCreature(player1, 0);
+    @DisplayName("Creature enters with no trigger on the stack when no legal target exists")
+    void entersWithoutStackedTriggerWhenNoLegalTargetExists() {
+        harness.castFromHand(player1, new UktabiOrangutan(), "{2}{G}");
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
         harness.assertOnBattlefield(player1, "Uktabi Orangutan");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An artifact must be chosen when the creature enters without a preselected target")
+    void choosesArtifactOnEntry() {
+        harness.addToBattlefield(player1, new TheHive());
+        harness.castFromHand(player1, new UktabiOrangutan(), "{2}{G}");
+
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "The Hive"));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Uktabi Orangutan");
+        harness.assertNotOnBattlefield(player1, "The Hive");
+        harness.assertInGraveyard(player1, "The Hive");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("ETB destroys the artifact even after Uktabi Orangutan leaves")
+    void etbResolvesAfterSourceLeaves() {
+        harness.addToBattlefield(player2, new TheHive());
+        harness.setHand(player1, List.of(new UktabiOrangutan()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castCreature(player1, 0, harness.getPermanentId(player2, "The Hive"));
+        harness.passBothPriorities();
+
+        Permanent source = findPermanent(player1, "Uktabi Orangutan");
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, source));
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Uktabi Orangutan");
+        harness.assertNotOnBattlefield(player2, "The Hive");
+        harness.assertInGraveyard(player2, "The Hive");
         assertThat(gd.stack).isEmpty();
     }
 }
