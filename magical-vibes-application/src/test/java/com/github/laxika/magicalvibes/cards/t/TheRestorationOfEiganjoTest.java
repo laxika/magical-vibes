@@ -117,13 +117,74 @@ class TheRestorationOfEiganjoTest extends BaseCardTest {
         addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(player2, List.of(0));
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers(player2);
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(1, 0)));
         resolveAllTriggers();
 
         assertThat(countPermanents(player1, "Spirit")).isEqualTo(1);
+    }
+
+
+    @Test
+    void chapterIICanReturnTheLandJustDiscarded() {
+        addSagaWithLore(1);
+        Plains plains = new Plains();
+        harness.setHand(player1, List.of(plains));
+        harness.setGraveyard(player1, List.of());
+
+        advanceToNextChapter();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.cards()).containsExactly(plains);
+        harness.handleMultipleCardsChosen(player1, List.of(plains.getId()));
+
+        assertThat(gd.stack).hasSize(1);
+        harness.assertNotOnBattlefield(player1, "Plains");
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Plains").isTapped()).isTrue();
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(plains);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void chapterIIReturnDoesNothingWhenTargetLeavesGraveyard() {
+        addSagaWithLore(1);
+        Plains plains = new Plains();
+        harness.setHand(player1, List.of(plains));
+        harness.setGraveyard(player1, List.of());
+
+        advanceToNextChapter();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(plains.getId()));
+        harness.setGraveyard(player1, List.of());
+        harness.setHand(player1, List.of(plains));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Plains");
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(plains);
+    }
+
+    @Test
+    void chapterIICanDiscardWithoutAnEligibleReturnTarget() {
+        addSagaWithLore(1);
+        Shock shock = new Shock();
+        harness.setHand(player1, List.of(shock));
+        harness.setGraveyard(player1, List.of());
+
+        advanceToNextChapter();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(shock);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
     }
 
     private Permanent addSagaWithLore(int loreCounters) {
