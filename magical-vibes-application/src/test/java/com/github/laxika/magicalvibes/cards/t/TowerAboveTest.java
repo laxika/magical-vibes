@@ -2,25 +2,27 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TowerAbove.class, GrizzlyBears.class, FountainOfYouth.class})
 class TowerAboveTest extends BaseCardTest {
-
-    // ===== Boost / keyword grant =====
 
     @Test
     @DisplayName("Resolving grants +4/+4, trample, and wither to the target")
@@ -73,13 +75,11 @@ class TowerAboveTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
-    // ===== Granted attack trigger: forced block =====
-
     @Test
     @DisplayName("When the boosted creature attacks, target creature is forced to block it")
     void attackTriggerForcesTargetToBlock() {
-        Permanent bear = readyCreature(player1);
-        Permanent blocker = readyCreature(player2);
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         grantTowerAbove(bear);
 
         declareAttackers(player1, List.of(0));
@@ -93,17 +93,15 @@ class TowerAboveTest extends BaseCardTest {
     @Test
     @DisplayName("Forced creature must block the boosted attacker")
     void forcedCreatureMustBlock() {
-        Permanent bear = readyCreature(player1);
-        Permanent blocker = readyCreature(player2);
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         grantTowerAbove(bear);
 
         declareAttackers(player1, List.of(0));
         harness.handlePermanentChosen(player1, blocker.getId());
         harness.passBothPriorities();
 
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         // Declaring no blockers is illegal — the targeted creature must block.
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of()))
@@ -117,8 +115,8 @@ class TowerAboveTest extends BaseCardTest {
     @Test
     @DisplayName("No attack trigger fires after the grant wears off at end of turn")
     void noTriggerAfterGrantWearsOff() {
-        Permanent bear = readyCreature(player1);
-        readyCreature(player2);
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
         grantTowerAbove(bear);
 
         // Wear off the temporary grant.
@@ -131,10 +129,100 @@ class TowerAboveTest extends BaseCardTest {
 
         // No target selection should be prompted — the granted trigger is gone.
         assertThat(gd.interaction.activeInteraction(
-                com.github.laxika.magicalvibes.model.PendingInteraction.PermanentChoice.class)).isNull();
+                PendingInteraction.PermanentChoice.class)).isNull();
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Two resolutions grant independent attack triggers with different targets")
+    void repeatedGrantsChooseSeparateBlockers() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent firstBlocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent secondBlocker = addCreatureReady(player2, new GrizzlyBears());
+        grantTowerAbove(attacker);
+        grantTowerAbove(attacker);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            harness.handlePermanentChosen(player1, firstBlocker.getId());
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
+            harness.handlePermanentChosen(player1, secondBlocker.getId());
+            resolveAllTriggers();
+        });
+
+        assertThat(firstBlocker.getMustBlockIds()).contains(attacker.getId());
+        assertThat(secondBlocker.getMustBlockIds()).contains(attacker.getId());
+        prepareDeclareBlockers();
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must block");
+        gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+        assertThat(firstBlocker.isBlocking()).isTrue();
+        assertThat(secondBlocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The attack trigger can target a tapped creature without forcing an illegal block")
+    void tappedTargetDoesNotHaveToBlock() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+        blocker.setTapped(true);
+        grantTowerAbove(attacker);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            harness.handlePermanentChosen(player1, blocker.getId());
+            resolveAllTriggers();
+        });
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of());
+        assertThat(blocker.isBlocking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The attack trigger can target a creature controlled by the attacker")
+    void attackTriggerCanTargetOwnCreature() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+        grantTowerAbove(attacker);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            harness.handlePermanentChosen(player1, ownCreature.getId());
+            resolveAllTriggers();
+        });
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of());
+        assertThat(ownCreature.isBlocking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Granted trample deals excess damage to the player and wither puts counters on the blocker")
+    void trampleAndWitherApplyToCombatDamage() {
+        harness.setLife(player2, 20);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        grantTowerAbove(attacker);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            harness.handlePermanentChosen(player1, blocker.getId());
+            resolveAllTriggers();
+        });
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+        harness.handleCombatDamageAssigned(player1, 0,
+                Map.of(blocker.getId(), 2, player2.getId(), 4));
+
+        assertThat(blocker.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertLife(player2, 16);
+    }
 
     private void grantTowerAbove(Permanent target) {
         harness.setHand(player1, List.of(new TowerAbove()));
@@ -144,10 +232,4 @@ class TowerAboveTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    private Permanent readyCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
 }
