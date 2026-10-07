@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.w.WhitemaneLion;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -23,11 +22,7 @@ class StonecloakerTest extends BaseCardTest {
     @DisplayName("ETB can return Stonecloaker itself to its owner's hand")
     void etbCanReturnItself() {
         Stonecloaker stonecloaker = new Stonecloaker();
-        harness.setHand(player1, List.of(stonecloaker));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, stonecloaker, "{2}{W}");
         resolveAllTriggers();
 
         UUID stonecloakerId = harness.getPermanentId(player1, "Stonecloaker");
@@ -48,11 +43,7 @@ class StonecloakerTest extends BaseCardTest {
         Card graveyardCard = new WhitemaneLion();
         harness.setGraveyard(player2, List.of(graveyardCard));
         Stonecloaker stonecloaker = new Stonecloaker();
-        harness.setHand(player1, List.of(stonecloaker));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, stonecloaker, "{2}{W}");
         resolveStonecloakerTriggers(creature.getId(), graveyardCard.getId());
 
         harness.assertInHand(player1, "Whitemane Lion");
@@ -66,11 +57,7 @@ class StonecloakerTest extends BaseCardTest {
         Card graveyardCard = new WhitemaneLion();
         harness.setGraveyard(player1, List.of(graveyardCard));
         Stonecloaker stonecloaker = new Stonecloaker();
-        harness.setHand(player1, List.of(stonecloaker));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, stonecloaker, "{2}{W}");
         resolveAllTriggers();
         UUID stonecloakerId = harness.getPermanentId(player1, "Stonecloaker");
         resolveStonecloakerTriggers(stonecloakerId, graveyardCard.getId());
@@ -86,11 +73,7 @@ class StonecloakerTest extends BaseCardTest {
         Card graveyardCard = new WhitemaneLion();
         harness.setGraveyard(player2, List.of(graveyardCard));
         Stonecloaker stonecloaker = new Stonecloaker();
-        harness.setHand(player1, List.of(stonecloaker));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, stonecloaker, "{2}{W}");
         resolveAllTriggers();
 
         if (gd.interaction.activeInteraction() instanceof PendingInteraction.PermanentChoice) {
@@ -102,6 +85,50 @@ class StonecloakerTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
         assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Returning a creature still resolves when the graveyard target becomes illegal")
+    void returnStillResolvesWhenGraveyardTargetDisappears() {
+        Card graveyardCard = new WhitemaneLion();
+        harness.setGraveyard(player2, List.of(graveyardCard));
+        harness.castFromHand(player1, new Stonecloaker(), "{2}{W}");
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        harness.handleMultipleCardsChosen(player1, List.of(graveyardCard.getId()));
+        harness.setGraveyard(player2, List.of());
+        resolveAllTriggers();
+
+        UUID stonecloakerId = harness.getPermanentId(player1, "Stonecloaker");
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, stonecloakerId);
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Stonecloaker");
+        harness.assertNotOnBattlefield(player1, "Stonecloaker");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).doesNotContain(graveyardCard);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The return choice includes only creatures the controller controls")
+    void returnChoiceExcludesOpponentsCreatures() {
+        Permanent friendly = harness.addToBattlefieldAndReturn(player1, new WhitemaneLion());
+        Permanent opposing = harness.addToBattlefieldAndReturn(player2, new WhitemaneLion());
+        harness.castFromHand(player1, new Stonecloaker(), "{2}{W}");
+        resolveAllTriggers();
+
+        UUID stonecloakerId = harness.getPermanentId(player1, "Stonecloaker");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactlyInAnyOrder(friendly.getId(), stonecloakerId)
+                .doesNotContain(opposing.getId());
+        harness.handlePermanentChosen(player1, friendly.getId());
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Whitemane Lion");
+        harness.assertOnBattlefield(player1, "Stonecloaker");
+        harness.assertOnBattlefield(player2, "Whitemane Lion");
     }
 
     private void resolveStonecloakerTriggers(UUID creatureToReturnId, UUID graveyardCardId) {
