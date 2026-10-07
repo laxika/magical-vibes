@@ -52,4 +52,43 @@ class StarvedRusalkaTest extends BaseCardTest {
                 harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Can activate while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent rusalka = harness.addToBattlefieldAndReturn(player1, new StarvedRusalka());
+        rusalka.setTapped(true);
+        harness.setLife(player1, 20);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 21);
+        harness.assertInGraveyard(player1, "Starved Rusalka");
+    }
+
+    @Test
+    @DisplayName("Sacrifice is paid before resolution and only the controller gains life")
+    void sacrificeIsPaidBeforeLifeGain() {
+        addCreatureReady(player2, new StarvedRusalka());
+        Permanent fodder = addCreatureReady(player2, new GhostWarden());
+        harness.forceActivePlayer(player2);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addMana(player2, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player2, 0, null, null);
+        harness.handlePermanentChosen(player2, fodder.getId());
+
+        harness.assertInGraveyard(player2, "Ghost Warden");
+        harness.assertNotOnBattlefield(player2, "Ghost Warden");
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 21);
+        harness.assertLife(player1, 20);
+        harness.assertOnBattlefield(player2, "Starved Rusalka");
+    }
 }
