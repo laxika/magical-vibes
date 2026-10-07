@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HistoryOfBenalia;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -19,11 +18,12 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TheWorldSpell.class, Forest.class, GrizzlyBears.class, HistoryOfBenalia.class, Shock.class})
+@CardUsed({TheWorldSpell.class, Forest.class})
 class TheWorldSpellTest extends BaseCardTest {
 
     @Test
     @DisplayName("Chapter I may put a non-Saga permanent from the top seven into hand")
+    @CardUsed({GrizzlyBears.class, HistoryOfBenalia.class, Shock.class})
     void chapterILooksAtTopSevenForNonSagaPermanent() {
         HistoryOfBenalia sagaCard = new HistoryOfBenalia();
         Shock instant = new Shock();
@@ -35,11 +35,9 @@ class TheWorldSpellTest extends BaseCardTest {
         Forest untouched = new Forest();
         harness.setLibrary(player1, List.of(sagaCard, instant, creature, land, secondInstant,
                 secondLand, secondCreature, untouched));
-        harness.setHand(player1, List.of(new TheWorldSpell()));
-        addWorldSpellMana();
-
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new TheWorldSpell(), "{5}{G}{G}");
         harness.passBothPriorities();
+        harness.handleListChoice(player1, "1");
         harness.passBothPriorities();
 
         PendingInteraction.LibraryRevealChoice choice =
@@ -61,6 +59,7 @@ class TheWorldSpellTest extends BaseCardTest {
 
     @Test
     @DisplayName("Chapter I bottoms the top seven without an eligible card")
+    @CardUsed({HistoryOfBenalia.class, Shock.class})
     void chapterIWithNoNonSagaPermanentDoesNotCreateChoice() {
         HistoryOfBenalia sagaOne = new HistoryOfBenalia();
         Shock shockOne = new Shock();
@@ -72,11 +71,9 @@ class TheWorldSpellTest extends BaseCardTest {
         Forest untouched = new Forest();
         harness.setLibrary(player1, List.of(sagaOne, shockOne, sagaTwo, shockTwo, sagaThree,
                 shockThree, sagaFour, untouched));
-        harness.setHand(player1, List.of(new TheWorldSpell()));
-        addWorldSpellMana();
-
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new TheWorldSpell(), "{5}{G}{G}");
         harness.passBothPriorities();
+        harness.handleListChoice(player1, "1");
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -87,9 +84,9 @@ class TheWorldSpellTest extends BaseCardTest {
 
     @Test
     @DisplayName("Chapter III puts up to two non-Saga permanents from hand onto the battlefield")
+    @CardUsed({GrizzlyBears.class, HistoryOfBenalia.class, Shock.class})
     void chapterIIIPutsUpToTwoNonSagaPermanentsFromHand() {
-        Permanent saga = new Permanent(new TheWorldSpell());
-        gd.playerBattlefields.get(player1.getId()).add(saga);
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new TheWorldSpell());
         saga.setCounterCount(CounterType.LORE, 2);
         GrizzlyBears firstCreature = new GrizzlyBears();
         GrizzlyBears secondCreature = new GrizzlyBears();
@@ -111,6 +108,86 @@ class TheWorldSpellTest extends BaseCardTest {
                 .filteredOn(permanent -> permanent.getCard() instanceof GrizzlyBears)
                 .hasSize(2);
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(sagaCard, instant);
+    }
+
+    @Test
+    @DisplayName("Chapter II repeats the top-seven selection")
+    void chapterIISelectsNonSagaPermanent() {
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new TheWorldSpell());
+        saga.setCounterCount(CounterType.LORE, 1);
+        Forest selected = new Forest();
+        TheWorldSpell excluded = new TheWorldSpell();
+        harness.setLibrary(player1, List.of(excluded, selected));
+        harness.setHand(player1, List.of());
+
+        triggerNextChapter();
+        harness.passBothPriorities();
+
+        PendingInteraction.LibraryRevealChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactly(selected.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(selected.getId()));
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(selected);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(excluded);
+    }
+
+    @Test
+    @DisplayName("Read ahead can skip directly to chapter III")
+    void readAheadStartsAtChapterThree() {
+        Forest selected = new Forest();
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setHand(player1, List.of(new TheWorldSpell(), selected));
+        addWorldSpellMana();
+
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player1, "3");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.PutUpToCardsFromHandOntoBattlefieldChoice.class);
+        harness.handleMultipleCardsChosen(player1, List.of(selected.getId()));
+        harness.assertOnBattlefield(player1, "Forest");
+        harness.assertInGraveyard(player1, "The World Spell");
+        harness.assertNotOnBattlefield(player1, "The World Spell");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Chapter I may decline even its only eligible card")
+    void chapterICanDeclineOnlyEligibleCard() {
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new TheWorldSpell());
+        saga.setCounterCount(CounterType.LORE, 0);
+        Forest eligible = new Forest();
+        TheWorldSpell excluded = new TheWorldSpell();
+        harness.setLibrary(player1, List.of(eligible, excluded));
+        harness.setHand(player1, List.of());
+
+        triggerNextChapter();
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(eligible, excluded);
+    }
+
+    @Test
+    @DisplayName("Chapter III may put no cards onto the battlefield")
+    void chapterIIICanDeclineAndSagaIsSacrificed() {
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new TheWorldSpell());
+        saga.setCounterCount(CounterType.LORE, 2);
+        Forest retained = new Forest();
+        harness.setHand(player1, List.of(retained));
+
+        triggerNextChapter();
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(retained);
+        harness.assertNotOnBattlefield(player1, "Forest");
+        harness.assertInGraveyard(player1, "The World Spell");
     }
 
     private void addWorldSpellMana() {
