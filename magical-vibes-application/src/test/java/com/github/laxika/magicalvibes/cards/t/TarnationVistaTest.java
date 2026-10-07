@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.l.LootTheKeyToEverything;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -17,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TarnationVista.class, Forest.class, FugitiveWizard.class, GrizzlyBears.class, SuntailHawk.class, HillGiant.class})
+@CardUsed({TarnationVista.class, Forest.class, FugitiveWizard.class, GrizzlyBears.class, SuntailHawk.class, HillGiant.class, LootTheKeyToEverything.class})
 class TarnationVistaTest extends BaseCardTest {
 
     @Test
@@ -67,6 +68,68 @@ class TarnationVistaTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
         assertThat(vista.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The color selected when playing the land is used by its mana ability")
+    void manaAbilityUsesColorChosenOnEntry() {
+        harness.setHand(player1, List.of(new TarnationVista()));
+        harness.playLand(player1, 0);
+        harness.handleListChoice(player1, "BLACK");
+        Permanent vista = findPermanent(player1, "Tarnation Vista");
+        vista.setTapped(false);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        assertThat(vista.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Duplicate monocolored permanents produce only one mana of their color")
+    void duplicateColorsProduceOnlyOneMana() {
+        addReadyVista();
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Multicolored permanents do not contribute colors")
+    void ignoresMulticoloredPermanents() {
+        addReadyVista();
+        harness.addToBattlefield(player1, new LootTheKeyToEverything());
+        harness.addToBattlefield(player1, new SuntailHawk());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("With only colorless permanents, the second ability spends its cost and produces no mana")
+    void noMonocoloredPermanentsProducesNoMana() {
+        Permanent vista = addReadyVista();
+        vista.setChosenColor(com.github.laxika.magicalvibes.model.CardColor.RED);
+        harness.addToBattlefield(player1, new Forest());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(vista.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
     }
 
     private Permanent addReadyVista() {
