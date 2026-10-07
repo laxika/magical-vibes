@@ -31,7 +31,7 @@ class StormHerdTest extends BaseCardTest {
                 .toList();
         assertThat(tokens).hasSize(7);
         assertThat(tokens).allSatisfy(token -> {
-            assertThat(token.getCard().getName()).isEqualTo("Pegasus");
+            assertThat(token.getCard().getName()).isEqualTo("Pegasus Token");
             assertThat(token.getCard().getColor()).isEqualTo(CardColor.WHITE);
             assertThat(token.getCard().getPower()).isEqualTo(1);
             assertThat(token.getCard().getToughness()).isEqualTo(1);
@@ -53,5 +53,26 @@ class StormHerdTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent.getCard().isToken())
                 .hasSize(11);
+    }
+
+    @Test
+    void createsOnlyOneTokenForCasterAfterLifeDropsToOne() {
+        harness.setLife(player1, 7);
+        harness.setLife(player2, 15);
+        harness.setHand(player1, List.of(new StormHerd()));
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castSorcery(player1, 0);
+        harness.setLife(player1, 1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).singleElement().satisfies(token -> {
+            assertThat(token.getCard().isToken()).isTrue();
+            assertThat(token.getCard().getSubtypes()).contains(CardSubtype.PEGASUS);
+            assertThat(token.isTapped()).isFalse();
+        });
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Storm Herd");
     }
 }
