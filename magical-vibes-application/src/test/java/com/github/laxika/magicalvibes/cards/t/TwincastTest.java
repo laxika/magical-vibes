@@ -2,10 +2,12 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.b.Bandage;
+import com.github.laxika.magicalvibes.cards.b.Blaze;
 import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.MightOfOaks;
 import com.github.laxika.magicalvibes.cards.o.OboroPalaceInTheClouds;
 import com.github.laxika.magicalvibes.cards.s.ShiftingBorders;
@@ -26,7 +28,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Twincast.class, Bandage.class, Boomerang.class, CounselOfTheSoratami.class,
-        GloriousAnthem.class, GrizzlyBears.class, MightOfOaks.class})
+        GloriousAnthem.class, GrizzlyBears.class, MightOfOaks.class, Blaze.class,
+        Island.class, ShiftingBorders.class, OboroPalaceInTheClouds.class})
 class TwincastTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -236,8 +239,7 @@ class TwincastTest extends BaseCardTest {
     @DisplayName("Copying a targeted instant preserves the target")
     void copyingTargetedInstantPreservesTarget() {
         GrizzlyBears bears = new GrizzlyBears();
-        harness.addToBattlefield(player1, bears);
-        UUID bearsPermId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID bearsPermId = harness.addToBattlefieldAndReturn(player1, bears).getId();
 
         Boomerang boomerang = new Boomerang();
         harness.setHand(player1, List.of(boomerang));
@@ -259,11 +261,10 @@ class TwincastTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Copy resolves with same target — bounce effect applied twice")
+    @DisplayName("Copy bounces the target and the original spell fizzles")
     void copyAndOriginalBothBounce() {
         GrizzlyBears bears = new GrizzlyBears();
-        harness.addToBattlefield(player1, bears);
-        UUID bearsPermId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID bearsPermId = harness.addToBattlefieldAndReturn(player1, bears).getId();
 
         Boomerang boomerang = new Boomerang();
         harness.setHand(player1, List.of(boomerang));
@@ -448,8 +449,7 @@ class TwincastTest extends BaseCardTest {
     @DisplayName("Twincast can copy an instant spell")
     void canCopyInstantSpell() {
         GrizzlyBears bears = new GrizzlyBears();
-        harness.addToBattlefield(player2, bears);
-        UUID bearsPermId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID bearsPermId = harness.addToBattlefieldAndReturn(player2, bears).getId();
 
         Boomerang boomerang = new Boomerang();
         harness.setHand(player1, List.of(boomerang));
@@ -501,8 +501,7 @@ class TwincastTest extends BaseCardTest {
     @DisplayName("Copying a targeted spell offers retarget may-ability prompt")
     void copyOfTargetedSpellOffersRetarget() {
         GrizzlyBears bears = new GrizzlyBears();
-        harness.addToBattlefield(player1, bears);
-        UUID bearsPermId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID bearsPermId = harness.addToBattlefieldAndReturn(player1, bears).getId();
 
         Boomerang boomerang = new Boomerang();
         harness.setHand(player1, List.of(boomerang));
@@ -527,10 +526,8 @@ class TwincastTest extends BaseCardTest {
     void acceptRetargetChangesTarget() {
         GrizzlyBears bears1 = new GrizzlyBears();
         GrizzlyBears bears2 = new GrizzlyBears();
-        harness.addToBattlefield(player1, bears1);
-        harness.addToBattlefield(player2, bears2);
-        UUID bears1PermId = harness.getPermanentId(player1, "Grizzly Bears");
-        UUID bears2PermId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID bears1PermId = harness.addToBattlefieldAndReturn(player1, bears1).getId();
+        UUID bears2PermId = harness.addToBattlefieldAndReturn(player2, bears2).getId();
 
         Boomerang boomerang = new Boomerang();
         harness.setHand(player1, List.of(boomerang));
@@ -596,12 +593,10 @@ class TwincastTest extends BaseCardTest {
     void retargetCreatureSpellOnlyOffersCreatures() {
         // Creature + enchantment on battlefield
         GrizzlyBears bears = new GrizzlyBears();
-        harness.addToBattlefield(player1, bears);
-        UUID bearsPermId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID bearsPermId = harness.addToBattlefieldAndReturn(player1, bears).getId();
 
         GloriousAnthem anthem = new GloriousAnthem();
-        harness.addToBattlefield(player1, anthem);
-        UUID anthemPermId = findPermanent(player1, "Glorious Anthem").getId();
+        UUID anthemPermId = harness.addToBattlefieldAndReturn(player1, anthem).getId();
 
         // Player1 casts Might of Oaks targeting bears
         MightOfOaks might = new MightOfOaks();
@@ -630,8 +625,7 @@ class TwincastTest extends BaseCardTest {
     void retargetAnyTargetSpellIncludesPlayers() {
         // Creature on battlefield
         GrizzlyBears bears = new GrizzlyBears();
-        harness.addToBattlefield(player1, bears);
-        UUID bearsPermId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID bearsPermId = harness.addToBattlefieldAndReturn(player1, bears).getId();
 
         // Player1 casts Bandage targeting bears
         Bandage bandage = new Bandage();
@@ -654,6 +648,71 @@ class TwincastTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).contains(bearsPermId);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).contains(player1.getId());
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).contains(player2.getId());
+    }
+
+    @Test
+    @DisplayName("Twincast cannot copy an activated ability on the stack")
+    void cannotTargetActivatedAbility() {
+        harness.addToBattlefield(player1, new OboroPalaceInTheClouds());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.setHand(player2, List.of(new Twincast()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        UUID abilityId = gd.stack.getLast().getTargetableId();
+        harness.passPriority(player1);
+
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, abilityId))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The controller can change both targets of a copied spell")
+    void canChangeBothTargetsOfCopy() {
+        Permanent firstLand = harness.addToBattlefieldAndReturn(player1, new Island());
+        Permanent secondLand = harness.addToBattlefieldAndReturn(player2, new Island());
+        Permanent thirdLand = harness.addToBattlefieldAndReturn(player1, new Island());
+        ShiftingBorders borders = new ShiftingBorders();
+        harness.setHand(player1, List.of(borders));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.setHand(player2, List.of(new Twincast()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castInstant(player1, 0, List.of(firstLand.getId(), secondLand.getId()));
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, borders.getId());
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handlePermanentChosen(player2, thirdLand.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player2, firstLand.getId());
+        assertThat(gd.stack.getLast().getTargetIds())
+                .containsExactly(thirdLand.getId(), firstLand.getId());
+        assertThat(gd.stack.getFirst().getTargetIds())
+                .containsExactly(firstLand.getId(), secondLand.getId());
+    }
+
+    @Test
+    @DisplayName("A copy retains the chosen X value and can damage a new target")
+    void copyRetainsChosenXValue() {
+        Blaze blaze = new Blaze();
+        harness.setHand(player1, List.of(blaze));
+        harness.addMana(player1, ManaColor.RED, 5);
+        harness.setHand(player2, List.of(new Twincast()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.castSorcery(player1, 0, 4, player2.getId());
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, blaze.getId());
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handlePermanentChosen(player2, player1.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player1, 16);
+        harness.assertLife(player2, 20);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 16);
     }
 }
 
