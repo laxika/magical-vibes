@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.Stifle;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -10,9 +11,11 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Timbermare.class, GrizzlyBears.class, Forest.class})
+@CardUsed({Timbermare.class, GrizzlyBears.class, Forest.class, Stifle.class})
 class TimbermareTest extends BaseCardTest {
 
     @Test
@@ -74,8 +77,43 @@ class TimbermareTest extends BaseCardTest {
 
     private void castAndResolveTimbermare() {
         harness.castFromHand(player1, new Timbermare(), "{3}{G}");
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.assertOnBattlefield(player1, "Timbermare");
+    }
+
+    @Test
+    @DisplayName("Countering the tap trigger does not prevent echo at the next upkeep")
+    void counteringEntryTriggerDoesNotPreventEcho() {
+        harness.castFromHand(player1, new Timbermare(), "{3}{G}");
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new Stifle()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, gd.stack.getLast().getCard().getId());
+        resolveAllTriggers();
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.assertNotOnBattlefield(player1, "Timbermare");
+        harness.assertInGraveyard(player1, "Timbermare");
+    }
+
+    @Test
+    @DisplayName("Echo waits for its controller's upkeep rather than the opponent's upkeep")
+    void echoDoesNotTriggerOnOpponentsUpkeep() {
+        castAndResolveTimbermare();
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Timbermare");
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.assertInGraveyard(player1, "Timbermare");
     }
 }
