@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.cards.r.RootwaterCommando;
 import com.github.laxika.magicalvibes.cards.t.TerrainGenerator;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -13,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SpiritualAsylum.class, RootwaterCommando.class, TerrainGenerator.class})
+@CardUsed({SpiritualAsylum.class, RootwaterCommando.class, TerrainGenerator.class, Opalescence.class})
 class SpiritualAsylumTest extends BaseCardTest {
 
     @Test
@@ -59,5 +60,66 @@ class SpiritualAsylumTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Spiritual Asylum");
         harness.assertNotInGraveyard(player1, "Spiritual Asylum");
+    }
+
+    @Test
+    @DisplayName("Shroud remains until the attack trigger resolves, then creatures and lands lose it")
+    void shroudEndsWhenSacrificeTriggerResolves() {
+        harness.addToBattlefield(player1, new SpiritualAsylum());
+        Permanent creature = addCreatureReady(player1, new RootwaterCommando());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new TerrainGenerator());
+
+        declareAttackers(player1, List.of(1));
+
+        harness.assertOnBattlefield(player1, "Spiritual Asylum");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.SHROUD)).isTrue();
+        assertThat(gqs.hasKeyword(gd, land, Keyword.SHROUD)).isTrue();
+
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Spiritual Asylum");
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.SHROUD)).isFalse();
+        assertThat(gqs.hasKeyword(gd, land, Keyword.SHROUD)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Each attacking creature triggers the sacrifice ability, but the enchantment is sacrificed only once")
+    void multipleAttackersTriggerSeparately() {
+        harness.addToBattlefield(player1, new SpiritualAsylum());
+        addCreatureReady(player1, new RootwaterCommando());
+        addCreatureReady(player1, new RootwaterCommando());
+
+        declareAttackers(player1, List.of(1, 2));
+
+        assertThat(gd.stack).hasSize(2);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Spiritual Asylum");
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card.getName().equals("Spiritual Asylum"))
+                .hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Declaring no attackers leaves Spiritual Asylum on the battlefield")
+    void noAttackersDoesNotSacrificeIt() {
+        harness.addToBattlefield(player1, new SpiritualAsylum());
+        addCreatureReady(player1, new RootwaterCommando());
+
+        declareAttackers(player1, List.of());
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Spiritual Asylum");
+        harness.assertNotInGraveyard(player1, "Spiritual Asylum");
+    }
+
+    @Test
+    @DisplayName("Spiritual Asylum has shroud when Opalescence makes it a creature")
+    void animatedAsylumHasShroud() {
+        harness.addToBattlefield(player1, new Opalescence());
+        Permanent asylum = harness.addToBattlefieldAndReturn(player1, new SpiritualAsylum());
+
+        assertThat(gqs.hasKeyword(gd, asylum, Keyword.SHROUD)).isTrue();
     }
 }
