@@ -1,7 +1,5 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.model.FlashbackCast;
-import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -17,22 +15,18 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({ThinkTwice.class})
 class ThinkTwiceTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    
-
     @Test
-    @DisplayName("Has flashback cost {2}{U}")
-    void hasFlashbackCost() {
-        ThinkTwice card = new ThinkTwice();
+    @DisplayName("Flashback requires more mana than the normal casting cost")
+    void flashbackCannotUseNormalCastingCost() {
+        harness.setGraveyard(player1, List.of(new ThinkTwice()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        FlashbackCast flashback = card.getCastingOption(FlashbackCast.class).orElseThrow();
-        assertThat(flashback.getCost(ManaCastingCost.class).orElseThrow().manaCost()).isEqualTo("{2}{U}");
+        assertThatThrownBy(() -> harness.castFlashback(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Think Twice");
+        assertThat(gd.stack).isEmpty();
     }
-
-    
-
-    // ===== Casting normally =====
 
     @Test
     @DisplayName("Casting draws one card")
@@ -53,8 +47,6 @@ class ThinkTwiceTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Think Twice");
         assertThat(gd.stack).isEmpty();
     }
-
-    // ===== Flashback =====
 
     @Test
     @DisplayName("Flashback from graveyard draws one card")
@@ -107,5 +99,43 @@ class ThinkTwiceTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castFlashback(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The same card draws once from hand and once with flashback")
+    void normalCastThenFlashbackDrawsTwice() {
+        ThinkTwice spell = new ThinkTwice();
+        ThinkTwice firstDraw = new ThinkTwice();
+        ThinkTwice secondDraw = new ThinkTwice();
+        harness.setLibrary(player1, List.of(firstDraw, secondDraw));
+        int opponentHandSize = gd.playerHands.get(player2.getId()).size();
+
+        harness.castFromHand(player1, spell, "{1}{U}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw);
+        harness.assertInGraveyard(player1, "Think Twice");
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castAndResolveFlashback(player1, 0, null);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(opponentHandSize);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        harness.assertNotInGraveyard(player1, "Think Twice");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(spell);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Flashback still requires blue mana")
+    void flashbackCannotBePaidWithOnlyColorlessMana() {
+        harness.setGraveyard(player1, List.of(new ThinkTwice()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.castFlashback(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Think Twice");
+        assertThat(gd.stack).isEmpty();
     }
 }
