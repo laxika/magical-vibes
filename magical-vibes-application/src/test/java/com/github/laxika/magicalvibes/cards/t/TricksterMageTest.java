@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.k.KorHaven;
 import com.github.laxika.magicalvibes.cards.o.Oraxid;
 import com.github.laxika.magicalvibes.cards.s.SpiritualAsylum;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -129,8 +128,63 @@ class TricksterMageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
-                .anyMatch(log -> log.contains("fizzles"));
+        assertThat(gameLogContains("fizzles")).isTrue();
+    }
+
+    @Test
+    @DisplayName("The Mage can target itself and untap after paying its tap cost")
+    void untapsItself() {
+        Permanent mage = addCreatureReady(player1, new TricksterMage());
+
+        activate(mage);
+
+        assertThat(mage.isTapped()).isFalse();
+        harness.assertInGraveyard(player1, "Oraxid");
+    }
+
+    @Test
+    @DisplayName("The ability resolves after its source leaves the battlefield")
+    void resolvesWithoutSource() {
+        Permanent mage = addCreatureReady(player1, new TricksterMage());
+        Permanent target = addCreatureReady(player2, new Oraxid());
+        activateAndPayDiscard(target);
+        gd.playerBattlefields.get(player1.getId()).remove(mage);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate while the Mage is tapped")
+    void cannotActivateWhenTapped() {
+        Permanent mage = addCreatureReady(player1, new TricksterMage());
+        mage.tap();
+        Permanent target = addCreatureReady(player2, new Oraxid());
+        harness.setHand(player1, List.of(new Oraxid()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The ability fizzles when its target gains shroud before resolution")
+    void fizzlesWhenTargetGainsShroud() {
+        addCreatureReady(player1, new TricksterMage());
+        Permanent target = addCreatureReady(player2, new Oraxid());
+        activateAndPayDiscard(target);
+        harness.addToBattlefield(player2, new SpiritualAsylum());
+
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gameLogContains("fizzles")).isTrue();
+        harness.assertInGraveyard(player1, "Oraxid");
     }
 
     private void activate(Permanent target) {
