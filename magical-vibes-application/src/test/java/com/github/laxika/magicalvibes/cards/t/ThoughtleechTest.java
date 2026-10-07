@@ -148,6 +148,43 @@ class ThoughtleechTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
     }
 
+    @Test
+    @DisplayName("Untapping an opponent's Island does not trigger Thoughtleech")
+    void untappingOpponentIslandDoesNotTrigger() {
+        harness.addToBattlefield(player1, new Thoughtleech());
+        Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
+        island.tap();
+        harness.setHand(player1, java.util.List.of(new Twiddle()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.castInstant(player1, 0, island.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(island.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
+    }
+
+    @Test
+    @DisplayName("A pending Thoughtleech trigger resolves after its source leaves the battlefield")
+    void pendingTriggerResolvesAfterSourceLeaves() {
+        Permanent thoughtleech = harness.addToBattlefieldAndReturn(player1, new Thoughtleech());
+        Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        tap(island);
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToGraveyard(gd, thoughtleech));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInGraveyard(player1, "Thoughtleech");
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
+    }
+
     private void tap(Permanent permanent) {
         permanent.tap();
         harness.inMutationScope(
