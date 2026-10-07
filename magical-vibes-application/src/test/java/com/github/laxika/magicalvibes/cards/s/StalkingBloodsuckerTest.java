@@ -127,4 +127,52 @@ class StalkingBloodsuckerTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Discard is paid before resolution and only the activating creature is boosted")
+    void discardIsACostAndBoostAppliesOnlyToSource() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        Permanent bloodsucker = harness.addToBattlefieldAndReturn(player1, new StalkingBloodsucker());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new StalkingBloodsucker());
+        int basePower = gqs.getEffectivePower(gd, bloodsucker);
+        int baseToughness = gqs.getEffectiveToughness(gd, bloodsucker);
+        int otherPower = gqs.getEffectivePower(gd, other);
+        int otherToughness = gqs.getEffectiveToughness(gd, other);
+        harness.setHand(player1, List.of(new AvenArcher()));
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player1, "Aven Archer");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, bloodsucker)).isEqualTo(basePower);
+        assertThat(gqs.getEffectiveToughness(gd, bloodsucker)).isEqualTo(baseToughness);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, bloodsucker)).isEqualTo(basePower + 2);
+        assertThat(gqs.getEffectiveToughness(gd, bloodsucker)).isEqualTo(baseToughness + 2);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(otherPower);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(otherToughness);
+    }
+
+    @Test
+    @DisplayName("The ability requires black mana even when a card can be discarded")
+    void cannotActivateWithoutBlackMana() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addToBattlefield(player1, new StalkingBloodsucker());
+        harness.setHand(player1, List.of(new AvenArcher()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Aven Archer");
+        harness.assertNotInGraveyard(player1, "Aven Archer");
+    }
 }
