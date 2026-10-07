@@ -1,19 +1,26 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.c.CivicWayfinder;
+import com.github.laxika.magicalvibes.cards.g.GatherCourage;
 import com.github.laxika.magicalvibes.cards.h.HuntedLammasu;
+import com.github.laxika.magicalvibes.cards.p.PrivilegedPosition;
 import com.github.laxika.magicalvibes.cards.t.Terrarion;
 import com.github.laxika.magicalvibes.cards.w.Watchwolf;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+import java.util.UUID;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Spawnbroker.class, CivicWayfinder.class, HuntedLammasu.class, Terrarion.class, Watchwolf.class})
+@CardUsed({Spawnbroker.class, CivicWayfinder.class, GatherCourage.class, HuntedLammasu.class,
+        PrivilegedPosition.class, Terrarion.class, Watchwolf.class})
 class SpawnbrokerTest extends BaseCardTest {
 
     @Test
@@ -147,6 +154,61 @@ class SpawnbrokerTest extends BaseCardTest {
                 .doesNotContain(opponent.getId());
         assertThat(gd.playerBattlefields.get(player2.getId())).extracting(Permanent::getId)
                 .contains(opponent.getId());
+    }
+
+    @Test
+    @DisplayName("Spawnbroker can exchange itself for an opposing creature")
+    void canExchangeItself() {
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new Spawnbroker());
+        castSpawnbroker();
+        harness.passBothPriorities();
+        UUID ownId = harness.getPermanentId(player1, "Spawnbroker");
+        harness.handlePermanentChosen(player1, ownId);
+        harness.handlePermanentChosen(player1, opponent.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).extracting(Permanent::getId)
+                .contains(opponent.getId()).doesNotContain(ownId);
+        assertThat(gd.playerBattlefields.get(player2.getId())).extracting(Permanent::getId)
+                .contains(ownId).doesNotContain(opponent.getId());
+    }
+
+    @Test
+    @DisplayName("Does not offer an exchange when every opposing creature has hexproof")
+    void noLegalPairWhenOpponentHasHexproof() {
+        harness.addToBattlefield(player1, new Watchwolf());
+        harness.addToBattlefield(player2, new Watchwolf());
+        harness.addToBattlefield(player2, new PrivilegedPosition());
+        castSpawnbroker();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Watchwolf");
+        harness.assertOnBattlefield(player2, "Watchwolf");
+    }
+
+    @Test
+    @DisplayName("Exchange does not happen if the opposing creature grows above the own target's power")
+    void rechecksPowerAtResolution() {
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new Watchwolf());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new Watchwolf());
+        castSpawnbroker();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, own.getId());
+        harness.handlePermanentChosen(player1, opponent.getId());
+
+        harness.setHand(player2, List.of(new GatherCourage()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.castAndResolveInstant(player2, 0, opponent.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).extracting(Permanent::getId)
+                .contains(own.getId()).doesNotContain(opponent.getId());
+        assertThat(gd.playerBattlefields.get(player2.getId())).extracting(Permanent::getId)
+                .contains(opponent.getId()).doesNotContain(own.getId());
     }
 
     private void castSpawnbroker() {
