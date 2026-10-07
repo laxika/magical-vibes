@@ -84,6 +84,111 @@ class SummonIxionTest extends BaseCardTest {
         harness.assertLife(player1, 22);
     }
 
+    @Test
+    void chapterITriggersOnEnteringBattlefield() {
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        harness.castFromHand(player1, new SummonIxion(), "{2}{W}");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, opponentCreature.getId());
+        harness.passBothPriorities();
+
+        Permanent saga = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(1);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(opponentCreature.getCard());
+    }
+
+    @Test
+    void chapterIDoesNotExileIfSagaLeavesBeforeResolution() {
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent saga = addSagaWithLore(0);
+        triggerChapter();
+        harness.handlePermanentChosen(player1, opponentCreature.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, saga));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentCreature);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).doesNotContain(opponentCreature.getCard());
+    }
+
+    @Test
+    void chapterIICanChooseZeroTargetsAndStillGainLife() {
+        Permanent saga = addSagaWithLore(1);
+        triggerChapter();
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(saga.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertLife(player1, 22);
+    }
+
+    @Test
+    void chapterIICanTargetSagaItselfOnlyOnce() {
+        Permanent saga = addSagaWithLore(1);
+        triggerChapter();
+        harness.handlePermanentChosen(player1, saga.getId());
+        harness.passBothPriorities();
+
+        assertThat(saga.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.assertLife(player1, 22);
+    }
+
+    @Test
+    void chapterIIDoesNotGainLifeWhenItsOnlyTargetLeaves() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        addSagaWithLore(1);
+        triggerChapter();
+        harness.handlePermanentChosen(player1, creature.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, creature));
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    void chapterIIResolvesForRemainingLegalTarget() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent saga = addSagaWithLore(1);
+        triggerChapter();
+        harness.handlePermanentChosen(player1, creature.getId());
+        harness.handlePermanentChosen(player1, saga.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, creature));
+        harness.passBothPriorities();
+
+        assertThat(saga.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.assertLife(player1, 22);
+    }
+
+    @Test
+    void finalChapterSacrificesSagaAndReturnsExiledCreature() {
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent saga = addSagaWithLore(0);
+        triggerChapter();
+        harness.handlePermanentChosen(player1, opponentCreature.getId());
+        harness.passBothPriorities();
+        saga.setCounterCount(CounterType.LORE, 2);
+
+        triggerChapter();
+        harness.handlePermanentChosen(player1, saga.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(saga);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(opponentCreature.getCard());
+        harness.passBothPriorities();
+
+        assertThat(saga.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(saga);
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(permanent -> permanent.getCard() == opponentCreature.getCard());
+        assertThat(gd.getPlayerExiledCards(player2.getId())).doesNotContain(opponentCreature.getCard());
+        harness.assertLife(player1, 22);
+    }
+
     private Permanent addSagaWithLore(int loreCounters) {
         Permanent saga = harness.addToBattlefieldAndReturn(player1, new SummonIxion());
         saga.setCounterCount(CounterType.LORE, loreCounters);
