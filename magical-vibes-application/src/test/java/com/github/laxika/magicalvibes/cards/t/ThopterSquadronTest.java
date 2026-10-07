@@ -41,12 +41,15 @@ class ThopterSquadronTest extends BaseCardTest {
     @Test
     @DisplayName("Removing a +1/+1 counter creates a 1/1 colorless Thopter artifact creature token")
     void removingCounterCreatesThopterToken() {
-        Permanent squadron = addReadySquadron(player1);
+        Permanent squadron = addSquadron(player1);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, indexOf(player1, squadron), 0, null, null);
+        assertThat(squadron.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().isToken());
         harness.passBothPriorities();
 
         assertThat(squadron.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
@@ -63,9 +66,9 @@ class ThopterSquadronTest extends BaseCardTest {
     @Test
     @DisplayName("Sacrificing another Thopter puts a +1/+1 counter on Thopter Squadron")
     void sacrificingAnotherThopterAddsCounter() {
-        Permanent squadron = addReadySquadron(player1);
-        Permanent sacrificedThopter = addReadySquadron(player1);
-        Permanent remainingThopter = addReadySquadron(player1);
+        Permanent squadron = addSquadron(player1);
+        Permanent sacrificedThopter = addSquadron(player1);
+        Permanent remainingThopter = addSquadron(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.forceActivePlayer(player1);
@@ -84,7 +87,7 @@ class ThopterSquadronTest extends BaseCardTest {
     @Test
     @DisplayName("The sacrifice ability cannot sacrifice Thopter Squadron itself")
     void sacrificeAbilityRequiresAnotherThopter() {
-        Permanent squadron = addReadySquadron(player1);
+        Permanent squadron = addSquadron(player1);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -96,8 +99,8 @@ class ThopterSquadronTest extends BaseCardTest {
     @Test
     @DisplayName("Activated abilities can only be activated at sorcery speed")
     void activatedAbilitiesRequireSorcerySpeed() {
-        Permanent squadron = addReadySquadron(player1);
-        addReadySquadron(player1);
+        Permanent squadron = addSquadron(player1);
+        addSquadron(player1);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.UPKEEP);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -113,7 +116,7 @@ class ThopterSquadronTest extends BaseCardTest {
     @Test
     @DisplayName("The token ability cannot be activated without a +1/+1 counter")
     void tokenAbilityRequiresPlusOneCounter() {
-        Permanent squadron = addReadySquadron(player1);
+        Permanent squadron = addSquadron(player1);
         squadron.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -124,10 +127,88 @@ class ThopterSquadronTest extends BaseCardTest {
                 .hasMessageContaining("Not enough counters");
     }
 
-    private Permanent addReadySquadron(Player player) {
-        Permanent squadron = addCreatureReady(player, new ThopterSquadron());
-        squadron.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
-        return squadron;
+    @Test
+    @DisplayName("Removing the last counter kills the Squadron but still creates a token")
+    void lastCounterStillCreatesTokenAfterSourceDies() {
+        Permanent squadron = addSquadron(player1);
+        squadron.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, indexOf(player1, squadron), 0, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Thopter Squadron");
+        harness.assertInGraveyard(player1, "Thopter Squadron");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(findThopterToken()).isNotNull();
+        assertThat(countPermanents(player1, "Thopter")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A created token can be sacrificed as a cost before the counter is added")
+    void createdTokenCanBeReabsorbed() {
+        Permanent squadron = addSquadron(player1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, indexOf(player1, squadron), 0, null, null);
+        harness.passBothPriorities();
+        Permanent token = findThopterToken();
+
+        harness.activateAbility(player1, indexOf(player1, squadron), 1, null, null);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(token);
+        assertThat(squadron.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(squadron.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(countPermanents(player1, "Thopter")).isZero();
+    }
+
+    @Test
+    @DisplayName("Neither ability can be activated with an ability already on the stack")
+    void abilitiesRequireEmptyStack() {
+        Permanent squadron = addSquadron(player1);
+        addSquadron(player1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, indexOf(player1, squadron), 0, null, null);
+
+        for (int abilityIndex = 0; abilityIndex < 2; abilityIndex++) {
+            int index = abilityIndex;
+            assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(player1, squadron), index, null, null))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("stack is empty");
+        }
+        assertThat(squadron.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("An opponent's Thopter cannot pay the sacrifice cost")
+    void cannotSacrificeOpponentsThopter() {
+        Permanent squadron = addSquadron(player1);
+        Permanent opponentThopter = addSquadron(player2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(player1, squadron), 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentThopter);
+        assertThat(squadron.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    private Permanent addSquadron(Player player) {
+        return harness.enterBattlefieldAndReturn(player, new ThopterSquadron());
     }
 
     private Permanent findThopterToken() {
