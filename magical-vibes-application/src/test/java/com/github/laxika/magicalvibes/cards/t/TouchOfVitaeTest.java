@@ -7,9 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
-import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
-import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -110,9 +108,10 @@ class TouchOfVitaeTest extends BaseCardTest {
         assertThat(scheduled.getFirst().count()).isEqualTo(1);
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
-        StepTriggerService stepTriggerService = GameTestEngineContext.get().getBean(StepTriggerService.class);
-        gd.activePlayerId = player2.getId();
-        harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gd));
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
@@ -143,5 +142,67 @@ class TouchOfVitaeTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, land.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A later casting grants a fresh once-only untap ability")
+    void laterCastingGrantsFreshAbility() {
+        Permanent creature = castOnOwnCreature();
+        creature.tap();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new TouchOfVitae()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+        creature.tap();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isFalse();
+        creature.tap();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("An illegal target prevents the delayed draw from being scheduled")
+    void illegalTargetPreventsDelayedDraw() {
+        Permanent creature = addCreatureReady(player1, new BalduvianBears());
+        harness.setHand(player1, List.of(new TouchOfVitae()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.castInstant(player1, 0, creature.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(creature);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
+        harness.assertInGraveyard(player1, "Touch of Vitae");
+    }
+
+    @Test
+    @DisplayName("Casting during upkeep waits until next turn's upkeep")
+    void castingDuringUpkeepWaitsForNextTurn() {
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        castOnOwnCreature();
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).hasSize(1);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.UPKEEP);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
     }
 }
