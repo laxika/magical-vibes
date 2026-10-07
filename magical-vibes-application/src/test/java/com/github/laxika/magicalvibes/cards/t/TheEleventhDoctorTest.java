@@ -60,4 +60,125 @@ class TheEleventhDoctorTest extends BaseCardTest {
 
         assertThat(target.isCantBeBlocked()).isTrue();
     }
+
+    @Test
+    void decliningCombatDamageAbilityLeavesCardInHand() {
+        addCreatureReady(player1, new TheEleventhDoctor());
+        GrizzlyBears card = new GrizzlyBears();
+        harness.setHand(player1, List.of(card));
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(card);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void exiledCreatureGainsSuspendAndLosesACounterAtItsOwnersUpkeep() {
+        addCreatureReady(player1, new TheEleventhDoctor());
+        GrizzlyBears card = new GrizzlyBears();
+        harness.setHand(player1, List.of(card));
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 2);
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 1);
+    }
+
+    @Test
+    void exilingAnotherCardDoesNotRemoveCountersFromPreviouslyExiledCards() {
+        addCreatureReady(player1, new TheEleventhDoctor());
+        GrizzlyBears first = new GrizzlyBears();
+        GrizzlyBears second = new GrizzlyBears();
+        harness.setHand(player1, List.of(first, second));
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        findPermanent(player1, "The Eleventh Doctor").setTapped(false);
+        declareAttackers(List.of(0));
+        resolveCombat();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.exiledCardTimeCounters).containsEntry(first.getId(), 2)
+                .containsEntry(second.getId(), 2);
+    }
+
+    @Test
+    void landCanBeExiledButDoesNotImmediatelyReturnWithoutTimeCounters() {
+        addCreatureReady(player1, new TheEleventhDoctor());
+        Forest card = new Forest();
+        harness.setHand(player1, List.of(card));
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
+        assertThat(gd.exiledCardTimeCounters.getOrDefault(card.getId(), 0)).isZero();
+        harness.assertNotOnBattlefield(player1, "Forest");
+    }
+
+    @Test
+    void targetBecomingTooPowerfulBeforeResolutionIsNotMadeUnblockable() {
+        harness.addToBattlefield(player1, new TheEleventhDoctor());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        target.setPowerModifier(2);
+        harness.passBothPriorities();
+
+        assertThat(target.isCantBeBlocked()).isFalse();
+    }
+
+    @Test
+    void opposingCreatureAtPowerThreeRemainsUnblockableIfPowerIncreasesAfterResolution() {
+        harness.addToBattlefield(player1, new TheEleventhDoctor());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        target.setPowerModifier(1);
+        harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        target.setPowerModifier(2);
+
+        assertThat(target.isCantBeBlocked()).isTrue();
+    }
+
+    @Test
+    void unblockableEffectExpiresAfterTheTurn() {
+        harness.addToBattlefield(player1, new TheEleventhDoctor());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        assertThat(target.isCantBeBlocked()).isTrue();
+
+        harness.passUntilWithNoAttackers(player2,
+                com.github.laxika.magicalvibes.model.TurnStep.UPKEEP);
+
+        assertThat(target.isCantBeBlocked()).isFalse();
+    }
 }
