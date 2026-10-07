@@ -65,8 +65,7 @@ class TolarianEntrancerTest extends BaseCardTest {
         Permanent entrancer = addCreatureReady(player1, new TolarianEntrancer());
         Permanent knight = addCreatureReady(player2, new BenalishKnight());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         harness.inMutationScope(() ->
@@ -96,8 +95,7 @@ class TolarianEntrancerTest extends BaseCardTest {
         Permanent entrancer = addCreatureReady(player1, new TolarianEntrancer());
         addCreatureReady(player2, new BenalishKnight());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         harness.setHand(player2, List.of(new ChokingVines()));
         harness.addMana(player2, ManaColor.GREEN, 2);
         harness.castInstantForX(player2, 0, 1, List.of(entrancer.getId()));
@@ -105,6 +103,62 @@ class TolarianEntrancerTest extends BaseCardTest {
 
         assertThat(entrancer.isBlockedWithoutBlockers()).isTrue();
         assertThat(gd.hasDelayedAction(GainControlOfPermanentAtEndOfCombat.class)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Control gain uses a delayed trigger that can be responded to at end of combat")
+    void controlGainWaitsForEndOfCombatTriggerToResolve() {
+        addCreatureReady(player1, new TolarianEntrancer());
+        Permanent knight = addCreatureReady(player2, new BenalishKnight());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+            resolveAllTriggers();
+        });
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(knight);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(knight);
+        assertThat(gd.stack).isNotEmpty();
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(knight);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(knight);
+    }
+
+    @Test
+    @DisplayName("A blocker that leaves before the trigger resolves is not gained")
+    void cannotGainBlockerThatLeftBattlefield() {
+        addCreatureReady(player1, new TolarianEntrancer());
+        Permanent knight = addCreatureReady(player2, new BenalishKnight());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToGraveyard(gd, knight));
+        resolveAllTriggers();
+        leaveEndOfCombat();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(knight);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(knight);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(knight.getCard());
+    }
+
+    @Test
+    @DisplayName("The Entrancer does not gain creatures it blocks")
+    void noControlWhenEntrancerIsBlocking() {
+        Permanent knight = addCreatureReady(player1, new BenalishKnight());
+        addCreatureReady(player2, new TolarianEntrancer());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveAllTriggers();
+        leaveEndOfCombat();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(knight);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(knight);
     }
 
     private void declareBlockers(BlockerAssignment... assignments) {
