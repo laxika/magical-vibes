@@ -118,4 +118,40 @@ class ThalakosScoutTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("shadow");
     }
+
+    @Test
+    @DisplayName("Thalakos Scout can block another creature with shadow")
+    void scoutCanBlockShadowCreature() {
+        addCreatureReady(player1, new ThalakosScout());
+        addCreatureReady(player2, new ThalakosScout());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertInGraveyard(player1, "Thalakos Scout");
+        harness.assertInGraveyard(player2, "Thalakos Scout");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Thalakos Scout can return itself without mana")
+    void tappedSummoningSickScoutCanReturnItself() {
+        Permanent scout = harness.addToBattlefieldAndReturn(player1, new ThalakosScout());
+        scout.setSummoningSick(true);
+        scout.setTapped(true);
+        harness.setHand(player1, List.of(new ThalakosDrifters()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Thalakos Scout");
+        harness.assertNotInHand(player1, "Thalakos Scout");
+        harness.assertInGraveyard(player1, "Thalakos Drifters");
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Thalakos Scout");
+        harness.assertNotOnBattlefield(player1, "Thalakos Scout");
+    }
 }
