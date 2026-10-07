@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -206,11 +205,8 @@ class TelepathyTest extends BaseCardTest {
     @Test
     @DisplayName("Telepathy reveals opponent's hand after being cast and resolved")
     void revealsHandAfterCastingUpstreamReview() {
-        harness.setHand(player1, List.of(new Telepathy()));
         harness.setHand(player2, List.of(new AirElemental()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new Telepathy(), "{U}");
         harness.clearMessages();
         harness.passBothPriorities();
 
@@ -221,16 +217,28 @@ class TelepathyTest extends BaseCardTest {
     @Test
     @DisplayName("Telepathy does not reveal the opponent's hand while it is on the stack")
     void handIsNotRevealedBeforeResolution() {
-        harness.setHand(player1, List.of(new Telepathy()));
         harness.setHand(player2, List.of(new AirElemental()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new Telepathy(), "{U}");
         harness.clearMessages();
         harness.publishState();
 
         assertThat(harness.getConn1().getMessagesContaining("\"opponentHand\":[]")).isNotEmpty();
         assertThat(harness.getConn1().getMessagesContaining("\"opponentHand\""))
                 .noneMatch(message -> message.contains("Air Elemental"));
+    }
+
+    @Test
+    @DisplayName("An opponent's hand remains revealed while another Telepathy remains")
+    void remainingCopyKeepsHandRevealed() {
+        var firstCopy = harness.addToBattlefieldAndReturn(player1, new Telepathy());
+        harness.addToBattlefield(player1, new Telepathy());
+        harness.setHand(player2, List.of(new AirElemental()));
+
+        harness.getGameData().playerBattlefields.get(player1.getId()).remove(firstCopy);
+        harness.clearMessages();
+        harness.publishState();
+
+        assertThat(harness.getConn1().getMessagesContaining("\"opponentHand\""))
+                .anyMatch(message -> message.contains("Air Elemental"));
     }
 }
