@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.a.AltarOfThePantheon;
 import com.github.laxika.magicalvibes.cards.a.ArchonOfJustice;
 import com.github.laxika.magicalvibes.cards.h.HeartlashCinder;
+import com.github.laxika.magicalvibes.cards.r.RestlessApparition;
+import com.github.laxika.magicalvibes.cards.u.Unmake;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({SpringjackShepherd.class, ArchonOfJustice.class, HeartlashCinder.class,
-        AltarOfThePantheon.class})
+        AltarOfThePantheon.class, RestlessApparition.class, Unmake.class})
 class SpringjackShepherdTest extends BaseCardTest {
 
     @Test
@@ -32,8 +34,7 @@ class SpringjackShepherdTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve Springjack Shepherd, queue ETB trigger
-        harness.passBothPriorities(); // resolve ETB trigger
+        resolveAllTriggers();
 
         List<Permanent> tokens = findPermanents(player1, "Goat");
         assertThat(tokens).hasSize(3);
@@ -55,8 +56,7 @@ class SpringjackShepherdTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Goat")).hasSize(1);
     }
@@ -70,8 +70,7 @@ class SpringjackShepherdTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Goat")).hasSize(1);
     }
@@ -98,9 +97,40 @@ class SpringjackShepherdTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Goat")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Each white-black hybrid symbol contributes one Goat")
+    void etbCountsHybridWhiteSymbols() {
+        addCreatureReady(player1, new RestlessApparition());
+        harness.setHand(player1, List.of(new SpringjackShepherd()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Goat")).hasSize(4);
+    }
+
+    @Test
+    @DisplayName("An exiled Shepherd contributes no symbols, but its trigger still resolves")
+    void etbResolvesAfterSourceLeavesWithNoWhitePermanents() {
+        harness.setHand(player1, List.of(new SpringjackShepherd()));
+        harness.setHand(player2, List.of(new Unmake()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.addMana(player2, ManaColor.BLACK, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0,
+                findPermanent(player1, "Springjack Shepherd").getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Springjack Shepherd");
+        assertThat(findPermanents(player1, "Goat")).isEmpty();
+        assertThat(gd.stack).isEmpty();
     }
 }
