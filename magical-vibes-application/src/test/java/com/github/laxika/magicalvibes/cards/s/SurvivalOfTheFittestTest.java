@@ -113,6 +113,76 @@ class SurvivalOfTheFittestTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(discardedCreature);
     }
 
+    @Test
+    @DisplayName("A creature search may fail to find even with a creature in the library")
+    void canFailToFindWithCreatureAvailable() {
+        addSurvival();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        Card discardedCreature = new Carnophage();
+        Card libraryCreature = new WoodElves();
+        Card nonCreature = new CullingTheWeak();
+        harness.setHand(player1, List.of(discardedCreature));
+        harness.setLibrary(player1, List.of(libraryCreature, nonCreature));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(discardedCreature);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(libraryCreature, nonCreature);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An empty library does not prevent activation or refund its costs")
+    void emptyLibraryStillPaysCostsAndResolves() {
+        addSurvival();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        Card discardedCreature = new Carnophage();
+        harness.setHand(player1, List.of(discardedCreature));
+        harness.setLibrary(player1, List.of());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(discardedCreature);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A found creature can be discarded to activate Survival again")
+    void foundCreatureCanPayForAnotherActivation() {
+        Permanent survival = addSurvival();
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        Card firstDiscard = new Carnophage();
+        Card firstFind = new WoodElves();
+        Card secondFind = new Carnophage();
+        harness.setHand(player1, List.of(firstDiscard));
+        harness.setLibrary(player1, List.of(firstFind, secondFind));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(secondFind);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(firstDiscard, firstFind);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(survival.isTapped()).isFalse();
+    }
     private Permanent addSurvival() {
         return harness.addToBattlefieldAndReturn(player1, new SurvivalOfTheFittest());
     }
