@@ -103,13 +103,89 @@ class StarscreamPowerHungryTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castCreature(player1, 0, bears.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.monarchPlayerId).isEqualTo(player1.getId());
         assertThat(starscream.isTransformed()).isFalse();
         assertThat(starscream.getCard()).isInstanceOf(StarscreamPowerHungry.class);
+    }
+
+    @Test
+    void simultaneousCombatDamageFromTwoCreaturesConvertsOnlyOnce() {
+        Permanent starscream = harness.addToBattlefieldAndReturn(player1, new StarscreamPowerHungry());
+        for (int i = 0; i < 2; i++) {
+            Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+            attacker.setAttacking(true);
+            attacker.setAttackTarget(player1.getId());
+        }
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.clearPriorityPassed();
+
+        harness.resolveCombatDamage();
+
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        assertThat(starscream.isTransformed()).isTrue();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(16);
+    }
+
+    @Test
+    void drawTriggerDoesNothingIfControllerStopsBeingMonarchBeforeResolution() {
+        harness.addToBattlefield(player1, new StarscreamPowerHungry());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        gd.monarchPlayerId = player1.getId();
+
+        drawCard();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        gd.monarchPlayerId = player2.getId();
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    void livingMetalStopsMakingBackFaceACreatureDuringOpponentsTurn() {
+        Permanent starscream = castConvertedStarscream();
+
+        harness.forceActivePlayer(player2);
+
+        assertThat(gqs.isCreature(gd, starscream)).isFalse();
+        harness.forceActivePlayer(player1);
+        assertThat(gqs.isCreature(gd, starscream)).isTrue();
+    }
+
+    @Test
+    void combatDamageToExistingMonarchTakesMonarchyAndConvertsToFrontFace() {
+        Permanent starscream = castConvertedStarscream();
+        gd.monarchPlayerId = player2.getId();
+        starscream.setAttacking(true);
+        starscream.setAttackTarget(player2.getId());
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.clearPriorityPassed();
+
+        harness.resolveCombatDamage();
+        resolveAllTriggers();
+
+        assertThat(gd.monarchPlayerId).isEqualTo(player1.getId());
+        assertThat(starscream.isTransformed()).isFalse();
+    }
+
+    @Test
+    void combatDamageDoesNotGiveAwayMonarchyWhenControllerAlreadyIsMonarch() {
+        Permanent starscream = castConvertedStarscream();
+        gd.monarchPlayerId = player1.getId();
+        starscream.setAttacking(true);
+        starscream.setAttackTarget(player2.getId());
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.clearPriorityPassed();
+
+        harness.resolveCombatDamage();
+        resolveAllTriggers();
+
+        assertThat(gd.monarchPlayerId).isEqualTo(player1.getId());
+        assertThat(starscream.isTransformed()).isTrue();
     }
 
     private Permanent castConvertedStarscream() {
@@ -117,8 +193,7 @@ class StarscreamPowerHungryTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castWithAlternateCost(player1, 0, List.of());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         return findPermanent(player1, "Starscream, Seeker Leader");
     }
 
