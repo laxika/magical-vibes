@@ -54,9 +54,8 @@ class ThermalNavigatorTest extends BaseCardTest {
     @Test
     @DisplayName("Ability grants flying to Thermal Navigator on resolution")
     void grantsFlyingOnResolution() {
-        harness.addToBattlefield(player1, new ThermalNavigator());
+        Permanent navigator = harness.addToBattlefieldAndReturn(player1, new ThermalNavigator());
         Permanent artifact = harness.addToBattlefieldAndReturn(player1, new AvariceTotem());
-        Permanent navigator = findPermanent(player1, "Thermal Navigator");
 
         harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, artifact.getId());
@@ -68,9 +67,8 @@ class ThermalNavigatorTest extends BaseCardTest {
     @Test
     @DisplayName("Granted flying wears off at end of turn")
     void flyingWearsOffAtEndOfTurn() {
-        harness.addToBattlefield(player1, new ThermalNavigator());
+        Permanent navigator = harness.addToBattlefieldAndReturn(player1, new ThermalNavigator());
         Permanent artifact = harness.addToBattlefieldAndReturn(player1, new AvariceTotem());
-        Permanent navigator = findPermanent(player1, "Thermal Navigator");
 
         harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, artifact.getId());
@@ -78,7 +76,6 @@ class ThermalNavigatorTest extends BaseCardTest {
         assertThat(navigator.hasKeyword(Keyword.FLYING)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(navigator.hasKeyword(Keyword.FLYING)).isFalse();
@@ -93,5 +90,65 @@ class ThermalNavigatorTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Thermal Navigator");
         harness.assertInGraveyard(player1, "Thermal Navigator");
+    }
+
+    @Test
+    @DisplayName("Cannot sacrifice an opponent's artifact to pay the cost")
+    void cannotSacrificeOpponentsArtifact() {
+        Permanent navigator = harness.addToBattlefieldAndReturn(player1, new ThermalNavigator());
+        Permanent ownArtifact = harness.addToBattlefieldAndReturn(player1, new AvariceTotem());
+        Permanent opposingArtifact = harness.addToBattlefieldAndReturn(player2, new AvariceTotem());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, opposingArtifact.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageStartingWith("Invalid permanent:");
+        harness.handlePermanentChosen(player1, ownArtifact.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Avarice Totem");
+        harness.assertOnBattlefield(player2, "Avarice Totem");
+        assertThat(navigator.hasKeyword(Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A tapped summoning-sick Navigator can activate, but gains flying only on resolution")
+    void tappedSummoningSickSourceCanActivate() {
+        Permanent navigator = harness.addToBattlefieldAndReturn(player1, new ThermalNavigator());
+        navigator.setTapped(true);
+        navigator.setSummoningSick(true);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new AvariceTotem());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, artifact.getId());
+
+        harness.assertInGraveyard(player1, "Avarice Totem");
+        assertThat(navigator.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(navigator.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(navigator.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Sacrificing the source leaves its ability on the stack without granting flying to another copy")
+    void sacrificedSourceDoesNotGrantFlyingToAnotherCopy() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new ThermalNavigator());
+        Permanent otherNavigator = harness.addToBattlefieldAndReturn(player1, new ThermalNavigator());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, source.getId());
+
+        harness.assertInGraveyard(player1, "Thermal Navigator");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanent(player1, "Thermal Navigator")).isSameAs(otherNavigator);
+        assertThat(otherNavigator.hasKeyword(Keyword.FLYING)).isFalse();
     }
 }
