@@ -67,4 +67,41 @@ class SulfurVentTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
         harness.assertOnBattlefield(player1, "Sulfur Vent");
     }
+
+    @Test
+    @DisplayName("Neither mana ability can be activated immediately after entering tapped")
+    void enteringTappedPreventsBothManaAbilities() {
+        harness.enterBattlefieldAndReturn(player1, new SulfurVent());
+
+        for (int abilityIndex = 0; abilityIndex < 2; abilityIndex++) {
+            int index = abilityIndex;
+            assertThatThrownBy(() -> harness.activateAbility(player1, 0, index, null, null))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("already tapped");
+        }
+
+        for (ManaColor color : List.of(ManaColor.BLACK, ManaColor.BLUE, ManaColor.RED)) {
+            assertThat(gd.playerManaPools.get(player1.getId()).get(color)).isZero();
+        }
+        harness.assertOnBattlefield(player1, "Sulfur Vent");
+        harness.assertNotInGraveyard(player1, "Sulfur Vent");
+    }
+
+    @Test
+    @DisplayName("Sacrifice mana ability resolves immediately and gives mana only to its controller")
+    void sacrificeManaGoesOnlyToControllerWithoutUsingStack() {
+        harness.addToBattlefield(player2, new SulfurVent());
+
+        harness.activateAbility(player2, 0, 1, null, null);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLACK)).isZero();
+        for (ManaColor color : List.of(ManaColor.BLACK, ManaColor.BLUE, ManaColor.RED)) {
+            assertThat(gd.playerManaPools.get(player1.getId()).get(color)).isZero();
+        }
+        harness.assertNotOnBattlefield(player2, "Sulfur Vent");
+        harness.assertInGraveyard(player2, "Sulfur Vent");
+    }
 }
