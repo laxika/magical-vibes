@@ -57,13 +57,36 @@ class SuperSpeedTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Super Speed cannot enchant a land")
-    void cannotEnchantLand() {
-        harness.addToBattlefield(player1, new Mountain());
+    @DisplayName("Super Speed can be cast during combat on an opponent's creature")
+    void flashCanEnchantOpponentsCreature() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent otherBear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
         harness.setHand(player1, List.of(new SuperSpeed()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        Permanent mountain = findPermanent(player1, "Mountain");
+        harness.castEnchantment(player1, 0, bear.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.FIRST_STRIKE)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, otherBear)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, otherBear, Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, otherBear, Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Super Speed cannot enchant a land")
+    void cannotEnchantLand() {
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        harness.setHand(player1, List.of(new SuperSpeed()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, mountain.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
