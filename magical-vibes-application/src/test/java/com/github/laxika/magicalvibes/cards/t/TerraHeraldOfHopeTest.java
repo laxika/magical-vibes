@@ -51,6 +51,10 @@ class TerraHeraldOfHopeTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(returnedCard, tooPowerful));
 
         dealCombatDamageWithTerra();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         PendingInteraction.MultiGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
@@ -58,11 +62,11 @@ class TerraHeraldOfHopeTest extends BaseCardTest {
         assertThat(choice.validCardIds()).containsExactly(returnedCard.getId());
 
         harness.handleMultipleCardsChosen(player1, List.of(returnedCard.getId()));
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        assertThat(findPermanents(player1, "Grizzly Bears")).isEmpty();
+        assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
-        Permanent returned = findPermanentByCardId(returnedCard);
+        Permanent returned = findPermanent(player1, "Grizzly Bears");
         assertThat(returned.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(returnedCard);
@@ -75,12 +79,89 @@ class TerraHeraldOfHopeTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(returnedCard));
 
         dealCombatDamageWithTerra();
-        harness.handleMultipleCardsChosen(player1, List.of(returnedCard.getId()));
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
+        assertThat(gd.stack).isEmpty();
+
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(returnedCard);
         assertThat(findPermanents(player1, "Grizzly Bears")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Trance still grants flying when there is only one card to mill")
+    void shortLibraryStillGrantsFlying() {
+        Card milled = new TerraHeraldOfHope();
+        harness.setLibrary(player1, List.of(milled));
+        Permanent terra = addTerra(player1);
+
+        advanceToBeginningOfCombat();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(milled);
+        assertThat(gqs.hasKeyword(gd, terra, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Trance does not trigger during the opponent's combat")
+    void opponentsCombatDoesNotTriggerTrance() {
+        Card top = new TerraHeraldOfHope();
+        harness.setLibrary(player1, List.of(top));
+        Permanent terra = addTerra(player1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gqs.hasKeyword(gd, terra, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Payment can be made even when the graveyard has no legal target")
+    void canPayWithEmptyGraveyard() {
+        harness.setGraveyard(player1, List.of());
+        dealCombatDamageWithTerra();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(findPermanents(player1, "Terra, Herald of Hope")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The reflexive trigger includes power three and excludes the opponent's graveyard")
+    void powerThreeInOwnGraveyardIsLegal() {
+        Card returnedCard = new TerraHeraldOfHope();
+        Card opponentCard = new TerraHeraldOfHope();
+        harness.setGraveyard(player1, List.of(returnedCard));
+        harness.setGraveyard(player2, List.of(opponentCard));
+        dealCombatDamageWithTerra();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactly(returnedCard.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(returnedCard.getId()));
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(returnedCard);
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(returnedCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentCard);
+        Permanent returned = findPermanent(player1, "Terra, Herald of Hope");
+        assertThat(returned.getCard().getId()).isEqualTo(returnedCard.getId());
+        assertThat(returned.isTapped()).isTrue();
     }
 
     private Permanent addTerra(Player player) {
@@ -91,10 +172,7 @@ class TerraHeraldOfHopeTest extends BaseCardTest {
         Permanent terra = addTerra(player1);
         terra.setAttacking(true);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers(player1);
         gs.declareBlockers(gd, player2, List.of());
         harness.passBothPriorities();
     }
@@ -104,12 +182,5 @@ class TerraHeraldOfHopeTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
-    }
-
-    private Permanent findPermanentByCardId(Card card) {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().getId().equals(card.getId()))
-                .findFirst()
-                .orElseThrow();
     }
 }
