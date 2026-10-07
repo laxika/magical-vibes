@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.f.FuneralPyre;
 import com.github.laxika.magicalvibes.cards.g.GiantWarthog;
 import com.github.laxika.magicalvibes.cards.m.MentalNote;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -28,11 +27,8 @@ class StitchTogetherTest extends BaseCardTest {
                 new MentalNote(), new MentalNote(), new MentalNote(), new MentalNote(), new MentalNote()));
         castStitchTogether(creature);
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(card -> card.getId().equals(creature.getId()));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(permanent -> permanent.getCard().getId().equals(creature.getId()));
+        harness.assertInHand(player1, "Giant Warthog");
+        harness.assertNotOnBattlefield(player1, "Giant Warthog");
     }
 
     @Test
@@ -44,11 +40,8 @@ class StitchTogetherTest extends BaseCardTest {
                 new MentalNote()));
         castStitchTogether(creature);
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(permanent -> permanent.getCard().getId().equals(creature.getId()));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .noneMatch(card -> card.getId().equals(creature.getId()));
+        harness.assertOnBattlefield(player1, "Giant Warthog");
+        harness.assertNotInHand(player1, "Giant Warthog");
     }
 
     @Test
@@ -64,8 +57,7 @@ class StitchTogetherTest extends BaseCardTest {
                 new MentalNote()));
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(permanent -> permanent.getCard().getId().equals(creature.getId()));
+        harness.assertOnBattlefield(player1, "Giant Warthog");
     }
 
     @Test
@@ -78,10 +70,8 @@ class StitchTogetherTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of());
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .noneMatch(card -> card.getId().equals(creature.getId()));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(permanent -> permanent.getCard().getId().equals(creature.getId()));
+        harness.assertNotInHand(player1, "Giant Warthog");
+        harness.assertNotOnBattlefield(player1, "Giant Warthog");
     }
 
     @Test
@@ -107,6 +97,39 @@ class StitchTogetherTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, creature.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("your graveyard");
+    }
+
+    @Test
+    @DisplayName("Cards in the opponent's graveyard do not contribute to threshold")
+    void opponentGraveyardDoesNotContributeToThreshold() {
+        Card creature = new GiantWarthog();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setGraveyard(player2, List.of(new MentalNote(), new MentalNote(),
+                new MentalNote(), new MentalNote(), new MentalNote(), new MentalNote(), new MentalNote()));
+
+        castStitchTogether(creature);
+
+        harness.assertInHand(player1, "Giant Warthog");
+        harness.assertNotOnBattlefield(player1, "Giant Warthog");
+        harness.assertNotInGraveyard(player1, "Giant Warthog");
+    }
+
+    @Test
+    @DisplayName("Returns only the chosen creature when there are more than seven graveyard cards")
+    void returnsOnlyChosenCreatureAboveThreshold() {
+        Card creature = new GiantWarthog();
+        Card otherCreature = new AvenFogbringer();
+        harness.setGraveyard(player1, List.of(creature, otherCreature,
+                new MentalNote(), new MentalNote(), new MentalNote(), new MentalNote(),
+                new MentalNote(), new MentalNote()));
+
+        castStitchTogether(creature);
+
+        harness.assertOnBattlefield(player1, "Giant Warthog");
+        harness.assertNotInHand(player1, "Giant Warthog");
+        harness.assertNotInGraveyard(player1, "Giant Warthog");
+        harness.assertInGraveyard(player1, "Aven Fogbringer");
+        harness.assertNotOnBattlefield(player1, "Aven Fogbringer");
     }
 
     private void castStitchTogether(Card target) {
