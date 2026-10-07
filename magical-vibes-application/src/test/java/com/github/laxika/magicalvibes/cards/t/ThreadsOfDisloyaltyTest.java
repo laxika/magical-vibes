@@ -16,7 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({ThreadsOfDisloyalty.class, AkkiRaider.class, GnarledMass.class,
-        GodsEyeGateToTheReikai.class})
+        GodsEyeGateToTheReikai.class, TerashisGrasp.class})
 class ThreadsOfDisloyaltyTest extends BaseCardTest {
 
     @Test
@@ -65,8 +65,7 @@ class ThreadsOfDisloyaltyTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, true); // Pay the cloaked creature's ward {2}.
         harness.passBothPriorities();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Threads of Disloyalty"));
+        harness.assertOnBattlefield(player1, "Threads of Disloyalty");
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getId().equals(creature.getId()));
         assertThat(gd.playerBattlefields.get(player2.getId()))
@@ -85,5 +84,66 @@ class ThreadsOfDisloyaltyTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(gd.stolenCreatures).doesNotContainKey(land.getId());
+    }
+
+    @Test
+    @DisplayName("Destroying Threads returns the creature to its previous controller")
+    void controlEndsWhenAuraIsDestroyed() {
+        Permanent creature = addCreatureReady(player2, new AkkiRaider());
+        harness.setHand(player1, List.of(new ThreadsOfDisloyalty(), new TerashisGrasp()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Akki Raider");
+
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castAndResolveSorcery(player1, 0,
+                harness.getPermanentId(player1, "Threads of Disloyalty"));
+
+        harness.assertInGraveyard(player1, "Threads of Disloyalty");
+        harness.assertNotOnBattlefield(player1, "Akki Raider");
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(p -> p.getId().equals(creature.getId()));
+        assertThat(creature.isSummoningSick()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Threads can enchant a creature already controlled by its caster")
+    void canEnchantOwnCreature() {
+        Permanent creature = addCreatureReady(player1, new AkkiRaider());
+        harness.setHand(player1, List.of(new ThreadsOfDisloyalty()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Threads of Disloyalty");
+        assertThat(findPermanent(player1, "Threads of Disloyalty").getAttachedTo())
+                .isEqualTo(creature.getId());
+        harness.assertOnBattlefield(player1, "Akki Raider");
+        assertThat(creature.isSummoningSick()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Threads goes to the graveyard when its enchanted creature turns face up with mana value three")
+    void auraFallsOffWhenEnchantedCreatureTurnsFaceUp() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GnarledMass());
+        creature.setFaceDownAsCloaked();
+        harness.setHand(player1, List.of(new ThreadsOfDisloyalty()));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Threads of Disloyalty");
+
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(creature));
+
+        harness.assertInGraveyard(player1, "Threads of Disloyalty");
+        harness.assertNotOnBattlefield(player1, "Threads of Disloyalty");
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(p -> p.getId().equals(creature.getId()));
+        assertThat(creature.isFaceDown()).isFalse();
     }
 }
