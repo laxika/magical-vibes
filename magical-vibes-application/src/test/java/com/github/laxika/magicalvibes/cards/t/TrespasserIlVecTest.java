@@ -125,4 +125,78 @@ class TrespasserIlVecTest extends BaseCardTest {
                 .hasMessageContaining("Must discard a card");
     }
 
+    @Test
+    @DisplayName("Discard is paid before the ability resolves")
+    void discardIsPaidBeforeResolution() {
+        Permanent trespasser = addCreatureReady(player1, new TrespasserIlVec());
+        harness.setHand(player1, List.of(new Island()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player1, "Island");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gqs.hasKeyword(gd, trespasser, Keyword.SHADOW)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, trespasser, Keyword.SHADOW)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A tapped creature with summoning sickness can activate the ability")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent trespasser = addCreatureReady(player1, new TrespasserIlVec());
+        trespasser.setSummoningSick(true);
+        trespasser.tap();
+        harness.setHand(player1, List.of(new AshcoatBear()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, trespasser, Keyword.SHADOW)).isTrue();
+        harness.assertInGraveyard(player1, "Ashcoat Bear");
+    }
+
+    @Test
+    @DisplayName("Trespasser with shadow cannot block a creature without shadow")
+    void cannotBlockCreatureWithoutShadow() {
+        addCreatureReady(player1, new TrespasserIlVec());
+        addCreatureReady(player2, new AshcoatBear());
+        harness.setHand(player1, List.of(new Island()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player1,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("shadow");
+    }
+
+    @Test
+    @DisplayName("Trespasser with shadow can block another creature with shadow")
+    void canBlockCreatureWithShadow() {
+        addCreatureReady(player1, new TrespasserIlVec());
+        addCreatureReady(player2, new TrespasserIlVec());
+        harness.setHand(player1, List.of(new Island()));
+        harness.setHand(player2, List.of(new Island()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.activateAbility(player2, 0, null, null);
+        harness.handleCardChosen(player2, 0);
+        harness.passBothPriorities();
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
 }
