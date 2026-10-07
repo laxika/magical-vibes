@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.d.DrudgeReavers;
 import com.github.laxika.magicalvibes.cards.d.DurkwoodBaloth;
 import com.github.laxika.magicalvibes.cards.n.NantukoShaman;
 import com.github.laxika.magicalvibes.cards.p.PrismaticLens;
@@ -16,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({SuddenDeath.class, DurkwoodBaloth.class, NantukoShaman.class, PrismaticLens.class,
-        SuddenShock.class})
+        SuddenShock.class, DrudgeReavers.class})
 class SuddenDeathTest extends BaseCardTest {
 
     @Test
@@ -59,7 +60,6 @@ class SuddenDeathTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, target.getId());
 
         harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(target.getPowerModifier()).isEqualTo(0);
@@ -110,5 +110,57 @@ class SuddenDeathTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player2, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+    @Test
+    @DisplayName("Split second prevents nonmana activated abilities")
+    void splitSecondPreventsNonManaAbilities() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new DrudgeReavers());
+        harness.setHand(player1, List.of(new SuddenDeath()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.BLACK, 1);
+
+        harness.castInstant(player1, 0, target.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("split second");
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(target.getRegenerationShield()).isZero();
+    }
+
+    @Test
+    @DisplayName("An existing regeneration shield cannot save a creature from zero toughness")
+    void regenerationCannotPreventToughnessDeath() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new DrudgeReavers());
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(target.getRegenerationShield()).isEqualTo(1);
+        harness.setHand(player1, List.of(new SuddenDeath()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertNotOnBattlefield(player2, "Drudge Reavers");
+        harness.assertInGraveyard(player2, "Drudge Reavers");
+    }
+
+    @Test
+    @DisplayName("Players can cast spells again after Sudden Death resolves")
+    void splitSecondEndsAfterResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new DurkwoodBaloth());
+        harness.setHand(player1, List.of(new SuddenDeath()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.setHand(player2, List.of(new SuddenShock()));
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        harness.assertLife(player1, 18);
     }
 }
