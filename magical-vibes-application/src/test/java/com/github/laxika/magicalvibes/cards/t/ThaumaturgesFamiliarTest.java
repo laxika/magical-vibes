@@ -1,9 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -13,7 +11,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ThaumaturgesFamiliar.class, GrizzlyBears.class})
+@CardUsed({ThaumaturgesFamiliar.class})
 class ThaumaturgesFamiliarTest extends BaseCardTest {
 
     @Test
@@ -31,8 +29,8 @@ class ThaumaturgesFamiliarTest extends BaseCardTest {
 
     @Test
     void scryOneCanKeepTheTopCard() {
-        Card topCard = new GrizzlyBears();
-        harness.setLibrary(player1, List.of(topCard, new GrizzlyBears()));
+        Card topCard = new ThaumaturgesFamiliar();
+        harness.setLibrary(player1, List.of(topCard, new ThaumaturgesFamiliar()));
         castFamiliar();
         resolveFamiliar();
 
@@ -44,8 +42,8 @@ class ThaumaturgesFamiliarTest extends BaseCardTest {
 
     @Test
     void scryOneCanPutTheTopCardOnTheBottom() {
-        Card topCard = new GrizzlyBears();
-        Card bottomCard = new GrizzlyBears();
+        Card topCard = new ThaumaturgesFamiliar();
+        Card bottomCard = new ThaumaturgesFamiliar();
         harness.setLibrary(player1, List.of(topCard, bottomCard));
         castFamiliar();
         resolveFamiliar();
@@ -56,10 +54,20 @@ class ThaumaturgesFamiliarTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(bottomCard, topCard);
     }
 
+    @Test
+    void scryWithAnEmptyLibraryFinishesWithoutAChoice() {
+        harness.setLibrary(player1, List.of());
+        castFamiliar();
+        resolveFamiliar();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Thaumaturge's Familiar");
+    }
+
     private void castFamiliar() {
-        harness.setHand(player1, List.of(new ThaumaturgesFamiliar()));
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new ThaumaturgesFamiliar(), "{3}");
     }
 
     private void resolveFamiliar() {
