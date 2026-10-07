@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MerfolkOfThePearlTrident;
 import com.github.laxika.magicalvibes.cards.m.Murder;
+import com.github.laxika.magicalvibes.cards.m.MerrowCommerce;
+import com.github.laxika.magicalvibes.cards.r.RishadanDockhand;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +19,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({SvyelunOfSeaAndSky.class, MerfolkOfThePearlTrident.class, Murder.class,
-        GrizzlyBears.class})
+        GrizzlyBears.class, RishadanDockhand.class, MerrowCommerce.class,
+        SealOfRemoval.class, SealOfCleansing.class})
 class SvyelunOfSeaAndSkyTest extends BaseCardTest {
 
     @Test
@@ -65,8 +68,7 @@ class SvyelunOfSeaAndSkyTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLACK, 2);
         harness.addMana(player2, ManaColor.COLORLESS, 2);
 
-        harness.castSorcery(player2, 0, merfolk.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, merfolk.getId());
         harness.handleMayAbilityChosen(player2, false);
 
         harness.assertOnBattlefield(player1, "Merfolk of the Pearl Trident");
@@ -86,10 +88,132 @@ class SvyelunOfSeaAndSkyTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLACK, 2);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
 
-        harness.castSorcery(player2, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, bears.getId());
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Murder");
+    }
+
+    @Test
+    @DisplayName("Paying ward allows the opponent's spell to resolve")
+    void payingWardAllowsDestruction() {
+        harness.addToBattlefield(player1, new SvyelunOfSeaAndSky());
+        Permanent merfolk = harness.addToBattlefieldAndReturn(player1, new RishadanDockhand());
+        harness.setHand(player2, List.of(new Murder()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveInstant(player2, 0, merfolk.getId());
+        harness.handleMayAbilityChosen(player2, true);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Rishadan Dockhand");
+        harness.assertInGraveyard(player1, "Rishadan Dockhand");
+        harness.assertInGraveyard(player2, "Murder");
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Ward counters an opponent's activated ability when they cannot pay")
+    void wardCountersActivatedAbility() {
+        harness.addToBattlefield(player1, new SvyelunOfSeaAndSky());
+        Permanent merfolk = harness.addToBattlefieldAndReturn(player1, new RishadanDockhand());
+        harness.addToBattlefield(player2, new SealOfRemoval());
+
+        harness.activateAbility(player2, 0, null, merfolk.getId());
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Rishadan Dockhand");
+        harness.assertNotInHand(player1, "Rishadan Dockhand");
+        harness.assertInGraveyard(player2, "Seal of Removal");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Svyelun does not grant ward to itself")
+    void doesNotGrantWardToItself() {
+        Permanent svyelun = harness.addToBattlefieldAndReturn(player1, new SvyelunOfSeaAndSky());
+        harness.addToBattlefield(player2, new SealOfRemoval());
+
+        harness.activateAbility(player2, 0, null, svyelun.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Svyelun of Sea and Sky");
+        harness.assertInHand(player1, "Svyelun of Sea and Sky");
+    }
+
+    @Test
+    @DisplayName("Ward does not trigger for an ability controlled by the Merfolk's controller")
+    void ownAbilityDoesNotTriggerWard() {
+        harness.addToBattlefield(player1, new SvyelunOfSeaAndSky());
+        Permanent merfolk = harness.addToBattlefieldAndReturn(player1, new RishadanDockhand());
+        harness.addToBattlefield(player1, new SealOfRemoval());
+
+        harness.activateAbility(player1, 2, null, merfolk.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Rishadan Dockhand");
+        harness.assertInHand(player1, "Rishadan Dockhand");
+    }
+
+    @Test
+    @DisplayName("Opponent's Merfolk neither grant indestructible nor receive ward")
+    void opponentsMerfolkAreExcluded() {
+        Permanent svyelun = harness.addToBattlefieldAndReturn(player1, new SvyelunOfSeaAndSky());
+        Permanent merfolk = harness.addToBattlefieldAndReturn(player2, new RishadanDockhand());
+        harness.addToBattlefield(player2, new RishadanDockhand());
+        harness.addToBattlefield(player1, new SealOfRemoval());
+
+        assertThat(gqs.hasKeyword(gd, svyelun, Keyword.INDESTRUCTIBLE)).isFalse();
+        harness.activateAbility(player1, 1, null, merfolk.getId());
+        resolveAllTriggers();
+
+        harness.assertInHand(player2, "Rishadan Dockhand");
+        assertThat(countPermanents(player2, "Rishadan Dockhand")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A noncreature Merfolk counts toward the indestructible threshold")
+    void noncreatureMerfolkCountsForIndestructible() {
+        Permanent svyelun = harness.addToBattlefieldAndReturn(player1, new SvyelunOfSeaAndSky());
+        harness.addToBattlefield(player1, new RishadanDockhand());
+        harness.addToBattlefield(player1, new MerrowCommerce());
+
+        assertThat(gqs.hasKeyword(gd, svyelun, Keyword.INDESTRUCTIBLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Svyelun dies from marked lethal damage when another Merfolk leaves")
+    void lethalDamageBecomesFatalBelowThreshold() {
+        Permanent svyelun = harness.addToBattlefieldAndReturn(player1, new SvyelunOfSeaAndSky());
+        Permanent merfolk = harness.addToBattlefieldAndReturn(player1, new RishadanDockhand());
+        harness.addToBattlefield(player1, new RishadanDockhand());
+        harness.addToBattlefield(player1, new SealOfRemoval());
+        svyelun.setMarkedDamage(4);
+        harness.runStateBasedActions();
+        harness.assertOnBattlefield(player1, "Svyelun of Sea and Sky");
+
+        harness.activateAbility(player1, 3, null, merfolk.getId());
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Rishadan Dockhand");
+        harness.assertNotOnBattlefield(player1, "Svyelun of Sea and Sky");
+        harness.assertInGraveyard(player1, "Svyelun of Sea and Sky");
+    }
+
+    @Test
+    @DisplayName("Other noncreature Merfolk have ward against opponent abilities")
+    void grantsWardToNoncreatureMerfolk() {
+        harness.addToBattlefield(player1, new SvyelunOfSeaAndSky());
+        Permanent commerce = harness.addToBattlefieldAndReturn(player1, new MerrowCommerce());
+        harness.addToBattlefield(player2, new SealOfCleansing());
+
+        harness.activateAbility(player2, 0, null, commerce.getId());
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Merrow Commerce");
+        harness.assertNotInGraveyard(player1, "Merrow Commerce");
+        harness.assertInGraveyard(player2, "Seal of Cleansing");
+        assertThat(gd.stack).isEmpty();
     }
 }
