@@ -111,4 +111,81 @@ class ThoughtpickerWitchTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
+
+    @Test
+    @DisplayName("The Witch can sacrifice itself and its ability still resolves")
+    void canSacrificeItself() {
+        Permanent witch = harness.addToBattlefieldAndReturn(player1, new ThoughtpickerWitch());
+        Card top = new Island();
+        Card second = new Forest();
+        Card third = new BorosRecruit();
+        harness.setLibrary(player2, List.of(top, second, third));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.handlePermanentChosen(player1, witch.getId());
+        harness.assertNotOnBattlefield(player1, "Thoughtpicker Witch");
+        harness.assertInGraveyard(player1, "Thoughtpicker Witch");
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .extracting(Card::getId).containsExactly(top.getId());
+        assertThat(gd.playerDecks.get(player2.getId()))
+                .extracting(Card::getId).containsExactly(second.getId(), third.getId());
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Exiling a card is mandatory and limited to the top two cards")
+    void cannotDeclineOrChooseBeyondTopTwo() {
+        Permanent witch = harness.addToBattlefieldAndReturn(player1, new ThoughtpickerWitch());
+        Card top = new Island();
+        Card second = new Forest();
+        Card third = new BorosRecruit();
+        harness.setLibrary(player2, List.of(top, second, third));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.handlePermanentChosen(player1, witch.getId());
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, -1))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, 2))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .extracting(Card::getId).containsExactly(second.getId());
+        assertThat(gd.playerDecks.get(player2.getId()))
+                .extracting(Card::getId).containsExactly(top.getId(), third.getId());
+    }
+
+    @Test
+    @DisplayName("Only a creature controlled by the activator can pay the sacrifice cost")
+    void cannotSacrificeLandOrOpponentsCreature() {
+        Permanent witch = harness.addToBattlefieldAndReturn(player1, new ThoughtpickerWitch());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new BorosRecruit());
+        harness.setLibrary(player2, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, land.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, opponentCreature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Forest");
+        harness.assertOnBattlefield(player2, "Boros Recruit");
+
+        harness.handlePermanentChosen(player1, witch.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Thoughtpicker Witch");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
 }
