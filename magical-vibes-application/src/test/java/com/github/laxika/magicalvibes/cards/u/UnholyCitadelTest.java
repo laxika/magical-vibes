@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.cards.a.AdunOakenshield;
 import com.github.laxika.magicalvibes.cards.e.ElvenRiders;
 import com.github.laxika.magicalvibes.cards.j.Johan;
 import com.github.laxika.magicalvibes.cards.t.TobiasAndrion;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -107,6 +109,88 @@ class UnholyCitadelTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(blackLegendary);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(otherLegendary);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+    }
+
+    @Test
+    @DisplayName("One black legendary creature can band with multiple other legendary creatures")
+    void blackLegendaryCanBandWithMultipleOtherLegendaries() {
+        harness.addToBattlefield(player1, new UnholyCitadel());
+        Permanent blackLegendary = addCreatureReady(player1, new AdunOakenshield());
+        Permanent firstLegendary = addCreatureReady(player1, new Johan());
+        Permanent secondLegendary = addCreatureReady(player1, new TobiasAndrion());
+
+        declareBand(player1, List.of(1, 2, 3), List.of(List.of(1, 2, 3)));
+
+        assertThat(blackLegendary.getBandId()).isNotNull();
+        assertThat(firstLegendary.getBandId()).isEqualTo(blackLegendary.getBandId());
+        assertThat(secondLegendary.getBandId()).isEqualTo(blackLegendary.getBandId());
+    }
+
+    @Test
+    @DisplayName("A legendary blocking pair lets its controller divide the attacker's damage")
+    void legendaryBlockingPairControlsAttackerDamage() {
+        harness.addToBattlefield(player2, new UnholyCitadel());
+        Permanent attacker = addCreatureReady(player1, new Johan());
+        Permanent blackLegendary = addCreatureReady(player2, new AdunOakenshield());
+        Permanent otherLegendary = addCreatureReady(player2, new TobiasAndrion());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(1, 0), new BlockerAssignment(2, 0)));
+        harness.passBothPriorities();
+
+        PendingInteraction.CombatDamageAssignment prompt =
+                gd.interaction.activeInteraction(PendingInteraction.CombatDamageAssignment.class);
+        assertThat(prompt).isNotNull();
+        assertThat(prompt.playerId()).isEqualTo(player2.getId());
+        assertThat(prompt.totalDamage()).isEqualTo(5);
+
+        harness.handleCombatDamageAssigned(player2, 0, Map.of(blackLegendary.getId(), 5));
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(otherLegendary).doesNotContain(blackLegendary);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
+    }
+
+    @Test
+    @DisplayName("A nonlegendary fellow blocker does not enable bands-with-other damage assignment")
+    void nonlegendaryFellowBlockerDoesNotTransferDamageAssignment() {
+        harness.addToBattlefield(player2, new UnholyCitadel());
+        Permanent attacker = addCreatureReady(player1, new Johan());
+        Permanent blackLegendary = addCreatureReady(player2, new AdunOakenshield());
+        Permanent nonlegendary = addCreatureReady(player2, new ElvenRiders());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(1, 0), new BlockerAssignment(2, 0)));
+        harness.passBothPriorities();
+
+        PendingInteraction.CombatDamageAssignment prompt =
+                gd.interaction.activeInteraction(PendingInteraction.CombatDamageAssignment.class);
+        assertThat(prompt).isNotNull();
+        assertThat(prompt.playerId()).isEqualTo(player1.getId());
+        assertThat(prompt.totalDamage()).isEqualTo(5);
+
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(nonlegendary.getId(), 5));
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(blackLegendary).doesNotContain(nonlegendary);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
+    }
+
+    @Test
+    @DisplayName("The Citadel grants itself the ability when it is a black legendary creature")
+    void animatedBlackLegendaryCitadelCanBand() {
+        Permanent citadel = addCreatureReady(player1, new UnholyCitadel());
+        citadel.setAnimatedUntilEndOfTurn(true);
+        citadel.setAnimatedPower(3);
+        citadel.setAnimatedToughness(3);
+        citadel.setAnimatedColor(CardColor.BLACK);
+        citadel.getPersistentGrantedSupertypes().add(CardSupertype.LEGENDARY);
+        Permanent otherLegendary = addCreatureReady(player1, new TobiasAndrion());
+
+        declareBand(player1, List.of(0, 1), List.of(List.of(0, 1)));
+
+        assertThat(citadel.getBandId()).isNotNull();
+        assertThat(citadel.getBandId()).isEqualTo(otherLegendary.getBandId());
     }
 
     private void beginAttackDeclaration(Player player) {
