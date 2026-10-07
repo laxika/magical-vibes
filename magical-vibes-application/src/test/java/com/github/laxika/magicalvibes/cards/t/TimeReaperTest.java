@@ -48,4 +48,60 @@ class TimeReaperTest extends BaseCardTest {
         assertThat(gd.findExiledCard(exiledCard.getId())).isNotNull();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
     }
+
+    @Test
+    void cannotTargetFaceDownExiledCard() {
+        PathToExile exiledCard = new PathToExile();
+        gd.addToExile(player2.getId(), exiledCard, null, true);
+        Permanent timeReaper = addCreatureReady(player1, new TimeReaper());
+        timeReaper.setAttacking(true);
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.findExiledCard(exiledCard.getId())).isNotNull();
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    void doesNotGainLifeWhenTargetLeavesExileBeforeResolution() {
+        PathToExile exiledCard = new PathToExile();
+        harness.setExile(player2, List.of(exiledCard));
+        Permanent timeReaper = addCreatureReady(player1, new TimeReaper());
+        timeReaper.setAttacking(true);
+
+        resolveCombat();
+        harness.handlePermanentChosen(player1, exiledCard.getId());
+        assertThat(gd.stack).isNotEmpty();
+        gd.removeFromExile(exiledCard.getId());
+        gd.playerHands.get(player2.getId()).add(exiledCard);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player2.getId())).contains(exiledCard);
+        assertThat(gd.playerDecks.get(player2.getId())).doesNotContain(exiledCard);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    void triggerStillResolvesAfterTimeReaperLeavesBattlefield() {
+        PathToExile exiledCard = new PathToExile();
+        PathToExile libraryCard = new PathToExile();
+        harness.setLibrary(player2, List.of(libraryCard));
+        harness.setExile(player2, List.of(exiledCard));
+        Permanent timeReaper = addCreatureReady(player1, new TimeReaper());
+        timeReaper.setAttacking(true);
+
+        resolveCombat();
+        harness.handlePermanentChosen(player1, exiledCard.getId());
+        assertThat(gd.stack).isNotEmpty();
+        gd.playerBattlefields.get(player1.getId()).remove(timeReaper);
+        gd.playerGraveyards.get(player1.getId()).add(timeReaper.getCard());
+        resolveAllTriggers();
+
+        assertThat(gd.findExiledCard(exiledCard.getId())).isNull();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(libraryCard, exiledCard);
+        harness.assertLife(player1, 23);
+        harness.assertLife(player2, 16);
+    }
 }
