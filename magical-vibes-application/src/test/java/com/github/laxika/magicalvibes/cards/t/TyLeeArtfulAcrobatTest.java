@@ -49,6 +49,7 @@ class TyLeeArtfulAcrobatTest extends BaseCardTest {
         harness.setHand(player1, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.castCreature(player1, 0);
+        harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, tyLee)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, tyLee)).isEqualTo(2);
@@ -63,13 +64,23 @@ class TyLeeArtfulAcrobatTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         declareAttack();
-        harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, bears.getId());
+
+        assertThat(bears.isCantBlockThisTurn()).isFalse();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
 
         assertThat(bears.isCantBlockThisTurn()).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(bears.isCantBlockThisTurn()).isFalse();
     }
 
     @Test
@@ -81,7 +92,6 @@ class TyLeeArtfulAcrobatTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         declareAttack();
-        harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
@@ -94,18 +104,75 @@ class TyLeeArtfulAcrobatTest extends BaseCardTest {
         addCreatureReady(player1, new TyLeeArtfulAcrobat());
         Permanent bears = addCreatureReady(player2, new GrizzlyBears());
         Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         declareAttack();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .contains(bears.getId())
                 .doesNotContain(forest.getId());
     }
 
+    @Test
+    @DisplayName("The initial attack trigger does not choose a target before payment")
+    void attackDoesNotTargetBeforePayment() {
+        addCreatureReady(player1, new TyLeeArtfulAcrobat());
+        addCreatureReady(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        declareAttack();
+
+        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+    }
+
+    @Test
+    @DisplayName("An opponent's noncreature spell does not trigger Ty Lee's prowess")
+    void opponentsSpellDoesNotTriggerProwess() {
+        Permanent tyLee = addCreatureReady(player1, new TyLeeArtfulAcrobat());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, tyLee)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, tyLee)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Prowess bonuses from multiple noncreature spells accumulate")
+    void prowessTriggersForEachNoncreatureSpell() {
+        Permanent tyLee = addCreatureReady(player1, new TyLeeArtfulAcrobat());
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, tyLee)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, tyLee)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("A noncreature spell creates exactly one prowess trigger")
+    void noncreatureSpellCreatesOneProwessTrigger() {
+        addCreatureReady(player1, new TyLeeArtfulAcrobat());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+
+        assertThat(gd.stack).hasSize(2);
+    }
+
     private void declareAttack() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
         declareAttackers(player1, List.of(0));
     }
 }
