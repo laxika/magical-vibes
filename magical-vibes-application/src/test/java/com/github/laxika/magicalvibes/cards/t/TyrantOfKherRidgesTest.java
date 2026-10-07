@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GoblinBlastRunner;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,22 +16,23 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({TyrantOfKherRidges.class, GoblinBlastRunner.class, TeferiTemporalPilgrim.class})
 class TyrantOfKherRidgesTest extends BaseCardTest {
 
     @Test
     @DisplayName("Entering the battlefield deals 4 damage to a target creature")
     void enteringDealsDamageToCreature() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID bearId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.addToBattlefield(player2, new GoblinBlastRunner());
+        UUID targetId = harness.getPermanentId(player2, "Goblin Blast-Runner");
         castTyrant();
 
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, bearId);
+        harness.handlePermanentChosen(player1, targetId);
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Goblin Blast-Runner");
+        harness.assertInGraveyard(player2, "Goblin Blast-Runner");
     }
 
     @Test
@@ -71,9 +74,63 @@ class TyrantOfKherRidgesTest extends BaseCardTest {
     }
 
     private Permanent addReadyTyrant() {
-        Permanent permanent = new Permanent(new TyrantOfKherRidges());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player1, new TyrantOfKherRidges());
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(permanent);
         return permanent;
+    }
+
+    @Test
+    @DisplayName("Entering the battlefield can deal exactly 4 damage to itself")
+    void enteringCanDamageItself() {
+        castTyrant();
+        UUID tyrantId = harness.getPermanentId(player1, "Tyrant of Kher Ridges");
+        harness.handlePermanentChosen(player1, tyrantId);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Tyrant of Kher Ridges");
+        Permanent tyrant = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(tyrant.getMarkedDamage()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Entering the battlefield can target its controller")
+    void enteringCanDamageController() {
+        castTyrant();
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 16);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Entering the battlefield deals 4 damage to a planeswalker")
+    void enteringDealsDamageToPlaneswalker() {
+        Permanent teferi = harness.addToBattlefieldAndReturn(player2, new TeferiTemporalPilgrim());
+        teferi.setCounterCount(CounterType.LOYALTY, 5);
+        castTyrant();
+        harness.handlePermanentChosen(player1, teferi.getId());
+        harness.passBothPriorities();
+
+        assertThat(teferi.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Teferi, Temporal Pilgrim");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Red activations stack while summoning sick without tapping or boosting toughness")
+    void redAbilityCanBeRepeatedWhileSummoningSick() {
+        Permanent tyrant = harness.addToBattlefieldAndReturn(player1, new TyrantOfKherRidges());
+        tyrant.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(tyrant.getPowerModifier()).isEqualTo(2);
+        assertThat(tyrant.getToughnessModifier()).isZero();
+        assertThat(tyrant.isTapped()).isFalse();
     }
 }
