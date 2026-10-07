@@ -43,7 +43,7 @@ class TolsimirMidnightsLightTest extends BaseCardTest {
 
     @Test
     void wolfAttackAfterTolsimirAttacksMakesChosenOpponentCreatureBlockIt() {
-        Permanent tolsimir = readyCreature(player1, new TolsimirMidnightsLight());
+        readyCreature(player1, new TolsimirMidnightsLight());
         Permanent wolf = readyCreature(player1, new YoungWolf());
         Permanent blocker = readyCreature(player2, new GrizzlyBears());
 
@@ -58,11 +58,9 @@ class TolsimirMidnightsLightTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, blocker.getId());
         harness.passBothPriorities();
 
-        assertThat(blocker.getMustBlockIds()).containsExactly(wolf.getId());
+        assertThat(blocker.getRequiredBlockSourceIds()).containsExactly(wolf.getId());
 
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("must block");
@@ -84,10 +82,76 @@ class TolsimirMidnightsLightTest extends BaseCardTest {
         assertThat(wolf.isAttacking()).isTrue();
     }
 
+    @Test
+    void nonWolfAttackDoesNotTriggerEvenWhenTolsimirAttacks() {
+        readyCreature(player1, new TolsimirMidnightsLight());
+        readyCreature(player1, new GrizzlyBears());
+        Permanent blocker = readyCreature(player2, new GrizzlyBears());
+
+        declareAttackers(player1, List.of(0, 1));
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        assertThat(blocker.getRequiredBlockSourceIds()).isEmpty();
+    }
+
+    @Test
+    void tappedTargetIsNotRequiredToBlockWhileUnable() {
+        readyCreature(player1, new TolsimirMidnightsLight());
+        readyCreature(player1, new YoungWolf());
+        Permanent blocker = readyCreature(player2, new GrizzlyBears());
+
+        declareAttackers(player1, List.of(0, 1));
+        harness.handlePermanentChosen(player1, blocker.getId());
+        harness.passBothPriorities();
+        blocker.setTapped(true);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of());
+
+        assertThat(blocker.isBlocking()).isFalse();
+    }
+
+    @Test
+    void blockingRequirementExpiresBeforeAnotherCombatThisTurn() {
+        Permanent tolsimir = readyCreature(player1, new TolsimirMidnightsLight());
+        Permanent wolf = readyCreature(player1, new YoungWolf());
+        Permanent blocker = readyCreature(player2, new GrizzlyBears());
+
+        declareAttackers(player1, List.of(0, 1));
+        harness.handlePermanentChosen(player1, blocker.getId());
+        harness.passBothPriorities();
+
+        harness.forceStep(TurnStep.END_OF_COMBAT);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        wolf.setTapped(false);
+        gd.playerBattlefields.get(player1.getId()).getFirst().setAttackedThisCombat(false);
+
+
+        declareAttackers(player1, List.of(1));
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of());
+
+        assertThat(blocker.isBlocking()).isFalse();
+    }
+
+    @Test
+    void unblockedTolsimirGainsLifeFromCombatDamage() {
+        readyCreature(player1, new TolsimirMidnightsLight());
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 20);
+
+        declareAttackers(player1, List.of(0));
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(13);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+    }
+
     private Permanent readyCreature(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, card);
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 
