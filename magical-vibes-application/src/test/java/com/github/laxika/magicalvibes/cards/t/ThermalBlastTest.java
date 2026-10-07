@@ -107,4 +107,45 @@ class ThermalBlastTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+    @Test
+    @DisplayName("Threshold gained while on the stack increases the damage")
+    void thresholdGainedBeforeResolution() {
+        var target = harness.addToBattlefieldAndReturn(player2, new RabidElephant());
+        harness.setHand(player1, List.of(new ThermalBlast()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.setGraveyard(player1, List.of(
+                new DuskImp(), new DuskImp(), new DuskImp(),
+                new DuskImp(), new DuskImp(), new DuskImp()));
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.setGraveyard(player1, List.of(
+                new DuskImp(), new DuskImp(), new DuskImp(),
+                new DuskImp(), new DuskImp(), new DuskImp(), new DuskImp()));
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(5);
+        harness.assertNotOnBattlefield(player2, "Rabid Elephant");
+        harness.assertInGraveyard(player2, "Rabid Elephant");
+    }
+
+    @Test
+    @DisplayName("Does not deal damage when its target has left the battlefield")
+    void targetLeavesBeforeResolution() {
+        var target = harness.addToBattlefieldAndReturn(player2, new DuskImp());
+        harness.setHand(player1, List.of(new ThermalBlast(), new ThermalBlast()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(3);
+        harness.assertNotOnBattlefield(player2, "Dusk Imp");
+        harness.assertInGraveyard(player2, "Dusk Imp");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card instanceof ThermalBlast).hasSize(2);
+    }
 }
