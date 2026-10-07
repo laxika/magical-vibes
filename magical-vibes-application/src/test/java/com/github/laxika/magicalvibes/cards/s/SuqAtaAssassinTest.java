@@ -28,16 +28,10 @@ class SuqAtaAssassinTest extends BaseCardTest {
     @Test
     @DisplayName("Unblocked attacker gives the defending player a poison counter")
     void unblockedGivesPoison() {
-        addAttacker();
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-
-        // Advance into the declare-blockers step (the defender has no blockers), which fires the
-        // "attacks and isn't blocked" trigger onto the stack, then resolve it.
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        addCreatureReady(player1, new SuqAtaAssassin());
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
+        resolveAllTriggers();
 
         assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(1);
         assertThat(gd.playerPoisonCounters.getOrDefault(player1.getId(), 0)).isZero();
@@ -47,7 +41,7 @@ class SuqAtaAssassinTest extends BaseCardTest {
     @DisplayName("Blocked attacker gives no poison counter")
     void blockedNoPoison() {
         // Phyrexian Walker is an artifact creature, so it can block through Fear.
-        Permanent blocker = addCreatureReady(player2, new PhyrexianWalker());
+        addCreatureReady(player2, new PhyrexianWalker());
 
         addAttacker();
 
@@ -83,5 +77,62 @@ class SuqAtaAssassinTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Poison goes to the defending player when player two attacks")
+    void playerTwoAttacks() {
+        addCreatureReady(player2, new SuqAtaAssassin());
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, List.of());
+        resolveAllTriggers();
+
+        assertThat(gd.playerPoisonCounters.getOrDefault(player1.getId(), 0)).isEqualTo(1);
+        assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isZero();
+    }
+
+    @Test
+    @DisplayName("Each unblocked Assassin gives a poison counter")
+    void multipleUnblockedAssassins() {
+        addCreatureReady(player1, new SuqAtaAssassin());
+        addCreatureReady(player1, new SuqAtaAssassin());
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
+        gs.declareBlockers(gd, player2, List.of());
+        resolveAllTriggers();
+
+        assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(2);
+        assertThat(gd.playerPoisonCounters.getOrDefault(player1.getId(), 0)).isZero();
+    }
+
+    @Test
+    @DisplayName("Only the unblocked Assassin gives a poison counter")
+    void oneOfTwoAssassinsBlocked() {
+        addCreatureReady(player1, new SuqAtaAssassin());
+        addCreatureReady(player1, new SuqAtaAssassin());
+        addCreatureReady(player2, new PhyrexianWalker());
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveAllTriggers();
+
+        assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Poison is given before combat damage and does not replace that damage")
+    void poisonBeforeCombatDamage() {
+        addCreatureReady(player1, new SuqAtaAssassin());
+        declareAttackersAndPrepareBlockers(List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            gs.declareBlockers(gd, player2, List.of());
+            resolveAllTriggers();
+        });
+
+        assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+        harness.assertLife(player2, 20);
+
+        resolveCombat();
+
+        harness.assertLife(player2, 19);
+        assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(1);
     }
 }
