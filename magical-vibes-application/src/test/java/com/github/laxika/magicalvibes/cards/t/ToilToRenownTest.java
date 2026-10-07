@@ -2,20 +2,21 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GreaterAuramancy;
 import com.github.laxika.magicalvibes.cards.m.MoxOpal;
 import com.github.laxika.magicalvibes.cards.w.WallOfTanglecord;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ToilToRenown.class, Forest.class, GrizzlyBears.class, MoxOpal.class,
+        WallOfTanglecord.class, GreaterAuramancy.class})
 class ToilToRenownTest extends BaseCardTest {
 
     @Test
@@ -80,20 +81,56 @@ class ToilToRenownTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
     }
 
+    @Test
+    @DisplayName("Tapped enchantments without a qualifying type are not counted")
+    void tappedEnchantmentNotCounted() {
+        add(player1, new GreaterAuramancy(), true);
+        add(player1, new Forest(), true);
+        harness.setLife(player1, 20);
+
+        cast(player1);
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(21);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Counts tapped status at resolution rather than when cast")
+    void countsTappedStatusAtResolution() {
+        Permanent forest = add(player1, new Forest(), false);
+        harness.setLife(player1, 20);
+        harness.castFromHand(player1, new ToilToRenown(), "{1}{G}");
+
+        forest.tap();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(21);
+    }
+
+    @Test
+    @DisplayName("A permanent untapped before resolution is no longer counted")
+    void excludesPermanentUntappedBeforeResolution() {
+        Permanent forest = add(player1, new Forest(), true);
+        harness.setLife(player1, 20);
+        harness.castFromHand(player1, new ToilToRenown(), "{1}{G}");
+
+        forest.untap();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+    }
+
     private void cast(Player player) {
-        harness.setHand(player, List.of(new ToilToRenown()));
-        harness.addMana(player, ManaColor.GREEN, 2);
-        harness.castInstant(player, 0);
+        harness.castFromHand(player, new ToilToRenown(), "{1}{G}");
         harness.passBothPriorities();
     }
 
     private Permanent add(Player player, Card card, boolean tapped) {
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, card);
         perm.setSummoningSick(false);
         if (tapped) {
             perm.tap();
         }
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }
