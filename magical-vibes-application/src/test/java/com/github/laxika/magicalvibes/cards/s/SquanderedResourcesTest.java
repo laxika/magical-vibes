@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.e.ExoticOrchard;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GriffinCanyon;
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -20,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({SquanderedResources.class, Forest.class, Island.class, RootboundCrag.class,
-        ThawingGlaciers.class, Taiga.class, GriffinCanyon.class})
+        ThawingGlaciers.class, Taiga.class, GriffinCanyon.class, ExoticOrchard.class})
 class SquanderedResourcesTest extends BaseCardTest {
 
     @Test
@@ -127,5 +128,47 @@ class SquanderedResourcesTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A tapped land can be sacrificed for additional mana")
+    void tappedLandCanBeSacrificed() {
+        harness.addToBattlefield(player1, new SquanderedResources());
+        harness.addToBattlefield(player1, new Forest());
+        harness.tapPermanent(player1, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertInGraveyard(player1, "Forest");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opponent's land cannot pay the sacrifice cost")
+    void opponentsLandCannotPayCost() {
+        harness.addToBattlefield(player1, new SquanderedResources());
+        harness.addToBattlefield(player2, new Forest());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player2, "Forest");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("A sacrificed Exotic Orchard can produce the opponent's land color")
+    void sacrificedOrchardUsesOpponentsLandColor() {
+        harness.addToBattlefield(player1, new SquanderedResources());
+        harness.addToBattlefield(player1, new ExoticOrchard());
+        harness.addToBattlefield(player2, new Island());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertInGraveyard(player1, "Exotic Orchard");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }
