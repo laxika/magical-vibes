@@ -106,6 +106,36 @@ class SuppressTest extends BaseCardTest {
                 .containsExactlyInAnyOrder(exiledCard, drawnCard);
     }
 
+    @Test
+    @DisplayName("Separate resolutions return their own exiled hands through delayed triggers")
+    void separateResolutionsReturnBothHands() {
+        Card firstCard = new Index();
+        Card secondCard = new Index();
+        Card drawnCard = new Index();
+        harness.setHand(player1, List.of(new Suppress(), new Suppress()));
+        harness.setHand(player2, List.of(firstCard));
+        harness.setLibrary(player2, List.of(drawnCard));
+        castSuppress();
+        harness.setHand(player2, List.of(secondCard));
+        castSuppress();
+
+        assertThat(gd.exiledCards).extracting(ExiledCardEntry::card)
+                .containsExactlyInAnyOrder(firstCard, secondCard);
+        harness.passUntil(player2, TurnStep.END_STEP);
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(drawnCard);
+        assertThat(gd.exiledCards).extracting(ExiledCardEntry::card)
+                .containsExactlyInAnyOrder(firstCard, secondCard);
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        assertThat(gd.exiledCards).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.exiledCards).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId()))
+                .containsExactlyInAnyOrder(firstCard, secondCard, drawnCard);
+    }
+
     private void castSuppress() {
         castSuppress(player2);
     }
@@ -116,7 +146,6 @@ class SuppressTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.castSorcery(player1, 0, targetPlayer.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetPlayer.getId());
     }
 }
