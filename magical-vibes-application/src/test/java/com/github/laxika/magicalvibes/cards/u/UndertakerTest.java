@@ -18,6 +18,68 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class UndertakerTest extends BaseCardTest {
 
     @Test
+    void cannotActivateWhileTapped() {
+        var undertaker = addCreatureReady(player1, new Undertaker());
+        undertaker.setTapped(true);
+        Card target = new SnortingGahr();
+        harness.setGraveyard(player1, List.of(target));
+        harness.setHand(player1, List.of(new SoulChanneling()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() ->
+                harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotActivateWithSummoningSickness() {
+        var undertaker = addCreatureReady(player1, new Undertaker());
+        undertaker.setSummoningSick(true);
+        Card target = new SnortingGahr();
+        harness.setGraveyard(player1, List.of(target));
+        harness.setHand(player1, List.of(new SoulChanneling()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() ->
+                harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotPayBlackManaCostWithColorlessMana() {
+        addCreatureReady(player1, new Undertaker());
+        Card target = new SnortingGahr();
+        harness.setGraveyard(player1, List.of(target));
+        harness.setHand(player1, List.of(new SoulChanneling()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() ->
+                harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void discardingCreatureDoesNotChangeChosenGraveyardTarget() {
+        addCreatureReady(player1, new Undertaker());
+        Card target = new SnortingGahr();
+        Card discardedCreature = new Undertaker();
+        harness.setGraveyard(player1, List.of(target));
+        harness.setHand(player1, List.of(discardedCreature));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId()));
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(discardedCreature);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(target);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(target);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(discardedCreature);
+    }
+
+    @Test
     @DisplayName("Returns a target creature card from the graveyard to hand after discarding a card")
     void returnsTargetCreatureCardToHand() {
         var undertaker = addCreatureReady(player1, new Undertaker());
