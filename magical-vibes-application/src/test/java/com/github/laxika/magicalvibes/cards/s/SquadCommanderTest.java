@@ -1,13 +1,12 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.f.FaerieMiscreant;
-import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.SoulWarden;
+import com.github.laxika.magicalvibes.cards.e.ExpeditionDiviner;
+import com.github.laxika.magicalvibes.cards.e.ExpeditionHealer;
+import com.github.laxika.magicalvibes.cards.g.GnarlidColony;
+import com.github.laxika.magicalvibes.cards.z.ZulaportDuelist;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -20,8 +19,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SquadCommander.class, FaerieMiscreant.class, FugitiveWizard.class,
-        GrizzlyBears.class, SoulWarden.class})
+@CardUsed({SquadCommander.class, ZulaportDuelist.class, ExpeditionDiviner.class,
+        ExpeditionHealer.class, GnarlidColony.class})
 class SquadCommanderTest extends BaseCardTest {
 
     @Test
@@ -29,10 +28,7 @@ class SquadCommanderTest extends BaseCardTest {
     void entersWithTokensForPartySize() {
         addThreePartyRoles();
 
-        harness.setHand(player1, List.of(new SquadCommander()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SquadCommander(), "{3}{W}");
         harness.passBothPriorities();
         resolveAllTriggers();
 
@@ -51,8 +47,8 @@ class SquadCommanderTest extends BaseCardTest {
     void fullPartyBoostsOwnCreatures() {
         Permanent commander = harness.addToBattlefieldAndReturn(player1, new SquadCommander());
         addThreePartyRoles();
-        Permanent ally = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent ally = harness.addToBattlefieldAndReturn(player1, new GnarlidColony());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new GnarlidColony());
 
         advanceToCombat(player1);
 
@@ -75,8 +71,8 @@ class SquadCommanderTest extends BaseCardTest {
     @DisplayName("Does not boost creatures without a full party")
     void doesNotBoostWithoutFullParty() {
         Permanent commander = harness.addToBattlefieldAndReturn(player1, new SquadCommander());
-        harness.addToBattlefield(player1, new SoulWarden());
-        harness.addToBattlefield(player1, new FaerieMiscreant());
+        harness.addToBattlefield(player1, new ExpeditionHealer());
+        harness.addToBattlefield(player1, new ZulaportDuelist());
 
         advanceToCombat(player1);
 
@@ -84,10 +80,117 @@ class SquadCommanderTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, commander, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
+    @Test
+    @DisplayName("Commander alone counts itself once, regardless of opposing party members")
+    void commanderAloneCreatesOneToken() {
+        harness.addToBattlefield(player2, new ExpeditionHealer());
+        harness.addToBattlefield(player2, new ZulaportDuelist());
+        harness.addToBattlefield(player2, new ExpeditionDiviner());
+
+        harness.castFromHand(player1, new SquadCommander(), "{3}{W}");
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(korWarriorTokens(player1)).hasSize(1);
+        assertThat(korWarriorTokens(player2)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Duplicate party roles do not increase the number of tokens")
+    void duplicateRolesCountOnlyOnce() {
+        harness.addToBattlefield(player1, new ExpeditionHealer());
+        harness.addToBattlefield(player1, new ExpeditionHealer());
+        harness.addToBattlefield(player1, new GnarlidColony());
+
+        harness.castFromHand(player1, new SquadCommander(), "{3}{W}");
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(korWarriorTokens(player1)).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Entry trigger counts the party at resolution even if Commander has left")
+    void entryTriggerUsesCurrentPartyWithoutCommander() {
+        addThreePartyRoles();
+        harness.castFromHand(player1, new SquadCommander(), "{3}{W}");
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.getPermanentRemovalService().removePermanentToExile(gd,
+                findPermanent(player1, "Squad Commander"));
+        resolveAllTriggers();
+
+        assertThat(korWarriorTokens(player1)).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("Losing a party member before combat trigger resolves prevents both bonuses")
+    void fullPartyIsCheckedAgainAtResolution() {
+        Permanent commander = harness.addToBattlefieldAndReturn(player1, new SquadCommander());
+        addThreePartyRoles();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.BEGINNING_OF_COMBAT);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.getPermanentRemovalService().removePermanentToExile(gd,
+                findPermanent(player1, "Expedition Diviner"));
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, commander)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, commander, Keyword.INDESTRUCTIBLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A party completed after combat begins does not retroactively trigger")
+    void completingPartyAfterCombatBeginsDoesNotTrigger() {
+        Permanent commander = harness.addToBattlefieldAndReturn(player1, new SquadCommander());
+        harness.addToBattlefield(player1, new ExpeditionHealer());
+        harness.addToBattlefield(player1, new ZulaportDuelist());
+        advanceToCombat(player1);
+        assertThat(gd.stack).isEmpty();
+
+        harness.addToBattlefield(player1, new ExpeditionDiviner());
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, commander)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, commander, Keyword.INDESTRUCTIBLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Combat bonuses persist after the party breaks and exclude later creatures")
+    void resolvedBonusesPersistAndOnlyAffectExistingCreatures() {
+        Permanent commander = harness.addToBattlefieldAndReturn(player1, new SquadCommander());
+        addThreePartyRoles();
+        advanceToCombat(player1);
+
+        harness.getPermanentRemovalService().removePermanentToExile(gd,
+                findPermanent(player1, "Expedition Diviner"));
+        Permanent newcomer = harness.addToBattlefieldAndReturn(player1, new GnarlidColony());
+
+        assertThat(gqs.getEffectivePower(gd, commander)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, commander, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, newcomer)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, newcomer, Keyword.INDESTRUCTIBLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A full party does not grant bonuses during an opponent's combat")
+    void doesNotTriggerOnOpponentsTurn() {
+        Permanent commander = harness.addToBattlefieldAndReturn(player1, new SquadCommander());
+        addThreePartyRoles();
+
+        advanceToCombat(player2);
+
+        assertThat(gqs.getEffectivePower(gd, commander)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, commander, Keyword.INDESTRUCTIBLE)).isFalse();
+    }
+
     private void addThreePartyRoles() {
-        harness.addToBattlefield(player1, new SoulWarden());
-        harness.addToBattlefield(player1, new FaerieMiscreant());
-        harness.addToBattlefield(player1, new FugitiveWizard());
+        harness.addToBattlefield(player1, new ExpeditionHealer());
+        harness.addToBattlefield(player1, new ZulaportDuelist());
+        harness.addToBattlefield(player1, new ExpeditionDiviner());
     }
 
     private List<Permanent> korWarriorTokens(Player player) {
@@ -100,8 +203,7 @@ class SquadCommanderTest extends BaseCardTest {
     private void advanceToCombat(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.BEGINNING_OF_COMBAT);
         resolveAllTriggers();
     }
 }
