@@ -115,16 +115,57 @@ class SpectralShieldTest extends BaseCardTest {
     @Test
     @DisplayName("Spectral Shield can't target a noncreature permanent")
     void cannotTargetNonCreature() {
-        harness.addToBattlefield(player1, new IcyManipulator());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new IcyManipulator());
         harness.setHand(player1, List.of(new SpectralShield()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        Permanent artifact = findPermanent(player1, "Icy Manipulator");
-
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("The creature's controller cannot target it with spells either")
+    void controllerCannotTargetWithSpells() {
+        Permanent bears = bearsOf(player1);
+        enchant(bears);
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, bears.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Another Aura spell cannot target the enchanted creature")
+    void cannotTargetWithAnotherAuraSpell() {
+        Permanent bears = bearsOf(player1);
+        enchant(bears);
+        harness.setHand(player1, List.of(new SpectralShield()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, bears.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Spells can target the creature again after Spectral Shield leaves")
+    void spellRestrictionStopsWhenRemoved() {
+        Permanent bears = bearsOf(player1);
+        Permanent aura = enchant(bears);
+        gd.playerBattlefields.get(player1.getId()).remove(aura);
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(5);
     }
 }
