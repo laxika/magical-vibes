@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Thoughtlace.class, GrizzlyBears.class, Forest.class, DarkRitual.class})
 class ThoughtlaceTest extends BaseCardTest {
@@ -73,8 +74,7 @@ class ThoughtlaceTest extends BaseCardTest {
         harness.castCreature(player1, 1);
         UUID bearsSpellId = gd.stack.getFirst().getCard().getId();
 
-        harness.castInstant(player1, 0, bearsSpellId);
-        harness.passBothPriorities(); // resolve Thoughtlace on the spell
+        harness.castAndResolveInstant(player1, 0, bearsSpellId);
         assertThat(gqs.getEffectiveCardColors(gd, gd.stack.getFirst().getCard()))
                 .containsExactly(CardColor.BLUE);
         harness.passBothPriorities(); // resolve the Grizzly Bears spell
@@ -92,11 +92,39 @@ class ThoughtlaceTest extends BaseCardTest {
 
         harness.castInstant(player1, 1);
         Card targetSpell = gd.stack.getFirst().getCard();
-        harness.castInstant(player1, 0, targetSpell.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetSpell.getId());
 
         assertThat(gqs.getEffectiveCardColors(gd, targetSpell)).containsExactly(CardColor.BLUE);
 
         harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("A player is not a legal target")
+    void cannotTargetPlayer() {
+        harness.setHand(player1, List.of(new Thoughtlace()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An instant loses the color change when it leaves the stack")
+    void instantReturnsToPrintedColorInGraveyard() {
+        harness.setHand(player1, List.of(new Thoughtlace(), new DarkRitual()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castInstant(player1, 1);
+        Card targetSpell = gd.stack.getFirst().getCard();
+        harness.castAndResolveInstant(player1, 0, targetSpell.getId());
+        assertThat(gqs.getEffectiveCardColors(gd, targetSpell)).containsExactly(CardColor.BLUE);
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Dark Ritual");
+        assertThat(gqs.getEffectiveCardColors(gd, targetSpell)).containsExactly(CardColor.BLACK);
     }
 }
