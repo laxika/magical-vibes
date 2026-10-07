@@ -39,8 +39,7 @@ class SpectralLynxTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new PhyrexianRager());
         addCreatureReady(player2, new SpectralLynx());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
 
@@ -89,8 +88,7 @@ class SpectralLynxTest extends BaseCardTest {
         harness.passBothPriorities();
 
         addCreatureReady(player2, new PhyrexianRager());
-        declareAttackers(player2, List.of(0));
-        prepareDeclareBlockers(player2);
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
 
         resolveCombat(player2);
@@ -100,5 +98,35 @@ class SpectralLynxTest extends BaseCardTest {
         assertThat(lynx.isBlocking()).isFalse();
         assertThat(lynx.getMarkedDamage()).isZero();
         assertThat(lynx.getRegenerationShield()).isZero();
+    }
+
+    @Test
+    @DisplayName("Spectral Lynx can block a green creature and prevents its combat damage")
+    void protectionPreventsGreenCombatDamage() {
+        addCreatureReady(player1, new UrborgElf());
+        Permanent lynx = addCreatureReady(player2, new SpectralLynx());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertOnBattlefield(player2, "Spectral Lynx");
+        harness.assertInGraveyard(player1, "Urborg Elf");
+        assertThat(lynx.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Regeneration can be activated while tapped and does not untap the creature")
+    void regenerationCanBeActivatedWhileTapped() {
+        Permanent lynx = addCreatureReady(player1, new SpectralLynx());
+        lynx.setTapped(true);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(lynx.getRegenerationShield()).isEqualTo(1);
+        assertThat(lynx.isTapped()).isTrue();
+        harness.assertOnBattlefield(player1, "Spectral Lynx");
     }
 }
