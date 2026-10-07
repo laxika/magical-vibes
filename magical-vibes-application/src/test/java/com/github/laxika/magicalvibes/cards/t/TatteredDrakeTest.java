@@ -64,13 +64,65 @@ class TatteredDrakeTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player2, new TatteredDrake());
         attacker.setAttacking(true);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat(player2);
 
         assertThat(findPermanent(player1, "Tattered Drake")).isNotNull();
         assertThat(drake.isTapped()).isTrue();
+        assertThat(drake.getRegenerationShield()).isZero();
+    }
+
+    @Test
+    @DisplayName("Creating a regeneration shield does not tap the Drake or remove it from combat")
+    void creatingShieldDoesNotRegenerateImmediately() {
+        Permanent drake = addCreatureReady(player1, new TatteredDrake());
+        drake.setAttacking(true);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(drake.getRegenerationShield()).isEqualTo(2);
+        assertThat(drake.isTapped()).isFalse();
+        assertThat(drake.isAttacking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Drake can activate regeneration")
+    void canActivateWithSummoningSickness() {
+        Permanent drake = addCreatureReady(player1, new TatteredDrake());
+        drake.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(drake.getRegenerationShield()).isEqualTo(1);
+        assertThat(drake.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An activated regeneration shield saves the Drake and removes it from combat")
+    void activatedShieldSavesFromCombat() {
+        Permanent drake = addCreatureReady(player1, new TatteredDrake());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        drake.setBlocking(true);
+        drake.addBlockingTarget(0);
+        Permanent attacker = addCreatureReady(player2, new TatteredDrake());
+        attacker.setAttacking(true);
+
+        resolveCombat(player2);
+
+        harness.assertOnBattlefield(player1, "Tattered Drake");
+        harness.assertInGraveyard(player2, "Tattered Drake");
+        assertThat(drake.isTapped()).isTrue();
+        assertThat(drake.isBlocking()).isFalse();
+        assertThat(drake.getBlockingTargets()).isEmpty();
+        assertThat(drake.getMarkedDamage()).isZero();
         assertThat(drake.getRegenerationShield()).isZero();
     }
 }
