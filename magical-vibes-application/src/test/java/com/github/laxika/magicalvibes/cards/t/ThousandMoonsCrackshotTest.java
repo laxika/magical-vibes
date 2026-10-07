@@ -1,10 +1,8 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DiamondPickAxe;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -16,64 +14,108 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ThousandMoonsCrackshot.class, GrizzlyBears.class, FountainOfYouth.class})
+@CardUsed({ThousandMoonsCrackshot.class, DiamondPickAxe.class})
 class ThousandMoonsCrackshotTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Attacking queues the trigger for target selection")
-    void attackQueuesTargetSelection() {
+    @DisplayName("Attacking puts a nontargeted payment trigger on the stack")
+    void attackQueuesPaymentWithoutTargetSelection() {
         addCreatureReady(player1, new ThousandMoonsCrackshot());
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new ThousandMoonsCrackshot());
 
         declareAttackers(List.of(0));
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        assertThat(gd.interaction.permanentChoiceContext())
-                .isInstanceOf(PermanentChoiceContext.AttackTriggerTarget.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        assertThat(gd.stack).hasSize(1);
     }
 
     @Test
-    @DisplayName("Paying {2}{W} taps the target creature")
+    @DisplayName("Paying {2}{W} creates a separate targeted trigger before tapping")
     void payingManaTapsTargetCreature() {
         addCreatureReady(player1, new ThousandMoonsCrackshot());
-        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.addMana(player1, ManaColor.WHITE, 1);
+        Permanent target = addCreatureReady(player2, new ThousandMoonsCrackshot());
+        addPaymentMana();
 
         declareAttackers(List.of(0));
-        harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, target.getId());
 
-        assertThat(bears.isTapped()).isTrue();
+        assertThat(target.isTapped()).isFalse();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
     }
 
     @Test
-    @DisplayName("Declining or lacking the payment leaves the target untapped")
-    void decliningOrLackingManaLeavesTargetUntapped() {
+    @DisplayName("Lacking the payment leaves the creature untapped without choosing a target")
+    void lackingManaLeavesTargetUntapped() {
         addCreatureReady(player1, new ThousandMoonsCrackshot());
-        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new ThousandMoonsCrackshot());
 
         declareAttackers(List.of(0));
-        harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(bears.isTapped()).isFalse();
+        assertThat(target.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
     }
 
     @Test
-    @DisplayName("The attack trigger rejects noncreature targets")
-    void attackTriggerRejectsNoncreatureTargets() {
+    @DisplayName("The reflexive trigger rejects noncreature targets after payment")
+    void reflexiveTriggerRejectsNoncreatureTargets() {
         addCreatureReady(player1, new ThousandMoonsCrackshot());
-        harness.addToBattlefield(player2, new FountainOfYouth());
-        Permanent fountain = gd.playerBattlefields.get(player2.getId()).getFirst();
-        addCreatureReady(player2, new GrizzlyBears());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player2, new DiamondPickAxe());
+        addCreatureReady(player2, new ThousandMoonsCrackshot());
+        addPaymentMana();
 
         declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
-        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, fountain.getId()))
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, equipment.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid permanent");
+    }
+
+    @Test
+    @DisplayName("Declining an affordable payment creates no targeted trigger")
+    void decliningPaymentLeavesCreatureUntapped() {
+        addCreatureReady(player1, new ThousandMoonsCrackshot());
+        Permanent target = addCreatureReady(player2, new ThousandMoonsCrackshot());
+        addPaymentMana();
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("The paid reflexive trigger can target a creature you control")
+    void canTapFriendlyCreature() {
+        addCreatureReady(player1, new ThousandMoonsCrackshot());
+        Permanent target = addCreatureReady(player1, new ThousandMoonsCrackshot());
+        addCreatureReady(player2, new ThousandMoonsCrackshot());
+        addPaymentMana();
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, target.getId());
+        assertThat(target.isTapped()).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    private void addPaymentMana() {
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
     }
 }
