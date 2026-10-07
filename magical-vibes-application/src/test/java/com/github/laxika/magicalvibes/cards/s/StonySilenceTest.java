@@ -1,235 +1,248 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.ActivatedAbility;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.cards.a.AbbeyGriffin;
+import com.github.laxika.magicalvibes.cards.a.AvacynianPriest;
+import com.github.laxika.magicalvibes.cards.b.BlazingTorch;
+import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GeistcatchersRig;
+import com.github.laxika.magicalvibes.cards.m.ManorGargoyle;
+import com.github.laxika.magicalvibes.cards.t.TravelersAmulet;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({StonySilence.class, SolRing.class, TravelersAmulet.class, Forest.class,
+        AvacynianPriest.class, ManorGargoyle.class, SilverInlaidDagger.class, BlazingTorch.class,
+        SongOfTheDryads.class, GeistcatchersRig.class, AbbeyGriffin.class})
 class StonySilenceTest extends BaseCardTest {
-
-    // ===== Blocking artifact mana abilities (tap for mana) =====
 
     @Test
     @DisplayName("Blocks mana abilities of artifacts")
     void blocksManaAbilitiesOfArtifacts() {
-        addStonySilence(player1);
+        harness.addToBattlefield(player1, new StonySilence());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new SolRing());
 
-        Permanent artifact = addArtifactWithManaAbility(player2, "Sol Ring");
-
-        assertThatThrownBy(() -> harness.tapPermanent(player2, 0))
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can't be activated")
                 .hasMessageContaining("Stony Silence");
+        assertThat(artifact.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isZero();
     }
 
     @Test
     @DisplayName("Blocks mana abilities of own artifacts")
     void blocksManaAbilitiesOfOwnArtifacts() {
-        addStonySilence(player1);
+        harness.addToBattlefield(player1, new StonySilence());
+        harness.addToBattlefield(player1, new SolRing());
 
-        Permanent artifact = addArtifactWithManaAbility(player1, "Sol Ring");
-
-        // Sol Ring is at index 1 (after Stony Silence at index 0)
-        assertThatThrownBy(() -> harness.tapPermanent(player1, 1))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can't be activated")
                 .hasMessageContaining("Stony Silence");
     }
 
-    // ===== Blocking artifact activated abilities =====
-
     @Test
-    @DisplayName("Blocks non-mana activated abilities of artifacts")
+    @DisplayName("Blocks non-mana activated abilities of artifacts before costs are paid")
     void blocksActivatedAbilitiesOfArtifacts() {
-        addStonySilence(player1);
+        harness.addToBattlefield(player1, new StonySilence());
+        harness.addToBattlefield(player2, new TravelersAmulet());
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
 
-        Permanent artifact = addArtifactWithActivatedAbility(player2, "Ratchet Bomb");
-
-        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, player1.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can't be activated")
                 .hasMessageContaining("Stony Silence");
+        harness.assertOnBattlefield(player2, "Traveler's Amulet");
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
     }
 
-    // ===== Does NOT block non-artifact permanents =====
-
     @Test
-    @DisplayName("Does NOT block mana abilities of non-artifact permanents (lands)")
+    @DisplayName("Does not block mana abilities of non-artifact lands")
     void doesNotBlockLandManaAbilities() {
-        addStonySilence(player1);
+        harness.addToBattlefield(player1, new StonySilence());
+        harness.addToBattlefield(player2, new Forest());
 
-        Card land = new Card();
-        land.setName("Forest");
-        land.setType(CardType.LAND);
-        land.addEffect(EffectSlot.ON_TAP, new AwardManaEffect(ManaColor.GREEN));
-        Permanent landPerm = new Permanent(land);
-        gd.playerBattlefields.get(player2.getId()).add(landPerm);
-
-        // Should work fine — lands are not artifacts
         harness.tapPermanent(player2, 0);
 
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isEqualTo(1);
     }
 
     @Test
-    @DisplayName("Does NOT block activated abilities of non-artifact creatures")
+    @DisplayName("Does not block activated abilities of non-artifact creatures")
     void doesNotBlockCreatureActivatedAbilities() {
-        addStonySilence(player1);
+        harness.addToBattlefield(player1, new StonySilence());
+        addCreatureReady(player2, new AvacynianPriest());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new ManorGargoyle());
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
 
-        Card creature = new Card();
-        creature.setName("Prodigal Pyromancer");
-        creature.setType(CardType.CREATURE);
-        creature.setManaCost("{2}{R}");
-        creature.setColor(CardColor.RED);
-        creature.setPower(1);
-        creature.setToughness(1);
-        creature.addActivatedAbility(new ActivatedAbility(
-                true, null,
-                List.of(new DealDamageToAnyTargetEffect(1)),
-                "{T}: Prodigal Pyromancer deals 1 damage to any target."
-        ));
-        Permanent creaturePerm = new Permanent(creature);
-        creaturePerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(creaturePerm);
+        harness.activateAbility(player2, 0, null, target.getId());
+        harness.passBothPriorities();
 
-        // Should work fine — creatures are not artifacts
-        harness.activateAbility(player2, 0, null, player1.getId());
-
-        assertThat(gd.stack).hasSize(1);
+        assertThat(target.isTapped()).isTrue();
     }
-
-    // ===== Blocks artifact creatures =====
 
     @Test
     @DisplayName("Blocks activated abilities of artifact creatures")
     void blocksArtifactCreatureAbilities() {
-        addStonySilence(player1);
+        harness.addToBattlefield(player1, new StonySilence());
+        addCreatureReady(player2, new ManorGargoyle());
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
 
-        Card artifactCreature = new Card();
-        artifactCreature.setName("Steel Overseer");
-        artifactCreature.setType(CardType.CREATURE);
-        artifactCreature.setAdditionalTypes(Set.of(CardType.ARTIFACT));
-        artifactCreature.setManaCost("{2}");
-        artifactCreature.setPower(1);
-        artifactCreature.setToughness(1);
-        artifactCreature.addActivatedAbility(new ActivatedAbility(
-                true, null,
-                List.of(new DealDamageToAnyTargetEffect(1)),
-                "{T}: Deal 1 damage to any target."
-        ));
-        Permanent creaturePerm = new Permanent(artifactCreature);
-        creaturePerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(creaturePerm);
-
-        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, player1.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can't be activated")
                 .hasMessageContaining("Stony Silence");
     }
 
-    // ===== Removal re-enables abilities =====
-
     @Test
     @DisplayName("Removing Stony Silence re-enables artifact abilities")
     void removingStonySilenceReenablesAbilities() {
-        Permanent silence = addStonySilence(player1);
-        Permanent artifact = addArtifactWithManaAbility(player2, "Sol Ring");
+        Permanent silence = harness.addToBattlefieldAndReturn(player1, new StonySilence());
+        harness.addToBattlefield(player2, new SolRing());
 
-        // Verify blocked
-        assertThatThrownBy(() -> harness.tapPermanent(player2, 0))
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can't be activated");
 
-        // Remove Stony Silence
         gd.playerBattlefields.get(player1.getId()).remove(silence);
-
-        // Now artifact abilities should work
-        harness.tapPermanent(player2, 0);
+        harness.activateAbility(player2, 0, null, null);
 
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
     }
 
-    // ===== Multiple Stony Silences =====
-
     @Test
-    @DisplayName("Multiple Stony Silences still block (removing one leaves the other)")
+    @DisplayName("Removing one Stony Silence leaves the other restriction active")
     void multipleStonysilencesStillBlock() {
-        Permanent silence1 = addStonySilence(player1);
-        Permanent silence2 = addStonySilence(player2);
-        Permanent artifact = addArtifactWithManaAbility(player2, "Sol Ring");
+        Permanent silence = harness.addToBattlefieldAndReturn(player1, new StonySilence());
+        harness.addToBattlefield(player2, new StonySilence());
+        harness.addToBattlefield(player2, new SolRing());
 
-        // Remove one Stony Silence
-        gd.playerBattlefields.get(player1.getId()).remove(silence1);
+        gd.playerBattlefields.get(player1.getId()).remove(silence);
 
-        // Still blocked by the other
-        assertThatThrownBy(() -> harness.tapPermanent(player2, 1))
+        assertThatThrownBy(() -> harness.activateAbility(player2, 1, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can't be activated");
     }
 
-    // ===== Stony Silence does not affect itself =====
+    @Test
+    @DisplayName("Resolving Stony Silence immediately blocks artifacts already on the battlefield")
+    void resolvingStonySilenceBlocksExistingArtifacts() {
+        harness.addToBattlefield(player2, new SolRing());
+        harness.setHand(player1, List.of(new StonySilence()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Stony Silence");
+    }
 
     @Test
-    @DisplayName("Stony Silence is an enchantment, not affected by its own ability")
-    void stonySilenceIsNotAnArtifact() {
-        StonySilence card = new StonySilence();
+    @DisplayName("Blocks equip but preserves the static bonus of attached equipment")
+    void blocksEquipWithoutRemovingStaticBonus() {
+        harness.addToBattlefield(player1, new StonySilence());
+        Permanent dagger = harness.addToBattlefieldAndReturn(player1, new SilverInlaidDagger());
+        Permanent creature = addCreatureReady(player1, new AvacynianPriest());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        // Stony Silence is an enchantment — it should never be treated as an artifact
-        assertThat(card.getType()).isNotEqualTo(CardType.ARTIFACT);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Stony Silence");
+        assertThat(dagger.getAttachedTo()).isNull();
+
+        int powerBefore = gqs.getEffectivePower(gd, creature);
+        dagger.setAttachedTo(creature.getId());
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(powerBefore + 3);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Does not block an ability granted by an artifact to a non-artifact creature")
+    void doesNotBlockAbilityGrantedByBlazingTorch() {
+        harness.addToBattlefield(player1, new StonySilence());
+        Permanent creature = addCreatureReady(player1, new AvacynianPriest());
+        Permanent torch = harness.addToBattlefieldAndReturn(player1, new BlazingTorch());
+        torch.setAttachedTo(creature.getId());
+        harness.setLife(player2, 20);
 
-    private Permanent addStonySilence(Player player) {
-        StonySilence card = new StonySilence();
-        card.setType(CardType.ENCHANTMENT);
-        card.setName("Stony Silence");
-        card.setManaCost("{1}{W}");
-        card.setColor(CardColor.WHITE);
-        Permanent perm = new Permanent(card);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        harness.activateAbility(player1, 1, 1, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        harness.assertInGraveyard(player1, "Blazing Torch");
+        assertThat(creature.isTapped()).isTrue();
     }
 
-    private Permanent addArtifactWithManaAbility(Player player, String name) {
-        Card artifact = new Card();
-        artifact.setName(name);
-        artifact.setType(CardType.ARTIFACT);
-        artifact.setManaCost("{1}");
-        artifact.addEffect(EffectSlot.ON_TAP, new AwardManaEffect(ManaColor.COLORLESS, 2));
-        Permanent perm = new Permanent(artifact);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    @Test
+    @DisplayName("Does not stop an artifact ability activated before Stony Silence resolves")
+    void doesNotCounterAlreadyActivatedAbility() {
+        harness.addToBattlefield(player1, new SilverInlaidDagger());
+        Permanent creature = addCreatureReady(player1, new AvacynianPriest());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.addToBattlefield(player2, new StonySilence());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().getAttachedTo())
+                .isEqualTo(creature.getId());
     }
 
-    private Permanent addArtifactWithActivatedAbility(Player player, String name) {
-        Card artifact = new Card();
-        artifact.setName(name);
-        artifact.setType(CardType.ARTIFACT);
-        artifact.setManaCost("{2}");
-        artifact.addActivatedAbility(new ActivatedAbility(
-                true, null,
-                List.of(new DealDamageToAnyTargetEffect(1)),
-                "{T}: Deal 1 damage to any target."
-        ));
-        Permanent perm = new Permanent(artifact);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    @Test
+    @DisplayName("Does not block triggered abilities of artifacts")
+    void doesNotBlockArtifactTriggeredAbilities() {
+        harness.addToBattlefield(player1, new StonySilence());
+        Permanent griffin = harness.addToBattlefieldAndReturn(player2, new AbbeyGriffin());
+
+        harness.castFromHand(player1, new GeistcatchersRig(), "{6}");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, griffin.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInGraveyard(player2, "Abbey Griffin");
+        harness.assertOnBattlefield(player1, "Geistcatcher's Rig");
+    }
+
+    @Test
+    @DisplayName("Turning Stony Silence into a Forest re-enables artifact mana abilities")
+    void losingPrintedAbilityReenablesArtifactManaAbilities() {
+        Permanent silence = harness.addToBattlefieldAndReturn(player1, new StonySilence());
+        Permanent song = harness.addToBattlefieldAndReturn(player2, new SongOfTheDryads());
+        song.setAttachedTo(silence.getId());
+        harness.addToBattlefield(player2, new SolRing());
+
+        harness.activateAbility(player2, 1, null, null);
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+        assertThat(gqs.canActivateManaAbility(gd, gd.playerBattlefields.get(player2.getId()).get(1))).isTrue();
+    }
+
+    @Test
+    @DisplayName("Turning Stony Silence into a Forest re-enables non-mana artifact abilities")
+    void losingPrintedAbilityReenablesArtifactActivatedAbilities() {
+        Permanent silence = harness.addToBattlefieldAndReturn(player1, new StonySilence());
+        Permanent song = harness.addToBattlefieldAndReturn(player2, new SongOfTheDryads());
+        song.setAttachedTo(silence.getId());
+        harness.addToBattlefield(player2, new ManorGargoyle());
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player2, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isZero();
     }
 }
