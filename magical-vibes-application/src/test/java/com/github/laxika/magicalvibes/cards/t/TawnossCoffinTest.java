@@ -23,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class TawnossCoffinTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Exiles a creature and its Auras, then returns both tapped with counters restored on untap")
+    @DisplayName("Exiles a creature and its Auras, then returns the creature tapped with counters restored on untap")
     void returnsCreatureAndAurasOnUntap() {
         Permanent coffin = addReadyCoffin();
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
@@ -41,8 +41,7 @@ class TawnossCoffinTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Twiddle()));
         harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.castInstant(player1, 0, coffin.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, coffin.getId());
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
@@ -65,7 +64,8 @@ class TawnossCoffinTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shatter()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castInstant(player1, 0, coffin.getId());
+        harness.castAndResolveInstant(player1, 0, coffin.getId());
+
         harness.passBothPriorities();
 
         Permanent returnedCreature = findByCardId(player2, creature.getCard().getId());
@@ -161,6 +161,7 @@ class TawnossCoffinTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castAndResolveInstant(player1, 0, coffin.getId());
+        harness.passBothPriorities();
 
         Permanent returnedCreature = findPermanent(player1, creatureCardId);
         Permanent returnedAura = findPermanent(player1, auraCardId);
@@ -182,6 +183,128 @@ class TawnossCoffinTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    @DisplayName("Leaving the battlefield queues a return trigger that players can respond to")
+    void leavingCoffinDoesNotReturnCreatureUntilTriggerResolves() {
+        Permanent coffin = addReadyCoffin();
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        UUID creatureCardId = creature.getCard().getId();
+        activate(coffin, creature);
+
+        harness.setHand(player1, List.of(new Shatter()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, coffin.getId());
+
+        assertThat(findPermanent(player2, creatureCardId)).isNull();
+        assertThat(gd.exiledCards).extracting(entry -> entry.card().getId()).contains(creatureCardId);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        Permanent returned = findPermanent(player2, creatureCardId);
+        assertThat(returned).isNotNull();
+        assertThat(returned.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Returned Auras enter untapped under their own owners' control")
+    void returnsAuraUntappedToItsOwner() {
+        Permanent coffin = addReadyCoffin();
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new HolyStrength());
+        aura.setAttachedTo(creature.getId());
+        aura.tap();
+        activate(coffin, creature);
+
+        harness.setHand(player1, List.of(new Twiddle()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, coffin.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        Permanent returnedCreature = findByCardId(player2, creature.getCard().getId());
+        Permanent returnedAura = findByCardId(player1, aura.getCard().getId());
+        assertThat(returnedCreature.isTapped()).isTrue();
+        assertThat(returnedAura.getAttachedTo()).isEqualTo(returnedCreature.getId());
+        assertThat(returnedAura.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Choosing not to untap keeps the creature exiled; choosing to untap later returns it")
+    void mayKeepCoffinTappedDuringUntapStep() {
+        Permanent coffin = addReadyCoffin();
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        activate(coffin, creature);
+
+        harness.performUntapStep(player1);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(coffin.isTapped()).isTrue();
+        assertThat(findPermanent(player2, creature.getCard().getId())).isNull();
+
+        harness.performUntapStep(player1);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(coffin.isTapped()).isFalse();
+        assertThat(findByCardId(player2, creature.getCard().getId()).isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Removing the Coffin before its activation resolves leaves the creature and Aura exiled")
+    void sourceLeavesBeforeActivationResolves() {
+        Permanent coffin = addReadyCoffin();
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new HolyStrength());
+        aura.setAttachedTo(creature.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, battlefieldIndex(coffin), null, creature.getId());
+
+        harness.setHand(player1, List.of(new Shatter()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, coffin.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player2, creature.getCard().getId())).isNull();
+        assertThat(findPermanent(player2, aura.getCard().getId())).isNull();
+        assertThat(gd.exiledCards).extracting(entry -> entry.card().getId())
+                .contains(creature.getCard().getId(), aura.getCard().getId());
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Untapping before the activation resolves does not return the subsequently exiled creature")
+    void untappingBeforeActivationResolvesWaitsForNextUntap() {
+        Permanent coffin = addReadyCoffin();
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, battlefieldIndex(coffin), null, creature.getId());
+
+        harness.setHand(player1, List.of(new Twiddle(), new Twiddle()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player1, 0, coffin.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        if (gd.stack.size() > 1) {
+            harness.passBothPriorities();
+        }
+        harness.passBothPriorities();
+
+        assertThat(coffin.isTapped()).isFalse();
+        assertThat(findPermanent(player2, creature.getCard().getId())).isNull();
+        assertThat(gd.exiledCards).extracting(entry -> entry.card().getId())
+                .contains(creature.getCard().getId());
+
+        harness.castAndResolveInstant(player1, 0, coffin.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(coffin.isTapped()).isTrue();
+        harness.performUntapStep(player1);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(findByCardId(player2, creature.getCard().getId()).isTapped()).isTrue();
+    }
     private void activateCoffin(Permanent coffin, UUID targetId) {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.activateAbility(player1, battlefieldIndex(coffin), null, targetId);
