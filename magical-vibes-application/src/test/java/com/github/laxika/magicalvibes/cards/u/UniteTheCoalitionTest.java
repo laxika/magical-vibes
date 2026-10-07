@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.u;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.Card;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({UniteTheCoalition.class, GrizzlyBears.class, Shock.class, Spellbook.class})
+@CardUsed({UniteTheCoalition.class, GrizzlyBears.class, Shock.class, Spellbook.class, GloriousAnthem.class})
 class UniteTheCoalitionTest extends BaseCardTest {
 
     @Test
@@ -72,6 +73,61 @@ class UniteTheCoalitionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player2, "Spellbook");
+    }
+
+    @Test
+    void graveyardExileOnlyAffectsThePlayerTargetedByThatMode() {
+        Card ownGraveyardCard = new Shock();
+        Card opposingGraveyardCard = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(ownGraveyardCard));
+        harness.setGraveyard(player2, List.of(opposingGraveyardCard));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+
+        cast(new int[]{1, 2, 3, 3, 3}, List.of(
+                player1.getId(), player2.getId(), player1.getId(), player1.getId(), player1.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(ownGraveyardCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).doesNotContain(opposingGraveyardCard);
+    }
+
+    @Test
+    void repeatedDamageModesKeepTheirSeparateTargets() {
+        int ownLife = gd.getLife(player1.getId());
+        int opposingLife = gd.getLife(player2.getId());
+
+        cast(new int[]{3, 3, 3, 3, 3}, List.of(
+                player1.getId(), player2.getId(), player1.getId(), player2.getId(), player2.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(ownLife - 4);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(opposingLife - 6);
+    }
+
+    @Test
+    void phasedOutArtifactIsNotDestroyedByALaterMode() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new Spellbook());
+        int opposingLife = gd.getLife(player2.getId());
+
+        cast(new int[]{0, 3, 3, 3, 4}, List.of(
+                artifact.getId(), player2.getId(), player2.getId(), player2.getId(), artifact.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.phasedOutPermanents.get(player2.getId())).contains(artifact);
+        assertThat(gd.playerGraveyards.get(player2.getId())).doesNotContain(artifact.getCard());
+        assertThat(gd.getLife(player2.getId())).isEqualTo(opposingLife - 6);
+    }
+
+    @Test
+    void destructionModeCanDestroyAnEnchantment() {
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new GloriousAnthem());
+
+        cast(new int[]{3, 3, 3, 3, 4}, List.of(
+                player2.getId(), player2.getId(), player2.getId(), player2.getId(), enchantment.getId()));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Glorious Anthem");
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(enchantment.getCard());
     }
 
     private void cast(int[] modeIndices, List<java.util.UUID> targetIds) {
