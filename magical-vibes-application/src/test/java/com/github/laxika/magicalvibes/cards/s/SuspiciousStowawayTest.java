@@ -1,11 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.d.DawnhartRejuvenator;
+import com.github.laxika.magicalvibes.model.DayNight;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -17,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SuspiciousStowaway.class, GrizzlyBears.class})
+@CardUsed({SuspiciousStowaway.class, DawnhartRejuvenator.class})
 class SuspiciousStowawayTest extends BaseCardTest {
 
     @Test
@@ -25,7 +23,7 @@ class SuspiciousStowawayTest extends BaseCardTest {
     void cannotBeBlocked() {
         Permanent stowaway = addCreatureReady(player1, new SuspiciousStowaway());
         stowaway.setAttacking(true);
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new DawnhartRejuvenator());
 
         prepareDeclareBlockers();
 
@@ -41,10 +39,10 @@ class SuspiciousStowawayTest extends BaseCardTest {
     void drawsThenDiscardsAfterCombatDamage() {
         Permanent stowaway = addCreatureReady(player1, new SuspiciousStowaway());
         stowaway.setAttacking(true);
-        GrizzlyBears kept = new GrizzlyBears();
-        GrizzlyBears discarded = new GrizzlyBears();
+        DawnhartRejuvenator kept = new DawnhartRejuvenator();
+        DawnhartRejuvenator discarded = new DawnhartRejuvenator();
         harness.setHand(player1, List.of(discarded));
-        setDeck(player1, List.of(kept));
+        harness.setLibrary(player1, List.of(kept));
 
         resolveCombat();
         harness.passBothPriorities();
@@ -53,19 +51,24 @@ class SuspiciousStowawayTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(kept);
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Dawnhart Rejuvenator");
     }
 
     @Test
-    @DisplayName("Transforms to Seafaring Werewolf when no spells were cast last turn")
+    @DisplayName("Transforms during untap when the previous active player cast no spells")
     void transformsToBackWhenNoSpellsWereCast() {
         Permanent stowaway = addCreatureReady(player1, new SuspiciousStowaway());
         gd.spellsCastLastTurn.clear();
+        gd.dayNight = DayNight.DAY;
+        gd.previousTurnActivePlayerId = player2.getId();
+        gd.spellsCastLastTurn.put(player1.getId(), 1);
 
-        advanceToUpkeepAndResolve(player1);
+        harness.performUntapStep(player1);
 
         assertThat(stowaway.isTransformed()).isTrue();
         assertThat(stowaway.getCard()).isInstanceOf(SeafaringWerewolf.class);
+        assertThat(gd.dayNight).isEqualTo(DayNight.NIGHT);
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
@@ -74,8 +77,8 @@ class SuspiciousStowawayTest extends BaseCardTest {
         Permanent stowaway = addCreatureReady(player1, new SuspiciousStowaway());
         transformToBack(stowaway);
         stowaway.setAttacking(true);
-        GrizzlyBears drawn = new GrizzlyBears();
-        setDeck(player1, List.of(drawn));
+        DawnhartRejuvenator drawn = new DawnhartRejuvenator();
+        harness.setLibrary(player1, List.of(drawn));
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
         resolveCombat();
@@ -83,38 +86,112 @@ class SuspiciousStowawayTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
         assertThat(gd.playerHands.get(player1.getId())).contains(drawn);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test
-    @DisplayName("Seafaring Werewolf transforms back when a player cast two spells last turn")
+    @DisplayName("Seafaring Werewolf transforms during untap when the previous active player cast two spells")
     void transformsBackWhenTwoSpellsWereCast() {
         Permanent stowaway = addCreatureReady(player1, new SuspiciousStowaway());
         transformToBack(stowaway);
 
         gd.spellsCastLastTurn.clear();
         gd.spellsCastLastTurn.put(player2.getId(), 2);
-        advanceToUpkeepAndResolve(player2);
+        gd.previousTurnActivePlayerId = player2.getId();
+        harness.performUntapStep(player1);
 
         assertThat(stowaway.isTransformed()).isFalse();
         assertThat(stowaway.getCard()).isInstanceOf(SuspiciousStowaway.class);
+        assertThat(gd.dayNight).isEqualTo(DayNight.DAY);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void enteringStartsDayWhenNeitherDayNorNight() {
+        gd.dayNight = DayNight.NEITHER;
+
+        Permanent stowaway = harness.enterBattlefieldAndReturn(player1, new SuspiciousStowaway());
+
+        assertThat(gd.dayNight).isEqualTo(DayNight.DAY);
+        assertThat(stowaway.isTransformed()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void entersTransformedAtNight() {
+        gd.dayNight = DayNight.NIGHT;
+
+        Permanent stowaway = harness.enterBattlefieldAndReturn(player1, new SuspiciousStowaway());
+
+        assertThat(stowaway.isTransformed()).isTrue();
+        assertThat(stowaway.getCard()).isInstanceOf(SeafaringWerewolf.class);
+        assertThat(gd.dayNight).isEqualTo(DayNight.NIGHT);
+    }
+
+    @Test
+    void backFaceCannotBeBlocked() {
+        Permanent stowaway = addCreatureReady(player1, new SuspiciousStowaway());
+        transformToBack(stowaway);
+        stowaway.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new DawnhartRejuvenator());
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(stowaway)))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+    }
+
+    @Test
+    void dayboundDoesNotCreateAnUpkeepTrigger() {
+        Permanent stowaway = harness.enterBattlefieldAndReturn(player1, new SuspiciousStowaway());
+        gd.previousTurnActivePlayerId = player2.getId();
+        gd.spellsCastLastTurn.put(player2.getId(), 1);
+
+        advanceToUpkeep(player1);
+
+        assertThat(stowaway.isTransformed()).isFalse();
+        assertThat(gd.dayNight).isEqualTo(DayNight.DAY);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void nightboundDoesNotCreateAnUpkeepTriggerWhenNonactivePlayerCastTwoSpells() {
+        gd.dayNight = DayNight.NIGHT;
+        Permanent stowaway = harness.enterBattlefieldAndReturn(player1, new SuspiciousStowaway());
+        gd.previousTurnActivePlayerId = player2.getId();
+        gd.spellsCastLastTurn.put(player2.getId(), 1);
+        gd.spellsCastLastTurn.put(player1.getId(), 2);
+
+        advanceToUpkeep(player1);
+
+        assertThat(stowaway.isTransformed()).isTrue();
+        assertThat(gd.dayNight).isEqualTo(DayNight.NIGHT);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void canDiscardTheCardJustDrawn() {
+        Permanent stowaway = addCreatureReady(player1, new SuspiciousStowaway());
+        stowaway.setAttacking(true);
+        DawnhartRejuvenator drawn = new DawnhartRejuvenator();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(drawn));
+
+        resolveCombat();
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(drawn);
     }
 
     private void transformToBack(Permanent stowaway) {
         gd.spellsCastLastTurn.clear();
-        advanceToUpkeepAndResolve(player1);
+        gd.dayNight = DayNight.DAY;
+        gd.previousTurnActivePlayerId = player2.getId();
+        harness.performUntapStep(player1);
         assertThat(stowaway.isTransformed()).isTrue();
-    }
-
-    private void advanceToUpkeepAndResolve(Player activePlayer) {
-        harness.forceActivePlayer(activePlayer);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-    }
-
-    private void setDeck(Player player, List<Card> cards) {
-        gd.playerDecks.get(player.getId()).clear();
-        gd.playerDecks.get(player.getId()).addAll(cards);
     }
 }
