@@ -18,13 +18,12 @@ class TalismanOfCuriosityTest extends BaseCardTest {
     @Test
     @DisplayName("Tapping for colorless mana adds {C} and deals no damage")
     void tapForColorlessMana() {
-        harness.addToBattlefield(player1, new TalismanOfCuriosity());
+        Permanent talisman = harness.addToBattlefieldAndReturn(player1, new TalismanOfCuriosity());
         GameData gd = harness.getGameData();
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
         harness.activateAbility(player1, 0, 0, null, null);
 
-        Permanent talisman = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(talisman.isTapped()).isTrue();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
@@ -34,14 +33,13 @@ class TalismanOfCuriosityTest extends BaseCardTest {
     @Test
     @DisplayName("Tapping for green mana adds {G} and deals 1 damage to controller")
     void tapForGreenMana() {
-        harness.addToBattlefield(player1, new TalismanOfCuriosity());
+        Permanent talisman = harness.addToBattlefieldAndReturn(player1, new TalismanOfCuriosity());
         GameData gd = harness.getGameData();
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.handleListChoice(player1, "GREEN");
 
-        Permanent talisman = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(talisman.isTapped()).isTrue();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
@@ -51,7 +49,7 @@ class TalismanOfCuriosityTest extends BaseCardTest {
     @Test
     @DisplayName("Tapping for blue mana adds {U} and deals 1 damage to controller")
     void tapForBlueMana() {
-        harness.addToBattlefield(player1, new TalismanOfCuriosity());
+        Permanent talisman = harness.addToBattlefieldAndReturn(player1, new TalismanOfCuriosity());
         GameData gd = harness.getGameData();
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
@@ -59,7 +57,6 @@ class TalismanOfCuriosityTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
         harness.handleListChoice(player1, "BLUE");
 
-        Permanent talisman = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(talisman.isTapped()).isTrue();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
@@ -76,5 +73,23 @@ class TalismanOfCuriosityTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
+    }
+
+    @Test
+    @DisplayName("Colored mana damages only the player controlling the Talisman")
+    void coloredManaDamagesItsController() {
+        Permanent talisman = harness.addToBattlefieldAndReturn(player2, new TalismanOfCuriosity());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player2, 0, 1, null, null);
+        harness.handleListChoice(player2, "GREEN");
+
+        assertThat(talisman.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        harness.assertLife(player2, 19);
+        harness.assertLife(player1, 20);
     }
 }
