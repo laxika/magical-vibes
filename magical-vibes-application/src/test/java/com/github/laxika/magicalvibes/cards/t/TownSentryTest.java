@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.h.HighGround;
 import com.github.laxika.magicalvibes.cards.v.VolunteerMilitia;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TownSentry.class, VolunteerMilitia.class})
+@CardUsed({TownSentry.class, VolunteerMilitia.class, HighGround.class})
 class TownSentryTest extends BaseCardTest {
 
     @Test
@@ -88,5 +89,61 @@ class TownSentryTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of());
 
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Blocking multiple attackers triggers only once")
+    void blockingMultipleAttackersTriggersOnce() {
+        Permanent sentry = addCreatureReady(player2, new TownSentry());
+        harness.addToBattlefield(player2, new HighGround());
+        addCreatureReady(player1, new VolunteerMilitia()).setAttacking(true);
+        addCreatureReady(player1, new VolunteerMilitia()).setAttacking(true);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(0, 1)));
+
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        assertThat(sentry.getPowerModifier()).isZero();
+        assertThat(sentry.getToughnessModifier()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The boost waits for resolution and affects only the blocking Sentry")
+    void boostAppliesOnlyToSourceAfterResolution() {
+        Permanent blockingSentry = addCreatureReady(player2, new TownSentry());
+        Permanent otherSentry = addCreatureReady(player2, new TownSentry());
+        Permanent attacker = addCreatureReady(player1, new VolunteerMilitia());
+        attacker.setAttacking(true);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blockingSentry.getToughnessModifier()).isZero();
+        assertThat(otherSentry.getToughnessModifier()).isZero();
+        resolveAllTriggers();
+
+        assertThat(blockingSentry.getPowerModifier()).isZero();
+        assertThat(blockingSentry.getToughnessModifier()).isEqualTo(2);
+        assertThat(otherSentry.getPowerModifier()).isZero();
+        assertThat(otherSentry.getToughnessModifier()).isZero();
+        assertThat(attacker.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Being blocked while attacking does not trigger the ability")
+    void beingBlockedDoesNotTrigger() {
+        Permanent sentry = addCreatureReady(player1, new TownSentry());
+        sentry.setAttacking(true);
+        addCreatureReady(player2, new VolunteerMilitia());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(sentry.getPowerModifier()).isZero();
+        assertThat(sentry.getToughnessModifier()).isZero();
     }
 }
