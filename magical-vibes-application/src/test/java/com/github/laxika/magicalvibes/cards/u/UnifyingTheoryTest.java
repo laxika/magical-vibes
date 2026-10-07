@@ -25,8 +25,7 @@ class UnifyingTheoryTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new Island()));
         harness.addMana(player2, ManaColor.COLORLESS, 2);
 
-        harness.castSorcery(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player2, 0, player1.getId());
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player2.getId());
@@ -46,8 +45,7 @@ class UnifyingTheoryTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new Island()));
         harness.addMana(player2, ManaColor.COLORLESS, 2);
 
-        harness.castSorcery(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player2, 0, player1.getId());
         harness.handleMayAbilityChosen(player2, false);
 
         harness.assertNotInHand(player2, "Island");
@@ -61,8 +59,7 @@ class UnifyingTheoryTest extends BaseCardTest {
         prepareOpponentToCast();
         harness.setLibrary(player2, List.of(new Island()));
 
-        harness.castSorcery(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player2, 0, player1.getId());
         harness.handleMayAbilityChosen(player2, true);
 
         harness.assertNotInHand(player2, "Island");
@@ -80,8 +77,7 @@ class UnifyingTheoryTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
@@ -89,6 +85,101 @@ class UnifyingTheoryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInHand(player1, "Island");
+    }
+
+    @Test
+    @DisplayName("Colored mana can pay the generic draw cost")
+    void coloredManaPaysForDraw() {
+        harness.addToBattlefield(player1, new UnifyingTheory());
+        prepareOpponentToCast();
+        harness.setLibrary(player2, List.of(new Island()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castAndResolveSorcery(player2, 0, player1.getId());
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertInHand(player2, "Island");
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLUE)).isZero();
+    }
+
+    @Test
+    @DisplayName("The enchantment controller's mana cannot pay for the opponent's draw")
+    void controllerManaCannotPayForOpponent() {
+        harness.addToBattlefield(player1, new UnifyingTheory());
+        prepareOpponentToCast();
+        harness.setLibrary(player2, List.of(new Island()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveSorcery(player2, 0, player1.getId());
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertNotInHand(player2, "Island");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A spell cast using flashback also offers its caster the draw")
+    void flashbackCastTriggersDraw() {
+        harness.addToBattlefield(player1, new UnifyingTheory());
+        prepareOpponentToCast();
+        harness.setHand(player2, List.of());
+        harness.setGraveyard(player2, List.of(new Firebolt()));
+        harness.setLibrary(player2, List.of(new Island()));
+        harness.addMana(player2, ManaColor.COLORLESS, 6);
+
+        harness.castAndResolveFlashback(player2, 0, player1.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertInHand(player2, "Island");
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isZero();
+        resolveAllTriggers();
+        harness.assertNotInGraveyard(player2, "Firebolt");
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("Playing a land does not trigger the draw ability")
+    void playingLandDoesNotTrigger() {
+        harness.addToBattlefield(player1, new UnifyingTheory());
+        prepareOpponentToCast();
+        harness.setHand(player2, List.of(new Island()));
+        harness.setLibrary(player2, List.of(new Island()));
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.playLand(player2, 0);
+
+        harness.assertOnBattlefield(player2, "Island");
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Unifying Theory does not trigger for its own casting")
+    void doesNotTriggerForItsOwnCasting() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new UnifyingTheory()));
+        harness.setLibrary(player1, List.of(new Island()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castEnchantment(player1, 0);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Unifying Theory");
+        harness.assertNotInHand(player1, "Island");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 
     private void prepareOpponentToCast() {
