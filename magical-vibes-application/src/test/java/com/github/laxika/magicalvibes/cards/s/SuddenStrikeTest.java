@@ -60,7 +60,60 @@ class SuddenStrikeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+    }
+
+    @Test
+    @DisplayName("Can destroy a blocking creature you control")
+    void destroysOwnBlockingCreature() {
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        target.setBlocking(true);
+
+        cast(target);
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Does not destroy a creature that leaves combat before resolution")
+    void targetLeavingCombatBecomesIllegal() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        target.setAttacking(true);
+        harness.setHand(player1, List.of(new SuddenStrike()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.castInstant(player1, 0, target.getId());
+
+        target.setAttacking(false);
         harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Sudden Strike");
+    }
+
+    @Test
+    @DisplayName("Does not destroy a different creature when the target leaves the battlefield")
+    void missingTargetDoesNotAffectOtherAttacker() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        target.setAttacking(true);
+        Permanent other = addCreatureReady(player2, new GrizzlyBears());
+        other.setAttacking(true);
+        harness.setHand(player1, List.of(new SuddenStrike()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.castInstant(player1, 0, target.getId());
+
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerHands.get(player2.getId()).add(target.getCard());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Sudden Strike");
     }
 }
