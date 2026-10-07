@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -67,6 +69,104 @@ class TrueIdentityTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(second);
+    }
+
+    @Test
+    void opponentTurningFaceUpDoesNotConsumeControllersTrigger() {
+        Card ownDraw = new TrueIdentity();
+        Card secondOwnDraw = new TrueIdentity();
+        Card opponentDraw = new TrueIdentity();
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(ownDraw, secondOwnDraw));
+        harness.setLibrary(player2, List.of(opponentDraw));
+        harness.addToBattlefield(player1, new TrueIdentity());
+        Permanent own = addFaceDownIdentity(player1);
+        Permanent opponent = addFaceDownIdentity(player2);
+        harness.addMana(player2, ManaColor.WHITE, 1);
+
+        harness.turnFaceUp(player2, gd.playerBattlefields.get(player2.getId()).indexOf(opponent));
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(opponentDraw);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(own));
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(ownDraw, secondOwnDraw);
+    }
+
+    @Test
+    void separateCopiesEachTriggerBeforeEitherAbilityResolves() {
+        Card firstDraw = new TrueIdentity();
+        Card secondDraw = new TrueIdentity();
+        Card thirdDraw = new TrueIdentity();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(firstDraw, secondDraw, thirdDraw));
+        harness.addToBattlefield(player1, new TrueIdentity());
+        Permanent first = addFaceDownIdentity(player1);
+        Permanent second = addFaceDownIdentity(player1);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(first));
+        assertThat(gd.stack).hasSize(2);
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(second));
+        assertThat(gd.stack).hasSize(3);
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw, thirdDraw);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void triggerLimitResetsOnOpponentsTurn() {
+        Card firstDraw = new TrueIdentity();
+        Card secondDraw = new TrueIdentity();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(firstDraw, secondDraw));
+        harness.setLibrary(player2, List.of(new TrueIdentity(), new TrueIdentity()));
+        harness.addToBattlefield(player1, new TrueIdentity());
+        Permanent first = addFaceDownIdentity(player1);
+        Permanent second = addFaceDownIdentity(player1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(first));
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw);
+
+        Card nextDraw = new TrueIdentity();
+        Card lastDraw = new TrueIdentity();
+        Card thirdDraw = new TrueIdentity();
+        harness.setLibrary(player1, List.of(nextDraw, lastDraw, thirdDraw));
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(second));
+        assertThat(gd.stack).hasSize(3);
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw, nextDraw, lastDraw, thirdDraw);
+    }
+
+    private Permanent addFaceDownIdentity(Player player) {
+        Permanent identity = harness.addToBattlefieldAndReturn(player, new TrueIdentity());
+        identity.setFaceDownAsDisguised();
+        return identity;
     }
 
     private Permanent addFaceDownGuide() {
