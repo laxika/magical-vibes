@@ -18,10 +18,67 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({TombOfUrami.class, RavingOniSlave.class, MikokoroCenterOfTheSea.class,
         MirenTheMoaningWell.class, OboroPalaceInTheClouds.class})
 class TombOfUramiTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Mana ability resolves immediately and taps Tomb of Urami")
+    void manaAbilityResolvesWithoutUsingStack() {
+        Permanent tomb = harness.addToBattlefieldAndReturn(player1, new TombOfUrami());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(tomb.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        harness.assertLife(player1, GameData.STARTING_LIFE_TOTAL - 1);
+    }
+
+    @Test
+    @DisplayName("Creating Urami with only Tomb as a land preserves nonland permanents")
+    void secondAbilityPreservesNonlandsAndWaitsForResolution() {
+        harness.addToBattlefield(player1, new TombOfUrami());
+        harness.addToBattlefield(player1, new RavingOniSlave());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        harness.assertInGraveyard(player1, "Tomb of Urami");
+        harness.assertOnBattlefield(player1, "Raving Oni-Slave");
+        harness.assertNotOnBattlefield(player1, "Urami");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Raving Oni-Slave");
+        harness.assertOnBattlefield(player1, "Urami");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken())
+                .hasSize(1)
+                .allMatch(permanent -> !permanent.isTapped());
+    }
+
+    @Test
+    @DisplayName("Insufficient black mana prevents sacrificing lands for Urami")
+    void secondAbilityRequiresTwoBlackMana() {
+        Permanent tomb = harness.addToBattlefieldAndReturn(player1, new TombOfUrami());
+        harness.addToBattlefield(player1, new MikokoroCenterOfTheSea());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(tomb.isTapped()).isFalse();
+        harness.assertOnBattlefield(player1, "Tomb of Urami");
+        harness.assertOnBattlefield(player1, "Mikokoro, Center of the Sea");
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
 
     @Test
     @DisplayName("Mana ability adds black mana and deals damage without an Ogre")
