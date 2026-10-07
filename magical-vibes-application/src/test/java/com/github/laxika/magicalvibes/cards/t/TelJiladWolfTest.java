@@ -46,8 +46,8 @@ class TelJiladWolfTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("When Tel-Jilad Wolf becomes blocked by multiple artifact creatures, it gets only one boost")
-    void becomesBlockedByMultipleArtifactCreaturesBoostsOnce() {
+    @DisplayName("Each artifact creature blocking Tel-Jilad Wolf gives it +3/+3")
+    void becomesBlockedByMultipleArtifactCreaturesBoostsForEach() {
         Permanent wolf = addCreatureReady(player1, new TelJiladWolf());
         addCreatureReady(player2, new Ornithopter());
         addCreatureReady(player2, new Ornithopter());
@@ -56,10 +56,29 @@ class TelJiladWolfTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
                 new BlockerAssignment(1, 0)));
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
-        assertThat(wolf.getPowerModifier()).isEqualTo(3);
-        assertThat(wolf.getToughnessModifier()).isEqualTo(3);
+        assertThat(wolf.getPowerModifier()).isEqualTo(6);
+        assertThat(wolf.getToughnessModifier()).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("Only artifact blockers contribute to Tel-Jilad Wolf's boost")
+    void mixedBlockersBoostForEachArtifactOnly() {
+        Permanent wolf = addCreatureReady(player1, new TelJiladWolf());
+        addCreatureReady(player2, new TelJiladWolf());
+        addCreatureReady(player2, new Ornithopter());
+        addCreatureReady(player2, new Ornithopter());
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0),
+                new BlockerAssignment(2, 0)));
+        resolveAllTriggers();
+
+        assertThat(wolf.getPowerModifier()).isEqualTo(6);
+        assertThat(wolf.getToughnessModifier()).isEqualTo(6);
     }
 
     @Test
@@ -86,7 +105,7 @@ class TelJiladWolfTest extends BaseCardTest {
     @Test
     @DisplayName("Blocking an artifact creature does not trigger Tel-Jilad Wolf")
     void blockingArtifactCreatureDoesNothing() {
-        Permanent artifactCreature = addCreatureReady(player1, new CopperMyr());
+        addCreatureReady(player1, new CopperMyr());
         Permanent wolf = addCreatureReady(player2, new TelJiladWolf());
         declareAttackersAndPrepareBlockers(List.of(0));
 
