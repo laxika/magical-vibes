@@ -100,4 +100,40 @@ class UmbraStalkerTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, perm)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, perm)).isEqualTo(1);
     }
+
+    @Test
+    @DisplayName("Casting Umbra Stalker applies its graveyard-dependent power and toughness")
+    void castingUsesGraveyardSymbols() {
+        harness.setGraveyard(player1, List.of(new SoulReap(), new SoulSnuffers()));
+        harness.castFromHand(player1, new UmbraStalker(), "{4}{B}{B}{B}");
+        harness.passBothPriorities();
+
+        Permanent perm = findPermanent(player1, "Umbra Stalker");
+        assertThat(gqs.getEffectivePower(gd, perm)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, perm)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Umbra Stalker dies when its graveyard no longer contains black mana symbols")
+    void diesWhenGraveyardStopsContributingSymbols() {
+        harness.setGraveyard(player1, List.of(new SoulReap()));
+        addCreatureReady(player1, new UmbraStalker());
+        harness.setGraveyard(player1, List.of());
+
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Umbra Stalker");
+        harness.assertInGraveyard(player1, "Umbra Stalker");
+    }
+
+    @Test
+    @DisplayName("Umbra Stalker counts its own black symbols while in the graveyard")
+    void countsItsOwnSymbolsInGraveyard() {
+        UmbraStalker card = new UmbraStalker();
+        harness.setGraveyard(player1, List.of(card, new SoulReap()));
+        harness.setGraveyard(player2, List.of(new SoulSnuffers()));
+
+        assertThat(gqs.getEffectiveCardPower(gd, card)).isEqualTo(4);
+        assertThat(gqs.getEffectiveCardToughness(gd, card)).isEqualTo(4);
+    }
 }
