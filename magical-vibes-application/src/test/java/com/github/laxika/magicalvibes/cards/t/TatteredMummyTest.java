@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.Colossapede;
+import com.github.laxika.magicalvibes.cards.f.FinalReward;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,15 +15,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({TatteredMummy.class, Colossapede.class, FinalReward.class, TrialOfAmbition.class})
 class TatteredMummyTest extends BaseCardTest {
 
     @Test
     @DisplayName("Casting Tattered Mummy puts it on the battlefield")
     void castingPutsOnBattlefield() {
-        harness.setHand(player1, List.of(new TatteredMummy()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new TatteredMummy());
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
@@ -53,8 +53,8 @@ class TatteredMummyTest extends BaseCardTest {
         harness.passBothPriorities(); // Combat damage — Tattered Mummy dies
         harness.passBothPriorities(); // Resolve the death trigger
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 18);
     }
 
     @Test
@@ -66,12 +66,57 @@ class TatteredMummyTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Sacrificing an opponent's Mummy causes life loss for its controller's opponent")
+    void sacrificeUsesDyingMummysController() {
+        harness.addToBattlefield(player2, new TatteredMummy());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new TrialOfAmbition()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castEnchantment(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Tattered Mummy");
+        assertThat(gd.stack).hasSize(1);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Exiling Tattered Mummy does not trigger its death ability")
+    void exileDoesNotCauseLifeLoss() {
+        Permanent mummy = harness.addToBattlefieldAndReturn(player1, new TatteredMummy());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new FinalReward()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castAndResolveInstant(player1, 0, mummy.getId());
+
+        harness.assertNotOnBattlefield(player1, "Tattered Mummy");
+        harness.assertNotInGraveyard(player1, "Tattered Mummy");
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
     }
 
     /**
-     * Sets up combat where Tattered Mummy (player1, 1/2) attacks and is blocked by a 2/2 creature
+     * Sets up combat where Tattered Mummy (player1, 1/2) attacks and is blocked by a 5/5 creature
      * (player2), so the Mummy dies to combat damage.
      */
     private void setupCombatWhereMummyDies() {
@@ -79,11 +124,10 @@ class TatteredMummyTest extends BaseCardTest {
         mummyPerm.setSummoningSick(false);
         mummyPerm.setAttacking(true);
 
-        Permanent blockerPerm = new Permanent(new GrizzlyBears());
+        Permanent blockerPerm = harness.addToBattlefieldAndReturn(player2, new Colossapede());
         blockerPerm.setSummoningSick(false);
         blockerPerm.setBlocking(true);
         blockerPerm.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blockerPerm);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
