@@ -6,10 +6,14 @@ import com.github.laxika.magicalvibes.cards.k.KavuAggressor;
 import com.github.laxika.magicalvibes.cards.t.TectonicInstability;
 import com.github.laxika.magicalvibes.cards.t.TidalVisionary;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -101,5 +105,51 @@ class SulamDjinnTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, sulam)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, sulam)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("The condition still checks green after Sulam Djinn changes color")
+    void checksGreenEvenWhenSulamChangesColor() {
+        Permanent sulam = addSulamDjinn();
+        addCreatureReady(player1, new TidalVisionary());
+
+        assertThat(gqs.getEffectivePower(gd, sulam)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, sulam)).isEqualTo(4);
+
+        harness.activateAbility(player1, 1, 0, null, sulam.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "BLUE");
+
+        assertThat(gqs.getEffectivePower(gd, sulam)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, sulam)).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("Combines color counts across both players' permanents")
+    void combinesColorCountsAcrossControllers() {
+        Permanent sulam = addSulamDjinn();
+        harness.addToBattlefield(player1, new KavuAggressor());
+        harness.addToBattlefield(player2, new KavuAggressor());
+
+        assertThat(gqs.getEffectivePower(gd, sulam)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, sulam)).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("Tramples using its reduced power when green is tied for most common")
+    void tramplesWithReducedPower() {
+        addCreatureReady(player1, new SulamDjinn());
+        Permanent blocker = addCreatureReady(player2, new GalinasKnight());
+        harness.setLife(player2, 20);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                blocker.getId(), 2, player2.getId(), 2));
+
+        harness.assertLife(player2, 18);
+        harness.assertOnBattlefield(player1, "Sulam Djinn");
+        harness.assertInGraveyard(player2, "Galina's Knight");
     }
 }
