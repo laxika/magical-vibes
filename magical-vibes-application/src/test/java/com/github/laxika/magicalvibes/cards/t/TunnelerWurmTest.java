@@ -54,6 +54,47 @@ class TunnelerWurmTest extends BaseCardTest {
     }
 
     @Test
+    void discardIsPaidBeforeTheRegenerationAbilityResolves() {
+        Permanent wurm = harness.addToBattlefieldAndReturn(player1, new TunnelerWurm());
+        TunnelerWurm discardedCard = new TunnelerWurm();
+        harness.setHand(player1, List.of(discardedCard));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(discardedCard);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(wurm.getRegenerationShield()).isZero();
+        assertThat(wurm.isTapped()).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(wurm.getRegenerationShield()).isEqualTo(1);
+        assertThat(wurm.isTapped()).isFalse();
+    }
+
+    @Test
+    void canActivateRepeatedlyWhileTappedAndSummoningSick() {
+        Permanent wurm = harness.addToBattlefieldAndReturn(player1, new TunnelerWurm());
+        wurm.setTapped(true);
+        wurm.setSummoningSick(true);
+        harness.setHand(player1, List.of(new TunnelerWurm(), new TunnelerWurm()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(wurm.getRegenerationShield()).isEqualTo(2);
+        assertThat(wurm.isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
     void cannotActivateWithoutACardToDiscard() {
         harness.addToBattlefieldAndReturn(player1, new TunnelerWurm());
         harness.setHand(player1, List.of());
