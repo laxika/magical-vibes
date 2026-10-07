@@ -1,22 +1,24 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TyrantsMachine.class, RuneclawBear.class})
 class TyrantsMachineTest extends BaseCardTest {
 
     @Test
     @DisplayName("Resolving the ability taps the target creature")
     void resolvingTapsTargetCreature() {
         harness.addToBattlefieldAndReturn(player1, new TyrantsMachine());
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new RuneclawBear());
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -29,7 +31,7 @@ class TyrantsMachineTest extends BaseCardTest {
     @DisplayName("Activating the ability taps the machine")
     void activatingTapsMachine() {
         Permanent machine = harness.addToBattlefieldAndReturn(player1, new TyrantsMachine());
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new RuneclawBear());
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -41,7 +43,7 @@ class TyrantsMachineTest extends BaseCardTest {
     @DisplayName("Can tap a creature its controller controls")
     void canTapOwnCreature() {
         harness.addToBattlefieldAndReturn(player1, new TyrantsMachine());
-        Permanent ownBears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent ownBears = addCreatureReady(player1, new RuneclawBear());
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.activateAbility(player1, 0, null, ownBears.getId());
@@ -65,11 +67,56 @@ class TyrantsMachineTest extends BaseCardTest {
     @DisplayName("Cannot activate without enough mana")
     void cannotActivateWithoutMana() {
         harness.addToBattlefieldAndReturn(player1, new TyrantsMachine());
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new RuneclawBear());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("An already tapped creature is a legal target")
+    void canTargetTappedCreature() {
+        Permanent machine = harness.addToBattlefieldAndReturn(player1, new TyrantsMachine());
+        Permanent target = addCreatureReady(player2, new RuneclawBear());
+        target.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(machine.isTapped()).isTrue();
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The target stays untapped until the ability resolves")
+    void targetIsNotTappedWhenPayingCosts() {
+        Permanent machine = harness.addToBattlefieldAndReturn(player1, new TyrantsMachine());
+        Permanent target = addCreatureReady(player2, new RuneclawBear());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        assertThat(machine.isTapped()).isTrue();
+        assertThat(target.isTapped()).isFalse();
+        harness.passBothPriorities();
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A tapped machine cannot activate again even with enough mana")
+    void cannotActivateAgainWhileTapped() {
+        harness.addToBattlefieldAndReturn(player1, new TyrantsMachine());
+        Permanent target = addCreatureReady(player2, new RuneclawBear());
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
     }
 }
