@@ -27,8 +27,7 @@ class TrophyHunterTest extends BaseCardTest {
         Permanent target = addCreatureReady(player2, new DrakeFamiliar());
 
         activateHunter(target);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
         assertThat(hunter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isOne();
@@ -59,8 +58,7 @@ class TrophyHunterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.activateAbility(player1, 1, null, target.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
         assertThat(hunter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isOne();
@@ -79,8 +77,7 @@ class TrophyHunterTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.activateAbility(player1, 1, null, target.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
         assertThat(hunter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -97,6 +94,50 @@ class TrophyHunterTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature with flying");
+    }
+
+    @Test
+    @DisplayName("Repeated damage to one creature gives only one counter when it dies")
+    void repeatedDamageGivesOneCounter() {
+        Permanent hunter = addCreatureReady(player1, new TrophyHunter());
+        Permanent target = addCreatureReady(player2, new CourierHawk());
+
+        activateHunter(target);
+        harness.passBothPriorities();
+        activateHunter(target);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+        assertThat(hunter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isOne();
+    }
+
+    @Test
+    @DisplayName("A flying creature killed without damage from Trophy Hunter gives no counter")
+    void undamagedCreatureDeathGivesNoCounter() {
+        Permanent hunter = addCreatureReady(player1, new TrophyHunter());
+        addCreatureReady(player1, new ViashinoFangtail());
+        Permanent target = addCreatureReady(player2, new DrakeFamiliar());
+
+        harness.activateAbility(player1, 1, null, target.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+        assertThat(hunter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("A tapped Trophy Hunter can damage its controller's flying creature")
+    void tappedHunterCanDamageOwnCreature() {
+        Permanent hunter = addCreatureReady(player1, new TrophyHunter());
+        hunter.setTapped(true);
+        Permanent target = addCreatureReady(player1, new DrakeFamiliar());
+
+        activateHunter(target);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
+        assertThat(hunter.isTapped()).isTrue();
+        assertThat(hunter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isOne();
     }
 
     private void activateHunter(Permanent target) {
