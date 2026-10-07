@@ -1,23 +1,22 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SundownPass.class, Mountain.class, ScoldingAdministrator.class})
 class SundownPassTest extends BaseCardTest {
-
-    
-
-    
 
     @Test
     @DisplayName("Enters tapped when you control zero other lands")
@@ -26,7 +25,7 @@ class SundownPassTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         Permanent pass = findPass(player1);
         assertThat(pass.isTapped()).isTrue();
@@ -41,7 +40,7 @@ class SundownPassTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         Permanent pass = findPass(player1);
         assertThat(pass.isTapped()).isTrue();
@@ -57,7 +56,7 @@ class SundownPassTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         Permanent pass = findPass(player1);
         assertThat(pass.isTapped()).isFalse();
@@ -74,7 +73,7 @@ class SundownPassTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         Permanent pass = findPass(player1);
         assertThat(pass.isTapped()).isFalse();
@@ -84,15 +83,14 @@ class SundownPassTest extends BaseCardTest {
     @DisplayName("Non-land permanents do not count toward the land check")
     void nonLandPermanentsDoNotCount() {
         for (int i = 0; i < 3; i++) {
-            Permanent creature = new Permanent(new LlanowarElves());
-            gd.playerBattlefields.get(player1.getId()).add(creature);
+            harness.addToBattlefield(player1, new ScoldingAdministrator());
         }
 
         harness.setHand(player1, List.of(new SundownPass()));
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         Permanent pass = findPass(player1);
         assertThat(pass.isTapped()).isTrue();
@@ -109,7 +107,7 @@ class SundownPassTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         Permanent pass = findPass(player1);
         assertThat(pass.isTapped()).isTrue();
@@ -137,17 +135,79 @@ class SundownPassTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
     }
 
+    @Test
+    @DisplayName("Nonbasic tapped lands count toward the entry condition")
+    void nonbasicTappedLandsCount() {
+        for (int i = 0; i < 2; i++) {
+            harness.addToBattlefieldAndReturn(player1, new SundownPass()).tap();
+        }
+        harness.setHand(player1, List.of(new SundownPass()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.playLand(player1, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()).get(2).isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Entering without a land play still checks other lands")
+    void entryWithoutLandPlayChecksOtherLands() {
+        addBasicLand(player1);
+        addBasicLand(player2);
+        addBasicLand(player2);
+
+        Permanent first = harness.enterBattlefieldAndReturn(player1, new SundownPass());
+        Permanent second = harness.enterBattlefieldAndReturn(player1, new SundownPass());
+
+        assertThat(first.isTapped()).isTrue();
+        assertThat(second.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A newly played untapped land can immediately produce mana without using the stack")
+    void newlyPlayedLandCanProduceManaImmediately() {
+        addBasicLand(player1);
+        addBasicLand(player1);
+        harness.setHand(player1, List.of(new SundownPass()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.playLand(player1, 0);
+
+        harness.activateAbility(player1, 2, 1, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(findPass(player1).isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Entering tapped prevents either mana ability from being activated")
+    void cannotActivateManaAbilitiesAfterEnteringTapped() {
+        harness.setHand(player1, List.of(new SundownPass()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.playLand(player1, 0);
+
+        for (int abilityIndex = 0; abilityIndex < 2; abilityIndex++) {
+            int index = abilityIndex;
+            assertThatThrownBy(() -> harness.activateAbility(player1, 0, index, null, null))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("already tapped");
+        }
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addPassReady(Player player) {
-        Permanent perm = new Permanent(new SundownPass());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new SundownPass());
     }
 
     private void addBasicLand(Player player) {
-        com.github.laxika.magicalvibes.model.Card land = new com.github.laxika.magicalvibes.cards.m.Mountain();
-        Permanent perm = new Permanent(land);
-        gd.playerBattlefields.get(player.getId()).add(perm);
+        harness.addToBattlefield(player, new Mountain());
     }
 
     private Permanent findPass(Player player) {
