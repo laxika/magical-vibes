@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.p.PlatinumEmperion;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -12,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(Tornado.class)
+@CardUsed({Tornado.class})
 class TornadoTest extends BaseCardTest {
 
     private void addMana(int green, int generic) {
@@ -135,5 +136,127 @@ class TornadoTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(tornado);
         harness.assertInGraveyard(player1, "Tornado");
+    }
+
+    @Test
+    @DisplayName("Life is paid on activation and the velocity counter is added only on resolution")
+    void lifePaymentPrecedesResolution() {
+        Permanent tornado = harness.addToBattlefieldAndReturn(player1, new Tornado());
+        tornado.setCounterCount(CounterType.VELOCITY, 1);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Tornado());
+        harness.setLife(player1, 20);
+        addMana(1, 2);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+
+        harness.assertLife(player1, 17);
+        assertThat(tornado.getCounterCount(CounterType.VELOCITY)).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 17);
+        assertThat(tornado.getCounterCount(CounterType.VELOCITY)).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+    }
+
+    @Test
+    @DisplayName("An illegal target prevents the velocity counter without refunding the life cost")
+    void illegalTargetPreventsVelocityCounter() {
+        Permanent tornado = harness.addToBattlefieldAndReturn(player1, new Tornado());
+        tornado.setCounterCount(CounterType.VELOCITY, 1);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Tornado());
+        harness.setLife(player1, 20);
+        addMana(1, 2);
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.activateAbility(player2, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 17);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(tornado);
+        assertThat(tornado.getCounterCount(CounterType.VELOCITY)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The destruction ability still resolves after its source is destroyed")
+    void resolvesWithoutSource() {
+        Permanent tornado = harness.addToBattlefieldAndReturn(player1, new Tornado());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Tornado());
+        addMana(1, 2);
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.activateAbility(player2, 0, 0, null, tornado.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(tornado);
+        assertThat(target.getCounterCount(CounterType.VELOCITY)).isEqualTo(1);
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Tornado");
+        harness.assertInGraveyard(player2, "Tornado");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Tornado can destroy itself as its target")
+    void canTargetItself() {
+        Permanent tornado = harness.addToBattlefieldAndReturn(player1, new Tornado());
+        addMana(1, 2);
+
+        harness.activateAbility(player1, 0, 0, null, tornado.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Tornado");
+        harness.assertInGraveyard(player1, "Tornado");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @CardUsed({PlatinumEmperion.class})
+    @DisplayName("A positive life cost cannot be paid while the controller's life total cannot change")
+    void rejectsPositiveLifeCostWithPlatinumEmperion() {
+        Permanent tornado = harness.addToBattlefieldAndReturn(player1, new Tornado());
+        tornado.setCounterCount(CounterType.VELOCITY, 1);
+        harness.addToBattlefield(player1, new PlatinumEmperion());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Tornado());
+        harness.setLife(player1, 20);
+        addMana(1, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        assertThat(tornado.getCounterCount(CounterType.VELOCITY)).isEqualTo(1);
+    }
+
+    @Test
+    @CardUsed({PlatinumEmperion.class})
+    @DisplayName("A zero life cost can be paid while the controller's life total cannot change")
+    void permitsZeroLifeCostWithPlatinumEmperion() {
+        Permanent tornado = harness.addToBattlefieldAndReturn(player1, new Tornado());
+        harness.addToBattlefield(player1, new PlatinumEmperion());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Tornado());
+        harness.setLife(player1, 20);
+        addMana(1, 2);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+        assertThat(tornado.getCounterCount(CounterType.VELOCITY)).isEqualTo(1);
     }
 }
