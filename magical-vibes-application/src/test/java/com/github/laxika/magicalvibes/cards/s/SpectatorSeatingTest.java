@@ -16,7 +16,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(SpectatorSeating.class)
+@CardUsed({SpectatorSeating.class})
 class SpectatorSeatingTest extends BaseCardTest {
 
     @Test
@@ -57,18 +57,47 @@ class SpectatorSeatingTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("Enters tapped when put onto the battlefield in a two-player game")
+    void entersTappedWhenPutOntoBattlefield() {
+        Permanent permanent = harness.enterBattlefieldAndReturn(player1, new SpectatorSeating());
+
+        assertThat(permanent.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Enters untapped when put onto the battlefield with two opponents")
+    void entersUntappedWhenPutOntoBattlefieldWithTwoOpponents() {
+        addThirdPlayer();
+
+        Permanent permanent = harness.enterBattlefieldAndReturn(player1, new SpectatorSeating());
+
+        assertThat(permanent.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A newly played untapped land can produce mana immediately and pays its tap cost")
+    void newlyPlayedLandProducesManaImmediately() {
+        addThirdPlayer();
+        playSpectatorSeating();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(findPermanent(player1, "Spectator Seating").isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void playSpectatorSeating() {
         harness.setHand(player1, List.of(new SpectatorSeating()));
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
     }
 
     private Permanent addReadySpectatorSeating() {
-        Permanent permanent = new Permanent(new SpectatorSeating());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(permanent);
-        return permanent;
+        return addCreatureReady(player1, new SpectatorSeating());
     }
 
     private void addThirdPlayer() {
