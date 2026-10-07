@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.a.AngelOfMercy;
 import com.github.laxika.magicalvibes.cards.a.AngelicShield;
 import com.github.laxika.magicalvibes.cards.h.HammerOfPurphoros;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -12,13 +11,12 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TeferisCare.class, AngelicShield.class, AngelOfMercy.class})
+@CardUsed({TeferisCare.class, AngelicShield.class, AngelOfMercy.class, HammerOfPurphoros.class})
 class TeferisCareTest extends BaseCardTest {
 
     @Test
@@ -94,15 +92,12 @@ class TeferisCareTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(HammerOfPurphoros.class)
     @DisplayName("Counter ability can target an artifact-enchantment spell")
     void countersArtifactEnchantmentSpell() {
         harness.addToBattlefield(player1, new TeferisCare());
         harness.addMana(player1, ManaColor.BLUE, 5);
 
         HammerOfPurphoros spell = new HammerOfPurphoros();
-        spell.setType(CardType.ARTIFACT);
-        spell.setAdditionalTypes(Set.of(CardType.ENCHANTMENT));
         harness.forceActivePlayer(player2);
         harness.forceStep(harness.getGameData().currentStep);
         harness.clearPriorityPassed();
@@ -149,5 +144,57 @@ class TeferisCareTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, angel.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can destroy an enchantment it controls by sacrificing itself")
+    void destroysOwnEnchantment() {
+        harness.addToBattlefield(player1, new TeferisCare());
+        Permanent shield = harness.addToBattlefieldAndReturn(player1, new AngelicShield());
+        UUID careId = harness.getPermanentId(player1, "Teferi's Care");
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, 0, null, shield.getId());
+        harness.handlePermanentChosen(player1, careId);
+
+        harness.assertInGraveyard(player1, "Teferi's Care");
+        harness.assertOnBattlefield(player1, "Angelic Shield");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Angelic Shield");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can target itself and sacrifice itself, leaving no legal target at resolution")
+    void canSacrificeItsOwnTarget() {
+        harness.addToBattlefield(player1, new TeferisCare());
+        UUID careId = harness.getPermanentId(player1, "Teferi's Care");
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, 0, null, careId);
+
+        harness.assertInGraveyard(player1, "Teferi's Care");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Teferi's Care");
+    }
+
+    @Test
+    @DisplayName("Can counter its controller's enchantment spell without sacrificing itself")
+    void countersOwnEnchantmentSpell() {
+        harness.addToBattlefield(player1, new TeferisCare());
+        AngelicShield shield = new AngelicShield();
+        harness.castFromHand(player1, shield, "{W}{U}");
+        harness.addMana(player1, ManaColor.BLUE, 5);
+
+        harness.activateAbility(player1, 0, 1, null, shield.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Angelic Shield");
+        harness.assertOnBattlefield(player1, "Teferi's Care");
     }
 }
