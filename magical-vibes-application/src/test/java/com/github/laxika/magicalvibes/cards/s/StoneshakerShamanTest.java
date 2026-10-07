@@ -95,11 +95,68 @@ class StoneshakerShamanTest extends BaseCardTest {
                 .doesNotContain(land);
     }
 
-    private void resolveEndStep(Player activePlayer) {
+    @Test
+    @DisplayName("Tapping the only land in response avoids the sacrifice")
+    void landTappedInResponseIsNotSacrificed() {
+        harness.addToBattlefield(player1, new StoneshakerShaman());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Mountain());
+
+        beginEndStep(player2);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(land);
+
+        harness.tapPermanent(player2, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(land);
+        harness.assertNotInGraveyard(player2, "Mountain");
+    }
+
+    @Test
+    @DisplayName("Each Shaman independently requires an untapped land sacrifice")
+    void multipleShamansRequireSeparateSacrifices() {
+        harness.addToBattlefield(player1, new StoneshakerShaman());
+        harness.addToBattlefield(player1, new StoneshakerShaman());
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new Forest());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new Plains());
+
+        beginEndStep(player2);
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player2, List.of(first.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(first, second);
+        harness.assertInGraveyard(player2, "Forest");
+        harness.assertInGraveyard(player2, "Plains");
+    }
+
+    @Test
+    @DisplayName("An end step still triggers when the active player has no lands")
+    void triggersWithoutLandsAndLeavesOtherPlayersLandsAlone() {
+        harness.addToBattlefield(player1, new StoneshakerShaman());
+        Permanent otherPlayersLand = harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        beginEndStep(player2);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(otherPlayersLand);
+    }
+
+    private void beginEndStep(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        gs.advanceStep(gd);
+        harness.passUntil(activePlayer, TurnStep.END_STEP);
+    }
+
+    private void resolveEndStep(Player activePlayer) {
+        beginEndStep(activePlayer);
         harness.passBothPriorities();
     }
 }
