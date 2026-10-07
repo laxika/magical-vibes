@@ -37,14 +37,16 @@ class TheElderDragonWarTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Chapter II lets each player discard any number and draw that many")
-    void chapterIIDiscardsAndDrawsForEachPlayer() {
+    @DisplayName("Chapter II lets only the controller discard and draw")
+    void chapterIIDiscardsAndDrawsForControllerOnly() {
         addSagaWithLore(1);
         GrizzlyBears player1Discard = new GrizzlyBears();
         GrizzlyBears player1Keep = new GrizzlyBears();
         GrizzlyBears player2Discard = new GrizzlyBears();
         harness.setHand(player1, List.of(player1Discard, player1Keep));
         harness.setHand(player2, List.of(player2Discard));
+        GrizzlyBears drawn = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(drawn));
 
         advanceToNextChapter();
         harness.passBothPriorities();
@@ -54,15 +56,11 @@ class TheElderDragonWarTest extends BaseCardTest {
         harness.handleXValueChosen(player1, 1);
         harness.handleCardChosen(player1, 0);
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class).playerId())
-                .isEqualTo(player2.getId());
-        harness.handleXValueChosen(player2, 1);
-        harness.handleCardChosen(player2, 0);
-
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(player1Discard);
-        assertThat(gd.playerGraveyards.get(player2.getId())).contains(player2Discard);
-        assertThat(gd.playerHands.get(player1.getId())).hasSize(2).contains(player1Keep);
-        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player2.getId())).doesNotContain(player2Discard);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(player1Keep, drawn);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(player2Discard);
     }
 
     @Test
@@ -84,6 +82,48 @@ class TheElderDragonWarTest extends BaseCardTest {
         assertThat(token.hasKeyword(Keyword.FLYING)).isTrue();
     }
 
+    @Test
+    @DisplayName("Read ahead can skip directly to chapter III")
+    void readAheadStartsAtChapterThree() {
+        harness.castFromHand(player1, new TheElderDragonWar(), "{2}{R}{R}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player1, "3");
+        harness.assertOnBattlefield(player1, "The Elder Dragon War");
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken())
+                .hasSize(1);
+        harness.assertNotOnBattlefield(player1, "The Elder Dragon War");
+        harness.assertInGraveyard(player1, "The Elder Dragon War");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Chapter II permits discarding zero without involving the opponent")
+    void chapterIICanDiscardZero() {
+        addSagaWithLore(1);
+        TheElderDragonWar retained = new TheElderDragonWar();
+        TheElderDragonWar opponentRetained = new TheElderDragonWar();
+        TheElderDragonWar undrawn = new TheElderDragonWar();
+        harness.setHand(player1, List.of(retained));
+        harness.setHand(player2, List.of(opponentRetained));
+        harness.setLibrary(player1, List.of(undrawn));
+
+        advanceToNextChapter();
+        harness.passBothPriorities();
+        harness.handleXValueChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(retained);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(opponentRetained);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(undrawn);
+    }
+
     private Permanent addSagaWithLore(int loreCounters) {
         Permanent saga = harness.addToBattlefieldAndReturn(player1, new TheElderDragonWar());
         saga.setCounterCount(CounterType.LORE, loreCounters);
@@ -93,7 +133,6 @@ class TheElderDragonWarTest extends BaseCardTest {
     private void advanceToNextChapter() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
     }
 }
