@@ -86,9 +86,44 @@ class TheloniteDruidTest extends BaseCardTest {
     }
 
     private Permanent addLand(Player player, com.github.laxika.magicalvibes.model.Card land) {
-        Permanent permanent = new Permanent(land);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        return addCreatureReady(player, land);
+    }
+
+    @Test
+    @DisplayName("Forests entering before resolution are animated, but later Forests are not")
+    void animationUsesForestsPresentAtResolution() {
+        addCreatureReady(player1, new TheloniteDruid());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        Permanent beforeResolution = harness.addToBattlefieldAndReturn(player1, new Forest());
+        assertThat(gqs.isCreature(gd, beforeResolution)).isFalse();
+        harness.passBothPriorities();
+        Permanent afterResolution = harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        assertThat(gqs.isCreature(gd, beforeResolution)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, beforeResolution)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, beforeResolution)).isEqualTo(3);
+        assertThat(gqs.isLand(gd, beforeResolution)).isTrue();
+        assertThat(beforeResolution.isSummoningSick()).isTrue();
+        assertThat(gqs.isCreature(gd, afterResolution)).isFalse();
+    }
+
+    @Test
+    @DisplayName("The ability can resolve without any Forests")
+    void canActivateWithoutForests() {
+        addCreatureReady(player1, new TheloniteDruid());
+        Permanent land = addLand(player1, new HavenwoodBattleground());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.assertInGraveyard(player1, "Thelonite Druid");
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, land)).isFalse();
+        assertThat(gqs.isLand(gd, land)).isTrue();
+        assertThat(gd.stack).isEmpty();
     }
 }
