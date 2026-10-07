@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(TimeVault.class)
+@CardUsed({TimeVault.class})
 class TimeVaultTest extends BaseCardTest {
 
     private Permanent putVaultOnBattlefield() {
@@ -20,9 +20,7 @@ class TimeVaultTest extends BaseCardTest {
     private void advanceToPlayer1TurnStart() {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.CLEANUP);
         harness.passBothPriorities();
     }
 
@@ -73,5 +71,84 @@ class TimeVaultTest extends BaseCardTest {
 
         assertThat(vault.isTapped()).isTrue();
         assertThat(gd.extraTurns).containsExactly(player1.getId());
+    }
+
+    @Test
+    @DisplayName("Declining both tapped Vaults starts the turn without repeating either choice")
+    void decliningAllVaultsStartsTurn() {
+        Permanent first = putVaultOnBattlefield();
+        Permanent second = putVaultOnBattlefield();
+        advanceToPlayer1TurnStart();
+
+        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.activePlayerId).isEqualTo(player1.getId());
+        assertThat(first.isTapped()).isTrue();
+        assertThat(second.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Skipping one turn untaps only the chosen Vault")
+    void skippingTurnUntapsOnlyOneVault() {
+        Permanent first = putVaultOnBattlefield();
+        Permanent second = putVaultOnBattlefield();
+        advanceToPlayer1TurnStart();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(first.isTapped() && second.isTapped()).isFalse();
+        assertThat(first.isTapped() || second.isTapped()).isTrue();
+        assertThat(gd.activePlayerId).isEqualTo(player2.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("An untapped Vault does not offer to skip the turn")
+    void untappedVaultDoesNotOfferChoice() {
+        Permanent vault = putVaultOnBattlefield();
+        vault.untap();
+
+        advanceToPlayer1TurnStart();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.activePlayerId).isEqualTo(player1.getId());
+        assertThat(vault.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A tapped Vault does not offer to skip an opponent's turn")
+    void doesNotReplaceOpponentsTurn() {
+        Permanent vault = putVaultOnBattlefield();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_STEP);
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.activePlayerId).isEqualTo(player2.getId());
+        assertThat(vault.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An extra turn can be skipped without skipping the following normal turn")
+    void canSkipExtraTurnWithoutSkippingNormalTurn() {
+        Permanent vault = putVaultOnBattlefield();
+        vault.untap();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        advanceToPlayer1TurnStart();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(vault.isTapped()).isFalse();
+        assertThat(gd.extraTurns).isEmpty();
+        assertThat(gd.activePlayerId).isEqualTo(player1.getId());
+        assertThat(gd.currentTurnIsExtraTurn).isFalse();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 }
