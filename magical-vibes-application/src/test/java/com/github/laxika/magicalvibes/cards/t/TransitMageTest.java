@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.c.CitanulFlute;
 import com.github.laxika.magicalvibes.cards.m.MindStone;
 import com.github.laxika.magicalvibes.cards.s.SolemnSimulacrum;
@@ -9,8 +10,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +19,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({TransitMage.class, CitanulFlute.class, SolemnSimulacrum.class, MindStone.class,
+        WurmcoilEngine.class, GrizzlyBears.class, HillGiant.class})
 class TransitMageTest extends BaseCardTest {
 
     @Test
@@ -62,8 +65,7 @@ class TransitMageTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         int chosenIndex = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
                 .params().cards().indexOf(flute);
-        harness.getGameService().handleInteractionAnswer(gd, player1,
-                new InteractionAnswer.LibraryCardChosen(chosenIndex));
+        harness.handleCardChosen(player1, chosenIndex);
 
         assertThat(gd.playerHands.get(player1.getId())).contains(flute);
         assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(flute);
@@ -100,11 +102,57 @@ class TransitMageTest extends BaseCardTest {
         resolveMayAbility(true);
 
         GameData gd = harness.getGameData();
-        harness.getGameService().handleInteractionAnswer(gd, player1,
-                new InteractionAnswer.LibraryCardChosen(-1));
+        harness.handleCardChosen(player1, -1);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerDecks.get(player1.getId())).contains(flute);
+    }
+
+    @Test
+    @DisplayName("A mana value four artifact creature is put into hand, not onto the battlefield")
+    void choosingManaValueFourArtifactPutsItIntoHand() {
+        setupAndCast();
+        SolemnSimulacrum simulacrum = new SolemnSimulacrum();
+        setupLibrary(simulacrum);
+        resolveMayAbility(true);
+
+        harness.handleCardChosen(player1, 0);
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(simulacrum);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard() == simulacrum);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A nonartifact with mana value four is excluded from the search")
+    void nonartifactInsideManaValueRangeIsExcluded() {
+        setupAndCast();
+        CitanulFlute flute = new CitanulFlute();
+        setupLibrary(new HillGiant(), flute);
+        resolveMayAbility(true);
+
+        PendingInteraction.LibrarySearch search =
+                harness.getGameData().interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search).isNotNull();
+        assertThat(search.params().cards()).containsExactly(flute);
+    }
+
+    @Test
+    @DisplayName("Searching an empty library does not search the opponent's library")
+    void emptyLibraryDoesNotSearchOpponentLibrary() {
+        setupAndCast();
+        setupLibrary();
+        CitanulFlute opponentArtifact = new CitanulFlute();
+        harness.setLibrary(player2, List.of(opponentArtifact));
+        resolveMayAbility(true);
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentArtifact);
     }
 
     private void setupAndCast() {
@@ -115,9 +163,7 @@ class TransitMageTest extends BaseCardTest {
     }
 
     private void setupLibrary(Card... cards) {
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(cards));
+        harness.setLibrary(player1, List.of(cards));
     }
 
     private void resolveMayAbility(boolean accept) {
