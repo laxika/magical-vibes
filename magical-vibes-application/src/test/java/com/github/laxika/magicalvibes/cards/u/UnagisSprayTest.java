@@ -83,10 +83,101 @@ class UnagisSprayTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
-    private void castSpray(Permanent target) {
+    @Test
+    @DisplayName("An opponent's Seal does not enable the draw")
+    void opponentsSealDoesNotEnableDraw() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new TigerSeal());
+        GrizzlyBears topCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(topCard));
+
+        castSpray(target);
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(-1);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+    }
+
+    @Test
+    @DisplayName("The targeted creature can itself enable the draw")
+    void ownTargetEnablesDraw() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new TigerSeal());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+
+        castSpray(target);
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(-1);
+        harness.assertInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Multiple qualifying permanents still draw only one card")
+    void multipleSealsDrawOnlyOneCard() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new TigerSeal());
+        harness.addToBattlefield(player1, new TigerSeal());
+        GrizzlyBears first = new GrizzlyBears();
+        GrizzlyBears second = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(first, second));
+
+        castSpray(target);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(first);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second);
+    }
+
+    @Test
+    @DisplayName("A Seal entering before resolution enables the draw")
+    void checksConditionAtResolutionAfterSealAppears() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
         harness.setHand(player1, List.of(new UnagisSpray()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castInstant(player1, 0, target.getId());
+
+        harness.addToBattlefield(player1, new TigerSeal());
         harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("A Seal leaving before resolution prevents the draw")
+    void checksConditionAtResolutionAfterSealLeaves() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent seal = harness.addToBattlefieldAndReturn(player1, new TigerSeal());
+        GrizzlyBears topCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(topCard));
+        harness.setHand(player1, List.of(new UnagisSpray()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castInstant(player1, 0, target.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(seal);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(-2);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+    }
+
+    @Test
+    @DisplayName("An illegal target prevents the conditional draw as well")
+    void missingTargetPreventsDraw() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new TigerSeal());
+        GrizzlyBears topCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(topCard));
+        harness.setHand(player1, List.of(new UnagisSpray()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castInstant(player1, 0, target.getId());
+
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+        harness.assertInGraveyard(player1, "Unagi's Spray");
+    }
+
+    private void castSpray(Permanent target) {
+        harness.setHand(player1, List.of(new UnagisSpray()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 }
