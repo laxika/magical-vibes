@@ -106,6 +106,40 @@ class StarCompassTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Tapped basic lands still contribute their mana colors")
+    void tappedBasicLandStillContributes() {
+        harness.addToBattlefield(player1, new StarCompass());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        forest.setTapped(true);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        assertThat(forest.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Only basic land colors are offered when nonbasic lands are also present")
+    void mixedLandsOfferOnlyBasicLandColors() {
+        harness.addToBattlefield(player1, new StarCompass());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new CityOfBrass());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactlyInAnyOrder("GREEN", "BLUE");
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
     @DisplayName("Activating Star Compass taps it as part of its cost")
     void activationTapsSource() {
         Permanent compass = harness.addToBattlefieldAndReturn(player1, new StarCompass());
