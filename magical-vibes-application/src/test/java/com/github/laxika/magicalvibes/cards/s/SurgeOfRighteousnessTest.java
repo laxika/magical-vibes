@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.k.KolaghanAspirant;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -15,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(SurgeOfRighteousness.class)
+@CardUsed({SurgeOfRighteousness.class, KolaghanAspirant.class})
 class SurgeOfRighteousnessTest extends BaseCardTest {
 
     @Test
@@ -76,6 +78,49 @@ class SurgeOfRighteousnessTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Surge of Righteousness");
     }
 
+    @Test
+    @DisplayName("Does not destroy or gain life if the target stops attacking before resolution")
+    void fizzlesIfTargetLeavesCombat() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new KolaghanAspirant());
+        target.setAttacking(true);
+        prepareSpell();
+
+        harness.castInstant(player1, 0, target.getId());
+        target.setAttacking(false);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Kolaghan Aspirant");
+        harness.assertLife(player1, 20);
+        harness.assertInGraveyard(player1, "Surge of Righteousness");
+    }
+
+    @Test
+    @DisplayName("Can destroy its controller's own red blocking creature and gains life")
+    void canTargetOwnBlockingCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new KolaghanAspirant());
+        target.setBlocking(true);
+
+        castAndResolve(target);
+
+        harness.assertInGraveyard(player1, "Kolaghan Aspirant");
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Gains life even when an indestructible target survives")
+    void gainsLifeIfTargetIsIndestructible() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new KolaghanAspirant());
+        target.setAttacking(true);
+        target.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+
+        castAndResolve(target);
+
+        harness.assertOnBattlefield(player2, "Kolaghan Aspirant");
+        harness.assertLife(player1, 22);
+        harness.assertInGraveyard(player1, "Surge of Righteousness");
+    }
+
     private void castAndResolve(Permanent target) {
         prepareSpell();
         harness.castInstant(player1, 0, target.getId());
@@ -98,10 +143,9 @@ class SurgeOfRighteousnessTest extends BaseCardTest {
         card.setPower(2);
         card.setToughness(2);
 
-        Permanent permanent = new Permanent(card);
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, card);
         permanent.setAttacking(attacking);
         permanent.setBlocking(blocking);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 }
