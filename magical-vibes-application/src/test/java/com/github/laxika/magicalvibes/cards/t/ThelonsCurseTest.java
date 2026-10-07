@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.i.IcatianPhalanx;
+import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.r.RiverMerfolk;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -16,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ThelonsCurse.class, RiverMerfolk.class, IcatianPhalanx.class})
+@CardUsed({ThelonsCurse.class, RiverMerfolk.class, IcatianPhalanx.class, Island.class})
 class ThelonsCurseTest extends BaseCardTest {
 
     @Test
@@ -26,7 +26,7 @@ class ThelonsCurseTest extends BaseCardTest {
         Permanent merfolk = addTapped(player1, new RiverMerfolk());
         Permanent soldier = addTapped(player1, new IcatianPhalanx());
 
-        advanceToNextTurn(player2);
+        advanceToUpkeep(player1);
 
         assertThat(merfolk.isTapped()).isTrue();
         assertThat(soldier.isTapped()).isFalse();
@@ -112,13 +112,37 @@ class ThelonsCurseTest extends BaseCardTest {
         return perm;
     }
 
-    private void advanceToNextTurn(Player currentActivePlayer) {
-        harness.forceActivePlayer(currentActivePlayer);
-        harness.setHand(player1, List.of());
-        harness.setHand(player2, List.of());
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        Player nextActivePlayer = currentActivePlayer == player1 ? player2 : player1;
-        harness.passUntil(nextActivePlayer, TurnStep.UPKEEP);
+    @Test
+    @DisplayName("Choosing a subset leaves unchosen creatures tapped and pays only for chosen creatures")
+    void choosingSubsetUntapsOnlyChosenCreatures() {
+        harness.addToBattlefield(player1, new ThelonsCurse());
+        Permanent chosen = addTapped(player1, new RiverMerfolk());
+        Permanent unchosen = addTapped(player1, new RiverMerfolk());
+        Permanent opponentsCreature = addTapped(player2, new RiverMerfolk());
+
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of(chosen.getId()));
+
+        assertThat(chosen.isTapped()).isFalse();
+        assertThat(unchosen.isTapped()).isTrue();
+        assertThat(opponentsCreature.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+    }
+
+    @Test
+    @CardUsed(Island.class)
+    @DisplayName("Untapped mana sources allow an upkeep payment choice even with an empty mana pool")
+    void untappedIslandAllowsPaymentChoiceWithEmptyPool() {
+        harness.addToBattlefield(player1, new ThelonsCurse());
+        Permanent merfolk = addTapped(player1, new RiverMerfolk());
+        harness.addToBattlefield(player1, new Island());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(merfolk.isTapped()).isTrue();
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
     }
 }
