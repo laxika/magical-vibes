@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.m.Mortivore;
 import com.github.laxika.magicalvibes.cards.m.MysticZealot;
 import com.github.laxika.magicalvibes.cards.p.PsionicGift;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -85,8 +86,7 @@ class StoneTongueBasiliskTest extends BaseCardTest {
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
-        harness.forceStep(TurnStep.COMBAT_DAMAGE);
-        harness.resolveCombatDamage();
+        resolveCombat();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(basilisk);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(mortivore);
@@ -106,8 +106,7 @@ class StoneTongueBasiliskTest extends BaseCardTest {
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
-        harness.forceStep(TurnStep.COMBAT_DAMAGE);
-        harness.resolveCombatDamage();
+        resolveCombat();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(basilisk);
@@ -136,6 +135,87 @@ class StoneTongueBasiliskTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
         assertThat(gd.hasDelayedAction(DelayedPermanentAction.class)).isFalse();
+    }
+
+    @Test
+    @DisplayName("The opponent's graveyard does not enable threshold")
+    void opponentsGraveyardDoesNotEnableThreshold() {
+        harness.setGraveyard(player1, graveyardWithCards(6));
+        harness.setGraveyard(player2, graveyardWithCards(7));
+        addAttackingCreature(player1, new StoneTongueBasilisk());
+        Permanent blocker = addCreatureReady(player2, new MetamorphicWurm());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of());
+
+        assertThat(blocker.isBlocking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Combat damage also schedules destruction when the Basilisk blocks")
+    void blockingBasiliskDestroysDamagedAttacker() {
+        harness.setGraveyard(player1, graveyardWithCards(5));
+        Permanent attacker = addAttackingCreature(player1, new Mortivore());
+        Permanent basilisk = addCreatureReady(player2, new StoneTongueBasilisk());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(basilisk);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
+        resolveAllTriggers();
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
+    }
+
+    @Test
+    @DisplayName("Regeneration can prevent the delayed destruction")
+    void regenerationPreventsDelayedDestruction() {
+        harness.setGraveyard(player1, graveyardWithCards(5));
+        addAttackingCreature(player1, new StoneTongueBasilisk());
+        Permanent mortivore = addCreatureReady(player2, new Mortivore());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.activateAbility(player2, 0, null, null);
+        resolveAllTriggers();
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(mortivore);
+        assertThat(mortivore.isTapped()).isTrue();
+        assertThat(mortivore.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("End-of-combat destruction uses the stack and allows a regeneration response")
+    void delayedDestructionAllowsResponseAtEndOfCombat() {
+        harness.setGraveyard(player1, graveyardWithCards(5));
+        addAttackingCreature(player1, new StoneTongueBasilisk());
+        Permanent mortivore = addCreatureReady(player2, new Mortivore());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+        resolveAllTriggers();
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(mortivore);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.activateAbility(player2, 0, null, null);
+        resolveAllTriggers();
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(mortivore);
+        assertThat(mortivore.isTapped()).isTrue();
+        assertThat(mortivore.getMarkedDamage()).isZero();
     }
 
     private Permanent addAttackingCreature(Player player, Card card) {
