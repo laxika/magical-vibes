@@ -59,4 +59,47 @@ class TuyaBearclawTest extends BaseCardTest {
         assertThat(tuya.getPowerModifier()).isZero();
         assertThat(tuya.getToughnessModifier()).isZero();
     }
+
+    @Test
+    @DisplayName("Calculates the greatest power when the attack trigger resolves")
+    void usesPowerAtResolution() {
+        var tuya = addCreatureReady(player1, new TuyaBearclaw());
+        var wurm = addCreatureReady(player1, new CrawWurm());
+        addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(List.of(0));
+        wurm.setPowerModifier(-5);
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, tuya)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, tuya)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("A negative greatest power gives no bonus or penalty")
+    void floorsNegativePowerAtZero() {
+        var tuya = addCreatureReady(player1, new TuyaBearclaw());
+        var bears = addCreatureReady(player1, new GrizzlyBears());
+        bears.setPowerModifier(-3);
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, tuya)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, tuya)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The resolved bonus does not change when another creature's power changes")
+    void bonusRemainsFixedAfterResolution() {
+        var tuya = addCreatureReady(player1, new TuyaBearclaw());
+        var wurm = addCreatureReady(player1, new CrawWurm());
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+        wurm.setPowerModifier(4);
+
+        assertThat(gqs.getEffectivePower(gd, tuya)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, tuya)).isEqualTo(8);
+    }
 }
