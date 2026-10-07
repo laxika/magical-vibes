@@ -34,8 +34,7 @@ class ThalakosDeceiverTest extends BaseCardTest {
     @DisplayName("Accepting the may sacrifices it and permanently gains control of the target creature")
     void acceptSacrificeAndGainControl() {
         Permanent attacker = addAttacker();
-        Permanent target = new Permanent(new YouthfulKnight());
-        gd.playerBattlefields.get(player2.getId()).add(target);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new YouthfulKnight());
 
         advanceToUnblockedMay();
 
@@ -57,10 +56,8 @@ class ThalakosDeceiverTest extends BaseCardTest {
     @DisplayName("The target choice offers creatures but not artifacts")
     void targetChoiceOffersCreaturesOnly() {
         addAttacker();
-        Permanent target = new Permanent(new YouthfulKnight());
-        Permanent artifact = new Permanent(new Heartstone());
-        gd.playerBattlefields.get(player2.getId()).add(target);
-        gd.playerBattlefields.get(player2.getId()).add(artifact);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new YouthfulKnight());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new Heartstone());
 
         advanceToUnblockedMay();
 
@@ -73,8 +70,7 @@ class ThalakosDeceiverTest extends BaseCardTest {
     @DisplayName("Declining the may keeps it on the battlefield and does not change control")
     void declineKeepsCreature() {
         addAttacker();
-        Permanent target = new Permanent(new YouthfulKnight());
-        gd.playerBattlefields.get(player2.getId()).add(target);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new YouthfulKnight());
 
         advanceToUnblockedMay();
         harness.handlePermanentChosen(player1, target.getId());
@@ -90,8 +86,7 @@ class ThalakosDeceiverTest extends BaseCardTest {
     @DisplayName("An illegal target prevents the source from being sacrificed")
     void illegalTargetPreventsResolution() {
         Permanent attacker = addAttacker();
-        Permanent target = new Permanent(new YouthfulKnight());
-        gd.playerBattlefields.get(player2.getId()).add(target);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new YouthfulKnight());
 
         advanceToUnblockedMay();
         harness.handlePermanentChosen(player1, target.getId());
@@ -110,8 +105,7 @@ class ThalakosDeceiverTest extends BaseCardTest {
     @DisplayName("If the source leaves first, accepting the may cannot gain control")
     void sourceLeavingBeforeResolutionPreventsControl() {
         Permanent attacker = addAttacker();
-        Permanent target = new Permanent(new YouthfulKnight());
-        gd.playerBattlefields.get(player2.getId()).add(target);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new YouthfulKnight());
 
         advanceToUnblockedMay();
         harness.handlePermanentChosen(player1, target.getId());
@@ -140,5 +134,45 @@ class ThalakosDeceiverTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertOnBattlefield(player1, "Thalakos Deceiver");
+    }
+
+    @Test
+    @DisplayName("The ability can target another creature you already control")
+    void canTargetOwnCreature() {
+        addAttacker();
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new YouthfulKnight());
+
+        advanceToUnblockedMay();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .contains(target.getId());
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInGraveyard(player1, "Thalakos Deceiver");
+        harness.assertNotOnBattlefield(player1, "Thalakos Deceiver");
+        harness.assertOnBattlefield(player1, "Youthful Knight");
+        harness.assertNotOnBattlefield(player2, "Youthful Knight");
+    }
+
+    @Test
+    @DisplayName("It can target itself and be sacrificed without returning to the battlefield")
+    void canTargetAndSacrificeItself() {
+        Permanent attacker = addAttacker();
+
+        advanceToUnblockedMay();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .contains(attacker.getId());
+        harness.handlePermanentChosen(player1, attacker.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInGraveyard(player1, "Thalakos Deceiver");
+        harness.assertNotOnBattlefield(player1, "Thalakos Deceiver");
+        harness.assertNotOnBattlefield(player2, "Thalakos Deceiver");
+        assertThat(gd.controlEffectsFor(attacker.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }
