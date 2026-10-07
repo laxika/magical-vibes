@@ -30,8 +30,7 @@ class StopColdTest extends BaseCardTest {
         addStopColdMana();
 
         harness.castEnchantment(player1, 0, creature.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(creature.isTapped()).isTrue();
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -49,8 +48,7 @@ class StopColdTest extends BaseCardTest {
         addStopColdMana();
 
         harness.castEnchantment(player1, 0, artifact.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(artifact.isTapped()).isTrue();
     }
@@ -83,6 +81,79 @@ class StopColdTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, plains.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be an artifact or creature");
+    }
+
+    @Test
+    @DisplayName("Can be cast during an opponent's upkeep and taps only when its trigger resolves")
+    void flashDuringOpponentsTurn() {
+        Permanent creature = addCreatureReady(player2, new AirElemental());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.setHand(player1, List.of(new StopCold()));
+        addStopColdMana();
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isFalse();
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+
+        assertThat(creature.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An enchanted artifact loses its activated ability and regains it after the Aura leaves")
+    void artifactAbilitiesAndUntappingReturnAfterAuraLeaves() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
+        harness.setHand(player1, List.of(new StopCold()));
+        addStopColdMana();
+        harness.castEnchantment(player1, 0, artifact.getId());
+        resolveAllTriggers();
+
+        harness.performUntapStep(player1);
+        assertThat(artifact.isTapped()).isTrue();
+
+        artifact.untap();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        Permanent aura = findPermanent(player1, "Stop Cold");
+        gd.playerBattlefields.get(player1.getId()).remove(aura);
+        gd.playerGraveyards.get(player1.getId()).add(aura.getCard());
+        artifact.tap();
+        harness.performUntapStep(player1);
+        assertThat(artifact.isTapped()).isFalse();
+
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(artifact.isTapped()).isTrue();
+        harness.assertLife(player1, lifeBefore + 1);
+    }
+
+    @Test
+    @DisplayName("Creature abilities return when the Aura leaves")
+    void creatureAbilitiesReturnAfterAuraLeaves() {
+        Permanent creature = addCreatureReady(player2, new AirElemental());
+        harness.setHand(player1, List.of(new StopCold()));
+        addStopColdMana();
+        harness.castEnchantment(player1, 0, creature.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isFalse();
+
+        Permanent aura = findPermanent(player1, "Stop Cold");
+        gd.playerBattlefields.get(player1.getId()).remove(aura);
+        gd.playerGraveyards.get(player1.getId()).add(aura.getCard());
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isTrue();
+        harness.performUntapStep(player2);
+        assertThat(creature.isTapped()).isFalse();
     }
 
     private void addStopColdMana() {
