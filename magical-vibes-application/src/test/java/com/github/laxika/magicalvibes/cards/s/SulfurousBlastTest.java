@@ -1,13 +1,58 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.a.AshcoatBear;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-@CardUsed({SulfurousBlast.class, SkulkingKnight.class})
+@CardUsed({SulfurousBlast.class, SkulkingKnight.class, AshcoatBear.class})
 class SulfurousBlastTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Two damage kills two-toughness creatures on both sides without targeting")
+    void twoDamageKillsCreaturesOnBothSides() {
+        harness.addToBattlefield(player1, new AshcoatBear());
+        harness.addToBattlefield(player2, new AshcoatBear());
+        harness.addToBattlefield(player1, new SkulkingKnight());
+        harness.addToBattlefield(player2, new SkulkingKnight());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
+
+        harness.castFromHand(player1, new SulfurousBlast(), "{2}{R}{R}");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Ashcoat Bear");
+        harness.assertNotOnBattlefield(player2, "Ashcoat Bear");
+        harness.assertInGraveyard(player1, "Ashcoat Bear");
+        harness.assertInGraveyard(player2, "Ashcoat Bear");
+        harness.assertOnBattlefield(player1, "Skulking Knight");
+        harness.assertOnBattlefield(player2, "Skulking Knight");
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 18);
+        harness.assertInGraveyard(player1, "Sulfurous Blast");
+    }
+
+    @Test
+    @DisplayName("Damages both players during the main phase even with no creatures")
+    void damagesPlayersWithEmptyBattlefields() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castFromHand(player1, new SulfurousBlast(), "{2}{R}{R}");
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 17);
+        harness.assertInGraveyard(player1, "Sulfurous Blast");
+    }
 
     @Test
     @DisplayName("Deals 3 damage during its controller's main phase")
