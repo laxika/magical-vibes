@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.w.WallOfMulch;
+import com.github.laxika.magicalvibes.cards.x.Xenograft;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -11,12 +11,10 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Standardize.class, WallOfMulch.class})
+@CardUsed({Standardize.class, WallOfMulch.class, Xenograft.class})
 class StandardizeTest extends BaseCardTest {
 
     @Test
@@ -57,9 +55,51 @@ class StandardizeTest extends BaseCardTest {
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
+    @Test
+    @DisplayName("Creatures entering after resolution retain their creature types")
+    void laterEntrantsAreUnaffected() {
+        Permanent existing = harness.addToBattlefieldAndReturn(player1, new WallOfMulch());
+
+        castStandardize(player1);
+        harness.handleListChoice(player1, CardSubtype.GOBLIN.name());
+        Permanent later = harness.addToBattlefieldAndReturn(player2, new WallOfMulch());
+
+        assertThat(gqs.effectiveCreatureSubtypes(gd, existing)).containsExactly(CardSubtype.GOBLIN);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, later)).containsExactly(CardSubtype.WALL);
+    }
+
+    @Test
+    @DisplayName("A second Standardize replaces the first chosen type")
+    void laterResolutionReplacesEarlierType() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new WallOfMulch());
+
+        castStandardize(player1);
+        harness.handleListChoice(player1, CardSubtype.GOBLIN.name());
+        castStandardize(player1);
+        harness.handleListChoice(player1, CardSubtype.ELF.name());
+
+        assertThat(gqs.effectiveCreatureSubtypes(gd, creature)).containsExactly(CardSubtype.ELF);
+    }
+
+    @Test
+    @DisplayName("A later Xenograft adds its chosen type after Standardize")
+    void laterStaticTypeGrantIsAppliedAfterStandardize() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new WallOfMulch());
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new WallOfMulch());
+
+        castStandardize(player1);
+        harness.handleListChoice(player1, CardSubtype.GOBLIN.name());
+        harness.castFromHand(player1, new Xenograft(), "{4}{U}");
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, CardSubtype.ELF.name());
+
+        assertThat(gqs.effectiveCreatureSubtypes(gd, ownCreature))
+                .containsExactlyInAnyOrder(CardSubtype.GOBLIN, CardSubtype.ELF);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, opposingCreature)).containsExactly(CardSubtype.GOBLIN);
+    }
+
     private void castStandardize(Player caster) {
-        harness.setHand(caster, List.of(new Standardize()));
-        harness.addMana(caster, ManaColor.BLUE, 2);
-        harness.castAndResolveInstant(caster, 0);
+        harness.castFromHand(caster, new Standardize(), "{U}{U}");
+        harness.passBothPriorities();
     }
 }
