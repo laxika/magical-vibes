@@ -51,6 +51,74 @@ class SylvanAdvocateTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, ownLand)).isEqualTo(2);
     }
 
+    @Test
+    @DisplayName("Reevaluates the bonus when the land count crosses six in either direction")
+    void reevaluatesBonusWhenLandCountChanges() {
+        Permanent advocate = harness.addToBattlefieldAndReturn(player1, new SylvanAdvocate());
+        addLands(player1, 5);
+        harness.addToBattlefield(player1, new NaturesRevolt());
+        Permanent ownLand = findPermanent(player1, "Forest");
+
+        assertThat(gqs.getEffectivePower(gd, advocate)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownLand)).isEqualTo(2);
+
+        Permanent sixthLand = harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        assertThat(gqs.getEffectivePower(gd, advocate)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, advocate)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, ownLand)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, ownLand)).isEqualTo(4);
+
+        gd.playerBattlefields.get(player1.getId()).remove(sixthLand);
+
+        assertThat(gqs.getEffectivePower(gd, advocate)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, advocate)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, ownLand)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownLand)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Multiple Advocates stack their land bonuses but do not boost each other")
+    void multipleAdvocatesStackOnlyForLandCreatures() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new SylvanAdvocate());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new SylvanAdvocate());
+        addLands(player1, 7);
+        harness.addToBattlefield(player1, new NaturesRevolt());
+        Permanent ownLand = findPermanent(player1, "Forest");
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, ownLand)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, ownLand)).isEqualTo(6);
+
+        gd.playerBattlefields.get(player1.getId()).remove(first);
+
+        assertThat(gqs.getEffectivePower(gd, ownLand)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, ownLand)).isEqualTo(4);
+
+        gd.playerBattlefields.get(player1.getId()).remove(second);
+
+        assertThat(gqs.getEffectivePower(gd, ownLand)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownLand)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Opponent lands do not contribute to the controller's six-land threshold")
+    void opponentLandsDoNotSatisfyThreshold() {
+        Permanent advocate = harness.addToBattlefieldAndReturn(player1, new SylvanAdvocate());
+        addLands(player1, 5);
+        addLands(player2, 6);
+        harness.addToBattlefield(player1, new NaturesRevolt());
+        Permanent ownLand = findPermanent(player1, "Forest");
+
+        assertThat(gqs.getEffectivePower(gd, advocate)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, advocate)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, ownLand)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownLand)).isEqualTo(2);
+    }
+
     private void addLands(Player player, int count) {
         for (int i = 0; i < count; i++) {
             harness.addToBattlefield(player, new Forest());
