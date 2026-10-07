@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -14,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TheBrute.class, GrizzlyBears.class, FountainOfYouth.class})
+@CardUsed({TheBrute.class, GrizzlyBears.class, FountainOfYouth.class, Disenchant.class})
 class TheBruteTest extends BaseCardTest {
 
     @Test
@@ -115,6 +116,48 @@ class TheBruteTest extends BaseCardTest {
                 player1, gd.playerBattlefields.get(player1.getId()).indexOf(aura), null, null))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(bears.getRegenerationShield()).isZero();
+    }
+
+    @Test
+    @DisplayName("Repeated activations create separate shields without tapping the creature or Aura")
+    void repeatedActivationsCreateSeparateShields() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new TheBrute());
+        aura.setAttachedTo(bears.getId());
+        harness.addMana(player1, ManaColor.RED, 6);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(bears.getRegenerationShield()).isEqualTo(2);
+        assertThat(bears.isTapped()).isFalse();
+        assertThat(aura.isTapped()).isFalse();
+        assertThat(aura.getRegenerationShield()).isZero();
+    }
+
+    @Test
+    @DisplayName("An activated regeneration ability still protects the creature after The Brute is destroyed")
+    void regenerationResolvesAfterAuraIsDestroyed() {
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new TheBrute());
+        aura.setAttachedTo(bears.getId());
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.setHand(player1, List.of(new Disenchant()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, aura.getId());
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "The Brute");
+        harness.assertInGraveyard(player1, "The Brute");
+        resolveAllTriggers();
+
+        assertThat(bears.getRegenerationShield()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(bears.isTapped()).isFalse();
     }
 
     @Test
