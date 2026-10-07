@@ -3,19 +3,22 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.d.DawntreaderElk;
+
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TowerGeist.class, DawntreaderElk.class, ThoughtScour.class})
 class TowerGeistTest extends BaseCardTest {
 
     
@@ -51,7 +54,7 @@ class TowerGeistTest extends BaseCardTest {
     @Test
     @DisplayName("ETB with two cards in library enters reveal choice state")
     void etbEntersRevealChoiceState() {
-        setupTopCards(List.of(new GrizzlyBears(), new Shock()));
+        harness.setLibrary(player1, List.of(new DawntreaderElk(), new ThoughtScour()));
         harness.setHand(player1, List.of(new TowerGeist()));
         addCastingMana();
 
@@ -63,9 +66,9 @@ class TowerGeistTest extends BaseCardTest {
     @Test
     @DisplayName("Choosing a card puts it in hand and the other into graveyard")
     void choosingPutsOneInHandRestInGraveyard() {
-        Card card0 = new GrizzlyBears();
-        Card card1 = new Shock();
-        setupTopCards(List.of(card0, card1));
+        Card card0 = new DawntreaderElk();
+        Card card1 = new ThoughtScour();
+        harness.setLibrary(player1, List.of(card0, card1));
         harness.setHand(player1, List.of(new TowerGeist()));
         addCastingMana();
 
@@ -80,9 +83,9 @@ class TowerGeistTest extends BaseCardTest {
     @Test
     @DisplayName("Choosing clears awaiting state")
     void choosingClearsAwaitingState() {
-        Card card0 = new GrizzlyBears();
-        Card card1 = new Shock();
-        setupTopCards(List.of(card0, card1));
+        Card card0 = new DawntreaderElk();
+        Card card1 = new ThoughtScour();
+        harness.setLibrary(player1, List.of(card0, card1));
         harness.setHand(player1, List.of(new TowerGeist()));
         addCastingMana();
 
@@ -95,9 +98,8 @@ class TowerGeistTest extends BaseCardTest {
     @Test
     @DisplayName("With one card in library, it automatically goes to hand")
     void oneCardInLibrary() {
-        gd.playerDecks.get(player1.getId()).clear();
-        Card singleCard = new GrizzlyBears();
-        gd.playerDecks.get(player1.getId()).add(singleCard);
+        Card singleCard = new DawntreaderElk();
+        harness.setLibrary(player1, List.of(singleCard));
         harness.setHand(player1, List.of(new TowerGeist()));
         addCastingMana();
 
@@ -112,7 +114,7 @@ class TowerGeistTest extends BaseCardTest {
     @Test
     @DisplayName("With empty library, nothing happens")
     void emptyLibrary() {
-        gd.playerDecks.get(player1.getId()).clear();
+        harness.setLibrary(player1, List.of());
         harness.setHand(player1, List.of(new TowerGeist()));
         addCastingMana();
 
@@ -123,6 +125,43 @@ class TowerGeistTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("library is empty"));
     }
 
+    @Test
+    @DisplayName("Putting one of the two cards into hand is mandatory")
+    void cannotDeclinePuttingACardIntoHand() {
+        Card first = new DawntreaderElk();
+        Card second = new ThoughtScour();
+        harness.setLibrary(player1, List.of(first, second));
+        harness.setHand(player1, List.of(new TowerGeist()));
+        addCastingMana();
+
+        castAndResolveEtb();
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId()));
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(first);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(second);
+    }
+
+    @Test
+    @DisplayName("Only the top two cards are affected and the remaining library keeps its order")
+    void leavesCardsBelowTopTwoUntouched() {
+        Card first = new DawntreaderElk();
+        Card second = new ThoughtScour();
+        Card third = new DawntreaderElk();
+        Card fourth = new ThoughtScour();
+        harness.setLibrary(player1, List.of(first, second, third, fourth));
+        harness.setHand(player1, List.of(new TowerGeist()));
+        addCastingMana();
+
+        castAndResolveEtb();
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(first);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(second);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(third, fourth);
+    }
     private void addCastingMana() {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -134,9 +173,4 @@ class TowerGeistTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    private void setupTopCards(List<Card> cards) {
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(cards);
-    }
 }
