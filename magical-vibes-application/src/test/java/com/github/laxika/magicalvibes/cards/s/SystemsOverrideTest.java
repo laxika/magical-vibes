@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.d.DoublingSeason;
+import com.github.laxika.magicalvibes.cards.f.FellGravship;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -18,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(SystemsOverride.class)
+@CardUsed({SystemsOverride.class, FellGravship.class, DoublingSeason.class})
 class SystemsOverrideTest extends BaseCardTest {
 
     @Test
@@ -94,10 +96,73 @@ class SystemsOverrideTest extends BaseCardTest {
         assertThat(gd.isStolenUntilEndOfTurn(target.getId())).isFalse();
     }
 
+    @Test
+    @DisplayName("Removes ten charge counters with one delayed ability")
+    void removesTenCountersInOneResolution() {
+        Permanent spacecraft = harness.addToBattlefieldAndReturn(player2, new FellGravship());
+        spacecraft.setCounterCount(CounterType.CHARGE, 2);
+
+        cast(spacecraft);
+
+        assertThat(spacecraft.getCounterCount(CounterType.CHARGE)).isEqualTo(12);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(spacecraft.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(spacecraft);
+    }
+
+    @Test
+    @DisplayName("Removes all remaining charge counters when fewer than ten remain")
+    void removesRemainingCounters() {
+        Permanent spacecraft = harness.addToBattlefieldAndReturn(player2, new FellGravship());
+
+        cast(spacecraft);
+        spacecraft.setCounterCount(CounterType.CHARGE, 4);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        assertThat(spacecraft.getCounterCount(CounterType.CHARGE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Can untap and grant haste to a Spacecraft already controlled by the caster")
+    void canTargetOwnSpacecraft() {
+        Permanent spacecraft = harness.addToBattlefieldAndReturn(player1, new FellGravship());
+        spacecraft.tap();
+
+        cast(spacecraft);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(spacecraft);
+        assertThat(spacecraft.isTapped()).isFalse();
+        assertThat(spacecraft.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(spacecraft.getCounterCount(CounterType.CHARGE)).isEqualTo(10);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        resolveAllTriggers();
+        assertThat(spacecraft.getCounterCount(CounterType.CHARGE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Removes only ten charge counters even when their placement was doubled")
+    void removesOnlyTenAfterCounterDoubling() {
+        harness.addToBattlefield(player1, new DoublingSeason());
+        Permanent spacecraft = harness.addToBattlefieldAndReturn(player2, new FellGravship());
+
+        cast(spacecraft);
+
+        assertThat(spacecraft.getCounterCount(CounterType.CHARGE)).isEqualTo(20);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        assertThat(spacecraft.getCounterCount(CounterType.CHARGE)).isEqualTo(10);
+    }
+
     private void cast(Permanent target) {
         prepareCast();
-        harness.castSorcery(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, target.getId());
     }
 
     private void prepareCast() {
