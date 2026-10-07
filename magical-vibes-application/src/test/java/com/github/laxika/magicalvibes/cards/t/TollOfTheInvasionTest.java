@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.c.CloudfinRaptor;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Peek;
@@ -19,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TollOfTheInvasion.class, Forest.class, GrizzlyBears.class, Peek.class})
+@CardUsed({TollOfTheInvasion.class, Forest.class, GrizzlyBears.class, Peek.class, CloudfinRaptor.class})
 class TollOfTheInvasionTest extends BaseCardTest {
 
     @Test
@@ -72,11 +73,62 @@ class TollOfTheInvasionTest extends BaseCardTest {
                 .hasMessageContaining("opponent");
     }
 
+    @Test
+    void amassesWhenOpponentsHandIsEmpty() {
+        harness.setHand(player2, List.of());
+        castTollOfTheInvasion();
+        assertThat(gd.playerBattlefields.get(player1.getId())).singleElement()
+                .satisfies(army -> assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1));
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void amassesWhenHandContainsOnlyLands() {
+        harness.setHand(player2, List.of(new Forest()));
+        castTollOfTheInvasion();
+        harness.assertInHand(player2, "Forest");
+        harness.assertNotInGraveyard(player2, "Forest");
+        assertThat(gd.playerBattlefields.get(player1.getId())).singleElement()
+                .satisfies(army -> assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1));
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void choosesOnlyOneOfMultipleOwnArmies() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opposingArmy = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        first.getGrantedSubtypes().add(CardSubtype.ARMY);
+        second.getGrantedSubtypes().add(CardSubtype.ARMY);
+        opposingArmy.getGrantedSubtypes().add(CardSubtype.ARMY);
+        harness.setHand(player2, List.of());
+        castTollOfTheInvasion();
+        harness.handleMultiplePermanentsChosen(player1, List.of(second.getId()));
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(first.getGrantedSubtypes()).doesNotContain(CardSubtype.ZOMBIE);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(second.getGrantedSubtypes()).contains(CardSubtype.ZOMBIE, CardSubtype.ARMY);
+        assertThat(opposingArmy.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    void newArmyEntersAsZeroZeroAndDoesNotTriggerEvolve() {
+        Permanent raptor = harness.addToBattlefieldAndReturn(player1, new CloudfinRaptor());
+        harness.setHand(player2, List.of());
+        castTollOfTheInvasion();
+        assertThat(gd.stack).isEmpty();
+        assertThat(raptor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken())
+                .singleElement()
+                .satisfies(army -> assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1));
+    }
+
     private void castTollOfTheInvasion() {
         harness.setHand(player1, List.of(new TollOfTheInvasion()));
         addManaForToll();
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
     }
 
     private void addManaForToll() {
