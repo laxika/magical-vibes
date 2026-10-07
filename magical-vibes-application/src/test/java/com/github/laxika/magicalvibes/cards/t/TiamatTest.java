@@ -4,14 +4,13 @@ import com.github.laxika.magicalvibes.cards.b.BalefireDragon;
 import com.github.laxika.magicalvibes.cards.b.BeaconOfUnrest;
 import com.github.laxika.magicalvibes.cards.b.BroodmateDragon;
 import com.github.laxika.magicalvibes.cards.g.GoldspanDragon;
+import com.github.laxika.magicalvibes.cards.g.GatherSpecimens;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningDragon;
 import com.github.laxika.magicalvibes.cards.s.ShivanDragon;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -22,7 +21,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({Tiamat.class, BalefireDragon.class, BeaconOfUnrest.class, BroodmateDragon.class,
-        GoldspanDragon.class, GrizzlyBears.class, LightningDragon.class, ShivanDragon.class})
+        GoldspanDragon.class, GatherSpecimens.class, GrizzlyBears.class, LightningDragon.class, ShivanDragon.class})
 class TiamatTest extends BaseCardTest {
 
     @Test
@@ -65,14 +64,86 @@ class TiamatTest extends BaseCardTest {
         harness.setHand(player1, List.of(new BeaconOfUnrest()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0, target.getId());
 
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Tiamat");
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getName)
                 .contains("Shivan Dragon");
+    }
+
+    @Test
+    @DisplayName("The search may be declined even when eligible Dragons exist")
+    void mayChooseNoDragons() {
+        setLibrary(new ShivanDragon(), new BroodmateDragon());
+        castTiamat();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getName)
+                .containsExactlyInAnyOrder("Shivan Dragon", "Broodmate Dragon");
+    }
+
+    @Test
+    @DisplayName("The search may stop after fewer than five Dragons")
+    void mayStopAfterOneDragon() {
+        setLibrary(new ShivanDragon(), new ShivanDragon(), new BroodmateDragon());
+        castTiamat();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        chooseCard("Shivan Dragon");
+        assertThat(activeSearch().params().cards()).extracting(Card::getName)
+                .containsExactly("Broodmate Dragon");
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName)
+                .containsExactly("Shivan Dragon");
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getName)
+                .containsExactlyInAnyOrder("Shivan Dragon", "Broodmate Dragon");
+    }
+
+    @Test
+    @DisplayName("The search finishes when only duplicate or excluded cards remain")
+    void searchFinishesWhenNoDistinctDragonsRemain() {
+        setLibrary(new ShivanDragon(), new ShivanDragon(), new Tiamat(), new GrizzlyBears());
+        castTiamat();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        chooseCard("Shivan Dragon");
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName)
+                .containsExactly("Shivan Dragon");
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getName)
+                .containsExactlyInAnyOrder("Shivan Dragon", "Tiamat", "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Tiamat entering under a different player's control does not trigger for that player")
+    void opponentWhoDidNotCastTiamatDoesNotSearch() {
+        harness.setLibrary(player2, List.of(new BroodmateDragon()));
+        harness.setHand(player2, List.of(new GatherSpecimens()));
+        harness.addMana(player2, ManaColor.BLUE, 6);
+        castTiamat();
+
+        harness.castInstant(player2, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Tiamat");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).extracting(Card::getName)
+                .containsExactly("Broodmate Dragon");
     }
 
     private void castTiamat() {
@@ -87,13 +158,11 @@ class TiamatTest extends BaseCardTest {
     }
 
     private void setLibrary(Card... cards) {
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(cards));
+        harness.setLibrary(player1, List.of(cards));
     }
 
     private PendingInteraction.LibrarySearch activeSearch() {
-        GameData gameData = harness.getGameData();
-        return gameData.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        return gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
     }
 
     private void chooseCard(String cardName) {
@@ -102,7 +171,6 @@ class TiamatTest extends BaseCardTest {
                 .toList();
         int index = offeredNames.indexOf(cardName);
         assertThat(index).isGreaterThanOrEqualTo(0);
-        harness.getGameService().handleInteractionAnswer(
-                gd, player1, new InteractionAnswer.LibraryCardChosen(index));
+        harness.handleCardChosen(player1, index);
     }
 }
