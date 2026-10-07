@@ -105,4 +105,60 @@ class TroubledHealerTest extends BaseCardTest {
 
         assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
     }
+
+    @Test
+    @DisplayName("Repeated activations add shields without tapping the healer")
+    void repeatedActivationsPreventFourDamage() {
+        harness.addToBattlefield(player1, new TroubledHealer());
+        for (int i = 0; i < 5; i++) {
+            harness.addToBattlefield(player2, new MoggFanatic());
+        }
+        harness.setLife(player1, 20);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        for (int i = 0; i < 2; i++) {
+            harness.addToBattlefield(player1, new Forest());
+            harness.activateAbility(player1, 0, null, player1.getId());
+            harness.passBothPriorities();
+        }
+
+        for (int i = 0; i < 5; i++) {
+            harness.activateAbility(player2, 0, null, player1.getId());
+            harness.passBothPriorities();
+            harness.assertLife(player1, i < 4 ? 20 : 19);
+        }
+        harness.assertOnBattlefield(player1, "Troubled Healer");
+        harness.assertNotOnBattlefield(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("An opponent's land cannot pay the sacrifice cost")
+    void cannotSacrificeOpponentsLand() {
+        harness.addToBattlefield(player1, new TroubledHealer());
+        harness.addToBattlefield(player2, new Forest());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player1.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player2, "Forest");
+    }
+
+    @Test
+    @DisplayName("An ordinary land is not a legal damage-prevention target")
+    void cannotTargetOrdinaryLand() {
+        harness.addToBattlefield(player1, new TroubledHealer());
+        harness.addToBattlefield(player1, new Forest());
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new Forest()).getId();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetId))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Forest");
+    }
 }
