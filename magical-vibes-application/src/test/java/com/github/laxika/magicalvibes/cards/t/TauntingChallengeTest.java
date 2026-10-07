@@ -27,8 +27,7 @@ class TauntingChallengeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new TauntingChallenge()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
-        harness.castSorcery(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, target.getId());
 
         assertThat(target.isMustBeBlockedByAllThisTurn()).isTrue();
     }
@@ -41,8 +40,7 @@ class TauntingChallengeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new TauntingChallenge()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
-        harness.castSorcery(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, target.getId());
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -61,8 +59,7 @@ class TauntingChallengeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new TauntingChallenge()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
-        harness.castSorcery(player1, 0, attacker.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, attacker.getId());
         attacker.setAttacking(true);
         prepareDeclareBlockers();
 
@@ -89,8 +86,7 @@ class TauntingChallengeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new TauntingChallenge()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
-        harness.castSorcery(player1, 0, attacker.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, attacker.getId());
         attacker.setAttacking(true);
         prepareDeclareBlockers();
 
@@ -136,8 +132,7 @@ class TauntingChallengeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new TauntingChallenge()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
-        harness.castSorcery(player1, 0, attacker.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, attacker.getId());
         attacker.setAttacking(true);
         prepareDeclareBlockers();
 
@@ -157,8 +152,7 @@ class TauntingChallengeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new TauntingChallenge()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
-        harness.castSorcery(player1, 0, attacker.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, attacker.getId());
         attacker.setAttacking(true);
         prepareDeclareBlockers();
 
@@ -170,5 +164,60 @@ class TauntingChallengeTest extends BaseCardTest {
 
         assertThat(unableBlocker.isBlocking()).isFalse();
         assertThat(ableBlocker.isBlocking()).isTrue();
+    }
+    @Test
+    @DisplayName("A creature entering after resolution must still block, even with summoning sickness")
+    void newlyEnteredCreatureMustBlock() {
+        Permanent attacker = addCreatureReady(player1, new ForestBear());
+        harness.setHand(player1, List.of(new TauntingChallenge()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.castAndResolveSorcery(player1, 0, attacker.getId());
+
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new ForestBear());
+        blocker.setSummoningSick(true);
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must block");
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Two affected attackers let a single blocker choose either one")
+    void competingRequirementsAllowEitherAttacker() {
+        Permanent firstAttacker = addCreatureReady(player1, new ForestBear());
+        Permanent secondAttacker = addCreatureReady(player1, new ForestBear());
+        Permanent blocker = addCreatureReady(player2, new ForestBear());
+        harness.setHand(player1, List.of(new TauntingChallenge(), new TauntingChallenge()));
+        harness.addMana(player1, ManaColor.GREEN, 6);
+        harness.castAndResolveSorcery(player1, 0, firstAttacker.getId());
+        harness.castAndResolveSorcery(player1, 0, secondAttacker.getId());
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must block");
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
+        assertThat(blocker.isBlocking()).isTrue();
+        assertThat(blocker.getBlockingTargets()).containsExactly(1);
+    }
+
+    @Test
+    @DisplayName("An affected creature that stays out of combat creates no blocking requirement")
+    void nonattackingTargetDoesNotRequireBlocking() {
+        Permanent target = addCreatureReady(player1, new ForestBear());
+        addCreatureReady(player1, new ForestBear());
+        Permanent blocker = addCreatureReady(player2, new ForestBear());
+        harness.setHand(player1, List.of(new TauntingChallenge()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+        declareAttackersAndPrepareBlockers(List.of(1));
+
+        gs.declareBlockers(gd, player2, List.of());
+        assertThat(blocker.isBlocking()).isFalse();
     }
 }
