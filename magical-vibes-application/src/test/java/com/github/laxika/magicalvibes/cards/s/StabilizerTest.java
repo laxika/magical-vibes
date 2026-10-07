@@ -53,4 +53,67 @@ class StabilizerTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         harness.assertInHand(player1, "Noble Templar");
     }
+
+    @Test
+    @DisplayName("A tapped Stabilizer still prevents cycling")
+    void tappedStabilizerPreventsCycling() {
+        harness.addToBattlefieldAndReturn(player1, new Stabilizer()).setTapped(true);
+        harness.setHand(player1, List.of(new SparkSpray()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("Players can't cycle cards");
+        harness.assertInHand(player1, "Spark Spray");
+    }
+
+    @Test
+    @DisplayName("Stabilizer in the graveyard does not prevent cycling")
+    void graveyardStabilizerDoesNotPreventCycling() {
+        harness.setGraveyard(player1, List.of(new Stabilizer()));
+        harness.setHand(player1, List.of(new SparkSpray()));
+        harness.setLibrary(player1, List.of(new NobleTemplar()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Spark Spray");
+        harness.assertInHand(player1, "Noble Templar");
+    }
+
+    @Test
+    @DisplayName("Cycling already on the stack resolves after Stabilizer enters")
+    void previouslyActivatedCyclingStillResolves() {
+        harness.setHand(player1, List.of(new SparkSpray()));
+        harness.setLibrary(player1, List.of(new NobleTemplar()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.addToBattlefield(player2, new Stabilizer());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Spark Spray");
+        harness.assertInHand(player1, "Noble Templar");
+    }
+
+    @Test
+    @DisplayName("Cycling becomes available after Stabilizer leaves the battlefield")
+    void cyclingAllowedAfterStabilizerLeaves() {
+        harness.addToBattlefield(player1, new Stabilizer());
+        harness.setHand(player1, List.of(new SparkSpray()));
+        harness.setLibrary(player1, List.of(new NobleTemplar()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("Players can't cycle cards");
+
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.setGraveyard(player1, List.of(new Stabilizer()));
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Spark Spray");
+        harness.assertInHand(player1, "Noble Templar");
+    }
 }
