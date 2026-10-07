@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -81,15 +80,82 @@ class TheSpotLivingPortalTest extends BaseCardTest {
                 .hasMessageContaining("battlefield");
     }
 
+    @Test
+    void battlefieldTargetThatDiesInResponseIsNotExiledFromGraveyard() {
+        Permanent battlefieldTarget = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        HillGiant graveyardTarget = new HillGiant();
+        harness.setGraveyard(player2, List.of(graveyardTarget));
+        castSpot();
+        harness.handleMultipleCardsChosen(player1,
+                List.of(battlefieldTarget.getCard().getId(), graveyardTarget.getId()));
+
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, battlefieldTarget);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).extracting(Card::getId)
+                .contains(battlefieldTarget.getCard().getId())
+                .doesNotContain(graveyardTarget.getId());
+        assertThat(gd.exiledCards).extracting(entry -> entry.card().getId())
+                .contains(graveyardTarget.getId())
+                .doesNotContain(battlefieldTarget.getCard().getId());
+    }
+
+    @Test
+    void graveyardOnlyTargetIsExiledAndReturned() {
+        HillGiant target = new HillGiant();
+        harness.setGraveyard(player1, List.of(target));
+        TheSpotLivingPortal spot = castSpot();
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.passBothPriorities();
+
+        Permanent spotPermanent = findPermanentByCardId(spot.getId());
+        assertThat(gd.getCardsExiledByPermanent(spotPermanent.getId())).extracting(Card::getId)
+                .containsExactly(target.getId());
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, spotPermanent);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getId).contains(target.getId());
+        assertThat(gd.playerDecks.get(player1.getId())).last().extracting(Card::getId).isEqualTo(spot.getId());
+    }
+
+    @Test
+    void exiledCardsStayExiledWhenSpotLeavesGraveyardBeforeDeathAbilityResolves() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+        TheSpotLivingPortal spot = castSpot();
+        harness.handleMultipleCardsChosen(player1, List.of(target.getCard().getId()));
+        harness.passBothPriorities();
+        Permanent spotPermanent = findPermanentByCardId(spot.getId());
+
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, spotPermanent);
+        harness.getPermanentRemovalService().removeCardFromGraveyardByIdForExile(gd, spot.getId());
+        harness.setExile(player1, List.of(spot));
+        harness.passBothPriorities();
+
+        assertThat(gd.getCardsExiledByPermanent(spotPermanent.getId())).extracting(Card::getId)
+                .containsExactly(target.getCard().getId());
+        assertThat(gd.playerHands.get(player2.getId())).extracting(Card::getId)
+                .doesNotContain(target.getCard().getId());
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getId).doesNotContain(spot.getId());
+    }
+
+    @Test
+    void spotCanTargetItselfWithoutTriggeringDeathAbility() {
+        TheSpotLivingPortal spot = castSpot();
+        harness.handleMultipleCardsChosen(player1, List.of(spot.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).extracting(permanent -> permanent.getCard().getId())
+                .doesNotContain(spot.getId());
+        assertThat(gd.exiledCards).extracting(entry -> entry.card().getId()).contains(spot.getId());
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getId).doesNotContain(spot.getId());
+        assertThat(gd.stack).isEmpty();
+    }
+
     private TheSpotLivingPortal castSpot() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         TheSpotLivingPortal spot = new TheSpotLivingPortal();
-        harness.setHand(player1, List.of(spot));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, spot, "{3}{W}{B}");
         harness.passBothPriorities();
         return spot;
     }
