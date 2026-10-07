@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.d.Disenchant;
+import com.github.laxika.magicalvibes.cards.e.EnchantmentAlteration;
 import com.github.laxika.magicalvibes.cards.k.Kindle;
 import com.github.laxika.magicalvibes.cards.l.LowlandGiant;
 import com.github.laxika.magicalvibes.cards.l.LotusPetal;
@@ -19,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({SpinalGraft.class, Disenchant.class, Kindle.class, LotusPetal.class,
-        LowlandGiant.class, MasterDecoy.class})
+        LowlandGiant.class, MasterDecoy.class, EnchantmentAlteration.class})
 class SpinalGraftTest extends BaseCardTest {
 
     @Test
@@ -81,8 +82,7 @@ class SpinalGraftTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Disenchant()));
         harness.addMana(player2, ManaColor.WHITE, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
-        harness.castInstant(player2, 0, graft.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, graft.getId());
 
         harness.assertInGraveyard(player1, "Spinal Graft");
         resolveAllTriggers();
@@ -105,6 +105,41 @@ class SpinalGraftTest extends BaseCardTest {
         assertThat(decoy.isTapped()).isTrue();
         harness.assertInGraveyard(player2, "Lowland Giant");
         harness.assertNotOnBattlefield(player2, "Lowland Giant");
+    }
+
+    @Test
+    @DisplayName("Moving the Aura in response does not change which creature its trigger destroys")
+    void triggerDestroysOriginalCreatureAfterAuraMoves() {
+        Permanent original = addCreatureReady(player2, new LowlandGiant());
+        Permanent destination = addCreatureReady(player2, new LowlandGiant());
+        Permanent graft = attachGraft(player1, original);
+
+        castKindleAt(player1, original);
+        harness.setHand(player2, List.of(new EnchantmentAlteration()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player2, 0, graft.getId());
+
+        assertThat(graft.getAttachedTo()).isEqualTo(destination.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(destination).doesNotContain(original);
+        harness.assertOnBattlefield(player1, "Spinal Graft");
+        resolveAllTriggers();
+    }
+
+    @Test
+    @DisplayName("Targeting another creature does not trigger Spinal Graft")
+    void targetingAnotherCreatureDoesNotTrigger() {
+        Permanent enchanted = addCreatureReady(player2, new LowlandGiant());
+        Permanent other = addCreatureReady(player2, new LowlandGiant());
+        attachGraft(player1, enchanted);
+
+        castKindleAt(player1, other);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(enchanted, other);
+        harness.assertOnBattlefield(player1, "Spinal Graft");
     }
 
     @Test
