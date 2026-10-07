@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -46,6 +48,53 @@ class TaigaTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
         assertThat(taiga.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Taiga's mana ability resolves without using the stack")
+    void manaAbilityDoesNotUseStack() {
+        addTaigaReady();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.stack).isEmpty();
+
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+    }
+
+    @Test
+    @DisplayName("Taiga cannot produce mana again while tapped")
+    void cannotActivateWhileTapped() {
+        addTaigaReady();
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "RED");
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Taiga enters untapped and can produce mana the turn it is played")
+    void canProduceManaImmediatelyAfterBeingPlayed() {
+        harness.setHand(player1, List.of(new Taiga()));
+
+        harness.playLand(player1, 0);
+
+        Permanent taiga = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(taiga.isTapped()).isFalse();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "RED");
+
+        assertThat(taiga.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
     }
 
     private Permanent addTaigaReady() {
