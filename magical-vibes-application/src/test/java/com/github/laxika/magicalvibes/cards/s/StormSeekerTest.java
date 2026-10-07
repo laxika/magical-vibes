@@ -69,6 +69,38 @@ class StormSeekerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Storm Seeker deals no damage when the target's hand becomes empty before resolution")
+    void dealsNoDamageWhenHandBecomesEmptyBeforeResolution() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new StormSeeker()));
+        harness.setHand(player2, List.of(new StormSeeker(), new StormSeeker()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.setHand(player2, List.of());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Storm Seeker does not count itself when it was its controller's last card")
+    void doesNotCountItselfWhenTargetingControllerWithLastCard() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new StormSeeker()));
+        harness.setHand(player2, List.of(new StormSeeker(), new StormSeeker()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
     @DisplayName("Storm Seeker cannot target a creature")
     void cannotTargetCreature() {
         Permanent bear = harness.addToBattlefieldAndReturn(player2, new BarbaryApes());
