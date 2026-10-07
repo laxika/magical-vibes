@@ -1,9 +1,12 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.b.BairdArgivianRecruiter;
 import com.github.laxika.magicalvibes.cards.g.GoblinPiker;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LightningStrike;
 import com.github.laxika.magicalvibes.cards.s.SavannahLions;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,7 +18,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ToriDAvenantFuryRider.class, GoblinPiker.class, SavannahLions.class, GrizzlyBears.class})
+@CardUsed({ToriDAvenantFuryRider.class, GoblinPiker.class, SavannahLions.class, GrizzlyBears.class,
+        BairdArgivianRecruiter.class, LightningStrike.class})
 class ToriDAvenantFuryRiderTest extends BaseCardTest {
 
     @Test
@@ -66,5 +70,67 @@ class ToriDAvenantFuryRiderTest extends BaseCardTest {
         assertThat(redAttacker.getPowerModifier()).isZero();
         assertThat(redAttacker.getToughnessModifier()).isZero();
         assertThat(gqs.hasKeyword(gd, redAttacker, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @CardUsed({ToriDAvenantFuryRider.class, BairdArgivianRecruiter.class})
+    @DisplayName("A red-white attacker receives every benefit and remains attacking after untapping")
+    void redWhiteAttackerReceivesAllBenefits() {
+        Permanent tori = addCreatureReady(player1, new ToriDAvenantFuryRider());
+        Permanent baird = addCreatureReady(player1, new BairdArgivianRecruiter());
+        Permanent opponentBaird = addCreatureReady(player2, new BairdArgivianRecruiter());
+        opponentBaird.setTapped(true);
+
+        declareAttackers(List.of(0, 1));
+        assertThat(baird.isTapped()).isTrue();
+        resolveAllTriggers();
+
+        assertThat(tori.getPowerModifier()).isZero();
+        assertThat(tori.getToughnessModifier()).isZero();
+        assertThat(baird.getPowerModifier()).isEqualTo(1);
+        assertThat(baird.getToughnessModifier()).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, baird, Keyword.TRAMPLE)).isTrue();
+        assertThat(baird.isTapped()).isFalse();
+        assertThat(baird.isAttacking()).isTrue();
+        assertThat(opponentBaird.getPowerModifier()).isZero();
+        assertThat(gqs.hasKeyword(gd, opponentBaird, Keyword.TRAMPLE)).isFalse();
+        assertThat(opponentBaird.isTapped()).isTrue();
+    }
+
+    @Test
+    @CardUsed({ToriDAvenantFuryRider.class, BairdArgivianRecruiter.class})
+    @DisplayName("Other creatures attacking without Tori do not trigger her ability")
+    void doesNotTriggerWhenToriDoesNotAttack() {
+        addCreatureReady(player1, new ToriDAvenantFuryRider());
+        Permanent baird = addCreatureReady(player1, new BairdArgivianRecruiter());
+
+        declareAttackers(List.of(1));
+        resolveAllTriggers();
+
+        assertThat(baird.getPowerModifier()).isZero();
+        assertThat(baird.getToughnessModifier()).isZero();
+        assertThat(gqs.hasKeyword(gd, baird, Keyword.TRAMPLE)).isFalse();
+        assertThat(baird.isTapped()).isTrue();
+    }
+
+    @Test
+    @CardUsed({ToriDAvenantFuryRider.class, BairdArgivianRecruiter.class, LightningStrike.class})
+    @DisplayName("Tori's attack trigger resolves after she is destroyed in response")
+    void attackTriggerResolvesAfterToriLeavesBattlefield() {
+        Permanent tori = addCreatureReady(player1, new ToriDAvenantFuryRider());
+        Permanent baird = addCreatureReady(player1, new BairdArgivianRecruiter());
+        harness.setHand(player2, List.of(new LightningStrike()));
+
+        declareAttackers(List.of(0, 1));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0, tori.getId());
+        harness.assertNotOnBattlefield(player1, "Tori D'Avenant, Fury Rider");
+        resolveAllTriggers();
+
+        assertThat(baird.getPowerModifier()).isEqualTo(1);
+        assertThat(baird.getToughnessModifier()).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, baird, Keyword.TRAMPLE)).isTrue();
+        assertThat(baird.isTapped()).isFalse();
     }
 }
