@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({StormShakerOfSkies.class, AirElemental.class, GrizzlyBears.class,
@@ -67,13 +68,42 @@ class StormShakerOfSkiesTest extends BaseCardTest {
     @Test
     @DisplayName("ETB can resolve without choosing a target")
     void etbCanResolveWithoutTarget() {
-        harness.setHand(player1, List.of(new StormShakerOfSkies()));
-        harness.addMana(player1, ManaColor.GREEN, 6);
+        harness.castFromHand(player1, new StormShakerOfSkies(), "{4}{G}{G}");
+        resolveAllTriggers();
+        harness.handlePermanentChosen(player1, player1.getId());
+        resolveAllTriggers();
 
-        harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Storm, Shaker of Skies");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
 
+    @Test
+    @DisplayName("ETB can decline to target even when a legal target exists")
+    void etbCanDeclineAvailableTarget() {
+        harness.addToBattlefield(player2, new AirElemental());
+
+        harness.castFromHand(player1, new StormShakerOfSkies(), "{4}{G}{G}");
+        resolveAllTriggers();
+        harness.handlePermanentChosen(player1, player1.getId());
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Storm, Shaker of Skies");
+        harness.assertOnBattlefield(player2, "Air Elemental");
+        harness.assertNotInGraveyard(player2, "Air Elemental");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("ETB can destroy an artifact its controller controls")
+    void etbDestroysOwnArtifact() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+
+        castStorm(target);
+
+        harness.assertNotOnBattlefield(player1, "Leonin Scimitar");
+        harness.assertInGraveyard(player1, "Leonin Scimitar");
         harness.assertOnBattlefield(player1, "Storm, Shaker of Skies");
     }
 
@@ -81,7 +111,6 @@ class StormShakerOfSkiesTest extends BaseCardTest {
         harness.setHand(player1, List.of(new StormShakerOfSkies()));
         harness.addMana(player1, ManaColor.GREEN, 6);
         harness.castCreature(player1, 0, target.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 }
