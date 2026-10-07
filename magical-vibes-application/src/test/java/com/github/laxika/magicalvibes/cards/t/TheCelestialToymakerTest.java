@@ -60,11 +60,106 @@ class TheCelestialToymakerTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, true);
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
 
         harness.assertLife(player2, 16);
+    }
+
+    @Test
+    void bothPilesAreExiledBeforeDefendingPlayerChooses() {
+        addReadyToymaker();
+        Card faceUp = new Forest();
+        Card faceDown = new Swamp();
+        harness.setLibrary(player1, List.of(faceUp, faceDown));
+
+        declareAttackers(player1, List.of(0));
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(faceUp.getId()));
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        assertThat(gd.exiledCards).anySatisfy(exiled -> {
+            assertThat(exiled.card()).isSameAs(faceUp);
+            assertThat(exiled.faceDown()).isFalse();
+        });
+        assertThat(gd.exiledCards).anySatisfy(exiled -> {
+            assertThat(exiled.card()).isSameAs(faceDown);
+            assertThat(exiled.faceDown()).isTrue();
+        });
+    }
+
+    @Test
+    void defendingPlayerCanChooseFaceDownPile() {
+        addReadyToymaker();
+        Card faceUp = new Forest();
+        Card faceDown = new Swamp();
+        harness.setLibrary(player1, List.of(faceUp, faceDown));
+
+        declareAttackers(player1, List.of(0));
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(faceUp.getId()));
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(faceDown).doesNotContain(faceUp);
+        assertThat(gd.exiledCards).noneSatisfy(exiled -> assertThat(exiled.card()).isSameAs(faceDown));
+        assertThat(gd.exiledCards).anySatisfy(exiled -> {
+            assertThat(exiled.card()).isSameAs(faceUp);
+            assertThat(exiled.faceDown()).isFalse();
+        });
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(faceUp, faceDown);
+    }
+
+    @Test
+    void defendingPlayerCanChooseEmptyFaceUpPile() {
+        addReadyToymaker();
+        Card card = new Island();
+        harness.setLibrary(player1, List.of(card));
+
+        declareAttackers(player1, List.of(0));
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(card);
+        assertThat(gd.exiledCards).anySatisfy(exiled -> {
+            assertThat(exiled.card()).isSameAs(card);
+            assertThat(exiled.faceDown()).isTrue();
+        });
+        assertThat(gd.pileGroupingOrGuessCountThisTurn).isEqualTo(1);
+    }
+
+    @Test
+    void opponentEndStepCountsEarlierPileGrouping() {
+        addReadyToymaker();
+        Card card = new Forest();
+        harness.setLibrary(player1, List.of(card));
+
+        declareAttackers(player1, List.of(0));
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(card.getId()));
+        harness.handleMayAbilityChosen(player2, true);
+        int lifeBeforeEndStep = gd.playerLifeTotals.get(player2.getId());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, lifeBeforeEndStep - 2);
+    }
+
+    @Test
+    void opponentEndStepWithoutPileGroupingCausesNoLifeLoss() {
+        addReadyToymaker();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
     }
 
     private Permanent addReadyToymaker() {
