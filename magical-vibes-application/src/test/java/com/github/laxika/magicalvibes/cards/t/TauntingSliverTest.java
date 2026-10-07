@@ -61,4 +61,61 @@ class TauntingSliverTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(als.getMustAttackRequirementCount(gd, target)).isZero();
     }
+
+    @Test
+    @DisplayName("Opposing Slivers do not gain the enter trigger")
+    void opposingSliverDoesNotGainEnterTrigger() {
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new TauntingSliver());
+
+        harness.enterBattlefieldAndReturn(player2, new SyphonSliver());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(als.getMustAttackRequirementCount(gd, target)).isZero();
+    }
+
+    @Test
+    @DisplayName("Entering without an opposing creature does not leave a pending target choice")
+    void noLegalTargetDoesNotLeavePendingChoice() {
+        harness.enterBattlefieldAndReturn(player1, new TauntingSliver());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A granted trigger resolves after Taunting Sliver leaves the battlefield")
+    void grantedTriggerSurvivesGrantingSliverLeaving() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent taunting = harness.addToBattlefieldAndReturn(player1, new TauntingSliver());
+        harness.enterBattlefieldAndReturn(player1, new SyphonSliver());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, taunting));
+        harness.passBothPriorities();
+
+        assertThat(als.getMustAttackRequirementCount(gd, target)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A goad trigger does nothing when its target leaves before resolution")
+    void targetLeavingBeforeResolutionDoesNotGoadOtherCreatures() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent other = addCreatureReady(player2, new GrizzlyBears());
+        harness.enterBattlefieldAndReturn(player1, new TauntingSliver());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, target));
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(als.getMustAttackRequirementCount(gd, other)).isZero();
+    }
 }
