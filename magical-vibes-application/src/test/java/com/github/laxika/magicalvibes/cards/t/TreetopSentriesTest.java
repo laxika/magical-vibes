@@ -37,10 +37,10 @@ class TreetopSentriesTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, food.getId());
-        harness.passBothPriorities();
 
         harness.assertInHand(player1, "Grizzly Bears");
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(food);
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
@@ -54,14 +54,39 @@ class TreetopSentriesTest extends BaseCardTest {
                 .noneMatch(card -> card.getName().equals("Grizzly Bears"));
     }
 
+    @Test
+    void acceptingWithoutFoodOrEnoughGraveyardCardsDoesNotDrawOrExile() {
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        castSentries();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        assertThat(gd.exiledCards).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void opponentsGraveyardCannotPayForForage() {
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setGraveyard(player2, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        castSentries();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(3);
+        assertThat(gd.exiledCards).isEmpty();
+    }
+
     private void castSentries() {
         harness.setHand(player1, List.of(new TreetopSentries()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
     private Permanent addFoodToken() {
@@ -72,9 +97,6 @@ class TreetopSentriesTest extends BaseCardTest {
         food.setToken(true);
         food.setSubtypes(List.of(CardSubtype.FOOD));
 
-        Permanent permanent = new Permanent(food);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(permanent);
-        return permanent;
+        return harness.addToBattlefieldAndReturn(player1, food);
     }
 }
