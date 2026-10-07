@@ -18,12 +18,11 @@ class StalkingTigerTest extends BaseCardTest {
     @Test
     @DisplayName("Stalking Tiger can be blocked by one creature")
     void canBeBlockedByOneCreature() {
-        Permanent attacker = addCreatureReady(player1, new StalkingTiger());
-        attacker.setAttacking(true);
+        addCreatureReady(player1, new StalkingTiger());
 
         addCreatureReady(player2, new StalkingTiger());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
@@ -44,13 +43,12 @@ class StalkingTigerTest extends BaseCardTest {
     @Test
     @DisplayName("Stalking Tiger cannot be blocked by two creatures")
     void cannotBeBlockedByTwoCreatures() {
-        Permanent attacker = addCreatureReady(player1, new StalkingTiger());
-        attacker.setAttacking(true);
+        addCreatureReady(player1, new StalkingTiger());
 
         addCreatureReady(player2, new StalkingTiger());
         addCreatureReady(player2, new StalkingTiger());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
@@ -63,10 +61,9 @@ class StalkingTigerTest extends BaseCardTest {
     @Test
     @DisplayName("Stalking Tiger can remain unblocked")
     void canRemainUnblocked() {
-        Permanent attacker = addCreatureReady(player1, new StalkingTiger());
-        attacker.setAttacking(true);
+        addCreatureReady(player1, new StalkingTiger());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         gs.declareBlockers(gd, player2, List.of());
         resolveCombat();
@@ -77,15 +74,13 @@ class StalkingTigerTest extends BaseCardTest {
     @Test
     @DisplayName("Each Stalking Tiger can be blocked by one creature")
     void eachAttackerCanBeBlockedByOneCreature() {
-        Permanent firstAttacker = addCreatureReady(player1, new StalkingTiger());
-        firstAttacker.setAttacking(true);
-        Permanent secondAttacker = addCreatureReady(player1, new StalkingTiger());
-        secondAttacker.setAttacking(true);
+        addCreatureReady(player1, new StalkingTiger());
+        addCreatureReady(player1, new StalkingTiger());
 
         Permanent firstBlocker = addCreatureReady(player2, new StalkingTiger());
         Permanent secondBlocker = addCreatureReady(player2, new StalkingTiger());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
 
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
@@ -99,17 +94,54 @@ class StalkingTigerTest extends BaseCardTest {
     @Test
     @DisplayName("Stalking Tiger's restriction does not affect other creatures")
     void restrictionOnlyAppliesToStalkingTiger() {
-        Permanent attacker = addCreatureReady(player1, new ShuFootSoldiers());
-        attacker.setAttacking(true);
+        addCreatureReady(player1, new ShuFootSoldiers());
+        addCreatureReady(player1, new StalkingTiger());
 
         Permanent firstBlocker = addCreatureReady(player2, new ShuFootSoldiers());
         Permanent secondBlocker = addCreatureReady(player2, new ShuFootSoldiers());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
                 new BlockerAssignment(1, 0)
+        ));
+
+        assertThat(firstBlocker.isBlocking()).isTrue();
+        assertThat(secondBlocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Stalking Tiger can block another creature alongside a second blocker")
+    void canBlockAlongsideAnotherCreature() {
+        addCreatureReady(player1, new ShuFootSoldiers());
+        Permanent tiger = addCreatureReady(player2, new StalkingTiger());
+        Permanent otherBlocker = addCreatureReady(player2, new ShuFootSoldiers());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0)
+        ));
+
+        assertThat(tiger.isBlocking()).isTrue();
+        assertThat(otherBlocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An attacking Stalking Tiger does not limit blockers of another attacker")
+    void otherAttackerCanBeBlockedByTwoCreatures() {
+        addCreatureReady(player1, new StalkingTiger());
+        addCreatureReady(player1, new ShuFootSoldiers());
+        Permanent firstBlocker = addCreatureReady(player2, new ShuFootSoldiers());
+        Permanent secondBlocker = addCreatureReady(player2, new ShuFootSoldiers());
+
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
+
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 1),
+                new BlockerAssignment(1, 1)
         ));
 
         assertThat(firstBlocker.isBlocking()).isTrue();
