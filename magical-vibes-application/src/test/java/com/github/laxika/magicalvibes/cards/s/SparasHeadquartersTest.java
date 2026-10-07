@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -15,8 +14,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SparasHeadquarters.class, GrizzlyBears.class})
+@CardUsed({SparasHeadquarters.class})
 class SparasHeadquartersTest extends BaseCardTest {
 
     @Test
@@ -65,8 +65,9 @@ class SparasHeadquartersTest extends BaseCardTest {
     @Test
     @DisplayName("Cycling discards the card and draws one")
     void cyclingDrawsACard() {
+        SparasHeadquarters drawn = new SparasHeadquarters();
         harness.setHand(player1, List.of(new SparasHeadquarters()));
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(drawn));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.activateHandAbility(player1, 0, null);
@@ -74,13 +75,76 @@ class SparasHeadquartersTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Spara's Headquarters");
-        harness.assertInHand(player1, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+    }
+
+    @Test
+    @DisplayName("Cycling pays three mana and discards immediately, but draws only on resolution")
+    void cyclingPaysCostsBeforeDrawing() {
+        SparasHeadquarters source = new SparasHeadquarters();
+        SparasHeadquarters drawn = new SparasHeadquarters();
+        harness.setHand(player1, List.of(source));
+        harness.setLibrary(player1, List.of(drawn));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(source);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(source);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cycling with only two mana fails without discarding or drawing")
+    void cyclingRequiresThreeMana() {
+        SparasHeadquarters source = new SparasHeadquarters();
+        SparasHeadquarters drawn = new SparasHeadquarters();
+        harness.setHand(player1, List.of(source));
+        harness.setLibrary(player1, List.of(drawn));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(source);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A land that has just entered tapped cannot activate its mana ability")
+    void cannotProduceManaWhileTapped() {
+        harness.setHand(player1, List.of(new SparasHeadquarters()));
+        harness.playLand(player1, 0);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
     }
 
     private Permanent addHeadquartersReady(Player player) {
-        Permanent perm = new Permanent(new SparasHeadquarters());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new SparasHeadquarters());
         perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }
