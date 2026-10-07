@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -13,63 +13,102 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TizerusCharger.class, GrizzlyBears.class})
+@CardUsed(TizerusCharger.class)
 class TizerusChargerTest extends BaseCardTest {
 
     @Test
-    void entersWithPlusOnePlusOneCounterWhenChosen() {
-        Permanent charger = castAndChoose("+1/+1");
+    void castingFromHandDoesNotOfferCounters() {
+        harness.castFromHand(player1, new TizerusCharger(), "{2}{B}");
+        harness.passBothPriorities();
 
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNull();
+        Permanent charger = findPermanent(player1, "Tizerus Charger");
+        assertThat(charger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(charger.getCounterCount(CounterType.FLYING)).isZero();
+        assertThat(charger.hasKeyword(Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    void escapesWithPlusOnePlusOneCounterWhenChosen() {
+        prepareEscape();
+        harness.castFromGraveyard(player1, 0, List.of(1, 2, 3, 4, 5));
+        harness.passBothPriorities();
+        assertCounterChoice();
+        harness.handleListChoice(player1, "+1/+1");
+
+        Permanent charger = findPermanent(player1, "Tizerus Charger");
         assertThat(charger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(charger.getCounterCount(CounterType.FLYING)).isZero();
         assertThat(charger.hasKeyword(Keyword.FLYING)).isFalse();
     }
 
     @Test
-    void entersWithFlyingCounterWhenChosen() {
-        Permanent charger = castAndChoose("flying");
+    void escapeExilesFiveOtherCardsBeforeEntering() {
+        List<Card> graveyard = prepareEscape();
+        harness.castFromGraveyard(player1, 0, List.of(1, 2, 3, 4, 5));
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .containsExactlyInAnyOrderElementsOf(graveyard.subList(1, 6));
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNull();
 
+        harness.passBothPriorities();
+        assertCounterChoice();
+        harness.handleListChoice(player1, "flying");
+
+        Permanent charger = findPermanent(player1, "Tizerus Charger");
         assertThat(charger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(charger.getCounterCount(CounterType.FLYING)).isEqualTo(1);
         assertThat(charger.hasKeyword(Keyword.FLYING)).isTrue();
     }
 
     @Test
-    void escapeExilesFiveOtherCardsBeforeEntering() {
-        TizerusCharger charger = new TizerusCharger();
-        List<GrizzlyBears> otherCards = List.of(
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears());
-        harness.setGraveyard(player1, List.of(charger, otherCards.get(0), otherCards.get(1), otherCards.get(2),
-                otherCards.get(3), otherCards.get(4)));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
+    void escapeCannotExileTheSpellItself() {
+        List<Card> graveyard = prepareEscape();
 
-        harness.castFromGraveyard(player1, 0, List.of(1, 2, 3, 4, 5));
-        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyInAnyOrderElementsOf(otherCards);
-
-        harness.passBothPriorities();
-        harness.handleListChoice(player1, "flying");
-
-        Permanent escapedCharger = findPermanent(player1, "Tizerus Charger");
-        assertThat(escapedCharger.getCounterCount(CounterType.FLYING)).isEqualTo(1);
-        assertThat(escapedCharger.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0, List.of(0, 1, 2, 3, 4)))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyElementsOf(graveyard);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
     }
 
-    private Permanent castAndChoose(String counterType) {
-        harness.setHand(player1, List.of(new TizerusCharger()));
+    @Test
+    void escapeRequiresFiveDistinctOtherCards() {
+        List<Card> graveyard = prepareEscape();
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0, List.of(1, 2, 3, 4, 4)))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyElementsOf(graveyard);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void escapeCannotBePaidWithTheNormalManaCost() {
+        prepareEscape();
+        gd.playerManaPools.get(player1.getId()).clear();
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castCreature(player1, 0);
-        harness.passBothPriorities();
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0, List.of(1, 2, 3, 4, 5)))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(6);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
 
+    private List<Card> prepareEscape() {
+        List<Card> graveyard = List.of(new TizerusCharger(), new TizerusCharger(), new TizerusCharger(),
+                new TizerusCharger(), new TizerusCharger(), new TizerusCharger());
+        harness.setGraveyard(player1, graveyard);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        return graveyard;
+    }
+
+    private void assertCounterChoice() {
         PendingInteraction.ColorChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.options()).containsExactly("+1/+1", "flying");
-        harness.handleListChoice(player1, counterType);
-
-        return findPermanent(player1, "Tizerus Charger");
     }
 }
