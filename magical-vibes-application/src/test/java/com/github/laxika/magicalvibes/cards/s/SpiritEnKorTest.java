@@ -30,8 +30,7 @@ class SpiritEnKorTest extends BaseCardTest {
 
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, spirit.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, spirit.getId());
 
         assertThat(spirit.getMarkedDamage()).isEqualTo(1);
         assertThat(destination.getMarkedDamage()).isEqualTo(1);
@@ -50,8 +49,7 @@ class SpiritEnKorTest extends BaseCardTest {
 
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, spirit.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, spirit.getId());
 
         assertThat(spirit.getMarkedDamage()).isEqualTo(0);
         assertThat(destination.getMarkedDamage()).isEqualTo(2);
@@ -67,8 +65,7 @@ class SpiritEnKorTest extends BaseCardTest {
         harness.activateAbility(player1, indexOf(player1, spirit), null, destination.getId());
         harness.passBothPriorities();
 
-        attacker.setAttacking(true);
-        prepareDeclareBlockers(player2);
+        declareAttackersAndPrepareBlockers(player2, List.of(indexOf(player2, attacker)));
         gs.declareBlockers(gd, player1,
                 List.of(new BlockerAssignment(indexOf(player1, spirit), indexOf(player2, attacker))));
         harness.passBothPriorities();
@@ -123,6 +120,87 @@ class SpiritEnKorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.creatureDamageRedirectShields).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A receiving Spirit en-Kor can redirect the damage onward")
+    void receivingCreatureCanRedirectDamageAgain() {
+        Permanent spirit = addCreatureReady(player1, new SpiritEnKor());
+        Permanent intermediate = addCreatureReady(player1, new SpiritEnKor());
+        Permanent destination = addCreatureReady(player1, new SpinedWurm());
+
+        harness.activateAbility(player1, indexOf(player1, spirit), null, intermediate.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, indexOf(player1, intermediate), null, destination.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, spirit.getId());
+
+        assertThat(spirit.getMarkedDamage()).isEqualTo(1);
+        assertThat(intermediate.getMarkedDamage()).isZero();
+        assertThat(destination.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Redirecting damage to itself does not prevent that damage")
+    void canRedirectDamageToItself() {
+        Permanent spirit = addCreatureReady(player1, new SpiritEnKor());
+        Permanent bullwhip = harness.addToBattlefieldAndReturn(player2, new Bullwhip());
+
+        harness.activateAbility(player1, indexOf(player1, spirit), null, spirit.getId());
+        harness.passBothPriorities();
+
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player2, indexOf(player2, bullwhip), null, spirit.getId());
+        harness.passBothPriorities();
+
+        assertThat(spirit.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Spirit en-Kor");
+    }
+
+    @Test
+    @DisplayName("Combat damage can be redirected through a second Spirit en-Kor")
+    void receivingCreatureCanRedirectCombatDamageAgain() {
+        Permanent spirit = addCreatureReady(player1, new SpiritEnKor());
+        Permanent intermediate = addCreatureReady(player1, new SpiritEnKor());
+        Permanent destination = addCreatureReady(player1, new SpinedWurm());
+        Permanent attacker = addCreatureReady(player2, new SpiritEnKor());
+
+        harness.activateAbility(player1, indexOf(player1, spirit), null, intermediate.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, indexOf(player1, intermediate), null, destination.getId());
+        harness.passBothPriorities();
+
+        declareAttackersAndPrepareBlockers(player2, List.of(indexOf(player2, attacker)));
+        gs.declareBlockers(gd, player1,
+                List.of(new BlockerAssignment(indexOf(player1, spirit), indexOf(player2, attacker))));
+        harness.passBothPriorities();
+
+        assertThat(spirit.getMarkedDamage()).isEqualTo(1);
+        assertThat(intermediate.getMarkedDamage()).isZero();
+        assertThat(destination.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Damage is not redirected when the destination has left the battlefield")
+    void departedDestinationDoesNotAbsorbDamage() {
+        Permanent spirit = addCreatureReady(player1, new SpiritEnKor());
+        Permanent destination = addCreatureReady(player1, new SpiritEnKor());
+
+        harness.activateAbility(player1, indexOf(player1, spirit), null, destination.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new Shock(), new Shock()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player2, 0, destination.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(destination);
+
+        harness.castAndResolveInstant(player2, 0, spirit.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(spirit);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
     }
 
     private int indexOf(Player player, Permanent perm) {
