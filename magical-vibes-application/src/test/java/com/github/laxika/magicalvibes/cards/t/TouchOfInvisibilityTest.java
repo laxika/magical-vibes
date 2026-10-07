@@ -21,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class TouchOfInvisibilityTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Target creature can't be blocked and its controller draws a card")
+    @DisplayName("Target creature can't be blocked and the spell's controller draws a card")
     void makesCreatureUnblockableAndDraws() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new Halberdier());
         harness.setHand(player1, List.of(new TouchOfInvisibility()));
@@ -33,6 +33,31 @@ class TouchOfInvisibilityTest extends BaseCardTest {
 
         assertThat(target.isCantBeBlocked()).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Targeting an opponent's creature still draws only for the spell's controller")
+    void targetingOpponentsCreatureDrawsForCaster() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Halberdier());
+        Permanent otherCreature = harness.addToBattlefieldAndReturn(player1, new Halberdier());
+        Forest drawnCard = new Forest();
+        Forest nextCard = new Forest();
+        Forest opponentsCard = new Forest();
+        harness.setHand(player1, List.of(new TouchOfInvisibility()));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(drawnCard, nextCard));
+        harness.setLibrary(player2, List.of(opponentsCard));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        assertThat(target.isCantBeBlocked()).isTrue();
+        assertThat(otherCreature.isCantBeBlocked()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nextCard);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentsCard);
     }
 
     @Test
