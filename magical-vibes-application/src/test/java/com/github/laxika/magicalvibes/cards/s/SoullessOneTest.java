@@ -48,6 +48,36 @@ class SoullessOneTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, soullessOne)).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("Ignores non-Zombies on the battlefield and Zombies in hand, library, and exile")
+    void ignoresUncountedCardsAndZones() {
+        Permanent soullessOne = addSoullessOne(player1);
+        harness.addToBattlefield(player1, new ElvishWarrior());
+        harness.addToBattlefield(player2, new ElvishWarrior());
+        for (Player player : List.of(player1, player2)) {
+            harness.setHand(player, List.of(new AnuridMurkdiver(), new SoullessOne()));
+            harness.setLibrary(player, List.of(new AnuridMurkdiver(), new SoullessOne()));
+            harness.setExile(player, List.of(new AnuridMurkdiver(), new SoullessOne()));
+        }
+
+        assertThat(gqs.getEffectivePower(gd, soullessOne)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, soullessOne)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Multiple Soulless Ones each count all copies on the battlefield and in graveyards")
+    void countsOtherCopiesWithoutRecursion() {
+        Permanent first = addSoullessOne(player1);
+        Permanent second = addSoullessOne(player2);
+        harness.setGraveyard(player1, List.of(new SoullessOne()));
+        harness.setGraveyard(player2, List.of(new SoullessOne()));
+
+        for (Permanent permanent : List.of(first, second)) {
+            assertThat(gqs.getEffectivePower(gd, permanent)).isEqualTo(4);
+            assertThat(gqs.getEffectiveToughness(gd, permanent)).isEqualTo(4);
+        }
+    }
+
     private Permanent addSoullessOne(Player player) {
         return addCreatureReady(player, new SoullessOne());
     }
