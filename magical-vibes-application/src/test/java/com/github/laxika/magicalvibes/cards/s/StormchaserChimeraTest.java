@@ -7,8 +7,10 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({StormchaserChimera.class, AirElemental.class, GrizzlyBears.class})
 class StormchaserChimeraTest extends BaseCardTest {
 
     @Test
@@ -56,6 +59,62 @@ class StormchaserChimeraTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(revealedCard);
     }
 
+    @Test
+    void emptyLibraryGivesNoBoost() {
+        Permanent chimera = addReadyChimera(player1);
+        harness.setLibrary(player1, List.of());
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(chimera.getPowerModifier()).isZero();
+        assertThat(chimera.getToughnessModifier()).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void bottomingOnlyCardStillRevealsThatCard() {
+        Permanent chimera = addReadyChimera(player1);
+        Card card = new AirElemental();
+        harness.setLibrary(player1, List.of(card));
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+
+        assertThat(chimera.getPowerModifier()).isEqualTo(5);
+        assertThat(chimera.getToughnessModifier()).isZero();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(card);
+    }
+
+    @Test
+    void boostsAccumulateRemainFixedAndExpireAtCleanup() {
+        Permanent chimera = addReadyChimera(player1);
+        harness.setLibrary(player1, List.of(new AirElemental(), new GrizzlyBears()));
+        addActivationMana();
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+
+        assertThat(chimera.getPowerModifier()).isEqualTo(7);
+        assertThat(chimera.getToughnessModifier()).isZero();
+        assertThat(chimera.isTapped()).isFalse();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(chimera.getPowerModifier()).isZero();
+        assertThat(chimera.getToughnessModifier()).isZero();
+    }
+
     private void addActivationMana() {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -63,9 +122,8 @@ class StormchaserChimeraTest extends BaseCardTest {
     }
 
     private Permanent addReadyChimera(Player player) {
-        Permanent chimera = new Permanent(new StormchaserChimera());
+        Permanent chimera = harness.addToBattlefieldAndReturn(player, new StormchaserChimera());
         chimera.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(chimera);
         return chimera;
     }
 }
