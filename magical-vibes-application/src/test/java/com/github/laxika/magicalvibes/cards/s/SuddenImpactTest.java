@@ -90,14 +90,44 @@ class SuddenImpactTest extends BaseCardTest {
     @Test
     @DisplayName("Sudden Impact cannot target a creature")
     void cannotTargetCreature() {
-        Permanent bear = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player2.getId()).add(bear);
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new SuddenImpact()));
         harness.addMana(player1, ManaColor.RED, 4);
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, bear.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Sudden Impact uses a smaller hand size if cards leave before resolution")
+    void usesSmallerHandSizeOnResolution() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new SuddenImpact(), new Plains(), new Island()));
+        harness.setHand(player2, List.of(new Plains(), new Island(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.setHand(player2, List.of(new Plains()));
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+        harness.assertLife(player1, 20);
+        harness.assertInGraveyard(player1, "Sudden Impact");
+    }
+
+    @Test
+    @DisplayName("Self-targeted Sudden Impact does not count itself after being cast")
+    void dealsNoDamageWhenItWasTheOnlyCardInItsControllersHand() {
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new SuddenImpact()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+
+        harness.assertLife(player1, 20);
+        harness.assertInGraveyard(player1, "Sudden Impact");
     }
 }
 
