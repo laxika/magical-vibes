@@ -69,6 +69,55 @@ class StoneBySunlightTest extends BaseCardTest {
                 .hasMessageContaining("creature");
     }
 
+    @Test
+    @DisplayName("Destroy mode cannot target a noncreature permanent")
+    void destroyModeRejectsNoncreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+
+        assertThatThrownBy(() -> cast(0, target))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Destroy mode rechecks the target's power when resolving")
+    void destroyModeDoesNotDestroyCreatureWhosePowerFallsBelowFour() {
+        Permanent target = addCreatureReady(player2, new AirElemental());
+        harness.setHand(player1, List.of(new StoneBySunlight()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, 0, target.getId());
+
+        target.setPowerModifier(-1);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Air Elemental");
+        harness.assertNotInGraveyard(player2, "Air Elemental");
+        harness.assertInGraveyard(player1, "Stone by Sunlight");
+    }
+
+    @Test
+    @DisplayName("Protection mode preserves creature type and existing abilities")
+    void protectionModePreservesCreatureTypeAndFlying() {
+        Permanent target = addCreatureReady(player1, new AirElemental());
+        cast(1, target);
+
+        assertThat(gqs.isCreature(gd, target)).isTrue();
+        assertThat(gqs.isArtifact(gd, target)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Protection mode prevents destruction by the destroy mode")
+    void protectedCreatureSurvivesDestruction() {
+        Permanent target = addCreatureReady(player2, new AirElemental());
+        cast(1, target);
+        cast(0, target);
+
+        harness.assertOnBattlefield(player2, "Air Elemental");
+        harness.assertNotInGraveyard(player2, "Air Elemental");
+    }
+
     private void cast(int modeIndex, Permanent target) {
         harness.setHand(player1, List.of(new StoneBySunlight()));
         harness.addMana(player1, ManaColor.WHITE, 1);
