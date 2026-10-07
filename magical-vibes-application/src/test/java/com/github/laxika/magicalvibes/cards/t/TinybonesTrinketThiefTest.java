@@ -35,7 +35,7 @@ class TinybonesTrinketThiefTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
 
         harness.assertLife(player1, 19);
@@ -88,5 +88,95 @@ class TinybonesTrinketThiefTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Triggers on the opponent end step after entering following the discard")
+    void triggersOnOpponentEndStepAfterEnteringLate() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new Distress(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castSorcery(player2, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
+        harness.passBothPriorities();
+
+        harness.addToBattlefield(player1, new TinybonesTrinketThief());
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The controller own discard does not trigger Tinybones")
+    void ownDiscardDoesNotTrigger() {
+        harness.addToBattlefield(player1, new TinybonesTrinketThief());
+        harness.setHand(player1, List.of(new Distress(), new GrizzlyBears()));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castSorcery(player1, 0, player1.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_STEP);
+        assertThat(gd.stack).isEmpty();
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opponent gaining a card before resolution avoids life loss")
+    void checksNonemptyHandAtResolution() {
+        harness.addToBattlefield(player1, new TinybonesTrinketThief());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("An opponent losing the last card before resolution loses 10 life")
+    void checksEmptyHandAtResolution() {
+        harness.addToBattlefield(player1, new TinybonesTrinketThief());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.setHand(player2, List.of());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 10);
     }
 }
