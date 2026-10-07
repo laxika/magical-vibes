@@ -170,6 +170,54 @@ class SpiritFlareTest extends BaseCardTest {
                 .anyMatch(card -> card.getName().equals("Spirit Flare"));
     }
 
+    @Test
+    @DisplayName("Taps the first target without damaging a creature that left combat")
+    void tapsFirstTargetWhenSecondTargetLeavesCombat() {
+        Permanent source = addCreatureReady(player1, new CentaurVeteran());
+        Permanent attacker = addCreatureReady(player2, new TerohsFaithful());
+        attacker.setAttacking(true);
+        castFromHand(source, attacker);
+
+        attacker.setAttacking(false);
+        harness.passBothPriorities();
+
+        assertThat(source.isTapped()).isTrue();
+        assertThat(attacker.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player1, "Spirit Flare");
+    }
+
+    @Test
+    @DisplayName("Does not tap or deal damage after losing control of the first target")
+    void doesNotDamageWhenFirstTargetChangesController() {
+        Permanent source = addCreatureReady(player1, new CentaurVeteran());
+        Permanent attacker = addCreatureReady(player2, new TerohsFaithful());
+        attacker.setAttacking(true);
+        castFromHand(source, attacker);
+
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        gd.playerBattlefields.get(player2.getId()).add(source);
+        harness.passBothPriorities();
+
+        assertThat(source.isTapped()).isFalse();
+        assertThat(attacker.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player1, "Spirit Flare");
+    }
+
+    @Test
+    @DisplayName("Can tap a summoning-sick creature to deal damage")
+    void canUseSummoningSickCreature() {
+        Permanent source = addCreatureReady(player1, new CentaurVeteran());
+        source.setSummoningSick(true);
+        Permanent attacker = addCreatureReady(player2, new TerohsFaithful());
+        attacker.setAttacking(true);
+        castFromHand(source, attacker);
+
+        harness.passBothPriorities();
+
+        assertThat(source.isTapped()).isTrue();
+        assertThat(attacker.getMarkedDamage()).isEqualTo(3);
+    }
+
     private void castFromHand(Permanent source, Permanent target) {
         prepareSpell();
         harness.castInstant(player1, 0, List.of(source.getId(), target.getId()));
