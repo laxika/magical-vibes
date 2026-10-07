@@ -146,6 +146,71 @@ class TidalFlatsTest extends BaseCardTest {
         assertThat(bystander.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
     }
 
+    @Test
+    @DisplayName("Resolving before blockers are declared does not grant first strike to later blockers")
+    void laterBlockersDoNotGainFirstStrike() {
+        harness.addToBattlefield(player1, new TidalFlats());
+        Permanent attacker = addAttacker(player2, new GrizzlyBears());
+        Permanent futureBlocker = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        activateTidalFlats();
+        harness.handleMayAbilityChosen(player2, false);
+
+        futureBlocker.setBlocking(true);
+        futureBlocker.addBlockingTargetId(attacker.getId());
+
+        assertThat(gqs.hasKeyword(gd, futureBlocker, Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Colored mana can pay the attacker's generic payment")
+    void coloredManaPaysGenericCost() {
+        harness.addToBattlefield(player1, new TidalFlats());
+        Permanent attacker = addAttacker(player2, new GrizzlyBears());
+        Permanent blocker = addBlocker(player1, attacker);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player2, ManaColor.GREEN, 1);
+
+        activateTidalFlats();
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gqs.hasKeyword(gd, blocker, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
+    @DisplayName("The ability still grants first strike after Tidal Flats leaves the battlefield")
+    void abilityResolvesWithoutItsSource() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new TidalFlats());
+        Permanent attacker = addAttacker(player2, new GrizzlyBears());
+        Permanent blocker = addBlocker(player1, attacker);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        gd.playerGraveyards.get(player1.getId()).add(source.getCard());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gqs.hasKeyword(gd, blocker, Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("With no attacking creatures the ability finishes without payment choices")
+    void noAttackersProducesNoPaymentChoices() {
+        harness.addToBattlefield(player1, new TidalFlats());
+        Permanent bystander = addCreatureReady(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        activateTidalFlats();
+
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gqs.hasKeyword(gd, bystander, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void activateTidalFlats() {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
