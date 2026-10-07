@@ -31,8 +31,7 @@ class ThirstForKnowledgeTest extends BaseCardTest {
         harness.setHand(player1, List.of(spell, nonArtifact, artifact));
         addMana();
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(5);
@@ -59,8 +58,7 @@ class ThirstForKnowledgeTest extends BaseCardTest {
         harness.setHand(player1, List.of(spell, firstArtifact, secondArtifact));
         addMana();
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         harness.handleCardChosen(player1, 0);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
@@ -81,8 +79,7 @@ class ThirstForKnowledgeTest extends BaseCardTest {
         harness.setHand(player1, List.of(spell, firstNonArtifact, secondNonArtifact));
         addMana();
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         harness.handleCardChosen(player1, 0);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
@@ -101,12 +98,60 @@ class ThirstForKnowledgeTest extends BaseCardTest {
         harness.setHand(player1, List.of(spell));
         addMana();
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(spell);
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can discard an artifact drawn by the spell")
+    void canDiscardFreshlyDrawnArtifact() {
+        ThirstForKnowledge spell = new ThirstForKnowledge();
+        AetherSpellbomb artifact = new AetherSpellbomb();
+        Forest forest = new Forest();
+        Island island = new Island();
+        harness.setLibrary(player1, List.of(artifact, forest, island));
+        harness.setHand(player1, List.of(spell));
+        addMana();
+
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(artifact, forest, island);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(forest, island);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyInAnyOrder(spell, artifact);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot stop after one nonartifact even with an artifact in hand")
+    void cannotDeclineSecondDiscardAfterNonartifact() {
+        ThirstForKnowledge spell = new ThirstForKnowledge();
+        Annul nonArtifact = new Annul();
+        AetherSpellbomb artifact = new AetherSpellbomb();
+        harness.setLibrary(player1, List.of(new Forest(), new Island(), new Mountain()));
+        harness.setHand(player1, List.of(spell, nonArtifact, artifact));
+        addMana();
+
+        harness.castAndResolveInstant(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(4).contains(artifact);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(nonArtifact).doesNotContain(artifact);
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(spell, nonArtifact, artifact);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
     }
 
