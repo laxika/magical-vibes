@@ -106,6 +106,50 @@ class TigerClawsTest extends BaseCardTest {
     }
 
     @Test
+    void multipleAurasStackTheirBoostsAndRemainingAuraKeepsTrample() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new FreshVolunteers());
+        harness.setHand(player1, List.of(new TigerClaws(), new TigerClaws()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        Permanent firstAura = findPermanent(player1, "Tiger Claws");
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
+
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, firstAura);
+        harness.runStateBasedActions();
+
+        assertThat(countPermanents(player1, "Tiger Claws")).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    void auraGoesToGraveyardWhenEnchantedCreatureReturnsToHand() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new FreshVolunteers());
+        harness.setHand(player1, List.of(new TigerClaws()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        harness.getPermanentRemovalService().removePermanentToHand(gd, creature);
+        harness.runStateBasedActions();
+
+        harness.assertInHand(player2, "Fresh Volunteers");
+        harness.assertInGraveyard(player1, "Tiger Claws");
+        harness.assertNotOnBattlefield(player1, "Tiger Claws");
+        harness.assertNotInGraveyard(player2, "Tiger Claws");
+    }
+
+    @Test
     void auraFizzlesIfTargetLeavesBeforeResolution() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new FreshVolunteers());
         harness.setHand(player1, List.of(new TigerClaws()));
