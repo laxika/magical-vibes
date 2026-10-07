@@ -25,8 +25,7 @@ class TenderizeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Tenderize()));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
-        harness.castInstant(player1, 0, List.of(source.getId(), target.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, List.of(source.getId(), target.getId()));
 
         harness.assertInGraveyard(player2, "Grizzly Bears");
         assertThat(source.getMarkedDamage()).isZero();
@@ -40,8 +39,7 @@ class TenderizeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Tenderize()));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
-        harness.castInstant(player1, 0, List.of(source.getId(), target.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, List.of(source.getId(), target.getId()));
 
         assertThat(target.getMarkedDamage()).isEqualTo(2);
         harness.assertOnBattlefield(player2, "Hill Giant");
@@ -59,5 +57,123 @@ class TenderizeTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of(ownSource.getId(), ownTarget.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("opponent controls");
+    }
+
+    @Test
+    @DisplayName("An opponent's creature cannot be chosen as the damage source")
+    void rejectsOpponentsSource() {
+        Permanent source = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.setHand(player1, List.of(new Tenderize()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of(source.getId(), target.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("you control");
+    }
+
+    @Test
+    @DisplayName("Damage uses the source's power at resolution even when it is tapped")
+    void usesCurrentPowerOfTappedSource() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        source.setTapped(true);
+        harness.setHand(player1, List.of(new Tenderize()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castInstant(player1, 0, List.of(source.getId(), target.getId()));
+        source.setPowerModifier(1);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Hill Giant");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(source.getMarkedDamage()).isZero();
+        assertThat(source.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A creature with negative power deals no damage")
+    void negativePowerDealsNoDamage() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        source.setPowerModifier(-3);
+        harness.setHand(player1, List.of(new Tenderize()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castAndResolveInstant(player1, 0, List.of(source.getId(), target.getId()));
+
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Hill Giant");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("No damage is dealt when the source leaves before resolution")
+    void noDamageWhenSourceLeaves() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.setHand(player1, List.of(new Tenderize()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castInstant(player1, 0, List.of(source.getId(), target.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Hill Giant");
+        harness.assertInGraveyard(player1, "Tenderize");
+    }
+
+    @Test
+    @DisplayName("No damage is dealt when the recipient leaves before resolution")
+    void noDamageWhenRecipientLeaves() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.setHand(player1, List.of(new Tenderize()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castInstant(player1, 0, List.of(source.getId(), target.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        harness.passBothPriorities();
+
+        assertThat(source.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Tenderize");
+    }
+
+    @Test
+    @DisplayName("No damage is dealt when the source changes to the opponent's control")
+    void noDamageWhenSourceChangesController() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.setHand(player1, List.of(new Tenderize()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castInstant(player1, 0, List.of(source.getId(), target.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        gd.playerBattlefields.get(player2.getId()).add(source);
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Hill Giant");
+        harness.assertInGraveyard(player1, "Tenderize");
+    }
+
+    @Test
+    @DisplayName("No damage is dealt when the recipient changes to your control")
+    void noDamageWhenRecipientChangesController() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.setHand(player1, List.of(new Tenderize()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castInstant(player1, 0, List.of(source.getId(), target.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerBattlefields.get(player1.getId()).add(target);
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player1, "Hill Giant");
+        harness.assertInGraveyard(player1, "Tenderize");
     }
 }
