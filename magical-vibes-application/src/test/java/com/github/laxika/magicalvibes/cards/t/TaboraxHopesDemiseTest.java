@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.c.ClericOfChillDepths;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.e.ExpeditionSkulker;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -19,7 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TaboraxHopesDemise.class, ClericOfChillDepths.class, GrizzlyBears.class})
+@CardUsed({TaboraxHopesDemise.class, ClericOfChillDepths.class, ExpeditionSkulker.class})
 class TaboraxHopesDemiseTest extends BaseCardTest {
 
     @Test
@@ -28,7 +28,7 @@ class TaboraxHopesDemiseTest extends BaseCardTest {
         Permanent taborax = harness.addToBattlefieldAndReturn(player1, new TaboraxHopesDemise());
         Permanent cleric = harness.addToBattlefieldAndReturn(player1, new ClericOfChillDepths());
         harness.setHand(player1, List.of());
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new ExpeditionSkulker()));
         harness.setLife(player1, 20);
 
         kill(cleric);
@@ -49,7 +49,7 @@ class TaboraxHopesDemiseTest extends BaseCardTest {
         Permanent taborax = harness.addToBattlefieldAndReturn(player1, new TaboraxHopesDemise());
         Permanent cleric = harness.addToBattlefieldAndReturn(player1, new ClericOfChillDepths());
         harness.setHand(player1, List.of());
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new ExpeditionSkulker()));
         harness.setLife(player1, 20);
 
         kill(cleric);
@@ -65,9 +65,9 @@ class TaboraxHopesDemiseTest extends BaseCardTest {
     @DisplayName("A dying non-Cleric puts a counter on Taborax without drawing or losing life")
     void nonClericDeathOnlyAddsCounter() {
         Permanent taborax = harness.addToBattlefieldAndReturn(player1, new TaboraxHopesDemise());
-        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new ExpeditionSkulker());
         harness.setHand(player1, List.of());
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new ExpeditionSkulker()));
         harness.setLife(player1, 20);
 
         kill(creature);
@@ -116,6 +116,94 @@ class TaboraxHopesDemiseTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
+    @Test
+    @DisplayName("An opposing Cleric's death does not trigger Taborax")
+    void opposingClericDeathDoesNotTrigger() {
+        harness.addToBattlefield(player1, new TaboraxHopesDemise());
+        Permanent cleric = harness.addToBattlefieldAndReturn(player2, new ClericOfChillDepths());
+
+        kill(cleric);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A simultaneous Cleric death still allows drawing after Taborax dies")
+    void simultaneousDeathStillAllowsDraw() {
+        Permanent taborax = harness.addToBattlefieldAndReturn(player1, new TaboraxHopesDemise());
+        Permanent cleric = harness.addToBattlefieldAndReturn(player1, new ClericOfChillDepths());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new ExpeditionSkulker()));
+        harness.setLife(player1, 20);
+
+        taborax.setMarkedDamage(10);
+        cleric.setMarkedDamage(10);
+        harness.runStateBasedActions();
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(19);
+    }
+
+    @Test
+    @DisplayName("The fifth counter from a death enables lifelink before the optional draw")
+    void fifthCounterEnablesLifelinkBeforeDrawChoice() {
+        Permanent taborax = harness.addToBattlefieldAndReturn(player1, new TaboraxHopesDemise());
+        taborax.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 4);
+        Permanent cleric = harness.addToBattlefieldAndReturn(player1, new ClericOfChillDepths());
+
+        kill(cleric);
+        harness.passBothPriorities();
+
+        assertThat(taborax.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, taborax, Keyword.LIFELINK)).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, false);
+    }
+
+    @Test
+    @DisplayName("A creature that gained the Cleric subtype allows drawing when it dies")
+    void grantedClericSubtypeAllowsDraw() {
+        Permanent taborax = harness.addToBattlefieldAndReturn(player1, new TaboraxHopesDemise());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new ExpeditionSkulker());
+        creature.getGrantedSubtypes().add(CardSubtype.CLERIC);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new ExpeditionSkulker()));
+        harness.setLife(player1, 20);
+
+        kill(creature);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(taborax.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(19);
+    }
+
+    @Test
+    @DisplayName("A printed Cleric that lost that subtype does not allow drawing when it dies")
+    void overwrittenClericSubtypeDoesNotAllowDraw() {
+        Permanent taborax = harness.addToBattlefieldAndReturn(player1, new TaboraxHopesDemise());
+        Permanent cleric = harness.addToBattlefieldAndReturn(player1, new ClericOfChillDepths());
+        cleric.setTransientCreatureTypeOverride(CardSubtype.BEAR);
+        harness.setHand(player1, List.of());
+        harness.setLife(player1, 20);
+
+        kill(cleric);
+        harness.passBothPriorities();
+
+        assertThat(taborax.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+    }
+
     private void kill(Permanent permanent) {
         permanent.setMarkedDamage(10);
         harness.runStateBasedActions();
@@ -131,8 +219,6 @@ class TaboraxHopesDemiseTest extends BaseCardTest {
         tokenCard.setPower(2);
         tokenCard.setToughness(2);
         tokenCard.setSubtypes(List.of(CardSubtype.BEAR));
-        Permanent token = new Permanent(tokenCard);
-        gd.playerBattlefields.get(player1.getId()).add(token);
-        return token;
+        return harness.addToBattlefieldAndReturn(player1, tokenCard);
     }
 }
