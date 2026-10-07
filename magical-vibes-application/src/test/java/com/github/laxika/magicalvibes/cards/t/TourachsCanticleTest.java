@@ -69,4 +69,48 @@ class TourachsCanticleTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("A one-card hand discards only the chosen card")
+    void oneCardHandDiscardsOnce() {
+        TourachsCanticle chosen = new TourachsCanticle();
+        harness.setHand(player2, List.of(chosen));
+        harness.setHand(player1, List.of(new TourachsCanticle()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(chosen);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Choosing the last card leaves the other card for the random discard")
+    void twoCardHandDiscardsChosenCardBeforeRemainingCard() {
+        TourachsCanticle remaining = new TourachsCanticle();
+        TourachsCanticle chosen = new TourachsCanticle();
+        harness.setHand(player2, List.of(remaining, chosen));
+        harness.setHand(player1, List.of(new TourachsCanticle()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThatThrownBy(() -> harness.handleCardChosen(player2, 1))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, -1))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(remaining, chosen);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(chosen, remaining);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gameLogContains("at random")).isTrue();
+    }
 }
