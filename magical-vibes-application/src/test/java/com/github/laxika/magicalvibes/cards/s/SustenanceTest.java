@@ -88,8 +88,7 @@ class SustenanceTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(target.getPowerModifier()).isEqualTo(0);
         assertThat(target.getToughnessModifier()).isEqualTo(0);
@@ -132,6 +131,70 @@ class SustenanceTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, source.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The land is sacrificed as a cost before the boost resolves")
+    void sacrificeIsPaidBeforeResolution() {
+        harness.addToBattlefield(player1, new Sustenance());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new FreshVolunteers());
+        prepareForActivation();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(forest);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(forest.getCard());
+        assertThat(gd.stack).hasSize(1);
+        assertThat(target.getPowerModifier()).isZero();
+        assertThat(target.getToughnessModifier()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(target.getPowerModifier()).isEqualTo(1);
+        assertThat(target.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Can sacrifice a tapped land during an opponent's turn")
+    void sacrificesTappedLandOnOpponentsTurn() {
+        harness.addToBattlefield(player1, new Sustenance());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new FreshVolunteers());
+        forest.setTapped(true);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(forest);
+        assertThat(target.getPowerModifier()).isEqualTo(1);
+        assertThat(target.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Repeated activations each sacrifice a land and their boosts add together")
+    void repeatedActivationsStackBoosts() {
+        harness.addToBattlefield(player1, new Sustenance());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new FreshVolunteers());
+        prepareForActivation();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.handlePermanentChosen(player1, first.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(first, second);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(first.getCard(), second.getCard());
+        assertThat(target.getPowerModifier()).isEqualTo(2);
+        assertThat(target.getToughnessModifier()).isEqualTo(2);
     }
 
     private void prepareForActivation() {
