@@ -55,12 +55,9 @@ class ToothAndClawTest extends BaseCardTest {
     @DisplayName("With more than two creatures the controller chooses which two to sacrifice")
     void choosesWhichCreaturesToSacrifice() {
         harness.addToBattlefield(player1, new ToothAndClaw());
+        UUID giantId = harness.addToBattlefieldAndReturn(player1, new LowlandGiant()).getId();
+        UUID dragonflyId = harness.addToBattlefieldAndReturn(player1, new BayouDragonfly()).getId();
         harness.addToBattlefield(player1, new LowlandGiant());
-        harness.addToBattlefield(player1, new BayouDragonfly());
-        harness.addToBattlefield(player1, new LowlandGiant());
-
-        UUID dragonflyId = findPermanent(player1, "Bayou Dragonfly").getId();
-        UUID giantId = findPermanent(player1, "Lowland Giant").getId();
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -86,5 +83,47 @@ class ToothAndClawTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough permanents to sacrifice");
+    }
+    @Test
+    @DisplayName("Creatures are sacrificed as a cost before the token is created")
+    void paysSacrificeCostBeforeResolution() {
+        harness.addToBattlefield(player1, new ToothAndClaw());
+        harness.addToBattlefield(player1, new LowlandGiant());
+        harness.addToBattlefield(player1, new BayouDragonfly());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Lowland Giant");
+        harness.assertNotOnBattlefield(player1, "Bayou Dragonfly");
+        harness.assertInGraveyard(player1, "Lowland Giant");
+        harness.assertInGraveyard(player1, "Bayou Dragonfly");
+        harness.assertNotOnBattlefield(player1, "Carnivore");
+
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Carnivore")).isEqualTo(1);
+        harness.assertNotOnBattlefield(player2, "Carnivore");
+    }
+
+    @Test
+    @DisplayName("A newly created Carnivore can be sacrificed for another activation")
+    void canSacrificeCreatedToken() {
+        harness.addToBattlefield(player1, new ToothAndClaw());
+        harness.addToBattlefield(player1, new LowlandGiant());
+        harness.addToBattlefield(player1, new BayouDragonfly());
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        UUID originalTokenId = findPermanent(player1, "Carnivore").getId();
+        harness.addToBattlefield(player1, new LowlandGiant());
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Carnivore");
+        harness.assertNotOnBattlefield(player1, "Lowland Giant");
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Carnivore")).isEqualTo(1);
+        assertThat(findPermanent(player1, "Carnivore").getId()).isNotEqualTo(originalTokenId);
+        harness.assertOnBattlefield(player1, "Tooth and Claw");
     }
 }
