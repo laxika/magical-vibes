@@ -133,4 +133,58 @@ class ThwartTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.stack).hasSize(1);
     }
+    @Test
+    @DisplayName("Tapped Islands can pay the alternate cost without available mana")
+    void returnsTappedIslandsWithoutManaBeforeResolution() {
+        List<Permanent> islands = List.of(
+                harness.addToBattlefieldAndReturn(player2, new Island()),
+                harness.addToBattlefieldAndReturn(player2, new Island()),
+                harness.addToBattlefieldAndReturn(player2, new Island()));
+        islands.forEach(Permanent::tap);
+
+        CloudSprite sprite = new CloudSprite();
+        harness.castFromHand(player1, sprite, "{U}");
+        harness.setHand(player2, List.of(new Thwart()));
+        harness.passPriority(player1);
+        harness.castInstantWithAlternateCost(player2, 0, sprite.getId(),
+                islands.stream().map(Permanent::getId).toList());
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId()))
+                .extracting(card -> card.getName())
+                .containsExactly("Island", "Island", "Island");
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotalAllMana()).isZero();
+        harness.assertNotInGraveyard(player1, "Cloud Sprite");
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Cloud Sprite");
+        harness.assertNotOnBattlefield(player1, "Cloud Sprite");
+        harness.assertInGraveyard(player2, "Thwart");
+    }
+    @Test
+    @DisplayName("Can counter another Thwart on the stack")
+    void countersAnInstantSpell() {
+        CloudSprite sprite = new CloudSprite();
+        harness.castFromHand(player1, sprite, "{U}");
+        Thwart opposingThwart = new Thwart();
+        harness.setHand(player2, List.of(opposingThwart));
+        harness.addMana(player2, ManaColor.BLUE, 4);
+        harness.castInstant(player2, 0, sprite.getId());
+
+        harness.setHand(player1, List.of(new Thwart()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.castInstant(player1, 0, opposingThwart.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Thwart");
+        harness.assertInGraveyard(player1, "Thwart");
+        assertThat(gd.stack).hasSize(1);
+        harness.assertNotInGraveyard(player1, "Cloud Sprite");
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Cloud Sprite");
+    }
 }
