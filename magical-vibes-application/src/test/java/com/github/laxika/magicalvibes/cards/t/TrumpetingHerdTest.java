@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.action.ReboundAtNextUpkeep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -57,15 +58,65 @@ class TrumpetingHerdTest extends BaseCardTest {
         assertThat(gd.delayedActions).noneMatch(action -> action instanceof ReboundAtNextUpkeep);
     }
 
+    @Test
+    void reboundWaitsForControllersUpkeep() {
+        TrumpetingHerd card = new TrumpetingHerd();
+        harness.setHand(player1, List.of(card));
+        addMana();
+
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(elephantTokens()).hasSize(1);
+        assertThat(gd.findExiledCard(card.getId())).isNotNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.delayedActions).anyMatch(action -> action instanceof ReboundAtNextUpkeep);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(elephantTokens()).hasSize(2);
+        harness.assertInGraveyard(player1, "Trumpeting Herd");
+    }
+
+    @Test
+    void decliningReboundLeavesCardExiledWithoutAnotherOpportunity() {
+        TrumpetingHerd card = new TrumpetingHerd();
+        harness.setHand(player1, List.of(card));
+        addMana();
+
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(elephantTokens()).hasSize(1);
+        assertThat(gd.findExiledCard(card.getId())).isNotNull();
+        harness.assertNotInGraveyard(player1, "Trumpeting Herd");
+        assertThat(gd.delayedActions).noneMatch(action -> action instanceof ReboundAtNextUpkeep);
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(elephantTokens()).hasSize(1);
+        assertThat(gd.findExiledCard(card.getId())).isNotNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+    }
+
     private void addMana() {
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
     }
 
     private List<Permanent> elephantTokens() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
+        return findPermanents(player1, "Elephant").stream()
                 .filter(permanent -> permanent.getCard().isToken())
-                .filter(permanent -> permanent.getCard().getName().equals("Elephant"))
                 .toList();
     }
 }
