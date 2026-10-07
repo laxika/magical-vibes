@@ -23,7 +23,7 @@ class TimetwisterTest extends BaseCardTest {
         Card graveyardCard = new GrizzlyBears();
         harness.setHand(player1, List.of(new Timetwister()));
         harness.setHand(player2, List.of(handCard));
-        gd.playerGraveyards.get(player2.getId()).add(graveyardCard);
+        harness.setGraveyard(player2, List.of(graveyardCard));
         harness.setLibrary(player1, deckOf(20));
         harness.setLibrary(player2, deckOf(20));
 
@@ -37,12 +37,71 @@ class TimetwisterTest extends BaseCardTest {
         assertThat(libraryAndHand).contains(handCard, graveyardCard).hasSize(22);
     }
 
+    @Test
+    @DisplayName("Both players recycle exactly seven cards while the resolving Timetwister stays out")
+    void recyclesBothPlayersZonesWithoutRecyclingItself() {
+        Timetwister spell = new Timetwister();
+        Card casterHand = new GrizzlyBears();
+        Card casterGraveyard = new GrizzlyBears();
+        Card opponentHand = new GrizzlyBears();
+        Card opponentGraveyard = new GrizzlyBears();
+        List<Card> casterLibrary = deckOf(5);
+        List<Card> opponentLibrary = deckOf(5);
+        List<Card> casterPool = new ArrayList<>(casterLibrary);
+        casterPool.add(casterHand);
+        casterPool.add(casterGraveyard);
+        List<Card> opponentPool = new ArrayList<>(opponentLibrary);
+        opponentPool.add(opponentHand);
+        opponentPool.add(opponentGraveyard);
+        harness.setHand(player1, List.of(spell, casterHand));
+        harness.setHand(player2, List.of(opponentHand));
+        harness.setGraveyard(player1, List.of(casterGraveyard));
+        harness.setGraveyard(player2, List.of(opponentGraveyard));
+        harness.setLibrary(player1, casterLibrary);
+        harness.setLibrary(player2, opponentLibrary);
+
+        cast();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrderElementsOf(casterPool);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactlyInAnyOrderElementsOf(opponentPool);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(spell);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Timetwister leaves battlefield and exile cards in their zones")
+    void leavesBattlefieldAndExileAlone() {
+        Card casterPermanent = new GrizzlyBears();
+        Card opponentPermanent = new GrizzlyBears();
+        Card casterExile = new GrizzlyBears();
+        Card opponentExile = new GrizzlyBears();
+        harness.addToBattlefield(player1, casterPermanent);
+        harness.addToBattlefield(player2, opponentPermanent);
+        harness.setExile(player1, List.of(casterExile));
+        harness.setExile(player2, List.of(opponentExile));
+        harness.setHand(player1, List.of(new Timetwister()));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, deckOf(7));
+        harness.setLibrary(player2, deckOf(7));
+
+        cast();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).extracting(p -> p.getCard()).containsExactly(casterPermanent);
+        assertThat(gd.playerBattlefields.get(player2.getId())).extracting(p -> p.getCard()).containsExactly(opponentPermanent);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(7).doesNotContain(casterExile, opponentExile);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(7).doesNotContain(casterExile, opponentExile);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.exiledCards).extracting(e -> e.card()).containsExactlyInAnyOrder(casterExile, opponentExile);
+    }
+
     private void cast() {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.forceActivePlayer(player1);
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
     }
 
     private List<Card> deckOf(int count) {
