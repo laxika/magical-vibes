@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.c.Confiscate;
 import com.github.laxika.magicalvibes.cards.d.Demystify;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.cards.p.PhyrexianHulk;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -19,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({StealArtifact.class})
+@CardUsed({StealArtifact.class, Confiscate.class, Demystify.class, GrizzlyBears.class, PhyrexianHulk.class, Spellbook.class, LeoninScimitar.class})
 class StealArtifactTest extends BaseCardTest {
     @Test
     @CardUsed({StealArtifact.class, PhyrexianHulk.class})
@@ -187,5 +188,67 @@ class StealArtifactTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, bears.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be an artifact");
+    }
+
+    @Test
+    @CardUsed({StealArtifact.class, Demystify.class, GrizzlyBears.class, LeoninScimitar.class})
+    @DisplayName("Equipment stays attached when Steal Artifact is destroyed")
+    void equipmentStaysAttachedWhenAuraDestroyed() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player2, new LeoninScimitar());
+        equipment.setAttachedTo(bears.getId());
+        harness.setHand(player1, List.of(new StealArtifact(), new Demystify()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castEnchantment(player1, 0, equipment.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(equipment);
+        assertThat(equipment.getAttachedTo()).isEqualTo(bears.getId());
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(bears);
+        Permanent aura = findPermanent(player1, "Steal Artifact");
+
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player1, 0, aura.getId());
+
+        harness.assertInGraveyard(player1, "Steal Artifact");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(equipment, bears);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(equipment);
+        assertThat(equipment.getAttachedTo()).isEqualTo(bears.getId());
+    }
+
+    @Test
+    @CardUsed({StealArtifact.class, Confiscate.class, Demystify.class, Spellbook.class})
+    @DisplayName("Removing Steal Artifact restores the older control effect")
+    void removingAuraRestoresOlderControlEffect() {
+        Permanent spellbook = harness.addToBattlefieldAndReturn(player1, new Spellbook());
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new Confiscate()));
+        harness.addMana(player2, ManaColor.BLUE, 6);
+        harness.castEnchantment(player2, 0, spellbook.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(spellbook);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new StealArtifact(), new Demystify()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.castEnchantment(player1, 0, spellbook.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(spellbook);
+        Permanent aura = findPermanent(player1, "Steal Artifact");
+
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player1, 0, aura.getId());
+
+        harness.assertInGraveyard(player1, "Steal Artifact");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(spellbook);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(spellbook);
+        assertThat(findPermanent(player2, "Confiscate").getAttachedTo()).isEqualTo(spellbook.getId());
     }
 }
