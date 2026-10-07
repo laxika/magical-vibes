@@ -1,26 +1,29 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.a.AxgardCavalry;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TormentorsHelm.class, AxgardCavalry.class, TyvarKell.class})
 class TormentorsHelmTest extends BaseCardTest {
 
     @Test
     @DisplayName("Equipped creature gets +1/+1")
     void equippedCreatureGetsBoost() {
-        Permanent creature = addReady(player1, new GrizzlyBears());
-        Permanent helm = addReady(player1, new TormentorsHelm());
+        Permanent creature = addCreatureReady(player1, new AxgardCavalry());
+        Permanent helm = addCreatureReady(player1, new TormentorsHelm());
         helm.setAttachedTo(creature.getId());
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
@@ -30,8 +33,8 @@ class TormentorsHelmTest extends BaseCardTest {
     @Test
     @DisplayName("Equip {1} attaches to target creature")
     void equipAttaches() {
-        Permanent helm = addReady(player1, new TormentorsHelm());
-        Permanent creature = addReady(player1, new GrizzlyBears());
+        Permanent helm = addCreatureReady(player1, new TormentorsHelm());
+        Permanent creature = addCreatureReady(player1, new AxgardCavalry());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, creature.getId());
@@ -43,10 +46,10 @@ class TormentorsHelmTest extends BaseCardTest {
     @Test
     @DisplayName("Becoming blocked makes the defending player take 1 damage")
     void blockedCreatureDamagesDefendingPlayer() {
-        Permanent creature = addReady(player1, new GrizzlyBears());
-        Permanent helm = addReady(player1, new TormentorsHelm());
+        Permanent creature = addCreatureReady(player1, new AxgardCavalry());
+        Permanent helm = addCreatureReady(player1, new TormentorsHelm());
         helm.setAttachedTo(creature.getId());
-        Permanent blocker = addReady(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new AxgardCavalry());
         creature.setAttacking(true);
         creature.setAttackTarget(player2.getId());
         setLifeTotals(20, 20);
@@ -60,11 +63,11 @@ class TormentorsHelmTest extends BaseCardTest {
     @Test
     @DisplayName("The trigger fires only once when multiple creatures block")
     void multipleBlockersTriggerOnce() {
-        Permanent creature = addReady(player1, new GrizzlyBears());
-        Permanent helm = addReady(player1, new TormentorsHelm());
+        Permanent creature = addCreatureReady(player1, new AxgardCavalry());
+        Permanent helm = addCreatureReady(player1, new TormentorsHelm());
         helm.setAttachedTo(creature.getId());
-        Permanent firstBlocker = addReady(player2, new GrizzlyBears());
-        Permanent secondBlocker = addReady(player2, new GrizzlyBears());
+        Permanent firstBlocker = addCreatureReady(player2, new AxgardCavalry());
+        Permanent secondBlocker = addCreatureReady(player2, new AxgardCavalry());
         creature.setAttacking(true);
         creature.setAttackTarget(player2.getId());
         setLifeTotals(20, 20);
@@ -83,9 +86,9 @@ class TormentorsHelmTest extends BaseCardTest {
     @Test
     @DisplayName("An unattached Helm does not trigger")
     void unattachedHelmDoesNotTrigger() {
-        Permanent creature = addReady(player1, new GrizzlyBears());
-        addReady(player1, new TormentorsHelm());
-        Permanent blocker = addReady(player2, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new AxgardCavalry());
+        addCreatureReady(player1, new TormentorsHelm());
+        Permanent blocker = addCreatureReady(player2, new AxgardCavalry());
         creature.setAttacking(true);
         creature.setAttackTarget(player2.getId());
         setLifeTotals(20, 20);
@@ -96,11 +99,104 @@ class TormentorsHelmTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 
-    private Permanent addReady(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    @DisplayName("The blocked creature still deals damage after leaving the battlefield")
+    void triggerSurvivesCreatureLeaving() {
+        Permanent creature = addCreatureReady(player1, new AxgardCavalry());
+        Permanent helm = addCreatureReady(player1, new TormentorsHelm());
+        helm.setAttachedTo(creature.getId());
+        Permanent blocker = addCreatureReady(player2, new AxgardCavalry());
+        creature.setAttacking(true);
+        creature.setAttackTarget(player2.getId());
+        setLifeTotals(20, 20);
+
+        declareBlock(creature, blocker);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToHand(gd, creature));
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Removing the attacked planeswalker does not prevent damage to its controller")
+    void triggerSurvivesAttackedPlaneswalkerLeaving() {
+        Permanent creature = addCreatureReady(player1, new AxgardCavalry());
+        Permanent helm = addCreatureReady(player1, new TormentorsHelm());
+        helm.setAttachedTo(creature.getId());
+        Permanent blocker = addCreatureReady(player2, new AxgardCavalry());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new TyvarKell());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 3);
+        creature.setAttacking(true);
+        creature.setAttackTarget(planeswalker.getId());
+        setLifeTotals(20, 20);
+
+        declareBlock(creature, blocker);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToHand(gd, planeswalker));
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Removing the Helm does not stop its pending trigger")
+    void triggerSurvivesHelmLeaving() {
+        Permanent creature = addCreatureReady(player1, new AxgardCavalry());
+        Permanent helm = addCreatureReady(player1, new TormentorsHelm());
+        helm.setAttachedTo(creature.getId());
+        Permanent blocker = addCreatureReady(player2, new AxgardCavalry());
+        creature.setAttacking(true);
+        creature.setAttackTarget(player2.getId());
+        setLifeTotals(20, 20);
+
+        declareBlock(creature, blocker);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToHand(gd, helm));
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Equip cannot target an opponent's creature")
+    void equipRejectsOpposingCreature() {
+        addCreatureReady(player1, new TormentorsHelm());
+        Permanent creature = addCreatureReady(player2, new AxgardCavalry());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Equip cannot be activated during combat")
+    void equipRequiresSorceryTiming() {
+        addCreatureReady(player1, new TormentorsHelm());
+        Permanent creature = addCreatureReady(player1, new AxgardCavalry());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Reequipping moves the boost to the new creature")
+    void reequippingMovesBoost() {
+        Permanent helm = addCreatureReady(player1, new TormentorsHelm());
+        Permanent first = addCreatureReady(player1, new AxgardCavalry());
+        Permanent second = addCreatureReady(player1, new AxgardCavalry());
+        helm.setAttachedTo(first.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, second.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(3);
     }
 
     private void declareBlock(Permanent attacker, Permanent blocker) {
