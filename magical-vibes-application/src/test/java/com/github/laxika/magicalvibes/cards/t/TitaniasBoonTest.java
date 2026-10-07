@@ -61,4 +61,32 @@ class TitaniasBoonTest extends BaseCardTest {
 
         assertThat(merfolk.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
     }
+
+    @Test
+    @DisplayName("Resolves with no creatures under your control")
+    void resolvesWithoutControlledCreatures() {
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new CoralMerfolk());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        harness.castFromHand(player1, new TitaniasBoon(), "{3}{G}");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Titania's Boon");
+        assertThat(opponentCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(forest.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Affects creatures present at resolution, not creatures entering afterward")
+    void checksCreaturesAtResolution() {
+        harness.castFromHand(player1, new TitaniasBoon(), "{3}{G}");
+        Permanent presentAtResolution = harness.addToBattlefieldAndReturn(player1, new CoralMerfolk());
+
+        harness.passBothPriorities();
+
+        Permanent enteredAfterward = harness.addToBattlefieldAndReturn(player1, new CoralMerfolk());
+        assertThat(presentAtResolution.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(enteredAfterward.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertInGraveyard(player1, "Titania's Boon");
+    }
 }
