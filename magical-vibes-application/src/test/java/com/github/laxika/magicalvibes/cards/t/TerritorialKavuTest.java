@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -41,7 +40,8 @@ class TerritorialKavuTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(drawn));
         addReadyKavu(player1);
 
-        declareAttack();
+        harness.addToBattlefield(player1, new Forest());
+        declareAttackers(List.of(0));
         harness.handleListChoice(player1, DISCARD_MODE);
         harness.passBothPriorities();
 
@@ -60,7 +60,8 @@ class TerritorialKavuTest extends BaseCardTest {
         harness.setGraveyard(player2, List.of(card));
         addReadyKavu(player1);
 
-        declareAttack();
+        harness.addToBattlefield(player1, new Forest());
+        declareAttackers(List.of(0));
         harness.handleListChoice(player1, EXILE_MODE);
 
         PendingInteraction.MultiGraveyardChoice choice =
@@ -77,18 +78,157 @@ class TerritorialKavuTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player2.getId())).contains(card);
     }
 
-    private Permanent addReadyKavu(Player player) {
-        Permanent kavu = new Permanent(new TerritorialKavu());
-        kavu.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(kavu);
-        return kavu;
+    @Test
+    void discardAndDrawFinishDuringTheSameResolution() {
+        Card discarded = new GrizzlyBears();
+        Card drawn = new Island();
+        harness.setHand(player1, new ArrayList<>(List.of(discarded)));
+        harness.setLibrary(player1, List.of(drawn));
+        addReadyKavu(player1);
+        harness.addToBattlefield(player1, new Forest());
+
+        declareAttackers(List.of(0));
+        harness.handleListChoice(player1, DISCARD_MODE);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
-    private void declareAttack() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player1, List.of(0));
+    @Test
+    void emptyHandDoesNotDraw() {
+        Card drawn = new Island();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(drawn));
+        addReadyKavu(player1);
+        harness.addToBattlefield(player1, new Forest());
+
+        declareAttackers(List.of(0));
+        harness.handleListChoice(player1, DISCARD_MODE);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void exileModeCanChooseNoTargetEvenWithCardsAvailable() {
+        Card card = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(card));
+        addReadyKavu(player1);
+        harness.addToBattlefield(player1, new Forest());
+
+        declareAttackers(List.of(0));
+        harness.handleListChoice(player1, EXILE_MODE);
+        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(card);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void domainCountsDistinctTypesOnlyOnControlledLandsAndUpdates() {
+        Permanent kavu = addReadyKavu(player1);
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new Island());
+
+        assertThat(gqs.getEffectivePower(gd, kavu)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, kavu)).isEqualTo(1);
+
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        assertThat(gqs.getEffectivePower(gd, kavu)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, kavu)).isEqualTo(2);
+
+        gd.playerBattlefields.get(player1.getId()).remove(island);
+        assertThat(gqs.getEffectivePower(gd, kavu)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, kavu)).isEqualTo(1);
+    }
+
+    @Test
+    void exileModeCanExileALandFromOwnGraveyard() {
+        Card card = new Island();
+        harness.setGraveyard(player1, List.of(card));
+        addReadyKavu(player1);
+        harness.addToBattlefield(player1, new Forest());
+
+        declareAttackers(List.of(0));
+        harness.handleListChoice(player1, EXILE_MODE);
+        harness.handleMultipleCardsChosen(player1, List.of(card.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(card);
+    }
+
+    @Test
+    void exileModeIsAvailableWithEmptyGraveyards() {
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of());
+        addReadyKavu(player1);
+        harness.addToBattlefield(player1, new Forest());
+
+        declareAttackers(List.of(0));
+        harness.handleListChoice(player1, EXILE_MODE);
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MultiGraveyardChoice) {
+            harness.handleMultipleCardsChosen(player1, List.of());
+        }
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void exileDoesNothingIfTargetLeavesGraveyardBeforeResolution() {
+        Card card = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(card));
+        addReadyKavu(player1);
+        harness.addToBattlefield(player1, new Forest());
+
+        declareAttackers(List.of(0));
+        harness.handleListChoice(player1, EXILE_MODE);
+        harness.handleMultipleCardsChosen(player1, List.of(card.getId()));
+        harness.setGraveyard(player2, List.of());
+        harness.setHand(player2, List.of(card));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(card);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void domainDefinesPowerAndToughnessInHandAndGraveyard() {
+        Card inHand = new TerritorialKavu();
+        Card inGraveyard = new TerritorialKavu();
+        harness.setHand(player1, List.of(inHand));
+        harness.setGraveyard(player1, List.of(inGraveyard));
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Island());
+
+        assertThat(gqs.getEffectiveCardPower(gd, inHand)).isEqualTo(2);
+        assertThat(gqs.getEffectiveCardToughness(gd, inHand)).isEqualTo(2);
+        assertThat(gqs.getEffectiveCardPower(gd, inGraveyard)).isEqualTo(2);
+        assertThat(gqs.getEffectiveCardToughness(gd, inGraveyard)).isEqualTo(2);
+    }
+
+    @Test
+    void kavuDiesWithNoBasicLandTypes() {
+        harness.addToBattlefield(player1, new TerritorialKavu());
+
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Territorial Kavu");
+        harness.assertInGraveyard(player1, "Territorial Kavu");
+    }
+
+    private Permanent addReadyKavu(Player player) {
+        return addCreatureReady(player, new TerritorialKavu());
     }
 }
