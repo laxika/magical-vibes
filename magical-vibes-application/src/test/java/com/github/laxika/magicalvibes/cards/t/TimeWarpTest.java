@@ -1,7 +1,5 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
@@ -17,15 +15,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(TimeWarp.class)
+@CardUsed({TimeWarp.class})
 class TimeWarpTest extends BaseCardTest {
 
     private void advanceTurn(Player activePlayer) {
         harness.forceStep(TurnStep.CLEANUP);
         harness.passUntil(activePlayer, TurnStep.PRECOMBAT_MAIN);
     }
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting puts Time Warp on the stack targeting a player")
@@ -43,8 +39,6 @@ class TimeWarpTest extends BaseCardTest {
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
         assertThat(entry.getTargetId()).isEqualTo(player1.getId());
     }
-
-    // ===== Resolution =====
 
     @Test
     @DisplayName("Time Warp goes to graveyard after resolution")
@@ -73,12 +67,8 @@ class TimeWarpTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player1.getId());
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log ->
-                log.contains("extra turn") && log.contains("1"));
+        assertThat(gameLogContains("takes 1 extra turn after this one.")).isTrue();
     }
-
-    // ===== Extra turn progression — targeting self =====
 
     @Test
     @DisplayName("Resolving targeting self queues one extra turn")
@@ -142,8 +132,6 @@ class TimeWarpTest extends BaseCardTest {
         assertThat(gd.extraTurns).isEmpty();
     }
 
-    // ===== Extra turn progression — targeting opponent =====
-
     @Test
     @DisplayName("Extra turn targeting opponent gives them the extra turn")
     void extraTurnTargetingOpponent() {
@@ -163,10 +151,61 @@ class TimeWarpTest extends BaseCardTest {
         assertThat(gd.activePlayerId).isEqualTo(player2.getId());
         assertThat(gd.turnNumber).isEqualTo(turnBefore + 1);
 
-        // End extra turn → normal alternation (player1's turn would have been next,
-        // but player2 just took extra turn so normal order resumes)
-        advanceTurn(player1);
-        assertThat(gd.activePlayerId).isEqualTo(player1.getId());
+        // Player2's scheduled normal turn still follows player1's normal turn.
+        advanceTurn(player2);
+        assertThat(gd.activePlayerId).isEqualTo(player2.getId());
         assertThat(gd.turnNumber).isEqualTo(turnBefore + 2);
+        assertThat(gd.currentTurnIsExtraTurn).isFalse();
+    }
+
+    @Test
+    @DisplayName("The most recently created extra turn is taken first")
+    void latestExtraTurnIsTakenFirst() {
+        harness.setHand(player1, List.of(new TimeWarp(), new TimeWarp()));
+        harness.addMana(player1, ManaColor.BLUE, 10);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        int turnBefore = gd.turnNumber;
+
+        harness.castSorcery(player1, 0, player1.getId());
+        harness.passBothPriorities();
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        advanceTurn(player2);
+        assertThat(gd.turnNumber).isEqualTo(turnBefore + 1);
+        assertThat(gd.currentTurnIsExtraTurn).isTrue();
+        advanceTurn(player1);
+        assertThat(gd.turnNumber).isEqualTo(turnBefore + 2);
+        assertThat(gd.currentTurnIsExtraTurn).isTrue();
+        advanceTurn(player2);
+        assertThat(gd.turnNumber).isEqualTo(turnBefore + 3);
+        assertThat(gd.currentTurnIsExtraTurn).isFalse();
+        assertThat(gd.extraTurns).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An extra turn created during an extra turn precedes the next normal turn")
+    void extraTurnCreatedDuringExtraTurn() {
+        harness.setHand(player1, List.of(new TimeWarp(), new TimeWarp()));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        int turnBefore = gd.turnNumber;
+
+        harness.castSorcery(player1, 0, player1.getId());
+        harness.passBothPriorities();
+        advanceTurn(player1);
+        harness.addMana(player1, ManaColor.BLUE, 5);
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        advanceTurn(player2);
+        assertThat(gd.turnNumber).isEqualTo(turnBefore + 2);
+        assertThat(gd.currentTurnIsExtraTurn).isTrue();
+        advanceTurn(player2);
+        assertThat(gd.turnNumber).isEqualTo(turnBefore + 3);
+        assertThat(gd.currentTurnIsExtraTurn).isFalse();
+        assertThat(gd.extraTurns).isEmpty();
     }
 }
