@@ -50,8 +50,7 @@ class SpiritOfTheHearthTest extends BaseCardTest {
         harness.setHand(player1, List.of(new BeaconOfImmortality()));
         harness.addMana(player1, ManaColor.WHITE, 6);
 
-        harness.castInstant(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player1.getId());
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(40);
     }
@@ -67,8 +66,7 @@ class SpiritOfTheHearthTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
 
-        harness.castInstant(player2, 0, spirit.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, spirit.getId());
 
         assertThat(spirit.getMarkedDamage()).isEqualTo(2);
     }
@@ -84,5 +82,55 @@ class SpiritOfTheHearthTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).add(spirit);
 
         assertThat(gqs.playerHasHexproof(gd, player1.getId())).isFalse();
+    }
+
+    @Test
+    @DisplayName("Spirit only grants hexproof to its controller")
+    void opponentDoesNotGainHexproof() {
+        harness.addToBattlefield(player1, new SpiritOfTheHearth());
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Gaining hexproof before resolution makes an opponent's player target illegal")
+    void gainingHexproofBeforeResolutionProtectsController() {
+        harness.setLife(player1, 20);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, player1.getId());
+        harness.addToBattlefield(player1, new SpiritOfTheHearth());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertInGraveyard(player2, "Shock");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Removing one of two Spirits does not remove the controller's hexproof")
+    void anotherSpiritKeepsControllerProtected() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new SpiritOfTheHearth());
+        harness.addToBattlefield(player1, new SpiritOfTheHearth());
+        gd.playerBattlefields.get(player1.getId()).remove(first);
+        gd.playerGraveyards.get(player1.getId()).add(first.getCard());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, player1.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("hexproof");
     }
 }
