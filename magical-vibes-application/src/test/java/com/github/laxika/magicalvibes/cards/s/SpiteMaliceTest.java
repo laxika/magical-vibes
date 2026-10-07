@@ -111,4 +111,35 @@ class SpiteMaliceTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, SPITE, skeleton.getCard().getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+    @Test
+    @DisplayName("Spite can counter its controller's spell without letting it resolve")
+    void spiteCountersOwnSpell() {
+        Opt opt = new Opt();
+        harness.setLibrary(player1, List.of(new KavuRunner()));
+        harness.setHand(player1, List.of(opt, new SpiteMalice()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castInstant(player1, 0);
+        harness.castInstant(player1, 0, SPITE, opt.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Opt");
+        harness.assertNotInHand(player1, "Kavu Runner");
+    }
+
+    @Test
+    @DisplayName("Malice can destroy its controller's nonblack creature")
+    void maliceDestroysOwnCreature() {
+        Permanent kavu = harness.addToBattlefieldAndReturn(player1, new KavuRunner());
+        harness.setHand(player1, List.of(new SpiteMalice()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castInstant(player1, 0, MALICE, kavu.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Kavu Runner");
+        harness.assertInGraveyard(player1, "Kavu Runner");
+    }
 }
