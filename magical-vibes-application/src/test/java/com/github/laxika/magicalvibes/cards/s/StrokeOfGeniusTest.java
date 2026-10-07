@@ -66,4 +66,57 @@ class StrokeOfGeniusTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, 1, merfolk.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("X=0 does not attempt to draw from an empty library")
+    void zeroWithEmptyLibraryDoesNotLose() {
+        harness.setHand(player1, List.of(new StrokeOfGenius()));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of());
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castInstant(player1, 0, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playersAttemptedDrawFromEmptyLibrary).isEmpty();
+        assertThat(gd.winnerPlayerId).isNull();
+        harness.assertInGraveyard(player1, "Stroke of Genius");
+    }
+
+    @Test
+    @DisplayName("Drawing exactly the remaining library does not cause a loss")
+    void drawingExactlyRemainingLibraryDoesNotLose() {
+        CoralMerfolk first = new CoralMerfolk();
+        CoralMerfolk second = new CoralMerfolk();
+        harness.setHand(player1, List.of(new StrokeOfGenius()));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(first, second));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+
+        harness.castInstant(player1, 0, 2, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(first, second);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playersAttemptedDrawFromEmptyLibrary).isEmpty();
+        assertThat(gd.winnerPlayerId).isNull();
+    }
+
+    @Test
+    @DisplayName("Attempting to draw more than the remaining library makes the target lose")
+    void drawingBeyondRemainingLibraryMakesTargetLose() {
+        CoralMerfolk remaining = new CoralMerfolk();
+        harness.setHand(player1, List.of(new StrokeOfGenius()));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(remaining));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+
+        harness.castInstant(player1, 0, 2, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(remaining);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.winnerPlayerId).isEqualTo(player1.getId());
+    }
 }
