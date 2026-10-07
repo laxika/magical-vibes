@@ -34,8 +34,7 @@ class ThoughtbindTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, spider.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, spider.getId());
 
         harness.assertInGraveyard(player1, "Giant Spider");
         harness.assertNotOnBattlefield(player1, "Giant Spider");
@@ -58,8 +57,7 @@ class ThoughtbindTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, harness.getPermanentId(player1, "Grizzly Bears"));
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, shock.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, shock.getId());
 
         harness.assertInGraveyard(player1, "Shock");
         harness.assertOnBattlefield(player1, "Grizzly Bears");
@@ -89,7 +87,7 @@ class ThoughtbindTest extends BaseCardTest {
         harness.setHand(player1, List.of(meteorShower));
         harness.addMana(player1, ManaColor.RED, 7);
 
-        // Meteor Shower costs {X}{X}{R}; X = 3 gives it mana value 6.
+        // Meteor Shower costs {X}{X}{R}; X = 3 gives it mana value 7.
         harness.castSorceryForX(player1, 0, 3, Map.of(player2.getId(), 4));
         harness.passPriority(player1);
 
@@ -98,6 +96,61 @@ class ThoughtbindTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player2, 0, meteorShower.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Counters a double-X spell below the mana value limit")
+    void countersDoubleXSpellBelowLimit() {
+        MeteorShower meteorShower = new MeteorShower();
+        harness.setHand(player1, List.of(meteorShower));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.setHand(player2, List.of(new Thoughtbind()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        harness.castSorceryForX(player1, 0, 1, Map.of(player2.getId(), 2));
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, meteorShower.getId());
+
+        harness.assertInGraveyard(player1, "Meteor Shower");
+        harness.assertInGraveyard(player2, "Thoughtbind");
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot target a double-X spell with mana value 5")
+    void cannotTargetDoubleXSpellJustAboveLimit() {
+        MeteorShower meteorShower = new MeteorShower();
+        harness.setHand(player1, List.of(meteorShower));
+        harness.addMana(player1, ManaColor.RED, 5);
+        Thoughtbind thoughtbind = new Thoughtbind();
+        harness.setHand(player2, List.of(thoughtbind));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        harness.castSorceryForX(player1, 0, 2, Map.of(player2.getId(), 3));
+        harness.passPriority(player1);
+
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, meteorShower.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInHand(player2, "Thoughtbind");
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Can counter its controller's own spell")
+    void countersOwnSpell() {
+        Shock shock = new Shock();
+        harness.setHand(player1, List.of(shock, new Thoughtbind()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.castAndResolveInstant(player1, 0, shock.getId());
+
+        harness.assertInGraveyard(player1, "Shock");
+        harness.assertInGraveyard(player1, "Thoughtbind");
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
