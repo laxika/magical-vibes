@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -37,13 +38,12 @@ class SuspiciousShamblerTest extends BaseCardTest {
         harness.activateGraveyardAbility(player1, 0);
         harness.passBothPriorities();
 
-        List<Permanent> zombies = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().isToken()
-                        && permanent.getCard().getName().equals("Zombie"))
-                .toList();
+        List<Permanent> zombies = findPermanents(player1, "Zombie");
 
         assertThat(zombies).hasSize(2);
         assertThat(zombies).allSatisfy(zombie -> {
+            assertThat(zombie.getCard().isToken()).isTrue();
+            assertThat(zombie.getCard().getColor()).isEqualTo(CardColor.BLACK);
             assertThat(zombie.getCard().getPower()).isEqualTo(2);
             assertThat(zombie.getCard().getToughness()).isEqualTo(2);
             assertThat(zombie.getCard().getSubtypes()).contains(CardSubtype.ZOMBIE);
@@ -62,6 +62,63 @@ class SuspiciousShamblerTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         harness.assertInGraveyard(player1, "Suspicious Shambler");
+    }
+
+    @Test
+    void cannotActivateDuringCombat() {
+        setUpAbility();
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInGraveyard(player1, "Suspicious Shambler");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotActivateWithAnotherAbilityOnStack() {
+        setUpAbility();
+        harness.setGraveyard(player1, List.of(new SuspiciousShambler(), new SuspiciousShambler()));
+        addMana();
+        harness.activateGraveyardAbility(player1, 0);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.assertInGraveyard(player1, "Suspicious Shambler");
+        harness.passBothPriorities();
+        assertThat(findPermanents(player1, "Zombie")).hasSize(2);
+    }
+
+    @Test
+    void cannotPayWithOnlyOneBlackMana() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setGraveyard(player1, List.of(new SuspiciousShambler()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInGraveyard(player1, "Suspicious Shambler");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void canActivateDuringPostcombatMainPhase() {
+        setUpAbility();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+
+        harness.activateGraveyardAbility(player1, 0);
+        assertThat(findPermanents(player1, "Zombie")).isEmpty();
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Zombie")).hasSize(2);
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
     }
 
     private void setUpAbility() {
