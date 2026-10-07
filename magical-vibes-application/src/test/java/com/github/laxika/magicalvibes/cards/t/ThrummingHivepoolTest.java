@@ -2,11 +2,13 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MetallicSliver;
+import com.github.laxika.magicalvibes.cards.s.Shatter;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -17,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ThrummingHivepool.class, MetallicSliver.class, GrizzlyBears.class})
+@CardUsed({ThrummingHivepool.class, MetallicSliver.class, GrizzlyBears.class, Shatter.class})
 class ThrummingHivepoolTest extends BaseCardTest {
 
     @Test
@@ -70,9 +72,7 @@ class ThrummingHivepoolTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().isToken())
-                .toList();
+        List<Permanent> tokens = findPermanents(player1, "Sliver");
 
         assertThat(tokens).hasSize(2);
         for (Permanent token : tokens) {
@@ -98,5 +98,65 @@ class ThrummingHivepoolTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent.getCard().isToken())
                 .isEmpty();
+    }
+
+    @Test
+    @DisplayName("Affinity can reduce the entire cost to zero and counts tapped Slivers")
+    void affinityWithSevenTappedSliversAllowsCastingWithoutMana() {
+        for (int i = 0; i < 7; i++) {
+            Permanent sliver = harness.addToBattlefieldAndReturn(player1, new MetallicSliver());
+            sliver.setTapped(true);
+        }
+        harness.setHand(player1, List.of(new ThrummingHivepool()));
+
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Thrumming Hivepool");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Sliver tokens created by Hivepool reduce the cost of another Hivepool")
+    void affinityCountsCreatedSliverTokens() {
+        harness.addToBattlefield(player1, new ThrummingHivepool());
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        assertThat(findPermanents(player1, "Sliver")).hasSize(2);
+        harness.setHand(player1, List.of(new ThrummingHivepool()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Thrumming Hivepool")).hasSize(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Upkeep trigger survives Hivepool's destruction, but its keyword grant does not")
+    void upkeepTriggerResolvesAfterHivepoolIsDestroyed() {
+        Permanent hivepool = harness.addToBattlefieldAndReturn(player1, new ThrummingHivepool());
+        Permanent existingSliver = harness.addToBattlefieldAndReturn(player1, new MetallicSliver());
+        harness.setHand(player1, List.of(new Shatter()));
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player1, 0, hivepool.getId());
+
+        harness.assertNotOnBattlefield(player1, "Thrumming Hivepool");
+        assertThat(gqs.hasKeyword(gd, existingSliver, Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, existingSliver, Keyword.HASTE)).isFalse();
+        harness.passBothPriorities();
+
+        List<Permanent> tokens = findPermanents(player1, "Sliver");
+        assertThat(tokens).hasSize(2);
+        for (Permanent token : tokens) {
+            assertThat(gqs.hasKeyword(gd, token, Keyword.DOUBLE_STRIKE)).isFalse();
+            assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isFalse();
+        }
     }
 }
