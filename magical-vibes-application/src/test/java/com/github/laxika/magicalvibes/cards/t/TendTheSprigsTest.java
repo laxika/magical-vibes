@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -37,7 +36,7 @@ class TendTheSprigsTest extends BaseCardTest {
         assertThat(search.params().cards()).singleElement().satisfies(card ->
                 assertThat(card.hasType(CardType.LAND)).isTrue());
 
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard().hasType(CardType.LAND) && permanent.isTapped());
@@ -53,7 +52,7 @@ class TendTheSprigsTest extends BaseCardTest {
         castTendTheSprigs();
 
         harness.passBothPriorities();
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard().getSubtypes().contains(CardSubtype.TREEFOLK)
@@ -72,7 +71,7 @@ class TendTheSprigsTest extends BaseCardTest {
         castTendTheSprigs();
 
         harness.passBothPriorities();
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getCard().getSubtypes().contains(CardSubtype.TREEFOLK));
@@ -89,7 +88,7 @@ class TendTheSprigsTest extends BaseCardTest {
         castTendTheSprigs();
 
         harness.passBothPriorities();
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent.hasKeyword(Keyword.REACH))
@@ -100,6 +99,63 @@ class TendTheSprigsTest extends BaseCardTest {
                 });
     }
 
+    @Test
+    @DisplayName("Creates a Treefolk even when the library is empty")
+    void createsTreefolkWithEmptyLibrary() {
+        for (int i = 0; i < 7; i++) {
+            harness.addToBattlefield(player1, new Forest());
+        }
+        setupLibrary();
+        castTendTheSprigs();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().getSubtypes().contains(CardSubtype.TREEFOLK))
+                .singleElement();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Failing to find a basic land still creates a Treefolk at the threshold")
+    void createsTreefolkAfterFailingToFind() {
+        for (int i = 0; i < 7; i++) {
+            harness.addToBattlefield(player1, new Forest());
+        }
+        setupLibrary(new Forest());
+        castTendTheSprigs();
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().getSubtypes().contains(CardSubtype.TREEFOLK))
+                .singleElement();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(8);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Opponent lands and unrelated creatures do not count toward the threshold")
+    void ignoresOpponentLandsAndUnrelatedCreatures() {
+        for (int i = 0; i < 5; i++) {
+            harness.addToBattlefield(player1, new Forest());
+        }
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new Forest());
+        harness.addToBattlefield(player2, new IronrootTreefolk());
+        setupLibrary(new Forest());
+        castTendTheSprigs();
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().getSubtypes().contains(CardSubtype.TREEFOLK));
+        assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(2);
+    }
+
     private void castTendTheSprigs() {
         harness.setHand(player1, List.of(new TendTheSprigs()));
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -108,8 +164,6 @@ class TendTheSprigsTest extends BaseCardTest {
     }
 
     private void setupLibrary(Card... cards) {
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(cards));
+        harness.setLibrary(player1, List.of(cards));
     }
 }
