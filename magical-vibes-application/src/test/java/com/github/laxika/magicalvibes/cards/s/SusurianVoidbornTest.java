@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.l.LiquimetalCoating;
 import com.github.laxika.magicalvibes.cards.m.MindStone;
 import com.github.laxika.magicalvibes.cards.n.Naturalize;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
@@ -17,9 +18,10 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({SusurianVoidborn.class, GrizzlyBears.class, LightningBolt.class, MindStone.class,
-        Naturalize.class, Ornithopter.class})
+        Naturalize.class, Ornithopter.class, LiquimetalCoating.class})
 class SusurianVoidbornTest extends BaseCardTest {
 
     @Test
@@ -86,8 +88,7 @@ class SusurianVoidbornTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
         setupPlayer2Active();
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castInstant(player2, 0, bearsId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, bearsId);
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         harness.assertLife(player2, 20);
@@ -103,13 +104,118 @@ class SusurianVoidbornTest extends BaseCardTest {
 
         harness.castCreatureWithAlternateCost(player1, 0, List.of());
         harness.passBothPriorities();
-        harness.passBothPriorities();
-
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
 
         assertThat(gd.findExiledCard(voidborn.getId())).isNotNull();
+    }
+
+    @Test
+    void selfDeathAsAnArtifactTriggersOnlyOnce() {
+        harness.addToBattlefield(player1, new LiquimetalCoating());
+        harness.addToBattlefield(player1, new SusurianVoidborn());
+        UUID voidbornId = harness.getPermanentId(player1, "Susurian Voidborn");
+        harness.activateAbility(player1, 0, null, voidbornId);
+        harness.passBothPriorities();
+
+        destroyWithLightningBolt(player1, "Susurian Voidborn");
+        resolveDrain(player2.getId());
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player2, 19);
+        harness.assertLife(player1, 21);
+    }
+
+    @Test
+    void opponentArtifactDeathDoesNotTrigger() {
+        harness.addToBattlefield(player1, new SusurianVoidborn());
+        harness.addToBattlefield(player2, new MindStone());
+        harness.setHand(player2, List.of(new Naturalize()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        setupPlayer2Active();
+
+        harness.castAndResolveInstant(player2, 0, harness.getPermanentId(player2, "Mind Stone"));
+
+        harness.assertInGraveyard(player2, "Mind Stone");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void drainCannotTargetItsController() {
+        harness.addToBattlefield(player1, new SusurianVoidborn());
+        destroyWithLightningBolt(player1, "Susurian Voidborn");
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, player1.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        resolveDrain(player2.getId());
+
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    void warpedCreatureDyingBeforeEndStepDrainsAndStaysInGraveyard() {
+        SusurianVoidborn voidborn = new SusurianVoidborn();
+        harness.setHand(player1, List.of(voidborn));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castCreatureWithAlternateCost(player1, 0, List.of());
+        harness.passBothPriorities();
+
+        destroyWithLightningBolt(player1, "Susurian Voidborn");
+        resolveDrain(player2.getId());
+        harness.passUntil(TurnStep.END_STEP);
+
+        harness.assertInGraveyard(player1, "Susurian Voidborn");
+        assertThat(gd.findExiledCard(voidborn.getId())).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    void normalCastDoesNotExileAtEndStep() {
+        harness.castFromHand(player1, new SusurianVoidborn(), "{2}{B}");
+        harness.passBothPriorities();
+
+        harness.passUntil(TurnStep.END_STEP);
+
+        harness.assertOnBattlefield(player1, "Susurian Voidborn");
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void warpExileDoesNotDrainAndPermitsNormalCastingOnALaterTurn() {
+        SusurianVoidborn voidborn = new SusurianVoidborn();
+        harness.setHand(player1, List.of(voidborn));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castCreatureWithAlternateCost(player1, 0, List.of());
+        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        assertThat(gd.findExiledCard(voidborn.getId())).isNotNull();
+        harness.assertNotOnBattlefield(player1, "Susurian Voidborn");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castFromExile(player1, voidborn.getId());
+        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
+
+        harness.assertOnBattlefield(player1, "Susurian Voidborn");
+        assertThat(gd.findExiledCard(voidborn.getId())).isNull();
+        assertThat(gd.stack).isEmpty();
     }
 
     private void destroyWithLightningBolt(com.github.laxika.magicalvibes.model.Player controller,
@@ -119,8 +225,7 @@ class SusurianVoidbornTest extends BaseCardTest {
         setupPlayer2Active();
 
         UUID permanentId = harness.getPermanentId(controller, permanentName);
-        harness.castInstant(player2, 0, permanentId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, permanentId);
     }
 
     private void destroyArtifact(String permanentName) {
@@ -129,8 +234,7 @@ class SusurianVoidbornTest extends BaseCardTest {
         setupPlayer2Active();
 
         UUID permanentId = harness.getPermanentId(player1, permanentName);
-        harness.castInstant(player2, 0, permanentId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, permanentId);
     }
 
     private void resolveDrain(UUID targetId) {
