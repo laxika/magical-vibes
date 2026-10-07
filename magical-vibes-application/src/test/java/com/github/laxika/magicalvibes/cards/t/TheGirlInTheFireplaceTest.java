@@ -21,6 +21,20 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TheGirlInTheFireplaceTest extends BaseCardTest {
 
     @Test
+    void enteringSagaTriggersFirstChapterAndHumanEntersWithThreeTimeCounters() {
+        harness.setHand(player1, List.of(new TheGirlInTheFireplace()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castEnchantment(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Human Noble")).isEqualTo(1);
+        assertThat(findPermanent(player1, "Human Noble").getCounterCount(CounterType.TIME))
+                .isEqualTo(3);
+        assertThat(findPermanent(player1, "The Girl in the Fireplace").getCounterCount(CounterType.LORE))
+                .isEqualTo(1);
+    }
+
+    @Test
     void chapterICreatesProtectedVanishingHumanNoble() {
         addSagaWithLore(0);
 
@@ -35,8 +49,7 @@ class TheGirlInTheFireplaceTest extends BaseCardTest {
 
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, human.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, human.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(human);
@@ -68,14 +81,102 @@ class TheGirlInTheFireplaceTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         resolveCombat();
+        resolveAllTriggers();
         harness.handleListChoice(player1, "ADD");
 
         assertThat(timeTarget.getCounterCount(CounterType.TIME)).isEqualTo(2);
     }
 
+    @Test
+    void vanishingRemovesCountersOnOwnUpkeepAndSacrificesAfterTheLast() {
+        addSagaWithLore(0);
+        advanceToNextChapter();
+        resolveAllTriggers();
+        Permanent human = findPermanent(player1, "Human Noble");
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+        assertThat(human.getCounterCount(CounterType.TIME)).isEqualTo(3);
+
+        for (int remaining = 2; remaining >= 0; remaining--) {
+            advanceToUpkeep(player1);
+            resolveAllTriggers();
+            assertThat(human.getCounterCount(CounterType.TIME)).isEqualTo(remaining);
+            assertThat(gd.playerBattlefields.get(player1.getId()).contains(human))
+                    .isEqualTo(remaining > 0);
+        }
+    }
+
+    @Test
+    void removingLastTimeCounterThroughTimeTravelSacrificesHuman() {
+        Permanent saga = addSagaWithLore(0);
+        advanceToNextChapter();
+        resolveAllTriggers();
+        Permanent human = findPermanent(player1, "Human Noble");
+        human.setCounterCount(CounterType.TIME, 1);
+        human.setSummoningSick(false);
+        saga.setCounterCount(CounterType.LORE, 2);
+
+        advanceToNextChapter();
+        resolveAllTriggers();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(saga);
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+        resolveAllTriggers();
+        harness.handleListChoice(player1, "REMOVE");
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(human);
+    }
+
+    @Test
+    void horseOnlyGrantsHorsemanshipToItsControllersDoctorsWhilePresent() {
+        addSagaWithLore(1);
+        Permanent ownDoctor = addCreatureReady(player1, new TheTenthDoctor());
+        Permanent opposingDoctor = addCreatureReady(player2, new TheTenthDoctor());
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
+
+        advanceToNextChapter();
+        resolveAllTriggers();
+        Permanent horse = findPermanent(player1, "Horse");
+
+        assertThat(gqs.hasKeyword(gd, ownDoctor, Keyword.HORSEMANSHIP)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opposingDoctor, Keyword.HORSEMANSHIP)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.HORSEMANSHIP)).isFalse();
+        assertThat(gqs.hasKeyword(gd, horse, Keyword.HORSEMANSHIP)).isFalse();
+
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, horse.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(horse);
+        assertThat(gqs.hasKeyword(gd, ownDoctor, Keyword.HORSEMANSHIP)).isFalse();
+    }
+
+    @Test
+    void chapterIIITimeTravelsOnceForEachCreatureDealingCombatDamage() {
+        addSagaWithLore(2);
+        Permanent first = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        first.setCounterCount(CounterType.TIME, 2);
+
+        advanceToNextChapter();
+        resolveAllTriggers();
+        declareAttackers(List.of(0, 1));
+        resolveCombat();
+        resolveAllTriggers();
+        harness.handleListChoice(player1, "SKIP");
+        resolveAllTriggers();
+        harness.handleListChoice(player1, "REMOVE");
+        resolveAllTriggers();
+
+        assertThat(first.getCounterCount(CounterType.TIME)).isEqualTo(1);
+        harness.assertLife(player2, 16);
+    }
+
     private Permanent addSagaWithLore(int loreCounters) {
-        harness.addToBattlefield(player1, new TheGirlInTheFireplace());
-        Permanent saga = findPermanent(player1, "The Girl in the Fireplace");
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new TheGirlInTheFireplace());
         saga.setCounterCount(CounterType.LORE, loreCounters);
         return saga;
     }
