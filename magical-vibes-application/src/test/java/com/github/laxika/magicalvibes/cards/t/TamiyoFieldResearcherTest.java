@@ -3,12 +3,16 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +21,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TamiyoFieldResearcher.class, GrizzlyBears.class, GiantGrowth.class, Shock.class, Forest.class})
 class TamiyoFieldResearcherTest extends BaseCardTest {
 
     @Test
@@ -122,7 +127,7 @@ class TamiyoFieldResearcherTest extends BaseCardTest {
     @DisplayName("−2: a land is not a legal target")
     void minusTwoRejectsLandTarget() {
         addReadyTamiyo();
-        harness.addToBattlefield(player2, new com.github.laxika.magicalvibes.cards.f.Forest());
+        harness.addToBattlefield(player2, new Forest());
         Permanent forest = findPermanent(player2, "Forest");
 
         assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(
@@ -171,6 +176,123 @@ class TamiyoFieldResearcherTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void plusOneDrawsForCombatDamageToCreatureEvenWhenWatchedCreatureDies() {
+        addReadyTamiyo();
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new GiantGrowth()));
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(attacker.getId()));
+        harness.passBothPriorities();
+
+        int before = handSize(player1);
+        declareAttackersAndPrepareBlockers(List.of(1));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(handSize(player1) - before).isEqualTo(1);
+    }
+
+    @Test
+    void plusOneAcceptsNoTargets() {
+        Permanent tamiyo = addReadyTamiyo();
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of());
+        harness.passBothPriorities();
+
+        assertThat(tamiyo.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void minusTwoAcceptsNoTargets() {
+        Permanent tamiyo = addReadyTamiyo();
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(tamiyo.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void plusOneStillDrawsAfterTamiyoLeavesBattlefield() {
+        Permanent tamiyo = addReadyTamiyo();
+        tamiyo.setCounterCount(CounterType.LOYALTY, 1);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new GiantGrowth()));
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(bears.getId()));
+        harness.passBothPriorities();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, tamiyo.getId());
+        harness.assertNotOnBattlefield(player1, "Tamiyo, Field Researcher");
+
+        int before = handSize(player1);
+        declareAttackers(player1, List.of(0));
+        resolveCombat(player1);
+        resolveAllTriggers();
+
+        assertThat(handSize(player1) - before).isEqualTo(1);
+    }
+
+    @Test
+    void plusOneResolvesForSurvivingTarget() {
+        addReadyTamiyo();
+        Permanent first = addCreatureReady(player1, new GrizzlyBears());
+        Permanent second = addCreatureReady(player1, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new GiantGrowth()));
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(first.getId(), second.getId()));
+        harness.castInstant(player2, 0, first.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        int before = handSize(player1);
+        declareAttackers(player1, List.of(1));
+        resolveCombat(player1);
+        resolveAllTriggers();
+
+        assertThat(handSize(player1) - before).isEqualTo(1);
+    }
+
+    @Test
+    void minusTwoLocksAlreadyTappedPermanentForOnlyOneUntap() {
+        addReadyTamiyo();
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        bears.setTapped(true);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 1, List.of(bears.getId()));
+        harness.passBothPriorities();
+        harness.performUntapStep(player2);
+        assertThat(bears.isTapped()).isTrue();
+        harness.performUntapStep(player2);
+        assertThat(bears.isTapped()).isFalse();
+    }
+
+    @Test
+    void emblemAllowsInstantOnOpponentsTurnButPreservesCreatureTiming() {
+        Permanent tamiyo = addReadyTamiyo();
+        tamiyo.setCounterCount(CounterType.LOYALTY, 7);
+        harness.setLibrary(player1, List.of(new Shock(), new GiantGrowth(), new GrizzlyBears()));
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new Shock(), new GrizzlyBears()));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.assertLife(player2, 18);
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
     private int handSize(Player player) {
         return gd.playerHands.get(player.getId()).size();
     }
@@ -193,9 +315,6 @@ class TamiyoFieldResearcherTest extends BaseCardTest {
         harness.setHand(activePlayer, List.of());
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        for (int step = 0; step < 10 && activePlayer.getId().equals(gd.activePlayerId); step++) {
-            harness.clearPriorityPassed();
-            harness.passBothPriorities();
-        }
+        harness.passUntil(activePlayer.equals(player1) ? player2 : player1, TurnStep.UPKEEP);
     }
 }
