@@ -71,7 +71,6 @@ class SpikeDroneTest extends BaseCardTest {
     @DisplayName("Cannot be activated without a +1/+1 counter to remove")
     void cannotActivateWithoutCounter() {
         Permanent drone = harness.enterBattlefieldAndReturn(player1, new SpikeDrone());
-        drone.setSummoningSick(false);
         drone.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
         Permanent spider = harness.addToBattlefieldAndReturn(player1, new CanopySpider());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -101,5 +100,60 @@ class SpikeDroneTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(drone), 0, null, forest.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Removing the last counter kills the source before its ability resolves")
+    void lastCounterIsPaidBeforeResolution() {
+        Permanent drone = castDrone();
+        Permanent spider = harness.addToBattlefieldAndReturn(player1, new CanopySpider());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, indexOf(drone), 0, null, spider.getId());
+
+        harness.assertNotOnBattlefield(player1, "Spike Drone");
+        harness.assertInGraveyard(player1, "Spike Drone");
+        assertThat(spider.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(spider.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Targeting itself with its last counter cannot save it")
+    void selfTargetWithLastCounterDies() {
+        Permanent drone = castDrone();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, indexOf(drone), 0, null, drone.getId());
+
+        harness.assertNotOnBattlefield(player1, "Spike Drone");
+        harness.assertInGraveyard(player1, "Spike Drone");
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Spike Drone");
+        assertThat(drone.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Drone with two counters can target itself")
+    void selfTargetWithExtraCounterSurvives() {
+        Permanent drone = castDrone();
+        drone.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        drone.setTapped(true);
+        drone.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, indexOf(drone), 0, null, drone.getId());
+
+        assertThat(drone.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Spike Drone");
+
+        harness.passBothPriorities();
+
+        assertThat(drone.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Spike Drone");
     }
 }
