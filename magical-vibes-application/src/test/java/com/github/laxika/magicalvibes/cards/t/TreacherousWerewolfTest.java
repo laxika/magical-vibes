@@ -116,6 +116,35 @@ class TreacherousWerewolfTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    @DisplayName("Death trigger still resolves after the graveyard falls below threshold")
+    void deathTriggerDoesNotRecheckThresholdOnResolution() {
+        fillGraveyard(player1, 7);
+        Permanent werewolf = harness.addToBattlefieldAndReturn(player1, new TreacherousWerewolf());
+
+        killWithChastise(werewolf);
+        assertThat(gd.stack).hasSize(1);
+        fillGraveyard(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 16);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opponent-controlled Werewolf makes that opponent lose life when it dies")
+    void opponentControlledWerewolfLosesLifeForItsController() {
+        fillGraveyardForJudReview(player2, 7);
+        Permanent werewolf = harness.addToBattlefieldAndReturn(player2, new TreacherousWerewolf());
+
+        killWithLightningSurgeForJudReview(werewolf);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 16);
+    }
+
     private void killWithChastise(Permanent target) {
         target.setAttacking(true);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
