@@ -34,6 +34,7 @@ class SqueeGoblinNabobTest extends BaseCardTest {
 
         advanceToUpkeep(player2);
 
+        assertThat(gd.stack).isEmpty();
         assertThat(gd.pendingMayAbilities).isEmpty();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
@@ -85,5 +86,68 @@ class SqueeGoblinNabobTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getId().equals(squee.getId()));
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(otherCard);
     }
-}
 
+    @Test
+    @DisplayName("Does not trigger from the battlefield, hand, or exile")
+    void doesNotTriggerOutsideGraveyard() {
+        harness.addToBattlefield(player1, new SqueeGoblinNabob());
+        harness.setHand(player1, List.of(new SqueeGoblinNabob()));
+        harness.setExile(player1, List.of(new SqueeGoblinNabob()));
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Each Squee in the graveyard has an independent optional return")
+    void multipleCopiesReturnIndependently() {
+        SqueeGoblinNabob first = new SqueeGoblinNabob();
+        SqueeGoblinNabob second = new SqueeGoblinNabob();
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of(first, second));
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+
+        var returned = gd.playerHands.get(player1.getId()).getFirst();
+        var remaining = gd.playerGraveyards.get(player1.getId()).getFirst();
+        assertThat(List.of(first, second)).contains(returned, remaining);
+        assertThat(returned).isNotSameAs(remaining);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(returned);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Does not return Squee after it leaves and reenters the graveyard")
+    void doesNotReturnNewGraveyardIncarnation() {
+        SqueeGoblinNabob squee = new SqueeGoblinNabob();
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of(squee));
+        gd.markGraveyardEntry(squee);
+
+        advanceToUpkeep(player1);
+        harness.setGraveyard(player1, List.of());
+        harness.setHand(player1, List.of(squee));
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of(squee));
+        gd.markGraveyardEntry(squee);
+        harness.passBothPriorities();
+        if (gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class) != null) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(squee);
+    }
+}
