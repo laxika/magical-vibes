@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,14 +13,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SpitefulVisions.class, CounselOfTheSoratami.class})
 class SpitefulVisionsTest extends BaseCardTest {
 
     private void advanceToDraw(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         gd.turnNumber = 2; // avoid first-turn draw skip
         harness.forceStep(TurnStep.UPKEEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advances from UPKEEP to DRAW
+        harness.passUntil(activePlayer, TurnStep.DRAW);
     }
 
     private void drainStack() {
@@ -78,6 +79,53 @@ class SpitefulVisionsTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLUE, 3);
 
         harness.castSorcery(player2, 0, 0);
+        drainStack();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Controller also gets the additional draw and takes damage for both draws")
+    void controllerDrawStep() {
+        harness.addToBattlefield(player1, new SpitefulVisions());
+        harness.setHand(player1, List.of());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        advanceToDraw(player1);
+        drainStack();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Two copies each add a draw and each damage the drawing player")
+    void multipleCopiesStack() {
+        harness.addToBattlefield(player1, new SpitefulVisions());
+        harness.addToBattlefield(player2, new SpitefulVisions());
+        harness.setHand(player2, List.of());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        advanceToDraw(player2);
+        drainStack();
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(3);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(14);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Damage triggers survive the enchantment leaving the battlefield")
+    void damageTriggersSurviveSourceRemoval() {
+        harness.addToBattlefield(player1, new SpitefulVisions());
+        harness.setLife(player2, 20);
+        harness.getDrawService().resolveDrawCards(gd, player2.getId(), 2);
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        gd.playerBattlefields.get(player1.getId()).clear();
         drainStack();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
