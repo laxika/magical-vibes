@@ -64,4 +64,37 @@ class StrongholdTaskmasterTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, shade)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, shade)).isEqualTo(1);
     }
+
+    @Test
+    @DisplayName("Zero-toughness black creatures die on both sides while nonblack creatures survive")
+    void zeroToughnessCreaturesDieOnBothSides() {
+        harness.addToBattlefield(player1, new DungeonShade());
+        harness.addToBattlefield(player2, new DungeonShade());
+        harness.addToBattlefield(player2, new FurnaceSpirit());
+        harness.enterBattlefieldAndReturn(player1, new StrongholdTaskmaster());
+
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Dungeon Shade");
+        harness.assertNotOnBattlefield(player2, "Dungeon Shade");
+        harness.assertInGraveyard(player1, "Dungeon Shade");
+        harness.assertInGraveyard(player2, "Dungeon Shade");
+        harness.assertOnBattlefield(player1, "Stronghold Taskmaster");
+        harness.assertOnBattlefield(player2, "Furnace Spirit");
+    }
+
+    @Test
+    @DisplayName("Taskmasters controlled by different players each apply their debuff")
+    void opposingTaskmasterDebuffsAccumulate() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new StrongholdTaskmaster());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new StrongholdTaskmaster());
+        Permanent third = harness.addToBattlefieldAndReturn(player2, new StrongholdTaskmaster());
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, third)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, third)).isEqualTo(1);
+    }
 }
