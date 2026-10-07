@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TeleminPerformance.class, Divination.class, Forest.class, GrizzlyBears.class})
 class TeleminPerformanceTest extends BaseCardTest {
 
     private void castTeleminPerformance() {
@@ -28,8 +30,7 @@ class TeleminPerformanceTest extends BaseCardTest {
     @Test
     @DisplayName("Noncreature cards revealed are milled and the creature is stolen under the caster's control")
     void millsNoncreaturesAndStealsCreature() {
-        gd.playerDecks.get(player2.getId()).clear();
-        gd.playerDecks.get(player2.getId()).addAll(List.of(new Divination(), new Forest(), new GrizzlyBears()));
+        harness.setLibrary(player2, List.of(new Divination(), new Forest(), new GrizzlyBears()));
 
         castTeleminPerformance();
         harness.passBothPriorities();
@@ -49,8 +50,7 @@ class TeleminPerformanceTest extends BaseCardTest {
     @Test
     @DisplayName("A library with no creature is entirely milled and nothing is stolen")
     void noCreatureMillsEntireLibrary() {
-        gd.playerDecks.get(player2.getId()).clear();
-        gd.playerDecks.get(player2.getId()).addAll(List.of(new Divination(), new Forest()));
+        harness.setLibrary(player2, List.of(new Divination(), new Forest()));
 
         castTeleminPerformance();
         harness.passBothPriorities();
@@ -59,6 +59,39 @@ class TeleminPerformanceTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .extracting("name").containsExactlyInAnyOrder("Divination", "Forest");
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An empty library reveals nothing and does not cause a draw loss")
+    void emptyLibraryDoesNothing() {
+        harness.setLibrary(player2, List.of());
+
+        castTeleminPerformance();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Telemin Performance");
+        assertThat(gd.status).isEqualTo(com.github.laxika.magicalvibes.model.GameStatus.RUNNING);
+    }
+
+    @Test
+    @DisplayName("Revealing stops at the first creature and leaves later cards in library order")
+    void firstCreatureStopsRevealing() {
+        GrizzlyBears creature = new GrizzlyBears();
+        Forest remainingLand = new Forest();
+        GrizzlyBears remainingCreature = new GrizzlyBears();
+        harness.setLibrary(player2, List.of(creature, remainingLand, remainingCreature));
+
+        castTeleminPerformance();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(remainingLand, remainingCreature);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .singleElement().satisfies(permanent -> assertThat(permanent.getCard()).isSameAs(creature));
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test
