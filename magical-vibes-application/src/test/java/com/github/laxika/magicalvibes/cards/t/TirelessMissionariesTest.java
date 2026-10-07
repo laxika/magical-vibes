@@ -1,18 +1,15 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({TirelessMissionaries.class})
 class TirelessMissionariesTest extends BaseCardTest {
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting Tireless Missionaries puts it on the stack as a creature spell")
@@ -23,8 +20,6 @@ class TirelessMissionariesTest extends BaseCardTest {
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Tireless Missionaries");
     }
-
-    // ===== Resolving creature spell =====
 
     @Test
     @DisplayName("Resolving puts Tireless Missionaries on battlefield with ETB trigger on stack")
@@ -38,8 +33,6 @@ class TirelessMissionariesTest extends BaseCardTest {
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Tireless Missionaries");
     }
-
-    // ===== ETB life gain =====
 
     @Test
     @DisplayName("ETB trigger causes controller to gain 3 life")
@@ -74,11 +67,25 @@ class TirelessMissionariesTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Entering without being cast gives life to its controller only after the trigger resolves")
+    void enteringWithoutCastingGainsLifeForOtherController() {
+        harness.enterBattlefieldAndReturn(player2, new TirelessMissionaries());
+
+        harness.assertOnBattlefield(player2, "Tireless Missionaries");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 23);
+        assertThat(gd.stack).isEmpty();
+    }
 
     private void castTirelessMissionaries() {
-        harness.setHand(player1, List.of(new TirelessMissionaries()));
-        harness.addMana(player1, ManaColor.WHITE, 5);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new TirelessMissionaries(), "{4}{W}");
     }
 }
