@@ -74,11 +74,56 @@ class TentativeConnectionTest extends BaseCardTest {
         assertThat(gd.isStolenUntilEndOfTurn(target.getId())).isFalse();
     }
 
+    @Test
+    @DisplayName("An opponent's menace creature does not reduce the cost")
+    void opponentMenaceDoesNotReduceCost() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new CavernWhisperer());
+        harness.setHand(player1, List.of(new TentativeConnection()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The menace discount does not remove the red mana requirement")
+    void discountDoesNotRemoveColoredCost() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new CavernWhisperer());
+        harness.setHand(player1, List.of(new TentativeConnection()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can target and untap your own menace creature for the reduced cost")
+    void targetsOwnMenaceCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new CavernWhisperer());
+        target.tap();
+        harness.setHand(player1, List.of(new TentativeConnection()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+    }
+
     private void castTentativeConnection(Permanent target) {
         harness.setHand(player1, List.of(new TentativeConnection()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castSorcery(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, target.getId());
     }
 }
