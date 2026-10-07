@@ -166,13 +166,64 @@ class SpiritCairnTest extends BaseCardTest {
             harness.handleCardChosen(player1, 0);
             harness.passBothPriorities();
             harness.handleMayAbilityChosen(player1, true);
-            while (!gd.stack.isEmpty()) {
-                harness.passBothPriorities();
-            }
+            resolveAllTriggers();
         }
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(p -> p.getCard().isToken() && p.getCard().getSubtypes().contains(CardSubtype.SPIRIT))
                 .hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Declining one discard trigger does not decline the next one")
+    void simultaneousDiscardPaymentsAreIndependent() {
+        harness.addToBattlefield(player1, new SpiritCairn());
+        harness.setHand(player2, List.of(new CabalTherapy(), new CabalTherapy()));
+        harness.setHand(player1, List.of(new CabalTherapy()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "Cabal Therapy");
+        resolveAllTriggers();
+
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(p -> p.getCard().isToken());
+
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(p -> p.getCard().isToken())
+                .hasSize(1);
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(p -> p.getCard().isToken());
+    }
+
+    @Test
+    @DisplayName("Each Spirit requires a separate white mana payment")
+    void simultaneousDiscardsCannotReuseOneWhiteMana() {
+        harness.addToBattlefield(player1, new SpiritCairn());
+        harness.setHand(player2, List.of(new CabalTherapy(), new CabalTherapy()));
+        harness.setHand(player1, List.of(new CabalTherapy()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "Cabal Therapy");
+        resolveAllTriggers();
+
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(p -> p.getCard().isToken())
+                .hasSize(1);
     }
 }
