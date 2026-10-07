@@ -25,8 +25,7 @@ class TunnelTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         UUID targetId = harness.getPermanentId(player2, "Living Wall");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.assertNotOnBattlefield(player2, "Living Wall");
         harness.assertInGraveyard(player2, "Living Wall");
@@ -41,8 +40,7 @@ class TunnelTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         UUID targetId = harness.getPermanentId(player2, "Living Wall");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.assertNotOnBattlefield(player2, "Living Wall");
         harness.assertInGraveyard(player2, "Living Wall");
@@ -59,5 +57,35 @@ class TunnelTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, targetId))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can destroy a Wall controlled by the caster")
+    void destroysOwnWall() {
+        Permanent wall = harness.addToBattlefieldAndReturn(player1, new LivingWall());
+        harness.setHand(player1, List.of(new Tunnel()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, wall.getId());
+
+        harness.assertNotOnBattlefield(player1, "Living Wall");
+        harness.assertInGraveyard(player1, "Living Wall");
+    }
+
+    @Test
+    @DisplayName("Bypasses regeneration activated in response")
+    void bypassesRegenerationInResponse() {
+        Permanent wall = harness.addToBattlefieldAndReturn(player2, new LivingWall());
+        harness.setHand(player1, List.of(new Tunnel()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player1, 0, wall.getId());
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Living Wall");
+        harness.assertInGraveyard(player2, "Living Wall");
     }
 }
