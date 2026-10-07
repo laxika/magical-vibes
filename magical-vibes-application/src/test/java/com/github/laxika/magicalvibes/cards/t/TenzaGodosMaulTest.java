@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -119,10 +120,67 @@ class TenzaGodosMaulTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, kikiJiki, Keyword.TRAMPLE)).isFalse();
     }
 
+    @Test
+    @DisplayName("Re-equipping moves all bonuses from the old host to the new host")
+    void reequippingMovesBonuses() {
+        Permanent maul = addMaulReady(player1);
+        Permanent kikiJiki = addCreatureReady(player1, new KikiJikiMirrorBreaker());
+        Permanent elder = addCreatureReady(player1, new SakuraTribeElder());
+        maul.setAttachedTo(kikiJiki.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, elder.getId());
+
+        assertThat(maul.getAttachedTo()).isEqualTo(kikiJiki.getId());
+        assertThat(gqs.getEffectivePower(gd, kikiJiki)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, kikiJiki, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, elder)).isEqualTo(1);
+
+        harness.passBothPriorities();
+
+        assertThat(maul.getAttachedTo()).isEqualTo(elder.getId());
+        assertThat(gqs.getEffectivePower(gd, kikiJiki)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, kikiJiki)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, kikiJiki, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, elder)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, elder)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, elder, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("The equipped creature retains all bonuses when an opponent gains control of it")
+    void bonusesRemainOnOpponentControlledHost() {
+        Permanent kikiJiki = addCreatureReady(player1, new KikiJikiMirrorBreaker());
+        Permanent maul = attachMaul(player1, kikiJiki);
+
+        gd.playerBattlefields.get(player1.getId()).remove(kikiJiki);
+        gd.playerBattlefields.get(player2.getId()).add(kikiJiki);
+
+        assertThat(maul.getAttachedTo()).isEqualTo(kikiJiki.getId());
+        assertThat(gqs.getEffectivePower(gd, kikiJiki)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, kikiJiki)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, kikiJiki, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Equip cannot be activated during combat")
+    void equipRejectsCombatTiming() {
+        Permanent maul = addMaulReady(player1);
+        Permanent elder = addCreatureReady(player1, new SakuraTribeElder());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, elder.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery speed");
+        assertThat(maul.getAttachedTo()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addMaulReady(Player player) {
-        Permanent perm = new Permanent(new TenzaGodosMaul());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new TenzaGodosMaul());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
