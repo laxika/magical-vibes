@@ -42,8 +42,7 @@ class TreacherousVampireTest extends BaseCardTest {
     @Test
     @DisplayName("Exiles a graveyard card instead of sacrificing when it attacks")
     void exilesCardInsteadOfSacrificingWhenAttacking() {
-        Permanent vampire = harness.addToBattlefieldAndReturn(player1, new TreacherousVampire());
-        vampire.setSummoningSick(false);
+        Permanent vampire = addCreatureReady(player1, new TreacherousVampire());
         Card cardToKeep = new KrosanWayfarer();
         Card cardToExile = new DwarvenScorcher();
         harness.setGraveyard(player1, List.of(cardToKeep, cardToExile));
@@ -82,8 +81,7 @@ class TreacherousVampireTest extends BaseCardTest {
     @Test
     @DisplayName("Sacrifices itself when its attack trigger is declined")
     void sacrificesWhenAttackChoiceIsDeclined() {
-        Permanent vampire = harness.addToBattlefieldAndReturn(player1, new TreacherousVampire());
-        vampire.setSummoningSick(false);
+        Permanent vampire = addCreatureReady(player1, new TreacherousVampire());
         Card cardInGraveyard = new KrosanWayfarer();
         harness.setGraveyard(player1, List.of(cardInGraveyard));
 
@@ -98,8 +96,7 @@ class TreacherousVampireTest extends BaseCardTest {
     @Test
     @DisplayName("Sacrifices itself without a choice when its attack trigger has no graveyard card to exile")
     void sacrificesWhenAttackHasNoGraveyardCard() {
-        Permanent vampire = harness.addToBattlefieldAndReturn(player1, new TreacherousVampire());
-        vampire.setSummoningSick(false);
+        Permanent vampire = addCreatureReady(player1, new TreacherousVampire());
 
         declareAttackers(player1, List.of(0));
         harness.passBothPriorities();
@@ -112,8 +109,7 @@ class TreacherousVampireTest extends BaseCardTest {
     @DisplayName("Exiling the seventh graveyard card removes the threshold bonus")
     void exilingSeventhGraveyardCardRemovesThresholdBonus() {
         fillGraveyard(player1, 7);
-        Permanent vampire = harness.addToBattlefieldAndReturn(player1, new TreacherousVampire());
-        vampire.setSummoningSick(false);
+        Permanent vampire = addCreatureReady(player1, new TreacherousVampire());
 
         declareAttackers(player1, List.of(0));
         harness.passBothPriorities();
@@ -129,8 +125,7 @@ class TreacherousVampireTest extends BaseCardTest {
     @DisplayName("Threshold death ability makes its controller lose 6 life")
     void thresholdDeathAbilityLosesLife() {
         fillGraveyard(player1, 7);
-        Permanent vampire = harness.addToBattlefieldAndReturn(player1, new TreacherousVampire());
-        vampire.setSummoningSick(false);
+        addCreatureReady(player1, new TreacherousVampire());
 
         declareAttackers(player1, List.of(0));
         harness.passBothPriorities();
@@ -144,8 +139,7 @@ class TreacherousVampireTest extends BaseCardTest {
     @DisplayName("Threshold death ability is absent below seven graveyard cards")
     void thresholdDeathAbilityIsAbsentBelowThreshold() {
         fillGraveyard(player1, 6);
-        Permanent vampire = harness.addToBattlefieldAndReturn(player1, new TreacherousVampire());
-        vampire.setSummoningSick(false);
+        addCreatureReady(player1, new TreacherousVampire());
 
         declareAttackers(player1, List.of(0));
         harness.passBothPriorities();
@@ -221,6 +215,59 @@ class TreacherousVampireTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(vampire);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Accepting the attack payment exiles the only graveyard card automatically")
+    void exilesOnlyGraveyardCardWhenAttacking() {
+        Permanent vampire = addCreatureReady(player1, new TreacherousVampire());
+        Card payment = new KrosanWayfarer();
+        harness.setGraveyard(player1, List.of(payment));
+
+        declareAttackers(player1, List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(vampire);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.exiledCards).extracting(exiled -> exiled.card()).contains(payment);
+    }
+
+    @Test
+    @DisplayName("A blocker cannot pay with cards in the attacking player's graveyard")
+    void sacrificesWhenBlockingWithOnlyOpponentsGraveyardAvailable() {
+        Permanent attacker = addCreatureReady(player1, new KrosanWayfarer());
+        attacker.setAttacking(true);
+        Permanent vampire = addCreatureReady(player2, new TreacherousVampire());
+        Card opposingCard = new DwarvenScorcher();
+        harness.setGraveyard(player1, List.of(opposingCard));
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(vampire);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(vampire.getCard());
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(opposingCard);
+        assertThat(gd.exiledCards).isEmpty();
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("A threshold death trigger still resolves after the graveyard drops below seven cards")
+    void deathTriggerDoesNotRecheckThresholdOnResolution() {
+        fillGraveyard(player2, 7);
+        Permanent vampire = harness.addToBattlefieldAndReturn(player2, new TreacherousVampire());
+        vampire.setMarkedDamage(6);
+
+        harness.runStateBasedActions();
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(vampire);
+        assertThat(gd.stack).hasSize(1);
+        fillGraveyard(player2, 6);
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 14);
         harness.assertLife(player1, 20);
     }
 }
