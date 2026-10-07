@@ -46,10 +46,7 @@ class TheThirteenthDoctorTest extends BaseCardTest {
     void handSpellDoesNotTriggerParadox() {
         harness.addToBattlefield(player1, new TheThirteenthDoctor());
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
         harness.passBothPriorities();
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -83,10 +80,85 @@ class TheThirteenthDoctorTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.END_STEP);
+        resolveAllTriggers();
 
         assertThat(counteredCreature.isTapped()).isFalse();
         assertThat(uncounteredCreature.isTapped()).isTrue();
+    }
+
+    @Test
+    void paradoxCanTargetOpponentsCreature() {
+        harness.addToBattlefield(player1, new TheThirteenthDoctor());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new TheThirteenthDoctor());
+        GrizzlyBears spell = new GrizzlyBears();
+        harness.setExile(player1, List.of(spell));
+        gd.exilePlayPermissions.put(spell.getId(), player1.getId());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castFromExile(player1, spell.getId());
+        harness.handlePermanentChosen(player1, target.getId());
+        resolveAllTriggers();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void opponentsOutsideHandSpellDoesNotTriggerParadox() {
+        Permanent doctor = harness.addToBattlefieldAndReturn(player1, new TheThirteenthDoctor());
+        GrizzlyBears spell = new GrizzlyBears();
+        harness.setExile(player2, List.of(spell));
+        gd.exilePlayPermissions.put(spell.getId(), player2.getId());
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.ensurePriority(player2);
+
+        harness.castFromExile(player2, spell.getId());
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        resolveAllTriggers();
+
+        assertThat(doctor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void teamTardisUntapsOtherCounterTypesButOnlyControlledCreatures() {
+        Permanent doctor = harness.addToBattlefieldAndReturn(player1, new TheThirteenthDoctor());
+        Permanent opposingDoctor = harness.addToBattlefieldAndReturn(player2, new TheThirteenthDoctor());
+        doctor.setCounterCount(CounterType.CHARGE, 1);
+        opposingDoctor.setCounterCount(CounterType.CHARGE, 1);
+        doctor.tap();
+        opposingDoctor.tap();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.passUntil(player1, TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        assertThat(doctor.isTapped()).isFalse();
+        assertThat(opposingDoctor.isTapped()).isTrue();
+    }
+
+    @Test
+    void teamTardisChecksCountersWhenTheAbilityResolves() {
+        harness.addToBattlefield(player1, new TheThirteenthDoctor());
+        Permanent gainingCounter = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent losingCounter = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        losingCounter.setCounterCount(CounterType.CHARGE, 1);
+        gainingCounter.tap();
+        losingCounter.tap();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.passUntil(player1, TurnStep.END_STEP);
+        assertThat(gd.stack).hasSize(1);
+        gainingCounter.setCounterCount(CounterType.CHARGE, 1);
+        losingCounter.setCounterCount(CounterType.CHARGE, 0);
+        resolveAllTriggers();
+
+        assertThat(gainingCounter.isTapped()).isFalse();
+        assertThat(losingCounter.isTapped()).isTrue();
     }
 }
