@@ -1,7 +1,10 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.d.DarksteelCitadel;
+import com.github.laxika.magicalvibes.cards.e.EchoingTruth;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.v.VolcanicIsland;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -15,7 +18,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SunderingTitan.class, Island.class, Mountain.class, Shatter.class})
+@CardUsed({SunderingTitan.class, Island.class, Mountain.class, Shatter.class,
+        DarksteelCitadel.class, EchoingTruth.class, VolcanicIsland.class})
 class SunderingTitanTest extends BaseCardTest {
 
     @Test
@@ -111,5 +115,91 @@ class SunderingTitanTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Mountain");
         harness.assertOnBattlefield(player2, "Mountain");
         harness.assertInGraveyard(player1, "Sundering Titan");
+    }
+
+    @Test
+    void resolvesWithoutLands() {
+        harness.castFromHand(player1, new SunderingTitan(), "{8}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Sundering Titan");
+    }
+
+    @Test
+    void ignoresLandsWithoutBasicLandTypes() {
+        harness.addToBattlefield(player2, new DarksteelCitadel());
+        harness.addToBattlefield(player1, new Mountain());
+
+        harness.castFromHand(player1, new SunderingTitan(), "{8}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player2, "Darksteel Citadel");
+        harness.assertNotOnBattlefield(player1, "Mountain");
+        harness.assertInGraveyard(player1, "Mountain");
+    }
+
+    @Test
+    void canChooseTheSameNonbasicLandForBothItsTypes() {
+        Permanent dual = harness.addToBattlefieldAndReturn(player2, new VolcanicIsland());
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new Mountain());
+
+        harness.castFromHand(player1, new SunderingTitan(), "{8}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of(dual.getId()));
+
+        harness.assertOnBattlefield(player2, "Volcanic Island");
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice.validIds()).contains(dual.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(dual.getId()));
+
+        harness.assertOnBattlefield(player1, "Island");
+        harness.assertOnBattlefield(player1, "Mountain");
+        harness.assertNotOnBattlefield(player2, "Volcanic Island");
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(dual.getCard());
+    }
+
+    @Test
+    void choosingADualLandForOneTypeDoesNotCoverItsOtherType() {
+        Permanent dual = harness.addToBattlefieldAndReturn(player2, new VolcanicIsland());
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+
+        harness.castFromHand(player1, new SunderingTitan(), "{8}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Volcanic Island");
+        harness.assertOnBattlefield(player1, "Mountain");
+        harness.handleMultiplePermanentsChosen(player1, List.of(mountain.getId()));
+
+        harness.assertNotOnBattlefield(player2, "Volcanic Island");
+        harness.assertNotOnBattlefield(player1, "Mountain");
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(dual.getCard());
+        harness.assertInGraveyard(player1, "Mountain");
+    }
+
+    @Test
+    void returningTitanToHandAlsoTriggersLandDestruction() {
+        Permanent titan = harness.addToBattlefieldAndReturn(player1, new SunderingTitan());
+        harness.addToBattlefield(player2, new Mountain());
+        harness.setHand(player1, List.of(new EchoingTruth()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, titan.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Sundering Titan");
+        harness.assertOnBattlefield(player2, "Mountain");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Mountain");
+        harness.assertInGraveyard(player2, "Mountain");
     }
 }
