@@ -80,17 +80,127 @@ class StennParanoidPartisanTest extends BaseCardTest {
                 .anyMatch(card -> card.getName().equals("Stenn, Paranoid Partisan"));
 
         advanceToEndStep();
+        harness.passBothPriorities();
+        if (gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class) != null) {
+            harness.handleListChoice(player1, CardType.SORCERY.name());
+        }
 
         harness.assertOnBattlefield(player1, "Stenn, Paranoid Partisan");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .noneMatch(card -> card.getName().equals("Stenn, Paranoid Partisan"));
     }
 
+    @Test
+    void returningStennChoosesANewType() {
+        addReadyStenn(player1, CardType.SORCERY);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        advanceToEndStep();
+        harness.passBothPriorities();
+
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.options()).contains(CardType.INSTANT.name());
+        harness.handleListChoice(player1, CardType.INSTANT.name());
+
+        Permanent returned = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard() instanceof StennParanoidPartisan)
+                .findFirst().orElseThrow();
+        assertThat(returned.getChosenCardType()).isEqualTo(CardType.INSTANT);
+    }
+
+    @Test
+    void opponentsSpellsAreNotReduced() {
+        addReadyStenn(player1, CardType.SORCERY);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Divination()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castSorcery(player2, 0, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    void reductionDoesNotPayColoredMana() {
+        addReadyStenn(player1, CardType.SORCERY);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new Divination()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    void stolenStennReturnsUnderItsOwnersControl() {
+        StennParanoidPartisan card = new StennParanoidPartisan();
+        card.setOwnerId(player1.getId());
+        Permanent stenn = harness.addToBattlefieldAndReturn(player2, card);
+        stenn.setChosenCardType(CardType.SORCERY);
+        gd.stolenCreatures.put(stenn.getId(), player1.getId());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player2, "Stenn, Paranoid Partisan");
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        if (gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class) != null) {
+            harness.handleListChoice(player1, CardType.ARTIFACT.name());
+        }
+
+        harness.assertOnBattlefield(player1, "Stenn, Paranoid Partisan");
+        harness.assertNotOnBattlefield(player2, "Stenn, Paranoid Partisan");
+    }
+
+    @Test
+    void activationDuringEndStepWaitsForTheFollowingEndStep() {
+        addReadyStenn(player1, CardType.SORCERY);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Stenn, Paranoid Partisan");
+        assertThat(gd.stack).isEmpty();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        if (gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class) != null) {
+            harness.handleListChoice(player1, CardType.SORCERY.name());
+        }
+
+        harness.assertOnBattlefield(player1, "Stenn, Paranoid Partisan");
+    }
+
     private Permanent addReadyStenn(Player player, CardType chosenType) {
-        Permanent stenn = new Permanent(new StennParanoidPartisan());
+        Permanent stenn = harness.addToBattlefieldAndReturn(player, new StennParanoidPartisan());
         stenn.setSummoningSick(false);
         stenn.setChosenCardType(chosenType);
-        gd.playerBattlefields.get(player.getId()).add(stenn);
         return stenn;
     }
 
