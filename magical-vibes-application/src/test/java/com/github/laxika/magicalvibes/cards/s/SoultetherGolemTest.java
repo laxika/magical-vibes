@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.n.NessianCourser;
+import com.github.laxika.magicalvibes.cards.t.Timecrafting;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SoultetherGolem.class, NessianCourser.class})
+@CardUsed({SoultetherGolem.class, NessianCourser.class, Timecrafting.class})
 class SoultetherGolemTest extends BaseCardTest {
 
     @Test
@@ -62,7 +63,7 @@ class SoultetherGolemTest extends BaseCardTest {
         Permanent golem = addCreatureReady(player1, new SoultetherGolem());
         golem.setCounterCount(CounterType.TIME, 1);
 
-        harness.addToBattlefield(player2, new NessianCourser());
+        harness.enterBattlefieldAndReturn(player2, new NessianCourser());
         resolveAllTriggers();
 
         assertThat(golem.getCounterCount(CounterType.TIME)).isEqualTo(1);
@@ -94,6 +95,72 @@ class SoultetherGolemTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(golem);
 
         advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Soultether Golem");
+        harness.assertInGraveyard(player1, "Soultether Golem");
+    }
+
+    @Test
+    void creatureEnteringRestoresTimeCounterAndRestartsVanishing() {
+        Permanent golem = harness.addToBattlefieldAndReturn(player1, new SoultetherGolem());
+
+        harness.enterBattlefieldAndReturn(player1, new NessianCourser());
+        resolveAllTriggers();
+
+        assertThat(golem.getCounterCount(CounterType.TIME)).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Soultether Golem");
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Soultether Golem");
+        harness.assertInGraveyard(player1, "Soultether Golem");
+    }
+
+    @Test
+    void opponentUpkeepDoesNotRemoveTimeCounter() {
+        Permanent golem = harness.addToBattlefieldAndReturn(player1, new SoultetherGolem());
+        golem.setCounterCount(CounterType.TIME, 1);
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(golem.getCounterCount(CounterType.TIME)).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Soultether Golem");
+    }
+
+    @Test
+    @CardUsed(Timecrafting.class)
+    void removingLastTimeCounterWithAnotherSpellTriggersSacrifice() {
+        Permanent golem = harness.addToBattlefieldAndReturn(player1, new SoultetherGolem());
+        golem.setCounterCount(CounterType.TIME, 1);
+        harness.setHand(player1, List.of(new Timecrafting()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castModalInstantForX(player1, 0, 0, 1, golem.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Soultether Golem");
+        harness.assertInGraveyard(player1, "Soultether Golem");
+    }
+
+    @Test
+    void addingTimeCounterAfterSacrificeTriggersDoesNotSaveGolem() {
+        Permanent golem = harness.addToBattlefieldAndReturn(player1, new SoultetherGolem());
+        golem.setCounterCount(CounterType.TIME, 1);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(golem.getCounterCount(CounterType.TIME)).isZero();
+        assertThat(gd.stack).hasSize(1);
+        harness.assertOnBattlefield(player1, "Soultether Golem");
+
+        harness.enterBattlefieldAndReturn(player1, new NessianCourser());
+        harness.passBothPriorities();
+
+        assertThat(golem.getCounterCount(CounterType.TIME)).isEqualTo(1);
         resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Soultether Golem");
