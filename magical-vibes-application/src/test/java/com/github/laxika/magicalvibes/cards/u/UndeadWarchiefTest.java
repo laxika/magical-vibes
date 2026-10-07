@@ -118,4 +118,43 @@ class UndeadWarchiefTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castCreature(player2, 0))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("A battlefield Warchief reduces the cost of another Warchief")
+    void reducesAnotherWarchiefsCost() {
+        addCreatureReady(player1, new UndeadWarchief());
+        harness.setHand(player1, List.of(new UndeadWarchief()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A Warchief spell does not reduce its own casting cost")
+    void doesNotReduceItsOwnCastingCost() {
+        harness.setHand(player1, List.of(new UndeadWarchief()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Excess Zombie cost reductions leave the colored mana cost payable")
+    void excessReductionsStopAtZeroGenericMana() {
+        for (int i = 0; i < 4; i++) {
+            addCreatureReady(player1, new UndeadWarchief());
+        }
+        harness.setHand(player1, List.of(new VengefulDead()));
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+    }
 }
