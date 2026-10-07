@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.u;
 
 import com.github.laxika.magicalvibes.cards.b.BarbaryApes;
+import com.github.laxika.magicalvibes.cards.s.SegovianLeviathan;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -22,7 +23,7 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Undertow.class, BarbaryApes.class})
+@CardUsed({Undertow.class, BarbaryApes.class, SegovianLeviathan.class})
 class UndertowTest extends BaseCardTest {
 
     @Test
@@ -58,6 +59,52 @@ class UndertowTest extends BaseCardTest {
     void nonLandwalkEvasionRemainsUnblockable() {
         harness.addToBattlefield(player2, new Undertow());
         Permanent attacker = addWalker(player1, Keyword.FLYING);
+        Permanent blocker = addCreatureReady(player2, new BarbaryApes());
+
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> declareBlock(blocker, attacker))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Undertow also allows blocks when controlled by the attacker")
+    void attackerControlledUndertowAllowsBlocking() {
+        harness.addToBattlefield(player2, basicLand(CardSubtype.ISLAND));
+        harness.addToBattlefield(player1, new Undertow());
+        Permanent attacker = addCreatureReady(player1, new SegovianLeviathan());
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new BarbaryApes());
+
+        prepareDeclareBlockers();
+        declareBlock(blocker, attacker);
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Undertow does not remove islandwalk from creatures")
+    void islandwalkAbilityIsRetained() {
+        harness.addToBattlefield(player2, basicLand(CardSubtype.ISLAND));
+        harness.addToBattlefield(player2, new Undertow());
+        Permanent attacker = addCreatureReady(player1, new SegovianLeviathan());
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new BarbaryApes());
+
+        prepareDeclareBlockers();
+        declareBlock(blocker, attacker);
+
+        assertThat(blocker.isBlocking()).isTrue();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.ISLANDWALK)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Undertow in a graveyard does not permit blocking an islandwalker")
+    void undertowOutsideBattlefieldDoesNotApply() {
+        harness.addToBattlefield(player2, basicLand(CardSubtype.ISLAND));
+        gd.playerGraveyards.get(player2.getId()).add(new Undertow());
+        Permanent attacker = addCreatureReady(player1, new SegovianLeviathan());
+        attacker.setAttacking(true);
         Permanent blocker = addCreatureReady(player2, new BarbaryApes());
 
         prepareDeclareBlockers();
