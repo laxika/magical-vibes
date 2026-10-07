@@ -97,11 +97,56 @@ class UnlivingPsychopathTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, target.getId());
 
         harness.activateAbility(player2, 0, 0, null, null);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertOnBattlefield(player2, "Slithering Shade");
         assertThat(psychopath.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The destruction ability uses the source's increased power on resolution")
+    void usesCurrentSourcePowerOnResolution() {
+        Permanent psychopath = addReadyPsychopath(player1);
+        Permanent target = addCreatureReady(player2, new SlitheringShade());
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.addMana(player2, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        harness.activateAbility(player2, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, psychopath)).isEqualTo(2);
+        harness.assertNotOnBattlefield(player2, "Slithering Shade");
+        harness.assertInGraveyard(player2, "Slithering Shade");
+    }
+
+    @Test
+    @DisplayName("The destruction ability uses last known power after its source dies")
+    void usesLastKnownPowerAfterSourceDies() {
+        addReadyPsychopath(player1);
+        Permanent target = addCreatureReady(player2, new MinisterOfImpediments());
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        for (int i = 0; i < 3; i++) {
+            harness.activateAbility(player1, 0, 0, null, null);
+            harness.passBothPriorities();
+        }
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Unliving Psychopath");
+        harness.assertInGraveyard(player1, "Unliving Psychopath");
+        harness.assertOnBattlefield(player2, "Minister of Impediments");
+
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Minister of Impediments");
+        harness.assertInGraveyard(player2, "Minister of Impediments");
     }
 
     private Permanent addReadyPsychopath(Player player) {
