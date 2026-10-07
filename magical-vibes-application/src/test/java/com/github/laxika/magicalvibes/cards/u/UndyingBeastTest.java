@@ -56,4 +56,48 @@ class UndyingBeastTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .noneMatch(card -> card.getId().equals(beastCard.getId()));
     }
+
+    @Test
+    @DisplayName("The death trigger puts Undying Beast into an empty library only when it resolves")
+    void deathTriggerResolvesIntoEmptyLibrary() {
+        Card beastCard = new UndyingBeast();
+        harness.setLibrary(player1, List.of());
+        harness.addToBattlefield(player1, beastCard);
+
+        harness.castFromHand(player1, new WrathOfGod(), "{2}{W}{W}");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Undying Beast");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .extracting(Card::getId).containsExactly(beastCard.getId());
+        harness.assertNotInGraveyard(player1, "Undying Beast");
+    }
+
+    @Test
+    @DisplayName("The death trigger does nothing if Undying Beast has left the graveyard")
+    void deathTriggerDoesNotRetrieveCardFromExile() {
+        Card beastCard = new UndyingBeast();
+        Card libraryCard = new WrathOfGod();
+        harness.setLibrary(player1, List.of(libraryCard));
+        harness.addToBattlefield(player1, beastCard);
+
+        harness.castFromHand(player1, new WrathOfGod(), "{2}{W}{W}");
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Undying Beast");
+
+        // Model the source being exiled while its death trigger is pending.
+        gd.playerGraveyards.get(player1.getId()).removeIf(card -> card.getId().equals(beastCard.getId()));
+        harness.setExile(player1, List.of(beastCard));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .extracting(Card::getId).containsExactly(libraryCard.getId());
+        harness.assertNotInGraveyard(player1, "Undying Beast");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .extracting(Card::getId).contains(beastCard.getId());
+    }
 }
