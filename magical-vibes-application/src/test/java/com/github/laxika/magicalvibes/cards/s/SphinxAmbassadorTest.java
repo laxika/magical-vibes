@@ -6,17 +6,22 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GrafdiggersCage;
+import com.github.laxika.magicalvibes.cards.m.MindlockOrb;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingSphinxAmbassadorChoice;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SphinxAmbassador.class, GrizzlyBears.class, Shock.class, MindlockOrb.class, GrafdiggersCage.class})
 class SphinxAmbassadorTest extends BaseCardTest {
 
     // ===== Combat damage trigger =====
@@ -30,8 +35,7 @@ class SphinxAmbassadorTest extends BaseCardTest {
         // Put known cards in opponent's library
         Card bears = new GrizzlyBears();
         Card shock = new Shock();
-        gd.playerDecks.get(player2.getId()).clear();
-        gd.playerDecks.get(player2.getId()).addAll(List.of(bears, shock));
+        harness.setLibrary(player2, List.of(bears, shock));
 
         resolveCombat();
 
@@ -50,8 +54,7 @@ class SphinxAmbassadorTest extends BaseCardTest {
         sphinx.setAttacking(true);
 
         Card bears = new GrizzlyBears();
-        gd.playerDecks.get(player2.getId()).clear();
-        gd.playerDecks.get(player2.getId()).add(bears);
+        harness.setLibrary(player2, List.of(bears));
 
         resolveCombat();
 
@@ -90,8 +93,7 @@ class SphinxAmbassadorTest extends BaseCardTest {
         sphinx.setAttacking(true);
 
         Card bears = new GrizzlyBears();
-        gd.playerDecks.get(player2.getId()).clear();
-        gd.playerDecks.get(player2.getId()).add(bears);
+        harness.setLibrary(player2, List.of(bears));
 
         resolveCombat();
 
@@ -123,8 +125,7 @@ class SphinxAmbassadorTest extends BaseCardTest {
         sphinx.setAttacking(true);
 
         Card shock = new Shock();
-        gd.playerDecks.get(player2.getId()).clear();
-        gd.playerDecks.get(player2.getId()).add(shock);
+        harness.setLibrary(player2, List.of(shock));
 
         resolveCombat();
 
@@ -146,8 +147,8 @@ class SphinxAmbassadorTest extends BaseCardTest {
         // Log should indicate conditions not met (card not revealed per rules)
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("conditions") && log.contains("not met"));
 
-        // Card name should NOT be revealed in the log (per ruling #3)
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).noneMatch(log -> log.contains("reveals") && log.contains("Grizzly Bears"));
+        // The selected noncreature card must not be revealed.
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).noneMatch(log -> log.contains("reveals") && log.contains("Shock"));
     }
 
     // ===== Non-creature card name not revealed =====
@@ -159,8 +160,7 @@ class SphinxAmbassadorTest extends BaseCardTest {
         sphinx.setAttacking(true);
 
         Card shock = new Shock();
-        gd.playerDecks.get(player2.getId()).clear();
-        gd.playerDecks.get(player2.getId()).add(shock);
+        harness.setLibrary(player2, List.of(shock));
 
         resolveCombat();
 
@@ -180,8 +180,7 @@ class SphinxAmbassadorTest extends BaseCardTest {
         sphinx.setAttacking(true);
 
         Card bears = new GrizzlyBears();
-        gd.playerDecks.get(player2.getId()).clear();
-        gd.playerDecks.get(player2.getId()).add(bears);
+        harness.setLibrary(player2, List.of(bears));
 
         resolveCombat();
 
@@ -212,8 +211,7 @@ class SphinxAmbassadorTest extends BaseCardTest {
         sphinx.setAttacking(true);
 
         Card bears = new GrizzlyBears();
-        gd.playerDecks.get(player2.getId()).clear();
-        gd.playerDecks.get(player2.getId()).add(bears);
+        harness.setLibrary(player2, List.of(bears));
 
         resolveCombat();
 
@@ -234,13 +232,12 @@ class SphinxAmbassadorTest extends BaseCardTest {
         Permanent sphinx = addCreatureReady(player1, new SphinxAmbassador());
         sphinx.setAttacking(true);
 
-        gd.playerDecks.get(player2.getId()).clear();
-        gd.playerDecks.get(player2.getId()).add(new GrizzlyBears());
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
 
         resolveCombat();
 
         // Sphinx Ambassador is 5/5, should deal 5 damage
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
+        harness.assertLife(player2, 15);
     }
 
     // ===== Empty library =====
@@ -251,11 +248,86 @@ class SphinxAmbassadorTest extends BaseCardTest {
         Permanent sphinx = addCreatureReady(player1, new SphinxAmbassador());
         sphinx.setAttacking(true);
 
-        gd.playerDecks.get(player2.getId()).clear();
+        harness.setLibrary(player2, List.of());
 
         resolveCombat();
 
         // Should not present library search for empty library
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Player still chooses a card name when their library is empty")
+    void emptyLibraryStillRequiresCardName() {
+        Permanent sphinx = addCreatureReady(player1, new SphinxAmbassador());
+        sphinx.setAttacking(true);
+        harness.setLibrary(player2, List.of());
+
+        resolveCombat();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player2, "Sphinx Ambassador");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An unrestricted search cannot fail to find in a nonempty library")
+    void mustChooseCardFromNonemptyLibrary() {
+        Permanent sphinx = addCreatureReady(player1, new SphinxAmbassador());
+        sphinx.setAttacking(true);
+        harness.setLibrary(player2, List.of(new Shock()));
+
+        resolveCombat();
+
+        assertThatThrownBy(() -> gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.LibraryCardChosen(-1))).isInstanceOf(IllegalStateException.class);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleListChoice(player2, "Sphinx Ambassador");
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+        assertThat(gd.peekPendingInteraction(PendingSphinxAmbassadorChoice.class)).isNull();
+    }
+
+    @Test
+    @CardUsed({SphinxAmbassador.class, Shock.class, MindlockOrb.class})
+    @DisplayName("A prevented search still makes the damaged player name a card and shuffle")
+    void preventedSearchStillNamesAndShufflesDamagedPlayersLibrary() {
+        Permanent sphinx = addCreatureReady(player1, new SphinxAmbassador());
+        sphinx.setAttacking(true);
+        harness.addToBattlefield(player2, new MindlockOrb());
+        Card shock = new Shock();
+        harness.setLibrary(player2, List.of(shock));
+
+        resolveCombat();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player2, "Sphinx Ambassador");
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(shock);
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .anyMatch(log -> log.contains(player2.getUsername()) && log.contains("shuffled"));
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @CardUsed({SphinxAmbassador.class, GrizzlyBears.class, GrafdiggersCage.class})
+    @DisplayName("Grafdigger's Cage prevents the selected creature from entering the battlefield")
+    void cagePreventsSelectedCreatureFromEnteringBattlefield() {
+        Permanent sphinx = addCreatureReady(player1, new SphinxAmbassador());
+        sphinx.setAttacking(true);
+        harness.addToBattlefield(player2, new GrafdiggersCage());
+        Card bears = new GrizzlyBears();
+        harness.setLibrary(player2, List.of(bears));
+
+        resolveCombat();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleListChoice(player2, "Sphinx Ambassador");
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(bears);
+        assertThat(gd.peekPendingInteraction(PendingSphinxAmbassadorChoice.class)).isNull();
     }
 }
