@@ -119,4 +119,25 @@ class ThingFromTheDeepTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Thing from the Deep");
         assertThat(countPermanents(player2, "Island")).isEqualTo(1);
     }
+
+    @Test
+    @DisplayName("Two attacking copies each require their own Island sacrifice")
+    void twoAttackersCannotShareOneIsland() {
+        harness.addToBattlefield(player1, new Island());
+        Permanent first = addCreatureReady(player1, new ThingFromTheDeep());
+        Permanent second = addCreatureReady(player1, new ThingFromTheDeep());
+        declareAttackers(List.of(
+                gd.playerBattlefields.get(player1.getId()).indexOf(first),
+                gd.playerBattlefields.get(player1.getId()).indexOf(second)));
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Island")).isZero();
+        harness.assertInGraveyard(player1, "Island");
+        assertThat(countPermanents(player1, "Thing from the Deep")).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Thing from the Deep");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
 }
