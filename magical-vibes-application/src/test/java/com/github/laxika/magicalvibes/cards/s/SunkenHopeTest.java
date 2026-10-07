@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.t.TrollAscetic;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -14,7 +15,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SunkenHope.class, GrizzlyBears.class})
+@CardUsed({SunkenHope.class, GrizzlyBears.class, TrollAscetic.class})
 class SunkenHopeTest extends BaseCardTest {
 
     private Permanent addCreature(Player player) {
@@ -194,5 +195,76 @@ class SunkenHopeTest extends BaseCardTest {
         harness.assertInHand(player2, "Grizzly Bears");
         harness.assertNotInHand(player1, "Grizzly Bears");
     }
-}
 
+    @Test
+    @DisplayName("An opponent's hexproof creature can be chosen because the ability does not target")
+    void returnsOpponentsHexproofCreature() {
+        harness.addToBattlefield(player1, new SunkenHope());
+        Permanent creature = addCreatureReady(player2, new TrollAscetic());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactly(creature.getId());
+        harness.handlePermanentChosen(player2, creature.getId());
+
+        harness.assertNotOnBattlefield(player2, "Troll Ascetic");
+        harness.assertInHand(player2, "Troll Ascetic");
+    }
+
+    @Test
+    @DisplayName("A creature entering after the trigger is put on the stack must still be returned")
+    void choosesCreaturePresentAtResolution() {
+        harness.addToBattlefield(player1, new SunkenHope());
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).hasSize(1);
+        Permanent creature = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, creature.getId());
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("The upkeep trigger resolves even after Sunken Hope leaves the battlefield")
+    void triggerResolvesAfterSourceLeaves() {
+        harness.addToBattlefield(player1, new SunkenHope());
+        Permanent creature = addCreature(player1);
+        advanceToUpkeep(player1);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToHand(gd, findPermanent(player1, "Sunken Hope")));
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, creature.getId());
+
+        harness.assertInHand(player1, "Sunken Hope");
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Two copies require two separate returns and refresh the available choices")
+    void multipleCopiesReturnSeparateCreatures() {
+        harness.addToBattlefield(player1, new SunkenHope());
+        harness.addToBattlefield(player2, new SunkenHope());
+        Permanent first = addCreature(player1);
+        Permanent second = addCreature(player1);
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, first.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactly(second.getId());
+        harness.handlePermanentChosen(player1, second.getId());
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player1.getId()))
+                .filteredOn(card -> card.getName().equals("Grizzly Bears")).hasSize(2);
+    }
+}
