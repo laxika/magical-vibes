@@ -40,4 +40,16 @@ class TormentedAngelTest extends BaseCardTest {
 
         assertThat(blocker.isBlocking()).isTrue();
     }
+
+    @Test
+    @DisplayName("Tormented Angel can block a ground creature")
+    void canBlockGroundCreature() {
+        addCreatureReady(player1, new CapashenTemplar());
+        Permanent blocker = addCreatureReady(player2, new TormentedAngel());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
 }
