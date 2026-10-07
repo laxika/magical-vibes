@@ -67,6 +67,80 @@ class StormscaleAnarchTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void discardsAsAnActivationCostBeforeDealingDamage() {
+        harness.addToBattlefield(player1, new StormscaleAnarch());
+        harness.setHand(player1, List.of(new TransguildCourier()));
+        harness.setLife(player2, 20);
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        harness.assertNotInHand(player1, "Transguild Courier");
+        harness.assertInGraveyard(player1, "Transguild Courier");
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    void eachStackedActivationUsesItsOwnDiscardedCard() {
+        harness.addToBattlefield(player1, new StormscaleAnarch());
+        harness.setHand(player1, List.of(new TransguildCourier()));
+        harness.setLife(player2, 20);
+        addActivationMana();
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.setHand(player1, List.of(new MistralCharger()));
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        harness.passBothPriorities();
+        harness.assertLife(player2, 18);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 14);
+        harness.assertInGraveyard(player1, "Mistral Charger");
+        harness.assertInGraveyard(player1, "Transguild Courier");
+    }
+
+    @Test
+    void multicoloredDiscardDealsFourDamageToACreature() {
+        harness.addToBattlefield(player1, new StormscaleAnarch());
+        harness.addToBattlefield(player2, new TransguildCourier());
+        harness.setHand(player1, List.of(new TransguildCourier()));
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null,
+                harness.getPermanentId(player2, "Transguild Courier"));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Transguild Courier");
+        harness.assertInGraveyard(player2, "Transguild Courier");
+        harness.assertInGraveyard(player1, "Transguild Courier");
+    }
+
+    @Test
+    void abilityStillDealsDamageAfterItsSourceDies() {
+        var source = harness.addToBattlefieldAndReturn(player1, new StormscaleAnarch());
+        harness.setHand(player1, List.of(new MistralCharger()));
+        harness.setLife(player2, 20);
+        addActivationMana();
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.setHand(player1, List.of(new MistralCharger()));
+        harness.activateAbility(player1, 0, null, source.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Stormscale Anarch");
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+    }
     private void addActivationMana() {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.RED, 1);
