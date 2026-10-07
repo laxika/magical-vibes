@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.c.Counterspell;
-import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -68,13 +67,67 @@ class SpeedballNewWarriorTest extends BaseCardTest {
                 .orElseThrow()
                 .getCard()
                 .getId();
-        harness.castInstant(player1, 0, shockId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, shockId);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gqs.getEffectivePower(gd, speedball)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, speedball)).isEqualTo(4);
+    }
+
+    @Test
+    void controllersSpellAlsoTriggersAndCanBeRetargetedToAPlayer() {
+        Permanent speedball = harness.addToBattlefieldAndReturn(player1, new SpeedballNewWarrior());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, speedball.getId());
+
+        assertThat(gqs.getEffectivePower(gd, speedball)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, speedball)).isEqualTo(4);
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
+        harness.assertOnBattlefield(player1, "Speedball, New Warrior");
+    }
+
+    @Test
+    void spellTargetingAnotherCreatureDoesNotTrigger() {
+        Permanent speedball = harness.addToBattlefieldAndReturn(player1, new SpeedballNewWarrior());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, bears.getId());
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, speedball)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, speedball)).isEqualTo(2);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void boostsAccumulateAndExpireAtEndOfTurn() {
+        Permanent speedball = harness.addToBattlefieldAndReturn(player1, new SpeedballNewWarrior());
+        castShockAtSpeedball(speedball);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+
+        castShockAtSpeedball(speedball);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, speedball)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, speedball)).isEqualTo(6);
+        harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
+
+        harness.assertOnBattlefield(player1, "Speedball, New Warrior");
+        assertThat(gqs.getEffectivePower(gd, speedball)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, speedball)).isEqualTo(2);
     }
 
     private void castShockAtSpeedball(Permanent speedball) {
