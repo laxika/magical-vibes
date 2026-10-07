@@ -109,4 +109,45 @@ class TimidDrakeTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId()))
                 .noneMatch(c -> c.getId().equals(drakeCard.getId()));
     }
+
+    @Test
+    @DisplayName("A second Timid Drake returns only the Drake already on the battlefield")
+    void secondDrakeReturnsOnlyTheExistingDrake() {
+        TimidDrake firstCard = new TimidDrake();
+        Permanent first = harness.addToBattlefieldAndReturn(player1, firstCard);
+        TimidDrake secondCard = new TimidDrake();
+
+        Permanent second = harness.enterBattlefieldAndReturn(player1, secondCard);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(Permanent::getId).contains(first.getId(), second.getId());
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(Permanent::getId).containsExactly(second.getId());
+        assertThat(gd.playerHands.get(player1.getId()))
+                .extracting(c -> c.getId()).contains(firstCard.getId()).doesNotContain(secondCard.getId());
+    }
+
+    @Test
+    @DisplayName("Multiple creature entries queue separate triggers and return the Drake only once")
+    void multiplePendingTriggersReturnDrakeOnlyOnce() {
+        TimidDrake drakeCard = new TimidDrake();
+        harness.addToBattlefield(player1, drakeCard);
+
+        harness.enterBattlefieldAndReturn(player1, new FreshVolunteers());
+        harness.enterBattlefieldAndReturn(player2, new FreshVolunteers());
+
+        assertThat(gd.stack).hasSize(2);
+
+        resolveAllTriggers();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(p -> p.getCard() instanceof TimidDrake);
+        assertThat(gd.playerHands.get(player1.getId()))
+                .filteredOn(c -> c.getId().equals(drakeCard.getId())).hasSize(1);
+    }
 }
