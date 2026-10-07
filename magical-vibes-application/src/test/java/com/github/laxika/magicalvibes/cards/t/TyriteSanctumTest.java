@@ -84,6 +84,77 @@ class TyriteSanctumTest extends BaseCardTest {
                 .hasMessageContaining("God");
     }
 
+    @Test
+    @DisplayName("The second ability can target an opponent's legendary creature and preserves its types")
+    void makesOpposingLegendaryCreatureAGod() {
+        addSanctum(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AegarTheFreezingFlame());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasEffectiveSubtype(gd, target, CardSubtype.GOD)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, target, CardSubtype.GIANT)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, target, CardSubtype.WIZARD)).isTrue();
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+    }
+
+    @Test
+    @DisplayName("A legendary creature that is already a God still receives the +1/+1 counter")
+    void existingGodReceivesPlusOneCounter() {
+        addSanctum(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new KolvoriGodOfKinship());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasEffectiveSubtype(gd, target, CardSubtype.GOD)).isTrue();
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A creature made a God can receive an indestructible counter from another Sanctum")
+    void newlyGrantedGodIsLegalForThirdAbility() {
+        addSanctum(player1);
+        Permanent sacrificedSanctum = addSanctum(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AegarTheFreezingFlame());
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, 2, null, target.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(sacrificedSanctum);
+        harness.assertInGraveyard(player1, "Tyrite Sanctum");
+        assertThat(target.getCounterCount(CounterType.INDESTRUCTIBLE)).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasEffectiveSubtype(gd, target, CardSubtype.GOD)).isTrue();
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(target.getCounterCount(CounterType.INDESTRUCTIBLE)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("The third ability can put an indestructible counter on an opponent's God")
+    void thirdAbilityCanTargetOpposingGod() {
+        Permanent sanctum = addSanctum(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new KolvoriGodOfKinship());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, 2, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(sanctum);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        assertThat(target.getCounterCount(CounterType.INDESTRUCTIBLE)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
+    }
+
     private Permanent addSanctum(Player player) {
         return harness.addToBattlefieldAndReturn(player, new TyriteSanctum());
     }
