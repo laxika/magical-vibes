@@ -36,11 +36,59 @@ class SungoldBarrageTest extends BaseCardTest {
                 .hasMessageContaining("toughness 4 or greater");
     }
 
-    private void castSungoldBarrage(Permanent target) {
+    @Test
+    @DisplayName("Can destroy its controller's creature")
+    void destroysOwnCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AirElemental());
+        castSungoldBarrage(target);
+
+        harness.assertNotOnBattlefield(player1, "Air Elemental");
+        harness.assertInGraveyard(player1, "Air Elemental");
+    }
+
+    @Test
+    @DisplayName("Uses modified toughness when choosing a target")
+    void destroysCreatureBoostedToFourToughness() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        target.setToughnessModifier(2);
+        castSungoldBarrage(target);
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Rejects a creature reduced to three toughness")
+    void rejectsCreatureReducedBelowThreshold() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        target.setToughnessModifier(-1);
+        harness.setHand(player1, java.util.List.of(new SungoldBarrage()));
+        addSungoldBarrageMana();
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("toughness 4 or greater");
+    }
+
+    @Test
+    @DisplayName("Does not destroy a target whose toughness falls below four before resolution")
+    void rechecksToughnessOnResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
         harness.setHand(player1, java.util.List.of(new SungoldBarrage()));
         addSungoldBarrageMana();
         harness.castInstant(player1, 0, target.getId());
+        target.setToughnessModifier(-1);
         harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Air Elemental");
+        harness.assertNotInGraveyard(player2, "Air Elemental");
+        harness.assertInGraveyard(player1, "Sungold Barrage");
+    }
+
+    private void castSungoldBarrage(Permanent target) {
+        harness.setHand(player1, java.util.List.of(new SungoldBarrage()));
+        addSungoldBarrageMana();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 
     private void addSungoldBarrageMana() {
