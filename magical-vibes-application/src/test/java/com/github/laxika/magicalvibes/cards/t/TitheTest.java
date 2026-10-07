@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.s.Savannah;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Tithe.class, Forest.class, Plains.class, GrizzlyBears.class})
+@CardUsed({Tithe.class, Forest.class, Plains.class, GrizzlyBears.class, Savannah.class})
 class TitheTest extends BaseCardTest {
 
     @Test
@@ -110,6 +111,116 @@ class TitheTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("opponent");
+    }
+
+    @Test
+    @DisplayName("An opponent's initial land advantage can disappear before resolution")
+    void landAdvantageLostBeforeResolution() {
+        harness.addToBattlefield(player2, new Forest());
+        setupAndCast();
+        List<Card> library = setupLibrary(2);
+        harness.addToBattlefield(player1, new Forest());
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(library.get(0));
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .containsExactlyInAnyOrder(library.get(1), library.get(2));
+    }
+
+    @Test
+    @DisplayName("A restricted search may find no Plains even when Plains are present")
+    void mayFailToFindAllPlains() {
+        setupAndCast();
+        harness.addToBattlefield(player2, new Forest());
+        List<Card> library = setupLibrary(2);
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrderElementsOf(library);
+        harness.assertInGraveyard(player1, "Tithe");
+    }
+
+    @Test
+    @DisplayName("When you control more lands, only one Plains can be found")
+    void controllerHasMoreLandsAllowsOnlyOnePlains() {
+        setupAndCast();
+        harness.addToBattlefield(player1, new Forest());
+        List<Card> library = setupLibrary(2);
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(library.get(0));
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .containsExactlyInAnyOrder(library.get(1), library.get(2));
+    }
+
+    @Test
+    @DisplayName("A nonbasic Plains can be found, but a Forest cannot")
+    void canFindNonbasicPlains() {
+        setupAndCast();
+        Savannah savannah = new Savannah();
+        Forest forest = new Forest();
+        harness.setLibrary(player1, List.of(forest, savannah));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
+                .params().cards()).containsExactly(savannah);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(savannah);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest);
+    }
+
+    @Test
+    @DisplayName("Finding the only Plains completes the search even when two are allowed")
+    void onlyOneMatchingPlainsCompletesSearch() {
+        setupAndCast();
+        harness.addToBattlefield(player2, new Forest());
+        List<Card> library = setupLibrary(1);
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(library.get(0));
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(library.get(1));
+    }
+
+    @Test
+    @DisplayName("A library with no Plains resolves without moving any cards")
+    void noMatchingPlains() {
+        setupAndCast();
+        List<Card> library = setupLibrary(0);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyElementsOf(library);
+        harness.assertInGraveyard(player1, "Tithe");
+    }
+
+    @Test
+    @DisplayName("An empty library does not prevent Tithe from resolving")
+    void emptyLibrary() {
+        setupAndCast();
+        harness.setLibrary(player1, List.of());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Tithe");
     }
 
     private void setupAndCast() {
