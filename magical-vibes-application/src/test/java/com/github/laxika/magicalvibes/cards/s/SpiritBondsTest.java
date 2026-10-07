@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
+import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -11,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -18,19 +20,19 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SpiritBonds.class, RuneclawBear.class, Opalescence.class})
 class SpiritBondsTest extends BaseCardTest {
 
     @Test
     void payingWhiteCreatesSpiritTokenForNontokenCreature() {
         harness.addToBattlefield(player1, new SpiritBonds());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new RuneclawBear()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
 
@@ -47,11 +49,9 @@ class SpiritBondsTest extends BaseCardTest {
 
     @Test
     void activatedAbilitySacrificesSpiritAndGrantsIndestructible() {
-        Permanent bonds = new Permanent(new SpiritBonds());
-        bonds.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bonds);
+        harness.addToBattlefield(player1, new SpiritBonds());
         Permanent spirit = createSpiritToken();
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new RuneclawBear());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -67,15 +67,142 @@ class SpiritBondsTest extends BaseCardTest {
 
     @Test
     void activatedAbilityCannotTargetSpirit() {
-        Permanent bonds = new Permanent(new SpiritBonds());
-        bonds.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bonds);
+        harness.addToBattlefield(player1, new SpiritBonds());
         Permanent spirit = createSpiritToken();
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, spirit.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void decliningPaymentCreatesNoToken() {
+        harness.addToBattlefield(player1, new SpiritBonds());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.enterBattlefieldAndReturn(player1, new RuneclawBear());
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(countPermanents(player1, "Spirit")).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void opponentsCreatureDoesNotTrigger() {
+        harness.addToBattlefield(player1, new SpiritBonds());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.enterBattlefieldAndReturn(player2, new RuneclawBear());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(countPermanents(player1, "Spirit")).isZero();
+    }
+
+    @Test
+    void abilityCanProtectOpponentsNonSpiritCreature() {
+        harness.addToBattlefield(player1, new SpiritBonds());
+        Permanent spirit = createSpiritToken();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new RuneclawBear());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(spirit);
+        assertThat(target.getGrantedKeywords()).doesNotContain(Keyword.INDESTRUCTIBLE);
+        harness.passBothPriorities();
+
+        assertThat(target.getGrantedKeywords()).contains(Keyword.INDESTRUCTIBLE);
+    }
+
+    @Test
+    void abilityCannotBeActivatedWithoutSpiritToSacrifice() {
+        harness.addToBattlefield(player1, new SpiritBonds());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new RuneclawBear());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(target.getGrantedKeywords()).doesNotContain(Keyword.INDESTRUCTIBLE);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void animatedSpiritBondsTriggersForItsOwnEntry() {
+        harness.addToBattlefield(player1, new Opalescence());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.enterBattlefieldAndReturn(player1, new SpiritBonds());
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(countPermanents(player1, "Spirit")).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void indestructibleExpiresAtEndOfTurn() {
+        harness.addToBattlefield(player1, new SpiritBonds());
+        createSpiritToken();
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new RuneclawBear());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        assertThat(target.getGrantedKeywords()).contains(Keyword.INDESTRUCTIBLE);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        assertThat(target.getGrantedKeywords()).doesNotContain(Keyword.INDESTRUCTIBLE);
+    }
+
+    @Test
+    void abilityCannotTargetNoncreaturePermanent() {
+        Permanent bonds = harness.addToBattlefieldAndReturn(player1, new SpiritBonds());
+        createSpiritToken();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bonds.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(countPermanents(player1, "Spirit")).isEqualTo(1);
+    }
+
+    @Test
+    void opponentsSpiritCannotPaySacrificeCost() {
+        harness.addToBattlefield(player1, new SpiritBonds());
+        Permanent spirit = createSpiritToken();
+        gd.playerBattlefields.get(player1.getId()).remove(spirit);
+        gd.playerBattlefields.get(player2.getId()).add(spirit);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new RuneclawBear());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(spirit);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void tokenCreatureEntryDoesNotTrigger() {
+        harness.addToBattlefield(player1, new SpiritBonds());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        Permanent spirit = createSpiritToken();
+        gd.playerBattlefields.get(player1.getId()).remove(spirit);
+
+        harness.enterBattlefieldAndReturn(player1, spirit.getCard());
+
+        assertThat(countPermanents(player1, "Spirit")).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     private Permanent createSpiritToken() {
