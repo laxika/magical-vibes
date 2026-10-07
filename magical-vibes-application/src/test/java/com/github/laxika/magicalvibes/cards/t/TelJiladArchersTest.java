@@ -99,6 +99,49 @@ class TelJiladArchersTest extends BaseCardTest {
                 .hasMessageContaining("protection");
     }
 
+    @Test
+    @DisplayName("Reach and protection allow Archers to block an artifact flyer")
+    void canBlockArtifactFlyer() {
+        Permanent flyer = addReadyPermanent(player1, new Ornithopter(), true);
+        Permanent archer = addReadyPermanent(player2, new TelJiladArchers(), false);
+
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                indexOf(player2, archer), indexOf(player1, flyer))));
+
+        assertThat(archer.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Protection from artifacts does not prevent damage from a non-artifact flyer")
+    void nonArtifactFlyerDealsCombatDamage() {
+        Permanent flyer = addReadyPermanent(player1, new LeoninSkyhunter(), true);
+        Permanent archer = addReadyPermanent(player2, new TelJiladArchers(), false);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                indexOf(player2, archer), indexOf(player1, flyer))));
+        harness.passBothPriorities();
+
+        assertThat(archer.getMarkedDamage()).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(archer);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(flyer);
+    }
+
+    @Test
+    @DisplayName("Protection makes attached artifact Equipment become unattached")
+    void artifactEquipmentBecomesUnattached() {
+        Permanent archer = harness.addToBattlefieldAndReturn(player1, new TelJiladArchers());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new Bonesplitter());
+        equipment.setAttachedTo(archer.getId());
+
+        harness.runStateBasedActions();
+
+        assertThat(equipment.getAttachedTo()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(archer, equipment);
+    }
+
     private Permanent addReadyPermanent(Player player, Card card, boolean attacking) {
         Permanent permanent = addCreatureReady(player, card);
         permanent.setAttacking(attacking);
