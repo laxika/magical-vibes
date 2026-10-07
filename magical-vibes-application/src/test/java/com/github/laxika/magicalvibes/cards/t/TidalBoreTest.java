@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HengeGuardian;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,13 +15,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TidalBore.class, Forest.class, GrizzlyBears.class, Island.class})
+@CardUsed({TidalBore.class, Forest.class, HengeGuardian.class, Island.class})
 class TidalBoreTest extends BaseCardTest {
 
     @Test
     @DisplayName("Taps a target creature when accepted")
     void tapsTargetCreature() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HengeGuardian());
         castForMana(target);
 
         harness.handleMayAbilityChosen(player1, true);
@@ -32,7 +32,7 @@ class TidalBoreTest extends BaseCardTest {
     @Test
     @DisplayName("Untaps a tapped target creature when accepted")
     void untapsTargetCreature() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HengeGuardian());
         target.tap();
         castForMana(target);
 
@@ -44,7 +44,7 @@ class TidalBoreTest extends BaseCardTest {
     @Test
     @DisplayName("Declining the may leaves the target unchanged")
     void decliningMayDoesNothing() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HengeGuardian());
         castForMana(target);
 
         harness.handleMayAbilityChosen(player1, false);
@@ -56,7 +56,7 @@ class TidalBoreTest extends BaseCardTest {
     @DisplayName("Can be cast by returning an Island")
     void castsByReturningAnIsland() {
         Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HengeGuardian());
         harness.setHand(player1, List.of(new TidalBore()));
 
         harness.castInstantWithAlternateCost(player1, 0, target.getId(), List.of(island.getId()));
@@ -72,7 +72,7 @@ class TidalBoreTest extends BaseCardTest {
     @DisplayName("Alternate cost rejects a non-Island")
     void alternateCostRejectsNonIsland() {
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HengeGuardian());
         harness.setHand(player1, List.of(new TidalBore()));
 
         assertThatThrownBy(() -> harness.castInstantWithAlternateCost(
@@ -84,7 +84,7 @@ class TidalBoreTest extends BaseCardTest {
     @DisplayName("Alternate cost requires an Island controlled by the caster")
     void alternateCostRequiresIslandTheCasterControls() {
         Permanent opposingIsland = harness.addToBattlefieldAndReturn(player2, new Island());
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HengeGuardian());
         harness.setHand(player1, List.of(new TidalBore()));
 
         assertThatThrownBy(() -> harness.castInstantWithAlternateCost(
@@ -107,7 +107,7 @@ class TidalBoreTest extends BaseCardTest {
     @Test
     @DisplayName("Fizzles if the target leaves the battlefield before resolution")
     void fizzlesIfTargetLeavesBattlefield() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HengeGuardian());
         harness.setHand(player1, List.of(new TidalBore()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -118,6 +118,55 @@ class TidalBoreTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gameLogContains("fizzles")).isTrue();
+        harness.assertInGraveyard(player1, "Tidal Bore");
+    }
+
+    @Test
+    @DisplayName("Returning a tapped Island pays the cost immediately, even when the effect is declined")
+    void returnsTappedIslandBeforeResolution() {
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        island.tap();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HengeGuardian());
+        harness.setHand(player1, List.of(new TidalBore()));
+
+        harness.castInstantWithAlternateCost(player1, 0, target.getId(), List.of(island.getId()));
+
+        harness.assertInHand(player1, "Island");
+        harness.assertNotOnBattlefield(player1, "Island");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(target.isTapped()).isFalse();
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(target.isTapped()).isFalse();
+        harness.assertInHand(player1, "Island");
+        harness.assertInGraveyard(player1, "Tidal Bore");
+    }
+
+    @Test
+    @DisplayName("Can untap a creature controlled by the caster")
+    void untapsOwnCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new HengeGuardian());
+        target.tap();
+        castForMana(target);
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(target.isTapped()).isFalse();
+        harness.assertInGraveyard(player1, "Tidal Bore");
+    }
+
+    @Test
+    @DisplayName("Declining to untap leaves a tapped creature tapped")
+    void decliningMayLeavesTappedCreatureTapped() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HengeGuardian());
+        target.tap();
+        castForMana(target);
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(target.isTapped()).isTrue();
         harness.assertInGraveyard(player1, "Tidal Bore");
     }
 
