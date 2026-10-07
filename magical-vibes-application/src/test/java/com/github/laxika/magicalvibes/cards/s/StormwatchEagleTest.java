@@ -80,4 +80,39 @@ class StormwatchEagleTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("A tapped land is sacrificed immediately, before the Eagle returns")
+    void sacrificesTappedLandAsActivationCost() {
+        harness.addToBattlefield(player1, new StormwatchEagle());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new WintermoonMesa());
+        land.setTapped(true);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        harness.assertInGraveyard(player1, "Wintermoon Mesa");
+        harness.assertNotOnBattlefield(player1, "Wintermoon Mesa");
+        harness.assertOnBattlefield(player1, "Stormwatch Eagle");
+        harness.assertNotInHand(player1, "Stormwatch Eagle");
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Stormwatch Eagle");
+        harness.assertNotOnBattlefield(player1, "Stormwatch Eagle");
+    }
+
+    @Test
+    @DisplayName("Only the Eagle whose ability was activated returns to hand")
+    void returnsOnlyTheAbilitySource() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new StormwatchEagle());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new StormwatchEagle());
+        harness.addToBattlefield(player1, new WintermoonMesa());
+
+        harness.activateAbility(player1, 1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(first).doesNotContain(second);
+        assertThat(gd.playerHands.get(player1.getId())).contains(second.getCard()).doesNotContain(first.getCard());
+        harness.assertInGraveyard(player1, "Wintermoon Mesa");
+    }
 }
