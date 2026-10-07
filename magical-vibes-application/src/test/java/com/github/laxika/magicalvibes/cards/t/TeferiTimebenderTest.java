@@ -1,12 +1,15 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.m.MoxAmber;
 import com.github.laxika.magicalvibes.cards.s.SkitteringSurveyor;
+import com.github.laxika.magicalvibes.cards.s.SteelLeafChampion;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,48 +17,28 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({TeferiTimebender.class, SteelLeafChampion.class, SkitteringSurveyor.class, MoxAmber.class, Island.class})
 class TeferiTimebenderTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has three loyalty abilities")
-    void hasThreeLoyaltyAbilities() {
-        TeferiTimebender card = new TeferiTimebender();
-        assertThat(card.getActivatedAbilities()).hasSize(3);
-    }
-
-    
-
-    
-
-    
-
-    // ===== +2 ability: Untap up to one target artifact or creature =====
 
     @Test
     @DisplayName("+2 ability untaps target creature")
     void plusTwoUntapsTargetCreature() {
         Permanent teferi = addReadyTeferi(player1);
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new SteelLeafChampion());
+        creature.tap();
 
-        Permanent bear = findPermanent(player1, "Grizzly Bears");
-        bear.tap();
-
-        harness.activateAbility(player1, 0, 0, null, bear.getId());
+        harness.activateAbility(player1, 0, 0, null, creature.getId());
         harness.passBothPriorities();
 
         assertThat(teferi.getCounterCount(CounterType.LOYALTY)).isEqualTo(7); // 5 + 2
-        assertThat(bear.isTapped()).isFalse();
+        assertThat(creature.isTapped()).isFalse();
     }
 
     @Test
     @DisplayName("+2 ability untaps target artifact")
     void plusTwoUntapsTargetArtifact() {
         Permanent teferi = addReadyTeferi(player1);
-        harness.addToBattlefield(player1, new SkitteringSurveyor());
-
-        Permanent surveyor = findPermanent(player1, "Skittering Surveyor");
+        Permanent surveyor = harness.addToBattlefieldAndReturn(player1, new SkitteringSurveyor());
         surveyor.tap();
         surveyor.setSummoningSick(false);
 
@@ -77,8 +60,6 @@ class TeferiTimebenderTest extends BaseCardTest {
         assertThat(teferi.getCounterCount(CounterType.LOYALTY)).isEqualTo(7); // 5 + 2
     }
 
-    // ===== -3 ability: Gain 2 life and draw two cards =====
-
     @Test
     @DisplayName("-3 ability gains 2 life and draws 2 cards")
     void minusThreeGainsLifeAndDrawsCards() {
@@ -94,8 +75,6 @@ class TeferiTimebenderTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 2);
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore + 2);
     }
-
-    // ===== -9 ability: Take an extra turn =====
 
     @Test
     @DisplayName("-9 ability grants controller an extra turn")
@@ -113,8 +92,6 @@ class TeferiTimebenderTest extends BaseCardTest {
         assertThat(gd.extraTurns).contains(player1.getId());
     }
 
-    // ===== Loyalty restrictions =====
-
     @Test
     @DisplayName("Cannot activate -9 when loyalty is only 5")
     void cannotActivateMinusNineWithInsufficientLoyalty() {
@@ -125,14 +102,81 @@ class TeferiTimebenderTest extends BaseCardTest {
                 .hasMessageContaining("Not enough loyalty");
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("+2 untaps an opponent's noncreature artifact")
+    void plusTwoUntapsOpponentsNoncreatureArtifact() {
+        Permanent teferi = addReadyTeferi(player1);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new MoxAmber());
+        artifact.tap();
+
+        harness.activateAbility(player1, 0, 0, null, artifact.getId());
+        harness.passBothPriorities();
+
+        assertThat(artifact.isTapped()).isFalse();
+        assertThat(teferi.getCounterCount(CounterType.LOYALTY)).isEqualTo(7);
+    }
+
+    @Test
+    @DisplayName("+2 rejects a land that is neither an artifact nor a creature")
+    void plusTwoRejectsLand() {
+        Permanent teferi = addReadyTeferi(player1);
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Island());
+        land.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, land.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(land.isTapped()).isTrue();
+        assertThat(teferi.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("+2 rejects Teferi himself as a target")
+    void plusTwoRejectsPlaneswalker() {
+        Permanent teferi = addReadyTeferi(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, teferi.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(teferi.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("-3 resolves after paying the last loyalty counters")
+    void minusThreeResolvesAfterTeferiLeavesBattlefield() {
+        Permanent teferi = addReadyTeferi(player1);
+        teferi.setCounterCount(CounterType.LOYALTY, 3);
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Teferi, Timebender");
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 2);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 2);
+    }
+
+    @Test
+    @DisplayName("Cannot activate another loyalty ability in the same turn")
+    void cannotActivateSecondLoyaltyAbility() {
+        Permanent teferi = addReadyTeferi(player1);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Only one loyalty ability");
+
+        assertThat(teferi.getCounterCount(CounterType.LOYALTY)).isEqualTo(7);
+    }
 
     private Permanent addReadyTeferi(Player player) {
-        TeferiTimebender card = new TeferiTimebender();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new TeferiTimebender());
         perm.setCounterCount(CounterType.LOYALTY, 5);
         perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return perm;
