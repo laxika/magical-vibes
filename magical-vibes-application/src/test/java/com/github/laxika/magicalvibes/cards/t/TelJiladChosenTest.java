@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.b.Bonesplitter;
 import com.github.laxika.magicalvibes.cards.b.BrownOuphe;
+import com.github.laxika.magicalvibes.cards.e.ElectrostaticBolt;
 import com.github.laxika.magicalvibes.cards.i.IronMyr;
+import com.github.laxika.magicalvibes.cards.p.PyriteSpellbomb;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -19,7 +21,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TelJiladChosen.class, IronMyr.class, BrownOuphe.class, Bonesplitter.class})
+@CardUsed({TelJiladChosen.class, IronMyr.class, BrownOuphe.class, Bonesplitter.class,
+        ElectrostaticBolt.class, PyriteSpellbomb.class})
 class TelJiladChosenTest extends BaseCardTest {
 
     @Test
@@ -96,6 +99,47 @@ class TelJiladChosenTest extends BaseCardTest {
                 player1, indexOf(player1, equipment), null, chosen.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("protection");
+    }
+
+    @Test
+    @DisplayName("Protection from artifacts makes artifact damage abilities illegal targets")
+    void protectionPreventsSpellbombFromTargetingChosen() {
+        Permanent chosen = harness.addToBattlefieldAndReturn(player2, new TelJiladChosen());
+        Permanent spellbomb = harness.addToBattlefieldAndReturn(player1, new PyriteSpellbomb());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, indexOf(player1, spellbomb), null, chosen.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(spellbomb);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(chosen);
+    }
+
+    @Test
+    @DisplayName("Protection from artifacts does not prevent targeting or damage from a red instant")
+    void protectionAllowsNonArtifactSpellToDealDamage() {
+        Permanent chosen = harness.addToBattlefieldAndReturn(player2, new TelJiladChosen());
+        harness.setHand(player1, List.of(new ElectrostaticBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, chosen.getId());
+
+        harness.assertNotOnBattlefield(player2, "Tel-Jilad Chosen");
+        harness.assertInGraveyard(player2, "Tel-Jilad Chosen");
+    }
+
+    @Test
+    @DisplayName("Illegally attached artifact equipment becomes unattached and remains on the battlefield")
+    void protectionUnattachesArtifactEquipment() {
+        Permanent chosen = harness.addToBattlefieldAndReturn(player1, new TelJiladChosen());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new Bonesplitter());
+        equipment.setAttachedTo(chosen.getId());
+
+        harness.runStateBasedActions();
+
+        assertThat(equipment.getAttachedTo()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(chosen, equipment);
     }
 
     private Permanent addReadyPermanent(Player player, Card card, boolean attacking) {
