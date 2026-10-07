@@ -52,6 +52,42 @@ class TestamentOfFaithTest extends BaseCardTest {
     }
 
     @Test
+    void repeatedActivationsUseTheirOwnXInResolutionOrder() {
+        Permanent testament = addTestament(player1);
+        harness.addMana(player1, ManaColor.WHITE, 7);
+
+        harness.activateAbility(player1, 0, 2, null);
+        harness.activateAbility(player1, 0, 5, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, testament)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, testament)).isEqualTo(5);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, testament)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, testament)).isEqualTo(2);
+        assertThat(gqs.isEnchantment(gd, testament)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, testament, CardSubtype.WALL)).isTrue();
+        assertThat(gqs.hasKeyword(gd, testament, Keyword.DEFENDER)).isTrue();
+    }
+
+    @Test
+    void animationAffectsOnlyTheSourceTestament() {
+        Permanent source = addTestament(player1);
+        Permanent other = addTestament(player1);
+        Permanent opposing = addTestament(player2);
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.activateAbility(player1, 0, 3, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, source)).isTrue();
+        assertThat(gqs.isCreature(gd, other)).isFalse();
+        assertThat(gqs.isCreature(gd, opposing)).isFalse();
+    }
+
+    @Test
     void animationWearsOffAtEndOfTurn() {
         Permanent testament = addTestament(player1);
         harness.addMana(player1, ManaColor.WHITE, 2);
@@ -61,7 +97,6 @@ class TestamentOfFaithTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, testament)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, testament)).isFalse();
