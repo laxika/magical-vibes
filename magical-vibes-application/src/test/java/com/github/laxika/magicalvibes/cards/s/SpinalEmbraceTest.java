@@ -128,6 +128,76 @@ class SpinalEmbraceTest extends BaseCardTest {
                 .hasMessageContaining("not playable");
     }
 
+    @Test
+    @DisplayName("The delayed sacrifice can be responded to with a toughness boost")
+    void canIncreaseToughnessInResponseToDelayedSacrifice() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        Permanent target = addCreatureReady(player2, new HoodedKavu());
+        castSpinalEmbrace(target.getId());
+        harness.passBothPriorities();
+        int lifeBeforeEndStep = gd.getLife(player1.getId());
+
+        harness.setHand(player1, List.of(new ExplosiveGrowth()));
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+
+        harness.assertOnBattlefield(player1, "Hooded Kavu");
+        harness.assertLife(player1, lifeBeforeEndStep);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Hooded Kavu");
+        harness.assertLife(player1, lifeBeforeEndStep + 4);
+    }
+
+    @Test
+    @DisplayName("Returning the creature in response to the delayed sacrifice prevents life gain")
+    void canReturnCreatureInResponseToDelayedSacrifice() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        Permanent target = addCreatureReady(player2, new HoodedKavu());
+        castSpinalEmbrace(target.getId());
+        harness.passBothPriorities();
+        int lifeBeforeEndStep = gd.getLife(player1.getId());
+
+        harness.setHand(player1, List.of(new Repulse()));
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+
+        harness.assertOnBattlefield(player1, "Hooded Kavu");
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Hooded Kavu");
+        harness.assertLife(player1, lifeBeforeEndStep);
+    }
+
+    @Test
+    @DisplayName("An illegal target on resolution prevents control and delayed life gain")
+    void targetLeavingInResponsePreventsAllEffects() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        Permanent target = addCreatureReady(player2, new HoodedKavu());
+        castSpinalEmbrace(target.getId());
+        int lifeBefore = gd.getLife(player1.getId());
+
+        harness.setHand(player2, List.of(new Repulse()));
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, target.getId());
+        harness.passBothPriorities();
+        advanceToNextEndStep();
+
+        harness.assertInHand(player2, "Hooded Kavu");
+        harness.assertNotOnBattlefield(player1, "Hooded Kavu");
+        harness.assertLife(player1, lifeBefore);
+    }
+
     private void setUpSpinalEmbrace() {
         harness.setHand(player1, List.of(new SpinalEmbrace()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -142,7 +212,7 @@ class SpinalEmbraceTest extends BaseCardTest {
 
     private void advanceToNextEndStep() {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
     }
 }
