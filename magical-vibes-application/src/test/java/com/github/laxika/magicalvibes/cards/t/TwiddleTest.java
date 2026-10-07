@@ -2,10 +2,10 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HowlingMine;
+import com.github.laxika.magicalvibes.cards.o.OrcishOriflamme;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -16,10 +16,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Twiddle.class, GrizzlyBears.class, Forest.class, HowlingMine.class, Telepathy.class})
+@CardUsed({Twiddle.class, GrizzlyBears.class, Forest.class, HowlingMine.class, OrcishOriflamme.class})
 class TwiddleTest extends BaseCardTest {
-
-    // ===== Tapping untapped permanents =====
 
     @Test
     @DisplayName("Taps an untapped creature")
@@ -39,7 +37,7 @@ class TwiddleTest extends BaseCardTest {
     @Test
     @DisplayName("Taps an untapped land")
     void tapsUntappedLand() {
-        Permanent target = addReadyLand(player2);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
         harness.setHand(player1, List.of(new Twiddle()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
@@ -52,7 +50,7 @@ class TwiddleTest extends BaseCardTest {
     @Test
     @DisplayName("Taps an untapped artifact")
     void tapsUntappedArtifact() {
-        Permanent target = addReadyArtifact(player2);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HowlingMine());
         harness.setHand(player1, List.of(new Twiddle()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
@@ -62,12 +60,10 @@ class TwiddleTest extends BaseCardTest {
         assertThat(target.isTapped()).isTrue();
     }
 
-    // ===== Untapping tapped permanents =====
-
     @Test
     @DisplayName("Untaps a tapped land")
     void untapsTappedLand() {
-        Permanent target = addReadyLand(player2);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
         target.tap();
         harness.setHand(player1, List.of(new Twiddle()));
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -80,13 +76,11 @@ class TwiddleTest extends BaseCardTest {
         assertThat(target.isTapped()).isFalse();
     }
 
-    // ===== Invalid targets =====
-
     @Test
     @DisplayName("Cannot target an enchantment")
     void cannotTargetEnchantment() {
         addCreatureReady(player1, new GrizzlyBears()); // valid target so spell is playable
-        Permanent enchantment = addReadyEnchantment(player2);
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new OrcishOriflamme());
         harness.setHand(player1, List.of(new Twiddle()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
@@ -101,8 +95,7 @@ class TwiddleTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Twiddle()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
         assertThat(target.isTapped()).isFalse();
@@ -114,8 +107,7 @@ class TwiddleTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Twiddle()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
         harness.handleMayAbilityChosen(player1, false);
@@ -171,8 +163,6 @@ class TwiddleTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Twiddle");
     }
 
-    // ===== After resolution =====
-
     @Test
     @DisplayName("Twiddle goes to graveyard after resolving")
     void goesToGraveyardAfterResolving() {
@@ -186,8 +176,6 @@ class TwiddleTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Twiddle");
     }
-
-    // ===== Can target own permanents =====
 
     @Test
     @DisplayName("Can untap own tapped creature")
@@ -203,17 +191,53 @@ class TwiddleTest extends BaseCardTest {
         assertThat(ownCreature.isTapped()).isFalse();
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Untaps a tapped artifact")
+    void untapsTappedArtifact() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HowlingMine());
+        target.tap();
+        harness.setHand(player1, List.of(new Twiddle()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
 
-    private Permanent addReadyLand(Player player) {
-        return harness.addToBattlefieldAndReturn(player, new Forest());
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Twiddle");
     }
 
-    private Permanent addReadyArtifact(Player player) {
-        return harness.addToBattlefieldAndReturn(player, new HowlingMine());
+    @Test
+    @DisplayName("Can decline to untap a tapped artifact")
+    void canDeclineToUntapTappedArtifact() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HowlingMine());
+        target.tap();
+        harness.setHand(player1, List.of(new Twiddle()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Twiddle");
     }
 
-    private Permanent addReadyEnchantment(Player player) {
-        return harness.addToBattlefieldAndReturn(player, new Telepathy());
+    @Test
+    @DisplayName("Can tap a target that became untapped before resolution")
+    void canTapTargetUntappedBeforeResolution() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        target.tap();
+        harness.setHand(player1, List.of(new Twiddle()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castInstant(player1, 0, target.getId());
+        target.untap();
+        harness.passBothPriorities();
+        assertThat(target.isTapped()).isFalse();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 }
