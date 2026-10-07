@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.c.Craterize;
 import com.github.laxika.magicalvibes.cards.c.CrucibleOfWorlds;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.Groundskeeper;
+import com.github.laxika.magicalvibes.cards.i.Ixidron;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -19,7 +20,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({TomikDistinguishedAdvokist.class, Craterize.class, CrucibleOfWorlds.class,
-        Forest.class, Groundskeeper.class})
+        Forest.class, Groundskeeper.class, Ixidron.class})
 class TomikDistinguishedAdvokistTest extends BaseCardTest {
 
     @Test
@@ -46,8 +47,7 @@ class TomikDistinguishedAdvokistTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 4);
 
         UUID targetId = harness.getPermanentId(player2, "Forest");
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetId);
 
         harness.assertInGraveyard(player2, "Forest");
     }
@@ -116,5 +116,93 @@ class TomikDistinguishedAdvokistTest extends BaseCardTest {
         harness.playGraveyardLand(player1, 0);
 
         harness.assertOnBattlefield(player1, "Forest");
+    }
+
+    @Test
+    void opponentsCannotTargetTomiksControllersLands() {
+        harness.addToBattlefield(player1, new TomikDistinguishedAdvokist());
+        harness.addToBattlefield(player1, new Forest());
+        harness.setHand(player2, List.of(new Craterize()));
+        harness.addMana(player2, ManaColor.RED, 4);
+
+        UUID targetId = harness.getPermanentId(player1, "Forest");
+        assertThatThrownBy(() -> harness.castSorcery(player2, 0, targetId))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be the target");
+    }
+
+    @Test
+    void landSpellTargetBecomesIllegalWhenTomikEntersBeforeResolution() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.setHand(player2, List.of(new Craterize()));
+        harness.addMana(player2, ManaColor.RED, 4);
+        harness.castSorcery(player2, 0, harness.getPermanentId(player1, "Forest"));
+
+        harness.addToBattlefield(player1, new TomikDistinguishedAdvokist());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Forest");
+        harness.assertNotInGraveyard(player1, "Forest");
+        harness.assertInGraveyard(player2, "Craterize");
+    }
+
+    @Test
+    void graveyardAbilityTargetBecomesIllegalWhenTomikEntersBeforeResolution() {
+        harness.addToBattlefield(player2, new Groundskeeper());
+        Card forest = new Forest();
+        harness.setGraveyard(player2, List.of(forest));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player2, 0, 0, null, forest.getId(), Zone.GRAVEYARD);
+
+        harness.addToBattlefield(player1, new TomikDistinguishedAdvokist());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Forest");
+        harness.assertNotInHand(player2, "Forest");
+    }
+
+    @Test
+    void opponentsCanPlayLandsFromHand() {
+        harness.addToBattlefield(player1, new TomikDistinguishedAdvokist());
+        harness.setHand(player2, List.of(new Forest()));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.playLand(player2, 0);
+
+        harness.assertOnBattlefield(player2, "Forest");
+    }
+
+    @Test
+    void faceDownTomikDoesNotRestrictLandTargets() {
+        harness.addToBattlefield(player1, new TomikDistinguishedAdvokist());
+        harness.addToBattlefield(player1, new Forest());
+        harness.castFromHand(player1, new Ixidron(), "{3}{U}{U}");
+        harness.passBothPriorities();
+        harness.setHand(player2, List.of(new Craterize()));
+        harness.addMana(player2, ManaColor.RED, 4);
+
+        harness.castAndResolveSorcery(player2, 0, harness.getPermanentId(player1, "Forest"));
+
+        harness.assertInGraveyard(player1, "Forest");
+    }
+
+    @Test
+    void faceDownTomikDoesNotRestrictGraveyardLandPlays() {
+        harness.addToBattlefield(player1, new TomikDistinguishedAdvokist());
+        harness.castFromHand(player1, new Ixidron(), "{3}{U}{U}");
+        harness.passBothPriorities();
+        harness.addToBattlefield(player2, new CrucibleOfWorlds());
+        harness.setGraveyard(player2, List.of(new Forest()));
+        harness.setHand(player2, List.of());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.playGraveyardLand(player2, 0);
+
+        harness.assertOnBattlefield(player2, "Forest");
     }
 }
