@@ -90,10 +90,49 @@ class TaskForceTest extends BaseCardTest {
         assertThat(taskForce.getToughnessModifier()).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(taskForce.getToughnessModifier()).isEqualTo(0);
+        assertThat(taskForce.getEffectiveToughness()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Toughness trigger resolves before otherwise lethal targeted damage")
+    void boostResolvesBeforeTargetedDamage() {
+        Permanent taskForce = addCreatureReady(player1, new TaskForce());
+        taskForce.setMarkedDamage(2);
+        addCreatureReady(player2, new StingingBarrier());
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player2, 0, null, taskForce.getId());
+
+        assertThat(taskForce.getToughnessModifier()).isZero();
+        assertThat(taskForce.getMarkedDamage()).isEqualTo(2);
+
+        harness.passBothPriorities();
+
+        assertThat(taskForce.getEffectiveToughness()).isEqualTo(6);
+        assertThat(taskForce.getMarkedDamage()).isEqualTo(2);
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Task Force");
+        assertThat(taskForce.getMarkedDamage()).isEqualTo(3);
+        assertThat(taskForce.getEffectiveToughness()).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("Does not trigger when an ability targets another creature")
+    void doesNotBoostWhenAnotherCreatureIsTargeted() {
+        Permanent taskForce = addCreatureReady(player1, new TaskForce());
+        Permanent barrier = addCreatureReady(player2, new StingingBarrier());
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player2, 0, null, barrier.getId());
+        harness.passBothPriorities();
+
+        assertThat(barrier.getMarkedDamage()).isEqualTo(1);
+        assertThat(taskForce.getToughnessModifier()).isZero();
         assertThat(taskForce.getEffectiveToughness()).isEqualTo(3);
     }
 }
