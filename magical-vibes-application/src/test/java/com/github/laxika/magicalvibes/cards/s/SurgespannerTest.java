@@ -31,9 +31,9 @@ class SurgespannerTest extends BaseCardTest {
 
         tap(surgespanner);
 
+        harness.handlePermanentChosen(player1, islandId);
         harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, islandId);
 
         harness.assertNotOnBattlefield(player2, "Island");
         harness.assertInHand(player2, "Island");
@@ -50,9 +50,9 @@ class SurgespannerTest extends BaseCardTest {
 
         tap(surgespanner);
 
+        harness.handlePermanentChosen(player1, creature.getId());
         harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, creature.getId());
 
         assertThat(gd.playerBattlefields.get(player2.getId())).noneMatch(perm -> perm.getId().equals(creature.getId()));
         harness.assertInHand(player2, "Goldmeadow Dodger");
@@ -68,6 +68,7 @@ class SurgespannerTest extends BaseCardTest {
 
         tap(surgespanner);
 
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Island"));
         harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
         harness.handleMayAbilityChosen(player1, false);
 
@@ -99,6 +100,56 @@ class SurgespannerTest extends BaseCardTest {
         PendingInteraction.PermanentChoice choice = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.validIds()).contains(target.getId());
+    }
+
+    @Test
+    @DisplayName("Surgespanner can return itself to its owner's hand")
+    void canReturnItself() {
+        Permanent surgespanner = harness.addToBattlefieldAndReturn(player1, new Surgespanner());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        tap(surgespanner);
+        harness.handlePermanentChosen(player1, surgespanner.getId());
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "Surgespanner");
+        harness.assertInHand(player1, "Surgespanner");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("An illegal target prevents resolution and the payment decision")
+    void targetLeavingBeforeResolutionPreventsPayment() {
+        Permanent surgespanner = harness.addToBattlefieldAndReturn(player1, new Surgespanner());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GoldmeadowDodger());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        tap(surgespanner);
+        harness.handlePermanentChosen(player1, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerGraveyards.get(player2.getId()).add(target.getCard());
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+        harness.assertInGraveyard(player2, "Goldmeadow Dodger");
+        harness.assertNotInHand(player2, "Goldmeadow Dodger");
+    }
+
+    @Test
+    @DisplayName("No available mana still requires a target when the trigger is stacked")
+    void noManaStillRequiresTarget() {
+        Permanent surgespanner = harness.addToBattlefieldAndReturn(player1, new Surgespanner());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Island());
+
+        tap(surgespanner);
+
+        PendingInteraction.PermanentChoice choice = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).contains(target.getId(), surgespanner.getId());
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
     private void tap(Permanent permanent) {
