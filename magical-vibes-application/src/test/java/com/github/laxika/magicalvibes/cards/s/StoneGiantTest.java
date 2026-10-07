@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
-import com.github.laxika.magicalvibes.cards.t.Terror;
+import com.github.laxika.magicalvibes.cards.d.DoomBlade;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -18,14 +18,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({StoneGiant.class, GrizzlyBears.class, LlanowarElves.class, GiantGrowth.class, Terror.class})
+@CardUsed({StoneGiant.class, RuneclawBear.class, LlanowarElves.class, GiantGrowth.class, DoomBlade.class})
 class StoneGiantTest extends BaseCardTest {
 
     @Test
     @DisplayName("Grants flying to target creature you control with toughness less than its power")
     void grantsFlyingToTargetCreature() {
         addCreatureReady(player1, new StoneGiant());
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new RuneclawBear());
 
         harness.activateAbility(player1, 0, null, bears.getId());
         harness.passBothPriorities();
@@ -99,7 +99,7 @@ class StoneGiantTest extends BaseCardTest {
     @DisplayName("Cannot target opponent's creatures")
     void cannotTargetOpponentCreatures() {
         addCreatureReady(player1, new StoneGiant());
-        Permanent opponentBears = addCreatureReady(player2, new GrizzlyBears());
+        Permanent opponentBears = addCreatureReady(player2, new RuneclawBear());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, opponentBears.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -109,7 +109,7 @@ class StoneGiantTest extends BaseCardTest {
     @DisplayName("Stone Giant taps when ability is activated")
     void tapsWhenAbilityActivated() {
         Permanent stoneGiant = addCreatureReady(player1, new StoneGiant());
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new RuneclawBear());
 
         assertThat(stoneGiant.isTapped()).isFalse();
         harness.activateAbility(player1, 0, null, bears.getId());
@@ -124,11 +124,10 @@ class StoneGiantTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, elves.getId());
 
-        harness.setHand(player2, List.of(new Terror()));
+        harness.setHand(player2, List.of(new DoomBlade()));
         harness.addMana(player2, ManaColor.BLACK, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
-        harness.castInstant(player2, 0, stoneGiant.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, stoneGiant.getId());
 
         harness.assertInGraveyard(player1, "Stone Giant");
 
@@ -139,25 +138,116 @@ class StoneGiantTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Delayed destruction still happens after the target becomes too tough")
+    void destroysTargetThatGrowsAfterResolution() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        addCreatureReady(player1, new StoneGiant());
+        Permanent bears = addCreatureReady(player1, new RuneclawBear());
+
+        harness.activateAbility(player1, 0, null, bears.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Runeclaw Bear");
+        harness.assertInGraveyard(player1, "Runeclaw Bear");
+    }
+
+    @Test
+    @DisplayName("An ability resolved during an end step waits until the following end step")
+    void activationDuringEndStepWaitsUntilNextEndStep() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        addCreatureReady(player1, new StoneGiant());
+        Permanent elves = addCreatureReady(player1, new LlanowarElves());
+
+        harness.activateAbility(player1, 0, null, elves.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.hasKeyword(gd, elves, Keyword.FLYING)).isTrue();
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.assertOnBattlefield(player1, "Llanowar Elves");
+        assertThat(gqs.hasKeyword(gd, elves, Keyword.FLYING)).isFalse();
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Llanowar Elves");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
+        harness.assertInGraveyard(player1, "Llanowar Elves");
+    }
+
+    @Test
+    @DisplayName("Delayed destruction survives Stone Giant leaving the battlefield")
+    void destroysTargetEvenWhenSourceLeavesAfterResolution() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        Permanent giant = addCreatureReady(player1, new StoneGiant());
+        Permanent elves = addCreatureReady(player1, new LlanowarElves());
+
+        harness.activateAbility(player1, 0, null, elves.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new DoomBlade()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0, giant.getId());
+        harness.assertInGraveyard(player1, "Stone Giant");
+        assertThat(gqs.hasKeyword(gd, elves, Keyword.FLYING)).isTrue();
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
+        harness.assertInGraveyard(player1, "Llanowar Elves");
+    }
+
+    @Test
+    @DisplayName("Uses increased source power to allow an otherwise too-tough creature")
+    void usesEffectiveSourcePowerForTargeting() {
+        Permanent giant = addCreatureReady(player1, new StoneGiant());
+        Permanent target = addCreatureReady(player1, new StoneGiant());
+
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castAndResolveInstant(player1, 0, giant.getId());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
     @DisplayName("Does nothing if the target's toughness is no longer less than Stone Giant's power")
     void doesNothingWhenTargetBecomesTooToughBeforeResolution() {
         Permanent stoneGiant = addCreatureReady(player1, new StoneGiant());
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new RuneclawBear());
 
         harness.activateAbility(player1, 0, null, bears.getId());
 
         harness.setHand(player1, List.of(new GiantGrowth()));
         harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.castInstant(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bears.getId());
 
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(5);
 
         harness.passBothPriorities();
 
         assertThat(bears.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
-        harness.assertOnBattlefield(player1, "Grizzly Bears");
-        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Runeclaw Bear");
+        harness.assertNotInGraveyard(player1, "Runeclaw Bear");
         assertThat(stoneGiant.isTapped()).isTrue();
     }
 }
