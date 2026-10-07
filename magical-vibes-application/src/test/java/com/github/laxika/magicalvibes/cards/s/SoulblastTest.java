@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.c.Cancel;
+import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -13,7 +15,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Soulblast.class, GrizzlyBears.class, RagingGoblin.class})
+@CardUsed({Soulblast.class, GrizzlyBears.class, RagingGoblin.class, GloriousAnthem.class, Cancel.class,
+        StalkingVengeance.class})
 class SoulblastTest extends BaseCardTest {
 
     @Test
@@ -114,6 +117,65 @@ class SoulblastTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         harness.assertNotInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Soulblast uses power modified by a continuous effect")
+    void usesEffectivePowerOfSacrificedCreatures() {
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new Soulblast()));
+        harness.addMana(player1, ManaColor.RED, 6);
+        harness.addToBattlefield(player1, new GloriousAnthem());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new RagingGoblin());
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.assertLife(player2, 15);
+        harness.assertOnBattlefield(player1, "Glorious Anthem");
+    }
+
+    @Test
+    @DisplayName("Countering Soulblast does not undo its sacrifice cost")
+    void counteringDoesNotReturnSacrificedCreatures() {
+        Soulblast soulblast = new Soulblast();
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(soulblast));
+        harness.setHand(player2, List.of(new Cancel()));
+        harness.addMana(player1, ManaColor.RED, 6);
+        harness.addMana(player2, ManaColor.BLUE, 3);
+        harness.addToBattlefield(player1, new GrizzlyBears());
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, soulblast.getId());
+
+        harness.assertLife(player2, 20);
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Soulblast");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Creatures sacrificed together see each other's deaths")
+    void sacrificeCostPreservesSimultaneousDeathTriggers() {
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new Soulblast()));
+        harness.addMana(player1, ManaColor.RED, 6);
+        harness.addToBattlefield(player1, new StalkingVengeance());
+        harness.addToBattlefield(player1, new RagingGoblin());
+
+        harness.castInstant(player1, 0, player2.getId());
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player2, 19);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 13);
+        harness.assertInGraveyard(player1, "Stalking Vengeance");
+        harness.assertInGraveyard(player1, "Raging Goblin");
     }
 }
 
