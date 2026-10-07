@@ -1,13 +1,10 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -64,9 +61,43 @@ class TemporalExtortionTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Temporal Extortion");
     }
 
+    @Test
+    @DisplayName("Remaining players may still pay after the spell is countered")
+    void bothPlayersMayPay() {
+        harness.setLife(player1, 19);
+        harness.setLife(player2, 14);
+        castTemporalExtortion();
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.assertInGraveyard(player1, "Temporal Extortion");
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertLife(player1, 9);
+        harness.assertLife(player2, 7);
+        assertThat(gd.extraTurns).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An even life total costs exactly half to counter the spell")
+    void paysExactlyHalfOfEvenLifeTotal() {
+        harness.setLife(player2, 20);
+        castTemporalExtortion();
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 10);
+        harness.assertInGraveyard(player1, "Temporal Extortion");
+        assertThat(gd.extraTurns).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void castTemporalExtortion() {
-        harness.setHand(player1, List.of(new TemporalExtortion()));
-        harness.addMana(player1, ManaColor.BLACK, 4);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new TemporalExtortion(), "{B}{B}{B}{B}");
     }
 }
