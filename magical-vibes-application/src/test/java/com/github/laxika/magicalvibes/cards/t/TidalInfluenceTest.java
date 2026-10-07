@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.f.FeralThallid;
+import com.github.laxika.magicalvibes.cards.i.Ixidron;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.cards.r.RiverMerfolk;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -11,9 +13,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TidalInfluence.class, FeralThallid.class, RiverMerfolk.class})
+@CardUsed({TidalInfluence.class, FeralThallid.class, RiverMerfolk.class, Opalescence.class, Ixidron.class})
 class TidalInfluenceTest extends BaseCardTest {
 
     @Test
@@ -110,6 +113,42 @@ class TidalInfluenceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(influence.getCounterCount(CounterType.TIDE)).isZero();
+    }
+
+    @Test
+    @DisplayName("A face-down Tidal Influence does not prevent casting another copy")
+    void faceDownTidalInfluenceDoesNotPreventCastingAnotherCopy() {
+        harness.addToBattlefield(player1, new Opalescence());
+        Permanent influence = castTidalInfluence(player1);
+        harness.castFromHand(player1, new Ixidron(), "{3}{U}{U}");
+        harness.passBothPriorities();
+
+        assertThat(influence.isFaceDown()).isTrue();
+        assertThatCode(() -> harness.castFromHand(player1, new TidalInfluence(), "{2}{U}"))
+                .doesNotThrowAnyException();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard() instanceof TidalInfluence && !permanent.isFaceDown())
+                .hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The reset trigger removes tide counters even after falling below four")
+    void resetTriggerResolvesAfterCounterCountDrops() {
+        Permanent influence = harness.addToBattlefieldAndReturn(player1, new TidalInfluence());
+        influence.setCounterCount(CounterType.TIDE, 4);
+        influence.setCounterCount(CounterType.FUNGUS, 2);
+        harness.runStateBasedActions();
+        assertThat(gd.stack).hasSize(1);
+
+        influence.setCounterCount(CounterType.TIDE, 1);
+        harness.runStateBasedActions();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(influence.getCounterCount(CounterType.TIDE)).isZero();
+        assertThat(influence.getCounterCount(CounterType.FUNGUS)).isEqualTo(2);
     }
 
     private Permanent castTidalInfluence(Player player) {
