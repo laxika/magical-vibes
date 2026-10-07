@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.d.DwarvenHold;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.IcatianPhalanx;
+import com.github.laxika.magicalvibes.cards.y.YavimayaCradleOfGrowth;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -17,6 +18,61 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({TourachsChant.class, Forest.class, IcatianPhalanx.class, DwarvenHold.class})
 class TourachsChantTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("A Forest entering without being played still triggers the Chant")
+    void forestEnteringWithoutBeingPlayedDealsDamage() {
+        harness.addToBattlefield(player2, new TourachsChant());
+
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("The Chant also damages its controller for their own Forest")
+    void ownForestTriggersButOpponentsCreatureCannotPay() {
+        harness.addToBattlefield(player1, new TourachsChant());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new IcatianPhalanx());
+
+        harness.setHand(player1, List.of(new Forest()));
+        harness.playLand(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(opponentCreature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @CardUsed(YavimayaCradleOfGrowth.class)
+    @DisplayName("An entering land made into a Forest by Yavimaya triggers the Chant")
+    void grantedForestSubtypeTriggersChant() {
+        harness.addToBattlefield(player2, new TourachsChant());
+        harness.addToBattlefield(player2, new YavimayaCradleOfGrowth());
+
+        harness.setHand(player1, List.of(new DwarvenHold()));
+        harness.playLand(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("The opponent's upkeep does not require the Chant's controller to pay")
+    void opponentsUpkeepDoesNotTriggerPayment() {
+        harness.addToBattlefield(player1, new TourachsChant());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Tourach's Chant");
+    }
 
     @Test
     @DisplayName("A Forest's controller may put a -1/-1 counter on a creature")
