@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,16 +12,16 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TannukMemorialEnsign.class, Forest.class, GrizzlyBears.class})
+@CardUsed({TannukMemorialEnsign.class, Forest.class})
 class TannukMemorialEnsignTest extends BaseCardTest {
 
     @Test
     @DisplayName("Landfall deals damage each time and draws on the second resolution")
     void secondLandfallResolutionDrawsCard() {
         harness.addToBattlefield(player1, new TannukMemorialEnsign());
-        Card drawn = new GrizzlyBears();
+        Card drawn = new Forest();
         harness.setLibrary(player1, List.of(drawn));
-        gd.playerHands.get(player1.getId()).clear();
+        harness.setHand(player1, List.of());
 
         resolveLandfall(new Forest());
 
@@ -39,8 +38,8 @@ class TannukMemorialEnsignTest extends BaseCardTest {
     @DisplayName("The draw happens only on the exact second landfall resolution")
     void laterLandfallResolutionsDoNotDrawAgain() {
         harness.addToBattlefield(player1, new TannukMemorialEnsign());
-        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
-        gd.playerHands.get(player1.getId()).clear();
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        harness.setHand(player1, List.of());
 
         resolveLandfall(new Forest());
         resolveLandfall(new Forest());
@@ -56,8 +55,8 @@ class TannukMemorialEnsignTest extends BaseCardTest {
     @DisplayName("An opponent's land does not trigger Tannuk")
     void opponentLandDoesNotTrigger() {
         harness.addToBattlefield(player1, new TannukMemorialEnsign());
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
-        gd.playerHands.get(player1.getId()).clear();
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setHand(player1, List.of());
         harness.setHand(player2, List.of(new Forest()));
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -67,6 +66,58 @@ class TannukMemorialEnsignTest extends BaseCardTest {
 
         harness.assertLife(player2, 20);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Queued landfall abilities draw only as the second ability resolves")
+    void queuedLandfallsCountResolutionsRatherThanTriggers() {
+        harness.addToBattlefield(player1, new TannukMemorialEnsign());
+        Card drawn = new Forest();
+        harness.setLibrary(player1, List.of(drawn, new Forest()));
+        harness.setHand(player1, List.of());
+
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+
+        assertThat(gd.stack).hasSize(3);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.passBothPriorities();
+        harness.assertLife(player2, 19);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.passBothPriorities();
+        harness.assertLife(player2, 18);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 17);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+    }
+
+    @Test
+    @DisplayName("The resolution count resets each turn and landfall works on an opponent's turn")
+    void resolutionCountResetsOnOpponentsTurn() {
+        harness.addToBattlefield(player1, new TannukMemorialEnsign());
+        Card firstDraw = new Forest();
+        Card secondDraw = new Forest();
+        harness.setLibrary(player1, List.of(firstDraw, secondDraw));
+        harness.setLibrary(player2, List.of(new Forest(), new Forest()));
+        harness.setHand(player1, List.of());
+
+        resolveLandfall(new Forest());
+        resolveLandfall(new Forest());
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw);
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+        harness.passBothPriorities();
+        harness.assertLife(player2, 17);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw);
+
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+        harness.passBothPriorities();
+        harness.assertLife(player2, 16);
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw);
     }
 
     private void resolveLandfall(Card land) {
