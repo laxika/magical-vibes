@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({StatusStatue.class, GrizzlyBears.class, FountainOfYouth.class, AngelicChorus.class, Forest.class})
 class StatusStatueTest extends BaseCardTest {
 
     private static final int STATUS = 0;
@@ -30,8 +32,7 @@ class StatusStatueTest extends BaseCardTest {
         harness.setHand(player1, List.of(new StatusStatue()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castModalInstant(player1, 0, STATUS, List.of(creature.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, List.of(creature.getId()));
 
         assertThat(creature.getEffectivePower()).isEqualTo(3);
         assertThat(creature.getEffectiveToughness()).isEqualTo(3);
@@ -85,8 +86,8 @@ class StatusStatueTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Fuse applies Status before destroying the Statue target")
-    void fuseResolvesBothHalves() {
+    @DisplayName("Both halves cannot be cast together with different targets")
+    void cannotCastBothHalvesWithDifferentTargets() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
         harness.setHand(player1, List.of(new StatusStatue()));
@@ -94,28 +95,89 @@ class StatusStatueTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castModalInstant(player1, 0, FUSE, List.of(creature.getId(), artifact.getId()));
-        harness.passBothPriorities();
-
-        assertThat(creature.getEffectivePower()).isEqualTo(3);
-        assertThat(creature.getEffectiveToughness()).isEqualTo(3);
-        assertThat(creature.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
-        harness.assertNotOnBattlefield(player2, "Fountain of Youth");
+        assertThatThrownBy(() -> harness.castModalInstant(player1, 0, FUSE,
+                List.of(creature.getId(), artifact.getId())))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
-    @DisplayName("Fuse allows the same creature as both targets")
-    void fuseAllowsSharedCreatureTarget() {
+    @DisplayName("Both halves cannot be cast together with a shared target")
+    void cannotCastBothHalvesWithSharedTarget() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new StatusStatue()));
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castModalInstant(player1, 0, FUSE, List.of(creature.getId(), creature.getId()));
+        assertThatThrownBy(() -> harness.castModalInstant(player1, 0, FUSE,
+                List.of(creature.getId(), creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Status can be paid for with black mana and target an opponent's creature")
+    void statusAcceptsBlackManaAndOpponentCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new StatusStatue()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        assertThat(creature.getEffectivePower()).isEqualTo(3);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(3);
+        assertThat(creature.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Status cannot target a noncreature artifact")
+    void statusCannotTargetNoncreatureArtifact() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+        harness.setHand(player1, List.of(new StatusStatue()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.castModalInstant(player1, 0, STATUS, List.of(artifact.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Statue can destroy a creature its caster controls")
+    void statueCanDestroyOwnCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new StatusStatue()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castInstant(player1, 0, STATUE, creature.getId());
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Status does not resolve when its creature is destroyed in response")
+    void statusDoesNotResolveAfterTargetIsDestroyed() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new StatusStatue()));
+        harness.setHand(player2, List.of(new StatusStatue()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.castInstant(player1, 0, STATUS, creature.getId());
+        harness.castInstant(player2, 0, STATUE, creature.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Status // Statue");
+        harness.assertInGraveyard(player2, "Status // Statue");
+        assertThat(creature.getPowerModifier()).isZero();
+        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(creature.hasKeyword(Keyword.DEATHTOUCH)).isFalse();
     }
 }
