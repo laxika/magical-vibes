@@ -28,8 +28,7 @@ class StrategicBetrayalTest extends BaseCardTest {
         harness.setHand(player1, List.of(new StrategicBetrayal()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(permanent -> permanent.getId().equals(bears.getId()));
@@ -47,8 +46,7 @@ class StrategicBetrayalTest extends BaseCardTest {
         harness.setHand(player1, List.of(new StrategicBetrayal()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId())
@@ -73,5 +71,46 @@ class StrategicBetrayalTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be an opponent");
+    }
+
+    @Test
+    @DisplayName("Exiles the graveyard even when the opponent controls no creatures")
+    void exilesGraveyardWithoutCreature() {
+        harness.setGraveyard(player2, List.of(new Peek(), new GiantSpider()));
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new StrategicBetrayal()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .extracting(card -> card.getName())
+                .containsExactlyInAnyOrder("Peek", "Giant Spider");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Exiles the entire graveyard after the opponent chooses a creature")
+    void exilesGraveyardAfterCreatureChoice() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GiantSpider());
+        harness.setGraveyard(player2, List.of(new Peek(), new GrizzlyBears()));
+        harness.setHand(player1, List.of(new StrategicBetrayal()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handlePermanentChosen(player2, bears.getId());
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Giant Spider");
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .extracting(card -> card.getName())
+                .containsExactlyInAnyOrder("Grizzly Bears", "Peek", "Grizzly Bears");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 }
