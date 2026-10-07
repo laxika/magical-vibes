@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -27,10 +28,7 @@ class ThawbringerTest extends BaseCardTest {
         gd.playerDecks.get(player1.getId()).add(0, topCard);
         int graveyardBefore = gd.playerGraveyards.get(player1.getId()).size();
 
-        harness.setHand(player1, List.of(new Thawbringer()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new Thawbringer(), "{2}{G}");
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
@@ -64,11 +62,59 @@ class ThawbringerTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    @DisplayName("Surveil may leave the card on top without drawing it")
+    void keepsTopCard() {
+        Card topCard = new GrizzlyBears();
+        Card secondCard = new Thawbringer();
+        harness.setLibrary(player1, List.of(topCard, secondCard));
+        harness.castFromHand(player1, new Thawbringer(), "{2}{G}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard, secondCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(topCard);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(topCard);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Entering with an empty library resolves without a choice or a draw")
+    void emptyLibrary() {
+        harness.setLibrary(player1, List.of());
+        harness.castFromHand(player1, new Thawbringer(), "{2}{G}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+    }
+
+    @Test
+    @DisplayName("The dying creature's controller surveils, not the spell's caster")
+    void opponentsDeathSurveilsOpponentsLibrary() {
+        Permanent thawbringer = addReadyThawbringer(player2);
+        Card ownTop = new GrizzlyBears();
+        Card opponentTop = new Thawbringer();
+        harness.setLibrary(player1, List.of(ownTop));
+        harness.setLibrary(player2, List.of(opponentTop));
+
+        killWithShock(player1, thawbringer.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(ownTop);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(thawbringer.getCard(), opponentTop);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(opponentTop);
+    }
+
     private Permanent addReadyThawbringer(Player player) {
-        Thawbringer card = new Thawbringer();
-        Permanent thawbringer = new Permanent(card);
+        Permanent thawbringer = harness.addToBattlefieldAndReturn(player, new Thawbringer());
         thawbringer.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(thawbringer);
         return thawbringer;
     }
 
@@ -78,7 +124,6 @@ class ThawbringerTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(caster, List.of(new Shock()));
         harness.addMana(caster, ManaColor.RED, 1);
-        harness.castInstant(caster, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(caster, 0, targetId);
     }
 }
