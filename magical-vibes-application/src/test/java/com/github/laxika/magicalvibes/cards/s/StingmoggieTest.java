@@ -22,8 +22,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({Stingmoggie.class, ThornbiteStaff.class, MurmuringBosk.class, MothdustChangeling.class})
 class StingmoggieTest extends BaseCardTest {
 
-    // ===== ETB: enters with two +1/+1 counters =====
-
     @Test
     @DisplayName("Enters the battlefield with two +1/+1 counters (0/0 becomes 2/2)")
     void entersWithTwoCounters() {
@@ -41,8 +39,6 @@ class StingmoggieTest extends BaseCardTest {
         assertThat(moggie.getEffectivePower()).isEqualTo(2);
         assertThat(moggie.getEffectiveToughness()).isEqualTo(2);
     }
-
-    // ===== Activated ability =====
 
     @Test
     @DisplayName("Ability destroys target artifact and removes a +1/+1 counter as cost")
@@ -84,8 +80,6 @@ class StingmoggieTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Murmuring Bosk");
     }
 
-    // ===== Target restrictions =====
-
     @Test
     @DisplayName("Cannot target a creature (neither artifact nor land)")
     void cannotTargetCreature() {
@@ -102,8 +96,6 @@ class StingmoggieTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, idx, null, targetId))
                 .isInstanceOf(IllegalStateException.class);
     }
-
-    // ===== Cannot activate without counters =====
 
     @Test
     @DisplayName("Cannot activate ability when no +1/+1 counters remain")
@@ -123,11 +115,69 @@ class StingmoggieTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Removing the last counter kills Stingmoggie but its ability still destroys the target")
+    void lastCounterAbilityResolvesAfterSourceDies() {
+        Permanent moggie = addReadyMoggie(player1);
+        moggie.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.addToBattlefield(player2, new ThornbiteStaff());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.activateAbility(player1, indexOf(player1, moggie), null,
+                harness.getPermanentId(player2, "Thornbite Staff"));
+
+        assertThat(moggie.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertInGraveyard(player1, "Stingmoggie");
+        harness.assertOnBattlefield(player2, "Thornbite Staff");
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Thornbite Staff");
+        harness.assertNotOnBattlefield(player2, "Thornbite Staff");
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Stingmoggie can destroy its controller's land")
+    void canActivateWhileTappedAndSummoningSickTargetingOwnLand() {
+        Permanent moggie = harness.enterBattlefieldAndReturn(player1, new Stingmoggie());
+        moggie.setSummoningSick(true);
+        moggie.setTapped(true);
+        harness.addToBattlefield(player1, new MurmuringBosk());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.activateAbility(player1, indexOf(player1, moggie), null,
+                harness.getPermanentId(player1, "Murmuring Bosk"));
+
+        assertThat(moggie.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Murmuring Bosk");
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Murmuring Bosk");
+        harness.assertNotOnBattlefield(player1, "Murmuring Bosk");
+    }
+
+    @Test
+    @DisplayName("Ability cannot be activated without red mana and does not remove a counter")
+    void cannotActivateWithoutRedMana() {
+        Permanent moggie = addReadyMoggie(player1);
+        harness.addToBattlefield(player2, new ThornbiteStaff());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        UUID targetId = harness.getPermanentId(player2, "Thornbite Staff");
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(player1, moggie), null, targetId))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(moggie.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player2, "Thornbite Staff");
+    }
 
     private Permanent addReadyMoggie(Player player) {
-        Permanent perm = addCreatureReady(player, new Stingmoggie());
-        perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        Permanent perm = harness.enterBattlefieldAndReturn(player, new Stingmoggie());
+        perm.setSummoningSick(false);
         return perm;
     }
 
