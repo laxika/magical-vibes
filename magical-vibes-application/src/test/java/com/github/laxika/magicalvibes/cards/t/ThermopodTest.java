@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(Thermopod.class)
+@CardUsed({Thermopod.class})
 class ThermopodTest extends BaseCardTest {
 
     @Test
@@ -73,5 +73,60 @@ class ThermopodTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         harness.assertInGraveyard(player1, "Thermopod");
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Self-sacrifice produces red mana from a snow source")
+    void selfSacrificeProducesSnowMana() {
+        Permanent thermopod = harness.addToBattlefieldAndReturn(player1, new Thermopod());
+        thermopod.tap();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getSnowManaTotal()).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Thermopod");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Mana from sacrificing a creature can pay Thermopod's snow cost")
+    void sacrificeManaPaysForHaste() {
+        Permanent thermopod = harness.addToBattlefieldAndReturn(player1, new Thermopod());
+        Permanent fodder = harness.addToBattlefieldAndReturn(player1, new Thermopod());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handlePermanentChosen(player1, fodder.getId());
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gqs.hasKeyword(gd, thermopod, Keyword.HASTE)).isFalse();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).getSnowManaTotal()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, thermopod, Keyword.HASTE)).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(thermopod);
+    }
+
+    @Test
+    @DisplayName("A tapped summoning-sick Thermopod can gain haste without granting it to other creatures")
+    void tappedSummoningSickThermopodCanGainHaste() {
+        Permanent thermopod = harness.addToBattlefieldAndReturn(player1, new Thermopod());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new Thermopod());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new Thermopod());
+        thermopod.tap();
+        gd.playerManaPools.get(player1.getId()).addSnowMana(ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, thermopod, Keyword.HASTE)).isTrue();
+        assertThat(thermopod.isTapped()).isTrue();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponent, Keyword.HASTE)).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getSnowManaTotal()).isZero();
     }
 }
