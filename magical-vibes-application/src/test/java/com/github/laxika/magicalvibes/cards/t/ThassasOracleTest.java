@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.n.NyxbornSeaguard;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -14,14 +14,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ThassasOracle.class, GrizzlyBears.class})
+@CardUsed({ThassasOracle.class, NyxbornSeaguard.class})
 class ThassasOracleTest extends BaseCardTest {
 
     @Test
     void looksAtBlueDevotionCardsAndPutsUpToOneOnTop() {
-        Card chosen = new GrizzlyBears();
-        Card otherLookedCard = new GrizzlyBears();
-        Card untouched = new GrizzlyBears();
+        Card chosen = new NyxbornSeaguard();
+        Card otherLookedCard = new NyxbornSeaguard();
+        Card untouched = new NyxbornSeaguard();
         harness.setLibrary(player1, List.of(chosen, otherLookedCard, untouched));
 
         castOracle();
@@ -40,9 +40,9 @@ class ThassasOracleTest extends BaseCardTest {
 
     @Test
     void mayPutNeitherLookedCardOnTop() {
-        Card first = new GrizzlyBears();
-        Card second = new GrizzlyBears();
-        Card untouched = new GrizzlyBears();
+        Card first = new NyxbornSeaguard();
+        Card second = new NyxbornSeaguard();
+        Card untouched = new NyxbornSeaguard();
         harness.setLibrary(player1, List.of(first, second, untouched));
 
         castOracle();
@@ -56,8 +56,8 @@ class ThassasOracleTest extends BaseCardTest {
 
     @Test
     void winsWhenDevotionEqualsLibrarySize() {
-        Card first = new GrizzlyBears();
-        Card second = new GrizzlyBears();
+        Card first = new NyxbornSeaguard();
+        Card second = new NyxbornSeaguard();
         harness.setLibrary(player1, List.of(first, second));
 
         castOracle();
@@ -68,8 +68,8 @@ class ThassasOracleTest extends BaseCardTest {
 
     @Test
     void zeroDevotionDoesNotLookAtCardsWhenOracleLeavesBeforeResolution() {
-        Card first = new GrizzlyBears();
-        Card second = new GrizzlyBears();
+        Card first = new NyxbornSeaguard();
+        Card second = new NyxbornSeaguard();
         harness.setLibrary(player1, List.of(first, second));
         ThassasOracle oracle = new ThassasOracle();
         harness.setHand(player1, List.of(oracle));
@@ -84,6 +84,71 @@ class ThassasOracleTest extends BaseCardTest {
 
         assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(first, second);
+    }
+
+    @Test
+    void winsWhenDevotionExceedsLibrarySizeAndOneCardIsChosen() {
+        Card onlyCard = new NyxbornSeaguard();
+        harness.setLibrary(player1, List.of(onlyCard));
+
+        castOracle();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(onlyCard);
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player1.getId());
+    }
+
+    @Test
+    void winsWithAnEmptyLibraryWithoutChoosingACard() {
+        harness.setLibrary(player1, List.of());
+
+        castOracle();
+
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player1.getId());
+    }
+
+    @Test
+    void winsWithZeroDevotionAndAnEmptyLibraryAfterOracleLeaves() {
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new ThassasOracle()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        Permanent oraclePermanent = findPermanent(player1, "Thassa's Oracle");
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, oraclePermanent));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player1.getId());
+    }
+
+    @Test
+    void countsOnlyControlledPermanentsTowardBlueDevotion() {
+        harness.addToBattlefield(player1, new NyxbornSeaguard());
+        harness.addToBattlefield(player2, new NyxbornSeaguard());
+        Card first = new NyxbornSeaguard();
+        Card second = new NyxbornSeaguard();
+        Card third = new NyxbornSeaguard();
+        Card fourth = new NyxbornSeaguard();
+        Card untouched = new NyxbornSeaguard();
+        harness.setLibrary(player1, List.of(first, second, third, fourth, untouched));
+
+        castOracle();
+
+        PendingInteraction.LibrarySearch search =
+                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search.params().cards()).containsExactly(first, second, third, fourth);
+
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .hasSize(5).contains(first, second, third, fourth, untouched);
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(untouched);
     }
 
     private void castOracle() {
