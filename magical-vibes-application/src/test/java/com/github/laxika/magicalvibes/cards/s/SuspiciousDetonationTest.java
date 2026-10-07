@@ -29,8 +29,7 @@ class SuspiciousDetonationTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
-        harness.castSorcery(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, target.getId());
 
         assertThat(target.getMarkedDamage()).isEqualTo(4);
         harness.assertOnBattlefield(player2, "Vizzerdrix");
@@ -50,8 +49,7 @@ class SuspiciousDetonationTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castSorcery(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, target.getId());
 
         assertThat(target.getMarkedDamage()).isEqualTo(4);
     }
@@ -98,8 +96,7 @@ class SuspiciousDetonationTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
-        harness.castSorcery(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, target.getId());
         harness.passBothPriorities();
 
         assertThat(harness.getGameData().interaction.isAwaitingInput()).isFalse();
@@ -117,5 +114,70 @@ class SuspiciousDetonationTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("An opponent's artifact sacrifice does not reduce your cost")
+    void opponentsSacrificeDoesNotReduceCost() {
+        harness.addToBattlefield(player2, new OxiddaDaredevil());
+        harness.addToBattlefield(player2, new Spellbook());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Vizzerdrix());
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new SuspiciousDetonation()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Sacrificing multiple artifacts does not multiply the reduction")
+    void multipleSacrificesDoNotMultiplyReduction() {
+        harness.addToBattlefield(player1, new OxiddaDaredevil());
+        Permanent firstArtifact = harness.addToBattlefieldAndReturn(player1, new Spellbook());
+        harness.addToBattlefield(player1, new Spellbook());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Vizzerdrix());
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, firstArtifact.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new SuspiciousDetonation()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The artifact sacrifice reduction does not remove the red requirement")
+    void reducedCostStillRequiresRedMana() {
+        harness.addToBattlefield(player1, new OxiddaDaredevil());
+        harness.addToBattlefield(player1, new Spellbook());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Vizzerdrix());
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new SuspiciousDetonation()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can damage a creature you control")
+    void canTargetOwnCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Vizzerdrix());
+        harness.setHand(player1, List.of(new SuspiciousDetonation()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        assertThat(target.getMarkedDamage()).isEqualTo(4);
+        harness.assertOnBattlefield(player1, "Vizzerdrix");
+        harness.assertInGraveyard(player1, "Suspicious Detonation");
     }
 }
