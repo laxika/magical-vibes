@@ -108,4 +108,26 @@ class SulfurousSpringsTest extends BaseCardTest {
         assertThat(gd.playerDamagePreventionShields.getOrDefault(player1.getId(), 0)).isZero();
         assertThat(gd.stack).isEmpty();
     }
+
+    @Test
+    @DisplayName("A prevention shield is consumed by one activation and does not prevent later pain-land damage")
+    void preventionShieldDoesNotPreventLaterActivation() {
+        harness.setLife(player1, 20);
+        addCreatureReady(player1, new SamiteHealer());
+        harness.addToBattlefield(player1, new SulfurousSprings());
+        harness.addToBattlefield(player1, new SulfurousSprings());
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 1, 1, null, null);
+        harness.assertLife(player1, 20);
+        harness.activateAbility(player1, 2, 2, null, null);
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
 }
