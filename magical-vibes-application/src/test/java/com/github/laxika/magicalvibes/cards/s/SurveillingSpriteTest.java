@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.l.LastGasp;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -49,6 +50,35 @@ class SurveillingSpriteTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(drawn);
+    }
+
+    @Test
+    @DisplayName("Declining the death trigger with an empty library does not lose the game")
+    void decliningDrawFromEmptyLibraryDoesNotLose() {
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of());
+        Permanent sprite = harness.addToBattlefieldAndReturn(player1, new SurveillingSprite());
+
+        killSprite(sprite);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Accepting the death trigger with an empty library loses the game")
+    void acceptingDrawFromEmptyLibraryLoses() {
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of());
+        Permanent sprite = harness.addToBattlefieldAndReturn(player1, new SurveillingSprite());
+
+        killSprite(sprite);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player2.getId());
     }
 
     private void killSprite(Permanent sprite) {
