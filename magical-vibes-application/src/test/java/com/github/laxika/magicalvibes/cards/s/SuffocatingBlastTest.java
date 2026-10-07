@@ -82,6 +82,80 @@ class SuffocatingBlastTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void stillCountersSpellIfCreatureTargetLeavesBattlefield() {
+        Permanent targetCreature = addCreatureReady(player1, new Cromat());
+        AnaDisciple targetSpell = new AnaDisciple();
+        harness.setHand(player2, List.of(new SuffocatingBlast()));
+        addBlastMana();
+
+        harness.castFromHand(player1, targetSpell, "{G}");
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, targetSpell.getId(), targetCreature.getId());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, 0, 4, null, null);
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Cromat");
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst().getName()).isEqualTo("Cromat");
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Ana Disciple");
+        harness.assertInGraveyard(player2, "Suffocating Blast");
+        assertThat(targetCreature.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void doesNotResolveWhenBothTargetsAreIllegal() {
+        Permanent targetCreature = addCreatureReady(player1, new Cromat());
+        AnaDisciple targetSpell = new AnaDisciple();
+        harness.setHand(player2, List.of(new SuffocatingBlast()));
+        addBlastMana();
+
+        harness.castFromHand(player1, targetSpell, "{G}");
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, targetSpell.getId(), targetCreature.getId());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, 0, 4, null, null);
+        harness.passBothPriorities();
+        gd.stack.removeIf(entry -> entry.getCard().getId().equals(targetSpell.getId()));
+        gd.playerGraveyards.get(player1.getId()).add(targetSpell);
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Suffocating Blast");
+        assertThat(targetCreature.getMarkedDamage()).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotCastWithoutCreatureTarget() {
+        AnaDisciple targetSpell = new AnaDisciple();
+        harness.setHand(player2, List.of(new SuffocatingBlast()));
+        addBlastMana();
+        harness.castFromHand(player1, targetSpell, "{G}");
+        harness.passPriority(player1);
+
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, targetSpell.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInHand(player2, "Suffocating Blast");
+    }
+
+    @Test
+    void cannotTargetPlayerForDamage() {
+        AnaDisciple targetSpell = new AnaDisciple();
+        harness.setHand(player2, List.of(new SuffocatingBlast()));
+        addBlastMana();
+        harness.castFromHand(player1, targetSpell, "{G}");
+        harness.passPriority(player1);
+
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, targetSpell.getId(), player1.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInHand(player2, "Suffocating Blast");
+    }
+
     private void addBlastMana() {
         harness.addMana(player2, ManaColor.BLUE, 2);
         harness.addMana(player2, ManaColor.RED, 1);
