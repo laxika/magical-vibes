@@ -79,19 +79,53 @@ class SuperVillainLockupTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.GREEN, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
         UUID lockupId = harness.getPermanentId(player1, "Super Villain Lockup");
-        harness.passPriority(player1);
-        harness.castInstant(player2, 0, lockupId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, lockupId);
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .noneMatch(card -> card.getName().equals("Grizzly Bears"));
     }
 
+    @Test
+    @DisplayName("Does not exile if Lockup leaves before its enter ability resolves")
+    void doesNotExileIfSourceLeavesBeforeResolution() {
+        Permanent target = addTappedCreature(player2);
+        prepareLockup();
+        harness.castEnchantment(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new Naturalize()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0,
+                harness.getPermanentId(player1, "Super Villain Lockup"));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Super Villain Lockup");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Can be cast during an opponent's combat thanks to flash")
+    void canBeCastDuringOpponentsCombat() {
+        Permanent target = addTappedCreature(player2);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.clearPriorityPassed();
+
+        castAndResolve(target.getId());
+
+        harness.assertOnBattlefield(player1, "Super Villain Lockup");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(card -> card.getName().equals("Grizzly Bears"));
+    }
+
     private Permanent addTappedCreature(Player player) {
-        Permanent creature = new Permanent(new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player, new GrizzlyBears());
         creature.tap();
-        gd.playerBattlefields.get(player.getId()).add(creature);
         return creature;
     }
 
