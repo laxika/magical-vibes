@@ -18,6 +18,43 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class SplinterTest extends BaseCardTest {
 
     @Test
+    @DisplayName("The caster may leave matching cards in hidden zones")
+    void mayLeaveMatchingCardsInHiddenZones() {
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new Shuko()).getId();
+        harness.setHand(player2, List.of(new Shuko()));
+        harness.setLibrary(player2, List.of(new Shuko()));
+        harness.setGraveyard(player2, List.of(new Shuko()));
+        harness.setHand(player1, List.of(new Splinter()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 0, targetId);
+
+        harness.assertNotOnBattlefield(player2, "Shuko");
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Can target its caster's artifact and searches that caster's zones")
+    void canTargetOwnArtifact() {
+        UUID targetId = harness.addToBattlefieldAndReturn(player1, new Shuko()).getId();
+        harness.setHand(player1, List.of(new Splinter()));
+        harness.setGraveyard(player1, List.of(new Shuko()));
+        harness.setLibrary(player1, List.of(new TendoIceBridge()));
+        harness.setGraveyard(player2, List.of(new Shuko()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 0, targetId);
+
+        harness.assertNotOnBattlefield(player1, "Shuko");
+        harness.assertNotInGraveyard(player1, "Shuko");
+        harness.assertInGraveyard(player2, "Shuko");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .filteredOn(card -> card.getName().equals("Shuko"))
+                .hasSize(2);
+        assertThat(gameLogContains("shuffles their library")).isTrue();
+    }
+
+    @Test
     @DisplayName("Exiles the target artifact and every same-name copy from graveyard, hand, and library")
     void exilesTargetAndAllCopies() {
         harness.addToBattlefield(player2, new Shuko());
