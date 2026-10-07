@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.FetidHeath;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -26,8 +27,8 @@ class SyphonLifeTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, player2.getId());
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 18);
     }
 
     @Test
@@ -40,8 +41,8 @@ class SyphonLifeTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, player1.getId());
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(16);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        harness.assertLife(player1, 16);
+        harness.assertLife(player2, 20);
     }
 
     @Test
@@ -68,8 +69,8 @@ class SyphonLifeTest extends BaseCardTest {
         harness.castRetrace(player1, 0, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 18);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         harness.assertInGraveyard(player1, "Fetid Heath");
     }
@@ -98,5 +99,61 @@ class SyphonLifeTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castRetrace(player1, 0, 0, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Syphon Life can be retraced repeatedly with a new land discard each time")
+    void canRetraceRepeatedly() {
+        SyphonLife spell = new SyphonLife();
+        harness.setLife(player1, 16);
+        harness.setLife(player2, 20);
+        harness.setGraveyard(player1, List.of(spell));
+        harness.setHand(player1, List.of(new FetidHeath(), new FetidHeath()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+
+        harness.castRetrace(player1, 0, 0, player2.getId());
+        harness.passBothPriorities();
+        int spellIndex = gd.playerGraveyards.get(player1.getId()).indexOf(spell);
+        assertThat(spellIndex).isGreaterThanOrEqualTo(0);
+        harness.castRetrace(player1, spellIndex, 0, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 16);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(c -> c.getName().equals("Fetid Heath")).hasSize(2);
+        harness.assertInGraveyard(player1, "Syphon Life");
+    }
+
+    @Test
+    @DisplayName("Retrace still requires Syphon Life's full mana cost")
+    void retraceRequiresManaInAdditionToLand() {
+        SyphonLife spell = new SyphonLife();
+        FetidHeath land = new FetidHeath();
+        harness.setGraveyard(player1, List.of(spell));
+        harness.setHand(player1, List.of(land));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        assertThatThrownBy(() -> harness.castRetrace(player1, 0, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(land);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(spell);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Self-targeted Syphon Life restores life before state-based actions")
+    void selfTargetAtTwoLifeSurvivesResolution() {
+        harness.setLife(player1, 2);
+        harness.setHand(player1, List.of(new SyphonLife()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+
+        harness.assertLife(player1, 2);
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+        harness.assertInGraveyard(player1, "Syphon Life");
     }
 }
