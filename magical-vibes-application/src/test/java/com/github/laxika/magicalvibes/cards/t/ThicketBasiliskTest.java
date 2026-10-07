@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
+import com.github.laxika.magicalvibes.model.action.DelayedEndOfCombatTrigger;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.w.WallOfAir;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -34,9 +35,9 @@ class ThicketBasiliskTest extends BaseCardTest {
                         && se.getCard().getName().equals("Thicket Basilisk")
                         && se.getTargetId().equals(spider.getId()));
 
-        resolveAllTriggers();
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .anyMatch(a -> a.permanentId().equals(spider.getId()));
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, this::resolveAllTriggers);
+        assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class))
+                .anyMatch(a -> a.affectedPermanentId().equals(spider.getId()));
     }
 
     @Test
@@ -52,8 +53,9 @@ class ThicketBasiliskTest extends BaseCardTest {
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-        resolveAllTriggers();
-        resolveCombat();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, this::resolveAllTriggers);
+        harness.passUntil(player1, TurnStep.END_OF_COMBAT);
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, this::resolveAllTriggers);
 
         harness.assertNotOnBattlefield(player2, "Giant Spider");
         harness.assertInGraveyard(player2, "Giant Spider");
@@ -72,7 +74,7 @@ class ThicketBasiliskTest extends BaseCardTest {
         assertThat(gd.stack)
                 .noneMatch(se -> se.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                         && se.getCard().getName().equals("Thicket Basilisk"));
-        assertThat(gd.hasDelayedAction(DelayedPermanentAction.class)).isFalse();
+        assertThat(gd.hasDelayedAction(DelayedEndOfCombatTrigger.class)).isFalse();
     }
     @Test
     @DisplayName("When Thicket Basilisk blocks a non-Wall creature, that attacker is scheduled for end-of-combat destruction")
@@ -89,9 +91,9 @@ class ThicketBasiliskTest extends BaseCardTest {
                         && se.getCard().getName().equals("Thicket Basilisk")
                         && se.getTargetId().equals(attacker.getId()));
 
-        resolveAllTriggers();
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .anyMatch(a -> a.permanentId().equals(attacker.getId()));
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, this::resolveAllTriggers);
+        assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class))
+                .anyMatch(a -> a.affectedPermanentId().equals(attacker.getId()));
     }
 
     @Test
@@ -108,7 +110,7 @@ class ThicketBasiliskTest extends BaseCardTest {
         assertThat(gd.stack)
                 .noneMatch(se -> se.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                         && se.getCard().getName().equals("Thicket Basilisk"));
-        assertThat(gd.hasDelayedAction(DelayedPermanentAction.class)).isFalse();
+        assertThat(gd.hasDelayedAction(DelayedEndOfCombatTrigger.class)).isFalse();
     }
 
     @Test
@@ -129,10 +131,10 @@ class ThicketBasiliskTest extends BaseCardTest {
                 .filter(se -> se.getCard().getName().equals("Thicket Basilisk")))
                 .hasSize(2);
 
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, this::resolveAllTriggers);
 
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .extracting(DelayedPermanentAction::permanentId)
+        assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class))
+                .extracting(DelayedEndOfCombatTrigger::affectedPermanentId)
                 .containsExactlyInAnyOrder(firstBlocker.getId(), secondBlocker.getId());
     }
 
@@ -148,10 +150,10 @@ class ThicketBasiliskTest extends BaseCardTest {
 
         TestCards.mutableCard(blocker).setSubtypes(List.of(CardSubtype.WALL));
 
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, this::resolveAllTriggers);
 
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .anyMatch(a -> a.permanentId().equals(blocker.getId()));
+        assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class))
+                .anyMatch(a -> a.affectedPermanentId().equals(blocker.getId()));
     }
 
     @Test
@@ -167,10 +169,78 @@ class ThicketBasiliskTest extends BaseCardTest {
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-        resolveAllTriggers();
-        resolveCombat();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, this::resolveAllTriggers);
+        harness.passUntil(player1, TurnStep.END_OF_COMBAT);
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, this::resolveAllTriggers);
 
         harness.assertNotOnBattlefield(player1, "Giant Spider");
         harness.assertInGraveyard(player1, "Giant Spider");
+    }
+
+    @Test
+    @DisplayName("Destruction waits for the end-of-combat trigger to resolve and allows regeneration")
+    void delayedDestructionCanBeRegenerated() {
+        Permanent basilisk = addCreatureReady(player1, new ThicketBasilisk());
+        basilisk.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new GiantSpider());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, this::resolveAllTriggers);
+
+        harness.assertOnBattlefield(player2, "Giant Spider");
+        harness.passUntil(player1, TurnStep.END_OF_COMBAT);
+        harness.assertOnBattlefield(player2, "Giant Spider");
+        assertThat(gd.stack).anyMatch(entry ->
+                entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                        && entry.getCard().getName().equals("Thicket Basilisk"));
+
+        blocker.setRegenerationShield(1);
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, this::resolveAllTriggers);
+
+        harness.assertOnBattlefield(player2, "Giant Spider");
+        harness.assertNotInGraveyard(player2, "Giant Spider");
+        assertThat(blocker.getRegenerationShield()).isZero();
+        assertThat(blocker.isTapped()).isTrue();
+        assertThat(blocker.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("The non-Wall blocker is destroyed even if Thicket Basilisk dies in combat")
+    void delayedDestructionSurvivesSourceDeath() {
+        Permanent basilisk = addCreatureReady(player1, new ThicketBasilisk());
+        basilisk.setAttacking(true);
+        basilisk.setMarkedDamage(2);
+        addCreatureReady(player2, new GiantSpider());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, this::resolveAllTriggers);
+        harness.passUntil(player1, TurnStep.END_OF_COMBAT);
+
+        harness.assertInGraveyard(player1, "Thicket Basilisk");
+        harness.assertOnBattlefield(player2, "Giant Spider");
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, this::resolveAllTriggers);
+
+        harness.assertNotOnBattlefield(player2, "Giant Spider");
+        harness.assertInGraveyard(player2, "Giant Spider");
+    }
+
+    @Test
+    @DisplayName("Only the non-Wall blocker gets a destruction trigger among mixed blockers")
+    void mixedBlockersOnlyScheduleNonWallDestruction() {
+        Permanent basilisk = addCreatureReady(player1, new ThicketBasilisk());
+        basilisk.setAttacking(true);
+        addCreatureReady(player2, new WallOfAir());
+        Permanent spider = addCreatureReady(player2, new GiantSpider());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, this::resolveAllTriggers);
+
+        assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class))
+                .extracting(DelayedEndOfCombatTrigger::affectedPermanentId)
+                .containsExactly(spider.getId());
     }
 }
