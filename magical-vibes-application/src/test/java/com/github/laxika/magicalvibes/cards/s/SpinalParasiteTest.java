@@ -106,6 +106,74 @@ class SpinalParasiteTest extends BaseCardTest {
                 .hasMessageContaining("Not enough counters");
     }
 
+    @Test
+    @DisplayName("The ability controller chooses which counter type to remove")
+    void controllerChoosesCounterType() {
+        addReadyParasite();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new StaffOfDomination());
+        target.setCounterCount(CounterType.CHARGE, 2);
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        assertThat(target.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Paying the last two counters kills the source but its ability still resolves")
+    void abilityResolvesAfterSourceDiesFromCost() {
+        addReadyParasite();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new StaffOfDomination());
+        target.setCounterCount(CounterType.CHARGE, 2);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Spinal Parasite");
+        harness.assertInGraveyard(player1, "Spinal Parasite");
+        assertThat(target.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
+
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Spinal Parasite can target itself and die from the counter removed on resolution")
+    void canTargetItself() {
+        Permanent parasite = addReadyParasite();
+        parasite.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 4);
+
+        harness.activateAbility(player1, 0, 0, null, parasite.getId());
+        assertThat(parasite.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Spinal Parasite");
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Spinal Parasite");
+        harness.assertInGraveyard(player1, "Spinal Parasite");
+    }
+
+    @Test
+    @DisplayName("The ability works while Spinal Parasite is tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent parasite = addReadyParasite();
+        parasite.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 4);
+        parasite.setSummoningSick(true);
+        parasite.setTapped(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new StaffOfDomination());
+        target.setCounterCount(CounterType.CHARGE, 1);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(parasite.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(target.getCounterCount(CounterType.CHARGE)).isZero();
+        harness.assertOnBattlefield(player1, "Spinal Parasite");
+    }
+
     private Permanent addReadyParasite() {
         Permanent parasite = addCreatureReady(player1, new SpinalParasite());
         parasite.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
