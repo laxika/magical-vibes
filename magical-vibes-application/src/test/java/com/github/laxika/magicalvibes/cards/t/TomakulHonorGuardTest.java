@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({TomakulHonorGuard.class, Shock.class, Unsummon.class, ProdigalSorcerer.class})
 class TomakulHonorGuardTest extends BaseCardTest {
 
     @Test
@@ -25,8 +27,7 @@ class TomakulHonorGuardTest extends BaseCardTest {
         Shock shock = new Shock();
         prepareOpponentCast(List.of(shock), ManaColor.RED, 1);
 
-        harness.castInstant(player2, 0, honorGuard.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, honorGuard.getId());
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId()))
@@ -42,8 +43,7 @@ class TomakulHonorGuardTest extends BaseCardTest {
         Unsummon unsummon = new Unsummon();
         prepareOpponentCast(List.of(unsummon), ManaColor.BLUE, 3);
 
-        harness.castInstant(player2, 0, honorGuard.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, honorGuard.getId());
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         harness.handleMayAbilityChosen(player2, true);
@@ -59,9 +59,8 @@ class TomakulHonorGuardTest extends BaseCardTest {
     @DisplayName("Triggers for an opponent's targeted ability")
     void countersOpponentAbilityWithoutPayment() {
         Permanent honorGuard = addReadyHonorGuard();
-        Permanent sorcerer = new Permanent(new ProdigalSorcerer());
+        Permanent sorcerer = harness.addToBattlefieldAndReturn(player2, new ProdigalSorcerer());
         sorcerer.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(sorcerer);
         forceOpponentMainPhase();
 
         harness.activateAbility(player2, 0, null, honorGuard.getId());
@@ -84,10 +83,50 @@ class TomakulHonorGuardTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
     }
 
+    @Test
+    @DisplayName("Counters an opponent's spell when its controller declines to pay")
+    void countersOpponentSpellWhenPaymentDeclined() {
+        Permanent honorGuard = addReadyHonorGuard();
+        Shock shock = new Shock();
+        prepareOpponentCast(List.of(shock), ManaColor.RED, 3);
+
+        harness.castAndResolveInstant(player2, 0, honorGuard.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .anyMatch(card -> card.getId().equals(shock.getId()));
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getId().equals(honorGuard.getId()));
+    }
+
+    @Test
+    @DisplayName("Allows an opponent's targeted ability after its controller pays")
+    void allowsOpponentAbilityAfterPayment() {
+        Permanent honorGuard = addReadyHonorGuard();
+        Permanent sorcerer = harness.addToBattlefieldAndReturn(player2, new ProdigalSorcerer());
+        sorcerer.setSummoningSick(false);
+        forceOpponentMainPhase();
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player2, 0, null, honorGuard.getId());
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player2, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getId().equals(honorGuard.getId()));
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card.getId().equals(honorGuard.getCard().getId()));
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(permanent -> permanent.getId().equals(sorcerer.getId()));
+    }
     private Permanent addReadyHonorGuard() {
-        Permanent honorGuard = new Permanent(new TomakulHonorGuard());
+        Permanent honorGuard = harness.addToBattlefieldAndReturn(player1, new TomakulHonorGuard());
         honorGuard.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(honorGuard);
         return honorGuard;
     }
 
