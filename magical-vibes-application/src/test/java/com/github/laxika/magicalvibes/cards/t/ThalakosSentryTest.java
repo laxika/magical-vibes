@@ -51,6 +51,22 @@ class ThalakosSentryTest extends BaseCardTest {
         assertThat(blocker.isBlocking()).isTrue();
     }
 
+    @Test
+    @DisplayName("Thalakos Sentry deals combat damage when a non-shadow creature cannot block it")
+    void dealsCombatDamagePastNonShadowCreature() {
+        addCreatureReady(player1, new ThalakosSentry());
+        addCreatureReady(player2, new CanopySpider());
+        harness.setLife(player2, 20);
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat();
+
+        harness.assertLife(player2, 19);
+        harness.assertOnBattlefield(player1, "Thalakos Sentry");
+        harness.assertOnBattlefield(player2, "Canopy Spider");
+    }
+
     private Permanent addAttacker(Card card) {
         Permanent attacker = addCreatureReady(player1, card);
         attacker.setAttacking(true);
