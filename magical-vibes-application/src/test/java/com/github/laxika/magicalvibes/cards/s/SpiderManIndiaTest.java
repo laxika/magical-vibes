@@ -32,8 +32,7 @@ class SpiderManIndiaTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, target.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(target.hasKeyword(Keyword.FLYING)).isTrue();
@@ -50,12 +49,10 @@ class SpiderManIndiaTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.handlePermanentChosen(player1, target.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(target.hasKeyword(Keyword.FLYING)).isFalse();
@@ -104,5 +101,128 @@ class SpiderManIndiaTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
         assertThat(spiderMan.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void canTargetItselfAndTriggerResolvesBeforeCreatureSpell() {
+        Permanent spiderMan = harness.addToBattlefieldAndReturn(player1, new SpiderManIndia());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castCreature(player1, 0);
+        harness.handlePermanentChosen(player1, spiderMan.getId());
+        harness.passBothPriorities();
+
+        assertThat(spiderMan.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(spiderMan.hasKeyword(Keyword.FLYING)).isTrue();
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void castingSpiderManDoesNotTriggerItsOwnAbility() {
+        harness.setHand(player1, List.of(new SpiderManIndia()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Spider-Man India");
+        Permanent spiderMan = findPermanent(player1, "Spider-Man India");
+        assertThat(spiderMan.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(spiderMan.hasKeyword(Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    void removedTargetDoesNotRedirectCounterOrFlying() {
+        Permanent spiderMan = harness.addToBattlefieldAndReturn(player1, new SpiderManIndia());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new GrizzlyBears(), new Shock()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castCreature(player1, 0);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.passBothPriorities();
+
+        assertThat(spiderMan.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(spiderMan.hasKeyword(Keyword.FLYING)).isFalse();
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void webSlingingCannotReturnUntappedCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SpiderManIndia()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castCreatureWithAlternateCost(player1, 0, List.of(creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Spider-Man India");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void webSlingingCannotReturnOpponentsTappedCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        creature.tap();
+        harness.setHand(player1, List.of(new SpiderManIndia()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castCreatureWithAlternateCost(player1, 0, List.of(creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Spider-Man India");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void opponentsCreatureSpellDoesNotTrigger() {
+        Permanent spiderMan = harness.addToBattlefieldAndReturn(player1, new SpiderManIndia());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castCreature(player2, 0);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(spiderMan.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(spiderMan.hasKeyword(Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    void webSlingingRequiresReturningACreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        creature.tap();
+        harness.setHand(player1, List.of(new SpiderManIndia()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castCreatureWithAlternateCost(player1, 0, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Spider-Man India");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 }
