@@ -24,6 +24,37 @@ class TurbulentMoorTest extends BaseCardTest {
     private Player thirdPlayer;
 
     @Test
+    @DisplayName("Enters tapped when opponents control no lands")
+    void entersTappedWithoutOpponentLands() {
+        playTurbulentMoor();
+
+        assertThat(findMoor(player1).isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Own lands do not supplement seven opponent lands")
+    void ownLandsDoNotCompleteOpponentThreshold() {
+        addLands(player1, 8);
+        addLands(player2, 7);
+
+        playTurbulentMoor();
+
+        assertThat(findMoor(player1).isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Tapped opponent lands count toward the threshold")
+    void tappedOpponentLandsCount() {
+        for (int i = 0; i < 9; i++) {
+            harness.addToBattlefieldAndReturn(player2, new Forest()).tap();
+        }
+
+        playTurbulentMoor();
+
+        assertThat(findMoor(player1).isTapped()).isFalse();
+    }
+
+    @Test
     @DisplayName("Enters tapped when opponents control fewer than eight lands")
     void entersTappedWithFewerThanEightOpponentLands() {
         addLands(player2, 7);
@@ -95,9 +126,8 @@ class TurbulentMoorTest extends BaseCardTest {
     }
 
     private Permanent addReadyMoor(Player player) {
-        Permanent moor = new Permanent(new TurbulentMoor());
+        Permanent moor = harness.addToBattlefieldAndReturn(player, new TurbulentMoor());
         moor.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(moor);
         return moor;
     }
 
