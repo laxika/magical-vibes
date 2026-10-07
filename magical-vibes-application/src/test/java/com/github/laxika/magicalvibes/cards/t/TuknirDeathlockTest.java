@@ -81,12 +81,60 @@ class TuknirDeathlockTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, firstTarget.getId());
         harness.passBothPriorities();
 
-        Permanent secondTarget = addCreatureReady(player2, new TuknirDeathlock());
         addAbilityMana();
 
         assertThat(tuknir.isTapped()).isTrue();
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, secondTarget.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, firstTarget.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can target itself with its boost")
+    void canBoostItself() {
+        Permanent tuknir = addCreatureReady(player1, new TuknirDeathlock());
+        addAbilityMana();
+
+        harness.activateAbility(player1, 0, null, tuknir.getId());
+        assertThat(tuknir.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, tuknir)).isEqualTo(2);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, tuknir)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, tuknir)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Cannot activate the tap ability while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        Permanent tuknir = harness.addToBattlefieldAndReturn(player1, new TuknirDeathlock());
+        tuknir.setSummoningSick(true);
+        Permanent target = addCreatureReady(player2, new TuknirDeathlock());
+        addAbilityMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(tuknir.isTapped()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The boost resolves even if Tuknir leaves the battlefield in response")
+    void boostResolvesAfterSourceLeaves() {
+        Permanent tuknir = addCreatureReady(player1, new TuknirDeathlock());
+        Permanent target = addCreatureReady(player2, new TuknirDeathlock());
+        harness.addToBattlefield(player2, new Karakas());
+        addAbilityMana();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gs.passPriority(gd, player1);
+        harness.activateAbility(player2, 1, 1, null, tuknir.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(tuknir);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
     }
 
     private void addAbilityMana() {
