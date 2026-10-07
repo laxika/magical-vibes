@@ -29,10 +29,9 @@ class SpeedYoungAvengerTest extends BaseCardTest {
         Permanent normalBlocker = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Permanent hasteBlocker = harness.addToBattlefieldAndReturn(player2, new RagingGoblin());
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.handlePermanentChosen(player1, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
         harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
         target.setAttacking(true);
@@ -62,6 +61,8 @@ class SpeedYoungAvengerTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
 
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 
@@ -71,10 +72,9 @@ class SpeedYoungAvengerTest extends BaseCardTest {
         Permanent target = prepareTrigger();
         Permanent blocker = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.handlePermanentChosen(player1, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
         harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
         harness.passBothPriorities();
 
         target.setAttacking(true);
@@ -83,6 +83,66 @@ class SpeedYoungAvengerTest extends BaseCardTest {
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
         assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Targeting waits until payment and the reflexive trigger can be responded to")
+    void paymentCreatesSeparateTargetedTrigger() {
+        Permanent target = prepareTrigger();
+
+        harness.castInstant(player1, 0, player2.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, target.getId());
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(target.getBlockRestrictionsUntilEndOfTurn()).isEmpty();
+        harness.passBothPriorities();
+        assertThat(target.getBlockRestrictionsUntilEndOfTurn()).hasSize(1);
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("An opponent's noncreature spell does not trigger Speed")
+    void opponentSpellDoesNotTrigger() {
+        harness.addToBattlefield(player1, new SpeedYoungAvenger());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.castInstant(player2, 0, player1.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("The paid trigger can target an opponent's haste creature but not a creature without haste")
+    void targetMustHaveHasteButMayBelongToOpponent() {
+        prepareTrigger();
+        Permanent opponentTarget = harness.addToBattlefieldAndReturn(player2, new RagingGoblin());
+        Permanent nonHaste = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.handleMayAbilityChosen(player1, true);
+
+        PendingInteraction.PermanentChoice choice = gd.interaction
+                .activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validPermanentIds()).contains(opponentTarget.getId()).doesNotContain(nonHaste.getId());
+        harness.handlePermanentChosen(player1, opponentTarget.getId());
+        harness.passBothPriorities();
+        assertThat(opponentTarget.getBlockRestrictionsUntilEndOfTurn()).hasSize(1);
+
+        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+        assertThat(opponentTarget.getBlockRestrictionsUntilEndOfTurn()).isEmpty();
     }
 
     private Permanent prepareTrigger() {
