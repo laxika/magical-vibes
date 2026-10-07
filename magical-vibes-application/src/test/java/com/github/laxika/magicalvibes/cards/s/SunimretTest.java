@@ -19,17 +19,19 @@ class SunimretTest extends BaseCardTest {
 
     @Test
     void exilesAllCreatures() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        Card firstCreature = new GrizzlyBears();
+        Card secondCreature = new GrizzlyBears();
+        harness.addToBattlefield(player1, firstCreature);
+        harness.addToBattlefield(player2, secondCreature);
         Card sunimret = new Sunimret();
-        harness.setHand(player1, List.of(sunimret));
-        harness.addMana(player1, ManaColor.BLACK, 6);
 
         harness.castFromHand(player1, sunimret, "{4}{B}{B}");
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.exiledCards).extracting(entry -> entry.card())
+                .containsExactlyInAnyOrder(firstCreature, secondCreature);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(sunimret);
     }
 
@@ -39,8 +41,7 @@ class SunimretTest extends BaseCardTest {
         Card searchedCard = new GrizzlyBears();
         harness.setLibrary(player1, List.of(searchedCard, sunimret));
         Card tutor = new DemonicTutor();
-        harness.setHand(player1, List.of(tutor));
-        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.castFromHand(player1, tutor, "{1}{B}");
         harness.passBothPriorities();
@@ -58,10 +59,45 @@ class SunimretTest extends BaseCardTest {
                 && entry.getCard().getId().equals(sunimret.getId())
                 && entry.isAlternateCost());
 
-        harness.getGameService().handleInteractionAnswer(gd, player1,
-                new com.github.laxika.magicalvibes.service.interaction.InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(sunimret);
+    }
+
+    @Test
+    void decliningReverseMiracleLeavesSunimretAvailableToSearchFor() {
+        Card sunimret = new Sunimret();
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), sunimret));
+
+        harness.castFromHand(player1, new DemonicTutor(), "{1}{B}");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        PendingInteraction.LibrarySearch search =
+                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search).isNotNull();
+        assertThat(search.params().cards()).contains(sunimret);
+        harness.handleCardChosen(player1, search.params().cards().indexOf(sunimret));
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(sunimret);
+        assertThat(gd.stack).noneMatch(entry -> entry.getCard().getId().equals(sunimret.getId()));
+    }
+
+    @Test
+    void doesNotOfferReverseMiracleWhenSunimretIsNotTheBottomCard() {
+        Card sunimret = new Sunimret();
+        harness.setLibrary(player1, List.of(sunimret, new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castFromHand(player1, new DemonicTutor(), "{1}{B}");
+        harness.passBothPriorities();
+
+        PendingInteraction.LibrarySearch search =
+                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search).isNotNull();
+        harness.handleCardChosen(player1, search.params().cards().indexOf(sunimret));
+        assertThat(gd.playerHands.get(player1.getId())).contains(sunimret);
+        assertThat(gd.stack).noneMatch(entry -> entry.getCard().getId().equals(sunimret.getId()));
     }
 }
