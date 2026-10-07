@@ -117,6 +117,65 @@ class SquirrelWranglerTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Both abilities require green mana and leave the land intact when payment fails")
+    void cannotPayWithOnlyColorlessMana() {
+        addCreatureReady(player1, new SquirrelWrangler());
+        harness.addToBattlefield(player1, new RhysticCave());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Rhystic Cave");
+        harness.assertNotInGraveyard(player1, "Rhystic Cave");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opponent's land cannot pay either sacrifice cost")
+    void cannotSacrificeOpponentsLand() {
+        addCreatureReady(player1, new SquirrelWrangler());
+        harness.addToBattlefield(player2, new RhysticCave());
+        addManaForAbility();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player2, "Rhystic Cave");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped Wrangler with summoning sickness can activate both abilities")
+    void tappedSummoningSickWranglerCanActivateBothAbilities() {
+        Permanent wrangler = harness.addToBattlefieldAndReturn(player1, new SquirrelWrangler());
+        wrangler.setSummoningSick(true);
+        wrangler.setTapped(true);
+        harness.addToBattlefield(player1, new RhysticCave());
+        addManaForAbility();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.assertInGraveyard(player1, "Rhystic Cave");
+        assertThat(countPermanents(player1, "Squirrel")).isZero();
+        harness.passBothPriorities();
+
+        harness.addToBattlefield(player1, new RhysticCave());
+        addManaForAbility();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Squirrel")).hasSize(2)
+                .allSatisfy(squirrel -> {
+                    assertThat(gqs.getEffectivePower(gd, squirrel)).isEqualTo(2);
+                    assertThat(gqs.getEffectiveToughness(gd, squirrel)).isEqualTo(2);
+                });
+    }
+
     private void addManaForAbility() {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
