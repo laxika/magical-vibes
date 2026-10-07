@@ -165,4 +165,76 @@ class TradeCaravanTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         assertThat(landCap.isTapped()).isTrue();
     }
+
+    @Test
+    @DisplayName("Can target an untapped basic land and still pays the counter cost")
+    void canTargetUntappedBasicLand() {
+        Permanent caravan = harness.addToBattlefieldAndReturn(player1, new TradeCaravan());
+        Permanent plains = harness.addToBattlefieldAndReturn(player1, new Plains());
+        caravan.setCounterCount(CounterType.CURRENCY, 2);
+
+        enterOpponentUpkeep();
+        harness.activateAbility(player1, 0, 0, null, plains.getId());
+        harness.passBothPriorities();
+
+        assertThat(plains.isTapped()).isFalse();
+        assertThat(caravan.getCounterCount(CounterType.CURRENCY)).isZero();
+    }
+
+    @Test
+    @DisplayName("Can activate more than once during the same opponent's upkeep")
+    void canActivateRepeatedlyDuringOpponentUpkeep() {
+        Permanent caravan = harness.addToBattlefieldAndReturn(player1, new TradeCaravan());
+        Permanent firstLand = harness.addToBattlefieldAndReturn(player1, new Plains());
+        Permanent secondLand = harness.addToBattlefieldAndReturn(player1, new Plains());
+        caravan.setCounterCount(CounterType.CURRENCY, 4);
+        caravan.setSummoningSick(true);
+        firstLand.tap();
+        secondLand.tap();
+
+        enterOpponentUpkeep();
+        harness.activateAbility(player1, 0, 0, null, firstLand.getId());
+        harness.activateAbility(player1, 0, 0, null, secondLand.getId());
+
+        assertThat(caravan.getCounterCount(CounterType.CURRENCY)).isZero();
+        assertThat(firstLand.isTapped()).isTrue();
+        assertThat(secondLand.isTapped()).isTrue();
+
+        resolveAllTriggers();
+
+        assertThat(firstLand.isTapped()).isFalse();
+        assertThat(secondLand.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Cannot target a creature and does not pay counters for an illegal target")
+    void cannotTargetCreature() {
+        Permanent caravan = harness.addToBattlefieldAndReturn(player1, new TradeCaravan());
+        caravan.setCounterCount(CounterType.CURRENCY, 2);
+        caravan.tap();
+
+        enterOpponentUpkeep();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, caravan.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(caravan.getCounterCount(CounterType.CURRENCY)).isEqualTo(2);
+        assertThat(caravan.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The activated ability resolves even if Trade Caravan leaves the battlefield")
+    void abilityResolvesWithoutSource() {
+        Permanent caravan = harness.addToBattlefieldAndReturn(player1, new TradeCaravan());
+        Permanent plains = harness.addToBattlefieldAndReturn(player1, new Plains());
+        caravan.setCounterCount(CounterType.CURRENCY, 2);
+        plains.tap();
+
+        enterOpponentUpkeep();
+        harness.activateAbility(player1, 0, 0, null, plains.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(caravan);
+        gd.playerGraveyards.get(player1.getId()).add(caravan.getCard());
+        harness.passBothPriorities();
+
+        assertThat(plains.isTapped()).isFalse();
+    }
 }
