@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,6 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({TempleOfMalady.class})
 class TempleOfMaladyTest extends BaseCardTest {
 
     @Test
@@ -76,6 +78,37 @@ class TempleOfMaladyTest extends BaseCardTest {
         }
     }
 
+    @Test
+    @DisplayName("Scry 1 can leave the top card on top without changing library order")
+    void scryKeepOnTop() {
+        Card top = new TempleOfMalady();
+        Card bottom = new TempleOfMalady();
+        harness.setLibrary(player1, List.of(top, bottom));
+        playTempleOfMalady(player1);
+
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top, bottom);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Scry 1 resolves without a choice when the library is empty")
+    void scryEmptyLibrary() {
+        harness.setLibrary(player1, List.of());
+        playTempleOfMalady(player1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(findTemple(player1).isTapped()).isTrue();
+    }
+
     private void playTempleOfMalady(Player player) {
         harness.setHand(player, List.of(new TempleOfMalady()));
         harness.forceActivePlayer(player);
@@ -84,9 +117,8 @@ class TempleOfMaladyTest extends BaseCardTest {
     }
 
     private Permanent addTempleReady(Player player) {
-        Permanent temple = new Permanent(new TempleOfMalady());
+        Permanent temple = harness.addToBattlefieldAndReturn(player, new TempleOfMalady());
         temple.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(temple);
         return temple;
     }
 
