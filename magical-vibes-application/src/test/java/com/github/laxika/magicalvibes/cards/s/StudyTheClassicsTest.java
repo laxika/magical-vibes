@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({StudyTheClassics.class, GrizzlyBears.class, FountainOfYouth.class})
+@CardUsed({StudyTheClassics.class, GrizzlyBears.class, FountainOfYouth.class, Boomerang.class})
 class StudyTheClassicsTest extends BaseCardTest {
 
     @Test
@@ -73,7 +74,43 @@ class StudyTheClassicsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new StudyTheClassics()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+    }
+
+    @Test
+    @DisplayName("Gains no life when the target leaves before resolution")
+    void targetLeavesBeforeResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.setLife(player1, 10);
+        harness.setHand(player1, List.of(new StudyTheClassics()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castSorcery(player1, 0, target.getId());
+
+        harness.setHand(player2, List.of(new Boomerang()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player2, 0, target.getId());
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Grizzly Bears");
         harness.passBothPriorities();
+
+        harness.assertLife(player1, 10);
+        harness.assertInGraveyard(player1, "Study the Classics");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Doubles and counts counters before opposing counters cancel")
+    void opposingCountersCancelOnlyAfterLifeGain() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        target.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+        harness.setLife(player1, 10);
+        cast(target);
+
+        harness.assertLife(player1, 12);
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 }
