@@ -12,6 +12,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -26,8 +27,7 @@ class SplicersSkillTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castSorcery(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, (UUID) null);
 
         Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken())
@@ -69,5 +69,116 @@ class SplicersSkillTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castWithSplice(player1, 0, null, List.of(1)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("only be used when casting an instant or sorcery");
+    }
+
+    @Test
+    @DisplayName("Splices onto a sorcery when the revealed card precedes the host in hand")
+    void splicesOntoSorceryBeforeHostInHand() {
+        SplicersSkill revealed = new SplicersSkill();
+        harness.setHand(player1, List.of(revealed, new SplicersSkill()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.castWithSplice(player1, 1, null, List.of(0));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2).allSatisfy(token -> {
+            assertThat(token.getCard().isToken()).isTrue();
+            assertThat(token.getCard().getColor()).isNull();
+            assertThat(token.getCard().hasType(CardType.CREATURE)).isTrue();
+            assertThat(token.getCard().hasType(CardType.ARTIFACT)).isTrue();
+            assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.PHYREXIAN, CardSubtype.GOLEM);
+            assertThat(token.getEffectivePower()).isEqualTo(3);
+            assertThat(token.getEffectiveToughness()).isEqualTo(3);
+        });
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(revealed);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+    }
+
+    @Test
+    @DisplayName("Each distinct spliced copy adds a token and requires its own splice payment")
+    void splicesMultipleCopies() {
+        SplicersSkill first = new SplicersSkill();
+        SplicersSkill second = new SplicersSkill();
+        harness.setHand(player1, List.of(new SplicersSkill(), first, second));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+
+        harness.castWithSplice(player1, 0, null, List.of(1, 2));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(first, second);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+    }
+
+    @Test
+    @DisplayName("Cannot splice the same physical card twice onto one spell")
+    void rejectsDuplicateSpliceCard() {
+        harness.setHand(player1, List.of(new SplicersSkill(), new SplicersSkill()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+
+        assertThatThrownBy(() -> harness.castWithSplice(player1, 0, null, List.of(1, 1)))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Paying the host's mana cost alone cannot pay for splice")
+    void rejectsUnpaidSpliceCost() {
+        harness.setHand(player1, List.of(new SplicersSkill(), new SplicersSkill()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castWithSplice(player1, 0, null, List.of(1)))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Spliced token creation still happens when the host kills its target")
+    void createsTokenWhenHostKillsTarget() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        SplicersSkill skill = new SplicersSkill();
+        harness.setHand(player1, List.of(new Shock(), skill));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castWithSplice(player1, 0, targetId, List.of(1));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(skill);
+    }
+
+    @Test
+    @DisplayName("No token is created if the host's only target becomes illegal before resolution")
+    void doesNotCreateTokenWhenHostCannotResolve() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        SplicersSkill skill = new SplicersSkill();
+        harness.setHand(player1, List.of(new Shock(), skill));
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castWithSplice(player1, 0, targetId, List.of(1));
+        harness.castInstant(player2, 0, targetId);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(skill);
+        harness.assertInGraveyard(player1, "Shock");
     }
 }
