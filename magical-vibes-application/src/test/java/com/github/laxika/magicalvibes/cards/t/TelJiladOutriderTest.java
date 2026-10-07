@@ -83,14 +83,48 @@ class TelJiladOutriderTest extends BaseCardTest {
         Permanent outrider = addCreatureReady(player1, new TelJiladOutrider());
         Permanent artifactAttacker = addCreatureReady(player2, new AuriokSiegeSled());
 
-        declareAttackers(player2, List.of(indexOf(player2, artifactAttacker)));
-        prepareDeclareBlockers(player2);
+        declareAttackersAndPrepareBlockers(player2, List.of(indexOf(player2, artifactAttacker)));
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(
                 indexOf(player1, outrider), indexOf(player2, artifactAttacker))));
         resolveCombat(player2);
 
         assertThat(outrider.getMarkedDamage()).isZero();
         assertThat(artifactAttacker.getMarkedDamage()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Protection from artifacts does not prevent damage from a non-artifact creature")
+    void nonArtifactCombatDamageKillsOutrider() {
+        Permanent outrider = addCreatureReady(player1, new TelJiladOutrider());
+        Permanent spider = addCreatureReady(player2, new TangleSpider());
+
+        declareAttackersAndPrepareBlockers(player2, List.of(indexOf(player2, spider)));
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(
+                indexOf(player1, outrider), indexOf(player2, spider))));
+        resolveCombat(player2);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(outrider);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(outrider.getCard());
+        assertThat(spider.getMarkedDamage()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Protection from artifacts checks a blocker's added artifact type")
+    void protectionPreventsBlockingByCreatureMadeArtifact() {
+        Permanent outrider = addCreatureReady(player1, new TelJiladOutrider());
+        Permanent spider = addCreatureReady(player2, new TangleSpider());
+        Permanent memnarch = addCreatureReady(player2, new Memnarch());
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player2, indexOf(player2, memnarch), null, spider.getId());
+        harness.passBothPriorities();
+
+        declareAttackersAndPrepareBlockers(List.of(indexOf(player1, outrider)));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                indexOf(player2, spider), indexOf(player1, outrider)))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection");
     }
 
     private int indexOf(Player player, Permanent permanent) {
