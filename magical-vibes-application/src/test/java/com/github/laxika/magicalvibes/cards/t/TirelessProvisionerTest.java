@@ -1,12 +1,14 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 
 
@@ -18,10 +20,10 @@ class TirelessProvisionerTest extends BaseCardTest {
     void landfallCanCreateFood() {
         addProvisionerAndLand();
 
-        harness.passBothPriorities();
+        resolveAllTriggers();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
         harness.handleListChoice(player1, "Create a Food token");
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(countPermanents(player1, "Food")).isEqualTo(1);
         assertThat(countPermanents(player1, "Treasure")).isZero();
@@ -31,9 +33,9 @@ class TirelessProvisionerTest extends BaseCardTest {
     void landfallCanCreateTreasure() {
         addProvisionerAndLand();
 
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleListChoice(player1, "Create a Treasure token");
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(countPermanents(player1, "Treasure")).isEqualTo(1);
         assertThat(countPermanents(player1, "Food")).isZero();
@@ -54,8 +56,9 @@ class TirelessProvisionerTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Forest()));
 
         harness.playLand(player1, 0);
+        resolveAllTriggers();
         harness.handleListChoice(player1, FOOD_MODE);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(countPermanents(player1, "Food")).isEqualTo(1);
     }
@@ -66,8 +69,9 @@ class TirelessProvisionerTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Forest()));
 
         harness.playLand(player1, 0);
+        resolveAllTriggers();
         harness.handleListChoice(player1, TREASURE_MODE);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(countPermanents(player1, "Treasure")).isEqualTo(1);
     }
@@ -84,6 +88,90 @@ class TirelessProvisionerTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken())
                 .count()).isZero();
+    }
+
+    @Test
+    void tokenTypeIsChosenOnlyWhenLandfallResolves() {
+        addProvisionerAndLand();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(countPermanents(player1, "Food")).isZero();
+        assertThat(countPermanents(player1, "Treasure")).isZero();
+
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player1, FOOD_MODE);
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Food")).isEqualTo(1);
+    }
+
+    @Test
+    void foodCanBeSacrificedImmediatelyForThreeLife() {
+        addProvisionerAndLand();
+        resolveAllTriggers();
+        harness.handleListChoice(player1, FOOD_MODE);
+        resolveAllTriggers();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        int foodIndex = gd.playerBattlefields.get(player1.getId()).indexOf(findPermanent(player1, "Food"));
+        harness.activateAbility(player1, foodIndex, null, null);
+
+        assertThat(countPermanents(player1, "Food")).isZero();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        resolveAllTriggers();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(23);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    void treasureCanBeSacrificedImmediatelyForColoredMana() {
+        addProvisionerAndLand();
+        resolveAllTriggers();
+        harness.handleListChoice(player1, TREASURE_MODE);
+        resolveAllTriggers();
+
+        int treasureIndex = gd.playerBattlefields.get(player1.getId()).indexOf(findPermanent(player1, "Treasure"));
+        harness.activateAbility(player1, treasureIndex, null, null);
+        harness.handleListChoice(player1, ManaColor.BLUE.name());
+
+        assertThat(countPermanents(player1, "Treasure")).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void landEnteringWithoutBeingPlayedAlsoTriggers() {
+        harness.addToBattlefield(player1, new TirelessProvisioner());
+
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+        resolveAllTriggers();
+        harness.handleListChoice(player1, TREASURE_MODE);
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Treasure")).isEqualTo(1);
+    }
+
+    @Test
+    void foodRequiresTwoManaAndAnUntappedToken() {
+        addProvisionerAndLand();
+        resolveAllTriggers();
+        harness.handleListChoice(player1, FOOD_MODE);
+        resolveAllTriggers();
+        int foodIndex = gd.playerBattlefields.get(player1.getId()).indexOf(findPermanent(player1, "Food"));
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        assertThatThrownBy(() -> harness.activateAbility(player1, foodIndex, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(countPermanents(player1, "Food")).isEqualTo(1);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        findPermanent(player1, "Food").tap();
+        assertThatThrownBy(() -> harness.activateAbility(player1, foodIndex, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(countPermanents(player1, "Food")).isEqualTo(1);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
     }
 
 }
