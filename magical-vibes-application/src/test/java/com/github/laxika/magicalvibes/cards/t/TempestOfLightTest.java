@@ -88,6 +88,28 @@ class TempestOfLightTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Destroys multiple enchantments on one battlefield, including an aura on an opposing creature")
+    void destroysAllEnchantmentsOnOneBattlefield() {
+        harness.addToBattlefield(player1, new GloriousAnthem());
+        harness.addToBattlefield(player1, new GloriousAnthem());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new HolyStrength());
+        aura.setAttachedTo(bears.getId());
+
+        harness.castFromHand(player1, new TempestOfLight(), "{2}{W}");
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Glorious Anthem")).isZero();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card instanceof GloriousAnthem)
+                .hasSize(2);
+        harness.assertNotOnBattlefield(player1, "Holy Strength");
+        harness.assertInGraveyard(player1, "Holy Strength");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Tempest of Light");
+    }
+
+    @Test
     @DisplayName("Does not destroy creatures")
     void doesNotDestroyCreatures() {
         harness.addToBattlefield(player1, new GrizzlyBears());
