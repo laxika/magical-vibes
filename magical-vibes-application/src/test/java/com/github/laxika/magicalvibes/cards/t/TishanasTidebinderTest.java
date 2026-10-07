@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.IcyManipulator;
 import com.github.laxika.magicalvibes.cards.m.MerfolkTrickster;
+import com.github.laxika.magicalvibes.cards.r.RestlessAnchorage;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({TishanasTidebinder.class, IcyManipulator.class, GrizzlyBears.class,
-        MerfolkTrickster.class, Shock.class})
+        MerfolkTrickster.class, Shock.class, RestlessAnchorage.class})
 class TishanasTidebinderTest extends BaseCardTest {
 
     @Test
@@ -34,10 +35,7 @@ class TishanasTidebinderTest extends BaseCardTest {
         harness.passPriority(player2);
         var activatedAbilitySourceId = gd.stack.getFirst().getCard().getId();
 
-        TishanasTidebinder tidebinder = new TishanasTidebinder();
-        harness.setHand(player1, List.of(tidebinder));
-        addTidebinderMana();
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new TishanasTidebinder(), "{2}{U}");
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, activatedAbilitySourceId);
         harness.passBothPriorities();
@@ -76,9 +74,7 @@ class TishanasTidebinderTest extends BaseCardTest {
         harness.passBothPriorities();
         var triggeredAbilitySourceId = gd.stack.getFirst().getCard().getId();
 
-        harness.setHand(player1, List.of(new TishanasTidebinder()));
-        addTidebinderMana();
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new TishanasTidebinder(), "{2}{U}");
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, triggeredAbilitySourceId);
         harness.passBothPriorities();
@@ -90,18 +86,65 @@ class TishanasTidebinderTest extends BaseCardTest {
     @Test
     @DisplayName("Can resolve with no target")
     void canResolveWithNoTarget() {
-        harness.setHand(player1, List.of(new TishanasTidebinder()));
-        addTidebinderMana();
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new TishanasTidebinder(), "{2}{U}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
     }
 
-    private void addTidebinderMana() {
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+    @Test
+    @DisplayName("Counters a land's animation ability without removing its abilities")
+    void countersLandAbilityWithoutRemovingAbilities() {
+        Permanent anchorage = harness.addToBattlefieldAndReturn(player2, new RestlessAnchorage());
+        anchorage.untap();
+        harness.forceActivePlayer(player2);
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player2, 0, 2, null, null);
+        var abilityId = gd.stack.getFirst().getTargetableId();
+
+        harness.castFromHand(player1, new TishanasTidebinder(), "{2}{U}");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, abilityId);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.isCreature(gd, anchorage)).isFalse();
+        harness.forceActivePlayer(player2);
+        harness.activateAbility(player2, 0, 0, null, null);
+        assertThat(anchorage.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Still counters when Tidebinder leaves before its trigger resolves, without removing abilities")
+    void leavingBeforeResolutionDoesNotRemoveAbilities() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent icy = harness.addToBattlefieldAndReturn(player2, new IcyManipulator());
+        harness.forceActivePlayer(player2);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player2, 0, null, bears.getId());
+        var abilityId = gd.stack.getFirst().getTargetableId();
+
+        harness.castFromHand(player1, new TishanasTidebinder(), "{2}{U}");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, abilityId);
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.ensurePriority(player2);
+        harness.castInstant(player2, 0, harness.getPermanentId(player1, "Tishana's Tidebinder"));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(bears.isTapped()).isFalse();
+        harness.assertNotOnBattlefield(player1, "Tishana's Tidebinder");
+        icy.untap();
+        harness.forceActivePlayer(player2);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player2, 0, null, bears.getId());
+        harness.passBothPriorities();
+        assertThat(bears.isTapped()).isTrue();
     }
 }
