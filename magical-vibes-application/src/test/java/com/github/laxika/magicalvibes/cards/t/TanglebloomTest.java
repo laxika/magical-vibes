@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.s.Shatter;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -7,10 +8,12 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(Tanglebloom.class)
+@CardUsed({Tanglebloom.class, Shatter.class})
 class TanglebloomTest extends BaseCardTest {
 
     @Test
@@ -76,5 +79,28 @@ class TanglebloomTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Ability still gains life after Tanglebloom is destroyed in response")
+    void abilityResolvesAfterSourceIsDestroyed() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        Permanent tanglebloom = harness.addToBattlefieldAndReturn(player1, new Tanglebloom());
+        harness.setHand(player1, List.of(new Shatter()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.castAndResolveInstant(player1, 0, tanglebloom.getId());
+
+        harness.assertInGraveyard(player1, "Tanglebloom");
+        assertThat(gd.stack).hasSize(1);
+        harness.assertLife(player1, 20);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 20);
     }
 }
