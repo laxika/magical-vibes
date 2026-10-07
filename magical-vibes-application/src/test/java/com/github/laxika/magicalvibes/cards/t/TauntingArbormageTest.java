@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -15,12 +14,12 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TauntingArbormage.class, GrizzlyBears.class, Forest.class})
+@CardUsed({TauntingArbormage.class, Forest.class})
 class TauntingArbormageTest extends BaseCardTest {
 
     @Test
     void withoutKickerDoesNotRequireBlocks() {
-        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new TauntingArbormage());
         harness.setHand(player1, List.of(new TauntingArbormage()));
         addMana(3);
 
@@ -32,9 +31,9 @@ class TauntingArbormageTest extends BaseCardTest {
 
     @Test
     void kickedRequiresAllAbleCreaturesToBlockTarget() {
-        Permanent target = addReadyCreature(player1);
-        Permanent blocker1 = addReadyCreature(player2);
-        Permanent blocker2 = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player1, new TauntingArbormage());
+        Permanent blocker1 = addCreatureReady(player2, new TauntingArbormage());
+        Permanent blocker2 = addCreatureReady(player2, new TauntingArbormage());
         harness.setHand(player1, List.of(new TauntingArbormage()));
         addMana(6);
 
@@ -72,7 +71,7 @@ class TauntingArbormageTest extends BaseCardTest {
 
     @Test
     void requirementWearsOffAtEndOfTurn() {
-        Permanent target = addReadyCreature(player2);
+        Permanent target = addCreatureReady(player2, new TauntingArbormage());
         harness.setHand(player1, List.of(new TauntingArbormage()));
         addMana(6);
 
@@ -88,10 +87,64 @@ class TauntingArbormageTest extends BaseCardTest {
         assertThat(target.isMustBeBlockedByAllThisTurn()).isFalse();
     }
 
-    private Permanent addReadyCreature(com.github.laxika.magicalvibes.model.Player player) {
-        Permanent permanent = harness.addToBattlefieldAndReturn(player, new GrizzlyBears());
-        permanent.setSummoningSick(false);
-        return permanent;
+    @Test
+    void enteringWithoutBeingCastDoesNotRequireBlocks() {
+        Permanent target = addCreatureReady(player1, new TauntingArbormage());
+
+        Permanent arbormage = harness.enterBattlefieldAndReturn(player1, new TauntingArbormage());
+        resolveAllTriggers();
+
+        assertThat(target.isMustBeBlockedByAllThisTurn()).isFalse();
+        assertThat(arbormage.isMustBeBlockedByAllThisTurn()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void tappedCreatureIsNotRequiredToBlock() {
+        Permanent target = addCreatureReady(player1, new TauntingArbormage());
+        Permanent blocker = addCreatureReady(player2, new TauntingArbormage());
+        Permanent tappedBlocker = addCreatureReady(player2, new TauntingArbormage());
+        tappedBlocker.setTapped(true);
+        harness.setHand(player1, List.of(new TauntingArbormage()));
+        addMana(6);
+
+        harness.castKickedCreature(player1, 0, target.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        target.setAttacking(true);
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+        assertThat(tappedBlocker.isBlocking()).isFalse();
+    }
+
+    @Test
+    void competingRequirementsAllowBlockerToChooseEitherAttacker() {
+        Permanent first = addCreatureReady(player1, new TauntingArbormage());
+        Permanent second = addCreatureReady(player1, new TauntingArbormage());
+        Permanent blocker = addCreatureReady(player2, new TauntingArbormage());
+        harness.setHand(player1, List.of(new TauntingArbormage(), new TauntingArbormage()));
+        addMana(6);
+        addMana(6);
+
+        harness.castKickedCreature(player1, 0, first.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+        harness.castKickedCreature(player1, 0, second.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        first.setAttacking(true);
+        second.setAttacking(true);
+        prepareDeclareBlockers();
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must block");
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
+
+        assertThat(blocker.isBlocking()).isTrue();
     }
 
     private void addMana(int amount) {
