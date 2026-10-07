@@ -84,6 +84,38 @@ class StrengthOfCedarsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Boost stays fixed when lands enter after resolution")
+    void boostDoesNotRecalculateAfterResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new IsamaruHoundOfKonda());
+        harness.addToBattlefield(player1, new Forest());
+        harness.setHand(player1, List.of(new StrengthOfCedars()));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.addToBattlefield(player1, new Mountain());
+
+        assertThat(target.getPowerModifier()).isEqualTo(1);
+        assertThat(target.getToughnessModifier()).isEqualTo(1);
+        assertThat(target.getEffectivePower()).isEqualTo(3);
+        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Nonland permanents do not contribute to the boost")
+    void nonlandPermanentsAreNotCounted() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new IsamaruHoundOfKonda());
+        harness.addToBattlefield(player1, new SenseisDiviningTop());
+        harness.addToBattlefield(player1, new Forest());
+        harness.setHand(player1, List.of(new StrengthOfCedars()));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(target.getPowerModifier()).isEqualTo(1);
+        assertThat(target.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("Can boost a creature an opponent controls")
     void canTargetOpponentCreature() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new IsamaruHoundOfKonda());
