@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.c.CloakAndDagger;
 import com.github.laxika.magicalvibes.cards.o.ObsidianBattleAxe;
+import com.github.laxika.magicalvibes.cards.y.YavimayaScion;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -10,11 +12,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({StonehewerGiant.class, ObsidianBattleAxe.class, StonybrookSchoolmaster.class})
+@CardUsed({StonehewerGiant.class, ObsidianBattleAxe.class, StonybrookSchoolmaster.class, YavimayaScion.class, CloakAndDagger.class})
 class StonehewerGiantTest extends BaseCardTest {
 
     @Test
@@ -135,5 +138,114 @@ class StonehewerGiantTest extends BaseCardTest {
         assertThat(findPermanent(player1, "Obsidian Battle-Axe").getAttachedTo()).isNull();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("May fail to find even when the library contains Equipment")
+    void mayFailToFindEquipment() {
+        addCreatureReady(player1, new StonehewerGiant());
+        ObsidianBattleAxe equipmentCard = new ObsidianBattleAxe();
+        harness.setLibrary(player1, List.of(equipmentCard));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(equipmentCard);
+        harness.assertNotOnBattlefield(player1, "Obsidian Battle-Axe");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Cannot activate the tap ability while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        harness.addToBattlefield(player1, new StonehewerGiant());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+    }
+
+    @Test
+    @DisplayName("The ability still searches and attaches after the Giant leaves")
+    void resolvesAfterGiantLeaves() {
+        Permanent giant = addCreatureReady(player1, new StonehewerGiant());
+        Permanent creature = addCreatureReady(player1, new StonybrookSchoolmaster());
+        harness.setLibrary(player1, List.of(new ObsidianBattleAxe()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        gd.playerBattlefields.get(player1.getId()).remove(giant);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.handlePermanentChosen(player1, creature.getId());
+
+        assertThat(findPermanent(player1, "Obsidian Battle-Axe").getAttachedTo())
+                .isEqualTo(creature.getId());
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Protection from artifacts excludes a creature from the mandatory attachment choice")
+    void excludesCreaturesThatCannotBeEquipped() {
+        Permanent giant = addCreatureReady(player1, new StonehewerGiant());
+        Permanent protectedCreature = addCreatureReady(player1, new YavimayaScion());
+        harness.setLibrary(player1, List.of(new ObsidianBattleAxe()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        List<UUID> offeredCreatures = List.copyOf(choice.validPermanentIds());
+        harness.handlePermanentChosen(player1, giant.getId());
+
+        assertThat(findPermanent(player1, "Obsidian Battle-Axe").getAttachedTo())
+                .isEqualTo(giant.getId());
+        assertThat(offeredCreatures).contains(giant.getId()).doesNotContain(protectedCreature.getId());
+    }
+
+    @Test
+    @DisplayName("Attaches to a creature with shroud because the ability does not target")
+    void attachesToCreatureWithShroud() {
+        Permanent giant = addCreatureReady(player1, new StonehewerGiant());
+        Permanent cloak = harness.addToBattlefieldAndReturn(player1, new CloakAndDagger());
+        cloak.setAttachedTo(giant.getId());
+        harness.setLibrary(player1, List.of(new ObsidianBattleAxe()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.handlePermanentChosen(player1, giant.getId());
+
+        assertThat(findPermanent(player1, "Obsidian Battle-Axe").getAttachedTo())
+                .isEqualTo(giant.getId());
+        assertThat(cloak.getAttachedTo()).isEqualTo(giant.getId());
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Resolves without asking for a card when the library is empty")
+    void resolvesWithEmptyLibrary() {
+        Permanent giant = addCreatureReady(player1, new StonehewerGiant());
+        harness.setLibrary(player1, List.of());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(giant.isTapped()).isTrue();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertNotOnBattlefield(player1, "Obsidian Battle-Axe");
     }
 }
