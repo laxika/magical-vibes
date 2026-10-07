@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -23,10 +22,7 @@ class SquirrelanoidsTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers(player1);
 
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(squirrelanoids);
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
@@ -38,5 +34,39 @@ class SquirrelanoidsTest extends BaseCardTest {
                 .noneMatch(permanent -> permanent.getId().equals(attacker.getId()));
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(permanent -> permanent.getId().equals(squirrelanoids.getId()));
+    }
+
+    @Test
+    @DisplayName("Deathtouch destroys a larger blocker even when Squirrelanoids dies simultaneously")
+    void attackingDeathtouchKillsLargerBlocker() {
+        Permanent attacker = addCreatureReady(player1, new Squirrelanoids());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        attacker.setAttacking(true);
+        prepareDeclareBlockers(player1);
+
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Squirrelanoids");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Squirrelanoids");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("An unblocked Squirrelanoids deals ordinary damage to a player")
+    void deathtouchDoesNotKillDamagedPlayer() {
+        Permanent attacker = addCreatureReady(player1, new Squirrelanoids());
+        attacker.setAttacking(true);
+        prepareDeclareBlockers(player1);
+
+        gs.declareBlockers(gd, player2, List.of());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+        harness.assertOnBattlefield(player1, "Squirrelanoids");
     }
 }
