@@ -18,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({Tallowisp.class, TeardropKami.class, VeilOfSecrecy.class, PhantomWings.class,
-        GenjuOfTheFields.class, GoblinCohort.class})
+        GenjuOfTheFields.class, GoblinCohort.class, ThreadsOfDisloyalty.class})
 class TallowispTest extends BaseCardTest {
 
     @Test
@@ -107,6 +107,61 @@ class TallowispTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertOnBattlefield(player2, "Teardrop Kami");
+    }
+
+    @Test
+    @DisplayName("Auras with a restricted enchant creature ability cannot be found")
+    void restrictedEnchantCreatureAuraCannotBeFound() {
+        addCreatureReady(player1, new Tallowisp());
+        prepareMainPhase();
+        harness.setLibrary(player1, List.of(new PhantomWings(), new ThreadsOfDisloyalty()));
+        harness.setHand(player1, List.of(new TeardropKami()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()
+                .stream().map(Card::getName)).containsExactly("Phantom Wings");
+    }
+
+    @Test
+    @DisplayName("The controller can fail to find even when an eligible Aura is present")
+    void canFailToFindEligibleAura() {
+        addCreatureReady(player1, new Tallowisp());
+        prepareMainPhase();
+        harness.setLibrary(player1, List.of(new PhantomWings()));
+        harness.setHand(player1, List.of(new TeardropKami()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotInHand(player1, "Phantom Wings");
+        assertThat(gd.playerDecks.get(player1.getId()).stream().map(Card::getName))
+                .containsExactly("Phantom Wings");
+    }
+
+    @Test
+    @DisplayName("Tallowisp does not trigger for its own cast")
+    void ownCastDoesNotTrigger() {
+        prepareMainPhase();
+        harness.setLibrary(player1, List.of(new PhantomWings()));
+        harness.setHand(player1, List.of(new Tallowisp()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Tallowisp");
+        harness.assertNotInHand(player1, "Phantom Wings");
     }
 
     private void prepareMainPhase() {
