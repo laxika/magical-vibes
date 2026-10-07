@@ -4,8 +4,7 @@ import com.github.laxika.magicalvibes.cards.e.ElectrostaticBolt;
 import com.github.laxika.magicalvibes.cards.g.Groffskithur;
 import com.github.laxika.magicalvibes.cards.m.MyrEnforcer;
 import com.github.laxika.magicalvibes.cards.p.PredatorsStrike;
-import com.github.laxika.magicalvibes.cards.t.Terror;
-import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.cards.s.SpikeshotGoblin;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -22,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({TrollAscetic.class, ElectrostaticBolt.class, Groffskithur.class, MyrEnforcer.class,
-        PredatorsStrike.class, Terror.class})
+        PredatorsStrike.class, Terror.class, SpikeshotGoblin.class})
 class TrollAsceticTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -95,14 +94,17 @@ class TrollAsceticTest extends BaseCardTest {
         assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(trollPerm.getId());
     }
 
-    // ===== Hexproof: hasKeyword check =====
-
     @Test
-    @DisplayName("Troll Ascetic has hexproof keyword on the battlefield")
-    void hasHexproofKeyword() {
-        Permanent trollPerm = addCreatureReady(player1, new TrollAscetic());
+    @DisplayName("Creating a regeneration shield does not tap a summoning-sick Troll Ascetic")
+    void regenerationDoesNotTapUntilDestruction() {
+        Permanent trollPerm = harness.addToBattlefieldAndReturn(player1, new TrollAscetic());
+        harness.addMana(player1, ManaColor.GREEN, 2);
 
-        assertThat(gqs.hasKeyword(gd, trollPerm, Keyword.HEXPROOF)).isTrue();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(trollPerm.isTapped()).isFalse();
+        assertThat(trollPerm.getRegenerationShield()).isEqualTo(1);
     }
 
     // ===== Regenerate activated ability =====
@@ -216,6 +218,58 @@ class TrollAsceticTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(troll.getRegenerationShield()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Regeneration saves from lethal spell damage only once")
+    void regenerationSavesFromSpellDamageOnlyOnce() {
+        Permanent troll = addCreatureReady(player1, new TrollAscetic());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new ElectrostaticBolt(), new ElectrostaticBolt()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player1, 0, troll.getId());
+
+        harness.assertOnBattlefield(player1, "Troll Ascetic");
+        assertThat(troll.isTapped()).isTrue();
+        assertThat(troll.getRegenerationShield()).isZero();
+        assertThat(troll.getMarkedDamage()).isZero();
+
+        harness.castAndResolveInstant(player1, 0, troll.getId());
+
+        harness.assertNotOnBattlefield(player1, "Troll Ascetic");
+        harness.assertInGraveyard(player1, "Troll Ascetic");
+    }
+
+    @Test
+    @DisplayName("Terror prevents regeneration even when Troll Ascetic has a shield")
+    void cannotRegenerateFromTerror() {
+        Permanent troll = addCreatureReady(player1, new TrollAscetic());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new Terror()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveInstant(player1, 0, troll.getId());
+
+        harness.assertNotOnBattlefield(player1, "Troll Ascetic");
+        harness.assertInGraveyard(player1, "Troll Ascetic");
+    }
+
+    @Test
+    @DisplayName("Opponent cannot target Troll Ascetic with an activated ability")
+    void opponentCannotTargetWithActivatedAbility() {
+        Permanent troll = addCreatureReady(player1, new TrollAscetic());
+        addCreatureReady(player2, new SpikeshotGoblin());
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.passPriority(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, troll.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("hexproof");
     }
 
 }
