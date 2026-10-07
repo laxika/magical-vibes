@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BlightsteelColossus;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -17,9 +19,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({SpreadTheSickness.class, GrizzlyBears.class, Spellbook.class, BlightsteelColossus.class})
 class SpreadTheSicknessTest extends BaseCardTest {
-
-    // ===== Destroy + Proliferate =====
 
     @Test
     @DisplayName("Destroys target creature and then proliferates")
@@ -28,17 +29,15 @@ class SpreadTheSicknessTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
 
-        Permanent otherBears = new Permanent(new GrizzlyBears());
+        Permanent otherBears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         otherBears.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
-        gd.playerBattlefields.get(player1.getId()).add(otherBears);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, List.of(new SpreadTheSickness()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities(); // resolve spell
+        harness.castAndResolveSorcery(player1, 0, targetId);
 
         // Target creature destroyed
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
@@ -53,17 +52,15 @@ class SpreadTheSicknessTest extends BaseCardTest {
     @Test
     @DisplayName("Destroys creature and proliferates choosing none")
     void destroysCreatureAndProliferatesNone() {
-        Permanent bears = new Permanent(new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         bears.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
-        gd.playerBattlefields.get(player2.getId()).add(bears);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, List.of(new SpreadTheSickness()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, bears.getId());
 
         // Bears was destroyed — proliferate has no eligible permanents now
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
@@ -76,9 +73,8 @@ class SpreadTheSicknessTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
 
-        Permanent otherBears = new Permanent(new GrizzlyBears());
+        Permanent otherBears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         otherBears.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
-        gd.playerBattlefields.get(player1.getId()).add(otherBears);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -97,12 +93,10 @@ class SpreadTheSicknessTest extends BaseCardTest {
         assertThat(otherBears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
     }
 
-    // ===== Targeting =====
-
     @Test
     @DisplayName("Cannot target non-creature permanents")
     void cannotTargetNonCreature() {
-        harness.addToBattlefield(player2, new com.github.laxika.magicalvibes.cards.s.Spellbook());
+        harness.addToBattlefield(player2, new Spellbook());
         UUID spellbookId = harness.getPermanentId(player2, "Spellbook");
 
         harness.forceActivePlayer(player1);
@@ -125,10 +119,70 @@ class SpreadTheSicknessTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SpreadTheSickness()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetId);
 
         assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Spread the Sickness");
+    }
+
+    @Test
+    @DisplayName("Proliferates all counter kinds on an indestructible target that survives")
+    void proliferatesSurvivingIndestructibleTarget() {
+        Permanent colossus = harness.addToBattlefieldAndReturn(player2, new BlightsteelColossus());
+        colossus.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+        colossus.setCounterCount(CounterType.STUN, 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new SpreadTheSickness()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castAndResolveSorcery(player1, 0, colossus.getId());
+        harness.assertOnBattlefield(player2, "Blightsteel Colossus");
+        harness.handleMultiplePermanentsChosen(player1, List.of(colossus.getId()));
+
+        assertThat(colossus.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
+        assertThat(colossus.getCounterCount(CounterType.STUN)).isEqualTo(3);
+        harness.assertInGraveyard(player1, "Spread the Sickness");
+    }
+
+    @Test
+    @DisplayName("Can proliferate a player while leaving another player's counters unchanged")
+    void proliferatesOnlyChosenPlayer() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        gd.playerPoisonCounters.put(player1.getId(), 1);
+        gd.playerPoisonCounters.put(player2.getId(), 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new SpreadTheSickness()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(player2.getId()));
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.playerPoisonCounters.get(player1.getId())).isEqualTo(1);
+        assertThat(gd.playerPoisonCounters.get(player2.getId())).isEqualTo(3);
+        harness.assertInGraveyard(player1, "Spread the Sickness");
+    }
+
+    @Test
+    @DisplayName("Can decline proliferating even when counters are available")
+    void declinesAvailableCounters() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent survivor = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        survivor.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        gd.playerPoisonCounters.put(player2.getId(), 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new SpreadTheSickness()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of());
+
+        assertThat(survivor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerPoisonCounters.get(player2.getId())).isEqualTo(2);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Spread the Sickness");
     }
 }
