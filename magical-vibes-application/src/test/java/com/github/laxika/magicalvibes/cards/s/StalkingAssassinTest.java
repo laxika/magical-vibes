@@ -100,6 +100,67 @@ class StalkingAssassinTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Raging Kavu");
     }
 
+    @Test
+    @DisplayName("Can target an already tapped creature with the tap ability")
+    void canTapAlreadyTappedCreature() {
+        Permanent assassin = addReadyAssassin(player1);
+        Permanent target = addTappedKavu(player2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(assassin.isTapped()).isTrue();
+        assertThat(target.isTapped()).isTrue();
+        harness.assertOnBattlefield(player2, "Raging Kavu");
+    }
+
+    @Test
+    @DisplayName("Can tap itself")
+    void canTapItself() {
+        Permanent assassin = addReadyAssassin(player1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, assassin.getId());
+        harness.passBothPriorities();
+
+        assertThat(assassin.isTapped()).isTrue();
+        harness.assertOnBattlefield(player1, "Stalking Assassin");
+    }
+
+    @Test
+    @DisplayName("Neither ability can be activated while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        harness.addToBattlefield(player1, new StalkingAssassin());
+        Permanent target = addTappedKavu(player2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Neither ability can be activated while already tapped")
+    void cannotActivateWhileTapped() {
+        Permanent assassin = addReadyAssassin(player1);
+        assassin.tap();
+        Permanent target = addTappedKavu(player2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
     private Permanent addReadyAssassin(Player player) {
         return addCreatureReady(player, new StalkingAssassin());
     }
