@@ -9,6 +9,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -50,6 +51,44 @@ class TwoHeadedGiantOfForiysTest extends BaseCardTest {
         )))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("too many times");
+    }
+
+    @Test
+    @DisplayName("The Giant does not let another creature block additional attackers")
+    void additionalBlockAppliesOnlyToGiant() {
+        addCreatureReady(player2, new TwoHeadedGiantOfForiys());
+        addCreatureReady(player2, new GrizzlyBears());
+        addAttacker();
+        addAttacker();
+
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(1, 0),
+                new BlockerAssignment(1, 1)
+        )))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("too many times");
+    }
+
+    @Test
+    @DisplayName("Trample deals excess combat damage to the defending player")
+    void tramplesOverBlocker() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLife(player2, 20);
+        addCreatureReady(player1, new TwoHeadedGiantOfForiys());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                blocker.getId(), 2, player2.getId(), 2));
+
+        harness.assertLife(player2, 18);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Two-Headed Giant of Foriys");
     }
 
     private void addAttacker() {
