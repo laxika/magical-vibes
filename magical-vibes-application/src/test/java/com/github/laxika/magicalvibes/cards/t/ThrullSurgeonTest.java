@@ -90,7 +90,7 @@ class ThrullSurgeonTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Thrull Surgeon");
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("empty"));
+        assertThat(gameLogContains("empty")).isTrue();
     }
 
     @Test
@@ -178,6 +178,49 @@ class ThrullSurgeonTest extends BaseCardTest {
                 .hasMessageContaining("stack is empty");
     }
 
+    @Test
+    @DisplayName("Can target yourself and discard a chosen card during the postcombat main phase")
+    void canTargetYourselfDuringPostcombatMainPhase() {
+        addReadyThrullSurgeon(player1);
+        addActivationMana(player1);
+        harness.setHand(player1, List.of(new GrizzlyBears(), new Forest()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player1, "Thrull Surgeon");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Forest");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Can activate while tapped and summoning sick because the cost has no tap symbol")
+    void canActivateWhileTappedAndSummoningSick() {
+        var surgeon = harness.addToBattlefieldAndReturn(player1, new ThrullSurgeon());
+        surgeon.setTapped(true);
+        surgeon.setSummoningSick(true);
+        addActivationMana(player1);
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertNotOnBattlefield(player1, "Thrull Surgeon");
+        harness.assertInGraveyard(player1, "Thrull Surgeon");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotInHand(player2, "Grizzly Bears");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
     private void addReadyThrullSurgeon(Player player) {
         addCreatureReady(player, new ThrullSurgeon());
     }
