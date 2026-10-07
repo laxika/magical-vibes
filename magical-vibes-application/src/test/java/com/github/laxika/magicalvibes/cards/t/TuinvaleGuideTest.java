@@ -62,6 +62,55 @@ class TuinvaleGuideTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, guide, Keyword.LIFELINK)).isFalse();
     }
 
+    @Test
+    @DisplayName("Entries before the Guide enters still enable celebration")
+    void countsEntriesBeforeGuideEnters() {
+        castGrizzlyBears();
+        Permanent guide = castTuinvaleGuide();
+
+        assertThat(gqs.getEffectivePower(gd, guide)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, guide, Keyword.LIFELINK)).isTrue();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.LIFELINK)).isFalse();
+    }
+
+    @Test
+    @DisplayName("An opponent's nonland entry does not enable your celebration")
+    void doesNotCountOpponentsEntries() {
+        Permanent guide = castTuinvaleGuide();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new TuinvaleGuide()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.castCreature(player2, 0);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, guide)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, guide, Keyword.LIFELINK)).isFalse();
+        Permanent opponentsGuide = findPermanent(player2, "Tuinvale Guide");
+        assertThat(gqs.getEffectivePower(gd, opponentsGuide)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, opponentsGuide, Keyword.LIFELINK)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Celebration grants lifelink for combat damage")
+    void celebrationCombatDamageGainsLife() {
+        Permanent guide = castTuinvaleGuide();
+        castGrizzlyBears();
+        guide.setSummoningSick(false);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+
+        harness.assertLife(player1, 23);
+        harness.assertLife(player2, 17);
+    }
+
     private Permanent castTuinvaleGuide() {
         harness.setHand(player1, List.of(new TuinvaleGuide()));
         harness.addMana(player1, ManaColor.WHITE, 1);
