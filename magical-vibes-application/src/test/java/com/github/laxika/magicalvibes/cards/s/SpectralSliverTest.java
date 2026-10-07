@@ -81,4 +81,45 @@ class SpectralSliverTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, sliver)).isEqualTo(basePower);
         assertThat(gqs.getEffectiveToughness(gd, sliver)).isEqualTo(baseToughness);
     }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Sliver can pump itself repeatedly")
+    void tappedSummoningSickSliverCanPumpRepeatedly() {
+        Permanent sliver = harness.addToBattlefieldAndReturn(player1, new SpectralSliver());
+        sliver.setSummoningSick(true);
+        sliver.setTapped(true);
+        int basePower = gqs.getEffectivePower(gd, sliver);
+        int baseToughness = gqs.getEffectiveToughness(gd, sliver);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, sliver)).isEqualTo(basePower + 2);
+        assertThat(gqs.getEffectiveToughness(gd, sliver)).isEqualTo(baseToughness + 2);
+        assertThat(sliver.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A granted pump already on the stack resolves after Spectral Sliver leaves")
+    void grantedPumpResolvesAfterGrantingSourceLeaves() {
+        Permanent source = addCreatureReady(player1, new SpectralSliver());
+        Permanent sliver = addCreatureReady(player1, new PlatedSliver());
+        int basePower = gqs.getEffectivePower(gd, sliver);
+        int baseToughness = gqs.getEffectiveToughness(gd, sliver);
+        int sourcePower = gqs.getEffectivePower(gd, source);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 1, null, null);
+        assertThat(gqs.getEffectivePower(gd, sliver)).isEqualTo(basePower);
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(sourcePower);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().tryDestroyPermanent(gd, source));
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, sliver)).isEqualTo(basePower + 1);
+        assertThat(gqs.getEffectiveToughness(gd, sliver)).isEqualTo(baseToughness + 1);
+        assertThat(gs.getEffectiveActivatedAbilities(gd, sliver)).isEmpty();
+    }
 }
