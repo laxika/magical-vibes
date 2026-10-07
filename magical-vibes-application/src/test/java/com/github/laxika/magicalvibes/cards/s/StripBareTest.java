@@ -98,4 +98,43 @@ class StripBareTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, targetId))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Strip Bare can target its controller's creature without attachments")
+    void canTargetOwnCreatureWithoutAttachments() {
+        Permanent creature = addCreatureReady(player1, new WiltLeafCavaliers());
+        harness.addToBattlefield(player1, new BlightSickle());
+        harness.setHand(player1, List.of(new StripBare()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        harness.assertOnBattlefield(player1, "Wilt-Leaf Cavaliers");
+        harness.assertOnBattlefield(player1, "Blight Sickle");
+        harness.assertInGraveyard(player1, "Strip Bare");
+    }
+
+    @Test
+    @DisplayName("Strip Bare destroys only attachments present when it resolves")
+    void checksAttachmentsAtResolution() {
+        Permanent target = addCreatureReady(player2, new WiltLeafCavaliers());
+        Permanent other = addCreatureReady(player2, new WiltLeafCavaliers());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player2, new BlightSickle());
+        equipment.setAttachedTo(target.getId());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new ShieldOfTheOversoul());
+        aura.setAttachedTo(other.getId());
+        harness.setHand(player1, List.of(new StripBare()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castInstant(player1, 0, target.getId());
+        equipment.setAttachedTo(other.getId());
+        aura.setAttachedTo(target.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Blight Sickle");
+        harness.assertNotInGraveyard(player2, "Blight Sickle");
+        harness.assertInGraveyard(player1, "Shield of the Oversoul");
+        harness.assertNotOnBattlefield(player1, "Shield of the Oversoul");
+        harness.assertOnBattlefield(player2, "Wilt-Leaf Cavaliers");
+    }
 }
