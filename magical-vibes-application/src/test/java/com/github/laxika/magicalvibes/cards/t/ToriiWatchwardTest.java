@@ -25,6 +25,35 @@ class ToriiWatchwardTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Vigilance keeps Torii Watchward untapped when it attacks")
+    void attackingDoesNotTapWatchward() {
+        var watchward = addCreatureReady(player1, new ToriiWatchward());
+
+        declareAttackers(List.of(0));
+
+        assertThat(watchward.isAttacking()).isTrue();
+        assertThat(watchward.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Soulshift does not return a target that leaves the graveyard before resolution")
+    void removedTargetIsNotReturned() {
+        harness.addToBattlefield(player1, new ToriiWatchward());
+        Card spirit = new KamiOfEmptyGraves();
+        harness.setGraveyard(player1, List.of(spirit));
+
+        kikuToKillWatchward();
+        harness.handleMultipleCardsChosen(player1, List.of(spirit.getId()));
+        gd.playerGraveyards.get(player1.getId()).removeIf(c -> c.getId().equals(spirit.getId()));
+        harness.setExile(player1, List.of(spirit));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotInHand(player1, "Kami of Empty Graves");
+        harness.assertNotInGraveyard(player1, "Kami of Empty Graves");
+    }
+
+    @Test
     @DisplayName("Soulshift 4 returns a targeted Spirit with mana value 4 or less from your graveyard to your hand")
     void deathReturnsCheapSpiritToHand() {
         harness.addToBattlefield(player1, new ToriiWatchward());
