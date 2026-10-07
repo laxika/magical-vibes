@@ -139,6 +139,35 @@ class SpiritShieldTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    @DisplayName("The ability requires two mana")
+    void cannotActivateWithOnlyOneMana() {
+        Permanent shield = addReadyShield(player1);
+        Permanent creature = addReadyCreature(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(shield.isTapped()).isFalse();
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A tapped Spirit Shield cannot activate its ability again")
+    void cannotActivateWhileTapped() {
+        addReadyShield(player1);
+        Permanent creature = addReadyCreature(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+    }
+
     private Permanent addReadyShield(Player player) {
         Permanent permanent = harness.addToBattlefieldAndReturn(player, new SpiritShield());
         permanent.setSummoningSick(false);
