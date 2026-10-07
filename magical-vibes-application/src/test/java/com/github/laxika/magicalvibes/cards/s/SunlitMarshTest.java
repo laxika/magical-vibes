@@ -10,8 +10,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(SunlitMarsh.class)
+@CardUsed({SunlitMarsh.class})
 class SunlitMarshTest extends BaseCardTest {
 
     @Test
@@ -36,10 +37,50 @@ class SunlitMarshTest extends BaseCardTest {
         tapFor(ManaColor.BLACK, "BLACK");
     }
 
+    @Test
+    @DisplayName("Cannot activate the mana ability while tapped")
+    void cannotProduceManaWhileTapped() {
+        harness.setHand(player1, List.of(new SunlitMarsh()));
+        harness.playLand(player1, 0);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("tapped");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Enters tapped when put directly onto the battlefield")
+    void entersTappedWithoutBeingPlayed() {
+        Permanent marsh = harness.enterBattlefieldAndReturn(player1, new SunlitMarsh());
+
+        assertThat(marsh.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can produce mana after untapping on the turn it enters")
+    void canProduceManaAfterUntapping() {
+        harness.setHand(player1, List.of(new SunlitMarsh()));
+        harness.playLand(player1, 0);
+        Permanent marsh = findPermanent(player1, "Sunlit Marsh");
+        marsh.untap();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "BLACK");
+
+        assertThat(marsh.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void tapFor(ManaColor manaColor, String choice) {
-        Permanent marsh = new Permanent(new SunlitMarsh());
+        Permanent marsh = harness.addToBattlefieldAndReturn(player1, new SunlitMarsh());
         marsh.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(marsh);
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.handleListChoice(player1, choice);
