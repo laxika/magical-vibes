@@ -107,6 +107,54 @@ class UndyingRageTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    @DisplayName("Returns to hand after the enchanted creature dies")
+    void returnsWhenEnchantedCreatureDies() {
+        Permanent creature = addCreatureReady(player1, new BenalishCavalry());
+        attachUndyingRage(player1, creature);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, creature));
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Benalish Cavalry");
+        harness.assertInHand(player1, "Undying Rage");
+        harness.assertNotInGraveyard(player1, "Undying Rage");
+        harness.assertNotOnBattlefield(player1, "Undying Rage");
+    }
+
+    @Test
+    @DisplayName("Returns only the copy that went to the graveyard from the battlefield")
+    void doesNotReturnAnotherCopyFromGraveyard() {
+        UndyingRage otherCopy = new UndyingRage();
+        harness.setGraveyard(player1, List.of(otherCopy));
+        Permanent creature = addCreatureReady(player1, new BenalishCavalry());
+        Permanent aura = attachUndyingRage(player1, creature);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, aura));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(otherCopy);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(aura.getCard());
+    }
+
+    @Test
+    @DisplayName("Does not return when its spell fails to resolve because its target has left")
+    void doesNotReturnWhenTargetLeavesBeforeResolution() {
+        Permanent creature = addCreatureReady(player2, new BenalishCavalry());
+        harness.setHand(player1, List.of(new UndyingRage()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castEnchantment(player1, 0, creature.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, creature));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Undying Rage");
+        harness.assertNotInHand(player1, "Undying Rage");
+        harness.assertNotOnBattlefield(player1, "Undying Rage");
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent attachUndyingRage(Player controller, Permanent creature) {
         Permanent aura = harness.addToBattlefieldAndReturn(controller, new UndyingRage());
         aura.setAttachedTo(creature.getId());
