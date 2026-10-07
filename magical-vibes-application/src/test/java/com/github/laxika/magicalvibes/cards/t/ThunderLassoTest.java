@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -39,7 +38,7 @@ class ThunderLassoTest extends BaseCardTest {
     @DisplayName("Attacking with the equipped creature taps a creature defending player controls")
     void attackingTapsDefendingCreature() {
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
-        Permanent lasso = addLassoReady(player1);
+        Permanent lasso = harness.addToBattlefieldAndReturn(player1, new ThunderLasso());
         lasso.setAttachedTo(attacker.getId());
         Permanent victim = addCreatureReady(player2, new GrizzlyBears());
 
@@ -54,7 +53,7 @@ class ThunderLassoTest extends BaseCardTest {
     @DisplayName("The attack trigger cannot target a creature controlled by the attacker")
     void attackTriggerOnlyTargetsDefendingCreatures() {
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
-        Permanent lasso = addLassoReady(player1);
+        Permanent lasso = harness.addToBattlefieldAndReturn(player1, new ThunderLasso());
         lasso.setAttachedTo(attacker.getId());
         Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
         Permanent defendingCreature = addCreatureReady(player2, new GrizzlyBears());
@@ -70,7 +69,7 @@ class ThunderLassoTest extends BaseCardTest {
     @DisplayName("An unattached Thunder Lasso does not trigger when a creature attacks")
     void unattachedLassoDoesNotTrigger() {
         addCreatureReady(player1, new GrizzlyBears());
-        addLassoReady(player1);
+        harness.addToBattlefieldAndReturn(player1, new ThunderLasso());
         addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0));
@@ -78,10 +77,96 @@ class ThunderLassoTest extends BaseCardTest {
         assertThat(gd.hasPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class)).isFalse();
     }
 
-    private Permanent addLassoReady(Player player) {
-        Permanent lasso = new Permanent(new ThunderLasso());
-        lasso.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(lasso);
-        return lasso;
+    @Test
+    @DisplayName("Equip pays two generic mana and transfers the boost to the new creature")
+    void equipMovesAttachmentAndBoost() {
+        Permanent lasso = harness.addToBattlefieldAndReturn(player1, new ThunderLasso());
+        Permanent first = addCreatureReady(player1, new GrizzlyBears());
+        Permanent second = addCreatureReady(player1, new GrizzlyBears());
+        lasso.setAttachedTo(first.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, second.getId());
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(lasso.getAttachedTo()).isEqualTo(first.getId());
+        harness.passBothPriorities();
+
+        assertThat(lasso.getAttachedTo()).isEqualTo(second.getId());
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Thunder Lasso enters unattached when its controller has no creatures")
+    void entersWithoutCreatureToAttachTo() {
+        harness.setHand(player1, List.of(new ThunderLasso()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player1, "Thunder Lasso").getAttachedTo()).isNull();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Attacking with a different creature does not trigger the attached Lasso")
+    void unequippedAttackerDoesNotTrigger() {
+        Permanent equipped = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        Permanent lasso = harness.addToBattlefieldAndReturn(player1, new ThunderLasso());
+        lasso.setAttachedTo(equipped.getId());
+        Permanent defender = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(player1, List.of(1));
+
+        assertThat(gd.hasPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class)).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(defender.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The attack trigger resolves after Thunder Lasso leaves the battlefield")
+    void attackTriggerSurvivesEquipmentRemoval() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent lasso = harness.addToBattlefieldAndReturn(player1, new ThunderLasso());
+        lasso.setAttachedTo(attacker.getId());
+        Permanent victim = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, victim.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(lasso);
+        gd.playerGraveyards.get(player1.getId()).add(lasso.getCard());
+        harness.passBothPriorities();
+
+        assertThat(victim.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The equipment controller chooses the target even when the attacker has another controller")
+    void equipmentControllerChoosesTargetForOpponentsAttacker() {
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent lasso = harness.addToBattlefieldAndReturn(player1, new ThunderLasso());
+        lasso.setAttachedTo(attacker.getId());
+        Permanent victim = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(player2, List.of(0));
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validPermanentIds())
+                .containsExactly(victim.getId());
+        harness.handlePermanentChosen(player1, victim.getId());
+        harness.passBothPriorities();
+
+        assertThat(victim.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(3);
     }
 }
