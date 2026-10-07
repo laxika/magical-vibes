@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({StartFire.class, GrizzlyBears.class})
 class StartFireTest extends BaseCardTest {
@@ -67,5 +68,54 @@ class StartFireTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 2);
+    }
+
+    @Test
+    void fireCanDestroyACreatureWithBothDamage() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new StartFire()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        gs.playCard(gd, player1, 0, 1, null,
+                Map.of(bears.getId(), 2), List.of(bears.getId()), List.of());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(findPermanents(player1, "Warrior")).isEmpty();
+    }
+
+    @Test
+    void fireDoesNotRedistributeDamageWhenOneTargetLeaves() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        int lifeBefore = gd.getLife(player2.getId());
+        harness.setHand(player1, List.of(new StartFire()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        gs.playCard(gd, player1, 0, 1, null,
+                Map.of(player2.getId(), 1, bears.getId(), 1),
+                List.of(player2.getId(), bears.getId()), List.of());
+        gd.playerBattlefields.get(player2.getId()).remove(bears);
+        gd.playerHands.get(player2.getId()).add(bears.getCard());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, lifeBefore - 1);
+        harness.assertInHand(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void fireRejectsATargetAssignedZeroDamage() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new StartFire()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 1, null,
+                Map.of(player2.getId(), 2, bears.getId(), 0),
+                List.of(player2.getId(), bears.getId()), List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
     }
 }
