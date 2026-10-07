@@ -63,13 +63,63 @@ class ToweringBalothTest extends BaseCardTest {
         assertThat(baloth.isFaceDown()).isTrue();
     }
 
+    @Test
+    void sevenColorlessManaCannotPayTheMorphCost() {
+        Permanent baloth = castFaceDown();
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
+
+        assertThatThrownBy(() -> harness.turnFaceUp(
+                player1, gd.playerBattlefields.get(player1.getId()).indexOf(baloth)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        assertThat(baloth.isFaceDown()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(7);
+    }
+
+    @Test
+    void turningFaceUpIsImmediateAndPreservesThePermanent() {
+        Permanent baloth = castFaceDown();
+        baloth.tap();
+        boolean summoningSick = baloth.isSummoningSick();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(baloth));
+
+        assertThat(baloth.isFaceDown()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanent(player1, "Towering Baloth")).isSameAs(baloth);
+        assertThat(baloth.isTapped()).isTrue();
+        assertThat(baloth.isSummoningSick()).isEqualTo(summoningSick);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void greenManaCanAlsoPayTheGenericPartOfTheMorphCost() {
+        Permanent baloth = castFaceDown();
+        harness.addMana(player1, ManaColor.GREEN, 7);
+
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(baloth));
+
+        assertThat(baloth.isFaceDown()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void morphCreatesATwoByTwoCreature() {
+        Permanent baloth = castFaceDown();
+
+        assertThat(gqs.getEffectivePower(gd, baloth)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, baloth)).isEqualTo(2);
+    }
+
     private Permanent castFaceDown() {
         harness.setHand(player1, List.of(new ToweringBaloth()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castCreatureWithMorph(player1, 0);
         harness.passBothPriorities();
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         Permanent baloth = findPermanent(player1, "Towering Baloth");
