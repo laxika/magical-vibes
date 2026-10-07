@@ -68,4 +68,67 @@ class TeamAvatarTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, noncreature.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    void attackBoostCountsCreaturesAtResolutionAndThenRemainsFixed() {
+        harness.addToBattlefield(player1, new TeamAvatar());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new HillGiant());
+
+        declareAttackers(player1, List.of(1));
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(4);
+
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(4);
+    }
+
+    @Test
+    void doesNotBoostOpponentsLoneAttacker() {
+        harness.addToBattlefield(player1, new TeamAvatar());
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(player2, List.of(0));
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
+    }
+
+    @Test
+    void handAbilityCountsOnlyControlledCreaturesAtResolution() {
+        harness.setHand(player1, List.of(new TeamAvatar()));
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateHandAbility(player1, 0, target.getId());
+        harness.assertNotInHand(player1, "Team Avatar");
+        harness.assertInGraveyard(player1, "Team Avatar");
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player2, "Hill Giant");
+    }
+
+    @Test
+    void handAbilityWithNoControlledCreaturesDealsNoDamage() {
+        harness.setHand(player1, List.of(new TeamAvatar()));
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateHandAbility(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player1, "Team Avatar");
+    }
 }
