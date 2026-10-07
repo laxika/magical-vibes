@@ -80,6 +80,63 @@ class SteelbaneHydraTest extends BaseCardTest {
                 .hasMessageContaining("artifact or enchantment");
     }
 
+    @Test
+    @DisplayName("Casting with X zero puts the Hydra into the graveyard")
+    void zeroXDiesOnEntry() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new SteelbaneHydra()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.getGameService().playCard(gd, player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Steelbane Hydra");
+        harness.assertInGraveyard(player1, "Steelbane Hydra");
+    }
+
+    @Test
+    @DisplayName("The last counter is paid before resolution and the ability survives the Hydra")
+    void lastCounterCostKillsHydraBeforeAbilityResolves() {
+        Permanent hydra = addReadyHydra(player1);
+        harness.addToBattlefield(player2, new AngelsFeather());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, harness.getPermanentId(player2, "Angel's Feather"));
+
+        assertThat(hydra.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertNotOnBattlefield(player1, "Steelbane Hydra");
+        harness.assertInGraveyard(player1, "Steelbane Hydra");
+        assertThat(gd.stack).hasSize(1);
+        harness.assertOnBattlefield(player2, "Angel's Feather");
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Angel's Feather");
+        harness.assertInGraveyard(player2, "Angel's Feather");
+    }
+
+    @Test
+    @DisplayName("A tapped summoning-sick Hydra can destroy its controller's artifact")
+    void tappedSummoningSickHydraCanTargetOwnArtifact() {
+        Permanent hydra = addReadyHydra(player1);
+        hydra.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        hydra.setSummoningSick(true);
+        hydra.setTapped(true);
+        harness.addToBattlefield(player1, new AngelsFeather());
+
+        activateAgainst(player1, "Angel's Feather");
+
+        assertThat(hydra.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(hydra.isTapped()).isTrue();
+        harness.assertOnBattlefield(player1, "Steelbane Hydra");
+        harness.assertNotOnBattlefield(player1, "Angel's Feather");
+        harness.assertInGraveyard(player1, "Angel's Feather");
+    }
+
     private void activateAgainst(Player targetPlayer, String targetName) {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -92,10 +149,9 @@ class SteelbaneHydraTest extends BaseCardTest {
     }
 
     private Permanent addReadyHydra(Player player) {
-        Permanent hydra = new Permanent(new SteelbaneHydra());
+        Permanent hydra = harness.addToBattlefieldAndReturn(player, new SteelbaneHydra());
         hydra.setSummoningSick(false);
         hydra.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
-        gd.playerBattlefields.get(player.getId()).add(hydra);
         return hydra;
     }
 
