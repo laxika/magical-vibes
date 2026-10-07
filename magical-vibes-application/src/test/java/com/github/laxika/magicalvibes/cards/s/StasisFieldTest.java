@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -38,9 +39,8 @@ class StasisFieldTest extends BaseCardTest {
     @Test
     void setsBasePowerToughnessGrantsDefenderAndRemovesAbilities() {
         Permanent airElemental = harness.addToBattlefieldAndReturn(player2, new AirElemental());
-        Permanent aura = new Permanent(new StasisField());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new StasisField());
         aura.setAttachedTo(airElemental.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         assertThat(gqs.getEffectivePower(gd, airElemental)).isEqualTo(0);
         assertThat(gqs.getEffectiveToughness(gd, airElemental)).isEqualTo(2);
@@ -52,9 +52,8 @@ class StasisFieldTest extends BaseCardTest {
     void preventsEnchantedCreatureFromActivatingAbilities() {
         Permanent pyromancer = harness.addToBattlefieldAndReturn(player1, new ProdigalPyromancer());
         pyromancer.setSummoningSick(false);
-        Permanent aura = new Permanent(new StasisField());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new StasisField());
         aura.setAttachedTo(pyromancer.getId());
-        gd.playerBattlefields.get(player2.getId()).add(aura);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -63,9 +62,8 @@ class StasisFieldTest extends BaseCardTest {
     @Test
     void removingAuraRestoresCreature() {
         Permanent airElemental = harness.addToBattlefieldAndReturn(player2, new AirElemental());
-        Permanent aura = new Permanent(new StasisField());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new StasisField());
         aura.setAttachedTo(airElemental.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         gd.playerBattlefields.get(player1.getId()).remove(aura);
 
@@ -73,6 +71,37 @@ class StasisFieldTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, airElemental)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, airElemental, Keyword.FLYING)).isTrue();
         assertThat(gqs.hasKeyword(gd, airElemental, Keyword.DEFENDER)).isFalse();
+    }
+
+    @Test
+    void countersStillModifyEnchantedCreaturesPowerAndToughness() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new StasisField());
+        aura.setAttachedTo(bears.getId());
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.DEFENDER)).isTrue();
+    }
+
+    @Test
+    void doesNotChangeOtherCreaturesOnEitherBattlefield() {
+        Permanent enchanted = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new AirElemental());
+        Permanent otherCreature = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new StasisField());
+        aura.setAttachedTo(enchanted.getId());
+
+        assertThat(gqs.hasKeyword(gd, enchanted, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, enchanted, Keyword.DEFENDER)).isTrue();
+        for (Permanent unaffected : List.of(ownCreature, otherCreature)) {
+            assertThat(gqs.getEffectivePower(gd, unaffected)).isEqualTo(4);
+            assertThat(gqs.getEffectiveToughness(gd, unaffected)).isEqualTo(4);
+            assertThat(gqs.hasKeyword(gd, unaffected, Keyword.FLYING)).isTrue();
+            assertThat(gqs.hasKeyword(gd, unaffected, Keyword.DEFENDER)).isFalse();
+        }
     }
 
     @Test
