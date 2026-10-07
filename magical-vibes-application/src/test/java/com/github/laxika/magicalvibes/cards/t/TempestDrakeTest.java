@@ -74,6 +74,44 @@ class TempestDrakeTest extends BaseCardTest {
         assertThat(archer.isBlocking()).isTrue();
     }
 
+    @Test
+    @DisplayName("Vigilance does not allow a tapped Tempest Drake to attack")
+    void tappedDrakeCannotAttack() {
+        Permanent drake = addCreatureReady(player1, new TempestDrake());
+        drake.tap();
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(drake.isAttacking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Vigilance does not allow a summoning-sick Tempest Drake to attack")
+    void summoningSickDrakeCannotAttack() {
+        Permanent drake = harness.addToBattlefieldAndReturn(player1, new TempestDrake());
+        drake.setSummoningSick(true);
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(drake.isAttacking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Tempest Drake can block a creature without flying")
+    void drakeCanBlockGroundCreature() {
+        Permanent attacker = addCreatureReady(player1, new Warthog());
+        Permanent drake = addCreatureReady(player2, new TempestDrake());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                indexOf(player2, drake), indexOf(player1, attacker))));
+
+        assertThat(drake.isBlocking()).isTrue();
+    }
+
     private int indexOf(Player player, Permanent perm) {
         return gd.playerBattlefields.get(player.getId()).indexOf(perm);
     }
