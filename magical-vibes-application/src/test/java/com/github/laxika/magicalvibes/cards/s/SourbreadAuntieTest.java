@@ -7,26 +7,25 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed(SourbreadAuntie.class)
 class SourbreadAuntieTest extends BaseCardTest {
 
     @Test
     void acceptingEnterTriggerBlightsChosenCreatureAndCreatesGoblinTokens() {
-        SourbreadAuntie auntie = castSourbreadAuntie();
+        castSourbreadAuntie();
 
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        Permanent auntiePermanent = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard() == auntie)
-                .findFirst()
-                .orElseThrow();
+        Permanent auntiePermanent = findPermanent(player1, "Sourbread Auntie");
         assertThat(auntiePermanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
         List<Permanent> goblins = findPermanents(player1, "Goblin");
         assertThat(goblins).hasSize(2);
@@ -41,13 +40,7 @@ class SourbreadAuntieTest extends BaseCardTest {
 
     @Test
     void decliningEnterTriggerDoesNotBlightOrCreateTokens() {
-        SourbreadAuntie auntie = new SourbreadAuntie();
-        harness.setHand(player1, List.of(auntie));
-        harness.addMana(player1, ManaColor.RED, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        SourbreadAuntie auntie = castSourbreadAuntie();
 
         harness.handleMayAbilityChosen(player1, false);
 
@@ -55,6 +48,32 @@ class SourbreadAuntieTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard() == auntie
                         && permanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) == 0);
+    }
+
+    @Test
+    void canBlightAnotherCreatureEvenWhenTheCountersKillIt() {
+        SourbreadAuntie otherAuntie = new SourbreadAuntie();
+        Permanent other = harness.addToBattlefieldAndReturn(player1, otherAuntie);
+        other.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new SourbreadAuntie());
+        SourbreadAuntie auntie = castSourbreadAuntie();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validPermanentIds()).contains(other.getId()).doesNotContain(opponent.getId());
+        harness.handlePermanentChosen(player1, other.getId());
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(otherAuntie);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(other);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() == auntie
+                        && permanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) == 0);
+        assertThat(opponent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        assertThat(findPermanents(player1, "Goblin")).hasSize(2);
+        assertThat(findPermanents(player2, "Goblin")).isEmpty();
     }
 
     private SourbreadAuntie castSourbreadAuntie() {
