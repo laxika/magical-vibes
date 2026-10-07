@@ -38,7 +38,7 @@ class TheLastRoninTest extends BaseCardTest {
     @Test
     void chapterIIMillsFourThenReturnsTargetCreatureFromGraveyard() {
         Card creature = new GrizzlyBears();
-        harness.setLibrary(player1, List.of(creature, new Card(), new Card(), new Card()));
+        harness.setLibrary(player1, List.of(creature, new TheLastRonin(), new TheLastRonin(), new TheLastRonin()));
         addSaga(1);
 
         advanceToNextChapter();
@@ -65,8 +65,8 @@ class TheLastRoninTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(8);
-        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isTrue();
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.LIFELINK)).isTrue();
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.INDESTRUCTIBLE)).isTrue();
@@ -92,6 +92,56 @@ class TheLastRoninTest extends BaseCardTest {
         assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(gqs.hasKeyword(gd, first, Keyword.TRAMPLE)).isFalse();
         assertThat(gqs.hasKeyword(gd, second, Keyword.LIFELINK)).isFalse();
+    }
+
+    @Test
+    void chapterIICanReturnACreatureAlreadyInTheGraveyard() {
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setLibrary(player1, List.of(new TheLastRonin(), new TheLastRonin()));
+        addSaga(1);
+
+        advanceToNextChapter();
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).contains(creature);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    void chapterIIMillsEvenWhenThereIsNoCreatureToReturn() {
+        harness.setLibrary(player1, List.of(new TheLastRonin(), new TheLastRonin()));
+        addSaga(1);
+
+        advanceToNextChapter();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void chapterIIIKeywordsExpireButCountersRemain() {
+        addSaga(2);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+
+        advanceToNextChapter();
+        harness.passBothPriorities();
+        declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
+        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
+
+        assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.LIFELINK)).isFalse();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     private Permanent addSaga(int loreCounters) {
