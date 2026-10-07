@@ -2,8 +2,10 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.model.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -13,10 +15,12 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ThaliaGuardianOfThraben.class, LightningBolt.class, GrizzlyBears.class})
 class ThaliaGuardianOfThrabenTest extends BaseCardTest {
 
     @Nested
     @DisplayName("Noncreature spell cost increase")
+    @CardUsed({ThaliaGuardianOfThraben.class, LightningBolt.class})
     class NoncreatureSpellCostIncrease {
 
         @Test
@@ -95,8 +99,69 @@ class ThaliaGuardianOfThrabenTest extends BaseCardTest {
         }
     }
 
+    @Test
+    @DisplayName("First strike kills a blocker before it can deal damage to Thalia")
+    void firstStrikeKillsBlockerBeforeRegularDamage() {
+        var thalia = addCreatureReady(player1, new ThaliaGuardianOfThraben());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(thalia);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("The additional generic cost can be paid with another mana color")
+    void taxCanBePaidWithAnotherColor() {
+        harness.addToBattlefield(player1, new ThaliaGuardianOfThraben());
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.assertLife(player2, 17);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Both players' Thalias add to the total cost paid")
+    void twoThaliasRequireAndConsumeTwoAdditionalMana() {
+        harness.addToBattlefield(player1, new ThaliaGuardianOfThraben());
+        harness.addToBattlefield(player2, new ThaliaGuardianOfThraben());
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.assertLife(player2, 17);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("The tax ends when Thalia dies, including for the next spell that turn")
+    void taxEndsWhenThaliaDies() {
+        var thalia = harness.addToBattlefieldAndReturn(player2, new ThaliaGuardianOfThraben());
+        harness.setHand(player1, List.of(new LightningBolt(), new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player1, 0, thalia.getId());
+
+        harness.assertNotOnBattlefield(player2, "Thalia, Guardian of Thraben");
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.assertLife(player2, 17);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
     @Nested
     @DisplayName("Creature spells not affected")
+    @CardUsed({ThaliaGuardianOfThraben.class, GrizzlyBears.class})
     class CreatureSpellsNotAffected {
 
         @Test
