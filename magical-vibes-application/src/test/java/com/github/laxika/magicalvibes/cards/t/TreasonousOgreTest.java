@@ -52,4 +52,77 @@ class TreasonousOgreTest extends BaseCardTest {
 
         assertThat(ogre.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
+
+    @Test
+    @DisplayName("Mana ability can be used repeatedly while tapped and summoning sick")
+    void manaAbilityWorksWhileTappedAndSummoningSick() {
+        Permanent ogre = harness.addToBattlefieldAndReturn(player1, new TreasonousOgre());
+        ogre.setSummoningSick(true);
+        ogre.setTapped(true);
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(14);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(2);
+        assertThat(ogre.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Rejected life payment grants no mana and loses no life")
+    void rejectedPaymentDoesNotChangeLifeOrMana() {
+        harness.addToBattlefield(player1, new TreasonousOgre());
+        harness.setLife(player1, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Dethrone triggers when defending player has strictly most life")
+    void dethroneTriggersWhenDefenderHasStrictlyMostLife() {
+        Permanent ogre = addCreatureReady(player1, new TreasonousOgre());
+        harness.setLife(player1, 15);
+        harness.setLife(player2, 20);
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+
+        assertThat(ogre.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Dethrone does not trigger when the attacking player has more life")
+    void dethroneDoesNotTriggerAgainstLowerLifePlayer() {
+        Permanent ogre = addCreatureReady(player1, new TreasonousOgre());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 15);
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+
+        assertThat(ogre.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Dethrone does not recheck life totals when its trigger resolves")
+    void dethroneDoesNotRecheckLifeTotalsAtResolution() {
+        Permanent ogre = addCreatureReady(player1, new TreasonousOgre());
+        harness.setLife(player1, 15);
+        harness.setLife(player2, 20);
+
+        declareAttackers(List.of(0));
+        assertThat(gd.stack).hasSize(1);
+        assertThat(ogre.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.setLife(player2, 10);
+        harness.passBothPriorities();
+
+        assertThat(ogre.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
 }
