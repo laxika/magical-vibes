@@ -17,6 +17,59 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TheHowlingCommandosTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Repeated activations stack without tapping the source")
+    void repeatedActivationsStack() {
+        Permanent commandos = addCreatureReady(player1, new TheHowlingCommandos());
+        harness.addMana(player1, ManaColor.COLORLESS, 10);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, commandos)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, commandos)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, commandos, Keyword.VIGILANCE)).isTrue();
+        assertThat(commandos.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Tapped and summoning-sick Commandos can activate the ability")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent commandos = harness.addToBattlefieldAndReturn(player1, new TheHowlingCommandos());
+        commandos.setSummoningSick(true);
+        commandos.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, commandos)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, commandos)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, commandos, Keyword.VIGILANCE)).isTrue();
+        assertThat(commandos.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Only creatures present when the ability resolves receive its effects")
+    void affectedCreaturesAreDeterminedAtResolution() {
+        addCreatureReady(player1, new TheHowlingCommandos());
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.activateAbility(player1, 0, null, null);
+        Permanent beforeResolution = harness.addToBattlefieldAndReturn(player1, new NightsquadCommando());
+
+        harness.passBothPriorities();
+        Permanent afterResolution = harness.addToBattlefieldAndReturn(player1, new NightsquadCommando());
+
+        assertThat(gqs.getEffectivePower(gd, beforeResolution)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, beforeResolution)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, beforeResolution, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, afterResolution)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, afterResolution)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, afterResolution, Keyword.VIGILANCE)).isFalse();
+    }
+
+    @Test
     @DisplayName("The ability boosts your creatures and gives your Soldiers vigilance")
     void boostsOwnCreaturesAndGrantsSoldiersVigilance() {
         Permanent commandos = addCreatureReady(player1, new TheHowlingCommandos());
