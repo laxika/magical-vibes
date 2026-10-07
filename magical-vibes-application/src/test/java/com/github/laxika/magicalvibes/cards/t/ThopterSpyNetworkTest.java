@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,21 +16,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ThopterSpyNetwork.class, GrizzlyBears.class, Memnite.class, Ornithopter.class})
 class ThopterSpyNetworkTest extends BaseCardTest {
 
     private Permanent addAttacker(com.github.laxika.magicalvibes.model.Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
+        Permanent perm = addCreatureReady(player1, card);
         perm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(perm);
         return perm;
-    }
-
-    private void runCombatDamage() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
     }
 
     private List<Permanent> thopterTokens() {
@@ -80,7 +72,7 @@ class ThopterSpyNetworkTest extends BaseCardTest {
         addAttacker(new Memnite());
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
-        runCombatDamage();
+        resolveCombat();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
 
         harness.passBothPriorities(); // resolve the draw trigger
@@ -96,7 +88,7 @@ class ThopterSpyNetworkTest extends BaseCardTest {
         addAttacker(new Memnite());
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
-        runCombatDamage();
+        resolveCombat();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
 
         // Drain every trigger the batch produced — it must add up to a single card.
@@ -113,7 +105,7 @@ class ThopterSpyNetworkTest extends BaseCardTest {
         addAttacker(new GrizzlyBears());
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
-        runCombatDamage();
+        resolveCombat();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
 
         assertThat(gd.stack).isEmpty();
@@ -127,10 +119,87 @@ class ThopterSpyNetworkTest extends BaseCardTest {
         addAttacker(new Ornithopter());
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
-        runCombatDamage();
+        resolveCombat();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+    }
+
+    @Test
+    void upkeepDoesNothingIfLastArtifactLeavesBeforeResolution() {
+        harness.addToBattlefield(player1, new ThopterSpyNetwork());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Memnite());
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(artifact);
+        resolveAllTriggers();
+
+        assertThat(thopterTokens()).isEmpty();
+    }
+
+    @Test
+    void upkeepStillCreatesTokenIfOriginalArtifactIsReplaced() {
+        harness.addToBattlefield(player1, new ThopterSpyNetwork());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Memnite());
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(artifact);
+        harness.addToBattlefield(player1, new Ornithopter());
+        resolveAllTriggers();
+
+        assertThat(thopterTokens()).hasSize(1);
+    }
+
+    @Test
+    void OpponentsArtifactDoesNotEnableUpkeepTrigger() {
+        harness.addToBattlefield(player1, new ThopterSpyNetwork());
+        harness.addToBattlefield(player2, new Memnite());
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(thopterTokens()).isEmpty();
+    }
+
+    @Test
+    void doesNotCreateTokenDuringOpponentsUpkeep() {
+        harness.addToBattlefield(player1, new ThopterSpyNetwork());
+        harness.addToBattlefield(player1, new Memnite());
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(thopterTokens()).isEmpty();
+    }
+
+    @Test
+    void opponentsArtifactCreatureDoesNotTriggerDraw() {
+        harness.addToBattlefield(player1, new ThopterSpyNetwork());
+        Permanent attacker = addCreatureReady(player2, new Memnite());
+        attacker.setAttacking(true);
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        resolveCombat(player2);
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+    }
+
+    @Test
+    void drawTriggerStillResolvesAfterDamagingArtifactLeaves() {
+        harness.addToBattlefield(player1, new ThopterSpyNetwork());
+        Permanent attacker = addAttacker(new Memnite());
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        resolveCombat();
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(attacker);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
     }
 }
