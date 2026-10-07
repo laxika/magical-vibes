@@ -14,7 +14,7 @@ class SoulknifeSpyTest extends BaseCardTest {
     @Test
     @DisplayName("Draws a card when it deals combat damage to a player")
     void drawsOnCombatDamageToPlayer() {
-        Permanent spy = addReadyCreature(player1);
+        Permanent spy = addCreatureReady(player1, new SoulknifeSpy());
         spy.setAttacking(true);
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
@@ -28,10 +28,10 @@ class SoulknifeSpyTest extends BaseCardTest {
     @Test
     @DisplayName("Does not draw when blocked")
     void doesNotDrawWhenBlocked() {
-        Permanent spy = addReadyCreature(player1);
+        Permanent spy = addCreatureReady(player1, new SoulknifeSpy());
         spy.setAttacking(true);
 
-        Permanent blocker = addReadyCreature(player2);
+        Permanent blocker = addCreatureReady(player2, new SoulknifeSpy());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
@@ -42,9 +42,36 @@ class SoulknifeSpyTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore);
     }
 
-    private Permanent addReadyCreature(com.github.laxika.magicalvibes.model.Player player) {
-        Permanent creature = harness.addToBattlefieldAndReturn(player, new SoulknifeSpy());
-        creature.setSummoningSick(false);
-        return creature;
+    @Test
+    @DisplayName("Each unblocked Spy draws one card for its controller")
+    void eachSpyDrawsOneCard() {
+        addCreatureReady(player1, new SoulknifeSpy()).setAttacking(true);
+        addCreatureReady(player1, new SoulknifeSpy()).setAttacking(true);
+        int attackingHandSize = gd.playerHands.get(player1.getId()).size();
+        int defendingHandSize = gd.playerHands.get(player2.getId()).size();
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(attackingHandSize + 2);
+        assertThat(gd.playerHands.get(player2.getId()).size()).isEqualTo(defendingHandSize);
+    }
+
+    @Test
+    @DisplayName("Draw waits for the trigger to resolve and survives the Spy leaving play")
+    void drawTriggerSurvivesSourceLeavingBattlefield() {
+        Permanent spy = addCreatureReady(player1, new SoulknifeSpy());
+        spy.setAttacking(true);
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+
+        resolveCombat();
+
+        assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore);
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(spy);
+        gd.playerGraveyards.get(player1.getId()).add(spy.getCard());
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore + 1);
     }
 }
