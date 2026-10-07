@@ -103,6 +103,54 @@ class ThroatSlitterTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Ninjutsu pays the return cost immediately and the incoming ninja triggers on combat damage")
+    void ninjutsuDealsCombatDamageAndDestroysCreature() {
+        Permanent attacker = addCreatureReady(player1, new GnarledMass());
+        Permanent target = addCreatureReady(player2, new GnarledMass());
+        declareAttackersAndPrepareBlockers(List.of(0));
+        harness.setHand(player1, List.of(new ThroatSlitter()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> gs.declareBlockers(gd, player2, List.of()));
+        harness.clearPriorityPassed();
+
+        harness.activateHandAbility(player1, 0, attacker.getId());
+
+        harness.assertInHand(player1, "Gnarled Mass");
+        harness.assertInHand(player1, "Throat Slitter");
+        harness.assertNotOnBattlefield(player1, "Gnarled Mass");
+        harness.assertNotOnBattlefield(player1, "Throat Slitter");
+
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, harness::passBothPriorities);
+        resolveCombat();
+        harness.assertLife(player2, 18);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Gnarled Mass");
+        harness.assertOnBattlefield(player1, "Throat Slitter");
+    }
+
+    @Test
+    @DisplayName("An unaffordable ninjutsu activation does not return the attacker")
+    void insufficientNinjutsuManaKeepsAttackerOnBattlefield() {
+        Permanent attacker = addCreatureReady(player1, new GnarledMass());
+        declareAttackersAndPrepareBlockers(List.of(0));
+        harness.setHand(player1, List.of(new ThroatSlitter()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Gnarled Mass");
+        harness.assertInHand(player1, "Throat Slitter");
+        harness.assertNotInHand(player1, "Gnarled Mass");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Ninjutsu cannot return a blocked attacker")
     void ninjutsuRejectsBlockedAttacker() {
         Permanent attacker = addCreatureReady(player1, new GnarledMass());
