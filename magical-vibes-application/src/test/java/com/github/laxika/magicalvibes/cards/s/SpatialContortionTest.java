@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BlindingDrone;
+import com.github.laxika.magicalvibes.cards.k.KozileksPathfinder;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -15,14 +17,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SpatialContortion.class, AirElemental.class, GrizzlyBears.class})
+@CardUsed({SpatialContortion.class, AirElemental.class, GrizzlyBears.class,
+        BlindingDrone.class, KozileksPathfinder.class})
 class SpatialContortionTest extends BaseCardTest {
 
     private void castOn(Permanent target) {
         harness.setHand(player1, List.of(new SpatialContortion()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 
     @Test
@@ -71,5 +73,46 @@ class SpatialContortionTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can modify an opponent's creature using colored mana for the generic cost")
+    void modifiesOpposingCreatureWithMixedMana() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new KozileksPathfinder());
+        harness.setHand(player1, List.of(new SpatialContortion()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(target.getEffectivePower()).isEqualTo(8);
+        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        harness.assertOnBattlefield(player2, "Kozilek's Pathfinder");
+        harness.assertInGraveyard(player1, "Spatial Contortion");
+    }
+
+    @Test
+    @DisplayName("A creature reduced to exactly zero toughness dies")
+    void killsCreatureAtZeroToughness() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BlindingDrone());
+
+        castOn(target);
+
+        harness.assertNotOnBattlefield(player2, "Blinding Drone");
+        harness.assertInGraveyard(player2, "Blinding Drone");
+    }
+
+    @Test
+    @DisplayName("Colored mana cannot pay the required colorless mana cost")
+    void requiresColorlessMana() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new KozileksPathfinder());
+        harness.setHand(player1, List.of(new SpatialContortion()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Spatial Contortion");
+        assertThat(gd.stack).isEmpty();
     }
 }
