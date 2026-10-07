@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -16,13 +17,32 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SteelSabotage.class, Millstone.class, GrizzlyBears.class, SpinEngine.class})
 class SteelSabotageTest extends BaseCardTest {
-
-    
 
     @Nested
     @DisplayName("Mode 1: Counter target artifact spell")
+    @CardUsed({SteelSabotage.class, Millstone.class, GrizzlyBears.class, SpinEngine.class})
     class CounterMode {
+
+        @Test
+        @DisplayName("Counters an artifact creature spell")
+        void countersArtifactCreatureSpell() {
+            SpinEngine creature = new SpinEngine();
+            harness.setHand(player1, List.of(creature));
+            harness.addMana(player1, ManaColor.COLORLESS, 3);
+            harness.setHand(player2, List.of(new SteelSabotage()));
+            harness.addMana(player2, ManaColor.BLUE, 1);
+
+            harness.castCreature(player1, 0);
+            harness.passPriority(player1);
+            harness.castInstant(player2, 0, 0, creature.getId());
+            harness.passBothPriorities();
+
+            harness.assertInGraveyard(player1, "Spin Engine");
+            harness.assertNotOnBattlefield(player1, "Spin Engine");
+            harness.assertInGraveyard(player2, "Steel Sabotage");
+        }
 
         @Test
         @DisplayName("Counters target artifact spell")
@@ -83,21 +103,74 @@ class SteelSabotageTest extends BaseCardTest {
 
     @Nested
     @DisplayName("Mode 2: Return target artifact to its owner's hand")
+    @CardUsed({SteelSabotage.class, Millstone.class, GrizzlyBears.class, SpinEngine.class})
     class BounceMode {
+
+        @Test
+        @DisplayName("Can return your own artifact creature to hand")
+        void returnsOwnArtifactCreatureToHand() {
+            Permanent creature = harness.addToBattlefieldAndReturn(player1, new SpinEngine());
+            harness.setHand(player1, List.of(new SteelSabotage()));
+            harness.addMana(player1, ManaColor.BLUE, 1);
+
+            harness.castInstant(player1, 0, 1, creature.getId());
+            harness.passBothPriorities();
+
+            harness.assertNotOnBattlefield(player1, "Spin Engine");
+            harness.assertInHand(player1, "Spin Engine");
+            harness.assertInGraveyard(player1, "Steel Sabotage");
+        }
+
+        @Test
+        @DisplayName("Bounce mode cannot target an artifact spell on the stack")
+        void cannotBounceArtifactSpell() {
+            SpinEngine creature = new SpinEngine();
+            harness.setHand(player1, List.of(creature));
+            harness.addMana(player1, ManaColor.COLORLESS, 3);
+            harness.setHand(player2, List.of(new SteelSabotage()));
+            harness.addMana(player2, ManaColor.BLUE, 1);
+
+            harness.castCreature(player1, 0);
+            harness.passPriority(player1);
+
+            assertThatThrownBy(() -> harness.castInstant(player2, 0, 1, creature.getId()))
+                    .isInstanceOf(IllegalStateException.class);
+        }
+
+        @Test
+        @DisplayName("Does not return the same card again after its target leaves the battlefield")
+        void targetLeavesBattlefieldBeforeResolution() {
+            Permanent creature = harness.addToBattlefieldAndReturn(player1, new SpinEngine());
+            harness.setHand(player1, List.of(new SteelSabotage()));
+            harness.setHand(player2, List.of(new SteelSabotage()));
+            harness.addMana(player1, ManaColor.BLUE, 1);
+            harness.addMana(player2, ManaColor.BLUE, 1);
+
+            harness.castInstant(player1, 0, 1, creature.getId());
+            harness.passPriority(player1);
+            harness.castInstant(player2, 0, 1, creature.getId());
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+
+            harness.assertNotOnBattlefield(player1, "Spin Engine");
+            assertThat(gd.playerHands.get(player1.getId()))
+                    .filteredOn(card -> card.getId().equals(creature.getCard().getId()))
+                    .hasSize(1);
+            harness.assertInGraveyard(player1, "Steel Sabotage");
+            harness.assertInGraveyard(player2, "Steel Sabotage");
+            assertThat(gd.stack).isEmpty();
+        }
 
         @Test
         @DisplayName("Returns target artifact to its owner's hand")
         void returnsArtifactToHand() {
-            Millstone millstone = new Millstone();
-            harness.addToBattlefield(player1, millstone);
+            Permanent millstonePermanent = harness.addToBattlefieldAndReturn(player1, new Millstone());
 
             harness.setHand(player2, List.of(new SteelSabotage()));
             harness.addMana(player2, ManaColor.BLUE, 1);
             harness.forceActivePlayer(player2);
             harness.forceStep(TurnStep.PRECOMBAT_MAIN);
             harness.clearPriorityPassed();
-
-            Permanent millstonePermanent = findPermanent(player1, "Millstone");
 
             harness.castInstant(player2, 0, 1, millstonePermanent.getId());
             harness.passBothPriorities();
@@ -109,16 +182,13 @@ class SteelSabotageTest extends BaseCardTest {
         @Test
         @DisplayName("Cannot target a non-artifact creature with bounce mode")
         void cannotTargetNonArtifactCreature() {
-            GrizzlyBears bears = new GrizzlyBears();
-            harness.addToBattlefield(player1, bears);
+            Permanent bearsPermanent = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
             harness.setHand(player2, List.of(new SteelSabotage()));
             harness.addMana(player2, ManaColor.BLUE, 1);
             harness.forceActivePlayer(player2);
             harness.forceStep(TurnStep.PRECOMBAT_MAIN);
             harness.clearPriorityPassed();
-
-            Permanent bearsPermanent = findPermanent(player1, "Grizzly Bears");
 
             assertThatThrownBy(() -> harness.castInstant(player2, 0, 1, bearsPermanent.getId()))
                     .isInstanceOf(IllegalStateException.class);
@@ -127,16 +197,13 @@ class SteelSabotageTest extends BaseCardTest {
         @Test
         @DisplayName("Steel Sabotage goes to graveyard after bouncing")
         void goesToGraveyardAfterResolving() {
-            Millstone millstone = new Millstone();
-            harness.addToBattlefield(player1, millstone);
+            Permanent millstonePermanent = harness.addToBattlefieldAndReturn(player1, new Millstone());
 
             harness.setHand(player2, List.of(new SteelSabotage()));
             harness.addMana(player2, ManaColor.BLUE, 1);
             harness.forceActivePlayer(player2);
             harness.forceStep(TurnStep.PRECOMBAT_MAIN);
             harness.clearPriorityPassed();
-
-            Permanent millstonePermanent = findPermanent(player1, "Millstone");
 
             harness.castInstant(player2, 0, 1, millstonePermanent.getId());
             harness.passBothPriorities();
