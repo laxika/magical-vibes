@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.Frogify;
+import com.github.laxika.magicalvibes.cards.h.HealingSalve;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TorbranThaneOfRedFell.class, GrizzlyBears.class, Shock.class})
+@CardUsed({TorbranThaneOfRedFell.class, GrizzlyBears.class, Shock.class, Frogify.class, HealingSalve.class})
 class TorbranThaneOfRedFellTest extends BaseCardTest {
 
     @Test
@@ -35,8 +37,7 @@ class TorbranThaneOfRedFellTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.setLife(player2, 20);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
     }
@@ -49,8 +50,7 @@ class TorbranThaneOfRedFellTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         harness.assertInGraveyard(player2, "Grizzly Bears");
     }
@@ -75,9 +75,78 @@ class TorbranThaneOfRedFellTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.setLife(player1, 20);
 
-        harness.castInstant(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player1.getId());
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+    }
+
+    @Test
+    void bonusMakesShockLethalToFourToughnessOpponentCreature() {
+        harness.addToBattlefield(player1, new TorbranThaneOfRedFell());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new TorbranThaneOfRedFell());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertInGraveyard(player2, "Torbran, Thane of Red Fell");
+        harness.assertOnBattlefield(player1, "Torbran, Thane of Red Fell");
+    }
+
+    @Test
+    void damageToOwnPermanentIsNotIncreased() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new TorbranThaneOfRedFell());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertOnBattlefield(player1, "Torbran, Thane of Red Fell");
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    void opponentRedSourceDoesNotReceiveBonus() {
+        harness.addToBattlefield(player1, new TorbranThaneOfRedFell());
+        harness.setLife(player1, 20);
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    void losingAbilitiesRemovesDamageBonus() {
+        Permanent torbran = harness.addToBattlefieldAndReturn(player1, new TorbranThaneOfRedFell());
+        harness.setHand(player1, List.of(new Frogify()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castEnchantment(player1, 0, torbran.getId());
+        harness.passBothPriorities();
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    void recipientCanPreventAllOriginalDamageBeforeApplyingBonus() {
+        harness.addToBattlefield(player1, new TorbranThaneOfRedFell());
+        harness.setLife(player2, 20);
+        harness.setHand(player2, List.of(new HealingSalve()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.castInstant(player2, 0, 1, player2.getId());
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.assertLife(player2, 20);
     }
 }
