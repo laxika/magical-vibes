@@ -2,10 +2,9 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.d.Dodecapod;
 import com.github.laxika.magicalvibes.cards.i.Index;
+import com.github.laxika.magicalvibes.cards.s.SummonTheSchool;
 import com.github.laxika.magicalvibes.cards.v.VodalianMystic;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -22,16 +21,8 @@ import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TidalCourier.class, VodalianMystic.class, Index.class, Dodecapod.class})
+@CardUsed({TidalCourier.class, VodalianMystic.class, Index.class, Dodecapod.class, SummonTheSchool.class})
 class TidalCourierTest extends BaseCardTest {
-
-    private static Card createNoncreatureMerfolk() {
-        Card card = new Card();
-        card.setName("Merfolk Research");
-        card.setType(CardType.SORCERY);
-        card.setSubtypes(List.of(CardSubtype.MERFOLK));
-        return card;
-    }
 
     private void finishAnyReorder() {
         var reorder = gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class);
@@ -43,8 +34,7 @@ class TidalCourierTest extends BaseCardTest {
 
     private void castCourier() {
         harness.castFromHand(player1, new TidalCourier(), "{3}{U}");
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
     @Test
@@ -69,7 +59,7 @@ class TidalCourierTest extends BaseCardTest {
     @Test
     @DisplayName("Noncreature Merfolk cards also go to hand")
     void noncreatureMerfolkCardsGoToHand() {
-        Card merfolk = createNoncreatureMerfolk();
+        Card merfolk = new SummonTheSchool();
         Card nonMerfolk = new Index();
         harness.setLibrary(player1, List.of(merfolk, nonMerfolk));
 
@@ -88,6 +78,40 @@ class TidalCourierTest extends BaseCardTest {
         castCourier();
 
         harness.assertOnBattlefield(player1, "Tidal Courier");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Unmatched cards go below untouched cards in the chosen order")
+    void unmatchedCardsGoToBottomInChosenOrder() {
+        Card first = new Index();
+        Card second = new Dodecapod();
+        Card third = new Index();
+        Card fourth = new Dodecapod();
+        Card untouched = new VodalianMystic();
+        harness.setLibrary(player1, List.of(first, second, third, fourth, untouched));
+
+        castCourier();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class)).isNotNull();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(3, 1, 2, 0)));
+
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .containsExactly(untouched, fourth, second, third, first);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A short library containing only Merfolk is put entirely into hand")
+    void shortAllMerfolkLibraryGoesToHand() {
+        Card first = new TidalCourier();
+        Card second = new VodalianMystic();
+        harness.setLibrary(player1, List.of(first, second));
+
+        castCourier();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(first, second);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
