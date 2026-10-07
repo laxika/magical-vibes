@@ -125,4 +125,60 @@ class TorWaukiTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("summoning sick");
     }
+
+    @Test
+    @DisplayName("Does not damage a target that stops blocking before resolution")
+    void targetMustStillBeBlockingOnResolution() {
+        addReadyTorWauki(player1);
+        Permanent blocker = addCombatCreature(player2, false, true);
+
+        harness.activateAbility(player1, 0, null, blocker.getId());
+        blocker.setBlocking(false);
+        harness.passBothPriorities();
+
+        assertThat(blocker.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Zephyr Falcon");
+    }
+
+    @Test
+    @DisplayName("Cannot pay the tap cost while already tapped")
+    void cannotActivateWhileTapped() {
+        Permanent torWauki = addReadyTorWauki(player1);
+        torWauki.setTapped(true);
+        Permanent attacker = addCombatCreature(player2, true, false);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+    }
+
+    @Test
+    @DisplayName("The ability resolves after Tor Wauki leaves the battlefield")
+    void resolvesAfterSourceLeavesBattlefield() {
+        Permanent torWauki = addReadyTorWauki(player1);
+        Permanent attacker = addCombatCreature(player2, true, false);
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        harness.getPermanentRemovalService().removePermanentToHand(gd, torWauki);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Tor Wauki");
+        harness.assertNotOnBattlefield(player2, "Zephyr Falcon");
+        harness.assertInGraveyard(player2, "Zephyr Falcon");
+    }
+
+    @Test
+    @DisplayName("Tor Wauki can target itself while blocking and remains a blocker after tapping")
+    void canTargetItselfWhileBlocking() {
+        Permanent torWauki = addReadyTorWauki(player1);
+        torWauki.setBlocking(true);
+
+        harness.activateAbility(player1, 0, null, torWauki.getId());
+        harness.passBothPriorities();
+
+        assertThat(torWauki.isTapped()).isTrue();
+        assertThat(torWauki.isBlocking()).isTrue();
+        assertThat(torWauki.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Tor Wauki");
+    }
 }
