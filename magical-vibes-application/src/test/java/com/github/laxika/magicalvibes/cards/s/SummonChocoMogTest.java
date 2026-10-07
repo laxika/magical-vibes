@@ -47,12 +47,73 @@ class SummonChocoMogTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(3);
 
-        gd.interaction.clearAwaitingInput();
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.UPKEEP);
 
         assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(2);
+    }
+
+    @Test
+    void castingSagaTriggersFirstChapterOnEntry() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        SummonChocoMog card = new SummonChocoMog();
+
+        harness.castFromHand(player1, card, "{2}{W}");
+        harness.passBothPriorities();
+
+        Permanent saga = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().getId().equals(card.getId()))
+                .findFirst().orElseThrow();
+        assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(2);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, saga)).isEqualTo(3);
+    }
+
+    @Test
+    void enteringWithoutBeingCastStillTriggersFirstChapter() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        Permanent saga = harness.enterBattlefieldAndReturn(player1, new SummonChocoMog());
+
+        assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(1);
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, saga)).isEqualTo(3);
+    }
+
+    @Test
+    void stampedeOnlyBoostsCreaturesPresentWhenItResolves() {
+        harness.addToBattlefield(player1, new SummonChocoMog());
+        advanceToNextChapter();
+        Permanent beforeResolution = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        harness.passBothPriorities();
+        Permanent afterResolution = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(gqs.getEffectivePower(gd, beforeResolution)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, afterResolution)).isEqualTo(2);
+    }
+
+    @Test
+    void finalChapterKeepsSagaUntilAbilityResolves() {
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new SummonChocoMog());
+        saga.setCounterCount(CounterType.LORE, 3);
+
+        advanceToNextChapter();
+        harness.runStateBasedActions();
+
+        assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(4);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(saga);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(saga);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(saga.getCard());
     }
 
     private void advanceToNextChapter() {
