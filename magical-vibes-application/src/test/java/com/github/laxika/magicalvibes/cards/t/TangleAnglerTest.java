@@ -6,7 +6,9 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SylvokReplica;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -17,22 +19,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TangleAngler.class, SylvokReplica.class})
 class TangleAnglerTest extends BaseCardTest {
-
-    // ===== Ability activation =====
-
-    @Test
-    @DisplayName("Tangle Angler has one activated ability")
-    void hasOneActivatedAbility() {
-        TangleAngler card = new TangleAngler();
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-    }
 
     @Test
     @DisplayName("Activating ability puts it on the stack targeting a creature")
     void activatingAbilityPutsOnStack() {
         Permanent angler = addReadyAngler(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new SylvokReplica());
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -40,7 +34,7 @@ class TangleAnglerTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(entry.getCard().getName()).isEqualTo("Tangle Angler");
+        assertThat(entry.getSourcePermanentId()).isEqualTo(angler.getId());
         assertThat(entry.getTargetId()).isEqualTo(target.getId());
     }
 
@@ -48,7 +42,7 @@ class TangleAnglerTest extends BaseCardTest {
     @DisplayName("Ability does not require tapping")
     void abilityDoesNotRequireTapping() {
         Permanent angler = addReadyAngler(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new SylvokReplica());
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -60,20 +54,18 @@ class TangleAnglerTest extends BaseCardTest {
     @DisplayName("Cannot activate ability without enough mana")
     void cannotActivateWithoutMana() {
         addReadyAngler(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new SylvokReplica());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
     }
 
-    // ===== Ability resolution =====
-
     @Test
     @DisplayName("Resolving ability adds source to target's mustBlockIds")
     void resolvingAbilityAddsMustBlockRestriction() {
         Permanent angler = addReadyAngler(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new SylvokReplica());
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -86,7 +78,7 @@ class TangleAnglerTest extends BaseCardTest {
     @DisplayName("Ability fizzles if target is removed before resolution")
     void abilityFizzlesIfTargetRemoved() {
         addReadyAngler(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new SylvokReplica());
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -101,13 +93,11 @@ class TangleAnglerTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
-    // ===== Blocking requirements =====
-
     @Test
     @DisplayName("Targeted creature must block Tangle Angler when it attacks")
     void targetedCreatureMustBlockTangleAngler() {
         Permanent angler = addReadyAngler(player1);
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new SylvokReplica());
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         // Activate and resolve the ability
@@ -116,10 +106,7 @@ class TangleAnglerTest extends BaseCardTest {
 
         // Set up combat: Tangle Angler attacks
         angler.setAttacking(true);
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         // Attempting to declare no blockers should fail
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of()))
@@ -131,7 +118,7 @@ class TangleAnglerTest extends BaseCardTest {
     @DisplayName("Targeted creature satisfies requirement by blocking Tangle Angler")
     void targetedCreatureCanSatisfyRequirement() {
         Permanent angler = addReadyAngler(player1);
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new SylvokReplica());
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         // Activate and resolve the ability
@@ -140,10 +127,7 @@ class TangleAnglerTest extends BaseCardTest {
 
         // Set up combat: Tangle Angler attacks
         angler.setAttacking(true);
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         // Blocker at index 0 blocks attacker at index 0 (Tangle Angler)
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -152,9 +136,9 @@ class TangleAnglerTest extends BaseCardTest {
     @Test
     @DisplayName("No requirement if Tangle Angler is not attacking")
     void noRequirementIfAnglerNotAttacking() {
-        Permanent angler = addReadyAngler(player1);
-        Permanent otherAttacker = addCreatureReady(player1, new GrizzlyBears());
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        addReadyAngler(player1);
+        Permanent otherAttacker = addCreatureReady(player1, new SylvokReplica());
+        Permanent blocker = addCreatureReady(player2, new SylvokReplica());
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         // Activate and resolve the ability
@@ -163,10 +147,7 @@ class TangleAnglerTest extends BaseCardTest {
 
         // Set up combat: only the other creature attacks (not Tangle Angler)
         otherAttacker.setAttacking(true);
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         // Declaring no blockers should succeed — no must-block requirement applies
         gs.declareBlockers(gd, player2, List.of());
@@ -176,8 +157,8 @@ class TangleAnglerTest extends BaseCardTest {
     @DisplayName("Can activate ability on multiple creatures")
     void canActivateOnMultipleCreatures() {
         Permanent angler = addReadyAngler(player1);
-        Permanent blocker1 = addCreatureReady(player2, new GrizzlyBears());
-        Permanent blocker2 = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blocker1 = addCreatureReady(player2, new SylvokReplica());
+        Permanent blocker2 = addCreatureReady(player2, new SylvokReplica());
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         // Activate on first blocker and resolve
@@ -196,7 +177,7 @@ class TangleAnglerTest extends BaseCardTest {
     @DisplayName("Targeted creature does not need to block if it can't legally block (e.g. tapped)")
     void noRequirementIfBlockerCannotBlock() {
         Permanent angler = addReadyAngler(player1);
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new SylvokReplica());
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         // Activate and resolve the ability
@@ -208,22 +189,17 @@ class TangleAnglerTest extends BaseCardTest {
 
         // Set up combat: Tangle Angler attacks
         angler.setAttacking(true);
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         // Declaring no blockers should succeed — tapped creature can't block
         gs.declareBlockers(gd, player2, List.of());
     }
 
-    // ===== End of turn reset =====
-
     @Test
     @DisplayName("Must-block restriction resets at end of turn")
     void restrictionResetsAtEndOfTurn() {
         Permanent angler = addReadyAngler(player1);
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new SylvokReplica());
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         // Activate and resolve the ability
@@ -232,19 +208,18 @@ class TangleAnglerTest extends BaseCardTest {
 
         assertThat(blocker.getMustBlockIds()).contains(angler.getId());
 
-        // Simulate end-of-turn reset (resetModifiers clears mustBlockIds)
-        blocker.resetModifiers();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
 
         assertThat(blocker.getMustBlockIds()).isEmpty();
     }
-
-    // ===== Can target own creatures =====
 
     @Test
     @DisplayName("Can activate ability targeting own creature")
     void canTargetOwnCreature() {
         Permanent angler = addReadyAngler(player1);
-        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent ownCreature = addCreatureReady(player1, new SylvokReplica());
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.activateAbility(player1, 0, null, ownCreature.getId());
@@ -253,13 +228,78 @@ class TangleAnglerTest extends BaseCardTest {
         assertThat(ownCreature.getMustBlockIds()).contains(angler.getId());
     }
 
-    // ===== Helper methods =====
+    @Test
+    @DisplayName("Tapped, summoning-sick Tangle Angler can activate repeatedly")
+    void tappedSummoningSickAnglerCanActivateRepeatedly() {
+        Permanent angler = harness.addToBattlefieldAndReturn(player1, new TangleAngler());
+        angler.tap();
+        Permanent target = addCreatureReady(player2, new SylvokReplica());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.activateAbility(player1, 0, null, target.getId());
+        resolveAllTriggers();
+
+        assertThat(angler.isTapped()).isTrue();
+        assertThat(target.getMustBlockIds()).contains(angler.getId());
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Unblocked combat damage gives poison instead of life loss")
+    void unblockedCombatDamageGivesPoison() {
+        Permanent angler = addReadyAngler(player1);
+        angler.setAttacking(true);
+        harness.setLife(player2, 20);
+
+        resolveCombat();
+
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Forced blocker receives infect counters rather than marked damage")
+    void forcedBlockerReceivesInfectCounters() {
+        Permanent angler = addReadyAngler(player1);
+        Permanent blocker = addCreatureReady(player2, new SylvokReplica());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.activateAbility(player1, 0, null, blocker.getId());
+        harness.passBothPriorities();
+        angler.setAttacking(true);
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        resolveCombat();
+
+        assertThat(blocker.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(blocker.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Sylvok Replica");
+        assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isZero();
+    }
+
+    @Test
+    @DisplayName("A creature required to block two Anglers may block either one")
+    void competingRequirementsAllowEitherAngler() {
+        Permanent first = addReadyAngler(player1);
+        Permanent second = addReadyAngler(player1);
+        Permanent blocker = addCreatureReady(player2, new SylvokReplica());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.activateAbility(player1, 0, null, blocker.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, null, blocker.getId());
+        harness.passBothPriorities();
+        first.setAttacking(true);
+        second.setAttacking(true);
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must block");
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
+    }
 
     private Permanent addReadyAngler(Player player) {
-        TangleAngler card = new TangleAngler();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new TangleAngler());
     }
 }
