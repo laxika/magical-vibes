@@ -1,9 +1,13 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.a.AshayaSoulOfTheWild;
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.r.RampagingFerocidon;
+import com.github.laxika.magicalvibes.cards.r.RimefeatherOwl;
 import com.github.laxika.magicalvibes.cards.s.SnowCoveredForest;
 import com.github.laxika.magicalvibes.model.CardSupertype;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -18,7 +22,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Thermokarst.class, Forest.class, SnowCoveredForest.class, BalduvianBears.class})
+@CardUsed({Thermokarst.class, Forest.class, SnowCoveredForest.class, BalduvianBears.class,
+        AshayaSoulOfTheWild.class, RampagingFerocidon.class, RimefeatherOwl.class})
 class ThermokarstTest extends BaseCardTest {
 
     @Test
@@ -76,5 +81,59 @@ class ThermokarstTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Thermokarst()));
         harness.addMana(player1, ManaColor.GREEN, 3);
         harness.castAndResolveSorcery(player1, 0, 0, targetId);
+    }
+
+    @Test
+    void canDestroyYourOwnSnowLandAndGainLife() {
+        Permanent snow = harness.addToBattlefieldAndReturn(player1, new SnowCoveredForest());
+
+        castThermokarst(snow.getId());
+
+        harness.assertNotOnBattlefield(player1, "Snow-Covered Forest");
+        harness.assertInGraveyard(player1, "Snow-Covered Forest");
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void gainsLifeEvenWhenSnowLandRegenerates() {
+        Permanent snow = harness.addToBattlefieldAndReturn(player2, new SnowCoveredForest());
+        snow.setRegenerationShield(1);
+
+        castThermokarst(snow.getId());
+
+        harness.assertOnBattlefield(player2, "Snow-Covered Forest");
+        harness.assertNotInGraveyard(player2, "Snow-Covered Forest");
+        harness.assertLife(player1, 21);
+    }
+
+    @Test
+    void doesNotGainLifeWhenTargetLeavesBeforeResolution() {
+        Permanent snow = harness.addToBattlefieldAndReturn(player2, new SnowCoveredForest());
+        harness.setHand(player1, List.of(new Thermokarst()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.castSorcery(player1, 0, snow.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(snow);
+        gd.playerGraveyards.get(player2.getId()).add(snow.getCard());
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertInGraveyard(player1, "Thermokarst");
+    }
+
+    @Test
+    @CardUsed({Thermokarst.class, AshayaSoulOfTheWild.class, RampagingFerocidon.class, RimefeatherOwl.class})
+    void gainsLifeAfterDestroyingSnowLandThatPreventsLifeGain() {
+        harness.addToBattlefield(player2, new AshayaSoulOfTheWild());
+        harness.addToBattlefield(player2, new RimefeatherOwl());
+        Permanent ferocidon = harness.addToBattlefieldAndReturn(player2, new RampagingFerocidon());
+        ferocidon.setCounterCount(CounterType.ICE, 1);
+
+        castThermokarst(ferocidon.getId());
+
+        harness.assertNotOnBattlefield(player2, "Rampaging Ferocidon");
+        harness.assertInGraveyard(player2, "Rampaging Ferocidon");
+        harness.assertLife(player1, 21);
     }
 }
