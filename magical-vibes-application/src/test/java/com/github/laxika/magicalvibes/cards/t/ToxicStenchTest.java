@@ -122,6 +122,37 @@ class ToxicStenchTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a nonblack creature");
     }
 
+    @Test
+    @DisplayName("The opponent's graveyard does not enable threshold")
+    void ignoresOpponentsGraveyardForThreshold() {
+        Permanent target = addCreatureReady(player2, new GiantWarthog());
+        setGraveyardSize(6);
+        harness.setGraveyard(player2, List.of(
+                new MentalNote(), new MentalNote(), new MentalNote(), new MentalNote(),
+                new MentalNote(), new MentalNote(), new MentalNote()
+        ));
+
+        prepareCast();
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertOnBattlefield(player2, "Giant Warthog");
+        assertThat(target.getPowerModifier()).isEqualTo(-1);
+        assertThat(target.getToughnessModifier()).isEqualTo(-1);
+    }
+
+    @Test
+    @DisplayName("Can destroy the caster's own nonblack creature with threshold")
+    void canTargetOwnCreatureWithThreshold() {
+        Permanent target = addCreatureReady(player1, new GiantWarthog());
+        setGraveyardSize(7);
+
+        prepareCast();
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Giant Warthog");
+        harness.assertInGraveyard(player1, "Giant Warthog");
+    }
+
     private void prepareCast() {
         harness.setHand(player1, List.of(new ToxicStench()));
         harness.addMana(player1, ManaColor.BLACK, 2);
