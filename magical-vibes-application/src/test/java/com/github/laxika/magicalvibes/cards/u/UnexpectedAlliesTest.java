@@ -1,9 +1,6 @@
 package com.github.laxika.magicalvibes.cards.u;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -63,12 +60,7 @@ class UnexpectedAlliesTest extends BaseCardTest {
 
     @Test
     void canTargetOnlyNontokenCreaturesYouControl() {
-        Card token = new Card();
-        token.setName("Soldier Token");
-        token.setType(CardType.CREATURE);
-        token.setColor(CardColor.WHITE);
-        token.setPower(1);
-        token.setToughness(1);
+        GrizzlyBears token = new GrizzlyBears();
         token.setToken(true);
         Permanent tokenPermanent = harness.addToBattlefieldAndReturn(player1, token);
         harness.setHand(player1, List.of(new UnexpectedAllies()));
@@ -79,10 +71,95 @@ class UnexpectedAlliesTest extends BaseCardTest {
                 .hasMessageContaining("nontoken creature you control");
     }
 
-    private void cast(Permanent target) {
+    @Test
+    void opponentsMatchingCreaturesAndGraveyardCardsDoNotGrantFirstStrike() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setGraveyard(player2, List.of(new GrizzlyBears()));
+
+        cast(target);
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.DOUBLE_TEAM)).isTrue();
+        assertThat(target.getPowerModifier()).isEqualTo(2);
+    }
+
+    @Test
+    void firstStrikeConditionIsCheckedWhenTheSpellResolves() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new UnexpectedAllies()));
         harness.addMana(player1, ManaColor.RED, 2);
         harness.castSorcery(player1, 0, target.getId());
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+
         harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
+    void firstStrikeRemainsAfterTheMatchingCardLeavesTheGraveyard() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        cast(target);
+
+        harness.setGraveyard(player1, List.of());
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
+    void aMatchingCardArrivingAfterResolutionDoesNotGrantFirstStrike() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        cast(target);
+
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
+    void cannotTargetAnOpponentsNontokenCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new UnexpectedAllies()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void grantedFirstStrikeExpiresAtEndOfTurn() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        cast(target);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isTrue();
+
+        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
+    void doubleTeamConjuresADuplicateAndRemovesItself() {
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        cast(target);
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .hasSize(1)
+                .allMatch(card -> card instanceof GrizzlyBears);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.DOUBLE_TEAM)).isFalse();
+        assertThat(target.getPowerModifier()).isEqualTo(2);
+    }
+
+    private void cast(Permanent target) {
+        harness.setHand(player1, List.of(new UnexpectedAllies()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveSorcery(player1, 0, target.getId());
     }
 }
