@@ -2,10 +2,10 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.e.EverflowingChalice;
 import com.github.laxika.magicalvibes.cards.m.MooglesValor;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -15,11 +15,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SummonGoodKingMogXII.class, CounselOfTheSoratami.class, GrizzlyBears.class, MooglesValor.class})
+@CardUsed({SummonGoodKingMogXII.class, CounselOfTheSoratami.class, GrizzlyBears.class, MooglesValor.class, EverflowingChalice.class})
 class SummonGoodKingMogXIITest extends BaseCardTest {
 
     @Test
@@ -75,6 +74,121 @@ class SummonGoodKingMogXIITest extends BaseCardTest {
         assertThat(saga.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
+    @Test
+    void chapterIITriggersForEveryNoncreatureSpell() {
+        addSagaWithLore(0);
+        advanceToNextChapter();
+        advanceToNextChapter();
+        Permanent original = moogles(player1).getFirst();
+        original.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+
+        castChaliceAndCopy(original);
+        castChaliceAndCopy(original);
+
+        assertThat(moogles(player1)).hasSize(4);
+        assertThat(moogles(player1)).filteredOn(p -> !p.getId().equals(original.getId()))
+                .allSatisfy(p -> assertThat(p.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero());
+    }
+
+    @Test
+    void chapterIIDoesNotCopyNontokenPermanents() {
+        addSagaWithLore(1);
+        advanceToNextChapter();
+
+        harness.castFromHand(player1, new EverflowingChalice(), "{0}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(p -> p.getCard().getName().equals("Everflowing Chalice"))
+                .hasSize(1);
+        assertThat(moogles(player1)).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void chapterIIDoesNotTriggerForOpponentsSpells() {
+        addSagaWithLore(0);
+        advanceToNextChapter();
+        advanceToNextChapter();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castFromHand(player2, new EverflowingChalice(), "{0}");
+        harness.passBothPriorities();
+
+        assertThat(moogles(player1)).hasSize(2);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void chapterIIDoesNotTriggerForCreatureSpells() {
+        addSagaWithLore(0);
+        advanceToNextChapter();
+        advanceToNextChapter();
+
+        harness.castFromHand(player1, new SummonGoodKingMogXII(), "{4}{W}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(moogles(player1)).hasSize(4);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void chapterIVBoostsOtherNontokenMooglesButNotOpponentsMoogles() {
+        Permanent source = addSagaWithLore(3);
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new SummonGoodKingMogXII());
+        other.setCounterCount(CounterType.LORE, 1);
+        Permanent opposing = harness.addToBattlefieldAndReturn(player2, new SummonGoodKingMogXII());
+        opposing.setCounterCount(CounterType.LORE, 1);
+
+        advanceToNextChapter();
+        harness.passBothPriorities();
+
+        assertThat(other.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(opposing.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertInGraveyard(player1, "Summon: Good King Mog XII");
+    }
+
+    @Test
+    void delayedTriggerContinuesAfterSagaIsSacrificed() {
+        Permanent saga = addSagaWithLore(0);
+        advanceToNextChapter();
+        advanceToNextChapter();
+        Permanent original = moogles(player1).getFirst();
+        saga.setCounterCount(CounterType.LORE, 3);
+        advanceToNextChapter();
+        harness.assertInGraveyard(player1, "Summon: Good King Mog XII");
+
+        castChaliceAndCopy(original);
+
+        assertThat(moogles(player1)).hasSize(3);
+    }
+
+    @Test
+    void delayedTriggerExpiresAtEndOfTurn() {
+        addSagaWithLore(0);
+        advanceToNextChapter();
+        advanceToNextChapter();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+
+        harness.castFromHand(player1, new MooglesValor(), "{3}{W}{W}");
+        harness.passBothPriorities();
+
+        assertThat(moogles(player1)).hasSize(5);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    private void castChaliceAndCopy(Permanent original) {
+        harness.castFromHand(player1, new EverflowingChalice(), "{0}");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, original.getId());
+        harness.passBothPriorities();
+    }
+
     private Permanent addSagaWithLore(int loreCounters) {
         Permanent saga = harness.addToBattlefieldAndReturn(player1, new SummonGoodKingMogXII());
         saga.setCounterCount(CounterType.LORE, loreCounters);
@@ -83,16 +197,12 @@ class SummonGoodKingMogXIITest extends BaseCardTest {
 
     private void createOneMoogleToken() {
         harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.setHand(player1, List.of(new MooglesValor()));
-        harness.addMana(player1, ManaColor.WHITE, 5);
-        harness.castInstant(player1, 0, (UUID) null);
+        harness.castFromHand(player1, new MooglesValor(), "{3}{W}{W}");
         harness.passBothPriorities();
     }
 
     private void castNoncreatureSpell(Card card) {
-        harness.setHand(player1, List.of(card));
-        harness.addMana(player1, ManaColor.BLUE, 3);
-        harness.castInstant(player1, 0, (UUID) null);
+        harness.castFromHand(player1, card, "{2}{U}");
         harness.passBothPriorities();
         harness.passBothPriorities();
     }
