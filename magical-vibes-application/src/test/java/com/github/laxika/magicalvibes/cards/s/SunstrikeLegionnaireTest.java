@@ -139,6 +139,77 @@ class SunstrikeLegionnaireTest extends BaseCardTest {
                 .hasMessageContaining("creature with mana value 3 or less");
     }
 
+    @Test
+    @DisplayName("Untap waits for the creature-entry trigger to resolve")
+    void untapWaitsForTriggerResolution() {
+        Permanent legionnaire = addReadyLegionnaire(player1);
+        legionnaire.tap();
+
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+        harness.passBothPriorities();
+
+        assertThat(legionnaire.isTapped()).isTrue();
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+
+        assertThat(legionnaire.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Another Sunstrike Legionnaire triggers the existing Legionnaire")
+    void anotherLegionnaireTriggersUntap() {
+        Permanent legionnaire = addReadyLegionnaire(player1);
+        legionnaire.tap();
+
+        harness.castFromHand(player1, new SunstrikeLegionnaire(), "{1}{W}");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(legionnaire.isTapped()).isTrue();
+
+        resolveAllTriggers();
+
+        assertThat(legionnaire.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Untapping a newly cast Legionnaire does not remove summoning sickness")
+    void triggeredUntapDoesNotRemoveSummoningSickness() {
+        harness.castFromHand(player1, new SunstrikeLegionnaire(), "{1}{W}");
+        resolveAllTriggers();
+        Permanent legionnaire = findPermanent(player1, "Sunstrike Legionnaire");
+        legionnaire.tap();
+
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+        resolveAllTriggers();
+        Permanent target = findPermanent(player1, "Grizzly Bears");
+
+        assertThat(legionnaire.isTapped()).isFalse();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An already tapped creature remains a legal target")
+    void canTargetAlreadyTappedCreature() {
+        Permanent legionnaire = addReadyLegionnaire(player1);
+        Permanent target = addCreatureReady(player2, new BenalishKnight());
+        target.tap();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        assertThat(legionnaire.isTapped()).isTrue();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addReadyLegionnaire(Player player) {
         return addCreatureReady(player, new SunstrikeLegionnaire());
     }
