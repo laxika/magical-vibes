@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.ClawsOfGix;
+import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -21,7 +22,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TollsOfWar.class, GrizzlyBears.class})
+@CardUsed({TollsOfWar.class, Plains.class})
 class TollsOfWarTest extends BaseCardTest {
 
     @Test
@@ -38,11 +39,10 @@ class TollsOfWarTest extends BaseCardTest {
     void createsAllyOnSacrificeDuringYourTurn() {
         harness.addToBattlefield(player1, new TollsOfWar());
         addClueToken(player1);
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Plains()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, permanentIndex(player1, "Clue"), null, null);
-        harness.passBothPriorities();
         resolveAllTriggers();
 
         Permanent ally = findPermanents(player1, "Ally").getFirst();
@@ -58,14 +58,12 @@ class TollsOfWarTest extends BaseCardTest {
         harness.addToBattlefield(player1, new TollsOfWar());
         addClueToken(player1);
         addClueToken(player1);
-        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Plains(), new Plains()));
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.activateAbility(player1, permanentIndex(player1, "Clue"), null, null);
-        harness.passBothPriorities();
         resolveAllTriggers();
         harness.activateAbility(player1, permanentIndex(player1, "Clue"), null, null);
-        harness.passBothPriorities();
         resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Ally")).hasSize(1);
@@ -76,7 +74,7 @@ class TollsOfWarTest extends BaseCardTest {
     void doesNotTriggerDuringAnotherPlayersTurn() {
         harness.addToBattlefield(player1, new TollsOfWar());
         addClueToken(player1);
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Plains()));
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -84,10 +82,113 @@ class TollsOfWarTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, permanentIndex(player1, "Clue"), null, null);
-        harness.passBothPriorities();
         resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Ally")).isEmpty();
+    }
+
+    @Test
+    void generatedClueCanBeSacrificedToDrawAndCreateAnAlly() {
+        harness.enterBattlefieldAndReturn(player1, new TollsOfWar());
+        resolveAllTriggers();
+        Plains drawnCard = new Plains();
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, permanentIndex(player1, "Clue"), null, null);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Clue")).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).contains(drawnCard);
+        assertThat(findPermanents(player1, "Ally")).hasSize(1);
+    }
+
+    @Test
+    void opponentsSacrificeDoesNotTriggerYourEnchantment() {
+        harness.addToBattlefield(player1, new TollsOfWar());
+        harness.enterBattlefieldAndReturn(player2, new TollsOfWar());
+        resolveAllTriggers();
+        harness.setLibrary(player2, List.of(new Plains()));
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.passPriority(player1);
+
+        harness.activateAbility(player2, permanentIndex(player2, "Clue"), null, null);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Ally")).isEmpty();
+        assertThat(findPermanents(player2, "Ally")).isEmpty();
+    }
+
+    @Test
+    void eachCopyTriggersIndependently() {
+        harness.enterBattlefieldAndReturn(player1, new TollsOfWar());
+        harness.enterBattlefieldAndReturn(player1, new TollsOfWar());
+        resolveAllTriggers();
+        harness.setLibrary(player1, List.of(new Plains(), new Plains()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, permanentIndex(player1, "Clue"), null, null);
+        resolveAllTriggers();
+        assertThat(findPermanents(player1, "Ally")).hasSize(2);
+
+        harness.activateAbility(player1, permanentIndex(player1, "Clue"), null, null);
+        resolveAllTriggers();
+        assertThat(findPermanents(player1, "Ally")).hasSize(2);
+    }
+
+    @Test
+    @CardUsed(ClawsOfGix.class)
+    void sacrificingTheEnchantmentTriggersItsOwnAbility() {
+        harness.addToBattlefield(player1, new ClawsOfGix());
+        Permanent tolls = harness.addToBattlefieldAndReturn(player1, new TollsOfWar());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, tolls.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Tolls of War");
+        assertThat(findPermanents(player1, "Ally")).hasSize(1);
+    }
+
+    @Test
+    void canTriggerAgainOnYourNextTurn() {
+        harness.enterBattlefieldAndReturn(player1, new TollsOfWar());
+        resolveAllTriggers();
+        addClueToken(player1);
+        harness.setLibrary(player1, List.of(new Plains(), new Plains(), new Plains()));
+        harness.setLibrary(player2, List.of(new Plains(), new Plains()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, permanentIndex(player1, "Clue"), null, null);
+        resolveAllTriggers();
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, permanentIndex(player1, "Clue"), null, null);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Ally")).hasSize(2);
+    }
+
+    @Test
+    @CardUsed(ClawsOfGix.class)
+    void sacrificingTheEnchantmentAfterItTriggeredDoesNotTriggerAgain() {
+        harness.addToBattlefield(player1, new ClawsOfGix());
+        Permanent tolls = harness.enterBattlefieldAndReturn(player1, new TollsOfWar());
+        resolveAllTriggers();
+        harness.setLibrary(player1, List.of(new Plains()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, permanentIndex(player1, "Clue"), null, null);
+        resolveAllTriggers();
+        assertThat(findPermanents(player1, "Ally")).hasSize(1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, tolls.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Tolls of War");
+        assertThat(findPermanents(player1, "Ally")).hasSize(1);
     }
 
     private int permanentIndex(Player player, String name) {
@@ -113,8 +214,7 @@ class TollsOfWarTest extends BaseCardTest {
                 List.of(new SacrificeSelfCost(), new DrawCardEffect()),
                 "{2}, Sacrifice this token: Draw a card."
         ));
-        Permanent clue = new Permanent(clueCard);
+        Permanent clue = harness.addToBattlefieldAndReturn(player, clueCard);
         clue.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(clue);
     }
 }
