@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.c.Cancel;
+import com.github.laxika.magicalvibes.cards.c.ChaliceOfTheVoid;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MindStone;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -14,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TheFrightfulFour.class, GrizzlyBears.class, MindStone.class})
+@CardUsed({TheFrightfulFour.class, GrizzlyBears.class, MindStone.class, Cancel.class, ChaliceOfTheVoid.class})
 class TheFrightfulFourTest extends BaseCardTest {
 
     @Test
@@ -27,9 +29,7 @@ class TheFrightfulFourTest extends BaseCardTest {
 
         harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
             harness.castArtifact(player2, 0);
-            while (!gd.stack.isEmpty()) {
-                harness.passBothPriorities();
-            }
+            resolveAllTriggers();
         });
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
 
@@ -88,8 +88,84 @@ class TheFrightfulFourTest extends BaseCardTest {
         harness.setHand(player, List.of(new MindStone()));
         harness.addMana(player, ManaColor.COLORLESS, 2);
         prepareCast(player);
-        harness.castArtifact(player, 0);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
+            harness.castArtifact(player, 0);
+            resolveAllTriggers();
+        });
+    }
+
+    @Test
+    @DisplayName("A noncreature spell cast before the source enters still counts as the first spell")
+    void countsSpellsCastBeforeEntering() {
+        castMindStone(player2);
+        harness.addToBattlefield(player1, new TheFrightfulFour());
+
+        castMindStone(player2);
+
+        harness.assertLife(player2, 20);
+        assertThat(countPermanents(player2, "Mind Stone")).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Life loss resolves before the triggering artifact spell")
+    void losesLifeBeforeSpellResolves() {
+        harness.addToBattlefield(player1, new TheFrightfulFour());
+        harness.setHand(player2, List.of(new MindStone()));
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        prepareCast(player2);
+
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
+            harness.castArtifact(player2, 0);
+            harness.assertLife(player2, 20);
+            harness.passBothPriorities();
+            harness.assertLife(player2, 18);
+            harness.assertLife(player1, 20);
+            harness.assertNotOnBattlefield(player2, "Mind Stone");
+            resolveAllTriggers();
+        });
+
+        harness.assertOnBattlefield(player2, "Mind Stone");
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Countering the first noncreature spell does not prevent its life loss")
+    void usesManaValueOfCounteredSpell() {
+        harness.addToBattlefield(player1, new TheFrightfulFour());
+        MindStone spell = new MindStone();
+        harness.setHand(player2, List.of(spell));
+        harness.setHand(player1, List.of(new Cancel()));
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        prepareCast(player2);
+
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
+            harness.castArtifact(player2, 0);
+            harness.castInstant(player1, 0, spell.getId());
+            harness.passBothPriorities();
+            harness.assertInGraveyard(player2, "Mind Stone");
+            resolveAllTriggers();
+        });
+
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Every X symbol contributes to the triggering spell's mana value")
+    void countsBothXSymbols() {
+        harness.addToBattlefield(player1, new TheFrightfulFour());
+        harness.setHand(player2, List.of(new ChaliceOfTheVoid()));
+        harness.addMana(player2, ManaColor.COLORLESS, 6);
+        prepareCast(player2);
+
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
+            harness.castArtifact(player2, 0, 3);
+            resolveAllTriggers();
+        });
+
+        harness.assertLife(player2, 14);
     }
 
     private void prepareCast(Player player) {
@@ -102,9 +178,6 @@ class TheFrightfulFourTest extends BaseCardTest {
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.UPKEEP);
     }
 }
