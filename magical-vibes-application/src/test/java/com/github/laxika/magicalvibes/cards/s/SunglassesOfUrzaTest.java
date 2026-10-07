@@ -30,8 +30,7 @@ class SunglassesOfUrzaTest extends BaseCardTest {
         harness.setHand(player1, List.of(new LightningBolt()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castInstant(player1, 0, bearsId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bearsId);
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(p -> p.getId().equals(bearsId));
@@ -118,5 +117,49 @@ class SunglassesOfUrzaTest extends BaseCardTest {
 
         assertThat(harness.getGameActionAvailabilityService()
                 .isCardPlayable(gd, player2.getId(), lightningBolt, pool, 0)).isFalse();
+    }
+
+    @Test
+    @DisplayName("White mana can pay multiple red symbols and generic mana in the same cost")
+    void castsCreatureWithMultipleRedSymbolsUsingWhite() {
+        harness.addToBattlefield(player1, new SunglassesOfUrza());
+        harness.setHand(player1, List.of(new DragonWhelp()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Dragon Whelp");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Sunglasses does not allow white mana to pay green costs")
+    void cannotPayGreenCostWithWhite() {
+        harness.addToBattlefield(player1, new SunglassesOfUrza());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("The permission ends when Sunglasses leaves the battlefield")
+    void cannotSpendWhiteAsRedAfterSunglassesLeaves() {
+        Permanent sunglasses = harness.addToBattlefieldAndReturn(player1, new SunglassesOfUrza());
+        Permanent dragonWhelp = addCreatureReady(player1, new DragonWhelp());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, sunglasses));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        assertThat(dragonWhelp.getEffectivePower()).isEqualTo(3);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
     }
 }
