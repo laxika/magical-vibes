@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SplendidAgony.class, HillGiant.class, FountainOfYouth.class})
 class SplendidAgonyTest extends BaseCardTest {
 
     @Test
@@ -23,8 +25,7 @@ class SplendidAgonyTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SplendidAgony()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castInstant(player1, 0, List.of(giant.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, List.of(giant.getId()));
 
         // Hill Giant (3/3) with two -1/-1 counters → 1/1.
         assertThat(giant.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
@@ -40,8 +41,7 @@ class SplendidAgonyTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SplendidAgony()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castInstant(player1, 0, List.of(giant1.getId(), giant2.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, List.of(giant1.getId(), giant2.getId()));
 
         // Each Hill Giant (3/3) with one -1/-1 counter → 2/2.
         assertThat(giant1.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
@@ -63,5 +63,42 @@ class SplendidAgonyTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of(artifact.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Does not redistribute the counter assigned to a target that leaves the battlefield")
+    void doesNotRedistributeCounterFromMissingTarget() {
+        Permanent missing = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        Permanent surviving = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.setHand(player1, List.of(new SplendidAgony()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castInstant(player1, 0, List.of(missing.getId(), surviving.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(missing);
+        gd.playerGraveyards.get(player2.getId()).add(missing.getCard());
+        harness.passBothPriorities();
+
+        assertThat(surviving.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(surviving.getEffectivePower()).isEqualTo(2);
+        assertThat(surviving.getEffectiveToughness()).isEqualTo(2);
+        assertThat(missing.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        harness.assertInGraveyard(player1, "Splendid Agony");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can distribute counters between creatures controlled by different players")
+    void canTargetCreaturesControlledByBothPlayers() {
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        Permanent opposing = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.setHand(player1, List.of(new SplendidAgony()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveInstant(player1, 0, List.of(own.getId(), opposing.getId()));
+
+        assertThat(own.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(opposing.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(own.getEffectiveToughness()).isEqualTo(2);
+        assertThat(opposing.getEffectiveToughness()).isEqualTo(2);
     }
 }
