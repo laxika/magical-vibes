@@ -44,6 +44,48 @@ class SymbolOfUnsummoningTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can return your own creature and draws exactly one card")
+    void returnsOwnCreatureAndDrawsExactlyOne() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
+        harness.setHand(player1, List.of(new SymbolOfUnsummoning()));
+        harness.setLibrary(player1, List.of(new Island(), new Forest()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveSorcery(player1, 0, targetId);
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Island");
+        harness.assertNotInHand(player1, "Forest");
+        assertThat(harness.getGameData().playerDecks.get(player1.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Symbol of Unsummoning");
+    }
+
+    @Test
+    @DisplayName("A stolen creature returns to its owner while the caster draws")
+    void stolenCreatureReturnsToOwner() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.getGameData().stolenCreatures.put(targetId, player1.getId());
+        harness.setHand(player1, List.of(new SymbolOfUnsummoning()));
+        harness.setLibrary(player1, List.of(new Island()));
+        harness.setLibrary(player2, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveSorcery(player1, 0, targetId);
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertNotInHand(player2, "Grizzly Bears");
+        harness.assertInHand(player1, "Island");
+        harness.assertNotInHand(player2, "Forest");
+        assertThat(harness.getGameData().playerDecks.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
     @DisplayName("Cannot target a land")
     void cannotTargetLand() {
         harness.addToBattlefield(player2, new Forest());
