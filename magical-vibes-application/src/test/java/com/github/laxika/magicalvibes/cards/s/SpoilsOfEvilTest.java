@@ -108,6 +108,40 @@ class SpoilsOfEvilTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Matching cards removed before resolution produce no mana or life")
+    void removedCardsAreNotCounted() {
+        harness.setLife(player1, 20);
+        harness.setGraveyard(player2, List.of(new BalduvianBears(), new ZuranOrb()));
+        setUpSpoilsOfEvilCast();
+        harness.castInstant(player1, 0, player2.getId());
+        harness.setGraveyard(player2, List.of());
+
+        harness.passBothPriorities();
+
+        assertThat(colorlessInPool()).isEqualTo(0);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Counting graveyard cards leaves them in the graveyard and benefits only the caster")
+    void leavesCountedCardsInGraveyard() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        BalduvianBears creature = new BalduvianBears();
+        ZuranOrb artifact = new ZuranOrb();
+        harness.setGraveyard(player2, List.of(creature, artifact));
+
+        castSpoilsOfEvil();
+
+        assertThat(colorlessInPool()).isEqualTo(2);
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(creature, artifact);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
     @DisplayName("Cannot target yourself")
     void cannotTargetSelf() {
         setUpSpoilsOfEvilCast();
