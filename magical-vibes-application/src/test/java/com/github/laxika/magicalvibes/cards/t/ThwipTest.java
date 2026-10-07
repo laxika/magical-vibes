@@ -72,10 +72,43 @@ class ThwipTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    @DisplayName("Targeting an opponent's Spider gains life for the spell's controller")
+    void opponentsSpiderGainsLifeForCaster() {
+        Permanent spider = harness.addToBattlefieldAndReturn(player2, new GiantSpider());
+        int casterLife = gd.getLife(player1.getId());
+        int opponentLife = gd.getLife(player2.getId());
+
+        cast(spider);
+
+        assertThat(spider.getEffectivePower()).isEqualTo(4);
+        assertThat(spider.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gqs.hasKeyword(gd, spider, Keyword.FLYING)).isTrue();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(casterLife + 2);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(opponentLife);
+    }
+
+    @Test
+    @DisplayName("Does not gain life when the Spider target leaves before resolution")
+    void missingSpiderTargetDoesNotGainLife() {
+        Permanent spider = harness.addToBattlefieldAndReturn(player1, new GiantSpider());
+        int lifeBefore = gd.getLife(player1.getId());
+        harness.setHand(player1, List.of(new Thwip()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castInstant(player1, 0, spider.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(spider);
+        gd.playerGraveyards.get(player1.getId()).add(spider.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore);
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Thwip!");
+    }
+
     private void cast(Permanent target) {
         harness.setHand(player1, List.of(new Thwip()));
         harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 }
