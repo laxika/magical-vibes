@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,14 +11,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TheGaffer.class, GrizzlyBears.class})
+@CardUsed({TheGaffer.class})
 class TheGafferTest extends BaseCardTest {
 
     private void advanceToEndStep(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.END_STEP);
     }
 
     @Test
@@ -27,7 +25,7 @@ class TheGafferTest extends BaseCardTest {
     void drawsAfterGainingAtLeastThreeLife() {
         harness.addToBattlefield(player1, new TheGaffer());
         harness.setHand(player1, List.of());
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new TheGaffer()));
         gd.lifeGainedThisTurn.put(player1.getId(), 3);
 
         advanceToEndStep(player1);
@@ -41,7 +39,7 @@ class TheGafferTest extends BaseCardTest {
     void doesNotDrawBelowLifeThreshold() {
         harness.addToBattlefield(player1, new TheGaffer());
         harness.setHand(player1, List.of());
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new TheGaffer()));
         gd.lifeGainedThisTurn.put(player1.getId(), 2);
 
         advanceToEndStep(player1);
@@ -56,10 +54,68 @@ class TheGafferTest extends BaseCardTest {
     void drawsOnOpponentEndStep() {
         harness.addToBattlefield(player1, new TheGaffer());
         harness.setHand(player1, List.of());
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new TheGaffer()));
         gd.lifeGainedThisTurn.put(player1.getId(), 3);
 
         advanceToEndStep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void drawsOnlyOneCardAfterGainingMoreThanThreeLife() {
+        harness.addToBattlefield(player1, new TheGaffer());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new TheGaffer(), new TheGaffer()));
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 9));
+
+        advanceToEndStep(player1);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void opponentsLifeGainDoesNotTriggerDraw() {
+        harness.addToBattlefield(player1, new TheGaffer());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new TheGaffer()));
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player2.getId(), 3));
+
+        advanceToEndStep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void lifeGainedAfterEndStepBeginsDoesNotTriggerDraw() {
+        harness.addToBattlefield(player1, new TheGaffer());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new TheGaffer()));
+
+        advanceToEndStep(player1);
+        harness.inMutationScope(() -> harness.getLifeSupport().applyGainLife(gd, player1.getId(), 3));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void separateLifeGainsCountEvenAfterLosingLife() {
+        harness.addToBattlefield(player1, new TheGaffer());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new TheGaffer()));
+        harness.inMutationScope(() -> {
+            harness.getLifeSupport().applyGainLife(gd, player1.getId(), 1);
+            harness.getLifeSupport().applyLifeLoss(gd, player1.getId(), 5, "life loss");
+            harness.getLifeSupport().applyGainLife(gd, player1.getId(), 2);
+        });
+
+        advanceToEndStep(player1);
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
