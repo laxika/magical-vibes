@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.f.FangOfShigeki;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.n.NicolBolasPlaneswalker;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SpinningWheelKick.class, HillGiant.class, GrizzlyBears.class, NicolBolasPlaneswalker.class})
+@CardUsed({SpinningWheelKick.class, HillGiant.class, GrizzlyBears.class, NicolBolasPlaneswalker.class, FangOfShigeki.class})
 class SpinningWheelKickTest extends BaseCardTest {
 
     @Test
@@ -76,5 +77,157 @@ class SpinningWheelKickTest extends BaseCardTest {
                 player1, 0, 1, List.of(source.getId(), player2.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("cannot target players");
+    }
+
+    @Test
+    void requiresExactlyXDamageTargets() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SpinningWheelKick()));
+        harness.addMana(player1, ManaColor.GREEN, 6);
+
+        assertThatThrownBy(() -> harness.castSorcery(
+                player1, 0, 2, List.of(source.getId(), target.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void damageTargetsMustBeDistinctWithinTheirGroup() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SpinningWheelKick()));
+        harness.addMana(player1, ManaColor.GREEN, 6);
+
+        assertThatThrownBy(() -> harness.castSorcery(
+                player1, 0, 2, List.of(source.getId(), target.getId(), target.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void zeroXStillTargetsTheSourceButDealsNoDamage() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        harness.setHand(player1, List.of(new SpinningWheelKick()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castSorcery(player1, 0, 0, List.of(source.getId()));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Hill Giant");
+        harness.assertInGraveyard(player1, "Spinning Wheel Kick");
+        assertThat(source.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void bothXSymbolsMustBePaid() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent otherTarget = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.setHand(player1, List.of(new SpinningWheelKick()));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+
+        assertThatThrownBy(() -> harness.castSorcery(
+                player1, 0, 2, List.of(source.getId(), target.getId(), otherTarget.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void usesSourcePowerAtResolution() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.setHand(player1, List.of(new SpinningWheelKick()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castSorcery(player1, 0, 1, List.of(source.getId(), target.getId()));
+        source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Hill Giant");
+        assertThat(source.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void removedSourceDealsNoDamageEvenWithLegalVictim() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SpinningWheelKick()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castSorcery(player1, 0, 1, List.of(source.getId(), target.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        gd.playerGraveyards.get(player1.getId()).add(source.getCard());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player1, "Spinning Wheel Kick");
+    }
+
+    @Test
+    void sourceNoLongerControlledByCasterDealsNoDamage() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SpinningWheelKick()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castSorcery(player1, 0, 1, List.of(source.getId(), target.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        gd.playerBattlefields.get(player2.getId()).add(source);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(target.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void remainingLegalVictimStillTakesDamage() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        Permanent removedTarget = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent remainingTarget = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.setHand(player1, List.of(new SpinningWheelKick()));
+        harness.addMana(player1, ManaColor.GREEN, 6);
+
+        harness.castSorcery(player1, 0, 2,
+                List.of(source.getId(), removedTarget.getId(), remainingTarget.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(removedTarget);
+        gd.playerHands.get(player2.getId()).add(removedTarget.getCard());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Hill Giant");
+        harness.assertOnBattlefield(player1, "Hill Giant");
+        assertThat(removedTarget.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void lethalDamageToSourceDoesNotStopDamageToOtherVictims() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SpinningWheelKick()));
+        harness.addMana(player1, ManaColor.GREEN, 6);
+
+        harness.castSorcery(player1, 0, 2,
+                List.of(source.getId(), source.getId(), target.getId()));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Hill Giant");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void damageUsesTheChosenCreaturesDeathtouch() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new FangOfShigeki());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        Permanent otherTarget = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SpinningWheelKick()));
+        harness.addMana(player1, ManaColor.GREEN, 6);
+
+        harness.castSorcery(player1, 0, 2,
+                List.of(source.getId(), target.getId(), otherTarget.getId()));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Hill Giant");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Fang of Shigeki");
+        assertThat(source.getMarkedDamage()).isZero();
     }
 }
