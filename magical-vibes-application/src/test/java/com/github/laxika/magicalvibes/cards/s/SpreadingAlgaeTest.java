@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.a.AuraGraft;
 import com.github.laxika.magicalvibes.cards.e.ElvishLyrist;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SpreadingAlgae.class, ElvishLyrist.class, Forest.class, Swamp.class})
+@CardUsed({SpreadingAlgae.class, ElvishLyrist.class, Forest.class, Swamp.class, AuraGraft.class})
 class SpreadingAlgaeTest extends BaseCardTest {
 
     // ===== Casting and targeting =====
@@ -55,8 +56,7 @@ class SpreadingAlgaeTest extends BaseCardTest {
     @DisplayName("Cannot cast Spreading Algae targeting a non-Swamp permanent")
     void cannotTargetNonSwamp() {
         harness.addToBattlefield(player1, new Swamp()); // valid target so spell is playable
-        harness.addToBattlefield(player1, new Forest());
-        Permanent forest = findPermanent(player1, "Forest");
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
         harness.setHand(player1, List.of(new SpreadingAlgae()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.forceActivePlayer(player1);
@@ -170,5 +170,67 @@ class SpreadingAlgaeTest extends BaseCardTest {
         aura.setAttachedTo(swamp.getId());
 
         return swamp;
+    }
+
+    @Test
+    void attachingToAlreadyTappedSwampDoesNotDestroyIt() {
+        Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
+        harness.tapPermanent(player1, 0);
+        harness.setHand(player1, List.of(new SpreadingAlgae()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castEnchantment(player1, 0, swamp.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Swamp");
+        assertThat(findPermanent(player1, "Spreading Algae").getAttachedTo()).isEqualTo(swamp.getId());
+    }
+
+    @Test
+    void destroyingAuraReturnsItWithoutDestroyingLand() {
+        addSwampWithAura();
+        Permanent aura = findPermanent(player1, "Spreading Algae");
+        addCreatureReady(player1, new ElvishLyrist());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.activateAbility(player1, 2, null, aura.getId());
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Swamp");
+        harness.assertInHand(player1, "Spreading Algae");
+        harness.assertNotInGraveyard(player1, "Spreading Algae");
+    }
+
+    @Test
+    @CardUsed(AuraGraft.class)
+    void movingAuraDoesNotChangeLandDestroyedByPendingTrigger() {
+        Permanent originalSwamp = addSwampWithAura();
+        Permanent aura = findPermanent(player1, "Spreading Algae");
+        Permanent otherSwamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
+        harness.setHand(player1, List.of(new AuraGraft()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.tapPermanent(player1, 0);
+        harness.castAndResolveInstant(player1, 0, aura.getId());
+        harness.handlePermanentChosen(player1, otherSwamp.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(originalSwamp).contains(otherSwamp, aura);
+    }
+
+    @Test
+    @CardUsed(AuraGraft.class)
+    void stolenAuraReturnsToOwnersHand() {
+        addSwampWithAura();
+        Permanent aura = findPermanent(player1, "Spreading Algae");
+        Permanent otherSwamp = harness.addToBattlefieldAndReturn(player2, new Swamp());
+        harness.setHand(player2, List.of(new AuraGraft()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player2, 0, aura.getId());
+        harness.handlePermanentChosen(player2, otherSwamp.getId());
+        harness.tapPermanent(player2, 0);
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Spreading Algae");
+        harness.assertNotInHand(player2, "Spreading Algae");
+        harness.assertNotInGraveyard(player1, "Spreading Algae");
     }
 }
