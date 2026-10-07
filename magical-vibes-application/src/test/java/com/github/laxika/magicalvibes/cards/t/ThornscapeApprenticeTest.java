@@ -40,7 +40,6 @@ class ThornscapeApprenticeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isFalse();
@@ -91,6 +90,65 @@ class ThornscapeApprenticeTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Red ability can grant first strike to the Apprentice itself")
+    void redAbilityCanTargetItself() {
+        Permanent apprentice = addReadyApprentice();
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, 0, null, apprentice.getId());
+        harness.passBothPriorities();
+
+        assertThat(apprentice.isTapped()).isTrue();
+        assertThat(gqs.hasKeyword(gd, apprentice, Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("White ability can target the Apprentice even though its tap cost taps it")
+    void whiteAbilityCanTargetItself() {
+        Permanent apprentice = addReadyApprentice();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, 1, null, apprentice.getId());
+        harness.passBothPriorities();
+
+        assertThat(apprentice.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("White ability can target an already tapped creature")
+    void whiteAbilityCanTargetTappedCreature() {
+        Permanent apprentice = addReadyApprentice();
+        Permanent target = addCreatureReady(player2, new ThornscapeMaster());
+        target.setTapped(true);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(apprentice.isTapped()).isTrue();
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Summoning sickness prevents both tap abilities")
+    void summoningSicknessPreventsBothAbilities() {
+        Permanent apprentice = harness.addToBattlefieldAndReturn(player1, new ThornscapeApprentice());
+        Permanent target = addCreatureReady(player2, new ThornscapeMaster());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(apprentice.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
     private Permanent addReadyApprentice() {
         return addCreatureReady(player1, new ThornscapeApprentice());
     }
