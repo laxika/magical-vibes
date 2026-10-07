@@ -2,31 +2,30 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LilianaVess;
+import com.github.laxika.magicalvibes.cards.b.BalothGorger;
+import com.github.laxika.magicalvibes.cards.k.KarnScionOfUrza;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({TheEldestReborn.class, BalothGorger.class, KarnScionOfUrza.class})
 class TheEldestRebornTest extends BaseCardTest {
-
-    // ===== ETB: first lore counter and chapter I triggers =====
 
     @Test
     @DisplayName("Casting The Eldest Reborn adds a lore counter and triggers chapter I")
     void castingAddsLoreCounterAndTriggersChapterI() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new BalothGorger());
         harness.setHand(player1, List.of(new TheEldestReborn()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
@@ -48,12 +47,10 @@ class TheEldestRebornTest extends BaseCardTest {
         assertThat(gd.stack.getFirst().getDescription()).contains("chapter I");
     }
 
-    // ===== Chapter I: each opponent sacrifices a creature or planeswalker =====
-
     @Test
     @DisplayName("Chapter I forces opponent to sacrifice their only creature")
     void chapterIForcesOpponentToSacrificeOnlyCreature() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new BalothGorger());
         harness.setHand(player1, List.of(new TheEldestReborn()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
@@ -62,14 +59,14 @@ class TheEldestRebornTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve enchantment → chapter I triggers
         harness.passBothPriorities(); // resolve chapter I
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Baloth Gorger");
+        harness.assertInGraveyard(player2, "Baloth Gorger");
     }
 
     @Test
     @DisplayName("Chapter I forces opponent to sacrifice a planeswalker when they have no creatures")
     void chapterIForcesOpponentToSacrificePlaneswalker() {
-        harness.addToBattlefield(player2, new LilianaVess());
+        harness.addToBattlefield(player2, new KarnScionOfUrza());
         harness.setHand(player1, List.of(new TheEldestReborn()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
@@ -78,8 +75,8 @@ class TheEldestRebornTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve enchantment → chapter I triggers
         harness.passBothPriorities(); // resolve chapter I
 
-        harness.assertNotOnBattlefield(player2, "Liliana Vess");
-        harness.assertInGraveyard(player2, "Liliana Vess");
+        harness.assertNotOnBattlefield(player2, "Karn, Scion of Urza");
+        harness.assertInGraveyard(player2, "Karn, Scion of Urza");
     }
 
     @Test
@@ -103,8 +100,8 @@ class TheEldestRebornTest extends BaseCardTest {
     @Test
     @DisplayName("Chapter I does not affect controller's permanents")
     void chapterIDoesNotAffectController() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new BalothGorger());
+        harness.addToBattlefield(player2, new BalothGorger());
         harness.setHand(player1, List.of(new TheEldestReborn()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
@@ -114,24 +111,18 @@ class TheEldestRebornTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve chapter I
 
         // Controller's creature should still be there
-        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Baloth Gorger");
         // Opponent's creature should be gone
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Baloth Gorger");
     }
-
-    // ===== Chapter II: each opponent discards a card =====
 
     @Test
     @DisplayName("Chapter II forces opponent to discard a card")
     void chapterIIForcesOpponentToDiscard() {
-        harness.addToBattlefield(player1, new TheEldestReborn());
-        Permanent saga = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("The Eldest Reborn"))
-                .findFirst().orElse(null);
-        assertThat(saga).isNotNull();
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new TheEldestReborn());
         saga.setCounterCount(CounterType.LORE, 1);
 
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears())));
+        harness.setHand(player2, List.of(new BalothGorger()));
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
@@ -145,28 +136,22 @@ class TheEldestRebornTest extends BaseCardTest {
 
         harness.passBothPriorities(); // resolve chapter II
 
-        gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId()).isEqualTo(player2.getId());
 
         harness.handleCardChosen(player2, 0);
 
-        gd = harness.getGameData();
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Baloth Gorger");
     }
 
     @Test
     @DisplayName("Chapter II does nothing when opponent has no cards in hand")
     void chapterIIDoesNothingWithEmptyHand() {
-        harness.addToBattlefield(player1, new TheEldestReborn());
-        Permanent saga = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("The Eldest Reborn"))
-                .findFirst().orElse(null);
-        assertThat(saga).isNotNull();
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new TheEldestReborn());
         saga.setCounterCount(CounterType.LORE, 1);
 
-        harness.setHand(player2, new ArrayList<>());
+        harness.setHand(player2, List.of());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
@@ -179,79 +164,60 @@ class TheEldestRebornTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
     }
 
-    // ===== Chapter III: return creature or planeswalker from graveyard =====
-
     @Test
     @DisplayName("Chapter III returns a creature from own graveyard to battlefield")
     void chapterIIIReturnsCreatureFromOwnGraveyard() {
-        harness.addToBattlefield(player1, new TheEldestReborn());
-        Permanent saga = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("The Eldest Reborn"))
-                .findFirst().orElse(null);
-        assertThat(saga).isNotNull();
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new TheEldestReborn());
         saga.setCounterCount(CounterType.LORE, 2);
 
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        BalothGorger creature = new BalothGorger();
+        harness.setGraveyard(player1, List.of(creature));
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
         harness.clearPriorityPassed();
         harness.passBothPriorities(); // advance to precombat main → chapter III triggers
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds())
+                .containsExactly(creature.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
         harness.passBothPriorities(); // resolve chapter III
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
-
-        harness.handleGraveyardCardChosen(player1, 0);
-
-        gd = harness.getGameData();
-        harness.assertOnBattlefield(player1, "Grizzly Bears");
-        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Baloth Gorger");
+        harness.assertNotInGraveyard(player1, "Baloth Gorger");
     }
 
     @Test
     @DisplayName("Chapter III returns a creature from opponent's graveyard under your control")
     void chapterIIIReturnsCreatureFromOpponentGraveyard() {
-        harness.addToBattlefield(player1, new TheEldestReborn());
-        Permanent saga = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("The Eldest Reborn"))
-                .findFirst().orElse(null);
-        assertThat(saga).isNotNull();
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new TheEldestReborn());
         saga.setCounterCount(CounterType.LORE, 2);
 
         harness.setGraveyard(player1, List.of());
-        harness.setGraveyard(player2, List.of(new GrizzlyBears()));
+        BalothGorger creature = new BalothGorger();
+        harness.setGraveyard(player2, List.of(creature));
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
         harness.clearPriorityPassed();
         harness.passBothPriorities(); // advance to precombat main → chapter III triggers
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds())
+                .containsExactly(creature.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
         harness.passBothPriorities(); // resolve chapter III
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
-
-        harness.handleGraveyardCardChosen(player1, 0);
-
-        gd = harness.getGameData();
         // Should be on player1's battlefield (under your control)
-        harness.assertOnBattlefield(player1, "Grizzly Bears");
-        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Baloth Gorger");
+        harness.assertNotInGraveyard(player2, "Baloth Gorger");
     }
-
-    // ===== Saga lifecycle =====
 
     @Test
     @DisplayName("Saga is sacrificed after chapter III resolves")
     void sagaSacrificedAfterChapterIII() {
-        harness.addToBattlefield(player1, new TheEldestReborn());
-        Permanent saga = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("The Eldest Reborn"))
-                .findFirst().orElse(null);
-        assertThat(saga).isNotNull();
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new TheEldestReborn());
         saga.setCounterCount(CounterType.LORE, 2);
 
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        BalothGorger creature = new BalothGorger();
+        harness.setGraveyard(player1, List.of(creature));
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
@@ -261,15 +227,11 @@ class TheEldestRebornTest extends BaseCardTest {
         // Chapter III on stack — saga should still be on battlefield
         harness.assertOnBattlefield(player1, "The Eldest Reborn");
 
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds())
+                .containsExactly(creature.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
         harness.passBothPriorities(); // resolve chapter III
-
-        GameData gd = harness.getGameData();
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
-
-        harness.handleGraveyardCardChosen(player1, 0);
         harness.runStateBasedActions(); // SBAs sacrifice the saga (lore counters >= final chapter)
-
-        gd = harness.getGameData();
 
         // Saga should be sacrificed
         harness.assertNotOnBattlefield(player1, "The Eldest Reborn");
@@ -280,25 +242,108 @@ class TheEldestRebornTest extends BaseCardTest {
     @Test
     @DisplayName("Saga is not sacrificed while chapter III ability is on the stack")
     void sagaNotSacrificedWhileChapterOnStack() {
-        harness.addToBattlefield(player1, new TheEldestReborn());
-        Permanent saga = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("The Eldest Reborn"))
-                .findFirst().orElse(null);
-        assertThat(saga).isNotNull();
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new TheEldestReborn());
         saga.setCounterCount(CounterType.LORE, 2);
 
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        BalothGorger creature = new BalothGorger();
+        harness.setGraveyard(player1, List.of(creature));
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
         harness.clearPriorityPassed();
         harness.passBothPriorities(); // precombat main → lore counter 3, chapter III triggers
 
-        GameData gd = harness.getGameData();
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
 
         assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(3);
         assertThat(gd.stack).isNotEmpty();
         // Saga should still be on the battlefield
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(saga);
     }
+
+    @Test
+    void chapterILetsOpponentChoosePlaneswalkerInsteadOfCreature() {
+        harness.addToBattlefield(player2, new BalothGorger());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new KarnScionOfUrza());
+        harness.setHand(player1, List.of(new TheEldestReborn()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player2, List.of(planeswalker.getId()));
+        harness.assertOnBattlefield(player2, "Baloth Gorger");
+        harness.assertNotOnBattlefield(player2, "Karn, Scion of Urza");
+        harness.assertInGraveyard(player2, "Karn, Scion of Urza");
+    }
+
+    @Test
+    void chapterIITouchesOnlyOpponentsHandAndLetsThemChoose() {
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new TheEldestReborn());
+        saga.setCounterCount(CounterType.LORE, 1);
+        harness.setHand(player1, List.of(new BalothGorger()));
+        harness.setHand(player2, List.of(new BalothGorger(), new KarnScionOfUrza()));
+        triggerNextChapter();
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 1);
+        harness.assertInHand(player1, "Baloth Gorger");
+        harness.assertInHand(player2, "Baloth Gorger");
+        harness.assertInGraveyard(player2, "Karn, Scion of Urza");
+    }
+
+    @Test
+    void chapterIIITargetsPlaneswalkerFromOpponentsGraveyard() {
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new TheEldestReborn());
+        saga.setCounterCount(CounterType.LORE, 2);
+        KarnScionOfUrza planeswalker = new KarnScionOfUrza();
+        harness.setGraveyard(player2, List.of(new TheEldestReborn(), planeswalker));
+        triggerNextChapter();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds())
+                .containsExactly(planeswalker.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(planeswalker.getId()));
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Karn, Scion of Urza");
+        harness.assertNotOnBattlefield(player2, "Karn, Scion of Urza");
+        harness.assertNotInGraveyard(player2, "Karn, Scion of Urza");
+    }
+
+    @Test
+    void chapterIIIDoesNotChooseAnotherCardIfTargetLeavesGraveyard() {
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new TheEldestReborn());
+        saga.setCounterCount(CounterType.LORE, 2);
+        BalothGorger creature = new BalothGorger();
+        KarnScionOfUrza alternative = new KarnScionOfUrza();
+        harness.setGraveyard(player2, List.of(creature, alternative));
+        triggerNextChapter();
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+        harness.setGraveyard(player2, List.of(alternative));
+        harness.setExile(player2, List.of(creature));
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotOnBattlefield(player1, "Baloth Gorger");
+        harness.assertNotOnBattlefield(player1, "Karn, Scion of Urza");
+        harness.assertInGraveyard(player2, "Karn, Scion of Urza");
+        harness.assertInGraveyard(player1, "The Eldest Reborn");
+    }
+
+    @Test
+    void chapterIIIWithNoLegalTargetDoesNotStayOnStack() {
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new TheEldestReborn());
+        saga.setCounterCount(CounterType.LORE, 2);
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of(new TheEldestReborn()));
+        triggerNextChapter();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotOnBattlefield(player1, "The Eldest Reborn");
+        harness.assertInGraveyard(player1, "The Eldest Reborn");
+    }
+
+    private void triggerNextChapter() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DRAW);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+    }
+
 }
