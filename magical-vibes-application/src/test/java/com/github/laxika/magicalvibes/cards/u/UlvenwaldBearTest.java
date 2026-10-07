@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({UlvenwaldBear.class, GrizzlyBears.class, Shock.class})
 class UlvenwaldBearTest extends BaseCardTest {
 
     @Test
@@ -27,7 +29,6 @@ class UlvenwaldBearTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
@@ -35,9 +36,7 @@ class UlvenwaldBearTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
 
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getId().equals(targetId))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
     }
 
@@ -59,9 +58,7 @@ class UlvenwaldBearTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, targetId); // ETB trigger on stack
         harness.passBothPriorities(); // resolve ETB
 
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getId().equals(targetId))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(bears.getEffectivePower()).isEqualTo(4);
         assertThat(bears.getEffectiveToughness()).isEqualTo(4);
@@ -85,9 +82,7 @@ class UlvenwaldBearTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, targetId); // ETB trigger on stack
         harness.passBothPriorities(); // resolve ETB
 
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getId().equals(targetId))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
@@ -107,8 +102,7 @@ class UlvenwaldBearTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         UUID bears1Id = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castInstant(player1, 0, bears1Id);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bears1Id);
 
         UUID bears2Id = harness.getPermanentId(player2, "Grizzly Bears");
         harness.castCreature(player1, 0);
@@ -116,9 +110,7 @@ class UlvenwaldBearTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bears2Id); // ETB trigger on stack
         harness.passBothPriorities(); // resolve ETB
 
-        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getId().equals(bears2Id))
-                .findFirst().orElseThrow();
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
@@ -160,5 +152,93 @@ class UlvenwaldBearTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Ulvenwald Bear");
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Morbid allows Ulvenwald Bear to target itself")
+    @CardUsed({UlvenwaldBear.class})
+    void canPutCountersOnItself() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new UlvenwaldBear()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        gd.creatureDeathCountThisTurn.merge(player1.getId(), 1, Integer::sum);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        Permanent bear = findPermanent(player1, "Ulvenwald Bear");
+        harness.handlePermanentChosen(player1, bear.getId());
+        harness.passBothPriorities();
+
+        assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A creature dying while the Bear spell is on the stack enables morbid")
+    void deathBeforeSpellResolvesEnablesMorbid() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new UlvenwaldBear(), new Shock()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castCreature(player1, 0);
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Grizzly Bears"));
+        harness.passBothPriorities();
+        Permanent bear = findPermanent(player1, "Ulvenwald Bear");
+        harness.handlePermanentChosen(player1, bear.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The triggered ability still puts counters on its target after the Bear dies")
+    void triggerResolvesAfterSourceDies() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new UlvenwaldBear(), new Shock()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.RED, 1);
+        gd.creatureDeathCountThisTurn.merge(player2.getId(), 1, Integer::sum);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Grizzly Bears"));
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Ulvenwald Bear"));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Ulvenwald Bear");
+        assertThat(findPermanent(player2, "Grizzly Bears").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
+                .isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A creature dying after the Bear enters cannot retroactively trigger morbid")
+    void deathAfterEntryDoesNotTriggerAbility() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new UlvenwaldBear(), new Shock()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        assertThat(gd.stack).isEmpty();
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Grizzly Bears"));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(findPermanent(player1, "Ulvenwald Bear").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
+                .isZero();
     }
 }
