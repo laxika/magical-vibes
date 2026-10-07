@@ -84,6 +84,43 @@ class UnhingeTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Target player chooses the discarded card before the controller draws")
+    void targetChoosesDiscardBeforeDraw() {
+        Card kept = new AvenTrooper();
+        Card discarded = new AvenTrooper();
+        Card drawn = new AvenTrooper();
+        harness.setHand(player1, List.of(new Unhinge()));
+        harness.setHand(player2, List.of(kept, discarded));
+        harness.setLibrary(player1, List.of(drawn));
+        addUnhingeMana();
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(drawn);
+        harness.handleCardChosen(player2, 1);
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(kept);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(discarded);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+    }
+
+    @Test
+    @DisplayName("Targeting self with no cards left after casting still draws")
+    void selfTargetWithEmptyHandStillDraws() {
+        Card spell = new Unhinge();
+        Card drawn = new AvenTrooper();
+        harness.setHand(player1, List.of(spell));
+        harness.setLibrary(player1, List.of(drawn));
+        addUnhingeMana();
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(spell);
+    }
     private void addUnhingeMana() {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
