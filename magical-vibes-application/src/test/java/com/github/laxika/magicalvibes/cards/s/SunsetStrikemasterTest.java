@@ -30,11 +30,10 @@ class SunsetStrikemasterTest extends BaseCardTest {
     @DisplayName("The sacrifice ability deals 6 damage to a creature with flying")
     void sacrificesAndDamagesFlyingCreature() {
         addCreatureReady(player1, new SunsetStrikemaster());
-        addCreatureReady(player2, new AirElemental());
+        Permanent target = addCreatureReady(player2, new AirElemental());
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        Permanent target = gd.playerBattlefields.get(player2.getId()).getFirst();
         harness.activateAbility(player1, 0, 1, null, target.getId());
         harness.passBothPriorities();
 
@@ -54,5 +53,48 @@ class SunsetStrikemasterTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature with flying");
         harness.assertOnBattlefield(player1, "Sunset Strikemaster");
+    }
+
+    @Test
+    @DisplayName("Sacrifice and mana are paid before damage, and your own flyer is a legal target")
+    void paysCostsBeforeDamagingOwnFlyingCreature() {
+        addCreatureReady(player1, new SunsetStrikemaster());
+        Permanent target = addCreatureReady(player1, new AirElemental());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+
+        harness.assertInGraveyard(player1, "Sunset Strikemaster");
+        harness.assertNotOnBattlefield(player1, "Sunset Strikemaster");
+        harness.assertOnBattlefield(player1, "Air Elemental");
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Air Elemental");
+    }
+
+    @Test
+    @DisplayName("Summoning sickness prevents both tap abilities")
+    void summoningSicknessPreventsBothAbilities() {
+        harness.addToBattlefield(player1, new SunsetStrikemaster());
+        Permanent target = addCreatureReady(player2, new AirElemental());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+
+        harness.assertOnBattlefield(player1, "Sunset Strikemaster");
+        harness.assertNotInGraveyard(player1, "Sunset Strikemaster");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
     }
 }
