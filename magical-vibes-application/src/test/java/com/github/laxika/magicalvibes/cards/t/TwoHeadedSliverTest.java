@@ -74,4 +74,51 @@ class TwoHeadedSliverTest extends BaseCardTest {
         assertThat(firstBlocker.isBlocking()).isTrue();
         assertThat(secondBlocker.isBlocking()).isTrue();
     }
+
+    @Test
+    @DisplayName("Slivers on both sides lose granted menace when the source leaves")
+    void menaceEndsWhenSourceLeaves() {
+        Permanent source = addCreatureReady(player1, new TwoHeadedSliver());
+        Permanent ownSliver = addCreatureReady(player1, new BonesplitterSliver());
+        Permanent opponentSliver = addCreatureReady(player2, new BonesplitterSliver());
+
+        assertThat(gqs.hasKeyword(gd, ownSliver, Keyword.MENACE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opponentSliver, Keyword.MENACE)).isTrue();
+
+        harness.getPermanentRemovalService().destroyPermanentToGraveyard(gd, source);
+
+        assertThat(gqs.hasKeyword(gd, ownSliver, Keyword.MENACE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponentSliver, Keyword.MENACE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Another source keeps granting menace after one source leaves")
+    void remainingSourceContinuesGrantingMenace() {
+        Permanent source = addCreatureReady(player1, new TwoHeadedSliver());
+        Permanent remainingSource = addCreatureReady(player2, new TwoHeadedSliver());
+        Permanent sliver = addCreatureReady(player1, new BonesplitterSliver());
+
+        harness.getPermanentRemovalService().destroyPermanentToGraveyard(gd, source);
+
+        assertThat(gqs.hasKeyword(gd, remainingSource, Keyword.MENACE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, sliver, Keyword.MENACE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Multiple Two-Headed Slivers still allow exactly two blockers")
+    void multipleSourcesDoNotIncreaseRequiredBlockers() {
+        addCreatureReady(player1, new TwoHeadedSliver());
+        addCreatureReady(player1, new TwoHeadedSliver());
+        Permanent firstBlocker = addCreatureReady(player2, new AshcoatBear());
+        Permanent secondBlocker = addCreatureReady(player2, new AshcoatBear());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0)));
+
+        assertThat(firstBlocker.isBlocking()).isTrue();
+        assertThat(secondBlocker.isBlocking()).isTrue();
+    }
 }
