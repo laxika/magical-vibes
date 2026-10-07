@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
+import com.github.laxika.magicalvibes.cards.b.Blaze;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.f.Fling;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.Memnite;
@@ -13,6 +14,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,9 +22,9 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SunbirdsInvocation.class, GrizzlyBears.class, LlanowarElves.class, Memnite.class,
+        Shock.class, Forest.class, Mountain.class, Plains.class, Blaze.class, Fling.class})
 class SunbirdsInvocationTest extends BaseCardTest {
-
-    // ===== Trigger fires on spell from hand =====
 
     @Test
     @DisplayName("Casting a spell from hand triggers Sunbird's Invocation")
@@ -40,16 +42,13 @@ class SunbirdsInvocationTest extends BaseCardTest {
         assertThat(gd.stack.getLast().getDescription()).contains("Sunbird's Invocation");
     }
 
-    // ===== Reveals top X cards where X = mana value =====
-
     @Test
     @DisplayName("Reveals top X cards where X is the triggering spell's mana value")
     void revealsTopXCards() {
         setupSunbirdsOnBattlefield();
 
         // Put known cards on top of library (MV 2 spell → reveal 2)
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(
+        harness.setLibrary(player1, List.of(
                 new LlanowarElves(), new GrizzlyBears(), new Mountain(), new Forest()));
 
         // Cast Grizzly Bears (MV 2)
@@ -75,16 +74,13 @@ class SunbirdsInvocationTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
     }
 
-    // ===== May cast a spell without paying mana cost =====
-
     @Test
     @DisplayName("Choosing a card casts it without paying its mana cost")
     void choosingCardCastsIt() {
         setupSunbirdsOnBattlefield();
 
         // Put Llanowar Elves (MV 1) and a land on top of library
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(
+        harness.setLibrary(player1, List.of(
                 new LlanowarElves(), new Forest(), new Mountain()));
 
         // Cast Grizzly Bears (MV 2)
@@ -96,7 +92,7 @@ class SunbirdsInvocationTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Choose Llanowar Elves (index 0)
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         // Llanowar Elves should be on the stack as a creature spell (cast without paying)
         assertThat(gd.stack).anyMatch(se ->
@@ -104,15 +100,12 @@ class SunbirdsInvocationTest extends BaseCardTest {
                 && se.getEntryType() == StackEntryType.CREATURE_SPELL);
     }
 
-    // ===== May decline to cast =====
-
     @Test
     @DisplayName("Player may decline to cast and all cards go to bottom")
     void declineToCast() {
         setupSunbirdsOnBattlefield();
 
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(
+        harness.setLibrary(player1, List.of(
                 new LlanowarElves(), new GrizzlyBears(), new Mountain()));
 
         // Cast Grizzly Bears (MV 2)
@@ -124,14 +117,12 @@ class SunbirdsInvocationTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Decline (index -1)
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+        harness.handleCardChosen(player1, -1);
 
         // All 2 revealed cards should be on the bottom of the library
         // (only Mountain was NOT revealed — it stayed in library)
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
     }
-
-    // ===== Lands cannot be cast =====
 
     @Test
     @DisplayName("Lands are not offered as castable choices")
@@ -139,8 +130,7 @@ class SunbirdsInvocationTest extends BaseCardTest {
         setupSunbirdsOnBattlefield();
 
         // Put only lands on top of library
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(
+        harness.setLibrary(player1, List.of(
                 new Forest(), new Mountain(), new Plains()));
 
         // Cast Grizzly Bears (MV 2)
@@ -158,8 +148,6 @@ class SunbirdsInvocationTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
     }
 
-    // ===== Mana value filter =====
-
     @Test
     @DisplayName("Cards with mana value greater than X are not offered")
     void manaValueFilter() {
@@ -167,8 +155,7 @@ class SunbirdsInvocationTest extends BaseCardTest {
 
         // Shock is MV 1, Grizzly Bears is MV 2
         // Put Grizzly Bears on top — if we cast a spell with MV 1, Bears (MV 2) should not be offered
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(
+        harness.setLibrary(player1, List.of(
                 new GrizzlyBears(), new Forest()));
 
         // Cast Llanowar Elves (MV 1) — reveal 1 card
@@ -183,16 +170,13 @@ class SunbirdsInvocationTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
     }
 
-    // ===== Does not trigger for spells not cast from hand =====
-
     @Test
     @DisplayName("Does not trigger when casting a spell not from hand (e.g., from Sunbird's itself)")
     void doesNotTriggerForNonHandCasts() {
         setupSunbirdsOnBattlefield();
 
         // Put known cards on top
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(
+        harness.setLibrary(player1, List.of(
                 new LlanowarElves(), new Shock(), new Mountain()));
 
         // Cast Shock (MV 1) from hand — triggers Sunbird's
@@ -207,7 +191,7 @@ class SunbirdsInvocationTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
 
         // Choose Llanowar Elves (index 0) — cast without paying
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         // Llanowar Elves should be on the stack
         // The Sunbird's trigger should NOT fire again for this free cast (not from hand)
@@ -217,8 +201,6 @@ class SunbirdsInvocationTest extends BaseCardTest {
                 .count();
         assertThat(sunbirdTriggerCount).isZero();
     }
-
-    // ===== Remaining cards go to bottom in random order =====
 
     @Test
     @DisplayName("Remaining revealed cards go to bottom of library (not awaiting reorder)")
@@ -230,8 +212,7 @@ class SunbirdsInvocationTest extends BaseCardTest {
         GrizzlyBears bears = new GrizzlyBears();
         Mountain mountain = new Mountain();
         Forest extraForest = new Forest();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(elf, bears, mountain, extraForest));
+        harness.setLibrary(player1, List.of(elf, bears, mountain, extraForest));
 
         // Cast a 3-MV spell from hand to reveal 3 cards
         // Use Shock (MV 1) + add extra mana to cast something bigger...
@@ -244,7 +225,7 @@ class SunbirdsInvocationTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Choose LlanowarElves (index 0) from revealed [LlanowarElves, GrizzlyBears]
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         // Should NOT be awaiting LIBRARY_REORDER (random order, no player interaction)
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class)).isNull();
@@ -253,8 +234,6 @@ class SunbirdsInvocationTest extends BaseCardTest {
         // GrizzlyBears was remaining after choosing LlanowarElves, placed on bottom
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
     }
-
-    // ===== MV 0 spell reveals nothing =====
 
     @Test
     @DisplayName("MV 0 spell reveals no cards and library is unchanged")
@@ -279,8 +258,6 @@ class SunbirdsInvocationTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
     }
 
-    // ===== Opponent's spells don't trigger =====
-
     @Test
     @DisplayName("Opponent casting a spell does not trigger Sunbird's Invocation")
     void opponentCastDoesNotTrigger() {
@@ -297,7 +274,138 @@ class SunbirdsInvocationTest extends BaseCardTest {
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
     }
 
-    // ===== Helper =====
+    @Test
+    @DisplayName("The chosen X contributes to the mana value of the triggering spell")
+    void triggeringSpellIncludesChosenX() {
+        setupSunbirdsOnBattlefield();
+        Forest first = new Forest();
+        GrizzlyBears bears = new GrizzlyBears();
+        Mountain third = new Mountain();
+        Plains fourth = new Plains();
+        harness.setLibrary(player1, List.of(first, bears, third, fourth));
+        harness.setHand(player1, List.of(new Blaze()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castSorcery(player1, 0, 2, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(fourth);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class))
+                .isNotNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
+                .params().cards()).containsExactly(bears);
+    }
+
+    @Test
+    @DisplayName("A short library reveals all available cards without drawing or losing")
+    void shortLibraryRevealsAvailableCards() {
+        setupSunbirdsOnBattlefield();
+        LlanowarElves elf = new LlanowarElves();
+        harness.setLibrary(player1, List.of(elf));
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
+                .params().cards()).containsExactly(elf);
+        harness.handleCardChosen(player1, -1);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(elf);
+    }
+
+    @Test
+    @DisplayName("An empty library makes the trigger do nothing")
+    void emptyLibraryDoesNothing() {
+        setupSunbirdsOnBattlefield();
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Declining keeps unrevealed cards on top and bottoms only the revealed cards")
+    void declinePreservesUnrevealedOrder() {
+        setupSunbirdsOnBattlefield();
+        LlanowarElves elf = new LlanowarElves();
+        GrizzlyBears bears = new GrizzlyBears();
+        Mountain mountain = new Mountain();
+        Forest forest = new Forest();
+        harness.setLibrary(player1, List.of(elf, bears, mountain, forest));
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerDecks.get(player1.getId()).subList(0, 2))
+                .containsExactly(mountain, forest);
+        assertThat(gd.playerDecks.get(player1.getId()).subList(2, 4))
+                .containsExactlyInAnyOrder(elf, bears);
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A revealed instant chooses a target and resolves before the original spell")
+    void revealedInstantResolvesBeforeOriginalSpell() {
+        setupSunbirdsOnBattlefield();
+        Shock shock = new Shock();
+        Forest forest = new Forest();
+        Mountain mountain = new Mountain();
+        harness.setLibrary(player1, List.of(shock, forest, mountain));
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.stack.getLast().getCard()).isSameAs(shock);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(mountain, forest);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 18);
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Casting Fling for free still pays its sacrifice cost and uses the creature's power")
+    void freeCastPaysMandatorySacrificeCost() {
+        setupSunbirdsOnBattlefield();
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        var sacrificeId = harness.getPermanentId(player1, "Grizzly Bears");
+        Fling fling = new Fling();
+        harness.setLibrary(player1, List.of(fling, new Forest(), new Mountain()));
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        for (int choice = 0; choice < 2 && gd.interaction.isAwaitingInput(); choice++) {
+            var pending = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+            assertThat(pending).isNotNull();
+            harness.handlePermanentChosen(player1,
+                    pending.validIds().contains(player2.getId()) ? player2.getId() : sacrificeId);
+        }
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getId().equals(sacrificeId));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.stack.getLast().getCard()).isSameAs(fling);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 18);
+    }
 
     private void setupSunbirdsOnBattlefield() {
         harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
