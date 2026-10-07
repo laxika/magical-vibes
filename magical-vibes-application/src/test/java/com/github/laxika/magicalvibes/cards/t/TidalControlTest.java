@@ -158,4 +158,44 @@ class TidalControlTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Tidal Control");
         harness.assertInGraveyard(player1, "Tidal Control");
     }
+
+    @Test
+    @DisplayName("A player with less than 2 life must use the mana payment instead")
+    void insufficientLifeDoesNotPreventManaPayment() {
+        harness.addToBattlefield(player1, new TidalControl());
+        harness.setLife(player1, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        StormShaman shaman = new StormShaman();
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, shaman, "{2}{R}");
+        harness.passPriority(player2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, shaman.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertLife(player1, 1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.activateAbility(player1, 0, 1, null, shaman.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.assertInGraveyard(player2, "Storm Shaman");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cumulative upkeep does not trigger during the opponent's upkeep")
+    void noCumulativeUpkeepDuringOpponentsTurn() {
+        var tidalControl = harness.addToBattlefieldAndReturn(player1, new TidalControl());
+        tidalControl.setCounterCount(CounterType.AGE, 1);
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(tidalControl.getCounterCount(CounterType.AGE)).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Tidal Control");
+    }
 }
