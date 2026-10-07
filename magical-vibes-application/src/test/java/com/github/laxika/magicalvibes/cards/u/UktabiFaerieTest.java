@@ -77,4 +77,57 @@ class UktabiFaerieTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Uktabi Faerie");
         harness.assertNotInGraveyard(player1, "Uktabi Faerie");
     }
+
+    @Test
+    @DisplayName("Can destroy an artifact controlled by its controller")
+    void destroysOwnArtifact() {
+        harness.addToBattlefield(player1, new UktabiFaerie());
+        harness.addToBattlefield(player1, new HorribleHordes());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        UUID targetId = harness.getPermanentId(player1, "Horrible Hordes");
+        harness.activateAbility(player1, 0, 0, null, targetId);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Horrible Hordes");
+        harness.assertInGraveyard(player1, "Horrible Hordes");
+        harness.assertInGraveyard(player1, "Uktabi Faerie");
+    }
+
+    @Test
+    @DisplayName("Can activate while tapped and summoning sick")
+    void activatesWhileTappedAndSummoningSick() {
+        var faerie = harness.addToBattlefieldAndReturn(player1, new UktabiFaerie());
+        faerie.setTapped(true);
+        faerie.setSummoningSick(true);
+        harness.addToBattlefield(player2, new HorribleHordes());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        UUID targetId = harness.getPermanentId(player2, "Horrible Hordes");
+        harness.activateAbility(player1, 0, 0, null, targetId);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Uktabi Faerie");
+        harness.assertNotOnBattlefield(player2, "Horrible Hordes");
+        harness.assertInGraveyard(player2, "Horrible Hordes");
+    }
+
+    @Test
+    @DisplayName("Four colorless mana cannot pay the activation's green requirement")
+    void missingGreenManaDoesNotSacrificeFaerie() {
+        harness.addToBattlefield(player1, new UktabiFaerie());
+        harness.addToBattlefield(player2, new HorribleHordes());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        UUID targetId = harness.getPermanentId(player2, "Horrible Hordes");
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, targetId))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Uktabi Faerie");
+        harness.assertNotInGraveyard(player1, "Uktabi Faerie");
+        harness.assertOnBattlefield(player2, "Horrible Hordes");
+        harness.assertNotInGraveyard(player2, "Horrible Hordes");
+    }
 }
