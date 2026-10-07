@@ -74,6 +74,65 @@ class StoicChampionTest extends BaseCardTest {
         assertThat(champion.getToughnessModifier()).isEqualTo(0);
     }
 
+    @Test
+    @DisplayName("The boost resolves before the cycling draw, rather than during activation")
+    void boostResolvesBeforeCyclingDraw() {
+        Permanent champion = harness.addToBattlefieldAndReturn(player1, new StoicChampion());
+        setUpCycling(player1);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        assertThat(champion.getPowerModifier()).isZero();
+        assertThat(champion.getToughnessModifier()).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Hundroog");
+
+        harness.passBothPriorities();
+
+        assertThat(champion.getPowerModifier()).isEqualTo(2);
+        assertThat(champion.getToughnessModifier()).isEqualTo(2);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Hundroog");
+        assertThat(champion.getPowerModifier()).isEqualTo(2);
+        assertThat(champion.getToughnessModifier()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Each Champion boosts itself when either player cycles")
+    void cyclingBoostsChampionsOfBothPlayers() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new StoicChampion());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new StoicChampion());
+        setUpCycling(player1);
+
+        harness.activateHandAbility(player1, 0, null);
+        resolveAllTriggers();
+
+        assertThat(first.getPowerModifier()).isEqualTo(2);
+        assertThat(first.getToughnessModifier()).isEqualTo(2);
+        assertThat(second.getPowerModifier()).isEqualTo(2);
+        assertThat(second.getToughnessModifier()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A pending boost cannot affect a Champion that reenters the battlefield")
+    void pendingBoostDoesNotAffectNewPermanent() {
+        StoicChampion card = new StoicChampion();
+        Permanent original = harness.addToBattlefieldAndReturn(player1, card);
+        setUpCycling(player1);
+
+        harness.activateHandAbility(player1, 0, null);
+        gd.playerBattlefields.get(player1.getId()).remove(original);
+        Permanent returned = harness.addToBattlefieldAndReturn(player1, card);
+        resolveAllTriggers();
+
+        assertThat(returned.getPowerModifier()).isZero();
+        assertThat(returned.getToughnessModifier()).isZero();
+        harness.assertInHand(player1, "Hundroog");
+    }
+
     private void setUpCycling(Player player) {
         harness.setHand(player, List.of(new Hundroog()));
         harness.setLibrary(player, List.of(new Hundroog()));
