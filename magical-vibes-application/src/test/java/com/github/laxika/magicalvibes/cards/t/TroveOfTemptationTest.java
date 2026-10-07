@@ -1,7 +1,10 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AwakenedSkyclave;
+import com.github.laxika.magicalvibes.cards.i.InvasionOfZendikar;
+import com.github.laxika.magicalvibes.cards.j.JaceCunningCastaway;
+import com.github.laxika.magicalvibes.cards.p.Propaganda;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -11,43 +14,40 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TroveOfTemptation.class, TishanasWayfinder.class, JaceCunningCastaway.class,
+        Propaganda.class, InvasionOfZendikar.class, AwakenedSkyclave.class})
 class TroveOfTemptationTest extends BaseCardTest {
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting puts enchantment on stack")
     void castingPutsOnStack() {
-        harness.setHand(player1, List.of(new TroveOfTemptation()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new TroveOfTemptation(), "{3}{R}");
 
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ENCHANTMENT_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Trove of Temptation");
+        assertThat(entry.getCard()).isInstanceOf(TroveOfTemptation.class);
     }
-
-    // ===== Must attack requirement =====
 
     @Test
     @DisplayName("Opponent must attack with at least one creature when Trove is on the battlefield")
     void opponentMustAttackWithAtLeastOneCreature() {
         harness.addToBattlefield(player1, new TroveOfTemptation());
 
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bears);
+        Permanent wayfinder = harness.addToBattlefieldAndReturn(player2, new TishanasWayfinder());
+        wayfinder.setSummoningSick(false);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -66,9 +66,8 @@ class TroveOfTemptationTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.addToBattlefield(player1, new TroveOfTemptation());
 
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bears);
+        Permanent wayfinder = harness.addToBattlefieldAndReturn(player2, new TishanasWayfinder());
+        wayfinder.setSummoningSick(false);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -77,7 +76,6 @@ class TroveOfTemptationTest extends BaseCardTest {
 
         gs.declareAttackers(gd, player2, List.of(0));
 
-        // Bears (2/2) attacks — damage resolves later, just verify no exception
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
     }
 
@@ -87,13 +85,11 @@ class TroveOfTemptationTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.addToBattlefield(player1, new TroveOfTemptation());
 
-        Permanent bears1 = new Permanent(new GrizzlyBears());
-        bears1.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bears1);
+        Permanent wayfinder1 = harness.addToBattlefieldAndReturn(player2, new TishanasWayfinder());
+        wayfinder1.setSummoningSick(false);
 
-        Permanent bears2 = new Permanent(new GrizzlyBears());
-        bears2.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bears2);
+        Permanent wayfinder2 = harness.addToBattlefieldAndReturn(player2, new TishanasWayfinder());
+        wayfinder2.setSummoningSick(false);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -112,9 +108,8 @@ class TroveOfTemptationTest extends BaseCardTest {
         harness.setLife(player2, 20);
         harness.addToBattlefield(player1, new TroveOfTemptation());
 
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent wayfinder = harness.addToBattlefieldAndReturn(player1, new TishanasWayfinder());
+        wayfinder.setSummoningSick(false);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -130,18 +125,18 @@ class TroveOfTemptationTest extends BaseCardTest {
     void noForceIfAllTapped() {
         harness.addToBattlefield(player1, new TroveOfTemptation());
 
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        bears.tap();
-        gd.playerBattlefields.get(player2.getId()).add(bears);
+        Permanent wayfinder = harness.addToBattlefieldAndReturn(player2, new TishanasWayfinder());
+        wayfinder.setSummoningSick(false);
+        wayfinder.tap();
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
 
-        // All creatures are tapped — no attackable creatures, so step is skipped
-        // (handleDeclareAttackersStep returns without setting ATTACKER_DECLARATION)
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class)).isNull();
+        harness.beginAttackerDeclarationInput();
+        gs.declareAttackers(gd, player2, List.of());
+
+        assertThat(wayfinder.isTapped()).isTrue();
     }
 
     @Test
@@ -150,9 +145,8 @@ class TroveOfTemptationTest extends BaseCardTest {
         TroveOfTemptation trove = new TroveOfTemptation();
         harness.addToBattlefield(player1, trove);
 
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bears);
+        Permanent wayfinder = harness.addToBattlefieldAndReturn(player2, new TishanasWayfinder());
+        wayfinder.setSummoningSick(false);
 
         // Remove Trove from battlefield
         gd.playerBattlefields.get(player1.getId()).removeIf(p -> p.getCard() == trove);
@@ -165,8 +159,6 @@ class TroveOfTemptationTest extends BaseCardTest {
         // Now opponent can choose not to attack
         gs.declareAttackers(gd, player2, List.of());
     }
-
-    // ===== End step Treasure token =====
 
     @Test
     @DisplayName("Creates Treasure token at controller's end step")
@@ -207,12 +199,122 @@ class TroveOfTemptationTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(bfSizeBefore);
     }
 
-    // ===== Helper methods =====
+    @Test
+    @DisplayName("A battle attack does not satisfy the requirement to attack Trove's controller or a planeswalker")
+    void attackingOnlyABattleDoesNotSatisfyRequirement() {
+        harness.addToBattlefield(player1, new TroveOfTemptation());
+        Permanent battle = harness.addToBattlefieldAndReturn(player2, new InvasionOfZendikar());
+        battle.setProtectorPlayerId(player1.getId());
+        battle.setCounterCount(CounterType.DEFENSE, 3);
+        Permanent wayfinder = harness.addToBattlefieldAndReturn(player2, new TishanasWayfinder());
+        wayfinder.setSummoningSick(false);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+
+        assertThatThrownBy(() -> gs.declareAttackers(gd, player2, List.of(1),
+                Map.of(1, battle.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("An attack tax on the player does not waive a free attack on their planeswalker")
+    void mustAttackWhenPlaneswalkerCanBeAttackedWithoutPaying() {
+        harness.addToBattlefield(player1, new TroveOfTemptation());
+        harness.addToBattlefield(player1, new Propaganda());
+        Permanent jace = harness.addToBattlefieldAndReturn(player1, new JaceCunningCastaway());
+        jace.setCounterCount(CounterType.LOYALTY, 3);
+        Permanent wayfinder = harness.addToBattlefieldAndReturn(player2, new TishanasWayfinder());
+        wayfinder.setSummoningSick(false);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+
+        assertThatThrownBy(() -> gs.declareAttackers(gd, player2, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("An opponent may decline to pay an attack tax when no planeswalker is available")
+    void mayDeclineAttackTax() {
+        harness.addToBattlefield(player1, new TroveOfTemptation());
+        harness.addToBattlefield(player1, new Propaganda());
+        Permanent wayfinder = harness.addToBattlefieldAndReturn(player2, new TishanasWayfinder());
+        wayfinder.setSummoningSick(false);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+
+        gs.declareAttackers(gd, player2, List.of());
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("An end-step trigger creates exactly one Treasure even if Trove leaves before resolution")
+    void treasureTriggerSurvivesSourceLeavingBattlefield() {
+        Permanent trove = harness.addToBattlefieldAndReturn(player1, new TroveOfTemptation());
+        advanceToEndStep(player1);
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(trove);
+
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Treasure")).hasSize(1);
+        assertThat(findPermanent(player1, "Treasure").isTapped()).isFalse();
+        assertThat(findPermanents(player2, "Treasure")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Attacking the controller's planeswalker satisfies Trove without paying Propaganda")
+    void attackingPlaneswalkerSatisfiesRequirement() {
+        harness.addToBattlefield(player1, new TroveOfTemptation());
+        harness.addToBattlefield(player1, new Propaganda());
+        Permanent jace = harness.addToBattlefieldAndReturn(player1, new JaceCunningCastaway());
+        jace.setCounterCount(CounterType.LOYALTY, 3);
+        Permanent wayfinder = harness.addToBattlefieldAndReturn(player2, new TishanasWayfinder());
+        wayfinder.setSummoningSick(false);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+
+        gs.declareAttackers(gd, player2, List.of(0), Map.of(0, jace.getId()));
+
+        assertThat(jace.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
+        harness.assertLife(player1, 20);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ManaColor.class, names = {"WHITE", "BLUE", "BLACK", "RED", "GREEN"})
+    @DisplayName("The created Treasure can tap and sacrifice for one mana of any color")
+    void treasureCanProduceAnyColor(ManaColor color) {
+        harness.addToBattlefield(player1, new TroveOfTemptation());
+        advanceToEndStep(player1);
+        harness.passBothPriorities();
+        assertThat(findPermanents(player1, "Treasure")).hasSize(1);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.activateAbility(player1, 1, null, null);
+        harness.handleListChoice(player1, color.name());
+
+        assertThat(findPermanents(player1, "Treasure")).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(color)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
 
     private void advanceToEndStep(Player player) {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance POSTCOMBAT_MAIN → END_STEP, triggers fire
+        harness.passUntil(player, TurnStep.END_STEP);
     }
 }
