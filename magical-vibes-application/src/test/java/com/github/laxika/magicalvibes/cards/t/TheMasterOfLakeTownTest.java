@@ -25,8 +25,8 @@ class TheMasterOfLakeTownTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(2);
@@ -40,8 +40,8 @@ class TheMasterOfLakeTownTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
@@ -62,6 +62,98 @@ class TheMasterOfLakeTownTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 2);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(7);
+    }
+
+    @Test
+    @DisplayName("Life-loss milling waits for its triggered ability to resolve")
+    void millingUsesTheStack() {
+        harness.addToBattlefield(player1, new TheMasterOfLakeTown());
+        harness.setLibrary(player2, graveyardOf(4));
+        harness.setGraveyard(player2, List.of());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(4);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(2);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Controller life-loss milling also waits for resolution")
+    void controllerMillingUsesTheStack() {
+        harness.addToBattlefield(player1, new TheMasterOfLakeTown());
+        harness.setLibrary(player1, graveyardOf(4));
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(4);
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Milling more cards than remain empties the library")
+    void millsOnlyAvailableCards() {
+        harness.addToBattlefield(player1, new TheMasterOfLakeTown());
+        harness.setLibrary(player2, graveyardOf(1));
+        harness.setGraveyard(player2, List.of());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The death ability draws nothing when neither graveyard qualifies")
+    void deathDrawsNothingBelowThreshold() {
+        Permanent master = harness.addToBattlefieldAndReturn(player1, new TheMasterOfLakeTown());
+        harness.setGraveyard(player1, graveyardOf(5));
+        harness.setGraveyard(player2, graveyardOf(6));
+        harness.setLibrary(player1, graveyardOf(3));
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+
+        master.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("The death ability counts qualifying graveyards at resolution")
+    void deathChecksGraveyardsAtResolution() {
+        Permanent master = harness.addToBattlefieldAndReturn(player1, new TheMasterOfLakeTown());
+        harness.setGraveyard(player1, graveyardOf(5));
+        harness.setGraveyard(player2, graveyardOf(6));
+        harness.setLibrary(player1, graveyardOf(3));
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+
+        master.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        harness.setGraveyard(player2, graveyardOf(7));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
     }
 
     private List<Card> graveyardOf(int count) {
