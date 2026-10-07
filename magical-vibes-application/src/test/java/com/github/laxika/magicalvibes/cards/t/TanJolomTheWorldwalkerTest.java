@@ -25,7 +25,7 @@ class TanJolomTheWorldwalkerTest extends BaseCardTest {
 
     @Test
     void animatesAnEligibleArtifactOrLandUntilEndOfTurn() {
-        addReadyTanJolom(player1);
+        addCreatureReady(player1, new TanJolomTheWorldwalker());
         Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Millstone());
         Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
         Permanent opponentArtifact = harness.addToBattlefieldAndReturn(player2, new Millstone());
@@ -51,10 +51,7 @@ class TanJolomTheWorldwalkerTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, artifact, Keyword.VIGILANCE)).isTrue();
         assertThat(gqs.hasKeyword(gd, artifact, Keyword.DOUBLE_TEAM)).isTrue();
 
-        gd.interaction.clearAwaitingInput();
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passUntil(TurnStep.CLEANUP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
 
         assertThat(gqs.isArtifact(gd, artifact)).isTrue();
         assertThat(gqs.isCreature(gd, artifact)).isFalse();
@@ -64,7 +61,7 @@ class TanJolomTheWorldwalkerTest extends BaseCardTest {
 
     @Test
     void mayChooseNoPermanent() {
-        addReadyTanJolom(player1);
+        addCreatureReady(player1, new TanJolomTheWorldwalker());
         Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Millstone());
 
         advanceToCombat(player1);
@@ -74,10 +71,75 @@ class TanJolomTheWorldwalkerTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, artifact)).isFalse();
     }
 
-    private Permanent addReadyTanJolom(Player player) {
-        Permanent permanent = harness.addToBattlefieldAndReturn(player, new TanJolomTheWorldwalker());
-        permanent.setSummoningSick(false);
-        return permanent;
+    @Test
+    void animatedLandRetainsItsLandTypeAndAttacksWithoutTapping() {
+        harness.addToBattlefield(player1, new TanJolomTheWorldwalker());
+        Permanent land = addCreatureReady(player1, new Forest());
+
+        advanceToCombat(player1);
+        harness.handlePermanentChosen(player1, land.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.isLand(gd, land)).isTrue();
+        assertThat(gqs.isCreature(gd, land)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, land)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, land)).isEqualTo(3);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(1)));
+        resolveAllTriggers();
+
+        assertThat(land.isTapped()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId()))
+                .hasSize(1).allMatch(card -> card instanceof Forest);
+    }
+
+    @Test
+    void doesNotTriggerDuringOpponentsCombat() {
+        harness.addToBattlefield(player1, new TanJolomTheWorldwalker());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Millstone());
+
+        advanceToCombat(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        assertThat(gqs.isCreature(gd, artifact)).isFalse();
+    }
+
+    @Test
+    void canGrantDoubleTeamAgainAfterItWasPerpetuallyRemoved() {
+        harness.addToBattlefield(player1, new TanJolomTheWorldwalker());
+        Permanent land = addCreatureReady(player1, new Forest());
+
+        advanceToCombat(player1);
+        harness.handlePermanentChosen(player1, land.getId());
+        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(1)));
+        resolveAllTriggers();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+        harness.performUntapStep(player1);
+        advanceToCombat(player1);
+        harness.handlePermanentChosen(player1, land.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, land, Keyword.DOUBLE_TEAM)).isTrue();
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(1)));
+        resolveAllTriggers();
+        assertThat(gd.playerHands.get(player1.getId()))
+                .hasSize(2).allMatch(card -> card instanceof Forest);
+    }
+
+    @Test
+    void resolvesWithoutAnEligiblePermanent() {
+        harness.addToBattlefield(player1, new TanJolomTheWorldwalker());
+
+        advanceToCombat(player1);
+        resolveAllTriggers();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
     }
 
     private void advanceToCombat(Player activePlayer) {
