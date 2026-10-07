@@ -14,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ThorAsgardsAvenger.class, RagingGoblin.class, SerraAngel.class, Shock.class})
+@CardUsed({ThorAsgardsAvenger.class, RagingGoblin.class, SerraAngel.class, Shock.class, TurnToFrog.class})
 class ThorAsgardsAvengerTest extends BaseCardTest {
 
     @Test
@@ -25,8 +25,7 @@ class ThorAsgardsAvengerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.setLife(player2, 20);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
     }
@@ -39,8 +38,7 @@ class ThorAsgardsAvengerTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(target.getMarkedDamage()).isEqualTo(3);
     }
@@ -76,8 +74,7 @@ class ThorAsgardsAvengerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.setLife(player1, 20);
 
-        harness.castInstant(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player1.getId());
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
     }
@@ -91,9 +88,66 @@ class ThorAsgardsAvengerTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.forceActivePlayer(player2);
 
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Damage to a friendly permanent is not increased")
+    void doesNotIncreaseDamageToFriendlyPermanent() {
+        harness.addToBattlefield(player1, new ThorAsgardsAvenger());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new SerraAngel());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("An opponent's source damaging that opponent is not increased")
+    void doesNotIncreaseOpponentsDamageToThemselves() {
+        harness.addToBattlefield(player1, new ThorAsgardsAvenger());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.setLife(player2, 20);
+        harness.forceActivePlayer(player2);
+
+        harness.castAndResolveInstant(player2, 0, player2.getId());
+
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Thor's bonus stops when he leaves the battlefield")
+    void bonusStopsAfterThorDies() {
+        Permanent thor = harness.addToBattlefieldAndReturn(player1, new ThorAsgardsAvenger());
+        harness.setHand(player1, List.of(new Shock(), new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.setLife(player2, 20);
+
+        harness.castAndResolveInstant(player1, 0, thor.getId());
+        harness.castAndResolveInstant(player1, 0, thor.getId());
+        harness.assertNotOnBattlefield(player1, "Thor, Asgard's Avenger");
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Thor does not increase damage after losing all abilities")
+    void bonusStopsWhenThorLosesAbilities() {
+        Permanent thor = harness.addToBattlefieldAndReturn(player1, new ThorAsgardsAvenger());
+        harness.setHand(player1, List.of(new TurnToFrog(), new Shock()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setLife(player2, 20);
+
+        harness.castAndResolveInstant(player1, 0, thor.getId());
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.assertLife(player2, 18);
     }
 }
