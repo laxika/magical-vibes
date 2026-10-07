@@ -72,6 +72,98 @@ class TempestTechniqueTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature you control");
     }
 
+    @Test
+    @DisplayName("Only your enchantments count, including Tempest Technique itself")
+    void excludesOpponentsEnchantmentsAndUnenchantedCreatures() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent otherCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new BloodMoon());
+
+        castTechnique(player1, creature);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, otherCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, otherCreature)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Storm counts opponents' spells and copies may enchant different creatures")
+    void stormCountsOpponentSpellAndRetargetsCopy() {
+        Permanent originalTarget = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent copyTarget = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.castFromHand(player2, new GrizzlyBears(), "{1}{G}");
+        harness.passBothPriorities();
+        harness.ensurePriority(player1);
+        castTechnique(player1, originalTarget);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, copyTarget.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        List<Permanent> techniques = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().getName().equals("Tempest Technique"))
+                .toList();
+        assertThat(techniques).hasSize(2);
+        assertThat(techniques).filteredOn(permanent -> permanent.getCard().isToken())
+                .singleElement().satisfies(permanent ->
+                        assertThat(permanent.getAttachedTo()).isEqualTo(copyTarget.getId()));
+        assertThat(techniques).filteredOn(permanent -> !permanent.getCard().isToken())
+                .singleElement().satisfies(permanent ->
+                        assertThat(permanent.getAttachedTo()).isEqualTo(originalTarget.getId()));
+        assertThat(gqs.getEffectivePower(gd, originalTarget)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, originalTarget)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, copyTarget)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, copyTarget)).isEqualTo(4);
+        assertThat(gd.getTotalSpellsCastThisTurnCount()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Multiple storm Auras each count every enchantment, including token copies")
+    void multipleCopiesStackTheirDynamicBoosts() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+        harness.passBothPriorities();
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+        harness.passBothPriorities();
+        castTechnique(player1, creature);
+
+        harness.passBothPriorities();
+        assertThat(gd.stack).filteredOn(StackEntry::isCopy).hasSize(2);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(11);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(11);
+        assertThat(gd.getTotalSpellsCastThisTurnCount()).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The Aura fails to resolve if its target changes controller")
+    void targetMustStillBeControlledOnResolution() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        castTechnique(player1, creature);
+        harness.passBothPriorities();
+
+        gd.playerBattlefields.get(player1.getId()).remove(creature);
+        gd.playerBattlefields.get(player2.getId()).add(creature);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Tempest Technique");
+        harness.assertInGraveyard(player1, "Tempest Technique");
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+    }
+
     private void castTechnique(com.github.laxika.magicalvibes.model.Player caster, Permanent creature) {
         harness.setHand(caster, List.of(new TempestTechnique()));
         harness.addMana(caster, ManaColor.WHITE, 1);
