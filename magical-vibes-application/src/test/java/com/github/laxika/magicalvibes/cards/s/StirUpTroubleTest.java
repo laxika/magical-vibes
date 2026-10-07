@@ -67,8 +67,7 @@ class StirUpTroubleTest extends BaseCardTest {
         harness.setHand(player1, List.of(new StirUpTrouble()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorceryWithSacrifice(player1, 0, target.getId(), null);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, target.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getId().equals(sacrifice.getId()));
@@ -102,5 +101,93 @@ class StirUpTroubleTest extends BaseCardTest {
         UUID landId = land.getId();
         assertThatThrownBy(() -> harness.castSorceryWithSacrifice(player1, 0, landId, sacrifice.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Sacrifice is paid during casting, before the target is destroyed")
+    void paysSacrificeBeforeResolution() {
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new ScrabblingClaws());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new StirUpTrouble()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castSorceryWithSacrifice(player1, 0, target.getId(), sacrifice.getId());
+
+        harness.assertNotOnBattlefield(player1, "Scrabbling Claws");
+        harness.assertInGraveyard(player1, "Scrabbling Claws");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Can target and sacrifice the same creature")
+    void canSacrificeItsOwnTarget() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new StirUpTrouble()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castSorceryWithSacrifice(player1, 0, creature.getId(), creature.getId());
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Stir Up Trouble");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Can pay the mana option without a permanent to sacrifice")
+    void paysManaWithNoSacrificeAvailable() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new StirUpTrouble()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+    }
+
+    @Test
+    @DisplayName("Cannot sacrifice an opponent's creature")
+    void rejectsOpponentsSacrifice() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new StirUpTrouble()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.castSorceryWithSacrifice(
+                player1, 0, creature.getId(), creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInHand(player1, "Stir Up Trouble");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot sacrifice a land that is neither an artifact nor a creature")
+    void rejectsLandSacrifice() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Plains());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new StirUpTrouble()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.castSorceryWithSacrifice(
+                player1, 0, target.getId(), land.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Plains");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInHand(player1, "Stir Up Trouble");
+        assertThat(gd.stack).isEmpty();
     }
 }
