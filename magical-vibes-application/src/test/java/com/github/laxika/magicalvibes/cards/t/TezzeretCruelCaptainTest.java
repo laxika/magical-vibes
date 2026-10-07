@@ -61,8 +61,7 @@ class TezzeretCruelCaptainTest extends BaseCardTest {
         Card moxAmber = new MoxAmber();
         Card mindStone = new MindStone();
         harness.setHand(player1, List.of());
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(moxAmber, mindStone));
+        harness.setLibrary(player1, List.of(moxAmber, mindStone));
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
@@ -108,6 +107,62 @@ class TezzeretCruelCaptainTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, firstArtifact)).isEqualTo(3);
     }
 
+    @Test
+    void zeroAbilityUntapsNoncreatureArtifactWithoutAddingCounter() {
+        addReadyTezzeret(player1, 4);
+        Permanent artifact = addReadyPermanent(player2, new MindStone());
+        artifact.tap();
+
+        harness.activateAbility(player1, 0, 0, null, artifact.getId());
+        harness.passBothPriorities();
+
+        assertThat(artifact.isTapped()).isFalse();
+        assertThat(artifact.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void zeroAbilityUntapsNonartifactCreatureWithoutAddingCounter() {
+        addReadyTezzeret(player1, 4);
+        Permanent creature = addReadyPermanent(player2, new GrizzlyBears());
+        creature.tap();
+
+        harness.activateAbility(player1, 0, 0, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isFalse();
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void zeroAbilityCountersAlreadyUntappedOpposingArtifactCreature() {
+        addReadyTezzeret(player1, 4);
+        Permanent creature = addReadyPermanent(player2, new GlazeFiend());
+
+        harness.activateAbility(player1, 0, 0, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isFalse();
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void emblemPreservesExistingArtifactCreatureBaseStatsAndSubtype() {
+        addReadyTezzeret(player1, 7);
+        Permanent creature = addReadyPermanent(player1, new GlazeFiend());
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+        harness.passUntil(TurnStep.BEGINNING_OF_COMBAT);
+        harness.handlePermanentChosen(player1, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, creature)).contains(CardSubtype.ILLUSION);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, creature)).doesNotContain(CardSubtype.ROBOT);
+    }
+
     private Permanent addReadyTezzeret(Player player, int loyalty) {
         Permanent permanent = new Permanent(new TezzeretCruelCaptain());
         permanent.setCounterCount(CounterType.LOYALTY, loyalty);
@@ -120,9 +175,8 @@ class TezzeretCruelCaptainTest extends BaseCardTest {
     }
 
     private Permanent addReadyPermanent(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, card);
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 }
