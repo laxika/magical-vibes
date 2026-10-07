@@ -2,6 +2,10 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.d.DarksteelRelic;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HopefulVigil;
+import com.github.laxika.magicalvibes.cards.i.IntoTheFaeCourt;
+import com.github.laxika.magicalvibes.cards.k.KindledHeroism;
+import com.github.laxika.magicalvibes.cards.p.PropheticPrism;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -11,7 +15,11 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-@CardUsed({TenaciousTomeseeker.class, DarksteelRelic.class, GrizzlyBears.class, Shock.class})
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+@CardUsed({TenaciousTomeseeker.class, DarksteelRelic.class, GrizzlyBears.class, Shock.class,
+        HopefulVigil.class, IntoTheFaeCourt.class, KindledHeroism.class, PropheticPrism.class})
 class TenaciousTomeseekerTest extends BaseCardTest {
 
     @Test
@@ -57,6 +65,142 @@ class TenaciousTomeseekerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void bargainReturnsSorceryAndLeavesOtherCardsInGraveyard() {
+        IntoTheFaeCourt sorcery = new IntoTheFaeCourt();
+        harness.setGraveyard(player1, List.of(sorcery, new KindledHeroism(), new TenaciousTomeseeker()));
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new PropheticPrism());
+        harness.setHand(player1, List.of(new TenaciousTomeseeker()));
+        addMana();
+
+        harness.castKickedCreatureWithPermanent(player1, 0, sacrifice.getId());
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(sorcery.getId()));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Into the Fae Court");
+        harness.assertInGraveyard(player1, "Kindled Heroism");
+        harness.assertInGraveyard(player1, "Tenacious Tomeseeker");
+        harness.assertInGraveyard(player1, "Prophetic Prism");
+    }
+
+    @Test
+    void bargainCanSacrificeEnchantment() {
+        KindledHeroism instant = new KindledHeroism();
+        harness.setGraveyard(player1, List.of(instant));
+        harness.setLibrary(player1, List.of());
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new HopefulVigil());
+        harness.setHand(player1, List.of(new TenaciousTomeseeker()));
+        addMana();
+
+        harness.castKickedCreatureWithPermanent(player1, 0, sacrifice.getId());
+        resolveAllTriggers();
+        harness.handleMultipleCardsChosen(player1, List.of(instant.getId()));
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Hopeful Vigil");
+        harness.assertInHand(player1, "Kindled Heroism");
+    }
+
+    @Test
+    void bargainCanSacrificeCreatureToken() {
+        harness.enterBattlefieldAndReturn(player1, new HopefulVigil());
+        resolveAllTriggers();
+        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken()).findFirst().orElseThrow();
+        KindledHeroism instant = new KindledHeroism();
+        harness.setGraveyard(player1, List.of(instant));
+        harness.setHand(player1, List.of(new TenaciousTomeseeker()));
+        addMana();
+
+        harness.castKickedCreatureWithPermanent(player1, 0, token.getId());
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(instant.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(p -> p.getId().equals(token.getId()));
+        harness.assertOnBattlefield(player1, "Hopeful Vigil");
+        harness.assertInHand(player1, "Kindled Heroism");
+    }
+
+    @Test
+    void bargainCannotSacrificeNontokenCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new TenaciousTomeseeker());
+        harness.setHand(player1, List.of(new TenaciousTomeseeker()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castKickedCreatureWithPermanent(player1, 0, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Tenacious Tomeseeker");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void bargainDoesNotReturnOpponentsGraveyardCard() {
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of(new KindledHeroism()));
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new PropheticPrism());
+        harness.setHand(player1, List.of(new TenaciousTomeseeker()));
+        addMana();
+
+        harness.castKickedCreatureWithPermanent(player1, 0, sacrifice.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player2, "Kindled Heroism");
+        harness.assertNotInHand(player1, "Kindled Heroism");
+    }
+
+    @Test
+    void removedTargetDoesNotReturnAnotherCardInstead() {
+        KindledHeroism target = new KindledHeroism();
+        IntoTheFaeCourt other = new IntoTheFaeCourt();
+        harness.setGraveyard(player1, List.of(target, other));
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new PropheticPrism());
+        harness.setHand(player1, List.of(new TenaciousTomeseeker()));
+        addMana();
+
+        harness.castKickedCreatureWithPermanent(player1, 0, sacrifice.getId());
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.setGraveyard(player1, List.of(other, sacrifice.getCard()));
+        harness.setExile(player1, List.of(target));
+        harness.passBothPriorities();
+
+        harness.assertNotInHand(player1, "Kindled Heroism");
+        harness.assertInGraveyard(player1, "Into the Fae Court");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void enteringWithoutBeingCastDoesNotTriggerRecovery() {
+        harness.setGraveyard(player1, List.of(new KindledHeroism()));
+
+        harness.enterBattlefieldAndReturn(player1, new TenaciousTomeseeker());
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Kindled Heroism");
+        harness.assertNotInHand(player1, "Kindled Heroism");
+    }
+
+    @Test
+    void bargainCannotSacrificeOpponentsArtifact() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new PropheticPrism());
+        harness.setHand(player1, List.of(new TenaciousTomeseeker()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castKickedCreatureWithPermanent(player1, 0, artifact.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Tenacious Tomeseeker");
+        harness.assertOnBattlefield(player2, "Prophetic Prism");
+        assertThat(gd.stack).isEmpty();
     }
 
     private void addMana() {
