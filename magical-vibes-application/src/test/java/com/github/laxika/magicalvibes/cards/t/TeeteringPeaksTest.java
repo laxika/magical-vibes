@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({TeeteringPeaks.class, GrizzlyBears.class})
 class TeeteringPeaksTest extends BaseCardTest {
 
     @Test
@@ -30,7 +32,6 @@ class TeeteringPeaksTest extends BaseCardTest {
         assertThat(bears.getEffectiveToughness()).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(bears.getEffectivePower()).isEqualTo(2);
@@ -60,5 +61,38 @@ class TeeteringPeaksTest extends BaseCardTest {
 
         assertThat(peaks.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Can enter tapped with no creatures to target")
+    void entersWithNoLegalTarget() {
+        harness.setHand(player1, List.of(new TeeteringPeaks()));
+
+        harness.playLand(player1, 0);
+
+        assertThat(findPermanent(player1, "Teetering Peaks").isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Only the chosen creature is boosted, after the trigger resolves")
+    void boostsOnlyChosenCreatureOnResolution() {
+        Permanent chosen = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new TeeteringPeaks()));
+
+        harness.playLand(player1, 0);
+        harness.handlePermanentChosen(player1, chosen.getId());
+
+        assertThat(chosen.getEffectivePower()).isEqualTo(2);
+        assertThat(other.getEffectivePower()).isEqualTo(2);
+
+        harness.passBothPriorities();
+
+        assertThat(chosen.getEffectivePower()).isEqualTo(4);
+        assertThat(chosen.getEffectiveToughness()).isEqualTo(2);
+        assertThat(other.getEffectivePower()).isEqualTo(2);
+        assertThat(other.getEffectiveToughness()).isEqualTo(2);
     }
 }
