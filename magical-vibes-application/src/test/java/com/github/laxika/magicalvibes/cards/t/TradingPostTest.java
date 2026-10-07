@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TradingPost.class, AngelsFeather.class, GrizzlyBears.class, Shock.class, Spellbook.class})
 class TradingPostTest extends BaseCardTest {
 
     private void setUpMain() {
@@ -84,9 +86,7 @@ class TradingPostTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, 2, null, feather.getId(), Zone.GRAVEYARD);
-        while (!gd.stack.isEmpty()) {
-            harness.passBothPriorities();
-        }
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.playerHands.get(player1.getId()))
@@ -123,5 +123,111 @@ class TradingPostTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Spellbook");
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Trading Post can sacrifice itself to draw a card")
+    void canSacrificeTradingPostItself() {
+        setUpMain();
+        harness.addToBattlefield(player1, new TradingPost());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 3, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Trading Post");
+        harness.assertInGraveyard(player1, "Trading Post");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.passBothPriorities();
+        harness.assertInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Discard is paid before the life gain resolves")
+    void discardIsAnActivationCost() {
+        setUpMain();
+        harness.addToBattlefield(player1, new TradingPost());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        int startingLife = gd.playerLifeTotals.get(player1.getId());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player1, "Shock");
+        harness.assertLife(player1, startingLife);
+        assertThat(findPermanent(player1, "Trading Post").isTapped()).isTrue();
+        harness.passBothPriorities();
+        harness.assertLife(player1, startingLife + 4);
+    }
+
+    @Test
+    @DisplayName("Life is paid before the Goat token is created")
+    void lifeIsAnActivationCost() {
+        setUpMain();
+        harness.addToBattlefield(player1, new TradingPost());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        int startingLife = gd.playerLifeTotals.get(player1.getId());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        harness.assertLife(player1, startingLife - 1);
+        harness.assertNotOnBattlefield(player1, "Goat");
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Goat");
+    }
+
+    @Test
+    @DisplayName("A tapped Trading Post cannot activate another ability")
+    void cannotActivateTwiceWithoutUntapping() {
+        setUpMain();
+        harness.addToBattlefield(player1, new TradingPost());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The Goat ability requires one mana")
+    void cannotActivateWithoutMana() {
+        setUpMain();
+        harness.addToBattlefield(player1, new TradingPost());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Recursion requires a creature to sacrifice")
+    void cannotReturnArtifactWithoutCreature() {
+        setUpMain();
+        harness.addToBattlefield(player1, new TradingPost());
+        Card artifact = new Spellbook();
+        harness.setGraveyard(player1, List.of(artifact));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, 0, 2, null, artifact.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Recursion cannot target an artifact in an opponent's graveyard")
+    void cannotReturnOpponentsArtifact() {
+        setUpMain();
+        harness.addToBattlefield(player1, new TradingPost());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        Card artifact = new Spellbook();
+        harness.setGraveyard(player2, List.of(artifact));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, 0, 2, null, artifact.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
     }
 }
