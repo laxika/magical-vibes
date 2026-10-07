@@ -14,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SpellSyphon.class, Cursecatcher.class, MistmeadowSkulk.class})
+@CardUsed({SpellSyphon.class, Cursecatcher.class, MistmeadowSkulk.class, SteelOfTheGodhead.class})
 class SpellSyphonTest extends BaseCardTest {
 
     /** Player2 casts Spell Syphon on player1's Mistmeadow Skulk. */
@@ -140,5 +140,68 @@ class SpellSyphonTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
         assertThat(harness.getPermanentId(player1, "Mistmeadow Skulk")).isNotNull();
+    }
+
+    @Test
+    @DisplayName("Blue permanents controlled by the opponent do not increase the cost")
+    void ignoresOpponentsBluePermanents() {
+        harness.addToBattlefield(player1, new Cursecatcher());
+        harness.addToBattlefield(player1, new Cursecatcher());
+        harness.addToBattlefield(player2, new Cursecatcher());
+
+        castSyphonOnSkulk(new MistmeadowSkulk(), 1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Mistmeadow Skulk");
+    }
+
+    @Test
+    @DisplayName("Declining an affordable nonzero payment counters the spell without spending mana")
+    void canDeclineAffordablePayment() {
+        harness.addToBattlefield(player2, new Cursecatcher());
+
+        castSyphonOnSkulk(new MistmeadowSkulk(), 1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInGraveyard(player1, "Mistmeadow Skulk");
+        harness.assertNotOnBattlefield(player1, "Mistmeadow Skulk");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Blue permanents entering after casting increase the cost at resolution")
+    void countsBluePermanentsAtResolution() {
+        harness.addToBattlefield(player2, new Cursecatcher());
+
+        castSyphonOnSkulk(new MistmeadowSkulk(), 1);
+        harness.addToBattlefield(player2, new Cursecatcher());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Mistmeadow Skulk");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A multicolored blue noncreature permanent contributes exactly one to the cost")
+    void countsMulticoloredBlueEnchantmentOnce() {
+        var creature = harness.addToBattlefieldAndReturn(player2, new MistmeadowSkulk());
+        var aura = harness.addToBattlefieldAndReturn(player2, new SteelOfTheGodhead());
+        aura.setAttachedTo(creature.getId());
+
+        castSyphonOnSkulk(new MistmeadowSkulk(), 1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Mistmeadow Skulk");
     }
 }
