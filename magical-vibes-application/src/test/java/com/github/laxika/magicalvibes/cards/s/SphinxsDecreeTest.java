@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SphinxsDecree.class, Shock.class, GrizzlyBears.class})
 class SphinxsDecreeTest extends BaseCardTest {
 
     @Test
@@ -62,6 +64,53 @@ class SphinxsDecreeTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
     }
 
+    @Test
+    @DisplayName("The opponent cannot cast a sorcery during their next turn")
+    void opponentCannotCastSorceryDuringNextTurn() {
+        castSphinxsDecree();
+        advanceToNextTurn(player1);
+
+        harness.setHand(player2, List.of(new SphinxsDecree()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castSorcery(player2, 0, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        harness.assertInHand(player2, "Sphinx's Decree");
+    }
+
+    @Test
+    @DisplayName("The caster can cast instants during the opponent's restricted turn")
+    void casterIsNotRestrictedDuringOpponentsTurn() {
+        castSphinxsDecree();
+        advanceToNextTurn(player1);
+
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.passPriority(player2);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.assertLife(player2, 18);
+        harness.assertInGraveyard(player1, "Shock");
+    }
+
+    @Test
+    @DisplayName("The opponent can cast instants immediately after their restricted turn")
+    void restrictionExpiresBeforeCastersNextMainPhase() {
+        castSphinxsDecree();
+        advanceToNextTurn(player1);
+        advanceToNextTurn(player2);
+
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        harness.assertLife(player1, 18);
+        harness.assertInGraveyard(player2, "Shock");
+    }
+
     private void castSphinxsDecree() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -69,8 +118,7 @@ class SphinxsDecreeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SphinxsDecree()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
     }
 
     private void advanceToNextTurn(Player currentPlayer) {
@@ -79,10 +127,8 @@ class SphinxsDecreeTest extends BaseCardTest {
         harness.forceActivePlayer(currentPlayer);
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Player nextPlayer = currentPlayer.equals(player1) ? player2 : player1;
+        harness.passUntil(nextPlayer, TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
     }
 }
