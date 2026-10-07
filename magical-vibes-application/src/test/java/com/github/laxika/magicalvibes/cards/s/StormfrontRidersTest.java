@@ -81,8 +81,7 @@ class StormfrontRidersTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         UUID stormfrontId = harness.getPermanentId(player1, "Stormfront Riders");
-        harness.castInstant(player1, 0, stormfrontId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, stormfrontId);
         resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Soldier")).hasSize(1);
@@ -97,13 +96,71 @@ class StormfrontRidersTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Boomerang()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        harness.castInstant(player1, 0, noncreature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, noncreature.getId());
 
         harness.assertInHand(player1, "Frozen Aether");
         assertThat(findPermanents(player1, "Soldier")).isEmpty();
     }
 
+    @Test
+    @DisplayName("Each of two Riders returned simultaneously triggers for both creatures")
+    void twoRidersReturnedSimultaneouslyCreateFourSoldiers() {
+        harness.addToBattlefield(player1, new StormfrontRiders());
+        harness.castFromHand(player1, new StormfrontRiders(), "{4}{W}");
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Stormfront Riders")).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(findPermanents(player1, "Soldier")).hasSize(4)
+                .allMatch(permanent -> permanent.getCard().isToken());
+    }
+
+    @Test
+    @DisplayName("With only Riders available its ETB returns it and creates one Soldier")
+    void etbWithOnlyItselfReturnsOneCreature() {
+        harness.castFromHand(player1, new StormfrontRiders(), "{4}{W}");
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Stormfront Riders");
+        harness.assertInHand(player1, "Stormfront Riders");
+        assertThat(findPermanents(player1, "Soldier")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Returning an opponent-owned creature to their hand creates no Soldier")
+    void returningOpponentsCreatureDoesNotTrigger() {
+        harness.addToBattlefield(player1, new StormfrontRiders());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new DuneriderOutlaw());
+        harness.setHand(player1, List.of(new Boomerang()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+        resolveAllTriggers();
+
+        harness.assertInHand(player2, "Dunerider Outlaw");
+        assertThat(findPermanents(player1, "Soldier")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Returning creature tokens triggers Riders for each token")
+    void returningTokensCreatesReplacementSoldiers() {
+        harness.addToBattlefield(player1, new DuneriderOutlaw());
+        harness.castFromHand(player1, new StormfrontRiders(), "{4}{W}");
+        resolveAllTriggers();
+        List<UUID> tokenIds = findPermanents(player1, "Soldier").stream()
+                .map(Permanent::getId).toList();
+
+        harness.castFromHand(player1, new StormfrontRiders(), "{4}{W}");
+        resolveAllTriggers();
+        harness.handleMultiplePermanentsChosen(player1, tokenIds);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Stormfront Riders");
+        assertThat(findPermanents(player1, "Soldier")).hasSize(2)
+                .noneMatch(permanent -> tokenIds.contains(permanent.getId()));
+        assertThat(gd.playerHands.get(player1.getId()))
+                .noneMatch(card -> card.isToken());
+    }
     private void addStormfrontMana() {
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.addMana(player1, ManaColor.WHITE, 1);
