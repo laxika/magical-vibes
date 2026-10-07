@@ -2,11 +2,14 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.w.WindDrake;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ThrashingMossdog.class, GrizzlyBears.class, Mountain.class, WindDrake.class})
 class ThrashingMossdogTest extends BaseCardTest {
 
     private void readyScavenge() {
@@ -86,5 +90,96 @@ class ThrashingMossdogTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0, bears.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void reachAllowsBlockingFlyingCreature() {
+        addCreatureReady(player1, new WindDrake());
+        Permanent mossdog = addCreatureReady(player2, new ThrashingMossdog());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(mossdog.isBlocking()).isTrue();
+    }
+
+    @Test
+    void scavengePaysManaAndExilesBeforeResolution() {
+        Permanent target = addCreatureReady(player1, new ThrashingMossdog());
+        readyScavenge();
+        var source = gd.playerGraveyards.get(player1.getId()).getFirst();
+
+        harness.activateGraveyardAbility(player1, 0, target.getId());
+
+        harness.assertNotInGraveyard(player1, "Thrashing Mossdog");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(source);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    void scavengeRequiresTwoGreenMana() {
+        Permanent target = addCreatureReady(player1, new ThrashingMossdog());
+        harness.setGraveyard(player1, List.of(new ThrashingMossdog()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Thrashing Mossdog");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void scavengeCannotBeActivatedDuringCombat() {
+        Permanent target = addCreatureReady(player1, new ThrashingMossdog());
+        readyScavenge();
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Thrashing Mossdog");
+    }
+
+    @Test
+    void scavengeCannotBeActivatedWithNonemptyStack() {
+        Permanent target = addCreatureReady(player1, new ThrashingMossdog());
+        harness.setGraveyard(player1, List.of(new ThrashingMossdog(), new ThrashingMossdog()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+        harness.activateGraveyardAbility(player1, 0, target.getId());
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    void scavengeDoesNotPutCountersOnTargetThatLeftBattlefield() {
+        Permanent target = addCreatureReady(player1, new ThrashingMossdog());
+        readyScavenge();
+        harness.activateGraveyardAbility(player1, 0, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+        harness.setGraveyard(player1, List.of(target.getCard()));
+
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .extracting(card -> card.getName()).containsExactly("Thrashing Mossdog");
+        assertThat(gd.stack).isEmpty();
     }
 }
