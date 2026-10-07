@@ -93,9 +93,84 @@ class TitaniasChosenTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castInstant(player1, 0, target.getId());
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(chosen.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The counter is added by a trigger before the green spell resolves")
+    void counterTriggerResolvesBeforeSpell() {
+        Permanent chosen = addCreatureReady(player1, new TitaniasChosen());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castFromHand(player1, new GorillaWarrior(), "{2}{G}");
+
+        assertThat(chosen.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertNotOnBattlefield(player1, "Gorilla Warrior");
         harness.passBothPriorities();
 
         assertThat(chosen.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.assertNotOnBattlefield(player1, "Gorilla Warrior");
+        resolveAllTriggers();
+        harness.assertOnBattlefield(player1, "Gorilla Warrior");
+        assertThat(chosen.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Casting Chosen triggers an existing Chosen but not the one being cast")
+    void doesNotTriggerForItsOwnCast() {
+        Permanent existing = addCreatureReady(player1, new TitaniasChosen());
+        TitaniasChosen incoming = new TitaniasChosen();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castFromHand(player1, incoming, "{2}{G}");
+        resolveAllTriggers();
+
+        assertThat(existing.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        Permanent entered = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().getId().equals(incoming.getId()))
+                .findFirst().orElseThrow();
+        assertThat(entered.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Each player's Chosen gets one counter for each green spell")
+    void multipleChosenTriggerForRepeatedGreenSpells() {
+        Permanent first = addCreatureReady(player1, new TitaniasChosen());
+        Permanent second = addCreatureReady(player2, new TitaniasChosen());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castFromHand(player1, new Lull(), "{1}{G}");
+        resolveAllTriggers();
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+
+        harness.castFromHand(player2, new Lull(), "{1}{G}");
+        resolveAllTriggers();
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Cycling a green card does not trigger Chosen")
+    void cyclingGreenCardDoesNotAddCounter() {
+        Permanent chosen = addCreatureReady(player1, new TitaniasChosen());
+        harness.setHand(player1, List.of(new Lull()));
+        harness.setLibrary(player1, List.of(new GorillaWarrior()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Lull");
+        harness.assertInHand(player1, "Gorilla Warrior");
+        assertThat(chosen.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 }
