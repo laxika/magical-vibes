@@ -5,9 +5,11 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.s.SpellstutterSprite;
+import com.github.laxika.magicalvibes.cards.w.WoodlandChangeling;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +19,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ThievingSprite.class, SpellstutterSprite.class, GrizzlyBears.class, HillGiant.class,
+        Tarfire.class, WoodlandChangeling.class})
 class ThievingSpriteTest extends BaseCardTest {
 
     private PendingInteraction.RevealCardsDiscardChoice activeChoice() {
@@ -156,5 +160,100 @@ class ThievingSpriteTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.handleCardChosen(player2, 5))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid card index");
+    }
+
+    @Test
+    @DisplayName("The controller can target themselves and chooses both the reveal and discard")
+    void canTargetSelf() {
+        harness.setHand(player1, List.of(new ThievingSprite(), new SpellstutterSprite(), new Tarfire()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castCreature(player1, 0, player1.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(activeChoice().revealStage()).isTrue();
+        assertThat(activeChoice().decidingPlayerId()).isEqualTo(player1.getId());
+        harness.handleCardChosen(player1, 1);
+        assertThat(activeChoice().revealStage()).isFalse();
+        assertThat(activeChoice().decidingPlayerId()).isEqualTo(player1.getId());
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player1, "Tarfire");
+        assertThat(gd.playerHands.get(player1.getId())).singleElement()
+                .isInstanceOf(SpellstutterSprite.class);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Opposing Faeries and friendly non-Faeries do not increase the reveal count")
+    void countsOnlyControlledFaeries() {
+        harness.addToBattlefield(player2, new SpellstutterSprite());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player2, List.of(new SpellstutterSprite(), new Tarfire()));
+
+        castThievingSprite(player2.getId());
+
+        assertThat(activeChoice().remainingCount()).isEqualTo(1);
+        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player1, 0);
+        harness.assertInGraveyard(player2, "Spellstutter Sprite");
+        assertThat(gd.playerHands.get(player2.getId())).singleElement().isInstanceOf(Tarfire.class);
+    }
+
+    @Test
+    @DisplayName("With more Faeries than cards in hand, all cards are revealed and only one is discarded")
+    void revealCountLargerThanHand() {
+        harness.addToBattlefield(player1, new SpellstutterSprite());
+        harness.addToBattlefield(player1, new SpellstutterSprite());
+        harness.setHand(player2, List.of(new SpellstutterSprite(), new Tarfire()));
+
+        castThievingSprite(player2.getId());
+
+        assertThat(activeChoice().revealStage()).isFalse();
+        assertThat(activeChoice().revealedCardIds()).hasSize(2);
+        harness.handleCardChosen(player1, 1);
+        harness.assertInGraveyard(player2, "Tarfire");
+        assertThat(gd.playerHands.get(player2.getId())).singleElement()
+                .isInstanceOf(SpellstutterSprite.class);
+    }
+
+    @Test
+    @DisplayName("Changeling contributes to the Faerie count")
+    void countsChangelingAsFaerie() {
+        harness.addToBattlefield(player1, new WoodlandChangeling());
+        harness.setHand(player2, List.of(new SpellstutterSprite(), new Tarfire(), new WoodlandChangeling()));
+
+        castThievingSprite(player2.getId());
+
+        assertThat(activeChoice().remainingCount()).isEqualTo(2);
+        harness.handleCardChosen(player2, 2);
+        harness.handleCardChosen(player2, 0);
+        assertThat(activeChoice().revealedCardIds()).hasSize(2);
+        harness.handleCardChosen(player1, 0);
+        harness.assertInGraveyard(player2, "Woodland Changeling");
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("If the only Faerie dies before resolution, the trigger reveals and discards nothing")
+    void noFaeriesAtResolution() {
+        harness.setHand(player2, List.of(new SpellstutterSprite(), new Tarfire()));
+        harness.setHand(player1, List.of(new ThievingSprite(), new Tarfire()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castCreature(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, gd.playerBattlefields.get(player1.getId()).getFirst().getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Thieving Sprite");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
     }
 }
