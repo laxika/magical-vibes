@@ -2,9 +2,11 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HolyStrength;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.model.planar.PlanechaseState;
@@ -21,7 +23,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TheMaelstrom.class, Forest.class, GrizzlyBears.class, Shock.class})
+@CardUsed({TheMaelstrom.class, Forest.class, GrizzlyBears.class, Shock.class, HolyStrength.class})
 class TheMaelstromTest extends BaseCardTest {
 
     private PlanechaseService planar;
@@ -118,6 +120,69 @@ class TheMaelstromTest extends BaseCardTest {
                 .anyMatch(candidate -> candidate.getCard().getId().equals(permanent.getId()));
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .containsExactly(nonPermanent);
+    }
+
+    @Test
+    void decliningToPutRevealedPermanentPutsItOnTheBottom() {
+        Card permanent = new Forest();
+        Card next = new Shock();
+        harness.setLibrary(player1, List.of(permanent, next));
+
+        triggerUpkeep();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(next, permanent);
+        harness.assertNotOnBattlefield(player1, "Forest");
+    }
+
+    @Test
+    void revealedAuraWithoutLegalAttachmentGoesToTheBottom() {
+        Card aura = new HolyStrength();
+        Card next = new Forest();
+        harness.setLibrary(player1, List.of(aura, next));
+
+        triggerUpkeep();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(next, aura);
+        harness.assertNotOnBattlefield(player1, "Holy Strength");
+    }
+
+    @Test
+    void emptyLibraryDoesNotOfferRevealOrLoseTheGame() {
+        harness.setLibrary(player1, List.of());
+        StepTriggerService steps = GameTestEngineContext.get().getBean(StepTriggerService.class);
+
+        harness.inMutationScope(() -> steps.handleUpkeepTriggers(gd));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.status).isEqualTo(com.github.laxika.magicalvibes.model.GameStatus.RUNNING);
+    }
+
+    @Test
+    void chaosReturnsAuraAttachedToChosenCreature() {
+        Card aura = new HolyStrength();
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setGraveyard(player1, List.of(aura));
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.inMutationScope(() -> triggers.processNextSpellGraveyardTargetTrigger(gd));
+        harness.handleMultipleCardsChosen(player1, List.of(aura.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handlePermanentChosen(player1, creature.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anySatisfy(permanent -> {
+                    assertThat(permanent.getCard().getId()).isEqualTo(aura.getId());
+                    assertThat(permanent.getAttachedTo()).isEqualTo(creature.getId());
+                });
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
     }
 
     private void triggerUpkeep() {
