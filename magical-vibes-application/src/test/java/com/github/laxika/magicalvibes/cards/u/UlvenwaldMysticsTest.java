@@ -6,27 +6,23 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({UlvenwaldMystics.class})
 class UlvenwaldMysticsTest extends BaseCardTest {
-
-    // ===== Werewolf transform: front → back (no spells cast last turn) =====
 
     @Test
     @DisplayName("Transforms to Ulvenwald Primordials when no spells were cast last turn")
     void transformsWhenNoSpellsCastLastTurn() {
-        harness.addToBattlefield(player1, new UlvenwaldMystics());
-        Permanent mystics = findPermanent(player1, "Ulvenwald Mystics");
+        Permanent mystics = harness.addToBattlefieldAndReturn(player1, new UlvenwaldMystics());
 
         gd.spellsCastLastTurn.clear();
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to upkeep, trigger goes on stack
+        advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve triggered ability
 
         assertThat(mystics.isTransformed()).isTrue();
@@ -38,34 +34,24 @@ class UlvenwaldMysticsTest extends BaseCardTest {
     @Test
     @DisplayName("Does not transform when a spell was cast last turn")
     void doesNotTransformWhenSpellCastLastTurn() {
-        harness.addToBattlefield(player1, new UlvenwaldMystics());
-        Permanent mystics = findPermanent(player1, "Ulvenwald Mystics");
+        Permanent mystics = harness.addToBattlefieldAndReturn(player1, new UlvenwaldMystics());
 
         gd.spellsCastLastTurn.put(player1.getId(), 1);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to upkeep — no trigger
+        advanceToUpkeep(player1);
 
         assertThat(mystics.isTransformed()).isFalse();
         assertThat(mystics.getCard().getName()).isEqualTo("Ulvenwald Mystics");
     }
 
-    // ===== Werewolf transform: back → front (two or more spells cast last turn) =====
-
     @Test
     @DisplayName("Ulvenwald Primordials transforms back when a player cast two or more spells last turn")
     void primordialTransformsBackWhenTwoSpellsCast() {
-        harness.addToBattlefield(player1, new UlvenwaldMystics());
-        Permanent mystics = findPermanent(player1, "Ulvenwald Mystics");
+        Permanent mystics = harness.addToBattlefieldAndReturn(player1, new UlvenwaldMystics());
 
         // Transform to Ulvenwald Primordials first
         gd.spellsCastLastTurn.clear();
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to upkeep
+        advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve transform
         assertThat(mystics.isTransformed()).isTrue();
 
@@ -73,10 +59,7 @@ class UlvenwaldMysticsTest extends BaseCardTest {
         gd.spellsCastLastTurn.clear();
         gd.spellsCastLastTurn.put(player2.getId(), 2);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to upkeep, back-face trigger goes on stack
+        advanceToUpkeep(player2);
         harness.passBothPriorities(); // resolve transform back
 
         assertThat(mystics.isTransformed()).isFalse();
@@ -88,15 +71,11 @@ class UlvenwaldMysticsTest extends BaseCardTest {
     @Test
     @DisplayName("Ulvenwald Primordials does not transform back when only one spell was cast last turn")
     void primordialDoesNotTransformWhenOneSpellCast() {
-        harness.addToBattlefield(player1, new UlvenwaldMystics());
-        Permanent mystics = findPermanent(player1, "Ulvenwald Mystics");
+        Permanent mystics = harness.addToBattlefieldAndReturn(player1, new UlvenwaldMystics());
 
         // Transform to Ulvenwald Primordials first
         gd.spellsCastLastTurn.clear();
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        advanceToUpkeep(player1);
         harness.passBothPriorities();
         assertThat(mystics.isTransformed()).isTrue();
 
@@ -105,49 +84,34 @@ class UlvenwaldMysticsTest extends BaseCardTest {
         gd.spellsCastLastTurn.put(player1.getId(), 1);
         gd.spellsCastLastTurn.put(player2.getId(), 1);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to upkeep — no trigger
+        advanceToUpkeep(player2);
 
         assertThat(mystics.isTransformed()).isTrue();
         assertThat(mystics.getCard().getName()).isEqualTo("Ulvenwald Primordials");
     }
 
-    // ===== Transform triggers on every upkeep (not just controller's) =====
-
     @Test
     @DisplayName("Transform triggers on opponent's upkeep too")
     void transformTriggersOnOpponentUpkeep() {
-        harness.addToBattlefield(player1, new UlvenwaldMystics());
-        Permanent mystics = findPermanent(player1, "Ulvenwald Mystics");
+        Permanent mystics = harness.addToBattlefieldAndReturn(player1, new UlvenwaldMystics());
 
         gd.spellsCastLastTurn.clear();
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to upkeep, trigger fires
+        advanceToUpkeep(player2);
         harness.passBothPriorities(); // resolve
 
         assertThat(mystics.isTransformed()).isTrue();
         assertThat(mystics.getCard().getName()).isEqualTo("Ulvenwald Primordials");
     }
 
-    // ===== Back face regeneration ability =====
-
     @Test
     @DisplayName("Ulvenwald Primordials can activate regeneration ability")
     void primordialCanActivateRegeneration() {
-        harness.addToBattlefield(player1, new UlvenwaldMystics());
-        Permanent mystics = findPermanent(player1, "Ulvenwald Mystics");
+        Permanent mystics = harness.addToBattlefieldAndReturn(player1, new UlvenwaldMystics());
 
         // Transform to Ulvenwald Primordials
         gd.spellsCastLastTurn.clear();
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        advanceToUpkeep(player1);
         harness.passBothPriorities();
         assertThat(mystics.isTransformed()).isTrue();
 
@@ -169,15 +133,11 @@ class UlvenwaldMysticsTest extends BaseCardTest {
     @Test
     @DisplayName("Regeneration shield saves Ulvenwald Primordials from lethal damage")
     void regenerationSavesPrimordialFromLethalDamage() {
-        harness.addToBattlefield(player1, new UlvenwaldMystics());
-        Permanent mystics = findPermanent(player1, "Ulvenwald Mystics");
+        Permanent mystics = harness.addToBattlefieldAndReturn(player1, new UlvenwaldMystics());
 
         // Transform to Ulvenwald Primordials (5/5)
         gd.spellsCastLastTurn.clear();
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        advanceToUpkeep(player1);
         harness.passBothPriorities();
         assertThat(mystics.isTransformed()).isTrue();
 
@@ -187,13 +147,10 @@ class UlvenwaldMysticsTest extends BaseCardTest {
         mystics.setBlocking(true);
         mystics.addBlockingTarget(0);
 
-        // Create a 6/6 attacker (power > 5 toughness to deal lethal)
-        UlvenwaldMystics attackerCard = new UlvenwaldMystics();
-        Permanent attacker = new Permanent(attackerCard);
-        attacker.setSummoningSick(false);
+        // Create a 6/3 attacker to deal lethal damage.
+        Permanent attacker = addCreatureReady(player2, new UlvenwaldMystics());
         attacker.setAttacking(true);
         attacker.setPowerModifier(3); // 3+3=6 power
-        gd.playerBattlefields.get(player2.getId()).add(attacker);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -204,6 +161,56 @@ class UlvenwaldMysticsTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Ulvenwald Primordials");
         assertThat(mystics.isTapped()).isTrue();
         assertThat(mystics.getRegenerationShield()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("An opponent's spell prevents the front face from transforming")
+    void opponentSpellPreventsTransform() {
+        Permanent mystics = harness.addToBattlefieldAndReturn(player1, new UlvenwaldMystics());
+        gd.spellsCastLastTurn.clear();
+        gd.spellsCastLastTurn.put(player2.getId(), 1);
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(mystics.isTransformed()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The back face stays transformed after a spell-free turn")
+    void primordialStaysTransformedWhenNoSpellsCast() {
+        Permanent mystics = harness.addToBattlefieldAndReturn(player1, new UlvenwaldMystics());
+        gd.spellsCastLastTurn.clear();
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        assertThat(mystics.isTransformed()).isTrue();
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(mystics.isTransformed()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A tapped Primordials can create multiple shields without regenerating immediately")
+    void tappedPrimordialCanCreateMultipleShields() {
+        Permanent mystics = harness.addToBattlefieldAndReturn(player1, new UlvenwaldMystics());
+        gd.spellsCastLastTurn.clear();
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        assertThat(mystics.isTransformed()).isTrue();
+        mystics.setTapped(true);
+        mystics.setMarkedDamage(2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(mystics.getRegenerationShield()).isEqualTo(2);
+        assertThat(mystics.getMarkedDamage()).isEqualTo(2);
+        assertThat(mystics.isTapped()).isTrue();
     }
 
 }
