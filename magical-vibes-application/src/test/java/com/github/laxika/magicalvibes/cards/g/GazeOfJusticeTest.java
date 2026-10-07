@@ -168,4 +168,89 @@ class GazeOfJusticeTest extends BaseCardTest {
         assertThat(third.isTapped()).isFalse();
         assertThat(gd.findExiledCard(target.getCard().getId())).isNull();
     }
+    @Test
+    @DisplayName("Summoning-sick creatures can pay the tap cost, including the target")
+    void tapsSummoningSickCreaturesAndExilesOneOfThem() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new BenalishCavalry());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new BenalishCavalry());
+        Permanent third = harness.addToBattlefieldAndReturn(player1, new BenalishCavalry());
+        first.setSummoningSick(true);
+        second.setSummoningSick(true);
+        third.setSummoningSick(true);
+        GazeOfJustice card = new GazeOfJustice();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castSorceryTappingPermanents(player1, 0, first.getId(),
+                List.of(first.getId(), second.getId(), third.getId()));
+
+        assertThat(first.isTapped()).isTrue();
+        assertThat(second.isTapped()).isTrue();
+        assertThat(third.isTapped()).isTrue();
+        assertThat(gd.findExiledCard(first.getCard().getId())).isNull();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.findExiledCard(first.getCard().getId())).isNotNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(first);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
+    }
+
+    @Test
+    @DisplayName("The same creature cannot pay the tap cost more than once")
+    void rejectsDuplicateTapCostSelection() {
+        Permanent first = addCreatureReady(player1, new BenalishCavalry());
+        Permanent second = addCreatureReady(player1, new BenalishCavalry());
+        Permanent target = addCreatureReady(player2, new AshcoatBear());
+        harness.setHand(player1, List.of(new GazeOfJustice()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.castSorceryTappingPermanents(player1, 0, target.getId(),
+                List.of(first.getId(), second.getId(), first.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(first.isTapped()).isFalse();
+        assertThat(second.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Fewer than three creatures cannot pay the tap cost")
+    void rejectsTooFewTapCostSelections() {
+        Permanent first = addCreatureReady(player1, new BenalishCavalry());
+        Permanent second = addCreatureReady(player1, new BenalishCavalry());
+        Permanent target = addCreatureReady(player2, new AshcoatBear());
+        harness.setHand(player1, List.of(new GazeOfJustice()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.castSorceryTappingPermanents(player1, 0, target.getId(),
+                List.of(first.getId(), second.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(first.isTapped()).isFalse();
+        assertThat(second.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Flashback cannot omit the additional tap cost")
+    void rejectsFlashbackWithoutTapPayment() {
+        Permanent first = addCreatureReady(player1, new BenalishCavalry());
+        Permanent second = addCreatureReady(player1, new BenalishCavalry());
+        Permanent third = addCreatureReady(player1, new BenalishCavalry());
+        Permanent target = addCreatureReady(player2, new AshcoatBear());
+        GazeOfJustice card = new GazeOfJustice();
+        harness.setGraveyard(player1, List.of(card));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        assertThatThrownBy(() -> harness.castFlashback(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(first.isTapped()).isFalse();
+        assertThat(second.isTapped()).isFalse();
+        assertThat(third.isTapped()).isFalse();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
+        assertThat(gd.stack).isEmpty();
+    }
 }
