@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DrudgeBeetle;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ThrillKillAssassin.class, DrudgeBeetle.class})
 class ThrillKillAssassinTest extends BaseCardTest {
 
     @Test
@@ -42,11 +44,9 @@ class ThrillKillAssassinTest extends BaseCardTest {
     void unleashedCantBlock() {
         Permanent assassin = addCreatureReady(player1, new ThrillKillAssassin());
         assassin.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new DrudgeBeetle());
 
-        declareAttackers(player2, List.of(0));
-
-        harness.beginBlockerDeclarationInput();
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
         assertThatThrownBy(() -> gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class);
     }
@@ -55,14 +55,15 @@ class ThrillKillAssassinTest extends BaseCardTest {
     @DisplayName("Without a +1/+1 counter it blocks normally and deathtouch kills the attacker")
     void blocksWithoutCounter() {
         addCreatureReady(player1, new ThrillKillAssassin());
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new DrudgeBeetle());
 
-        declareAttackers(player2, List.of(0));
-
-        harness.beginBlockerDeclarationInput();
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat(player2);
 
-        assertThat(findPermanent(player1, "Thrill-Kill Assassin").isBlocking()).isTrue();
+        harness.assertInGraveyard(player2, "Drudge Beetle");
+        harness.assertInGraveyard(player1, "Thrill-Kill Assassin");
+        harness.assertLife(player1, 20);
     }
 
     @Test
@@ -77,6 +78,36 @@ class ThrillKillAssassinTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
 
+    @Test
+    @DisplayName("Removing the unleash counter restores blocking even with another counter type")
+    void blocksAfterUnleashCounterIsRemoved() {
+        castAssassin(true);
+        Permanent assassin = findPermanent(player1, "Thrill-Kill Assassin");
+        assassin.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+        assassin.setCounterCount(CounterType.CHARGE, 1);
+        addCreatureReady(player2, new DrudgeBeetle());
+
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat(player2);
+
+        harness.assertInGraveyard(player2, "Drudge Beetle");
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("A +1/+1 counter added after declining unleash still prevents blocking")
+    void counterAddedAfterDecliningPreventsBlocking() {
+        castAssassin(false);
+        Permanent assassin = findPermanent(player1, "Thrill-Kill Assassin");
+        assassin.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        addCreatureReady(player2, new DrudgeBeetle());
+
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
     private void castAssassin(boolean unleash) {
         harness.setHand(player1, List.of(new ThrillKillAssassin()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -85,6 +116,7 @@ class ThrillKillAssassinTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Thrill-Kill Assassin");
         harness.handleMayAbilityChosen(player1, unleash);
     }
 }
