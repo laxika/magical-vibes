@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.k.KolaghanAspirant;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -19,15 +18,16 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SwiftWarkite.class, GrizzlyBears.class, HillGiant.class})
+@CardUsed({SwiftWarkite.class, KolaghanAspirant.class, SummitProwler.class,
+        ScreamreachBrawler.class, StormcragElemental.class, SibsigIcebreakers.class})
 class SwiftWarkiteTest extends BaseCardTest {
 
     @Test
     @DisplayName("Puts an eligible creature from hand onto the battlefield with haste and returns it at the next end step")
     void putsCreatureFromHandWithHasteAndReturnsAtNextEndStep() {
         Card warkite = new SwiftWarkite();
-        Card bear = new GrizzlyBears();
-        Card hillGiant = new HillGiant();
+        Card bear = new KolaghanAspirant();
+        Card hillGiant = new SummitProwler();
         harness.setHand(player1, List.of(warkite, bear, hillGiant));
         castWarkite();
 
@@ -37,7 +37,7 @@ class SwiftWarkiteTest extends BaseCardTest {
 
         harness.handleMultipleCardsChosen(player1, List.of(bear.getId()));
 
-        Permanent entered = findPermanent(player1, "Grizzly Bears");
+        Permanent entered = findPermanent(player1, "Kolaghan Aspirant");
         assertThat(entered.hasKeyword(Keyword.HASTE)).isTrue();
         assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
                 .contains(new DelayedPermanentAction(
@@ -45,9 +45,11 @@ class SwiftWarkiteTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_STEP);
+        harness.assertOnBattlefield(player1, "Kolaghan Aspirant");
         harness.passBothPriorities();
 
-        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Kolaghan Aspirant");
         harness.assertOnBattlefield(player1, "Swift Warkite");
     }
 
@@ -55,7 +57,7 @@ class SwiftWarkiteTest extends BaseCardTest {
     @DisplayName("Puts an eligible creature from the graveyard onto the battlefield")
     void putsCreatureFromGraveyardOntoBattlefield() {
         Card warkite = new SwiftWarkite();
-        Card bear = new GrizzlyBears();
+        Card bear = new KolaghanAspirant();
         harness.setHand(player1, List.of(warkite));
         harness.setGraveyard(player1, List.of(bear));
         castWarkite();
@@ -66,7 +68,7 @@ class SwiftWarkiteTest extends BaseCardTest {
 
         harness.handleMultipleCardsChosen(player1, List.of(bear.getId()));
 
-        Permanent entered = findPermanent(player1, "Grizzly Bears");
+        Permanent entered = findPermanent(player1, "Kolaghan Aspirant");
         assertThat(entered.hasKeyword(Keyword.HASTE)).isTrue();
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(bear);
     }
@@ -75,7 +77,7 @@ class SwiftWarkiteTest extends BaseCardTest {
     @DisplayName("May decline putting a creature onto the battlefield")
     void mayDeclinePuttingCreatureOntoBattlefield() {
         Card warkite = new SwiftWarkite();
-        Card bear = new GrizzlyBears();
+        Card bear = new KolaghanAspirant();
         harness.setHand(player1, List.of(warkite, bear));
         castWarkite();
 
@@ -85,6 +87,60 @@ class SwiftWarkiteTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getCard().getId().equals(bear.getId()));
         assertThat(gd.getDelayedActions(DelayedPermanentAction.class)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Mana value three is eligible, but a cheaper face-down casting option is not")
+    void usesManaValueRatherThanAlternateCastingCost() {
+        Card brawler = new ScreamreachBrawler();
+        Card elemental = new StormcragElemental();
+        Card opposingCreature = new ScreamreachBrawler();
+        harness.setHand(player1, List.of(new SwiftWarkite(), brawler, elemental));
+        harness.setGraveyard(player2, List.of(opposingCreature));
+        castWarkite();
+
+        PendingInteraction.PutCardFromHandOrGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PutCardFromHandOrGraveyardChoice.class);
+        assertThat(choice.validCardIds()).containsExactly(brawler.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(brawler.getId()));
+
+        harness.assertOnBattlefield(player1, "Screamreach Brawler");
+        harness.assertInHand(player1, "Stormcrag Elemental");
+        harness.assertInGraveyard(player2, "Screamreach Brawler");
+    }
+
+    @Test
+    @DisplayName("Putting a creature onto the battlefield triggers its enters ability")
+    void returnedCreatureTriggersItsEntersAbility() {
+        Card icebreakers = new SibsigIcebreakers();
+        Card discard = new ScreamreachBrawler();
+        harness.setHand(player1, List.of(new SwiftWarkite(), discard));
+        harness.setGraveyard(player1, List.of(icebreakers));
+        harness.setHand(player2, List.of());
+        castWarkite();
+        harness.handleMultipleCardsChosen(player1, List.of(icebreakers.getId()));
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        PendingInteraction.DiscardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.assertInGraveyard(player1, "Screamreach Brawler");
+        harness.assertOnBattlefield(player1, "Sibsig Icebreakers");
+    }
+
+    @Test
+    @DisplayName("The enters ability completes without a choice when no eligible creature exists")
+    void noEligibleCreatureNeedsNoChoice() {
+        harness.setHand(player1, List.of(new SwiftWarkite(), new StormcragElemental()));
+        castWarkite();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Swift Warkite");
+        harness.assertInHand(player1, "Stormcrag Elemental");
     }
 
     private void castWarkite() {
