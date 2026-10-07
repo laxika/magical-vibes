@@ -2,26 +2,23 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({Thrummingbird.class, GrizzlyBears.class, SerraAngel.class})
 class ThrummingbirdTest extends BaseCardTest {
 
     private Permanent addReadyThrummingbird() {
-        Permanent perm = new Permanent(new Thrummingbird());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player1, new Thrummingbird());
     }
-
-    // ===== Combat damage triggers proliferate =====
 
     @Test
     @DisplayName("Dealing combat damage triggers proliferate and adds -1/-1 counter to chosen creature")
@@ -29,11 +26,11 @@ class ThrummingbirdTest extends BaseCardTest {
         Permanent bird = addReadyThrummingbird();
         bird.setAttacking(true);
 
-        Permanent bears = new Permanent(new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         bears.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
-        gd.playerBattlefields.get(player2.getId()).add(bears);
 
         resolveCombat();
+        resolveAllTriggers();
 
         harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
 
@@ -46,11 +43,11 @@ class ThrummingbirdTest extends BaseCardTest {
         Permanent bird = addReadyThrummingbird();
         bird.setAttacking(true);
 
-        Permanent bears = new Permanent(new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
 
         resolveCombat();
+        resolveAllTriggers();
 
         harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
 
@@ -63,11 +60,11 @@ class ThrummingbirdTest extends BaseCardTest {
         Permanent bird = addReadyThrummingbird();
         bird.setAttacking(true);
 
-        Permanent bears = new Permanent(new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         bears.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
-        gd.playerBattlefields.get(player2.getId()).add(bears);
 
         resolveCombat();
+        resolveAllTriggers();
 
         harness.handleMultiplePermanentsChosen(player1, List.of());
 
@@ -80,15 +77,14 @@ class ThrummingbirdTest extends BaseCardTest {
         Permanent bird = addReadyThrummingbird();
         bird.setAttacking(true);
 
-        Permanent bears1 = new Permanent(new GrizzlyBears());
+        Permanent bears1 = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         bears1.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
-        gd.playerBattlefields.get(player1.getId()).add(bears1);
 
-        Permanent bears2 = new Permanent(new GrizzlyBears());
+        Permanent bears2 = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         bears2.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
-        gd.playerBattlefields.get(player2.getId()).add(bears2);
 
         resolveCombat();
+        resolveAllTriggers();
 
         harness.handleMultiplePermanentsChosen(player1, List.of(bears1.getId(), bears2.getId()));
 
@@ -102,17 +98,15 @@ class ThrummingbirdTest extends BaseCardTest {
         Permanent bird = addReadyThrummingbird();
         bird.setAttacking(true);
 
-        Permanent blocker = new Permanent(new SerraAngel());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        Permanent blocker = addCreatureReady(player2, new SerraAngel());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0); // Thrummingbird is at index 0
 
-        Permanent bears = new Permanent(new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         bears.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
-        gd.playerBattlefields.get(player2.getId()).add(bears);
 
         resolveCombat();
+        resolveAllTriggers();
 
         // No proliferate trigger — bears counter unchanged
         assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
@@ -128,6 +122,7 @@ class ThrummingbirdTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
 
         resolveCombat();
+        resolveAllTriggers();
 
         // Proliferate resolves with no eligible permanents — no choice needed
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
@@ -141,7 +136,65 @@ class ThrummingbirdTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         resolveCombat();
+        resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+    }
+    @Test
+    @DisplayName("Proliferate adds each existing counter kind and leaves unchosen permanents unchanged")
+    void proliferateEveryCounterKind() {
+        Permanent bird = addReadyThrummingbird();
+        bird.setAttacking(true);
+        Permanent chosen = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        chosen.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        chosen.setCounterCount(CounterType.CHARGE, 3);
+        Permanent unchosen = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        unchosen.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        resolveCombat();
+        resolveAllTriggers();
+        harness.handleMultiplePermanentsChosen(player1, List.of(chosen.getId()));
+
+        assertThat(chosen.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(chosen.getCounterCount(CounterType.CHARGE)).isEqualTo(4);
+        assertThat(chosen.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        assertThat(unchosen.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Proliferate can choose both players together with a permanent")
+    void proliferatePlayersAndPermanent() {
+        Permanent bird = addReadyThrummingbird();
+        bird.setAttacking(true);
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        gd.playerPoisonCounters.put(player1.getId(), 1);
+        gd.playerPoisonCounters.put(player2.getId(), 2);
+
+        resolveCombat();
+        resolveAllTriggers();
+        harness.handleMultiplePermanentsChosen(player1,
+                List.of(player1.getId(), player2.getId(), bears.getId()));
+
+        assertThat(gd.playerPoisonCounters.get(player1.getId())).isEqualTo(2);
+        assertThat(gd.playerPoisonCounters.get(player2.getId())).isEqualTo(3);
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Proliferate can choose only one player when no permanent has counters")
+    void proliferateOnlyChosenPlayer() {
+        Permanent bird = addReadyThrummingbird();
+        bird.setAttacking(true);
+        gd.playerPoisonCounters.put(player1.getId(), 1);
+        gd.playerPoisonCounters.put(player2.getId(), 2);
+
+        resolveCombat();
+        resolveAllTriggers();
+        harness.handleMultiplePermanentsChosen(player1, List.of(player2.getId()));
+
+        assertThat(gd.playerPoisonCounters.get(player1.getId())).isEqualTo(1);
+        assertThat(gd.playerPoisonCounters.get(player2.getId())).isEqualTo(3);
+        assertThat(bird.getCounters()).isEmpty();
     }
 }
