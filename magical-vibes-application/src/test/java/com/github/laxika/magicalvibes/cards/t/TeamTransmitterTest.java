@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -22,10 +22,7 @@ class TeamTransmitterTest extends BaseCardTest {
         harness.addToBattlefield(player1, new TeamTransmitter());
         int lifeBefore = gd.getLife(player1.getId());
 
-        harness.setHand(player1, List.of(new LukeCagePowerMan()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new LukeCagePowerMan(), "{3}{W}");
         resolveCreatureAndTrigger();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore + 1);
@@ -37,10 +34,7 @@ class TeamTransmitterTest extends BaseCardTest {
         harness.addToBattlefield(player1, new TeamTransmitter());
         int lifeBefore = gd.getLife(player1.getId());
 
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore);
@@ -63,5 +57,57 @@ class TeamTransmitterTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("An opposing Hero entering does not gain life")
+    void opposingHeroDoesNotGainLife() {
+        harness.addToBattlefield(player1, new TeamTransmitter());
+        int lifeBefore = gd.getLife(player1.getId());
+        int opponentLifeBefore = gd.getLife(player2.getId());
+
+        harness.enterBattlefieldAndReturn(player2, new LukeCagePowerMan());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(opponentLifeBefore);
+    }
+
+    @Test
+    @DisplayName("Each transmitter triggers for a Hero entering without being cast")
+    void eachTransmitterTriggersForHeroPutOntoBattlefield() {
+        harness.addToBattlefield(player1, new TeamTransmitter());
+        harness.addToBattlefield(player1, new TeamTransmitter());
+        int lifeBefore = gd.getLife(player1.getId());
+
+        harness.enterBattlefieldAndReturn(player1, new LukeCagePowerMan());
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore);
+        harness.passBothPriorities();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore + 1);
+        harness.passBothPriorities();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore + 2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ManaColor.class, names = {"WHITE", "BLUE", "BLACK", "RED", "GREEN"})
+    @DisplayName("The mana ability resolves immediately and produces exactly one chosen mana")
+    void manaAbilitySupportsEveryColor(ManaColor color) {
+        Permanent transmitter = harness.addToBattlefieldAndReturn(player1, new TeamTransmitter());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        assertThat(gd.stack).isEmpty();
+        harness.handleListChoice(player1, color.name());
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(color)).isEqualTo(1);
+        for (ManaColor other : ManaColor.values()) {
+            if (other != color) {
+                assertThat(gd.playerManaPools.get(player1.getId()).get(other)).isZero();
+            }
+        }
+        assertThat(transmitter.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
     }
 }
