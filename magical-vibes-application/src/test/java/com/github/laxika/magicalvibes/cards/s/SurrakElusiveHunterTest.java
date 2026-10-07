@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.c.Counterspell;
 import com.github.laxika.magicalvibes.cards.e.ElaborateFirecannon;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MishrasFactory;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SurrakElusiveHunter.class, Counterspell.class, ElaborateFirecannon.class, GiantGrowth.class, GrizzlyBears.class, Shock.class})
+@CardUsed({SurrakElusiveHunter.class, Counterspell.class, ElaborateFirecannon.class, GiantGrowth.class, GrizzlyBears.class, Shock.class, MishrasFactory.class})
 class SurrakElusiveHunterTest extends BaseCardTest {
 
     @Test
@@ -74,9 +75,7 @@ class SurrakElusiveHunterTest extends BaseCardTest {
         SurrakElusiveHunter surrak = new SurrakElusiveHunter();
         Permanent surrakPermanent = harness.addToBattlefieldAndReturn(player1, surrak);
 
-        Permanent firecannon = new Permanent(new ElaborateFirecannon());
-        firecannon.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(firecannon);
+        harness.addToBattlefield(player2, new ElaborateFirecannon());
         harness.addMana(player2, ManaColor.COLORLESS, 4);
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
@@ -122,5 +121,58 @@ class SurrakElusiveHunterTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard().getId().equals(surrak.getId()));
         harness.assertInGraveyard(player2, "Counterspell");
+    }
+
+    @Test
+    @DisplayName("Draws when an opponent targets an animated land you control")
+    void drawsWhenOpponentTargetsAnimatedLand() {
+        harness.addToBattlefield(player1, new SurrakElusiveHunter());
+        Permanent factory = harness.addToBattlefieldAndReturn(player1, new MishrasFactory());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(gqs.isCreature(gd, factory)).isTrue();
+
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, factory.getId());
+
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+        resolveAllTriggers();
+    }
+
+    @Test
+    @DisplayName("Draws when another creature you control is targeted")
+    void drawsWhenOpponentTargetsAnotherCreature() {
+        harness.addToBattlefield(player1, new SurrakElusiveHunter());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, bears.getId());
+
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+        resolveAllTriggers();
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Does not trigger when an opponent targets their own creature")
+    void doesNotTriggerForOpponentsCreature() {
+        harness.addToBattlefield(player1, new SurrakElusiveHunter());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player2, List.of(new GiantGrowth()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+
+        harness.castInstant(player2, 0, bears.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
     }
 }
