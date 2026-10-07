@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.p.Plateau;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -88,6 +89,7 @@ class TimelessDragonTest extends BaseCardTest {
         assertThat(token.getCard().getSubtypes())
                 .contains(CardSubtype.ZOMBIE, CardSubtype.DRAGON);
         assertThat(token.getCard().getManaCost()).isEmpty();
+        assertThat(token.getCard().getKeywords()).contains(Keyword.FLYING);
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getId().equals(dragon.getId()));
     }
@@ -105,5 +107,97 @@ class TimelessDragonTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         harness.assertInGraveyard(player1, "Timeless Dragon");
+    }
+
+    @Test
+    @DisplayName("Plainscycling discards immediately and can fail to find an available Plains")
+    void plainscyclingCanFailToFind() {
+        harness.setHand(player1, List.of(new TimelessDragon()));
+        Card plateau = new Plateau();
+        harness.setLibrary(player1, List.of(plateau));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertNotInHand(player1, "Timeless Dragon");
+        harness.assertInGraveyard(player1, "Timeless Dragon");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(plateau);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Plainscycling resolves with an empty library without drawing a card")
+    void plainscyclingWithEmptyLibrary() {
+        harness.setHand(player1, List.of(new TimelessDragon()));
+        harness.setLibrary(player1, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Timeless Dragon");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Eternalize exiles its source as a cost before creating the token")
+    void eternalizeExilesBeforeResolution() {
+        TimelessDragon dragon = new TimelessDragon();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setGraveyard(player1, List.of(dragon));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateGraveyardAbility(player1, 0);
+
+        harness.assertNotInGraveyard(player1, "Timeless Dragon");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(dragon);
+        harness.assertNotOnBattlefield(player1, "Timeless Dragon");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Timeless Dragon");
+    }
+
+    @Test
+    @DisplayName("Eternalize requires two white mana even with enough total mana")
+    void eternalizeRequiresTwoWhiteMana() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setGraveyard(player1, List.of(new TimelessDragon()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInGraveyard(player1, "Timeless Dragon");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Eternalize cannot be activated during its controller's combat")
+    void eternalizeCannotActivateDuringCombat() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.setGraveyard(player1, List.of(new TimelessDragon()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInGraveyard(player1, "Timeless Dragon");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
     }
 }
