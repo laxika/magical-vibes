@@ -61,6 +61,58 @@ class SpectersWailTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A player with one card discards that card without choosing")
+    void discardsOnlyCard() {
+        CateranBrute discarded = new CateranBrute();
+        DeadlyInsect retained = new DeadlyInsect();
+        SpectersWail spell = new SpectersWail();
+        harness.setHand(player2, List.of(discarded));
+        harness.setHand(player1, List.of(spell, retained));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(discarded);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(retained);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(spell);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Self-targeting discards from the caster's remaining hand")
+    void selfTargetDiscardsRemainingCard() {
+        SpectersWail spell = new SpectersWail();
+        CateranBrute discarded = new CateranBrute();
+        DeadlyInsect opponentCard = new DeadlyInsect();
+        harness.setHand(player1, List.of(spell, discarded));
+        harness.setHand(player2, List.of(opponentCard));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyInAnyOrder(spell, discarded);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(opponentCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Self-targeting with only the spell in hand discards nothing")
+    void selfTargetWithNoRemainingCards() {
+        SpectersWail spell = new SpectersWail();
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(spell);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Targeting a player with an empty hand does nothing")
     void emptyHandDoesNothing() {
         harness.setHand(player2, List.of());
