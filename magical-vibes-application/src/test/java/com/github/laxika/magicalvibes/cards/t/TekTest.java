@@ -116,6 +116,49 @@ class TekTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, tek, Keyword.TRAMPLE)).isTrue();
     }
 
+    @Test
+    @DisplayName("Multiple Plains and Swamps do not multiply the bonuses")
+    void duplicateLandTypesDoNotStack() {
+        Permanent tek = addTek();
+        Permanent firstPlains = harness.addToBattlefieldAndReturn(player1, new Plains());
+        harness.addToBattlefield(player1, new Plains());
+        Permanent firstSwamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
+        harness.addToBattlefield(player1, new Swamp());
+
+        assertThat(gqs.getEffectivePower(gd, tek)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, tek)).isEqualTo(4);
+
+        gd.playerBattlefields.get(player1.getId()).remove(firstPlains);
+        gd.playerBattlefields.get(player1.getId()).remove(firstSwamp);
+
+        assertThat(gqs.getEffectivePower(gd, tek)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, tek)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("All bonuses disappear when the last qualifying lands leave")
+    void allBonusesDisappearWhenLandsLeave() {
+        Permanent tek = addTek();
+        harness.addToBattlefield(player1, new Plains());
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new Swamp());
+        harness.addToBattlefield(player1, new Mountain());
+        harness.addToBattlefield(player1, new Forest());
+
+        assertThat(gqs.getEffectivePower(gd, tek)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, tek)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, tek, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, tek, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, tek, Keyword.TRAMPLE)).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).removeIf(permanent -> permanent != tek);
+
+        assertThat(gqs.getEffectivePower(gd, tek)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, tek)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, tek, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, tek, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, tek, Keyword.TRAMPLE)).isFalse();
+    }
     private Permanent addTek() {
         return harness.addToBattlefieldAndReturn(player1, new Tek());
     }
