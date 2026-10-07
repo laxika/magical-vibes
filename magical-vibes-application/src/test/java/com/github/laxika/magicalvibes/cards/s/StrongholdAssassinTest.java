@@ -100,4 +100,74 @@ class StrongholdAssassinTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Stronghold Assassin");
         harness.assertNotOnBattlefield(player1, "Skyshroud Troopers");
     }
+
+    @Test
+    @DisplayName("Sacrifice and tap costs are paid before the target is destroyed")
+    void costsPaidBeforeResolution() {
+        Permanent assassin = setup();
+        Permanent fodder = addCreatureReady(player1, new SkyshroudTroopers());
+        Permanent target = addCreatureReady(player2, new SkyshroudTroopers());
+
+        harness.activateAbility(player1, idxOf(assassin), 0, null, target.getId());
+        harness.handlePermanentChosen(player1, fodder.getId());
+
+        assertThat(assassin.isTapped()).isTrue();
+        harness.assertNotOnBattlefield(player1, "Skyshroud Troopers");
+        harness.assertInGraveyard(player1, "Skyshroud Troopers");
+        harness.assertOnBattlefield(player2, "Skyshroud Troopers");
+        harness.assertNotInGraveyard(player2, "Skyshroud Troopers");
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Skyshroud Troopers");
+    }
+
+    @Test
+    @DisplayName("May sacrifice the chosen target, leaving the ability without a legal target")
+    void maySacrificeTargetAsCost() {
+        Permanent assassin = setup();
+        Permanent target = addCreatureReady(player1, new SkyshroudTroopers());
+        Permanent otherCreature = addCreatureReady(player2, new SkyshroudTroopers());
+
+        harness.activateAbility(player1, idxOf(assassin), 0, null, target.getId());
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.assertInGraveyard(player1, "Skyshroud Troopers");
+        harness.passBothPriorities();
+
+        assertThat(assassin.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(otherCreature);
+        harness.assertNotInGraveyard(player2, "Skyshroud Troopers");
+    }
+
+    @Test
+    @DisplayName("A tapped Assassin cannot activate the ability")
+    void cannotActivateWhileTapped() {
+        Permanent assassin = setup();
+        assassin.setTapped(true);
+        Permanent target = addCreatureReady(player2, new SkyshroudTroopers());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, idxOf(assassin), 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Stronghold Assassin");
+        harness.assertOnBattlefield(player2, "Skyshroud Troopers");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Assassin cannot activate the ability")
+    void cannotActivateWhileSummoningSick() {
+        Permanent assassin = setup();
+        assassin.setSummoningSick(true);
+        Permanent target = addCreatureReady(player2, new SkyshroudTroopers());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, idxOf(assassin), 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(assassin.isTapped()).isFalse();
+        harness.assertOnBattlefield(player1, "Stronghold Assassin");
+        harness.assertOnBattlefield(player2, "Skyshroud Troopers");
+        assertThat(gd.stack).isEmpty();
+    }
 }
