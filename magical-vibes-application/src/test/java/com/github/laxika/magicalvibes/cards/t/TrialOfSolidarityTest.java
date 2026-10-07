@@ -2,11 +2,13 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.c.CartoucheOfSolidarity;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,15 +16,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({TrialOfSolidarity.class, GrizzlyBears.class, CartoucheOfSolidarity.class, Opalescence.class})
 class TrialOfSolidarityTest extends BaseCardTest {
 
     @Test
     @DisplayName("ETB gives creatures you control +2/+1 and vigilance, not the opponent's")
     void etbBuffsOwnCreatures() {
-        Permanent mine = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(mine);
-        Permanent theirs = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player2.getId()).add(theirs);
+        Permanent mine = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent theirs = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new TrialOfSolidarity()));
         harness.addMana(player1, ManaColor.WHITE, 3);
@@ -43,8 +44,7 @@ class TrialOfSolidarityTest extends BaseCardTest {
     @Test
     @DisplayName("ETB buff wears off at end of turn")
     void buffWearsOffAtEndOfTurn() {
-        Permanent mine = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(mine);
+        Permanent mine = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new TrialOfSolidarity()));
         harness.addMana(player1, ManaColor.WHITE, 3);
@@ -67,8 +67,7 @@ class TrialOfSolidarityTest extends BaseCardTest {
     @Test
     @DisplayName("Returns to hand when a Cartouche you control enters")
     void bouncesWhenAllyCartoucheEnters() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new TrialOfSolidarity());
 
         harness.setHand(player1, List.of(new CartoucheOfSolidarity()));
@@ -88,8 +87,7 @@ class TrialOfSolidarityTest extends BaseCardTest {
     void staysWhenOpponentCartoucheEnters() {
         harness.addToBattlefield(player1, new TrialOfSolidarity());
 
-        Permanent opponentBears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player2.getId()).add(opponentBears);
+        Permanent opponentBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -103,5 +101,70 @@ class TrialOfSolidarityTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve aura's ETB token trigger
 
         harness.assertOnBattlefield(player1, "Trial of Solidarity");
+    }
+
+    @Test
+    @DisplayName("Creatures entering before the trigger resolves receive the bonus")
+    void creatureEnteringBeforeResolutionIsBuffed() {
+        harness.setHand(player1, List.of(new TrialOfSolidarity()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent creature = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Creatures entering after the trigger resolves do not receive the bonus")
+    void creatureEnteringAfterResolutionIsNotBuffed() {
+        harness.setHand(player1, List.of(new TrialOfSolidarity()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        Permanent creature = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A non-Cartouche enchantment does not return the Trial")
+    void staysWhenNonCartoucheEnters() {
+        harness.addToBattlefield(player1, new TrialOfSolidarity());
+        harness.setHand(player1, List.of(new TrialOfSolidarity()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+        harness.assertNotInHand(player1, "Trial of Solidarity");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The Trial grants itself vigilance when it is a creature")
+    void animatedTrialReceivesItsOwnVigilance() {
+        harness.addToBattlefield(player1, new Opalescence());
+        harness.setHand(player1, List.of(new TrialOfSolidarity()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        Permanent trial = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard() instanceof TrialOfSolidarity)
+                .findFirst().orElseThrow();
+        assertThat(gqs.getEffectivePower(gd, trial)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, trial)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, trial, Keyword.VIGILANCE)).isTrue();
     }
 }
