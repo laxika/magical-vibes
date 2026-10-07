@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -32,7 +31,7 @@ class TheftOfDreamsTest extends BaseCardTest {
     @Test
     @DisplayName("Draws one card per tapped creature the opponent controls")
     void drawsPerTappedCreature() {
-        harness.setHand(player1, new ArrayList<>(List.of(new TheftOfDreams())));
+        harness.setHand(player1, List.of(new TheftOfDreams()));
         addTapped(new GoblinPiker());
         addTapped(new GoblinPiker());
         // Untapped creature is not counted.
@@ -47,7 +46,7 @@ class TheftOfDreamsTest extends BaseCardTest {
     @Test
     @DisplayName("Only the opponent's tapped creatures are counted, not the caster's")
     void ignoresCastersTappedCreatures() {
-        harness.setHand(player1, new ArrayList<>(List.of(new TheftOfDreams())));
+        harness.setHand(player1, List.of(new TheftOfDreams()));
         Permanent own = harness.addToBattlefieldAndReturn(player1, new GoblinPiker());
         own.tap();
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
@@ -61,7 +60,7 @@ class TheftOfDreamsTest extends BaseCardTest {
     @Test
     @DisplayName("Tapped non-creature permanents are not counted")
     void ignoresTappedNonCreatures() {
-        harness.setHand(player1, new ArrayList<>(List.of(new TheftOfDreams())));
+        harness.setHand(player1, List.of(new TheftOfDreams()));
         addTapped(new GoblinPiker());
         // A tapped land is not a creature and must not be counted.
         Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
@@ -76,7 +75,7 @@ class TheftOfDreamsTest extends BaseCardTest {
     @Test
     @DisplayName("Counts tapped creatures when the spell resolves")
     void countsAtResolution() {
-        harness.setHand(player1, new ArrayList<>(List.of(new TheftOfDreams())));
+        harness.setHand(player1, List.of(new TheftOfDreams()));
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GoblinPiker());
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
 
@@ -91,7 +90,7 @@ class TheftOfDreamsTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target yourself")
     void cannotTargetSelf() {
-        harness.setHand(player1, new ArrayList<>(List.of(new TheftOfDreams())));
+        harness.setHand(player1, List.of(new TheftOfDreams()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, player1.getId()))
@@ -102,7 +101,7 @@ class TheftOfDreamsTest extends BaseCardTest {
     @Test
     @DisplayName("Counts the target's tapped creatures when the spell resolves")
     void ignoresCreatureUntappedBeforeResolution() {
-        harness.setHand(player1, new ArrayList<>(List.of(new TheftOfDreams())));
+        harness.setHand(player1, List.of(new TheftOfDreams()));
         Permanent bears = addTapped(new GoblinPiker());
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
 
@@ -112,5 +111,45 @@ class TheftOfDreamsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore);
+    }
+
+    @Test
+    @DisplayName("The caster draws the cards, not the targeted opponent")
+    void casterReceivesDrawnCards() {
+        harness.setHand(player1, List.of(new TheftOfDreams()));
+        harness.setHand(player2, List.of());
+        GoblinPiker firstCard = new GoblinPiker();
+        GoblinPiker secondCard = new GoblinPiker();
+        GoblinPiker remainingCard = new GoblinPiker();
+        harness.setLibrary(player1, List.of(firstCard, secondCard, remainingCard));
+        addTapped(new GoblinPiker());
+        addTapped(new GoblinPiker());
+        int opponentDeckSize = gd.playerDecks.get(player2.getId()).size();
+
+        castTheftOfDreams();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstCard, secondCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remainingCard);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(opponentDeckSize);
+        harness.assertInGraveyard(player1, "Theft of Dreams");
+    }
+
+    @Test
+    @DisplayName("A tapped creature that leaves before resolution is not counted")
+    void ignoresCreatureThatLeavesBeforeResolution() {
+        harness.setHand(player1, List.of(new TheftOfDreams()));
+        Permanent departingCreature = addTapped(new GoblinPiker());
+        addTapped(new GoblinPiker());
+        int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
+
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.castSorcery(player1, 0, player2.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(departingCreature);
+        gd.playerGraveyards.get(player2.getId()).add(departingCreature.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore - 1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 }
