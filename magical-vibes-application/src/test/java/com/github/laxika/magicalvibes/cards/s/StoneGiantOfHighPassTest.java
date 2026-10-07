@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -23,10 +22,7 @@ class StoneGiantOfHighPassTest extends BaseCardTest {
     @Test
     @DisplayName("ETB creates a 3/1 colorless Wall artifact creature token named Stone Boulder")
     void etbCreatesStoneBoulder() {
-        harness.setHand(player1, List.of(new StoneGiantOfHighPass()));
-        addStoneGiantMana();
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new StoneGiantOfHighPass(), "{5}{R}{R}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -43,7 +39,7 @@ class StoneGiantOfHighPassTest extends BaseCardTest {
     @Test
     @DisplayName("Attacking creates a Stone Boulder token")
     void attackCreatesStoneBoulder() {
-        addReadyStoneGiant();
+        addCreatureReady(player1, new StoneGiantOfHighPass());
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
@@ -91,9 +87,53 @@ class StoneGiantOfHighPassTest extends BaseCardTest {
                 .hasMessageContaining("No permanent to sacrifice matching: an artifact");
     }
 
-    private void addStoneGiantMana() {
-        harness.addMana(player1, ManaColor.RED, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 5);
+    @Test
+    @DisplayName("A summoning-sick Giant can sacrifice its generated Boulder to deal damage")
+    void generatedBoulderPaysAbilityCost() {
+        harness.castFromHand(player1, new StoneGiantOfHighPass(), "{5}{R}{R}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.setLife(player2, 20);
+        addAbilityMana();
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        assertThat(findPermanents(player1, "Stone Boulder")).isEmpty();
+        harness.assertLife(player2, 20);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 16);
+        harness.assertOnBattlefield(player1, "Stone-Giant of High Pass");
+    }
+
+    @Test
+    @DisplayName("An opponent's artifact cannot pay the sacrifice cost")
+    void cannotSacrificeOpponentsArtifact() {
+        harness.addToBattlefield(player1, new StoneGiantOfHighPass());
+        harness.addToBattlefield(player2, new Spellbook());
+        addAbilityMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("No permanent to sacrifice matching: an artifact");
+
+        harness.assertOnBattlefield(player2, "Spellbook");
+    }
+
+    @Test
+    @DisplayName("Sacrificing the targeted Boulder makes the damage ability have no legal target")
+    void canTargetBoulderSacrificedForCost() {
+        harness.castFromHand(player1, new StoneGiantOfHighPass(), "{5}{R}{R}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        Permanent boulder = findPermanent(player1, "Stone Boulder");
+        addAbilityMana();
+
+        harness.activateAbility(player1, 0, null, boulder.getId());
+        assertThat(findPermanents(player1, "Stone Boulder")).isEmpty();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Stone-Giant of High Pass");
     }
 
     private void addAbilityMana() {
@@ -101,9 +141,4 @@ class StoneGiantOfHighPassTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
     }
 
-    private Permanent addReadyStoneGiant() {
-        Permanent permanent = harness.addToBattlefieldAndReturn(player1, new StoneGiantOfHighPass());
-        permanent.setSummoningSick(false);
-        return permanent;
-    }
 }
