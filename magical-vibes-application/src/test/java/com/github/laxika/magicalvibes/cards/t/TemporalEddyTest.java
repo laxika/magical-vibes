@@ -68,6 +68,62 @@ class TemporalEddyTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature or land");
     }
 
+    @Test
+    @DisplayName("Can target its controller's creature without changing existing library order")
+    void targetsOwnCreatureAndPreservesLibraryOrder() {
+        Card targetCard = new BenalishCavalry();
+        Permanent target = harness.addToBattlefieldAndReturn(player1, targetCard);
+        Card first = new Forest();
+        Card second = new CandlesOfLeng();
+        harness.setLibrary(player1, List.of(first, second));
+
+        castAndResolve(target.getId());
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(targetCard, first, second);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof TemporalEddy);
+    }
+
+    @Test
+    @DisplayName("Puts an opponent-owned creature into its owner's library rather than its controller's")
+    void returnsControlledCreatureToOwnersLibrary() {
+        Card targetCard = new BenalishCavalry();
+        targetCard.setOwnerId(player2.getId());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, targetCard);
+        Card controllerTop = new Forest();
+        Card ownerTop = new CandlesOfLeng();
+        harness.setLibrary(player1, List.of(controllerTop));
+        harness.setLibrary(player2, List.of(ownerTop));
+
+        castAndResolve(target.getId());
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(targetCard, ownerTop);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(controllerTop);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
+    }
+
+    @Test
+    @DisplayName("Does not move a target that has left the battlefield before resolution")
+    void doesNotMoveTargetThatLeftBattlefield() {
+        Card targetCard = new BenalishCavalry();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, targetCard);
+        Card libraryTop = new Forest();
+        harness.setLibrary(player2, List.of(libraryTop));
+        harness.setHand(player1, List.of(new TemporalEddy()));
+        addMana();
+        harness.castSorcery(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        harness.setGraveyard(player2, List.of(targetCard));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(libraryTop);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(targetCard);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof TemporalEddy);
+        assertThat(gd.stack).isEmpty();
+    }
     private void castAndResolve(UUID targetId) {
         harness.setHand(player1, List.of(new TemporalEddy()));
         addMana();
