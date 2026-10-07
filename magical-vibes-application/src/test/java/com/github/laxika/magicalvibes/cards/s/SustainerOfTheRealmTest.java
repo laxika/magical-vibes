@@ -17,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SustainerOfTheRealm.class, GiantCockroach.class})
+@CardUsed({SustainerOfTheRealm.class, GiantCockroach.class, ValorMadeReal.class})
 class SustainerOfTheRealmTest extends BaseCardTest {
 
     @Test
@@ -65,7 +65,6 @@ class SustainerOfTheRealmTest extends BaseCardTest {
         assertThat(sustainer.getToughnessModifier()).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(sustainer.getPowerModifier()).isEqualTo(0);
@@ -85,7 +84,6 @@ class SustainerOfTheRealmTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(ValorMadeReal.class)
     @DisplayName("Blocking multiple creatures creates only one block trigger")
     void blockTriggerFiresOnlyOnceWhenBlockingMultipleCreatures() {
         Permanent sustainer = addCreatureReady(player2, new SustainerOfTheRealm());
@@ -104,6 +102,48 @@ class SustainerOfTheRealmTest extends BaseCardTest {
         ));
 
         assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The blocking boost lets Sustainer survive four combat damage")
+    void blockingBoostAppliesBeforeCombatDamage() {
+        Permanent sustainer = addCreatureReady(player2, new SustainerOfTheRealm());
+        addCreatureReady(player1, new GiantCockroach());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveAllTriggers();
+        harness.resolveCombatDamage();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(sustainer);
+        harness.assertInGraveyard(player1, "Giant Cockroach");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Only the Sustainer that blocks receives the toughness boost")
+    void nonblockingSustainerDoesNotReceiveBoost() {
+        Permanent blocker = addCreatureReady(player2, new SustainerOfTheRealm());
+        Permanent nonblocker = addCreatureReady(player2, new SustainerOfTheRealm());
+        addAttacker();
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveAllTriggers();
+
+        assertThat(blocker.getToughnessModifier()).isEqualTo(2);
+        assertThat(nonblocker.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Attacking does not create the blocking trigger")
+    void attackingDoesNotTriggerBoost() {
+        Permanent sustainer = addCreatureReady(player1, new SustainerOfTheRealm());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(sustainer.getToughnessModifier()).isZero();
     }
 
     private Permanent addAttacker() {
