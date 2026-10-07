@@ -55,4 +55,47 @@ class TheGreatMoundTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).contains(drawn);
     }
+
+    @Test
+    void tokenCreationUsesTheStackAndPaysManaAndTapCostsImmediately() {
+        harness.addToBattlefield(player1, new TheGreatMound());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(countPermanents(player1, "Vibranium")).isZero();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(findPermanent(player1, "The Great Mound").isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Vibranium")).isEqualTo(1);
+        assertThat(countPermanents(player2, "Vibranium")).isZero();
+    }
+
+    @Test
+    void vibraniumManaCanPayForTheLandsDrawAbility() {
+        TheGreatMound drawn = new TheGreatMound();
+        harness.setLibrary(player1, List.of(drawn));
+        harness.addToBattlefield(player1, new TheGreatMound());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        findPermanent(player1, "The Great Mound").untap();
+        findPermanent(player1, "Vibranium").untap();
+        harness.activateAbility(player1, 1, 0, null, null);
+        assertThat(gd.stack).isEmpty();
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.activateAbility(player1, 0, 2, null, null);
+
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(drawn);
+        assertThat(gd.playerManaPools.get(player1.getId()).getPowerstoneOnlyColorless()).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(findPermanent(player1, "The Great Mound").isTapped()).isTrue();
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).contains(drawn);
+    }
 }
