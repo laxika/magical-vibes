@@ -159,6 +159,64 @@ class SowerOfTemptationTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Taking control does not untap the creature or let it attack immediately")
+    void stolenTappedCreatureStaysTappedAndCannotAttackImmediately() {
+        Permanent giant = addCreatureReady(player2, new HillcomberGiant());
+        giant.setTapped(true);
+
+        castSower(giant.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getId().equals(giant.getId()));
+        assertThat(giant.isTapped()).isTrue();
+        assertThat(giant.isSummoningSick()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An earlier Sower control effect resumes when a later Sower leaves")
+    void earlierControlEffectResumesWhenLaterSowerLeaves() {
+        Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillcomberGiant());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new SowerOfTemptation()));
+        harness.addMana(player2, ManaColor.BLUE, 4);
+        harness.castCreature(player2, 0, giant.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        Permanent earlierSower = findPermanent(player2, "Sower of Temptation");
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        castSower(giant.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        Permanent laterSower = findPermanent(player1, "Sower of Temptation");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getId().equals(giant.getId()));
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Aethersnipe()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 5);
+        harness.castCreature(player2, 0, laterSower.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(p -> p.getId().equals(giant.getId()))
+                .anyMatch(p -> p.getId().equals(earlierSower.getId()));
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(p -> p.getId().equals(giant.getId()));
+        harness.assertInHand(player1, "Sower of Temptation");
+    }
+
     private void castSower(UUID targetId) {
         harness.setHand(player1, List.of(new SowerOfTemptation()));
         harness.addMana(player1, ManaColor.BLUE, 4);
