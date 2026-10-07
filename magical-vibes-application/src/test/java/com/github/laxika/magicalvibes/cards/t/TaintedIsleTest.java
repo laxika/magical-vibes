@@ -76,6 +76,57 @@ class TaintedIsleTest extends BaseCardTest {
         assertThat(isle.isTapped()).isFalse();
     }
 
+    @Test
+    @DisplayName("A tapped Swamp still enables colored mana")
+    void tappedSwampEnablesColoredMana() {
+        Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
+        swamp.setTapped(true);
+        Permanent isle = addReadyIsle(player1);
+
+        harness.activateAbility(player1, 1, 1, null, null);
+        harness.handleListChoice(player1, "BLUE");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(swamp.isTapped()).isTrue();
+        assertThat(isle.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Both mana abilities require an untapped Tainted Isle")
+    void tappedIsleCannotActivateEitherAbility() {
+        harness.addToBattlefield(player1, new Swamp());
+        Permanent isle = addReadyIsle(player1);
+        isle.setTapped(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+    }
+
+    @Test
+    @DisplayName("Losing the last Swamp disables colored mana but leaves colorless available")
+    void losingLastSwampDisablesOnlyColoredMana() {
+        Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
+        Permanent isle = addReadyIsle(player1);
+        gd.playerBattlefields.get(player1.getId()).remove(swamp);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("a Swamp");
+        assertThat(isle.isTapped()).isFalse();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(isle.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addReadyIsle(Player player) {
         return addCreatureReady(player, new TaintedIsle());
     }
