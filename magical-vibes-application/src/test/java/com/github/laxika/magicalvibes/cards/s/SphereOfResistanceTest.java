@@ -76,11 +76,55 @@ class SphereOfResistanceTest extends BaseCardTest {
     void costIncreaseIsSymmetric() {
         harness.addToBattlefield(player1, new SphereOfResistance());
         harness.forceActivePlayer(player2);
-        harness.forceStep(gd.currentStep);
-        harness.clearPriorityPassed();
 
         assertThatThrownBy(() -> harness.castFromHand(player2, new FightingChance(), "{R}"))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("A tapped Sphere still increases spell costs")
+    void tappedSphereStillIncreasesCosts() {
+        var sphere = harness.addToBattlefieldAndReturn(player1, new SphereOfResistance());
+        sphere.tap();
+
+        assertThatThrownBy(() -> harness.castFromHand(player1, new FightingChance(), "{R}"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("A Sphere on the stack does not increase spell costs")
+    void sphereOnStackDoesNotIncreaseCosts() {
+        harness.castFromHand(player1, new SphereOfResistance(), "{2}");
+
+        harness.castFromHand(player1, new FightingChance(), "{R}");
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Creature spells can pay the increase with generic mana")
+    void creatureSpellsPayGenericIncrease() {
+        harness.addToBattlefield(player1, new SphereOfResistance());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castFromHand(player1, new RagingGoblin(), "{R}");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("An opponent can pay the increase imposed by a Sphere")
+    void opponentCanPayIncrease() {
+        harness.addToBattlefield(player1, new SphereOfResistance());
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castFromHand(player2, new FightingChance(), "{R}");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
     }
 }
