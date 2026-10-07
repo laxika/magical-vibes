@@ -1,13 +1,14 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.b.BonebreakerGiant;
+import com.github.laxika.magicalvibes.cards.m.Manalith;
+import com.github.laxika.magicalvibes.cards.r.RoyalAssassin;
+import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SpiritMantle.class, RuneclawBear.class, BonebreakerGiant.class, Manalith.class, RoyalAssassin.class, Shock.class})
 class SpiritMantleTest extends BaseCardTest {
 
     private Permanent enchant(Permanent creature) {
@@ -28,7 +30,7 @@ class SpiritMantleTest extends BaseCardTest {
     @Test
     @DisplayName("Enchanted creature gets +1/+1")
     void enchantedCreatureGetsBoost() {
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new RuneclawBear());
         enchant(bears);
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
@@ -38,7 +40,7 @@ class SpiritMantleTest extends BaseCardTest {
     @Test
     @DisplayName("Boost goes away when Spirit Mantle leaves the battlefield")
     void boostStopsWhenRemoved() {
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new RuneclawBear());
         Permanent aura = enchant(bears);
 
         gd.playerBattlefields.get(player1.getId()).remove(aura);
@@ -50,16 +52,13 @@ class SpiritMantleTest extends BaseCardTest {
     @Test
     @DisplayName("Enchanted creature can't be blocked by a creature")
     void creaturesCannotBlockEnchantedCreature() {
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player1, new RuneclawBear());
         bears.setAttacking(true);
         enchant(bears);
 
-        Permanent blocker = addCreatureReady(player2, new HillGiant());
+        Permanent blocker = addCreatureReady(player2, new BonebreakerGiant());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -69,40 +68,113 @@ class SpiritMantleTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Enchanted creature takes no combat damage from a blocking creature")
+    @DisplayName("Enchanted blocker takes no combat damage and still deals its own damage")
     void enchantedCreatureTakesNoCombatDamage() {
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
-        bears.setAttacking(true);
-        enchant(bears);
+        Permanent attacker = addCreatureReady(player1, new BonebreakerGiant());
+        Permanent blocker = addCreatureReady(player2, new RuneclawBear());
+        enchant(blocker);
 
-        Permanent blocker = addCreatureReady(player2, new HillGiant());
-        blocker.setBlocking(true);
-        blocker.addBlockingTarget(0);
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-
-        // The 3/3's damage to the 3/3 Bears is prevented by protection from creatures; the
-        // Bears' damage still kills nothing but the Giant survives at 3 toughness.
-        harness.assertOnBattlefield(player1, "Grizzly Bears");
-        assertThat(blocker.getMarkedDamage()).isEqualTo(3);
+        harness.assertOnBattlefield(player2, "Runeclaw Bear");
+        assertThat(blocker.getMarkedDamage()).isZero();
+        assertThat(attacker.getMarkedDamage()).isEqualTo(3);
     }
 
     @Test
     @DisplayName("Cannot enchant a noncreature permanent")
     void cannotTargetNonCreature() {
-        addCreatureReady(player2, new GrizzlyBears());
-        harness.addToBattlefield(player1, new FountainOfYouth());
+        addCreatureReady(player2, new RuneclawBear());
+        harness.addToBattlefield(player1, new Manalith());
         harness.setHand(player1, List.of(new SpiritMantle()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        Permanent artifact = findPermanent(player1, "Fountain of Youth");
+        Permanent artifact = findPermanent(player1, "Manalith");
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Resolves on an opponent's creature and stays attached despite granting protection")
+    void resolvesOnOpponentsCreature() {
+        Permanent creature = addCreatureReady(player2, new RuneclawBear());
+        Permanent other = addCreatureReady(player2, new RuneclawBear());
+        harness.setHand(player1, List.of(new SpiritMantle()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        harness.runStateBasedActions();
+
+        Permanent aura = findPermanent(player1, "Spirit Mantle");
+        assertThat(aura.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Creature abilities cannot target the enchanted creature")
+    void creatureAbilityCannotTarget() {
+        Permanent creature = addCreatureReady(player1, new RuneclawBear());
+        creature.tap();
+        enchant(creature);
+        addCreatureReady(player1, new RoyalAssassin());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 2, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection");
+    }
+
+    @Test
+    @DisplayName("Creature abilities can target again after the Aura leaves")
+    void protectionStopsWhenRemoved() {
+        Permanent creature = addCreatureReady(player1, new RuneclawBear());
+        creature.tap();
+        Permanent aura = enchant(creature);
+        addCreatureReady(player1, new RoyalAssassin());
+        gd.playerBattlefields.get(player1.getId()).remove(aura);
+
+        harness.activateAbility(player1, 1, null, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Runeclaw Bear");
+    }
+
+    @Test
+    @DisplayName("Protection from creatures does not stop damage from an instant")
+    void instantCanTargetAndDamage() {
+        Permanent creature = addCreatureReady(player1, new RuneclawBear());
+        enchant(creature);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Runeclaw Bear");
+        assertThat(creature.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Aura goes to the graveyard when its creature dies")
+    void auraLeavesWhenCreatureDies() {
+        Permanent creature = addCreatureReady(player1, new RuneclawBear());
+        enchant(creature);
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castInstant(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        harness.castInstant(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Runeclaw Bear");
+        harness.assertInGraveyard(player1, "Spirit Mantle");
     }
 }
