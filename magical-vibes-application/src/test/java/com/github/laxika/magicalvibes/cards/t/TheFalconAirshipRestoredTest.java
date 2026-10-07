@@ -73,11 +73,65 @@ class TheFalconAirshipRestoredTest extends BaseCardTest {
         assertThat(returned.isTapped()).isTrue();
     }
 
+    @Test
+    @DisplayName("The Falcon may be sacrificed even with no creature cards in the graveyard")
+    void canSacrificeWithEmptyGraveyard() {
+        Permanent falcon = addReadyFalcon();
+        addCreatureReady(player1, new GrizzlyBears());
+        crewFalcon();
+
+        falcon.setAttacking(true);
+        resolveCombat();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "The Falcon, Airship Restored");
+        harness.assertInGraveyard(player1, "The Falcon, Airship Restored");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @CardUsed(TheFalconAirshipRestored.class)
+    @DisplayName("The graveyard ability returns only the copy whose ability was activated")
+    void graveyardAbilityReturnsOnlyItsSource() {
+        Card source = new TheFalconAirshipRestored();
+        Card other = new TheFalconAirshipRestored();
+        harness.setGraveyard(player1, List.of(source, other));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(other);
+        assertThat(findPermanent(player1, "The Falcon, Airship Restored").getCard().getId())
+                .isEqualTo(source.getId());
+    }
+
+    @Test
+    @CardUsed(TheFalconAirshipRestored.class)
+    @DisplayName("An old graveyard activation cannot return the Falcon after it leaves and reenters the graveyard")
+    void oldActivationCannotReturnNewGraveyardObject() {
+        harness.setGraveyard(player1, List.of(new TheFalconAirshipRestored()));
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.activateGraveyardAbility(player1, 0);
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent returned = findPermanent(player1, "The Falcon, Airship Restored");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(harness.getPermanentRemovalService().sacrificePermanentToGraveyard(gd, returned)).isTrue();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "The Falcon, Airship Restored");
+        harness.assertNotOnBattlefield(player1, "The Falcon, Airship Restored");
+    }
+
     private Permanent addReadyFalcon() {
-        Permanent falcon = new Permanent(new TheFalconAirshipRestored());
-        falcon.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(falcon);
-        return falcon;
+        return addCreatureReady(player1, new TheFalconAirshipRestored());
     }
 
     private void crewFalcon() {
