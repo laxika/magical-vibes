@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.Humility;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -12,9 +13,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -25,7 +24,6 @@ class TwistAllegianceTest extends BaseCardTest {
     @Test
     @DisplayName("Exchanges, untaps, and gives haste to both players' creatures")
     void exchangesUntapsAndGivesHasteToBothSides() {
-        enableAutoStop();
         Permanent mine = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent theirs = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         mine.tap();
@@ -48,7 +46,6 @@ class TwistAllegianceTest extends BaseCardTest {
     @Test
     @DisplayName("Does not exchange, untap, or give haste to noncreatures")
     void doesNotAffectNoncreatures() {
-        enableAutoStop();
         Permanent mine = harness.addToBattlefieldAndReturn(player1, new Mountain());
         Permanent theirs = harness.addToBattlefieldAndReturn(player2, new Mountain());
         mine.tap();
@@ -67,15 +64,16 @@ class TwistAllegianceTest extends BaseCardTest {
     @Test
     @DisplayName("Control and haste expire at end of turn")
     void controlAndHasteExpireAtEndOfTurn() {
-        enableAutoStop();
         Permanent mine = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent theirs = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         castAndResolve();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
+            harness.forceStep(TurnStep.END_STEP);
+            harness.clearPriorityPassed();
+            harness.passBothPriorities();
+        });
 
         assertThat(controls(player1.getId(), mine.getId())).isTrue();
         assertThat(controls(player2.getId(), theirs.getId())).isTrue();
@@ -94,19 +92,75 @@ class TwistAllegianceTest extends BaseCardTest {
                 .hasMessageContaining("Target must be an opponent");
     }
 
+    @Test
+    @DisplayName("Transfers creatures even when the opponent has none")
+    void transfersCreaturesToEmptyOpponentBattlefield() {
+        Permanent mine = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        mine.tap();
+
+        castAndResolve();
+
+        assertThat(controls(player2.getId(), mine.getId())).isTrue();
+        assertThat(mine.isTapped()).isFalse();
+        assertThat(mine.hasKeyword(Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Gains creatures even when the caster has none")
+    void gainsCreaturesWithEmptyCasterBattlefield() {
+        Permanent theirs = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        theirs.tap();
+
+        castAndResolve();
+
+        assertThat(controls(player1.getId(), theirs.getId())).isTrue();
+        assertThat(theirs.isTapped()).isFalse();
+        assertThat(theirs.hasKeyword(Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Transfers all creatures when the players have different counts")
+    void transfersUnequalNumbersOfCreatures() {
+        Permanent mine = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        mine.tap();
+        first.tap();
+        second.tap();
+
+        castAndResolve();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactlyInAnyOrder(first, second);
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(mine);
+        for (Permanent creature : List.of(mine, first, second)) {
+            assertThat(creature.isTapped()).isFalse();
+            assertThat(creature.hasKeyword(Keyword.HASTE)).isTrue();
+        }
+    }
+
+    @Test
+    @CardUsed(Humility.class)
+    @DisplayName("Both sides gain haste despite an earlier Humility")
+    void grantsHasteAfterEarlierHumility() {
+        harness.addToBattlefield(player1, new Humility());
+        Permanent mine = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent theirs = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        assertThat(gqs.hasKeyword(gd, mine, Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, theirs, Keyword.HASTE)).isFalse();
+
+        castAndResolve();
+
+        assertThat(controls(player2.getId(), mine.getId())).isTrue();
+        assertThat(controls(player1.getId(), theirs.getId())).isTrue();
+        assertThat(gqs.hasKeyword(gd, theirs, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, mine, Keyword.HASTE)).isTrue();
+    }
+
     private void castAndResolve() {
         harness.setHand(player1, List.of(new TwistAllegiance()));
         addMana();
-        harness.castAndResolveSorcery(player1, 0, player2.getId());
-    }
-
-    private void enableAutoStop() {
-        Set<TurnStep> stops1 = ConcurrentHashMap.newKeySet();
-        stops1.add(TurnStep.PRECOMBAT_MAIN);
-        gd.playerAutoStopSteps.put(player1.getId(), stops1);
-        Set<TurnStep> stops2 = ConcurrentHashMap.newKeySet();
-        stops2.add(TurnStep.PRECOMBAT_MAIN);
-        gd.playerAutoStopSteps.put(player2.getId(), stops2);
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN,
+                () -> harness.castAndResolveSorcery(player1, 0, player2.getId()));
     }
 
     private void addMana() {
