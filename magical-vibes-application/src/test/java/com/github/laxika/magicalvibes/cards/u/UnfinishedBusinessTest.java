@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyStrength;
 import com.github.laxika.magicalvibes.cards.g.GateSmasher;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
+import com.github.laxika.magicalvibes.cards.s.SagesReverie;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -18,8 +19,51 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({UnfinishedBusiness.class, AbundantGrowth.class, GrizzlyBears.class,
-        GateSmasher.class, HolyStrength.class, LeoninScimitar.class})
+        GateSmasher.class, HolyStrength.class, LeoninScimitar.class, SagesReverie.class})
 class UnfinishedBusinessTest extends BaseCardTest {
+
+    @Test
+    void returnsCreatureWithoutSelectingAttachments() {
+        GrizzlyBears creature = new GrizzlyBears();
+        HolyStrength aura = new HolyStrength();
+        cast(List.of(creature, aura), List.of(creature));
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Holy Strength");
+        harness.assertInGraveyard(player1, "Unfinished Business");
+    }
+
+    @Test
+    void returnedAuraTriggersItsEnterAbility() {
+        GrizzlyBears creature = new GrizzlyBears();
+        SagesReverie aura = new SagesReverie();
+        HolyStrength otherAura = new HolyStrength();
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        cast(List.of(creature, aura, otherAura), List.of(creature, aura, otherAura));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(findPermanent(player1, "Sage's Reverie").getAttachedTo())
+                .isEqualTo(findPermanent(player1, "Grizzly Bears").getId());
+    }
+
+    @Test
+    void missingCreatureTargetStillReturnsEquipmentButLeavesAuraInGraveyard() {
+        GrizzlyBears creature = new GrizzlyBears();
+        HolyStrength aura = new HolyStrength();
+        LeoninScimitar equipment = new LeoninScimitar();
+        harness.setGraveyard(player1, List.of(creature, aura, equipment));
+        harness.setHand(player1, List.of(new UnfinishedBusiness()));
+        addMana();
+        harness.castSorcery(player1, 0, List.of(creature.getId(), aura.getId(), equipment.getId()));
+        harness.setGraveyard(player1, List.of(aura, equipment));
+        harness.setExile(player1, List.of(creature));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Holy Strength");
+        assertThat(findPermanent(player1, "Leonin Scimitar").getAttachedTo()).isNull();
+    }
 
     @Test
     void returnsCreatureAndAttachesSelectedAurasAndEquipment() {
@@ -72,8 +116,7 @@ class UnfinishedBusinessTest extends BaseCardTest {
         harness.setGraveyard(player1, graveyard);
         harness.setHand(player1, List.of(new UnfinishedBusiness()));
         addMana();
-        harness.castSorcery(player1, 0, targets.stream().map(Card::getId).toList());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targets.stream().map(Card::getId).toList());
     }
 
     private void addMana() {
