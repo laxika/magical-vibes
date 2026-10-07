@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Tetravus.class})
+@CardUsed({Tetravus.class, UnholyStrength.class, Disenchant.class})
 class TetravusTest extends BaseCardTest {
 
     @Test
@@ -100,7 +101,6 @@ class TetravusTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(UnholyStrength.class)
     @DisplayName("Tetravite tokens can't be enchanted by an Aura")
     void tetraviteTokensCannotBeEnchanted() {
         Permanent tetravus = addCreatureReady(player1, new Tetravus());
@@ -111,6 +111,8 @@ class TetravusTest extends BaseCardTest {
         harness.handleListChoice(player1, "1");
 
         Permanent token = tetraviteTokens().getFirst();
+        resolveTriggersUntilInput();
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, List.of(new UnholyStrength()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
@@ -144,7 +146,6 @@ class TetravusTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(Disenchant.class)
     @DisplayName("The exile trigger still works if Tetravus leaves before resolution")
     void exileTriggerWorksAfterSourceLeaves() {
         Permanent tetravus = addCreatureReady(player1, new Tetravus());
@@ -158,13 +159,81 @@ class TetravusTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.setHand(player1, List.of(new Disenchant()));
         harness.addMana(player1, ManaColor.WHITE, 2);
-        harness.castInstant(player1, 0, tetravus.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, tetravus.getId());
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(tetravus);
 
         resolveTriggersUntilInput();
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
         harness.handleMultiplePermanentsChosen(player1, List.of(token.getId()));
+        assertThat(tetraviteTokens()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Returning only some tokens leaves the others on the battlefield")
+    void exileOnlySomeTokens() {
+        Permanent tetravus = addCreatureReady(player1, new Tetravus());
+        tetravus.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        advanceToUpkeep(player1);
+        resolveTriggersUntilInput();
+        harness.handleListChoice(player1, "3");
+        List<Permanent> tokens = tetraviteTokens();
+
+        advanceToUpkeep(player1);
+        resolveTriggersUntilInput();
+        harness.handleMultiplePermanentsChosen(player1, List.of(tokens.getFirst().getId()));
+        resolveTriggersUntilInput();
+        harness.handleListChoice(player1, "0");
+
+        assertThat(tetravus.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(tetraviteTokens()).containsExactly(tokens.get(1), tokens.get(2));
+    }
+
+    @Test
+    @DisplayName("Returning tokens is optional even when eligible tokens exist")
+    void declineExilingTokens() {
+        Permanent tetravus = addCreatureReady(player1, new Tetravus());
+        tetravus.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        advanceToUpkeep(player1);
+        resolveTriggersUntilInput();
+        harness.handleListChoice(player1, "1");
+        Permanent token = tetraviteTokens().getFirst();
+
+        advanceToUpkeep(player1);
+        resolveTriggersUntilInput();
+        harness.handleMultiplePermanentsChosen(player1, List.of());
+        resolveTriggersUntilInput();
+
+        assertThat(tetravus.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(tetraviteTokens()).containsExactly(token);
+    }
+
+    @Test
+    @DisplayName("Neither ability triggers during an opponent's upkeep")
+    void opponentUpkeepDoesNotTrigger() {
+        Permanent tetravus = addCreatureReady(player1, new Tetravus());
+        tetravus.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        advanceToUpkeep(player2);
+        resolveTriggersUntilInput();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(tetravus.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(tetraviteTokens()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("No counters can be removed after Tetravus leaves the battlefield")
+    void cannotCreateTokensAfterSourceLeaves() {
+        Permanent tetravus = addCreatureReady(player1, new Tetravus());
+        tetravus.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        advanceToUpkeep(player1);
+        harness.setHand(player1, List.of(new Disenchant()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player1, 0, tetravus.getId());
+        resolveTriggersUntilInput();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(tetravus);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(tetraviteTokens()).isEmpty();
     }
 
