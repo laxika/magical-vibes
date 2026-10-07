@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SoulbladeDjinn.class, GrizzlyBears.class, Shock.class})
 class SoulbladeDjinnTest extends BaseCardTest {
 
     @Test
@@ -52,8 +54,7 @@ class SoulbladeDjinnTest extends BaseCardTest {
 
         Permanent opponentBears = findPermanent(player2, "Grizzly Bears");
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, opponentBears)).isEqualTo(2);
@@ -101,8 +102,7 @@ class SoulbladeDjinnTest extends BaseCardTest {
 
         Permanent bears = findPermanent(player1, "Grizzly Bears");
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
@@ -113,5 +113,72 @@ class SoulbladeDjinnTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Each noncreature spell adds another boost")
+    void multipleSpellsGiveCumulativeBoosts() {
+        harness.addToBattlefield(player1, new SoulbladeDjinn());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent djinn = findPermanent(player1, "Soulblade Djinn");
+
+        for (int i = 0; i < 2; i++) {
+            harness.castAndResolveInstant(player1, 0, player2.getId());
+            harness.passBothPriorities();
+        }
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, djinn)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, djinn)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("The boost affects only creatures present when the trigger resolves")
+    void affectedCreaturesAreDeterminedAtResolution() {
+        harness.addToBattlefield(player1, new SoulbladeDjinn());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent earlyBear = findPermanent(player1, "Grizzly Bears");
+        harness.passBothPriorities();
+
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent lateBear = gd.playerBattlefields.get(player1.getId()).getLast();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, earlyBear)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, earlyBear)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, lateBear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, lateBear)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The trigger still boosts creatures after the Djinn dies in response")
+    void triggerResolvesAfterSourceDies() {
+        harness.addToBattlefield(player1, new SoulbladeDjinn());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.setHand(player2, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.RED, 2);
+        Permanent djinn = findPermanent(player1, "Soulblade Djinn");
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.castAndResolveInstant(player2, 0, djinn.getId());
+        harness.castAndResolveInstant(player2, 0, djinn.getId());
+        harness.assertInGraveyard(player1, "Soulblade Djinn");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
     }
 }
