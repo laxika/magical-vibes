@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MindStone;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ThreeStepsAhead.class, GrizzlyBears.class, Shock.class})
+@CardUsed({ThreeStepsAhead.class, GrizzlyBears.class, Shock.class, MindStone.class})
 class ThreeStepsAheadTest extends BaseCardTest {
 
     @Test
@@ -79,6 +80,124 @@ class ThreeStepsAheadTest extends BaseCardTest {
 
         assertThatThrownBy(() -> cast(new int[]{1}, List.of(bears.getId()), 4))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void copiesNoncreatureArtifact() {
+        Permanent stone = harness.addToBattlefieldAndReturn(player1, new MindStone());
+
+        cast(new int[]{1}, List.of(stone.getId()), 4);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken())
+                .singleElement().satisfies(token ->
+                        assertThat(token.getCard().getName()).isEqualTo("Mind Stone"));
+    }
+
+    @Test
+    void allThreeModesResolveInPrintedOrder() {
+        Shock shock = new Shock();
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Card first = new GrizzlyBears();
+        Card second = new MindStone();
+        harness.setLibrary(player1, List.of(first, second));
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(shock));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, player1.getId());
+        harness.passPriority(player2);
+        harness.setHand(player1, List.of(new ThreeStepsAhead()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.castModalInstantWithModes(player1, 0, 1, 3,
+                new int[]{0, 1, 2}, List.of(shock.getId(), bears.getId()));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Shock");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken()).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(first, second);
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(second);
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    void cannotPayForCounterModeWithOnlyOneBlueMana() {
+        Shock shock = new Shock();
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(shock));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, player1.getId());
+        harness.passPriority(player2);
+        harness.setHand(player1, List.of(new ThreeStepsAhead()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castModalInstantWithModes(player1, 0, 1, 3,
+                new int[]{0}, List.of(shock.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    void doesNotDrawWhenCopyTargetIsTheOnlyTargetAndDies() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Card first = new GrizzlyBears();
+        Card second = new MindStone();
+        harness.setLibrary(player1, List.of(first, second));
+        harness.setHand(player1, List.of(new ThreeStepsAhead()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.castModalInstantWithModes(player1, 0, 1, 3,
+                new int[]{1, 2}, List.of(bears.getId()));
+        harness.passPriority(player1);
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, bears.getId());
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(first, second);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Three Steps Ahead");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void countersAndDrawsWhenCopyTargetDiesButSpellTargetRemainsLegal() {
+        Shock original = new Shock();
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Card first = new GrizzlyBears();
+        Card second = new MindStone();
+        harness.setLibrary(player1, List.of(first, second));
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(original, new Shock()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.castInstant(player2, 0, player1.getId());
+        harness.passPriority(player2);
+        harness.setHand(player1, List.of(new ThreeStepsAhead()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.castModalInstantWithModes(player1, 0, 1, 3,
+                new int[]{0, 1, 2}, List.of(original.getId(), bears.getId()));
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, bears.getId());
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(first, second);
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(second);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(original);
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
     }
 
     private void cast(int[] modes, List<java.util.UUID> targets, int totalMana) {
