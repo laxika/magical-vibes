@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -15,7 +17,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({StampedingWildebeests.class, GrizzlyBears.class, RagingGoblin.class})
+@CardUsed({StampedingWildebeests.class, GrizzlyBears.class, RagingGoblin.class, Unsummon.class})
 class StampedingWildebeestsTest extends BaseCardTest {
 
     @Test
@@ -95,6 +97,59 @@ class StampedingWildebeestsTest extends BaseCardTest {
 
         harness.assertInHand(player2, "Grizzly Bears");
         harness.assertNotInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Returns itself when it is the only green creature")
+    void returnsItselfWhenOnlyGreenCreature() {
+        Permanent wildebeests = addCreatureReady(player1, new StampedingWildebeests());
+        addCreatureReady(player1, new RagingGoblin());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, wildebeests.getId());
+
+        harness.assertNotOnBattlefield(player1, "Stampeding Wildebeests");
+        harness.assertInHand(player1, "Stampeding Wildebeests");
+        harness.assertOnBattlefield(player1, "Raging Goblin");
+    }
+
+    @Test
+    @DisplayName("Upkeep trigger still returns a green creature after the source leaves")
+    void triggerResolvesAfterSourceLeaves() {
+        Permanent wildebeests = addCreatureReady(player1, new StampedingWildebeests());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        advanceToUpkeep(player1);
+        harness.castAndResolveInstant(player1, 0, wildebeests.getId());
+        harness.assertInHand(player1, "Stampeding Wildebeests");
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactly(bears.getId());
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Upkeep trigger does nothing when no green creatures remain")
+    void triggerDoesNothingWhenNoGreenCreaturesRemain() {
+        Permanent wildebeests = addCreatureReady(player1, new StampedingWildebeests());
+        addCreatureReady(player1, new RagingGoblin());
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        advanceToUpkeep(player1);
+        harness.castAndResolveInstant(player1, 0, wildebeests.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInHand(player1, "Stampeding Wildebeests");
+        harness.assertOnBattlefield(player1, "Raging Goblin");
     }
 
     @Test
