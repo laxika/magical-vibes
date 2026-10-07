@@ -23,11 +23,7 @@ class StagecoachSecurityTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
     }
 
     @Test
@@ -59,6 +55,49 @@ class StagecoachSecurityTest extends BaseCardTest {
         assertThat(bears.getPowerModifiers()).isZero();
         assertThat(bears.getToughnessModifiers()).isZero();
         assertThat(gqs.hasKeyword(gd, bears, Keyword.VIGILANCE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("The boost and vigilance expire at end of turn")
+    void effectsExpireAtEndOfTurn() {
+        castStagecoach();
+        Permanent stagecoach = findPermanent(player1, "Stagecoach Security");
+
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+
+        assertThat(stagecoach.getPowerModifiers()).isZero();
+        assertThat(stagecoach.getToughnessModifiers()).isZero();
+        assertThat(gqs.hasKeyword(gd, stagecoach, Keyword.VIGILANCE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Creatures entering after resolution do not receive the effects")
+    void doesNotAffectCreaturesEnteringLater() {
+        castStagecoach();
+
+        Permanent laterCreature = harness.addToBattlefieldAndReturn(player1, new StagecoachSecurity());
+
+        assertThat(laterCreature.getPowerModifiers()).isZero();
+        assertThat(laterCreature.getToughnessModifiers()).isZero();
+        assertThat(gqs.hasKeyword(gd, laterCreature, Keyword.VIGILANCE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Plot is unavailable outside a main phase")
+    void cannotPlotDuringCombat() {
+        StagecoachSecurity stagecoach = new StagecoachSecurity();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.setHand(player1, List.of(stagecoach));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.castWithAlternateCost(player1, 0, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(stagecoach);
+        assertThat(gd.plottedCardIds).doesNotContain(stagecoach.getId());
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(4);
     }
 
     @Test
