@@ -50,12 +50,69 @@ class SummonPrimalOdinTest extends BaseCardTest {
 
         saga.setSummoningSick(false);
         saga.setAttacking(true);
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat();
 
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    void chapterICannotSkipChoosingAnAvailableTarget() {
+        addSagaWithLore(0);
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        advanceToNextChapter();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validIds()).contains(opponentCreature.getId())
+                .doesNotContain(player1.getId(), player2.getId());
+    }
+
+    @Test
+    void enteringBattlefieldTriggersChapterI() {
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        Permanent saga = harness.enterBattlefieldAndReturn(player1, new SummonPrimalOdin());
+        harness.handlePermanentChosen(player1, opponentCreature.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(saga);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(opponentCreature);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(opponentCreature.getCard());
+    }
+
+    @Test
+    void combatDamageBeforeChapterIIDoesNotCauseGameLoss() {
+        Permanent saga = addSagaWithLore(1);
+        saga.setSummoningSick(false);
+        saga.setAttacking(true);
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+        harness.assertLife(player2, 15);
+    }
+
+    @Test
+    void repeatingChapterIIGrantsAnAdditionalIndependentCombatDamageTrigger() {
+        Permanent saga = addSagaWithLore(1);
+        advanceToNextChapter();
+        resolveAllTriggers();
+
+        saga.setCounterCount(CounterType.LORE, 1);
+        advanceToNextChapter();
+        resolveAllTriggers();
+
+        saga.setSummoningSick(false);
+        saga.setAttacking(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
+
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        assertThat(gd.winnerPlayerId).isEqualTo(player1.getId());
     }
 
     @Test
