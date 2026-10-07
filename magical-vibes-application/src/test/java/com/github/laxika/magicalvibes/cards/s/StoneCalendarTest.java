@@ -86,4 +86,58 @@ class StoneCalendarTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castCreature(player2, 0))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    void instantSpellsAreReduced() {
+        harness.addToBattlefield(player1, new StoneCalendar());
+        harness.setHand(player1, List.of(new HolyLight()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    void excessReductionDoesNotPayColoredMana() {
+        harness.addToBattlefield(player1, new StoneCalendar());
+        harness.addToBattlefield(player1, new StoneCalendar());
+        harness.setHand(player1, List.of(new BogImp()));
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void calendarDoesNotReduceItsOwnCostBeforeEnteringBattlefield() {
+        harness.setHand(player1, List.of(new StoneCalendar()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.castArtifact(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void reductionStillAppliesWhileCalendarIsTapped() {
+        harness.addToBattlefieldAndReturn(player1, new StoneCalendar()).setTapped(true);
+        harness.setHand(player1, List.of(new BogImp()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    void excessReductionCanMakeGenericSpellFree() {
+        harness.addToBattlefield(player1, new StoneCalendar());
+        harness.addToBattlefield(player1, new StoneCalendar());
+        harness.addToBattlefield(player1, new StoneCalendar());
+        harness.setHand(player1, List.of(new FellwarStone()));
+
+        harness.castArtifact(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+    }
 }
