@@ -74,6 +74,44 @@ class SunkenHollowTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
     }
 
+    @Test
+    void entersTappedWithoutAnyLands() {
+        playSunkenHollow();
+
+        assertThat(findSunkenHollow(player1).isTapped()).isTrue();
+    }
+
+    @Test
+    void tappedBasicLandsOfTheSameTypeCount() {
+        harness.addToBattlefieldAndReturn(player1, new Island()).tap();
+        harness.addToBattlefieldAndReturn(player1, new Island()).tap();
+
+        playSunkenHollow();
+
+        assertThat(findSunkenHollow(player1).isTapped()).isFalse();
+    }
+
+    @Test
+    void entersUntappedWithMoreThanTwoBasicLands() {
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new Swamp());
+
+        playSunkenHollow();
+
+        assertThat(findSunkenHollow(player1).isTapped()).isFalse();
+    }
+
+    @Test
+    void nonbasicLandWithBasicLandTypesDoesNotSupplySecondBasicLand() {
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new SunkenHollow());
+
+        playSunkenHollow();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()).get(2).isTapped()).isTrue();
+    }
+
     private void playSunkenHollow() {
         harness.setHand(player1, List.of(new SunkenHollow()));
         harness.forceActivePlayer(player1);
@@ -82,9 +120,8 @@ class SunkenHollowTest extends BaseCardTest {
     }
 
     private Permanent addReadySunkenHollow(Player player) {
-        Permanent permanent = new Permanent(new SunkenHollow());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new SunkenHollow());
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 
