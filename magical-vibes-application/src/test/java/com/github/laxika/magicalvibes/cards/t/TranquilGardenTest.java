@@ -1,15 +1,19 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.c.Confiscate;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(TranquilGarden.class)
+@CardUsed({TranquilGarden.class, Confiscate.class})
 class TranquilGardenTest extends BaseCardTest {
 
     @Test
@@ -69,6 +73,60 @@ class TranquilGardenTest extends BaseCardTest {
 
         assertThat(activatedGarden.isTapped()).isTrue();
         assertThat(otherGarden.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The opponent's untap step does not consume the colored mana restriction")
+    void opponentsUntapDoesNotConsumeRestriction() {
+        Permanent garden = addGarden();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(mana(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+        advanceToUpkeep(player2);
+        assertThat(garden.isTapped()).isTrue();
+        advanceToUpkeep(player1);
+        assertThat(garden.isTapped()).isTrue();
+        advanceToUpkeep(player1);
+        assertThat(garden.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A new controller can untap the land before the activating player's next untap step")
+    void newControllerCanUntapBeforeActivatorsNextUntap() {
+        Permanent garden = addGarden();
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        stealGarden(garden);
+        advanceToUpkeep(player2);
+
+        assertThat(garden.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The restriction expires at the activating player's untap step after control changes")
+    void restrictionExpiresAtActivatorsUntapAfterControlChanges() {
+        Permanent garden = addGarden();
+        harness.activateAbility(player1, 0, 2, null, null);
+
+        stealGarden(garden);
+        advanceToUpkeep(player1);
+        assertThat(garden.isTapped()).isTrue();
+        advanceToUpkeep(player2);
+
+        assertThat(garden.isTapped()).isFalse();
+    }
+
+    private void stealGarden(Permanent garden) {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new Confiscate()));
+        harness.addMana(player2, ManaColor.BLUE, 6);
+        harness.castEnchantment(player2, 0, garden.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(garden);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(garden);
     }
 
     private Permanent addGarden() {
