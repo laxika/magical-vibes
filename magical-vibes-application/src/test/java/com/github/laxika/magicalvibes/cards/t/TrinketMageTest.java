@@ -121,6 +121,42 @@ class TrinketMageTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
+    @Test
+    @DisplayName("A zero-cost artifact can be found and put into hand")
+    void zeroCostArtifactCanBeFound() {
+        setupAndCast();
+        ParadiseMantle mantle = new ParadiseMantle();
+        harness.setLibrary(player1, List.of(mantle, new GuardianIdol()));
+        harness.setLibrary(player2, List.of(new ConjurersBauble()));
+
+        resolveEtb();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(mantle);
+        assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(mantle).hasSize(1);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+        harness.assertNotInHand(player2, "Paradise Mantle");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gameLogContains("shuffled")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Accepting the search with an empty library completes without a choice")
+    void emptyLibrarySearchCompletes() {
+        setupAndCast();
+        harness.setLibrary(player1, List.of());
+
+        resolveEtb();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertOnBattlefield(player1, "Trinket Mage");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gameLogContains("searches their library but it is empty")).isTrue();
+        assertThat(gameLogContains("shuffled")).isTrue();
+    }
+
     private void setupAndCast() {
         harness.castFromHand(player1, new TrinketMage(), "{2}{U}");
     }
