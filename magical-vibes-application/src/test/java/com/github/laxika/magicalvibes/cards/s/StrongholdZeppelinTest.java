@@ -38,4 +38,17 @@ class StrongholdZeppelinTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can only block creatures with flying");
     }
+
+    @Test
+    void groundCreatureCannotBlockAttackingZeppelin() {
+        addCreatureReady(player1, new StrongholdZeppelin());
+        addCreatureReady(player2, new StrongholdBiologist());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("flying");
+    }
 }
