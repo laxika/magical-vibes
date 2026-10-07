@@ -51,8 +51,7 @@ class SqueesToyTest extends BaseCardTest {
         harness.activateAbility(player1, indexOf(player1, toy), null, spider.getId());
         harness.passBothPriorities();
 
-        declareAttackers(player2, List.of(indexOf(player2, attacker)));
-        prepareDeclareBlockers(player2);
+        declareAttackersAndPrepareBlockers(player2, List.of(indexOf(player2, attacker)));
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(indexOf(player1, spider), 0)));
         harness.passBothPriorities();
 
@@ -110,5 +109,66 @@ class SqueesToyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(spider.getDamagePreventionShield()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("A consumed shield does not prevent a later damage event")
+    void shieldOnlyPreventsFirstDamageEvent() {
+        Permanent toy = addToy();
+        Permanent spider = harness.addToBattlefieldAndReturn(player1, new CanopySpider());
+        Permanent firstHunter = addCreatureReady(player2, new RootwaterHunter());
+        Permanent secondHunter = addCreatureReady(player2, new RootwaterHunter());
+
+        harness.activateAbility(player1, indexOf(player1, toy), null, spider.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player2, indexOf(player2, firstHunter), null, spider.getId());
+        harness.passBothPriorities();
+        assertThat(spider.getMarkedDamage()).isZero();
+
+        harness.activateAbility(player2, indexOf(player2, secondHunter), null, spider.getId());
+        harness.passBothPriorities();
+        assertThat(spider.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Canopy Spider");
+    }
+
+    @Test
+    @DisplayName("Two Toys prevent two damage across separate events, then allow further damage")
+    void shieldsStackAndConsumeAcrossDamageEvents() {
+        Permanent firstToy = addToy();
+        Permanent secondToy = addToy();
+        Permanent spider = harness.addToBattlefieldAndReturn(player1, new CanopySpider());
+        Permanent firstHunter = addCreatureReady(player2, new RootwaterHunter());
+        Permanent secondHunter = addCreatureReady(player2, new RootwaterHunter());
+        Permanent thirdHunter = addCreatureReady(player2, new RootwaterHunter());
+
+        harness.activateAbility(player1, indexOf(player1, firstToy), null, spider.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, indexOf(player1, secondToy), null, spider.getId());
+        harness.passBothPriorities();
+
+        harness.activateAbility(player2, indexOf(player2, firstHunter), null, spider.getId());
+        harness.passBothPriorities();
+        assertThat(spider.getMarkedDamage()).isZero();
+        harness.activateAbility(player2, indexOf(player2, secondHunter), null, spider.getId());
+        harness.passBothPriorities();
+        assertThat(spider.getMarkedDamage()).isZero();
+        harness.activateAbility(player2, indexOf(player2, thirdHunter), null, spider.getId());
+        harness.passBothPriorities();
+        assertThat(spider.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Canopy Spider");
+    }
+
+    @Test
+    @DisplayName("A tapped Toy cannot activate again")
+    void cannotActivateWhileTapped() {
+        Permanent toy = addToy();
+        Permanent spider = harness.addToBattlefieldAndReturn(player1, new CanopySpider());
+
+        harness.activateAbility(player1, indexOf(player1, toy), null, spider.getId());
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(player1, toy), null, spider.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(spider.getDamagePreventionShield()).isEqualTo(1);
     }
 }
