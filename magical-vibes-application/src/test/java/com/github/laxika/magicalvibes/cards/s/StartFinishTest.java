@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({StartFinish.class, GrizzlyBears.class, Plains.class, RagingGoblin.class})
 class StartFinishTest extends BaseCardTest {
 
     @Test
@@ -27,8 +29,7 @@ class StartFinishTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         List<Permanent> warriors = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().isToken() && p.getCard().getName().equals("Warrior"))
@@ -105,5 +106,75 @@ class StartFinishTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castFlashbackWithSacrifice(player1, 0, target.getId(), fodder.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("sorcery-speed");
+    }
+
+    @Test
+    @DisplayName("Finish can target and sacrifice the same creature, then is exiled without resolving")
+    void finishCanSacrificeItsOwnTarget() {
+        harness.setHand(player1, List.of(new StartFinish()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castAndResolveInstant(player1, 0);
+        List<Permanent> warriors = List.copyOf(gd.playerBattlefields.get(player1.getId()));
+        assertThat(warriors).hasSize(2);
+        Permanent sacrificedTarget = warriors.getFirst();
+        Permanent survivor = warriors.getLast();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castFlashbackWithSacrifice(player1, 0, sacrificedTarget.getId(), sacrificedTarget.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(Permanent::getId).containsExactly(survivor.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(Permanent::getId).containsExactly(survivor.getId());
+        harness.assertNotInGraveyard(player1, "Start");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(c -> c.getName().equals("Start"));
+    }
+
+    @Test
+    @DisplayName("Finish can destroy another creature its caster controls and pays the sacrifice before resolution")
+    void finishCanDestroyAnotherControlledCreature() {
+        Permanent fodder = harness.addToBattlefieldAndReturn(player1, new RagingGoblin());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setGraveyard(player1, List.of(new StartFinish()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castFlashbackWithSacrifice(player1, 0, target.getId(), fodder.getId());
+
+        harness.assertInGraveyard(player1, "Raging Goblin");
+        harness.assertNotOnBattlefield(player1, "Raging Goblin");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(c -> c.getName().equals("Start"));
+    }
+
+    @Test
+    @DisplayName("Finish cannot sacrifice an opponent's creature")
+    void finishCannotSacrificeOpponentsCreature() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new RagingGoblin());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setGraveyard(player1, List.of(new StartFinish()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castFlashbackWithSacrifice(player1, 0, target.getId(), target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(Permanent::getId).contains(ownCreature.getId());
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Start");
+        assertThat(gd.stack).isEmpty();
     }
 }
