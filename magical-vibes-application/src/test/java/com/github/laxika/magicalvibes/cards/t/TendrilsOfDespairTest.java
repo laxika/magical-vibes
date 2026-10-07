@@ -18,10 +18,52 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class TendrilsOfDespairTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Sacrifice is paid while casting, before the opponent discards")
+    void sacrificeIsPaidBeforeResolution() {
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new RedwoodTreefolk());
+        harness.setHand(player1, List.of(new TendrilsOfDespair(), new RedwoodTreefolk()));
+        harness.setHand(player2, List.of(new RedwoodTreefolk(), new RedwoodTreefolk()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castSorceryWithSacrifice(player1, 0, player2.getId(), sacrifice.getId());
+
+        harness.assertNotOnBattlefield(player1, "Redwood Treefolk");
+        harness.assertInGraveyard(player1, "Redwood Treefolk");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Tendrils of Despair");
+    }
+
+    @Test
+    @DisplayName("Cannot sacrifice an opponent's creature to pay the additional cost")
+    void cannotSacrificeOpponentsCreature() {
+        harness.addToBattlefield(player1, new RedwoodTreefolk());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new RedwoodTreefolk());
+        harness.setHand(player1, List.of(new TendrilsOfDespair()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.castSorceryWithSacrifice(
+                player1, 0, player2.getId(), opponentCreature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Redwood Treefolk");
+        harness.assertOnBattlefield(player2, "Redwood Treefolk");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
     @DisplayName("Sacrifices a creature and makes the target opponent discard two cards")
     void opponentDiscardsTwoCards() {
-        Permanent sacrifice = new Permanent(new RedwoodTreefolk());
-        gd.playerBattlefields.get(player1.getId()).add(sacrifice);
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new RedwoodTreefolk());
 
         harness.setHand(player1, List.of(new TendrilsOfDespair()));
         harness.setHand(player2, List.of(new RedwoodTreefolk(), new RedwoodTreefolk(), new RedwoodTreefolk()));
@@ -53,8 +95,7 @@ class TendrilsOfDespairTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target its own controller")
     void cannotTargetSelf() {
-        Permanent sacrifice = new Permanent(new RedwoodTreefolk());
-        gd.playerBattlefields.get(player1.getId()).add(sacrifice);
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new RedwoodTreefolk());
 
         harness.setHand(player1, List.of(new TendrilsOfDespair()));
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -66,8 +107,7 @@ class TendrilsOfDespairTest extends BaseCardTest {
     @Test
     @DisplayName("Opponent with a single card discards only that card")
     void opponentWithOneCardDiscardsIt() {
-        Permanent sacrifice = new Permanent(new RedwoodTreefolk());
-        gd.playerBattlefields.get(player1.getId()).add(sacrifice);
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new RedwoodTreefolk());
 
         harness.setHand(player1, List.of(new TendrilsOfDespair()));
         harness.setHand(player2, List.of(new RedwoodTreefolk()));
@@ -84,8 +124,7 @@ class TendrilsOfDespairTest extends BaseCardTest {
     @Test
     @DisplayName("Sacrifices the creature even when the target opponent has no cards")
     void opponentWithEmptyHandStillPaysAdditionalCost() {
-        Permanent sacrifice = new Permanent(new RedwoodTreefolk());
-        gd.playerBattlefields.get(player1.getId()).add(sacrifice);
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new RedwoodTreefolk());
 
         harness.setHand(player1, List.of(new TendrilsOfDespair()));
         harness.setHand(player2, List.of());
