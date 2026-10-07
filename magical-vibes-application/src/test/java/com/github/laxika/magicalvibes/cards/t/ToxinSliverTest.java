@@ -3,6 +3,9 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.b.BladeSliver;
 import com.github.laxika.magicalvibes.cards.e.EnormousBaloth;
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
+import com.github.laxika.magicalvibes.cards.h.Humble;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,7 +15,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-@CardUsed({ToxinSliver.class, BladeSliver.class, EnormousBaloth.class, FugitiveWizard.class})
+@CardUsed({ToxinSliver.class, BladeSliver.class, EnormousBaloth.class, FugitiveWizard.class, Humble.class})
 class ToxinSliverTest extends BaseCardTest {
 
     @Test
@@ -113,6 +116,51 @@ class ToxinSliverTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Fugitive Wizard");
+        harness.assertOnBattlefield(player2, "Enormous Baloth");
+    }
+
+    @Test
+    @CardUsed({ToxinSliver.class, BladeSliver.class, EnormousBaloth.class, Humble.class})
+    @DisplayName("Toxin Sliver watches combat damage from a Sliver that has lost all abilities")
+    void destroysCreatureDamagedBySliverWithoutAbilities() {
+        addCreatureReady(player1, new ToxinSliver());
+        Permanent sliver = addCreatureReady(player1, new BladeSliver());
+        sliver.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        addCreatureReady(player2, new EnormousBaloth());
+        harness.setHand(player1, List.of(new Humble()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, sliver.getId());
+
+        sliver.setAttacking(true);
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Blade Sliver");
+        harness.assertInGraveyard(player2, "Enormous Baloth");
+    }
+
+    @Test
+    @CardUsed({ToxinSliver.class, BladeSliver.class, EnormousBaloth.class, Humble.class})
+    @DisplayName("A zero-power Sliver deals no combat damage and does not trigger destruction")
+    void doesNotDestroyCreatureWhenSliverDealsNoDamage() {
+        addCreatureReady(player1, new ToxinSliver());
+        Permanent sliver = addCreatureReady(player1, new BladeSliver());
+        addCreatureReady(player2, new EnormousBaloth());
+        harness.setHand(player1, List.of(new Humble()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, sliver.getId());
+
+        sliver.setAttacking(true);
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Blade Sliver");
         harness.assertOnBattlefield(player2, "Enormous Baloth");
     }
 }
