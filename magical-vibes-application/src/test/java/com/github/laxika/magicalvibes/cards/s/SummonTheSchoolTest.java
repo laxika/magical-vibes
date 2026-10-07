@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.d.DeeptreadMerrow;
 import com.github.laxika.magicalvibes.cards.g.GoldmeadowStalwart;
+import com.github.laxika.magicalvibes.cards.o.OonasProwler;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -19,11 +20,12 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SummonTheSchool.class, DeeptreadMerrow.class, GoldmeadowStalwart.class})
+@CardUsed({SummonTheSchool.class, DeeptreadMerrow.class, GoldmeadowStalwart.class, OonasProwler.class})
 class SummonTheSchoolTest extends BaseCardTest {
 
     @Nested
     @DisplayName("Spell effect")
+    @CardUsed({SummonTheSchool.class})
     class SpellEffect {
 
         @Test
@@ -52,6 +54,7 @@ class SummonTheSchoolTest extends BaseCardTest {
 
     @Nested
     @DisplayName("Graveyard activated ability")
+    @CardUsed({SummonTheSchool.class, DeeptreadMerrow.class, GoldmeadowStalwart.class, OonasProwler.class})
     class GraveyardAbility {
 
         @Test
@@ -133,6 +136,49 @@ class SummonTheSchoolTest extends BaseCardTest {
 
             assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
                     .isInstanceOf(IllegalStateException.class);
+        }
+
+        @Test
+        @DisplayName("Newly entered Merfolk can pay the tap cost")
+        void canTapSummoningSickMerfolk() {
+            harness.setGraveyard(player1, List.of(new SummonTheSchool()));
+            for (int i = 0; i < 4; i++) {
+                harness.addToBattlefield(player1, new DeeptreadMerrow());
+            }
+
+            harness.activateGraveyardAbility(player1, 0);
+
+            assertThat(gd.playerBattlefields.get(player1.getId())).allMatch(Permanent::isTapped);
+            harness.passBothPriorities();
+            harness.assertInHand(player1, "Summon the School");
+        }
+
+        @Test
+        @DisplayName("An older activation cannot return the card after it leaves and reenters the graveyard")
+        void cannotReturnNewGraveyardObject() {
+            harness.setHand(player1, List.of());
+            SummonTheSchool card = new SummonTheSchool();
+            harness.setGraveyard(player1, List.of(card));
+            harness.addToBattlefield(player1, new OonasProwler());
+            addMerfolk(player1, 8);
+            List<Permanent> merfolk = findPermanents(player1, "Deeptread Merrow");
+
+            harness.activateGraveyardAbility(player1, 0);
+            for (int i = 0; i < 4; i++) {
+                harness.handlePermanentChosen(player1, merfolk.get(i).getId());
+            }
+            harness.activateGraveyardAbility(player1, 0);
+            harness.passBothPriorities();
+            harness.assertInHand(player1, "Summon the School");
+            assertThat(gd.stack).hasSize(1);
+
+            harness.activateAbility(player1, 0, null, null);
+            harness.handleCardChosen(player1, 0);
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+
+            harness.assertNotInHand(player1, "Summon the School");
+            harness.assertInGraveyard(player1, "Summon the School");
         }
 
         @Test
