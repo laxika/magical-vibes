@@ -1,107 +1,64 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
-import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.cards.a.AirElemental;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.cards.a.AlphaTyrranax;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import org.junit.jupiter.api.Test;
 
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import java.util.UUID;
 
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import static org.assertj.core.api.Assertions.assertThat;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({TowerOfCalamities.class, AlphaTyrranax.class})
 class TowerOfCalamitiesTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has tap ability that costs {8} and deals 12 damage to target creature")
-    void hasCorrectAbility() {
-        TowerOfCalamities card = new TowerOfCalamities();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isEqualTo("{8}");
-        assertThat(card.getActivatedAbilities().getFirst().getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().getFirst())
-                .isInstanceOf(DealDamageToTargetCreatureEffect.class);
-
-        DealDamageToTargetCreatureEffect effect =
-                (DealDamageToTargetCreatureEffect) card.getActivatedAbilities().getFirst().getEffects().getFirst();
-        assertThat(effect.damage()).isEqualTo(new Fixed(12));
-    }
-
-    // ===== Ability resolves correctly =====
 
     @Test
     @DisplayName("Deals 12 damage to target creature when ability resolves")
     void deals12DamageToTargetCreature() {
-        harness.addToBattlefield(player1, new TowerOfCalamities());
-        harness.addToBattlefield(player2, new AirElemental());
+        addCreatureReady(player1, new TowerOfCalamities());
+        harness.addToBattlefield(player2, new AlphaTyrranax());
         harness.forceActivePlayer(player1);
-        clearSummoningSickness(player1, "Tower of Calamities");
 
         harness.addMana(player1, ManaColor.COLORLESS, 8);
-        UUID targetId = harness.getPermanentId(player2, "Air Elemental");
+        UUID targetId = harness.getPermanentId(player2, "Alpha Tyrranax");
 
         harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
 
-        // Air Elemental is 4/4, takes 12 damage → dies
-        harness.assertInGraveyard(player2, "Air Elemental");
+        harness.assertInGraveyard(player2, "Alpha Tyrranax");
     }
 
     @Test
     @DisplayName("Deals 12 damage but creature survives if toughness is high enough")
     void creatureSurvivesWithHighToughness() {
-        harness.addToBattlefield(player1, new TowerOfCalamities());
-        harness.addToBattlefield(player2, new AirElemental());
+        addCreatureReady(player1, new TowerOfCalamities());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AlphaTyrranax());
         harness.forceActivePlayer(player1);
-        clearSummoningSickness(player1, "Tower of Calamities");
-
-        // Boost Air Elemental toughness with +1/+1 counters so it survives 12 damage (4/4 + 9 = 4/13)
-        Permanent airElemental = findPermanent(player2, "Air Elemental");
-        airElemental.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 9);
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 8);
 
         harness.addMana(player1, ManaColor.COLORLESS, 8);
-        UUID targetId = harness.getPermanentId(player2, "Air Elemental");
+        UUID targetId = harness.getPermanentId(player2, "Alpha Tyrranax");
 
         harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
 
-        // Air Elemental is 13/13 with counters, takes 12 damage → survives with 1 toughness
-        harness.assertOnBattlefield(player2, "Air Elemental");
+        harness.assertOnBattlefield(player2, "Alpha Tyrranax");
     }
-
-    // ===== Cost enforcement =====
 
     @Test
     @DisplayName("Cannot activate without enough mana")
     void cannotActivateWithoutMana() {
-        harness.addToBattlefield(player1, new TowerOfCalamities());
-        harness.addToBattlefield(player2, new AirElemental());
+        addCreatureReady(player1, new TowerOfCalamities());
+        harness.addToBattlefield(player2, new AlphaTyrranax());
         harness.forceActivePlayer(player1);
-        clearSummoningSickness(player1, "Tower of Calamities");
 
         harness.addMana(player1, ManaColor.COLORLESS, 7); // 1 short
-        UUID targetId = harness.getPermanentId(player2, "Air Elemental");
+        UUID targetId = harness.getPermanentId(player2, "Alpha Tyrranax");
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetId))
                 .isInstanceOf(IllegalStateException.class);
@@ -110,13 +67,12 @@ class TowerOfCalamitiesTest extends BaseCardTest {
     @Test
     @DisplayName("Taps when ability is activated")
     void tapsOnActivation() {
-        harness.addToBattlefield(player1, new TowerOfCalamities());
-        harness.addToBattlefield(player2, new AirElemental());
+        addCreatureReady(player1, new TowerOfCalamities());
+        harness.addToBattlefield(player2, new AlphaTyrranax());
         harness.forceActivePlayer(player1);
-        clearSummoningSickness(player1, "Tower of Calamities");
 
         harness.addMana(player1, ManaColor.COLORLESS, 8);
-        UUID targetId = harness.getPermanentId(player2, "Air Elemental");
+        UUID targetId = harness.getPermanentId(player2, "Alpha Tyrranax");
 
         harness.activateAbility(player1, 0, null, targetId);
 
@@ -124,18 +80,15 @@ class TowerOfCalamitiesTest extends BaseCardTest {
         assertThat(tower.isTapped()).isTrue();
     }
 
-    // ===== Fizzle =====
-
     @Test
     @DisplayName("Fizzles when target creature is removed before resolution")
     void fizzlesWhenTargetRemoved() {
-        harness.addToBattlefield(player1, new TowerOfCalamities());
-        harness.addToBattlefield(player2, new AirElemental());
+        addCreatureReady(player1, new TowerOfCalamities());
+        harness.addToBattlefield(player2, new AlphaTyrranax());
         harness.forceActivePlayer(player1);
-        clearSummoningSickness(player1, "Tower of Calamities");
 
         harness.addMana(player1, ManaColor.COLORLESS, 8);
-        UUID targetId = harness.getPermanentId(player2, "Air Elemental");
+        UUID targetId = harness.getPermanentId(player2, "Alpha Tyrranax");
 
         harness.activateAbility(player1, 0, null, targetId);
 
@@ -144,13 +97,87 @@ class TowerOfCalamitiesTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+        assertThat(gameLogContains("fizzles")).isTrue();
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Marks exactly 12 damage on a surviving creature")
+    void marksExactlyTwelveDamage() {
+        harness.addToBattlefield(player1, new TowerOfCalamities());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AlphaTyrranax());
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 8);
+        harness.forceActivePlayer(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
 
-    private void clearSummoningSickness(com.github.laxika.magicalvibes.model.Player player, String cardName) {
-        Permanent perm = findPermanent(player, cardName);
-        perm.setSummoningSick(false);
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(12);
+        harness.assertOnBattlefield(player2, "Alpha Tyrranax");
+    }
+
+    @Test
+    @DisplayName("A tapped Tower cannot activate")
+    void cannotActivateWhileTapped() {
+        Permanent tower = harness.addToBattlefieldAndReturn(player1, new TowerOfCalamities());
+        tower.tap();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AlphaTyrranax());
+        harness.forceActivePlayer(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can target a creature controlled by the ability controller")
+    void canTargetOwnCreature() {
+        harness.addToBattlefield(player1, new TowerOfCalamities());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AlphaTyrranax());
+        harness.forceActivePlayer(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Alpha Tyrranax");
+    }
+
+    @Test
+    @DisplayName("Cannot target a noncreature artifact")
+    void cannotTargetNoncreatureArtifact() {
+        harness.addToBattlefield(player1, new TowerOfCalamities());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new TowerOfCalamities());
+        harness.forceActivePlayer(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot target a player")
+    void cannotTargetPlayer() {
+        harness.addToBattlefield(player1, new TowerOfCalamities());
+        harness.forceActivePlayer(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Ability resolves even when the Tower leaves the battlefield")
+    void resolvesAfterSourceLeavesBattlefield() {
+        harness.addToBattlefield(player1, new TowerOfCalamities());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AlphaTyrranax());
+        harness.forceActivePlayer(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Alpha Tyrranax");
     }
 }
