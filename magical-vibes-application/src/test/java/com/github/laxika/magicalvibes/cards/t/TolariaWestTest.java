@@ -59,6 +59,81 @@ class TolariaWestTest extends BaseCardTest {
     }
 
     @Test
+    void transmutePaysManaAndDiscardsBeforeResolution() {
+        DryadArbor matchingCard = new DryadArbor();
+        harness.setHand(player1, List.of(new TolariaWest()));
+        harness.setLibrary(player1, List.of(matchingCard));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertInGraveyard(player1, "Tolaria West");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(matchingCard);
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(matchingCard);
+    }
+
+    @Test
+    void transmuteMayFailToFindEvenWhenMatchingCardExists() {
+        DryadArbor matchingCard = new DryadArbor();
+        harness.setHand(player1, List.of(new TolariaWest()));
+        harness.setLibrary(player1, List.of(matchingCard));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        harness.assertInGraveyard(player1, "Tolaria West");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(matchingCard);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void transmuteResolvesWhenLibraryHasNoMatchingCard() {
+        Tarmogoyf nonMatchingCard = new Tarmogoyf();
+        harness.setHand(player1, List.of(new TolariaWest()));
+        harness.setLibrary(player1, List.of(nonMatchingCard));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Tolaria West");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nonMatchingCard);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void transmuteCannotPayBlueCostWithOnlyOneBlueMana() {
+        TolariaWest land = new TolariaWest();
+        harness.setHand(player1, List.of(land));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(land);
+        harness.assertNotInGraveyard(player1, "Tolaria West");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     void transmuteCanOnlyBeActivatedAtSorcerySpeed() {
         TolariaWest land = new TolariaWest();
         harness.setHand(player1, List.of(land));
