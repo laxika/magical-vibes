@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.l.LoxodonStalwart;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.s.StreetWraith;
 import com.github.laxika.magicalvibes.cards.z.ZuranSpellcaster;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
@@ -20,8 +21,56 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({TazriStalwartSurvivor.class, DrudgeSkeletons.class, GrizzlyBears.class,
         LlanowarElves.class, LoxodonStalwart.class,
-        ZuranSpellcaster.class, Mountain.class})
+        ZuranSpellcaster.class, Mountain.class, StreetWraith.class})
 class TazriStalwartSurvivorTest extends BaseCardTest {
+
+    @Test
+    void printedManaAbilityCountsAsAnotherActivatedAbility() {
+        addCreatureReady(player1, new TazriStalwartSurvivor());
+        Permanent elves = addCreatureReady(player1, new LlanowarElves());
+
+        harness.activateAbility(player1, 1, 0, null, null);
+
+        assertThat(elves.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId())
+                .getCreatureAbilityOnlyMana(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cyclingCountsAsAnotherActivatedAbilityOnTheBattlefield() {
+        addCreatureReady(player1, new TazriStalwartSurvivor());
+        Permanent wraith = addCreatureReady(player1, new StreetWraith());
+
+        harness.activateAbility(player1, 1, 0, null, null);
+
+        assertThat(wraith.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId())
+                .getCreatureAbilityOnlyMana(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void returnsMilledCyclingCreatureFromAShortLibrary() {
+        addCreatureReady(player1, new TazriStalwartSurvivor());
+        StreetWraith wraith = new StreetWraith();
+        GrizzlyBears oldGraveyardCard = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(oldGraveyardCard));
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(wraith));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(wraith);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(oldGraveyardCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
 
     @Test
     void grantsManaAbilityOnlyToCreaturesWithAnotherActivatedAbility() {
