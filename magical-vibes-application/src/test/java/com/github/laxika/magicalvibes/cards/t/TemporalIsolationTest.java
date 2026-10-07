@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.d.DrifterIlDal;
 import com.github.laxika.magicalvibes.cards.d.DurkwoodBaloth;
 import com.github.laxika.magicalvibes.cards.f.FledglingMawcor;
 import com.github.laxika.magicalvibes.cards.h.Hivestone;
+import com.github.laxika.magicalvibes.cards.s.Skullcrack;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -20,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({TemporalIsolation.class, DurkwoodBaloth.class, DrifterIlDal.class,
-        FledglingMawcor.class, Hivestone.class})
+        FledglingMawcor.class, Hivestone.class, Skullcrack.class})
 class TemporalIsolationTest extends BaseCardTest {
 
     @Test
@@ -138,6 +139,81 @@ class TemporalIsolationTest extends BaseCardTest {
         harness.castEnchantment(player1, 0, creature.getId());
 
         assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    void resolvesAttachedToOpponentsCreature() {
+        Permanent creature = addCreatureReady(player2, new DurkwoodBaloth());
+        harness.setHand(player1, List.of(new TemporalIsolation()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Temporal Isolation").getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.SHADOW)).isTrue();
+    }
+
+    @Test
+    void enchantedCreatureCannotBlockNonShadowAttacker() {
+        Permanent attacker = addCreatureReady(player1, new DurkwoodBaloth());
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new DurkwoodBaloth());
+        enchant(blocker);
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void enchantedBlockerPreventsOnlyItsOwnDamage() {
+        Permanent attacker = addCreatureReady(player1, new DrifterIlDal());
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new DurkwoodBaloth());
+        enchant(blocker);
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        assertThat(attacker.getMarkedDamage()).isZero();
+        assertThat(blocker.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Drifter il-Dal");
+    }
+
+    @Test
+    void preventsNoncombatDamageToCreatures() {
+        Permanent spellcaster = addCreatureReady(player1, new FledglingMawcor());
+        Permanent target = addCreatureReady(player2, new DrifterIlDal());
+        enchant(spellcaster);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Drifter il-Dal");
+    }
+
+    @Test
+    @CardUsed(Skullcrack.class)
+    void cannotPreventUnpreventableNoncombatDamageToPlayer() {
+        Permanent spellcaster = addCreatureReady(player1, new FledglingMawcor());
+        enchant(spellcaster);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new Skullcrack()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.assertLife(player2, 17);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 16);
     }
 
     private Permanent enchant(Permanent creature) {
