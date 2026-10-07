@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -29,6 +30,36 @@ class TheMountainKingsReturnTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard().getName().equals("Soldier"));
+    }
+
+    @Test
+    @DisplayName("Recruit creates a token with both Human and Soldier subtypes")
+    void recruitCreatesHumanSoldier() {
+        castAndResolve(new GrizzlyBears(), new Forest());
+
+        assertThat(findPermanent(player1, "Soldier").getCard().getSubtypes())
+                .containsExactlyInAnyOrder(CardSubtype.HUMAN, CardSubtype.SOLDIER);
+    }
+
+    @Test
+    @DisplayName("Recruit creates its token during the chapter resolution without another priority window")
+    void recruitCompletesDuringChapterResolution() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new TheMountainKingsReturn(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInHand(player1, "Forest");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(countPermanents(player1, "Soldier")).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
@@ -81,6 +112,35 @@ class TheMountainKingsReturnTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Chapter III can choose no target even when a creature is available")
+    void chapterIIICanChooseNoTarget() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        addSagaWithLore(2);
+
+        advanceToChapter();
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertNotOnBattlefield(player1, "The Mountain-king's Return");
+        harness.assertInGraveyard(player1, "The Mountain-king's Return");
+    }
+
+    @Test
+    @DisplayName("Chapter III can put its counter on an opponent's creature")
+    void chapterIIICanTargetOpponentsCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        addSagaWithLore(2);
+
+        advanceToChapter();
+        harness.handlePermanentChosen(player1, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.assertInGraveyard(player1, "The Mountain-king's Return");
     }
 
     private void castAndResolve(Card discardedCard, Card drawnCard) {
