@@ -41,6 +41,29 @@ class ThreeTragediesTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Target player chooses which card to keep")
+    void targetChoosesWhichCardToKeep() {
+        harness.setHand(player2, List.of(new FrostOgre(), new GnarledMass(), new GnarledMass(), new GnarledMass()));
+        harness.setHand(player1, List.of(new ThreeTragedies(), new FrostOgre()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        harness.handleCardChosen(player2, 1);
+        harness.handleCardChosen(player2, 1);
+        harness.handleCardChosen(player2, 1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        harness.assertInHand(player2, "Frost Ogre");
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(3);
+        harness.assertNotInGraveyard(player2, "Frost Ogre");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.assertInHand(player1, "Frost Ogre");
+        harness.assertInGraveyard(player1, "Three Tragedies");
+    }
+
+    @Test
     @DisplayName("Target with fewer than three cards discards their whole hand")
     void targetWithFewerCardsDiscardsAll() {
         harness.setHand(player2, List.of(new GnarledMass(), new GnarledMass()));
