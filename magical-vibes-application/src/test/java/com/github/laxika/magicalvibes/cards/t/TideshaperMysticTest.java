@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.b.BloodMoon;
+import com.github.laxika.magicalvibes.cards.v.VividCreek;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -13,13 +15,15 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TideshaperMystic.class, Forest.class, TurtleshellChangeling.class})
+@CardUsed({TideshaperMystic.class, Forest.class, TurtleshellChangeling.class, VividCreek.class, BloodMoon.class})
 class TideshaperMysticTest extends BaseCardTest {
 
     // ===== Activated ability =====
@@ -93,10 +97,9 @@ class TideshaperMysticTest extends BaseCardTest {
     @Test
     @DisplayName("Overridden Forest produces blue mana instead of green")
     void overriddenForestProducesBlueMana() {
-        becomeIsland(player1);
+        Permanent forest = becomeIsland(player1);
 
-        int forestIndex = gd.playerBattlefields.get(player1.getId())
-                .indexOf(gqs.findPermanentById(gd, harness.getPermanentId(player1, "Forest")));
+        int forestIndex = gd.playerBattlefields.get(player1.getId()).indexOf(forest);
         harness.tapPermanent(player1, forestIndex);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
@@ -160,19 +163,84 @@ class TideshaperMysticTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a land");
     }
 
-    // ===== Helpers =====
+    @ParameterizedTest
+    @CsvSource({"PLAINS, WHITE", "ISLAND, BLUE", "SWAMP, BLACK", "MOUNTAIN, RED", "FOREST, GREEN"})
+    @DisplayName("Every basic land type choice grants its corresponding mana ability")
+    void everyBasicLandTypeProducesCorrespondingMana(CardSubtype subtype, ManaColor color) {
+        addCreatureReady(player1, new TideshaperMystic());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.forceActivePlayer(player1);
+
+        harness.activateAbility(player1, 0, null, forest.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, subtype.name());
+
+        assertThat(gqs.effectiveLandTypes(gd, forest)).containsExactly(subtype);
+        harness.tapPermanent(player1, 1);
+        for (ManaColor candidate : ManaColor.values()) {
+            assertThat(gd.playerManaPools.get(player1.getId()).get(candidate))
+                    .isEqualTo(candidate == color ? 1 : 0);
+        }
+    }
+
+    @Test
+    @DisplayName("Can activate during your own end step")
+    void canActivateDuringOwnEndStep() {
+        addCreatureReady(player1, new TideshaperMystic());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_STEP);
+
+        harness.activateAbility(player1, 0, null, forest.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "SWAMP");
+
+        assertThat(gqs.effectiveLandTypes(gd, forest)).containsExactly(CardSubtype.SWAMP);
+    }
+
+    @Test
+    @DisplayName("Summoning sickness prevents paying the tap cost")
+    void summoningSicknessPreventsActivation() {
+        harness.addToBattlefield(player1, new TideshaperMystic());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.forceActivePlayer(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, forest.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A later Blood Moon overrides Mystic's earlier change to a nonbasic land")
+    void laterBloodMoonOverridesEarlierTypeChange() {
+        addCreatureReady(player1, new TideshaperMystic());
+        Permanent creek = harness.addToBattlefieldAndReturn(player1, new VividCreek());
+        harness.forceActivePlayer(player1);
+
+        harness.activateAbility(player1, 0, null, creek.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "ISLAND");
+        assertThat(gqs.effectiveLandTypes(gd, creek)).containsExactly(CardSubtype.ISLAND);
+
+        harness.castFromHand(player1, new BloodMoon(), "{2}{R}");
+        harness.passBothPriorities();
+
+        assertThat(gqs.effectiveLandTypes(gd, creek)).containsExactly(CardSubtype.MOUNTAIN);
+        harness.tapPermanent(player1, 1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+    }
 
     /** Adds a Tideshaper Mystic + Forest for {@code player}, then makes the Forest become an Island. */
     private Permanent becomeIsland(com.github.laxika.magicalvibes.model.Player player) {
         addCreatureReady(player, new TideshaperMystic());
-        harness.addToBattlefield(player, new Forest());
+        Permanent forest = harness.addToBattlefieldAndReturn(player, new Forest());
         harness.forceActivePlayer(player);
-        UUID forestId = harness.getPermanentId(player, "Forest");
 
-        harness.activateAbility(player, 0, null, forestId);
+        harness.activateAbility(player, 0, null, forest.getId());
         harness.passBothPriorities();
         harness.handleListChoice(player, "ISLAND");
 
-        return gqs.findPermanentById(gd, forestId);
+        return forest;
     }
 }
