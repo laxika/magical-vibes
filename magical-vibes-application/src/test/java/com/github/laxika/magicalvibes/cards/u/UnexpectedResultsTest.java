@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.u;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GruulCharm;
 import com.github.laxika.magicalvibes.cards.p.Pyroclasm;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -12,12 +13,11 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({UnexpectedResults.class, Forest.class, GrizzlyBears.class, Pyroclasm.class})
+@CardUsed({UnexpectedResults.class, Forest.class, GrizzlyBears.class, Pyroclasm.class, GruulCharm.class})
 class UnexpectedResultsTest extends BaseCardTest {
 
     /**
@@ -25,11 +25,7 @@ class UnexpectedResultsTest extends BaseCardTest {
      * "the top card" deterministic.
      */
     private void stackLibrary(Card only) {
-        List<Card> deck = new ArrayList<>();
-        if (only != null) {
-            deck.add(only);
-        }
-        gd.playerDecks.put(player1.getId(), deck);
+        harness.setLibrary(player1, only == null ? List.of() : List.of(only));
     }
 
     private void castUnexpectedResults() {
@@ -127,5 +123,33 @@ class UnexpectedResultsTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertInGraveyard(player1, "Unexpected Results");
+    }
+
+    @Test
+    @DisplayName("A revealed creature is cast as a spell before entering the battlefield")
+    void creatureIsCastBeforeEnteringBattlefield() {
+        stackLibrary(new GrizzlyBears());
+
+        castUnexpectedResults();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Unexpected Results");
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("A revealed modal spell requires its mode to be chosen while casting")
+    void modalSpellRequiresModeBeforePriority() {
+        stackLibrary(new GruulCharm());
+
+        castUnexpectedResults();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
     }
 }
