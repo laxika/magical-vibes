@@ -1,12 +1,15 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DefiantKhenra;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SunscourgeChampion.class, DefiantKhenra.class, Unsummon.class})
 class SunscourgeChampionTest extends BaseCardTest {
 
     @Test
@@ -23,13 +27,9 @@ class SunscourgeChampionTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player1, List.of(new SunscourgeChampion()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
         int lifeBefore = gd.getLife(player1.getId());
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SunscourgeChampion(), "{2}{W}");
         harness.passBothPriorities(); // resolve the creature spell → ETB trigger on stack
         harness.passBothPriorities(); // resolve the ETB trigger → gain life
 
@@ -44,7 +44,7 @@ class SunscourgeChampionTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.setGraveyard(player1, List.of(new SunscourgeChampion()));
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new DefiantKhenra()));
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
@@ -57,7 +57,7 @@ class SunscourgeChampionTest extends BaseCardTest {
 
         // Discard cost: the hand card went to the graveyard.
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Defiant Khenra");
         // Exile cost: the source card left the graveyard for exile.
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Sunscourge Champion"));
@@ -66,7 +66,7 @@ class SunscourgeChampionTest extends BaseCardTest {
         assertThat(token.getEffectivePower()).isEqualTo(4);
         assertThat(token.getEffectiveToughness()).isEqualTo(4);
         assertThat(token.getCard().getColor()).isEqualTo(CardColor.BLACK);
-        assertThat(token.getCard().getSubtypes()).contains(CardSubtype.ZOMBIE, CardSubtype.WIZARD);
+        assertThat(token.getCard().getSubtypes()).contains(CardSubtype.ZOMBIE, CardSubtype.HUMAN, CardSubtype.WIZARD);
         assertThat(token.getCard().getManaCost()).isEmpty();
 
         // The 4/4 token's ETB gains life equal to its power (4).
@@ -94,7 +94,7 @@ class SunscourgeChampionTest extends BaseCardTest {
     @DisplayName("Eternalize can only be activated at sorcery speed")
     void eternalizeOnlyAtSorcerySpeed() {
         harness.setGraveyard(player1, List.of(new SunscourgeChampion()));
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new DefiantKhenra()));
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
@@ -106,6 +106,76 @@ class SunscourgeChampionTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         harness.assertInGraveyard(player1, "Sunscourge Champion");
+    }
+
+
+    @Test
+    void lifeGainUsesPowerWhenTriggerResolves() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        int lifeBefore = gd.getLife(player1.getId());
+
+        harness.castFromHand(player1, new SunscourgeChampion(), "{2}{W}");
+        harness.passBothPriorities();
+        findPermanent(player1, "Sunscourge Champion").setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, lifeBefore + 5);
+    }
+
+    @Test
+    void lifeGainUsesLastKnownPowerAfterSourceLeaves() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        int lifeBefore = gd.getLife(player1.getId());
+
+        harness.castFromHand(player1, new SunscourgeChampion(), "{2}{W}");
+        harness.passBothPriorities();
+        Permanent champion = findPermanent(player1, "Sunscourge Champion");
+        champion.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, champion.getId());
+        harness.assertNotOnBattlefield(player1, "Sunscourge Champion");
+        harness.assertInHand(player1, "Sunscourge Champion");
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, lifeBefore + 5);
+    }
+
+    @Test
+    void eternalizeCannotBeActivatedOutsideMainPhase() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
+        harness.setGraveyard(player1, List.of(new SunscourgeChampion()));
+        harness.setHand(player1, List.of(new DefiantKhenra()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Sunscourge Champion");
+        harness.assertInHand(player1, "Defiant Khenra");
+    }
+
+    @Test
+    void eternalizeCannotBeActivatedWithNonemptyStack() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setGraveyard(player1, List.of(new SunscourgeChampion()));
+        harness.castFromHand(player1, new DefiantKhenra(), "{1}{R}");
+        harness.setHand(player1, List.of(new DefiantKhenra()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Sunscourge Champion");
+        harness.assertInHand(player1, "Defiant Khenra");
     }
 
     private Permanent eternalizedToken() {
