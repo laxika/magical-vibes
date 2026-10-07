@@ -46,10 +46,8 @@ class SpellstutterSpriteTest extends BaseCardTest {
         // Resolve the ETB trigger → counter Goldmeadow Harrier.
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getId().equals(harrier.getId()));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getId().equals(harrier.getId()));
+        harness.assertInGraveyard(player1, "Goldmeadow Harrier");
+        harness.assertNotOnBattlefield(player1, "Goldmeadow Harrier");
     }
 
     @Test
@@ -70,8 +68,7 @@ class SpellstutterSpriteTest extends BaseCardTest {
         // No valid target → the ETB is skipped, nothing to choose.
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         // Kithkin Greatheart was not countered — it never reached a graveyard.
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getId().equals(greatheart.getId()));
+        harness.assertNotInGraveyard(player1, "Kithkin Greatheart");
     }
 
     @Test
@@ -98,10 +95,8 @@ class SpellstutterSpriteTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, greatheart.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getId().equals(greatheart.getId()));
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getId().equals(greatheart.getId()));
+        harness.assertInGraveyard(player1, "Kithkin Greatheart");
+        harness.assertNotOnBattlefield(player1, "Kithkin Greatheart");
     }
 
     @Test
@@ -125,9 +120,8 @@ class SpellstutterSpriteTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, tarfire.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getId().equals(tarfire.getId()));
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        harness.assertInGraveyard(player1, "Tarfire");
+        harness.assertLife(player1, 20);
     }
 
     @Test
@@ -153,8 +147,79 @@ class SpellstutterSpriteTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getId().equals(command.getId()));
+        harness.assertLife(player2, 19);
+        harness.assertInGraveyard(player1, "Profane Command");
+    }
+
+    @Test
+    @DisplayName("Losing the only Faerie makes the trigger's target illegal")
+    void doesNotCounterAfterOnlyFaerieDies() {
+        GoldmeadowHarrier harrier = new GoldmeadowHarrier();
+        harness.setHand(player1, List.of(harrier, new SpellstutterSprite()));
+        harness.setHand(player2, List.of(new Tarfire()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castCreature(player1, 0);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, harrier.getId());
+
+        harness.castAndResolveInstant(player2, 0,
+                harness.getPermanentId(player1, "Spellstutter Sprite"));
+        harness.assertInGraveyard(player1, "Spellstutter Sprite");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Goldmeadow Harrier");
+        harness.assertNotInGraveyard(player1, "Goldmeadow Harrier");
+    }
+
+    @Test
+    @DisplayName("The trigger still counters after its source dies if another Faerie remains")
+    void countersAfterSourceDiesWithEnoughFaeriesRemaining() {
+        harness.addToBattlefield(player1, new SpellstutterSprite());
+        GoldmeadowHarrier harrier = new GoldmeadowHarrier();
+        SpellstutterSprite sprite = new SpellstutterSprite();
+        harness.setHand(player1, List.of(harrier, sprite));
+        harness.setHand(player2, List.of(new Tarfire()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castCreature(player1, 0);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, harrier.getId());
+        Permanent source = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().getId().equals(sprite.getId()))
+                .findFirst().orElseThrow();
+
+        harness.castAndResolveInstant(player2, 0, source.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Goldmeadow Harrier");
+        harness.assertNotOnBattlefield(player1, "Goldmeadow Harrier");
+        harness.assertInGraveyard(player1, "Spellstutter Sprite");
+        harness.assertOnBattlefield(player1, "Spellstutter Sprite");
+    }
+
+    @Test
+    @DisplayName("An opponent's Faeries do not contribute to the counter's limit")
+    void doesNotCountOpponentsFaeries() {
+        harness.addToBattlefield(player2, new SpellstutterSprite());
+        harness.setHand(player1, List.of(new KithkinGreatheart(), new SpellstutterSprite()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castCreature(player1, 0);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Kithkin Greatheart");
+        harness.assertNotInGraveyard(player1, "Kithkin Greatheart");
     }
 }
