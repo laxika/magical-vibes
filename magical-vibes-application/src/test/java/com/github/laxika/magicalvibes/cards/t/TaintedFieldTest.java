@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -72,6 +74,46 @@ class TaintedFieldTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
         assertThat(field.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A tapped Swamp still enables colored mana")
+    void tappedSwampEnablesColoredMana() {
+        Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
+        swamp.setTapped(true);
+        Permanent field = addReadyField();
+
+        harness.activateAbility(player1, 1, 1, null, null);
+        harness.handleListChoice(player1, "BLACK");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(swamp.isTapped()).isTrue();
+        assertThat(field.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A Swamp in hand does not enable colored mana")
+    void swampInHandDoesNotEnableColoredMana() {
+        harness.setHand(player1, List.of(new Swamp()));
+        Permanent field = addReadyField();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Swamp");
+        assertThat(field.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Tainted Field can tap for mana immediately after entering")
+    void canTapForManaImmediatelyAfterEntering() {
+        Permanent field = harness.addToBattlefieldAndReturn(player1, new TaintedField());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(field.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
     }
 
     private Permanent addReadyField() {
