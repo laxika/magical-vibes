@@ -68,6 +68,45 @@ class StandTogetherTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Still puts counters on the first target when the second target leaves")
+    void stillPutsCountersOnFirstTargetWhenSecondTargetLeaves() {
+        Permanent survivingCreature = harness.addToBattlefieldAndReturn(player1, new DarksteelGargoyle());
+        Permanent removedCreature = harness.addToBattlefieldAndReturn(player2, new DarksteelGargoyle());
+        harness.setHand(player1, List.of(new StandTogether()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castInstant(player1, 0, List.of(survivingCreature.getId(), removedCreature.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(removedCreature);
+        harness.passBothPriorities();
+
+        assertThat(survivingCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(removedCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertInGraveyard(player1, "Stand Together");
+    }
+
+    @Test
+    @DisplayName("Does not resolve when both targets have left the battlefield")
+    void doesNotResolveWhenBothTargetsLeave() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new DarksteelGargoyle());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new DarksteelGargoyle());
+        harness.setHand(player1, List.of(new StandTogether()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castInstant(player1, 0, List.of(first.getId(), second.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(first);
+        gd.playerBattlefields.get(player2.getId()).remove(second);
+        harness.passBothPriorities();
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Stand Together");
+        assertThat(gameLogContains("fizzles (illegal target)")).isTrue();
+    }
+
+    @Test
     @DisplayName("Requires two target creatures")
     void requiresTwoTargetCreatures() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new DarksteelGargoyle());
