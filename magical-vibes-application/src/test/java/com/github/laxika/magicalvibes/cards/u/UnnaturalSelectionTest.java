@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.u;
 
 import com.github.laxika.magicalvibes.cards.a.AngelfireCrusader;
+import com.github.laxika.magicalvibes.cards.a.AmoeboidChangeling;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -14,7 +15,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({UnnaturalSelection.class, AngelfireCrusader.class})
+@CardUsed({UnnaturalSelection.class, AngelfireCrusader.class, AmoeboidChangeling.class})
 class UnnaturalSelectionTest extends BaseCardTest {
 
     @Test
@@ -98,6 +99,38 @@ class UnnaturalSelectionTest extends BaseCardTest {
         assertThatThrownBy(() -> activate(target))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("A later effect removing all creature types overrides the chosen type")
+    void laterTypeLossOverridesChosenType() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AngelfireCrusader());
+        Permanent changeling = addCreatureReady(player1, new AmoeboidChangeling());
+        addSelectionAndMana();
+
+        activate(target);
+        harness.handleListChoice(player1, CardSubtype.GOBLIN.name());
+
+        int changelingIndex = gd.playerBattlefields.get(player1.getId()).indexOf(changeling);
+        harness.activateAbility(player1, changelingIndex, 1, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.effectiveCreatureSubtypes(gd, target)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A subsequent activation replaces the previously chosen creature type")
+    void subsequentActivationReplacesChosenType() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AngelfireCrusader());
+        addSelectionAndMana();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        activate(target);
+        harness.handleListChoice(player1, CardSubtype.GOBLIN.name());
+        activate(target);
+        harness.handleListChoice(player1, CardSubtype.ZOMBIE.name());
+
+        assertThat(gqs.effectiveCreatureSubtypes(gd, target)).containsExactly(CardSubtype.ZOMBIE);
     }
 
     private void addSelectionAndMana() {
