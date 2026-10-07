@@ -86,6 +86,55 @@ class ThreeDreamsTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
     }
 
+    @Test
+    @DisplayName("Can choose zero Auras even when matching cards are available")
+    void choosesZeroAuras() {
+        DreamLeash dreamLeash = new DreamLeash();
+        FlightOfFancy flightOfFancy = new FlightOfFancy();
+        setupLibrary(dreamLeash, flightOfFancy);
+        cast();
+        harness.passBothPriorities();
+
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(handNames()).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(dreamLeash, flightOfFancy);
+        assertThat(gameLogContains("Library is shuffled")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Finishes when only duplicate names remain and leaves those duplicates in the library")
+    void exhaustsDistinctNames() {
+        DreamLeash chosen = new DreamLeash();
+        DreamLeash duplicate = new DreamLeash();
+        BorosRecruit nonAura = new BorosRecruit();
+        setupLibrary(chosen, duplicate, nonAura);
+        cast();
+        harness.passBothPriorities();
+
+        chooseCard("Dream Leash");
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(handNames()).containsExactly("Dream Leash");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(duplicate, nonAura);
+        assertThat(gameLogContains("reveals Dream Leash")).isTrue();
+        assertThat(gameLogContains("Library is shuffled")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Resolves and shuffles an empty library without offering a choice")
+    void emptyLibrary() {
+        setupLibrary();
+        cast();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(handNames()).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gameLogContains("Library is shuffled")).isTrue();
+    }
+
     private void cast() {
         harness.castFromHand(player1, new ThreeDreams(), "{4}{W}");
     }
