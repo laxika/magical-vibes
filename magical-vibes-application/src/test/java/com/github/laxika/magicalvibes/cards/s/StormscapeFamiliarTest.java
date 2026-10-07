@@ -1,17 +1,21 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.m.MarshCrocodile;
 import com.github.laxika.magicalvibes.cards.n.NightscapeFamiliar;
 import com.github.laxika.magicalvibes.cards.t.ThornscapeFamiliar;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({StormscapeFamiliar.class, SunscapeFamiliar.class, NightscapeFamiliar.class,
-        ThornscapeFamiliar.class, SilverDrake.class})
+        ThornscapeFamiliar.class, SilverDrake.class, MarshCrocodile.class})
 class StormscapeFamiliarTest extends BaseCardTest {
 
     @Test
@@ -65,6 +69,45 @@ class StormscapeFamiliarTest extends BaseCardTest {
         harness.addToBattlefield(player1, new StormscapeFamiliar());
 
         assertThatThrownBy(() -> harness.castFromHand(player1, new SunscapeFamiliar(), "{1}"))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Multiple Familiars stack their generic mana reductions")
+    void multipleFamiliarsReduceCostByTwo() {
+        harness.addToBattlefield(player1, new StormscapeFamiliar());
+        harness.addToBattlefield(player1, new StormscapeFamiliar());
+        harness.castFromHand(player1, new MarshCrocodile(), "{U}{B}");
+
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard().getName().equals("Marsh Crocodile"));
+    }
+
+    @Test
+    @DisplayName("Excess reductions do not pay colored mana")
+    void excessReductionsDoNotPayColoredMana() {
+        harness.addToBattlefield(player1, new StormscapeFamiliar());
+        harness.addToBattlefield(player1, new StormscapeFamiliar());
+
+        assertThatThrownBy(() -> harness.castFromHand(player1, new SilverDrake(), "{W}"))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Blue spells are not reduced")
+    void blueSpellsAreNotReduced() {
+        harness.addToBattlefield(player1, new StormscapeFamiliar());
+
+        assertThatThrownBy(() -> harness.castFromHand(player1, new StormscapeFamiliar(), "{U}"))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A Familiar in hand does not reduce spell costs")
+    void familiarInHandDoesNotReduceCosts() {
+        harness.setHand(player1, List.of(new SunscapeFamiliar(), new StormscapeFamiliar()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
     }
 }
