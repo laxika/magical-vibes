@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -59,11 +60,82 @@ class TheFourteenthDoctorTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, entered, Keyword.HASTE)).isTrue();
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(doctor);
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        assertThat(gqs.hasKeyword(gd, entered, Keyword.HASTE)).isTrue();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.hasKeyword(gd, entered, Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    void copyingGrantsHasteImmediatelyWithoutAnEtbTrigger() {
+        Card doctor = new TheFourteenthDoctor();
+        harness.setLibrary(player1, List.of(doctor, new GrizzlyBears()));
+        castDoctor();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMultipleCardsChosen(player1, List.of(doctor.getId()));
+
+        Permanent entered = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(gqs.hasKeyword(gd, entered, Keyword.HASTE)).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void mayDeclineCopyAndEnterWithoutHaste() {
+        Card doctor = new TheFourteenthDoctor();
+        harness.setLibrary(player1, List.of(doctor, new GrizzlyBears()));
+        castDoctor();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        Permanent entered = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(gqs.hasKeyword(gd, entered, Keyword.HASTE)).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(doctor);
+    }
+
+    @Test
+    void cannotCopyDoctorAlreadyInGraveyardOrInOpponentsGraveyard() {
+        Card ownDoctor = new TheFourteenthDoctor();
+        Card opposingDoctor = new TheFourteenthDoctor();
+        harness.setGraveyard(player1, List.of(ownDoctor));
+        harness.setGraveyard(player2, List.of(opposingDoctor));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        castDoctor();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gqs.hasKeyword(gd, gd.playerBattlefields.get(player1.getId()).getFirst(), Keyword.HASTE))
+                .isFalse();
+    }
+
+    @Test
+    void onlyRevealsFourteenCardsAndPutsOthersBelowUnrevealedCards() {
+        Card revealedDoctor = new TheFourteenthDoctor();
+        List<Card> revealedBears = new ArrayList<>();
+        for (int i = 0; i < 13; i++) {
+            revealedBears.add(new GrizzlyBears());
+        }
+        Card unrevealedDoctor = new TheFourteenthDoctor();
+        List<Card> library = new ArrayList<>();
+        library.add(revealedDoctor);
+        library.addAll(revealedBears);
+        library.add(unrevealedDoctor);
+        harness.setLibrary(player1, library);
+        castDoctor();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(revealedDoctor);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(14);
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(unrevealedDoctor);
+        assertThat(gd.playerDecks.get(player1.getId()).subList(1, 14))
+                .containsExactlyInAnyOrderElementsOf(revealedBears);
     }
 
     private void castDoctor() {
