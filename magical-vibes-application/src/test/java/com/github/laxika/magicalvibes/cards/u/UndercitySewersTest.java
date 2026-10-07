@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.u;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -14,13 +13,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({UndercitySewers.class, GrizzlyBears.class})
+@CardUsed({UndercitySewers.class})
 class UndercitySewersTest extends BaseCardTest {
 
     @Test
     @DisplayName("Enters tapped and surveils 1")
     void entersTappedAndSurveilsOne() {
-        Card topCard = new GrizzlyBears();
+        Card topCard = new UndercitySewers();
         harness.setLibrary(player1, List.of(topCard));
         harness.setHand(player1, List.of(new UndercitySewers()));
 
@@ -37,6 +36,78 @@ class UndercitySewersTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Surveil may leave the card on top without changing library order")
+    void mayKeepTopCard() {
+        Card topCard = new UndercitySewers();
+        Card nextCard = new UndercitySewers();
+        harness.setLibrary(player1, List.of(topCard, nextCard));
+        harness.setHand(player1, List.of(new UndercitySewers()));
+
+        harness.playLand(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard, nextCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Surveil puts only the top card into the graveyard")
+    void surveilsOnlyOneCard() {
+        Card topCard = new UndercitySewers();
+        Card nextCard = new UndercitySewers();
+        harness.setLibrary(player1, List.of(topCard, nextCard));
+        harness.setHand(player1, List.of(new UndercitySewers()));
+
+        harness.playLand(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nextCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Entering with an empty library completes surveil without a choice")
+    void emptyLibrary() {
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new UndercitySewers()));
+
+        harness.playLand(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Undercity Sewers").isTapped()).isTrue();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Surveil resolves for its controller after the land leaves the battlefield")
+    void triggerResolvesWithoutSource() {
+        Card topCard = new UndercitySewers();
+        Card opponentTopCard = new UndercitySewers();
+        harness.setLibrary(player1, List.of(topCard));
+        harness.setLibrary(player2, List.of(opponentTopCard));
+        harness.setHand(player1, List.of(new UndercitySewers()));
+
+        harness.playLand(player1, 0);
+        Permanent sewers = findPermanent(player1, "Undercity Sewers");
+        gd.playerBattlefields.get(player1.getId()).remove(sewers);
+        harness.setGraveyard(player1, List.of(sewers.getCard()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(sewers.getCard(), topCard);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentTopCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
     @DisplayName("Taps for blue mana")
     void tapsForBlueMana() {
         tapFor(ManaColor.BLUE);
@@ -49,7 +120,7 @@ class UndercitySewersTest extends BaseCardTest {
     }
 
     private void tapFor(ManaColor color) {
-        Permanent sewers = addReadySewers();
+        Permanent sewers = harness.addToBattlefieldAndReturn(player1, new UndercitySewers());
 
         harness.activateAbility(player1, 0, color == ManaColor.BLUE ? 0 : 1, null, null);
 
@@ -57,10 +128,4 @@ class UndercitySewersTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(color)).isEqualTo(1);
     }
 
-    private Permanent addReadySewers() {
-        Permanent sewers = new Permanent(new UndercitySewers());
-        sewers.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(sewers);
-        return sewers;
-    }
 }
