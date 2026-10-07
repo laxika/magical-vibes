@@ -2,7 +2,10 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.d.DuskLegionDreadnought;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.j.JukaiPreserver;
+import com.github.laxika.magicalvibes.cards.t.TheWanderingEmperor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +19,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SurgehackerMech.class, DuskLegionDreadnought.class, GrizzlyBears.class, SerraAngel.class})
+@CardUsed({SurgehackerMech.class, DuskLegionDreadnought.class, GrizzlyBears.class, SerraAngel.class,
+        JukaiPreserver.class, TheWanderingEmperor.class})
 class SurgehackerMechTest extends BaseCardTest {
 
     @Test
@@ -72,6 +76,63 @@ class SurgehackerMechTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, vehicle)).isTrue();
         assertThat(crew.isTapped()).isTrue();
         assertThat(gqs.hasEffectiveSubtype(gd, vehicle, CardSubtype.VEHICLE)).isTrue();
+    }
+
+    @Test
+    void damagesOpponentPlaneswalkerWithoutCountingOpponentVehicles() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addToBattlefield(player2, new SurgehackerMech());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new TheWanderingEmperor());
+        target.setCounterCount(CounterType.LOYALTY, 3);
+
+        harness.setHand(player1, List.of(new SurgehackerMech()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "The Wandering Emperor");
+    }
+
+    @Test
+    void countsVehiclesAddedAfterTheTriggerWasPutOnTheStack() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new JukaiPreserver());
+
+        harness.setHand(player1, List.of(new SurgehackerMech()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.addToBattlefield(player1, new SurgehackerMech());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Jukai Preserver");
+        harness.assertNotOnBattlefield(player2, "Jukai Preserver");
+    }
+
+    @Test
+    void dealsNoDamageIfItsControllerHasNoVehiclesAtResolution() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new JukaiPreserver());
+
+        harness.setHand(player1, List.of(new SurgehackerMech()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        Permanent source = findPermanent(player1, "Surgehacker Mech");
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        gd.playerGraveyards.get(player1.getId()).add(source.getCard());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Jukai Preserver");
     }
 
     private Permanent addVehicle(Player player) {
