@@ -54,10 +54,74 @@ class ThroneOfTheHighCityTest extends BaseCardTest {
         assertThat(gd.monarchPlayerId).isNull();
     }
 
+    @Test
+    void sacrificeAndManaArePaidBeforeMonarchAbilityResolves() {
+        Permanent throne = addReadyThrone(player1);
+        gd.monarchPlayerId = player2.getId();
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(throne.isTapped()).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Throne of the High City");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(gd.monarchPlayerId).isEqualTo(player2.getId());
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.monarchPlayerId).isEqualTo(player1.getId());
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void canBecomeFirstMonarchOnOpponentsTurn() {
+        addReadyThrone(player1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.monarchPlayerId).isEqualTo(player1.getId());
+        harness.assertInGraveyard(player1, "Throne of the High City");
+    }
+
+    @Test
+    void tappedThroneCannotActivateEitherAbility() {
+        Permanent throne = addReadyThrone(player1);
+        throne.tap();
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(4);
+        harness.assertOnBattlefield(player1, "Throne of the High City");
+        harness.assertNotInGraveyard(player1, "Throne of the High City");
+        assertThat(gd.monarchPlayerId).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void newlyEnteredNoncreatureLandCanActivateMonarchAbility() {
+        Permanent throne = addReadyThrone(player1);
+        throne.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.monarchPlayerId).isEqualTo(player1.getId());
+        harness.assertInGraveyard(player1, "Throne of the High City");
+    }
+
     private Permanent addReadyThrone(Player player) {
-        Permanent permanent = new Permanent(new ThroneOfTheHighCity());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
+        Permanent permanent = addCreatureReady(player, new ThroneOfTheHighCity());
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
