@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.h.HostileDesert;
+import com.github.laxika.magicalvibes.cards.g.GlacialChasm;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TownRazerTyrant.class, HostileDesert.class, Island.class})
+@CardUsed({TownRazerTyrant.class, HostileDesert.class, Island.class, GlacialChasm.class})
 class TownRazerTyrantTest extends BaseCardTest {
 
     @Test
@@ -25,11 +26,13 @@ class TownRazerTyrantTest extends BaseCardTest {
         castTyrant(target);
 
         assertThat(gqs.computeStaticBonus(gd, target).losesAllNonManaAbilities()).isTrue();
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.setGraveyard(player2, List.of(new Island()));
         assertThatThrownBy(() -> harness.activateAbility(player2, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
 
         harness.tapPermanent(player2, 0);
-        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isEqualTo(3);
     }
 
     @Test
@@ -78,6 +81,67 @@ class TownRazerTyrantTest extends BaseCardTest {
         addTyrantMana();
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0, opposingBasic.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Removed printed upkeep abilities do not trigger")
+    void removesPrintedUpkeepAbility() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GlacialChasm());
+        castTyrant(target);
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+        harness.assertLife(player2, 18);
+        harness.assertOnBattlefield(player2, "Glacial Chasm");
+    }
+
+    @Test
+    @DisplayName("The granted ability does not trigger during the Tyrant controller's upkeep")
+    void doesNotTriggerOnOtherPlayersUpkeep() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HostileDesert());
+        castTyrant(target);
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Applying the effect twice replaces the old non-mana trigger")
+    void secondTyrantLeavesOnlyOneUpkeepTrigger() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HostileDesert());
+        castTyrant(target);
+        castTyrant(target);
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("The land remains affected after the Tyrant leaves the battlefield")
+    void effectPersistsAfterTyrantLeaves() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HostileDesert());
+        castTyrant(target);
+        gd.playerBattlefields.get(player1.getId()).clear();
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+
+        harness.assertLife(player2, 18);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.setGraveyard(player2, List.of(new Island()));
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
 
