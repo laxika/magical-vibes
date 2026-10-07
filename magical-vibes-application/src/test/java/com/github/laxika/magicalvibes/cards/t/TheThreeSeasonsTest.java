@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.i.IcehideTroll;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.s.SnowCoveredForest;
 import com.github.laxika.magicalvibes.cards.s.SnowCoveredIsland;
@@ -21,7 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({TheThreeSeasons.class, Forest.class, Shock.class,
-        SnowCoveredForest.class, SnowCoveredIsland.class})
+        SnowCoveredForest.class, SnowCoveredIsland.class, IcehideTroll.class})
 class TheThreeSeasonsTest extends BaseCardTest {
 
     @Test
@@ -118,6 +119,96 @@ class TheThreeSeasonsTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
     }
 
+    @Test
+    @DisplayName("Chapter I mills all remaining cards when the library has fewer than three")
+    void chapterIMillsAShortLibrary() {
+        Card first = new Forest();
+        Card second = new SnowCoveredIsland();
+        harness.setLibrary(player1, List.of(first, second));
+        addSaga(0);
+
+        triggerChapter();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(first, second);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Chapter II may choose no cards even when snow permanents are available")
+    void chapterIIMayChooseZeroCards() {
+        Card snowForest = new SnowCoveredForest();
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of(snowForest));
+        addSaga(1);
+
+        triggerChapter();
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(snowForest);
+    }
+
+    @Test
+    @DisplayName("Chapter II can return one snow creature and cannot choose an opponent's snow card")
+    void chapterIIReturnsOneSnowCreature() {
+        Card troll = new IcehideTroll();
+        Card snowForest = new SnowCoveredForest();
+        Card opponentSnow = new SnowCoveredIsland();
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of(troll, snowForest));
+        harness.setGraveyard(player2, List.of(opponentSnow));
+        addSaga(1);
+
+        triggerChapter();
+        harness.passBothPriorities();
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.validCardIds()).containsExactly(troll.getId(), snowForest.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(troll.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(troll);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(snowForest);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentSnow);
+    }
+
+    @Test
+    @DisplayName("Chapter II still returns its remaining target when the other leaves the graveyard")
+    void chapterIIReturnsRemainingLegalTarget() {
+        Card snowForest = new SnowCoveredForest();
+        Card snowIsland = new SnowCoveredIsland();
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of(snowForest, snowIsland));
+        addSaga(1);
+
+        triggerChapter();
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(snowForest.getId(), snowIsland.getId()));
+        harness.setGraveyard(player1, List.of(snowIsland));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(snowIsland);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Chapter III resolves with empty graveyards and then sacrifices the Saga")
+    void chapterIIIResolvesWithEmptyGraveyards() {
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of());
+        Permanent saga = addSaga(2);
+
+        triggerChapter();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(saga.getCard());
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(saga);
+    }
     private Permanent addSaga(int loreCounters) {
         Permanent saga = harness.addToBattlefieldAndReturn(player1, new TheThreeSeasons());
         saga.setCounterCount(CounterType.LORE, loreCounters);
