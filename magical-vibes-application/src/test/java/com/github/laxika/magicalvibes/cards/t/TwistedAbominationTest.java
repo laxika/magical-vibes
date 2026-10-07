@@ -92,4 +92,45 @@ class TwistedAbominationTest extends BaseCardTest {
         harness.assertNotInHand(player1, "Twisted Abomination");
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nonSwamp);
     }
+
+    @Test
+    @DisplayName("Swampcycling discards its source before the search resolves")
+    void swampcyclingDiscardsAsActivationCost() {
+        TwistedAbomination abomination = new TwistedAbomination();
+        Swamp swamp = new Swamp();
+        harness.setHand(player1, List.of(abomination));
+        harness.setLibrary(player1, List.of(swamp));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertInGraveyard(player1, "Twisted Abomination");
+        harness.assertNotInHand(player1, "Twisted Abomination");
+        harness.assertNotInHand(player1, "Swamp");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(swamp);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInHand(player1, "Swamp");
+    }
+
+    @Test
+    @DisplayName("Swampcycling may decline to find an available Swamp")
+    void swampcyclingMayDeclineAvailableSwamp() {
+        Swamp swamp = new Swamp();
+        harness.setHand(player1, List.of(new TwistedAbomination()));
+        harness.setLibrary(player1, List.of(swamp));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Twisted Abomination");
+        harness.assertNotInHand(player1, "Swamp");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(swamp);
+    }
 }
