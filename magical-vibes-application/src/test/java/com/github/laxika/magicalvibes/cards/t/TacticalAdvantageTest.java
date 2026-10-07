@@ -80,6 +80,66 @@ class TacticalAdvantageTest extends BaseCardTest {
                 .hasMessageContaining("you control");
     }
 
+    @Test
+    @DisplayName("Cannot target an attacking creature that was not blocked")
+    void cannotTargetUnblockedAttacker() {
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        attacker.setAttacking(true);
+        setupSpell();
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("blocking or blocked");
+    }
+
+    @Test
+    @DisplayName("A blocked attacker remains eligible after its last blocker dies")
+    void boostsBlockedAttackerAfterLastBlockerDies() {
+        Permanent attacker = addBlockedCreature();
+        Permanent blocker = gd.playerBattlefields.get(player2.getId()).getFirst();
+        blocker.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+
+        castAt(attacker.getId());
+
+        assertThat(attacker.getPowerModifier()).isEqualTo(2);
+        assertThat(attacker.getToughnessModifier()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The boost still resolves when the last blocker dies in response")
+    void resolvesAfterLastBlockerDies() {
+        Permanent attacker = addBlockedCreature();
+        Permanent blocker = gd.playerBattlefields.get(player2.getId()).getFirst();
+        setupSpell();
+        harness.castInstant(player1, 0, attacker.getId());
+
+        blocker.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+
+        assertThat(attacker.getPowerModifier()).isEqualTo(2);
+        assertThat(attacker.getToughnessModifier()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Does not boost a target that stops blocking before resolution")
+    void doesNotBoostTargetRemovedFromCombat() {
+        Permanent blocker = addBlockingCreature(player1);
+        setupSpell();
+        harness.castInstant(player1, 0, blocker.getId());
+
+        blocker.setBlocking(false);
+        blocker.getBlockingTargetIds().clear();
+        harness.passBothPriorities();
+
+        assertThat(blocker.getPowerModifier()).isZero();
+        assertThat(blocker.getToughnessModifier()).isZero();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Tactical Advantage");
+    }
+
     private Permanent addBlockingCreature(Player player) {
         Permanent blocker = harness.addToBattlefieldAndReturn(player, new GrizzlyBears());
         blocker.setBlocking(true);
@@ -98,8 +158,7 @@ class TacticalAdvantageTest extends BaseCardTest {
 
     private void castAt(UUID targetId) {
         setupSpell();
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
     }
 
     private void setupSpell() {
