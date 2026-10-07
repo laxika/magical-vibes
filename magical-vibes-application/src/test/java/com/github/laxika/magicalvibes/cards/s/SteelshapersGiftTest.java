@@ -92,6 +92,49 @@ class SteelshapersGiftTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(entry -> entry.contains("finds no"));
     }
 
+    @Test
+    @DisplayName("An empty library still completes the search and shuffle")
+    void emptyLibraryCompletesResolution() {
+        setupAndCast();
+        harness.setLibrary(player1, List.of());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Steelshaper's Gift");
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .anyMatch(entry -> entry.contains("Library is shuffled."));
+    }
+
+    @Test
+    @DisplayName("Only the selected Equipment is revealed and moved to the controller's hand")
+    void choosesExactlyOneEquipmentFromMultipleMatches() {
+        setupAndCast();
+        GraftedWargear firstEquipment = new GraftedWargear();
+        GraftedWargear chosenEquipment = new GraftedWargear();
+        ChimericCoils nonEquipment = new ChimericCoils();
+        GraftedWargear opponentsEquipment = new GraftedWargear();
+        harness.setLibrary(player1, List.of(nonEquipment, firstEquipment, chosenEquipment));
+        harness.setLibrary(player2, List.of(opponentsEquipment));
+        int opponentHandBefore = gd.playerHands.get(player2.getId()).size();
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(chosenEquipment);
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .containsExactlyInAnyOrder(nonEquipment, firstEquipment);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(opponentHandBefore);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentsEquipment);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Steelshaper's Gift");
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .anyMatch(entry -> entry.contains("reveals Grafted Wargear")
+                        && entry.contains("puts it into their hand"));
+    }
+
     private void setupAndCast() {
         harness.castFromHand(player1, new SteelshapersGift(), "{W}");
     }
