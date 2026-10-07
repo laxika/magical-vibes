@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -57,7 +56,7 @@ class TheEarthKingTest extends BaseCardTest {
         assertThat(search.params().remainingCount()).isEqualTo(1);
         assertThat(search.params().destination()).isEqualTo(LibrarySearchDestination.BATTLEFIELD_TAPPED);
 
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(p -> p.getCard().hasType(CardType.LAND) && p.isTapped())
@@ -90,5 +89,63 @@ class TheEarthKingTest extends BaseCardTest {
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(lowPowerAttacker)));
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Two qualifying attackers allow two lands, but a nonattacking creature does not count")
+    void searchesForMultipleQualifyingAttackers() {
+        addCreatureReady(player1, new TheEarthKing());
+        Permanent first = addCreatureReady(player1, new SerraAngel());
+        Permanent second = addCreatureReady(player1, new SerraAngel());
+        addCreatureReady(player1, new SerraAngel());
+        Permanent small = addCreatureReady(player1, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new Forest(), new Plains(), new Forest(), new GrizzlyBears()));
+
+        declareAttackers(List.of(
+                gd.playerBattlefields.get(player1.getId()).indexOf(first),
+                gd.playerBattlefields.get(player1.getId()).indexOf(second),
+                gd.playerBattlefields.get(player1.getId()).indexOf(small)));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
+                .params().remainingCount()).isEqualTo(2);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(p -> p.getCard().hasType(CardType.LAND))
+                .hasSize(2).allMatch(Permanent::isTapped);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The controller can find zero lands even when a basic land is available")
+    void canFindZeroLands() {
+        addCreatureReady(player1, new TheEarthKing());
+        Permanent attacker = addCreatureReady(player1, new SerraAngel());
+        harness.setLibrary(player1, List.of(new Forest(), new GrizzlyBears()));
+
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(p -> p.getCard().hasType(CardType.LAND));
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An opponent's qualifying attackers do not trigger the ability")
+    void doesNotTriggerForOpponentAttackers() {
+        addCreatureReady(player1, new TheEarthKing());
+        Permanent attacker = addCreatureReady(player2, new SerraAngel());
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        declareAttackers(player2, List.of(gd.playerBattlefields.get(player2.getId()).indexOf(attacker)));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }
