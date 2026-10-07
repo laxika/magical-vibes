@@ -72,6 +72,21 @@ class UktabiDrakeTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Uktabi Drake");
     }
 
+    @Test
+    @DisplayName("Echo does not create an enters-the-battlefield trigger")
+    void enteringDoesNotCreateAnEchoRegistrationTrigger() {
+        harness.castFromHand(player1, new UktabiDrake(), "{G}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Uktabi Drake");
+        assertThat(gd.stack).isEmpty();
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.assertInGraveyard(player1, "Uktabi Drake");
+    }
     private void castAndResolveUktabiDrake() {
         harness.castFromHand(player1, new UktabiDrake(), "{G}");
         resolveAllTriggers();
