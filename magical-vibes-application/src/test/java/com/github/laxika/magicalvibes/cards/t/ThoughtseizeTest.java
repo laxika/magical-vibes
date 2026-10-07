@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Thoughtseize.class, Forest.class, GrizzlyBears.class, Peek.class})
 class ThoughtseizeTest extends BaseCardTest {
 
     @Test
@@ -50,8 +52,7 @@ class ThoughtseizeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Thoughtseize()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         // Reveal + choose interaction pauses resolution
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.RevealedHandChoice.class);
@@ -74,8 +75,7 @@ class ThoughtseizeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Thoughtseize()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class).validIndices())
                 .containsExactly(0);
@@ -88,8 +88,7 @@ class ThoughtseizeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Thoughtseize()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         // No interaction — resolution runs through the life loss
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -104,11 +103,72 @@ class ThoughtseizeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Thoughtseize()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Can target yourself and discard a nonland card from your own hand")
+    void canTargetYourself() {
+        harness.setHand(player1, List.of(new Thoughtseize(), new Thoughtseize(), new Forest()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card.getName().equals("Thoughtseize")).hasSize(2);
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Caster must choose a nonland card and the target cannot make the choice")
+    void choiceIsMandatoryAndBelongsToCaster() {
+        harness.setHand(player1, List.of(new Thoughtseize()));
+        harness.setHand(player2, List.of(new Forest(), new Thoughtseize()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThatThrownBy(() -> harness.handleCardChosen(player2, 1))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, -1))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+
+        harness.handleCardChosen(player1, 1);
+
+        harness.assertInGraveyard(player2, "Thoughtseize");
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Can choose an instant and only the caster loses life")
+    void canChooseInstant() {
+        harness.setHand(player1, List.of(new Thoughtseize()));
+        harness.setHand(player2, List.of(new GrizzlyBears(), new Peek()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleCardChosen(player1, 1);
+
+        harness.assertInGraveyard(player2, "Peek");
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Thoughtseize");
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }
