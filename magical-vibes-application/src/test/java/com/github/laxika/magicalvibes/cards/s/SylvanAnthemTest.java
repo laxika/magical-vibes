@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -50,11 +51,7 @@ class SylvanAnthemTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(topCard));
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.GREEN, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -72,14 +69,92 @@ class SylvanAnthemTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Forest()));
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.setHand(player1, List.of(new HillGiant()));
-        harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.RED, 4);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new HillGiant(), "{3}{R}");
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Does not trigger for an opponent's green creature")
+    void doesNotScryForOpponentsGreenCreature() {
+        harness.addToBattlefield(player1, new SylvanAnthem());
+        Forest topCard = new Forest();
+        harness.setLibrary(player1, List.of(topCard));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castFromHand(player2, new GrizzlyBears(), "{1}{G}");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+    }
+
+    @Test
+    @DisplayName("Multiple Anthems stack their boosts and scry separately")
+    void multipleAnthemsBoostAndScrySeparately() {
+        harness.addToBattlefield(player1, new SylvanAnthem());
+        harness.addToBattlefield(player1, new SylvanAnthem());
+        Forest first = new Forest();
+        Forest second = new Forest();
+        harness.setLibrary(player1, List.of(first, second));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+        harness.passBothPriorities();
+
+        Permanent bears = gd.playerBattlefields.get(player1.getId()).get(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
+        assertThat(gd.stack).hasSize(2);
+
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
+                .containsExactly(first);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
+                .containsExactly(second);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second, first);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @CardUsed({Opalescence.class})
+    @DisplayName("An animated Anthem boosts itself")
+    void animatedAnthemBoostsItself() {
+        harness.addToBattlefield(player1, new Opalescence());
+        Permanent anthem = harness.addToBattlefieldAndReturn(player1, new SylvanAnthem());
+
+        assertThat(gqs.isCreature(gd, anthem)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, anthem)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, anthem)).isEqualTo(3);
+    }
+
+    @Test
+    @CardUsed({Opalescence.class})
+    @DisplayName("An Anthem entering as a creature triggers its own scry ability")
+    void animatedAnthemScriesForItsOwnEntry() {
+        harness.addToBattlefield(player1, new Opalescence());
+        Forest topCard = new Forest();
+        harness.setLibrary(player1, List.of(topCard));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castFromHand(player1, new SylvanAnthem(), "{G}{G}");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        PendingInteraction.Scry scry = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
+        assertThat(scry).isNotNull();
+        assertThat(scry.cards()).containsExactly(topCard);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
     }
 }
