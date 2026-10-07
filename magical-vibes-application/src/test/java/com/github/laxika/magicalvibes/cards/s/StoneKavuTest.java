@@ -94,6 +94,37 @@ class StoneKavuTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Summoning-sick Kavu can activate both abilities and boosts only itself on resolution")
+    void summoningSickKavuBoostsOnlyItselfOnResolution() {
+        Permanent kavu = harness.addToBattlefieldAndReturn(player1, new StoneKavu());
+        Permanent otherKavu = harness.addToBattlefieldAndReturn(player1, new StoneKavu());
+        Permanent opposingKavu = harness.addToBattlefieldAndReturn(player2, new StoneKavu());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(kavu.getPowerModifier()).isZero();
+        assertThat(kavu.getToughnessModifier()).isZero();
+
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(kavu.getPowerModifier()).isEqualTo(1);
+        assertThat(kavu.getToughnessModifier()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(kavu.getPowerModifier()).isEqualTo(1);
+        assertThat(kavu.getToughnessModifier()).isEqualTo(1);
+        assertThat(kavu.isTapped()).isFalse();
+        assertThat(otherKavu.getPowerModifier()).isZero();
+        assertThat(otherKavu.getToughnessModifier()).isZero();
+        assertThat(opposingKavu.getPowerModifier()).isZero();
+        assertThat(opposingKavu.getToughnessModifier()).isZero();
+    }
+
+    @Test
     @DisplayName("Boosts wear off at end of turn")
     void boostsWearOffAtEndOfTurn() {
         Permanent kavu = addCreatureReady(player1, new StoneKavu());
