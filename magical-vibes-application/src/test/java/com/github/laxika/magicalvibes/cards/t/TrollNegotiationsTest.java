@@ -31,8 +31,7 @@ class TrollNegotiationsTest extends BaseCardTest {
 
         UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
         UUID giantId = harness.getPermanentId(player2, "Hill Giant");
-        harness.castSorcery(player1, 0, List.of(bearId, giantId));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(bearId, giantId));
 
         harness.assertInGraveyard(player2, "Hill Giant");
         Permanent bear = gd.playerBattlefields.get(player1.getId()).getFirst();
@@ -92,5 +91,65 @@ class TrollNegotiationsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Llanowar Elves");
+    }
+
+    @Test
+    @DisplayName("Still puts counters on the first target when the second target leaves")
+    void countersRemainWhenSecondTargetRemoved() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new HillGiant());
+        harness.setHand(player1, List.of(new TrollNegotiations()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID giantId = harness.getPermanentId(player2, "Hill Giant");
+        harness.castSorcery(player1, 0, List.of(bearId, giantId));
+        gd.playerBattlefields.get(player2.getId()).clear();
+        harness.passBothPriorities();
+
+        Permanent bear = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(bear.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player1, "Troll Negotiations");
+    }
+
+    @Test
+    @DisplayName("Both creatures deal fight damage even when both die")
+    void bothCreaturesDieFromFight() {
+        harness.addToBattlefield(player1, new LlanowarElves());
+        harness.addToBattlefield(player2, new HillGiant());
+        harness.setHand(player1, List.of(new TrollNegotiations()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        UUID elvesId = harness.getPermanentId(player1, "Llanowar Elves");
+        UUID giantId = harness.getPermanentId(player2, "Hill Giant");
+        harness.castAndResolveSorcery(player1, 0, List.of(elvesId, giantId));
+
+        harness.assertInGraveyard(player1, "Llanowar Elves");
+        harness.assertInGraveyard(player2, "Hill Giant");
+        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
+        harness.assertNotOnBattlefield(player2, "Hill Giant");
+    }
+
+    @Test
+    @DisplayName("A second target that changes to your control does not fight")
+    void noFightWhenSecondTargetChangesController() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new HillGiant());
+        harness.setHand(player1, List.of(new TrollNegotiations()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID giantId = harness.getPermanentId(player2, "Hill Giant");
+        harness.castSorcery(player1, 0, List.of(bearId, giantId));
+        Permanent giant = gd.playerBattlefields.get(player2.getId()).removeFirst();
+        gd.playerBattlefields.get(player1.getId()).add(giant);
+        harness.passBothPriorities();
+
+        Permanent bear = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(bear.getMarkedDamage()).isZero();
+        assertThat(giant.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player1, "Hill Giant");
     }
 }
