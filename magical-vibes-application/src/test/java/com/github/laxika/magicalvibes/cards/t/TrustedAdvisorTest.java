@@ -153,6 +153,67 @@ class TrustedAdvisorTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
     }
 
+    @Test
+    @DisplayName("Trusted Advisor returns itself when it is the only blue creature")
+    void upkeepReturnsTrustedAdvisorItself() {
+        Permanent advisor = addCreatureReady(player1, new TrustedAdvisor());
+        harness.setHand(player1, List.of());
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).containsExactly(advisor.getId());
+
+        harness.handlePermanentChosen(player1, advisor.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Trusted Advisor");
+        harness.assertInHand(player1, "Trusted Advisor");
+    }
+
+    @Test
+    @DisplayName("Upkeep trigger still returns a blue creature after Trusted Advisor leaves")
+    void upkeepTriggerResolvesAfterSourceLeaves() {
+        Permanent advisor = addCreatureReady(player1, new TrustedAdvisor());
+        Permanent creature = addCreatureReady(player1, new Secretkeeper());
+
+        advanceToUpkeep(player1);
+        gd.playerBattlefields.get(player1.getId()).remove(advisor);
+        resolveAllTriggers();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).containsExactly(creature.getId());
+
+        harness.handlePermanentChosen(player1, creature.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Secretkeeper");
+        harness.assertInHand(player1, "Secretkeeper");
+    }
+
+    @Test
+    @DisplayName("Multiple Trusted Advisors each increase maximum hand size")
+    void maximumHandSizeIncreasesForEachAdvisor() {
+        harness.addToBattlefield(player1, new TrustedAdvisor());
+        harness.addToBattlefield(player1, new TrustedAdvisor());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.setHand(player1, handOfSize(12));
+
+        gs.advanceStep(gd);
+
+        PendingInteraction.DiscardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.remainingCount()).isEqualTo(1);
+    }
+
     private List<Card> handOfSize(int size) {
         List<Card> hand = new ArrayList<>();
         for (int i = 0; i < size; i++) {
