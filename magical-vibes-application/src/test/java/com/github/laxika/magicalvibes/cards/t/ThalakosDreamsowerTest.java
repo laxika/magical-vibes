@@ -1,9 +1,12 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.c.Capsize;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.f.FireWhip;
 import com.github.laxika.magicalvibes.cards.h.HornedTurtle;
 import com.github.laxika.magicalvibes.cards.s.SoltariFootSoldier;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -16,7 +19,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ThalakosDreamsower.class, HornedTurtle.class, Forest.class, SoltariFootSoldier.class})
+@CardUsed({ThalakosDreamsower.class, HornedTurtle.class, Forest.class, SoltariFootSoldier.class,
+        FireWhip.class, Capsize.class})
 class ThalakosDreamsowerTest extends BaseCardTest {
 
     /** Run the next player's untap step and stop at upkeep. */
@@ -101,6 +105,87 @@ class ThalakosDreamsowerTest extends BaseCardTest {
         advanceToNextTurnWithMayChoice(player2, false);
 
         assertThat(dreamsower.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Noncombat damage to an opponent taps and locks the chosen creature")
+    void noncombatDamageAlsoTapsAndLocksCreature() {
+        Permanent dreamsower = addCreatureReady(player1, new ThalakosDreamsower());
+        Permanent enemyCreature = addCreatureReady(player2, new HornedTurtle());
+        Permanent whip = harness.addToBattlefieldAndReturn(player1, new FireWhip());
+        whip.setAttachedTo(dreamsower.getId());
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, enemyCreature.getId());
+        harness.passBothPriorities();
+
+        assertThat(enemyCreature.isTapped()).isTrue();
+        advanceToNextTurn(player1);
+        assertThat(enemyCreature.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Targeting itself prevents Dreamsower from untapping during its untap step")
+    void selfTargetPreventsOptionalUntap() {
+        Permanent dreamsower = addCreatureReady(player1, new ThalakosDreamsower());
+        dreamsower.tap();
+        dreamsower.setAttacking(true);
+
+        resolveCombat();
+        harness.handlePermanentChosen(player1, dreamsower.getId());
+        harness.passBothPriorities();
+
+        advanceToUpkeep(player1);
+
+        assertThat(dreamsower.isTapped()).isTrue();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An already tapped target stays locked when Dreamsower's controller declines to untap")
+    void alreadyTappedTargetRemainsLockedAfterDecliningUntap() {
+        Permanent dreamsower = addCreatureReady(player1, new ThalakosDreamsower());
+        dreamsower.tap();
+        dreamsower.setAttacking(true);
+        Permanent enemyCreature = addCreatureReady(player2, new HornedTurtle());
+        enemyCreature.tap();
+
+        resolveCombat();
+        harness.handlePermanentChosen(player1, enemyCreature.getId());
+        harness.passBothPriorities();
+
+        advanceToNextTurn(player1);
+        assertThat(enemyCreature.isTapped()).isTrue();
+        advanceToNextTurnWithMayChoice(player2, false);
+        assertThat(dreamsower.isTapped()).isTrue();
+        advanceToNextTurn(player1);
+        assertThat(enemyCreature.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Removing Dreamsower before its trigger resolves still taps the target but creates no lock")
+    void sourceLeavesBeforeResolution() {
+        Permanent dreamsower = addCreatureReady(player1, new ThalakosDreamsower());
+        dreamsower.tap();
+        dreamsower.setAttacking(true);
+        Permanent enemyCreature = addCreatureReady(player2, new HornedTurtle());
+
+        resolveCombat();
+        harness.handlePermanentChosen(player1, enemyCreature.getId());
+        harness.setHand(player1, List.of(new Capsize()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, dreamsower.getId());
+        harness.passBothPriorities();
+        harness.assertInHand(player1, "Thalakos Dreamsower");
+        harness.passBothPriorities();
+
+        assertThat(enemyCreature.isTapped()).isTrue();
+        advanceToNextTurn(player1);
+        assertThat(enemyCreature.isTapped()).isFalse();
     }
 
     @Test
