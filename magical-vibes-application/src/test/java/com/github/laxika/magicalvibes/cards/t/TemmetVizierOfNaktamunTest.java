@@ -10,13 +10,16 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TemmetVizierOfNaktamun.class})
 class TemmetVizierOfNaktamunTest extends BaseCardTest {
 
     private Card creatureToken(String name, boolean token) {
@@ -32,8 +35,7 @@ class TemmetVizierOfNaktamunTest extends BaseCardTest {
     private void advanceToCombat(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to BEGINNING_OF_COMBAT, triggers fire
+        harness.passUntil(activePlayer, TurnStep.BEGINNING_OF_COMBAT);
     }
 
     // ===== Beginning-of-combat trigger =====
@@ -84,7 +86,7 @@ class TemmetVizierOfNaktamunTest extends BaseCardTest {
 
         advanceToCombat(player1);
 
-        // No creature token to target — the trigger is skipped, nothing awaits input.
+        // No creature token to target Ă˘â‚¬â€ť the trigger is skipped, nothing awaits input.
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
         assertThat(nontoken.getPowerModifier()).isEqualTo(0);
@@ -126,5 +128,56 @@ class TemmetVizierOfNaktamunTest extends BaseCardTest {
 
         assertThat(token.getCard().getColors()).containsExactly(CardColor.WHITE);
         assertThat(token.getCard().getSubtypes()).contains(CardSubtype.ZOMBIE);
+    }
+
+    @Test
+    void opposingCreatureTokenIsNotValidTarget() {
+        Permanent token = harness.addToBattlefieldAndReturn(player2, creatureToken("Zombie", true));
+        harness.addToBattlefield(player1, new TemmetVizierOfNaktamun());
+
+        advanceToCombat(player1);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(token.getPowerModifier()).isZero();
+        assertThat(token.isCantBeBlocked()).isFalse();
+    }
+
+    @Test
+    void embalmedTemmetCanTargetItself() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setGraveyard(player1, List.of(new TemmetVizierOfNaktamun()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateGraveyardAbility(player1, 0);
+        harness.assertNotInGraveyard(player1, "Temmet, Vizier of Naktamun");
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        harness.passBothPriorities();
+        Permanent token = gd.playerBattlefields.get(player1.getId()).getFirst();
+
+        advanceToCombat(player1);
+        harness.handlePermanentChosen(player1, token.getId());
+        harness.passBothPriorities();
+
+        assertThat(token.getPowerModifier()).isEqualTo(1);
+        assertThat(token.getToughnessModifier()).isEqualTo(1);
+        assertThat(token.isCantBeBlocked()).isTrue();
+    }
+
+    @Test
+    void embalmCannotBeActivatedDuringCombat() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.setGraveyard(player1, List.of(new TemmetVizierOfNaktamun()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Temmet, Vizier of Naktamun");
+        assertThat(gd.stack).isEmpty();
     }
 }
