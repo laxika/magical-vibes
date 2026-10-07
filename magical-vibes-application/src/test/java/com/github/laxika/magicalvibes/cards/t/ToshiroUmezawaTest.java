@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({ToshiroUmezawa.class, CruelEdict.class, GrizzlyBears.class, LavaSpike.class, Shock.class})
 class ToshiroUmezawaTest extends BaseCardTest {
@@ -32,28 +33,22 @@ class ToshiroUmezawaTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Opponent's creature dying lets the targeted instant be cast from the graveyard, and it is exiled instead of returning there")
-    void castsInstantFromGraveyardAndExilesIt() {
+    @DisplayName("The targeted instant must be offered for casting during the trigger's resolution")
+    void offersInstantDuringTriggerResolution() {
         harness.addToBattlefield(player1, new ToshiroUmezawa());
         harness.addToBattlefield(player2, new GrizzlyBears());
         Card shock = new Shock();
         harness.setGraveyard(player1, new ArrayList<>(List.of(shock)));
+        harness.addMana(player1, ManaColor.RED, 1);
 
         killOpponentCreature();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
         harness.handleMultipleCardsChosen(player1, List.of(shock.getId()));
-        harness.passBothPriorities(); // resolve the trigger — permission granted
-
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.castFromGraveyardTargeting(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getId().equals(shock.getId()));
-        assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getId().equals(shock.getId()));
+        assertThat(gd.interaction.activeInteraction()).isNotNull();
+        assertThat(gd.graveyardCardCastPermissionsUntilEndOfTurn).isEmpty();
     }
 
     @Test
@@ -135,8 +130,59 @@ class ToshiroUmezawaTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("The granted permission expires at end of turn")
-    void permissionExpiresAtEndOfTurn() {
+    @DisplayName("An instant not cast during resolution cannot be cast later in the turn")
+    void cannotCastLaterAfterDeclining() {
+        harness.addToBattlefield(player1, new ToshiroUmezawa());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        Card shock = new Shock();
+        harness.setGraveyard(player1, new ArrayList<>(List.of(shock)));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        killOpponentCreature();
+        harness.handleMultipleCardsChosen(player1, List.of(shock.getId()));
+        harness.passBothPriorities();
+
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player1, false);
+        }
+
+        assertThatThrownBy(() -> harness.castFromGraveyardTargeting(player1, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(shock);
+        assertThat(gd.graveyardCardCastPermissionsUntilEndOfTurn).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An unblocked attacker does not get a bushido bonus")
+    void noBushidoWhenUnblocked() {
+        Permanent toshiro = addCreatureReady(player1, new ToshiroUmezawa());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
+        harness.passBothPriorities();
+
+        assertThat(toshiro.getPowerModifier()).isZero();
+        assertThat(toshiro.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Being blocked by two creatures triggers bushido only once")
+    void bushidoOnlyOnceForMultipleBlockers() {
+        Permanent toshiro = addCreatureReady(player1, new ToshiroUmezawa());
+        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+        harness.passBothPriorities();
+
+        assertThat(toshiro.getPowerModifier()).isEqualTo(1);
+        assertThat(toshiro.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A targeted instant that leaves the graveyard before resolution cannot be cast")
+    void targetLeavingGraveyardPreventsCast() {
         harness.addToBattlefield(player1, new ToshiroUmezawa());
         harness.addToBattlefield(player2, new GrizzlyBears());
         Card shock = new Shock();
@@ -144,13 +190,13 @@ class ToshiroUmezawaTest extends BaseCardTest {
 
         killOpponentCreature();
         harness.handleMultipleCardsChosen(player1, List.of(shock.getId()));
+        harness.setGraveyard(player1, new ArrayList<>());
+        harness.setExile(player1, List.of(shock));
         harness.passBothPriorities();
 
-        assertThat(gd.graveyardCardCastPermissionsUntilEndOfTurn).containsKey(shock.getId());
-
-        harness.forceStep(TurnStep.END_STEP);
-        gs.advanceStep(gd);
-
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
         assertThat(gd.graveyardCardCastPermissionsUntilEndOfTurn).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(shock);
     }
 }
