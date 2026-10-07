@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({StressDream.class, AvatarOfMight.class, GrizzlyBears.class, LlanowarElves.class})
 class StressDreamTest extends BaseCardTest {
 
     private void addMana(com.github.laxika.magicalvibes.model.Player p) {
@@ -24,20 +26,17 @@ class StressDreamTest extends BaseCardTest {
         harness.addMana(p, ManaColor.GREEN, 3); // 3 generic
     }
 
-    // ===== Damage + card selection =====
-
     @Test
     @DisplayName("Deals 5 to target creature; chosen card to hand, other to bottom")
     void damagesCreatureAndSelectsCard() {
         Permanent avatar = harness.addToBattlefieldAndReturn(player2, new AvatarOfMight());
-        UUID targetId = harness.getPermanentId(player2, "Avatar of Might");
+        UUID targetId = avatar.getId();
         harness.setHand(player1, List.of(new StressDream()));
         addMana(player1);
 
         Card top1 = new GrizzlyBears();
         Card top2 = new LlanowarElves();
-        gd.playerDecks.get(player1.getId()).add(0, top2);
-        gd.playerDecks.get(player1.getId()).add(0, top1); // top1 is now the very top
+        harness.setLibrary(player1, List.of(top1, top2, new GrizzlyBears()));
 
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
@@ -54,8 +53,6 @@ class StressDreamTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(top2);
     }
 
-    // ===== No creature target (up to one) =====
-
     @Test
     @DisplayName("Can be cast with no creature target; still looks at two and takes one")
     void castWithNoCreatureTarget() {
@@ -64,8 +61,7 @@ class StressDreamTest extends BaseCardTest {
 
         Card top1 = new GrizzlyBears();
         Card top2 = new LlanowarElves();
-        gd.playerDecks.get(player1.getId()).add(0, top2);
-        gd.playerDecks.get(player1.getId()).add(0, top1);
+        harness.setLibrary(player1, List.of(top1, top2, new GrizzlyBears()));
 
         harness.castInstant(player1, 0);
         harness.passBothPriorities();
@@ -74,6 +70,77 @@ class StressDreamTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.playerHands.get(player1.getId())).contains(top2);
         assertThat(gd.playerDecks.get(player1.getId()).getLast()).isSameAs(top1);
+        harness.assertInGraveyard(player1, "Stress Dream");
+    }
+
+    @Test
+    void putsOnlyLibraryCardIntoHand() {
+        Card onlyCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(onlyCard));
+        harness.setHand(player1, List.of(new StressDream()));
+        addMana(player1);
+
+        harness.castInstant(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(onlyCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Stress Dream");
+    }
+
+    @Test
+    void killsTargetAndStillSelectsCard() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Card top1 = new GrizzlyBears();
+        Card top2 = new LlanowarElves();
+        harness.setLibrary(player1, List.of(top1, top2));
+        harness.setHand(player1, List.of(new StressDream()));
+        addMana(player1);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(top1.getId()));
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(top1);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top2);
+    }
+
+    @Test
+    void dealsDamageWithEmptyLibrary() {
+        Permanent avatar = harness.addToBattlefieldAndReturn(player2, new AvatarOfMight());
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new StressDream()));
+        addMana(player1);
+
+        harness.castInstant(player1, 0, avatar.getId());
+        harness.passBothPriorities();
+
+        assertThat(avatar.getMarkedDamage()).isEqualTo(5);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Stress Dream");
+    }
+
+    @Test
+    void doesNotSelectCardsWhenOnlyTargetLeavesBattlefield() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Card top1 = new GrizzlyBears();
+        Card top2 = new LlanowarElves();
+        harness.setLibrary(player1, List.of(top1, top2));
+        harness.setHand(player1, List.of(new StressDream()));
+        addMana(player1);
+
+        harness.castInstant(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        harness.setGraveyard(player2, List.of(target.getCard()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top1, top2);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
         harness.assertInGraveyard(player1, "Stress Dream");
     }
 }
