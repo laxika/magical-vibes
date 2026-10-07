@@ -55,4 +55,44 @@ class SpinedBasherTest extends BaseCardTest {
                 .hasMessageContaining("Not enough mana");
         assertThat(basher.isFaceDown()).isTrue();
     }
+
+    @Test
+    void turningFaceUpRequiresFullGenericCostAndDoesNotUseTheStack() {
+        harness.setHand(player1, List.of(new SpinedBasher()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passBothPriorities();
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        Permanent basher = findPermanent(player1, "Spined Basher");
+        int basherIndex = gd.playerBattlefields.get(player1.getId()).indexOf(basher);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.turnFaceUp(player1, basherIndex))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        assertThat(basher.isFaceDown()).isTrue();
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.turnFaceUp(player1, basherIndex);
+
+        assertThat(basher.isFaceDown()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(basher);
+    }
+
+    @Test
+    void castingFaceDownRequiresThreeMana() {
+        harness.setHand(player1, List.of(new SpinedBasher()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castCreatureWithMorph(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        harness.assertInHand(player1, "Spined Basher");
+        harness.assertNotOnBattlefield(player1, "Spined Basher");
+        assertThat(gd.stack).isEmpty();
+    }
 }
