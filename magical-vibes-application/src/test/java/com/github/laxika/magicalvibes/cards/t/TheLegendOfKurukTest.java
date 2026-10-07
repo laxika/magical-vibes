@@ -134,7 +134,7 @@ class TheLegendOfKurukTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
 
-        prepareDeclareBlockers(player2);
+        prepareDeclareBlockers(player1);
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(spirit),
@@ -161,6 +161,144 @@ class TheLegendOfKurukTest extends BaseCardTest {
         assertThat(gd.extraTurns).containsExactly(player1.getId());
     }
 
+    @Test
+    void chapterOneCanBottomBothCardsBeforeDrawing() {
+        Card first = new TheLegendOfKuruk();
+        Card second = new TheLegendOfKuruk();
+        Card third = new TheLegendOfKuruk();
+        harness.setLibrary(player1, List.of(first, second, third));
+        addSaga(0);
+
+        advanceToNextChapter();
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(), List.of(1, 0)));
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(third);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second, first);
+    }
+
+    @Test
+    void enteringSagaTriggersChapterOneAndDrawsAfterScry() {
+        Card first = new TheLegendOfKuruk();
+        Card second = new TheLegendOfKuruk();
+        harness.setLibrary(player1, List.of(first, second));
+        harness.setHand(player1, List.of(new TheLegendOfKuruk()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castEnchantment(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player1, "The Legend of Kuruk").getCounterCount(CounterType.LORE))
+                .isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNotNull();
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(1, 0), List.of()));
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(second);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(first);
+    }
+
+    @Test
+    void chapterThreeReturnsUnderAbilityControllersControlInsteadOfOwners() {
+        TheLegendOfKuruk card = new TheLegendOfKuruk();
+        card.setOwnerId(player2.getId());
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, card);
+        saga.setCounterCount(CounterType.LORE, 2);
+
+        advanceToNextChapter();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Avatar Kuruk");
+        harness.assertNotOnBattlefield(player2, "Avatar Kuruk");
+        Permanent avatar = findPermanent(player1, "Avatar Kuruk");
+        assertThat(avatar.getId()).isNotEqualTo(saga.getId());
+        assertThat(avatar.getCounterCount(CounterType.LORE)).isZero();
+        assertThat(avatar.isSummoningSick()).isTrue();
+    }
+
+    @Test
+    void avatarTriggersForNoncreatureSpellBeforeSpellResolves() {
+        addTransformedAvatar(player1);
+        harness.setHand(player1, List.of(new TheLegendOfKuruk()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Spirit")).isEqualTo(1);
+        harness.assertNotOnBattlefield(player1, "The Legend of Kuruk");
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    void opponentsSpellDoesNotCreateSpirit() {
+        addTransformedAvatar(player1);
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castCreature(player2, 0);
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Spirit")).isZero();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void restrictedSpiritCanBlockSpirit() {
+        addTransformedAvatar(player2);
+        createSpiritToken(player2);
+        Permanent spirit = findPermanent(player2, "Spirit");
+        Permanent attacker = addCreatureReady(player1, new KamiOfFalseHope());
+        attacker.setAttacking(true);
+        prepareDeclareBlockers(player1);
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(spirit),
+                gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
+
+        assertThat(spirit.isBlocking()).isTrue();
+    }
+
+    @Test
+    void waterbendCanBePaidEntirelyWithManaWithoutTappingAvatar() {
+        Permanent avatar = addTransformedAvatar(player1);
+        avatar.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 20);
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(avatar), null, null);
+        harness.passBothPriorities();
+
+        assertThat(avatar.isTapped()).isFalse();
+        assertThat(gd.extraTurns).containsExactly(player1.getId());
+    }
+
+    @Test
+    void waterbendCanTapSummoningSickAvatarAndExhaustRemainsUsedAfterUntapping() {
+        Permanent avatar = addTransformedAvatar(player1);
+        avatar.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 19);
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(avatar), null, null);
+        harness.passBothPriorities();
+
+        assertThat(avatar.isTapped()).isTrue();
+        assertThat(gd.extraTurns).containsExactly(player1.getId());
+        harness.performUntapStep(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 20);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(avatar), null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("only once");
+    }
+
     private Permanent addSaga(int loreCounters) {
         Permanent saga = harness.addToBattlefieldAndReturn(player1, new TheLegendOfKuruk());
         saga.setCounterCount(CounterType.LORE, loreCounters);
@@ -184,8 +322,7 @@ class TheLegendOfKurukTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.castCreature(player, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
     private void advanceToNextChapter() {
