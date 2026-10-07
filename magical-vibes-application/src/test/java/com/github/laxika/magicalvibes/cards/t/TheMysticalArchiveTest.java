@@ -80,4 +80,98 @@ class TheMysticalArchiveTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard().getId().equals(outsideStartingDeckCard.getId()));
     }
+
+    @Test
+    void draftingIsAnAsEntersChoiceRatherThanAStackTrigger() {
+        harness.setHand(player1, List.of(new TheMysticalArchive()));
+        harness.playLand(player1, 0);
+
+        PendingInteraction.SpellbookDraftToExileChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftToExileChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(choice.cards()).hasSize(3);
+        harness.handleMultipleCardsChosen(player1, List.of(choice.cards().getFirst().getId()));
+    }
+
+    @Test
+    void newControllerReturnsExiledCardToItsOwner() {
+        Permanent archive = harness.addToBattlefieldAndReturn(player2, new TheMysticalArchive());
+        Card exiled = new GrizzlyBears();
+        exiled.setOwnerId(player1.getId());
+        gd.addToExile(player1.getId(), exiled, archive.getId(), true);
+
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player2, 0, 2, null, null);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(exiled);
+        assertThat(gd.playerHands.get(player2.getId())).doesNotContain(exiled);
+        assertThat(gd.exiledCards).noneMatch(entry -> entry.card().getId().equals(exiled.getId()));
+    }
+
+    @Test
+    void colorlessManaAbilityResolvesImmediatelyAndTapsLand() {
+        Permanent archive = harness.addToBattlefieldAndReturn(player1, new TheMysticalArchive());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(archive.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void restrictedManaCanBeTwoDifferentColorsAndCannotPayForAnAbility() {
+        Permanent archive = harness.addToBattlefieldAndReturn(player1, new TheMysticalArchive());
+        harness.addToBattlefield(player1, new TheMysticalArchive());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, ManaColor.GREEN.name());
+        harness.handleListChoice(player1, ManaColor.RED.name());
+
+        assertThat(archive.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId())
+                .getOutsideStartingDeckSpellOnlyMana(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId())
+                .getOutsideStartingDeckSpellOnlyMana(ManaColor.RED)).isEqualTo(1);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 2, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void retrievalDoesNotTakeCardsExiledWithAnotherArchive() {
+        Permanent archive = harness.addToBattlefieldAndReturn(player1, new TheMysticalArchive());
+        Permanent otherArchive = harness.addToBattlefieldAndReturn(player1, new TheMysticalArchive());
+        Card exiled = new GrizzlyBears();
+        exiled.setOwnerId(player1.getId());
+        gd.addToExile(player1.getId(), exiled, otherArchive.getId(), true);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, 2, null, null);
+        resolveAllTriggers();
+
+        assertThat(archive.isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(exiled);
+        assertThat(gd.exiledCards).anyMatch(entry -> entry.card().getId().equals(exiled.getId()));
+    }
+
+    @Test
+    void retrievalStillResolvesAfterSourceLeavesBattlefield() {
+        Permanent archive = harness.addToBattlefieldAndReturn(player1, new TheMysticalArchive());
+        Card exiled = new GrizzlyBears();
+        exiled.setOwnerId(player1.getId());
+        gd.addToExile(player1.getId(), exiled, archive.getId(), true);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, 2, null, null);
+        gd.playerBattlefields.get(player1.getId()).remove(archive);
+        gd.playerGraveyards.get(player1.getId()).add(archive.getCard());
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(exiled);
+        assertThat(gd.exiledCards).noneMatch(entry -> entry.card().getId().equals(exiled.getId()));
+    }
 }
