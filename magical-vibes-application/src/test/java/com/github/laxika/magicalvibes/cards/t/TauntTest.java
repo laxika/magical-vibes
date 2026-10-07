@@ -1,7 +1,10 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BlazingArchon;
+import com.github.laxika.magicalvibes.cards.g.GideonJura;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -11,11 +14,13 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThatCode;
 
-@CardUsed({Taunt.class, GrizzlyBears.class})
+@CardUsed({Taunt.class, GrizzlyBears.class, BlazingArchon.class, GideonJura.class})
 class TauntTest extends BaseCardTest {
 
     private void advanceTurn() {
@@ -43,8 +48,7 @@ class TauntTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Taunt()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.tauntedNextTurn).containsEntry(player2.getId(), player1.getId());
@@ -79,7 +83,7 @@ class TauntTest extends BaseCardTest {
                 .getMustAttackIndices(gd, player2.getId(), attackable)).contains(0);
 
         // Declaring no attackers is illegal — the creature must attack.
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player2, List.of()))
+        assertThatThrownBy(() -> declareAttackers(player2, List.of()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -117,5 +121,67 @@ class TauntTest extends BaseCardTest {
 
         assertThat(gd.activePlayerId).isEqualTo(player1.getId());
         assertThat(gd.tauntedThisTurn).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Resolving Taunt forces creatures gained afterward to attack on the next turn")
+    void creaturesGainedAfterResolutionMustAttack() {
+        harness.setHand(player1, List.of(new Taunt()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        addCreatureReady(player2, new GrizzlyBears());
+        advanceTurn();
+
+        assertThatThrownBy(() -> declareAttackers(player2, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        declareAttackers(player2, List.of(0));
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("A creature entering during the taunted turn is exempt while summoning sick")
+    void summoningSickCreatureNeedNotAttack() {
+        harness.setHand(player1, List.of(new Taunt()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        advanceTurn();
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        assertThatCode(() -> declareAttackers(player2, List.of())).doesNotThrowAnyException();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Targeting yourself does not require creatures to attack an opponent")
+    void selfTargetDoesNotForceAttackOnOpponent() {
+        harness.setHand(player1, List.of(new Taunt()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+        addCreatureReady(player1, new GrizzlyBears());
+        advanceTurn();
+        advanceTurn();
+
+        assertThatCode(() -> declareAttackers(player1, List.of())).doesNotThrowAnyException();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("When the taunter cannot be attacked, creatures may attack their planeswalker")
+    void mayAttackPlaneswalkerWhenTaunterCannotBeAttacked() {
+        harness.addToBattlefield(player1, new BlazingArchon());
+        Permanent gideon = harness.addToBattlefieldAndReturn(player1, new GideonJura());
+        gideon.setCounterCount(CounterType.LOYALTY, 6);
+        addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Taunt()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        advanceTurn();
+
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+        assertThatCode(() -> gs.declareAttackers(gd, player2, List.of(0), Map.of(0, gideon.getId())))
+                .doesNotThrowAnyException();
     }
 }
