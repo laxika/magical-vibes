@@ -18,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TobiasDoomedConqueror.class, GrizzlyBears.class, Shock.class})
+@CardUsed({TobiasDoomedConqueror.class, GrizzlyBears.class, Shock.class, Card.class})
 class TobiasDoomedConquerorTest extends BaseCardTest {
 
     @Test
@@ -45,14 +45,88 @@ class TobiasDoomedConquerorTest extends BaseCardTest {
         });
     }
 
+    @Test
+    @DisplayName("Counts creatures that die simultaneously with Tobias")
+    void countsSimultaneousDeaths() {
+        Permanent tobias = addCreatureReady(player1, new TobiasDoomedConqueror());
+        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent opposingCreature = addCreatureReady(player2, new GrizzlyBears());
+        tobias.setMarkedDamage(2);
+        ownCreature.setMarkedDamage(2);
+        opposingCreature.setMarkedDamage(2);
+
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Zombie")).hasSize(2);
+        assertThat(findPermanents(player2, "Zombie")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Counts additional creatures that die in response to Tobias's trigger")
+    void countsDeathsAtResolution() {
+        Permanent tobias = addCreatureReady(player1, new TobiasDoomedConqueror());
+        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
+        killWithShock(player2, tobias);
+        assertThat(findPermanents(player1, "Zombie")).isEmpty();
+
+        killWithShock(player2, ownCreature);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Zombie")).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Counts deaths earlier in the turn before Tobias entered the battlefield")
+    void countsDeathsBeforeEnteringBattlefield() {
+        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
+        killWithShock(player2, ownCreature);
+        Permanent tobias = addCreatureReady(player1, new TobiasDoomedConqueror());
+
+        killWithShock(player2, tobias);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Zombie")).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Does not count creatures that died on the previous turn")
+    void excludesPreviousTurnDeaths() {
+        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
+        killWithShock(player2, ownCreature);
+        harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
+        Permanent tobias = addCreatureReady(player1, new TobiasDoomedConqueror());
+
+        killWithShock(player2, tobias);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Zombie")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Can be cast during an opponent's turn using flash")
+    void canBeCastDuringOpponentsTurn() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.setHand(player1, List.of(new TobiasDoomedConqueror()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.passPriority(player2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Tobias, Doomed Conqueror");
+    }
+
     private void killWithShock(Player caster, Permanent target) {
         harness.forceActivePlayer(caster);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.setHand(caster, List.of(new Shock()));
         harness.addMana(caster, ManaColor.RED, 1);
-        harness.castInstant(caster, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(caster, 0, target.getId());
     }
 
     private Card tokenCreature() {
