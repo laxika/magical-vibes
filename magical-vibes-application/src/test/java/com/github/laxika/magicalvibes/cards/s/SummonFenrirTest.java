@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -59,9 +60,9 @@ class SummonFenrirTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 4);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(findPermanentByCard(firstCard).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(findPermanentByCard(secondCard).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -93,6 +94,115 @@ class SummonFenrirTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
     }
 
+    @Test
+    void chapterICompletesWhenThereIsNoBasicLandToFind() {
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        addSagaWithLore(0);
+
+        advanceToNextChapter();
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void chapterIAllowsFailingToFindEvenWhenABasicLandIsAvailable() {
+        Forest forest = new Forest();
+        harness.setLibrary(player1, List.of(forest));
+        addSagaWithLore(0);
+        advanceToNextChapter();
+        resolveAllTriggers();
+
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void chapterIIDoesNotEmpowerOrConsumeTheGrantForACreatureEnteringWithoutBeingCast() {
+        addSagaWithLore(1);
+        advanceToNextChapter();
+        resolveAllTriggers();
+
+        Permanent uncastCreature = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+        assertThat(uncastCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Grizzly Bears"))
+                .filteredOn(permanent -> permanent != uncastCreature)
+                .singleElement()
+                .satisfies(permanent -> assertThat(permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
+                        .isEqualTo(1));
+    }
+
+    @Test
+    void chapterIICreatesARespondableDelayedTriggerAboveTheCreatureSpell() {
+        addSagaWithLore(1);
+        advanceToNextChapter();
+        resolveAllTriggers();
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
+        assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+
+        resolveAllTriggers();
+        assertThat(findPermanent(player1, "Grizzly Bears").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
+                .isEqualTo(1);
+    }
+
+    @Test
+    void chapterIIIDrawsWhenFenrirItselfHasTheGreatestPowerAndThenSacrificesIt() {
+        addSagaWithLore(2);
+        harness.setLibrary(player1, List.of(new Forest()));
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+
+        advanceToNextChapter();
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
+        harness.assertNotOnBattlefield(player1, "Summon: Fenrir");
+        harness.assertInGraveyard(player1, "Summon: Fenrir");
+    }
+
+    @Test
+    void chapterIIIChecksGreatestPowerAtResolutionRatherThanWhenItTriggers() {
+        addSagaWithLore(2);
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new Forest()));
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+
+        advanceToNextChapter();
+        opponentCreature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
+    }
+
+    @Test
+    void chapterIIIDrawsIfYouGainTheGreatestPowerBeforeResolution() {
+        Permanent saga = addSagaWithLore(2);
+        harness.addToBattlefield(player2, new CrawWurm());
+        harness.setLibrary(player1, List.of(new Forest()));
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+
+        advanceToNextChapter();
+        saga.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 4);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
+    }
+
     private Permanent addSagaWithLore(int lore) {
         Permanent saga = harness.addToBattlefieldAndReturn(player1, new SummonFenrir());
         saga.setCounterCount(CounterType.LORE, lore);
@@ -110,6 +220,6 @@ class SummonFenrirTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
     }
 }
