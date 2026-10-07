@@ -90,6 +90,32 @@ class StarlightTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can target an opponent with an empty battlefield and gains no life")
+    void canTargetOpponentWithEmptyBattlefield() {
+        harness.setLife(player1, 20);
+
+        castStarlight();
+
+        harness.assertLife(player1, 20);
+        harness.assertInGraveyard(player1, "Starlight");
+    }
+
+    @Test
+    @DisplayName("Counts black creatures that arrive after the spell is cast")
+    void countsBlackCreaturesEnteringBeforeResolution() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 17);
+        prepareStarlight();
+        harness.castSorcery(player1, 0, player2.getId());
+
+        harness.addToBattlefield(player2, new BogImp());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 23);
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
     @DisplayName("Cannot target yourself")
     void cannotTargetSelf() {
         prepareStarlight();
