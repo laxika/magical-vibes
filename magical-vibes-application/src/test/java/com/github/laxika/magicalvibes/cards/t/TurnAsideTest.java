@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
+import com.github.laxika.magicalvibes.cards.a.ArcTrail;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
@@ -11,6 +12,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,9 +21,82 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TurnAside.class, GiantGrowth.class, GrizzlyBears.class, LlanowarElves.class, Shock.class, ArcTrail.class})
 class TurnAsideTest extends BaseCardTest {
 
-    // ===== Casting =====
+    @Test
+    void cannotCounterSpellTargetingOnlyYou() {
+        Shock shock = new Shock();
+        harness.setHand(player2, List.of(shock));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.setHand(player1, List.of(new TurnAside()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.forceActivePlayer(player2);
+        harness.castInstant(player2, 0, player1.getId());
+        harness.passPriority(player2);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, shock.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void canCounterYourOwnSpellTargetingYourPermanent() {
+        var bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        GiantGrowth growth = new GiantGrowth();
+        harness.setHand(player1, List.of(growth, new TurnAside()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castInstant(player1, 0, bears.getId());
+        harness.castAndResolveInstant(player1, 0, growth.getId());
+
+        harness.assertInGraveyard(player1, "Giant Growth");
+        harness.assertInGraveyard(player1, "Turn Aside");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void countersEntireSpellWithAnotherTarget() {
+        var bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        ArcTrail trail = new ArcTrail();
+        harness.setHand(player2, List.of(trail));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.setHand(player1, List.of(new TurnAside()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.forceActivePlayer(player2);
+        harness.castSorcery(player2, 0, List.of(player1.getId(), bears.getId()));
+        harness.passPriority(player2);
+        harness.castAndResolveInstant(player1, 0, trail.getId());
+
+        harness.assertInGraveyard(player2, "Arc Trail");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void becomesIllegalWhenTheOnlyPermanentTargetLeavesBattlefield() {
+        var bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        ArcTrail trail = new ArcTrail();
+        harness.setHand(player2, List.of(trail, new Shock()));
+        harness.addMana(player2, ManaColor.RED, 3);
+        harness.setHand(player1, List.of(new TurnAside()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.forceActivePlayer(player2);
+        harness.castSorcery(player2, 0, List.of(player1.getId(), bears.getId()));
+        harness.passPriority(player2);
+        harness.castInstant(player1, 0, trail.getId());
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        harness.assertNotInGraveyard(player2, "Arc Trail");
+        harness.assertInGraveyard(player1, "Turn Aside");
+        harness.passBothPriorities();
+        harness.assertLife(player1, 18);
+        harness.assertInGraveyard(player2, "Arc Trail");
+    }
 
     @Test
     @DisplayName("Can target a spell that targets a permanent you control")
@@ -92,8 +167,6 @@ class TurnAsideTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Resolving =====
-
     @Test
     @DisplayName("Resolving counters the spell that targets your permanent")
     void countersSpellTargetingYourPermanent() {
@@ -110,8 +183,7 @@ class TurnAsideTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.castInstant(player2, 0, harness.getPermanentId(player1, "Grizzly Bears"));
         harness.passPriority(player2);
-        harness.castInstant(player1, 0, shock.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, shock.getId());
 
         // Countered spell goes to owner's graveyard
         harness.assertInGraveyard(player2, "Shock");
@@ -135,15 +207,12 @@ class TurnAsideTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.castInstant(player2, 0, harness.getPermanentId(player1, "Grizzly Bears"));
         harness.passPriority(player2);
-        harness.castInstant(player1, 0, shock.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, shock.getId());
 
         GameData gd = harness.getGameData();
         harness.assertInGraveyard(player1, "Turn Aside");
         assertThat(gd.stack).isEmpty();
     }
-
-    // ===== Fizzle =====
 
     @Test
     @DisplayName("Fizzles if target spell is no longer on the stack")
