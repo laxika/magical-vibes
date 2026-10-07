@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.h.HaazdaExonerator;
 import com.github.laxika.magicalvibes.cards.m.MistralCharger;
-import com.github.laxika.magicalvibes.cards.s.Skyscribing;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -80,5 +79,68 @@ class SpellSnareTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player2, 0, skyscribing.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Counters Skyscribing with X chosen as zero")
+    void countersXSpellWithManaValueTwo() {
+        Skyscribing skyscribing = new Skyscribing();
+        harness.setHand(player1, List.of(skyscribing));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castSorcery(player1, 0, 0);
+
+        harness.setHand(player2, List.of(new SpellSnare()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.castInstant(player2, 0, skyscribing.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Skyscribing");
+        harness.assertInGraveyard(player2, "Spell Snare");
+    }
+
+    @Test
+    @DisplayName("Can counter its controller's own spell")
+    void countersOwnSpell() {
+        MistralCharger charger = new MistralCharger();
+        harness.castFromHand(player1, charger, "{1}{W}");
+
+        harness.setHand(player1, List.of(new SpellSnare()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castInstant(player1, 0, charger.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Mistral Charger");
+        harness.assertInGraveyard(player1, "Spell Snare");
+        harness.assertNotOnBattlefield(player1, "Mistral Charger");
+    }
+
+    @Test
+    @DisplayName("Does not resolve when another Spell Snare counters its target first")
+    void targetLeavesStackBeforeResolution() {
+        MistralCharger charger = new MistralCharger();
+        harness.castFromHand(player1, charger, "{1}{W}");
+
+        SpellSnare first = new SpellSnare();
+        SpellSnare second = new SpellSnare();
+        harness.setHand(player2, List.of(first, second));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.castInstant(player2, 0, charger.getId());
+        harness.castInstant(player2, 0, charger.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getId()).isEqualTo(first.getId());
+        harness.assertInGraveyard(player1, "Mistral Charger");
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .extracting(card -> card.getId()).contains(second.getId()).doesNotContain(first.getId());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .extracting(card -> card.getId()).containsExactlyInAnyOrder(first.getId(), second.getId());
+        harness.assertNotOnBattlefield(player1, "Mistral Charger");
     }
 }
