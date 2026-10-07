@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({TangledFlorahedron.class, TangledVale.class})
 class TangledFlorahedronTest extends BaseCardTest {
@@ -50,5 +51,85 @@ class TangledFlorahedronTest extends BaseCardTest {
 
         ManaPool mana = gd.playerManaPools.get(player1.getId());
         assertThat(mana.get(ManaColor.GREEN)).isEqualTo(1);
+    }
+
+    @Test
+    void creatureCannotProduceManaWhileSummoningSick() {
+        harness.setHand(player1, List.of(new TangledFlorahedron()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent creature = findPermanent(player1, "Tangled Florahedron");
+        assertThat(creature.isTapped()).isFalse();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(creature.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
+    void creatureManaAbilityResolvesImmediatelyAndCannotBeUsedTwiceWithoutUntapping() {
+        addCreatureReady(player1, new TangledFlorahedron());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanent(player1, "Tangled Florahedron").isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+    }
+
+    @Test
+    void landFaceNeedsNoManaBypassesTheStackAndUsesTheLandPlay() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new TangledFlorahedron(), new TangledFlorahedron()));
+
+        gs.playCard(gd, player1, 0, 1, null, null);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(countPermanents(player1, "Tangled Vale")).isEqualTo(1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.ensurePriority(player1);
+        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(countPermanents(player1, "Tangled Vale")).isEqualTo(1);
+        harness.assertInHand(player1, "Tangled Florahedron");
+    }
+
+    @Test
+    void tappedLandFaceCannotProduceManaUntilUntapped() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new TangledFlorahedron()));
+        gs.playCard(gd, player1, 0, 1, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void creatureFaceStillRequiresItsManaCostWhenLandFaceIsPlayable() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new TangledFlorahedron()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        harness.assertInHand(player1, "Tangled Florahedron");
+        harness.assertNotOnBattlefield(player1, "Tangled Florahedron");
+        harness.assertNotOnBattlefield(player1, "Tangled Vale");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
     }
 }
