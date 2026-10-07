@@ -117,10 +117,65 @@ class ToilsOfNightAndDayTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void resolvesFirstClauseWhenSecondTargetLeaves() {
+        Permanent mass = addCreatureReady(player2, new GnarledMass());
+        Permanent bridge = harness.addToBattlefieldAndReturn(player1, new TendoIceBridge());
+
+        prepareCast();
+        harness.castInstant(player1, 0, List.of(mass.getId(), bridge.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(bridge);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(mass.isTapped()).isTrue();
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void doesNotResolveWhenBothTargetsLeave() {
+        Permanent mass = addCreatureReady(player2, new GnarledMass());
+        Permanent bridge = harness.addToBattlefieldAndReturn(player1, new TendoIceBridge());
+
+        prepareCast();
+        harness.castInstant(player1, 0, List.of(mass.getId(), bridge.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(mass);
+        gd.playerBattlefields.get(player1.getId()).remove(bridge);
+        harness.passBothPriorities();
+
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof ToilsOfNightAndDay);
+    }
+
+    @Test
+    void canUntapFirstTargetAndTapSecondTarget() {
+        Permanent mass = addCreatureReady(player2, new GnarledMass());
+        mass.tap();
+        Permanent bridge = harness.addToBattlefieldAndReturn(player1, new TendoIceBridge());
+
+        castToils(mass, bridge);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(mass.isTapped()).isFalse();
+        assertThat(bridge.isTapped()).isTrue();
+    }
+
+    @Test
+    void requiresTwoTargetsEvenWhenActionsAreOptional() {
+        Permanent mass = addCreatureReady(player2, new GnarledMass());
+        prepareCast();
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of(mass.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
     private void castToils(Permanent first, Permanent second) {
         prepareCast();
-        harness.castInstant(player1, 0, List.of(first.getId(), second.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, List.of(first.getId(), second.getId()));
     }
 
     private void prepareCast() {
