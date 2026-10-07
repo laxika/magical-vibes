@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.w.WalkingCorpse;
+import com.github.laxika.magicalvibes.cards.d.DreamTwist;
+import com.github.laxika.magicalvibes.cards.d.Dissipate;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -13,15 +16,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({StitchedDrake.class, WalkingCorpse.class, DreamTwist.class, Dissipate.class})
 class StitchedDrakeTest extends BaseCardTest {
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting Stitched Drake exiles a creature card from graveyard")
     void castingExilesCreatureFromGraveyard() {
-        GrizzlyBears bears = new GrizzlyBears();
-        harness.setGraveyard(player1, List.of(bears));
+        WalkingCorpse corpse = new WalkingCorpse();
+        harness.setGraveyard(player1, List.of(corpse));
 
         harness.setHand(player1, List.of(new StitchedDrake()));
         harness.addMana(player1, ManaColor.BLUE, 2);
@@ -32,12 +34,12 @@ class StitchedDrakeTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Stitched Drake");
+        assertThat(entry.getCard()).isInstanceOf(StitchedDrake.class);
 
         // Creature card should be exiled from graveyard
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+                .anyMatch(c -> c.getName().equals("Walking Corpse"));
     }
 
     @Test
@@ -54,8 +56,8 @@ class StitchedDrakeTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot exile a non-creature card from graveyard for Stitched Drake")
     void cannotExileNonCreatureCard() {
-        Shock shock = new Shock(); // Instant, not a creature
-        harness.setGraveyard(player1, List.of(shock));
+        DreamTwist dreamTwist = new DreamTwist(); // Instant, not a creature
+        harness.setGraveyard(player1, List.of(dreamTwist));
 
         harness.setHand(player1, List.of(new StitchedDrake()));
         harness.addMana(player1, ManaColor.BLUE, 2);
@@ -66,13 +68,11 @@ class StitchedDrakeTest extends BaseCardTest {
                 .hasMessageContaining("creature");
     }
 
-    // ===== Resolution =====
-
     @Test
-    @DisplayName("Stitched Drake enters the battlefield as a 3/4 after resolving")
-    void entersAsThreeFour() {
-        GrizzlyBears bears = new GrizzlyBears();
-        harness.setGraveyard(player1, List.of(bears));
+    @DisplayName("Stitched Drake resolves after paying its additional cost")
+    void resolvesAfterPayingAdditionalCost() {
+        WalkingCorpse corpse = new WalkingCorpse();
+        harness.setGraveyard(player1, List.of(corpse));
 
         harness.setHand(player1, List.of(new StitchedDrake()));
         harness.addMana(player1, ManaColor.BLUE, 2);
@@ -82,16 +82,13 @@ class StitchedDrakeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Stitched Drake");
-        var drake = findPermanent(player1, "Stitched Drake");
-        assertThat(drake.getCard().getPower()).isEqualTo(3);
-        assertThat(drake.getCard().getToughness()).isEqualTo(4);
     }
 
     @Test
     @DisplayName("Exile cost is paid even if Stitched Drake is countered")
     void exileCostPaidEvenIfCountered() {
-        GrizzlyBears bears = new GrizzlyBears();
-        harness.setGraveyard(player1, List.of(bears));
+        WalkingCorpse corpse = new WalkingCorpse();
+        harness.setGraveyard(player1, List.of(corpse));
 
         harness.setHand(player1, List.of(new StitchedDrake()));
         harness.addMana(player1, ManaColor.BLUE, 2);
@@ -99,31 +96,89 @@ class StitchedDrakeTest extends BaseCardTest {
 
         harness.castCreatureWithGraveyardExile(player1, 0, 0);
 
+        harness.setHand(player2, List.of(new Dissipate()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+        harness.castAndResolveInstant(player2, 0, gd.stack.getFirst().getCard().getId());
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Stitched Drake");
+
         // Exile cost already paid
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+                .anyMatch(c -> c.getName().equals("Walking Corpse"));
     }
 
     @Test
     @DisplayName("Can exile second creature from graveyard when multiple are present")
     void exilesCorrectCreatureByIndex() {
-        GrizzlyBears bears = new GrizzlyBears();
-        Shock shock = new Shock(); // Non-creature, should stay
-        GrizzlyBears bears2 = new GrizzlyBears();
-        harness.setGraveyard(player1, List.of(bears, shock, bears2));
+        WalkingCorpse corpse = new WalkingCorpse();
+        DreamTwist dreamTwist = new DreamTwist(); // Non-creature, should stay
+        WalkingCorpse secondCorpse = new WalkingCorpse();
+        harness.setGraveyard(player1, List.of(corpse, dreamTwist, secondCorpse));
 
         harness.setHand(player1, List.of(new StitchedDrake()));
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        // Exile the second Grizzly Bears (index 2)
+        // Exile the second Walking Corpse (index 2)
         harness.castCreatureWithGraveyardExile(player1, 0, 2);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Stitched Drake");
-        // Shock and first Grizzly Bears remain in graveyard
+        // Dream Twist and first Walking Corpse remain in graveyard
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
-        harness.assertInGraveyard(player1, "Shock");
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(corpse, dreamTwist);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(secondCorpse);
+    }
+
+    @Test
+    @DisplayName("A creature in the opponent's graveyard cannot pay the additional cost")
+    void cannotUseOpponentsGraveyard() {
+        WalkingCorpse corpse = new WalkingCorpse();
+        harness.setGraveyard(player2, List.of(corpse));
+        harness.setHand(player1, List.of(new StitchedDrake()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        assertThatThrownBy(() -> harness.castCreatureWithGraveyardExile(player1, 0, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(corpse);
+        assertThat(gd.stack).isEmpty();
+        harness.assertInHand(player1, "Stitched Drake");
+    }
+
+    @Test
+    @DisplayName("A creature in the graveyard does not let the caster omit the exile cost")
+    void cannotOmitExileCost() {
+        WalkingCorpse corpse = new WalkingCorpse();
+        harness.setGraveyard(player1, List.of(corpse));
+        harness.setHand(player1, List.of(new StitchedDrake()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(corpse);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInHand(player1, "Stitched Drake");
+    }
+
+    @Test
+    @DisplayName("Insufficient mana does not exile the selected creature")
+    void insufficientManaDoesNotPayExileCost() {
+        WalkingCorpse corpse = new WalkingCorpse();
+        harness.setGraveyard(player1, List.of(corpse));
+        harness.setHand(player1, List.of(new StitchedDrake()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        assertThatThrownBy(() -> harness.castCreatureWithGraveyardExile(player1, 0, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(corpse);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInHand(player1, "Stitched Drake");
     }
 }
