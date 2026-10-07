@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.b.BaneslayerAngel;
 import com.github.laxika.magicalvibes.cards.d.DoomBlade;
 import com.github.laxika.magicalvibes.cards.l.LilianaVess;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({StalkingVengeance.class, DoomBlade.class, LilianaVess.class})
+@CardUsed({StalkingVengeance.class, DoomBlade.class, LilianaVess.class, BaneslayerAngel.class})
 class StalkingVengeanceTest extends BaseCardTest {
 
     @Test
@@ -96,6 +97,55 @@ class StalkingVengeanceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(liliana.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The dying creature deals the damage and retains its lifelink")
+    void dyingCreatureLifelinkGainsLife() {
+        harness.addToBattlefield(player1, new StalkingVengeance());
+        Permanent angel = harness.addToBattlefieldAndReturn(player1, new BaneslayerAngel());
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 20);
+
+        destroyWithDoomBlade(angel.getId());
+
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 15);
+        harness.assertLife(player1, 15);
+    }
+
+    @Test
+    @DisplayName("Can target its controller without declining the mandatory trigger")
+    void canTargetController() {
+        harness.addToBattlefield(player1, new StalkingVengeance());
+        Permanent dyingVengeance = harness.addToBattlefieldAndReturn(player1, new StalkingVengeance());
+        harness.setLife(player1, 20);
+
+        destroyWithDoomBlade(dyingVengeance.getId());
+
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 15);
+    }
+
+    @Test
+    @DisplayName("The death trigger resolves after Stalking Vengeance leaves the battlefield")
+    void triggerResolvesAfterSourceDies() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new StalkingVengeance());
+        Permanent dyingVengeance = harness.addToBattlefieldAndReturn(player1, new StalkingVengeance());
+        harness.setLife(player2, 20);
+
+        destroyWithDoomBlade(dyingVengeance.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        destroyWithDoomBlade(source.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 15);
+        harness.assertNotOnBattlefield(player1, "Stalking Vengeance");
     }
 
     private void destroyWithDoomBlade(java.util.UUID targetId) {
