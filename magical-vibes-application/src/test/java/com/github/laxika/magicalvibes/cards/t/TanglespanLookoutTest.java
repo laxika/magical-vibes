@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.c.CoopedUp;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TanglespanLookout.class, Pacifism.class, GloriousAnthem.class, GrizzlyBears.class})
+@CardUsed({TanglespanLookout.class, Pacifism.class, GloriousAnthem.class, GrizzlyBears.class, CoopedUp.class})
 class TanglespanLookoutTest extends BaseCardTest {
 
     @Test
@@ -59,5 +60,74 @@ class TanglespanLookoutTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Each Aura entry triggers, and the draw waits for the trigger to resolve")
+    void drawsForEachAuraEnchantingOwnCreature() {
+        Permanent lookout = harness.addToBattlefieldAndReturn(player1, new TanglespanLookout());
+        TanglespanLookout firstDraw = new TanglespanLookout();
+        TanglespanLookout secondDraw = new TanglespanLookout();
+        harness.setLibrary(player1, List.of(firstDraw, secondDraw));
+        harness.setHand(player1, List.of(new CoopedUp(), new CoopedUp()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castEnchantment(player1, 0, lookout.getId());
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).contains(firstDraw).hasSize(2);
+
+        harness.castEnchantment(player1, 0, lookout.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Two Lookouts each draw a card for the same Aura entry")
+    void eachLookoutTriggersIndependently() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new TanglespanLookout());
+        harness.addToBattlefield(player1, new TanglespanLookout());
+        TanglespanLookout firstDraw = new TanglespanLookout();
+        TanglespanLookout secondDraw = new TanglespanLookout();
+        harness.setLibrary(player1, List.of(firstDraw, secondDraw));
+        harness.setHand(player1, List.of(new CoopedUp()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castEnchantment(player1, 0, target.getId());
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The draw resolves after both the Lookout and triggering Aura leave")
+    void drawSurvivesSourceAndAuraLeaving() {
+        Permanent lookout = harness.addToBattlefieldAndReturn(player1, new TanglespanLookout());
+        TanglespanLookout drawnCard = new TanglespanLookout();
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.setHand(player1, List.of(new CoopedUp()));
+        harness.addMana(player1, ManaColor.WHITE, 5);
+
+        harness.castEnchantment(player1, 0, lookout.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Tanglespan Lookout");
+        harness.assertInGraveyard(player1, "Cooped Up");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.stack).isEmpty();
     }
 }
