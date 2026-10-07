@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.h.HelmOfPossession;
 import com.github.laxika.magicalvibes.cards.l.LowlandGiant;
 import com.github.laxika.magicalvibes.cards.l.LotusPetal;
 import com.github.laxika.magicalvibes.cards.m.MinimusContainment;
+import com.github.laxika.magicalvibes.cards.w.WinterOrb;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -15,8 +17,10 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({StaticOrb.class, LowlandGiant.class, Forest.class, LotusPetal.class})
+@CardUsed({StaticOrb.class, LowlandGiant.class, Forest.class, LotusPetal.class,
+        MinimusContainment.class, HelmOfPossession.class, WinterOrb.class})
 class StaticOrbTest extends BaseCardTest {
 
     @Test
@@ -132,6 +136,73 @@ class StaticOrbTest extends BaseCardTest {
 
         assertThat(giant.isTapped()).isFalse();
         assertThat(forest.isTapped()).isTrue();
+        assertThat(petal.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A permanent with an optional untap ability can be one of the two chosen permanents")
+    void mayChoosePermanentWithOptionalUntap() {
+        addCreatureReady(player1, new StaticOrb());
+        Permanent helm = addCreatureReady(player1, new HelmOfPossession());
+        Permanent giant = addCreatureReady(player1, new LowlandGiant());
+        Permanent forest = addCreatureReady(player1, new Forest());
+        Permanent petal = addCreatureReady(player1, new LotusPetal());
+        helm.tap();
+        giant.tap();
+        forest.tap();
+        petal.tap();
+
+        advanceToNextTurn(player2);
+        harness.handleMultiplePermanentsChosen(player1, List.of(helm.getId(), forest.getId()));
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(helm.isTapped()).isFalse();
+        assertThat(forest.isTapped()).isFalse();
+        assertThat(giant.isTapped()).isTrue();
+        assertThat(petal.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Static Orb and Winter Orb both restrict the same untap choice")
+    void overlappingOrbsEnforceBothCaps() {
+        addCreatureReady(player1, new StaticOrb());
+        addCreatureReady(player1, new WinterOrb());
+        Permanent firstForest = addCreatureReady(player1, new Forest());
+        Permanent secondForest = addCreatureReady(player1, new Forest());
+        Permanent petal = addCreatureReady(player1, new LotusPetal());
+        firstForest.tap();
+        secondForest.tap();
+        petal.tap();
+
+        advanceToNextTurn(player2);
+
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1,
+                List.of(firstForest.getId(), secondForest.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleMultiplePermanentsChosen(player1, List.of(firstForest.getId(), petal.getId()));
+
+        assertThat(firstForest.isTapped()).isFalse();
+        assertThat(secondForest.isTapped()).isTrue();
+        assertThat(petal.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Two Static Orbs still allow two permanents to untap")
+    void multipleStaticOrbsDoNotReduceCap() {
+        addCreatureReady(player1, new StaticOrb());
+        addCreatureReady(player2, new StaticOrb());
+        Permanent giant = addCreatureReady(player1, new LowlandGiant());
+        Permanent forest = addCreatureReady(player1, new Forest());
+        Permanent petal = addCreatureReady(player1, new LotusPetal());
+        giant.tap();
+        forest.tap();
+        petal.tap();
+
+        advanceToNextTurn(player2);
+        harness.handleMultiplePermanentsChosen(player1, List.of(giant.getId(), forest.getId()));
+
+        assertThat(giant.isTapped()).isFalse();
+        assertThat(forest.isTapped()).isFalse();
         assertThat(petal.isTapped()).isTrue();
     }
 
