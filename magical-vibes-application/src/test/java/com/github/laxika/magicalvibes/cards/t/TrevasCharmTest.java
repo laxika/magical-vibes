@@ -29,16 +29,16 @@ class TrevasCharmTest extends BaseCardTest {
 
     @Nested
     @DisplayName("Mode 0: Destroy target enchantment")
+    @CardUsed({TrevasCharm.class, CloudCover.class, MorgueToad.class})
     class DestroyEnchantmentMode {
 
         @Test
         @DisplayName("Destroys target enchantment")
         void destroysEnchantment() {
-            harness.addToBattlefield(player2, new CloudCover());
+            Permanent cloudCover = harness.addToBattlefieldAndReturn(player2, new CloudCover());
             harness.setHand(player1, List.of(new TrevasCharm()));
             addGUW();
 
-            Permanent cloudCover = findPermanent(player2, "Cloud Cover");
             harness.castModalInstant(player1, 0, 0, List.of(cloudCover.getId()));
             harness.passBothPriorities();
 
@@ -49,11 +49,10 @@ class TrevasCharmTest extends BaseCardTest {
         @Test
         @DisplayName("Cannot target a creature with the enchantment mode")
         void cannotTargetCreature() {
-            harness.addToBattlefield(player2, new MorgueToad());
+            Permanent toad = harness.addToBattlefieldAndReturn(player2, new MorgueToad());
             harness.setHand(player1, List.of(new TrevasCharm()));
             addGUW();
 
-            Permanent toad = findPermanent(player2, "Morgue Toad");
             assertThatThrownBy(() -> harness.castModalInstant(player1, 0, 0, List.of(toad.getId())))
                     .isInstanceOf(IllegalStateException.class);
         }
@@ -61,7 +60,24 @@ class TrevasCharmTest extends BaseCardTest {
 
     @Nested
     @DisplayName("Mode 1: Exile target attacking creature")
+    @CardUsed({TrevasCharm.class, MorgueToad.class})
     class ExileAttackerMode {
+        @Test
+        @DisplayName("Does not exile a target that stopped attacking before resolution")
+        void targetStopsAttacking() {
+            Permanent attacker = addAttacker(player2, player1, new MorgueToad());
+            harness.setHand(player1, List.of(new TrevasCharm()));
+            addGUW();
+
+            harness.castModalInstant(player1, 0, 1, List.of(attacker.getId()));
+            attacker.setAttacking(false);
+            attacker.setAttackTarget(null);
+            harness.passBothPriorities();
+
+            harness.assertOnBattlefield(player2, "Morgue Toad");
+            assertThat(gd.exiledCards).isEmpty();
+            harness.assertInGraveyard(player1, "Treva's Charm");
+        }
 
         @Test
         @DisplayName("Exiles target attacking creature")
@@ -93,7 +109,24 @@ class TrevasCharmTest extends BaseCardTest {
 
     @Nested
     @DisplayName("Mode 2: Draw a card, then discard a card")
+    @CardUsed({TrevasCharm.class, CloudCover.class, MorgueToad.class})
     class LootMode {
+        @Test
+        @DisplayName("Can discard the newly drawn card")
+        void discardsNewlyDrawnCard() {
+            harness.setHand(player1, List.of(new TrevasCharm(), new CloudCover()));
+            harness.setLibrary(player1, List.of(new MorgueToad()));
+            addGUW();
+
+            harness.castModalInstant(player1, 0, 2, List.of());
+            harness.passBothPriorities();
+            harness.handleCardChosen(player1, 1);
+
+            assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+            harness.assertInHand(player1, "Cloud Cover");
+            harness.assertNotInHand(player1, "Morgue Toad");
+            harness.assertInGraveyard(player1, "Morgue Toad");
+        }
 
         @Test
         @DisplayName("Draws before prompting for a discard")
