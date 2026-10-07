@@ -15,8 +15,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({TimeBomb.class, GrizzlyBears.class})
 class TimeBombTest extends BaseCardTest {
 
-    // ===== Upkeep trigger =====
-
     @Test
     @DisplayName("Upkeep trigger puts a time counter on Time Bomb")
     void upkeepTriggerAddsTimeCounter() {
@@ -37,8 +35,6 @@ class TimeBombTest extends BaseCardTest {
 
         assertThat(bomb.getCounterCount(CounterType.TIME)).isZero();
     }
-
-    // ===== Activated ability: mass damage =====
 
     @Test
     @DisplayName("Sacrificing Time Bomb deals damage equal to time counters to each creature and each player")
@@ -120,7 +116,58 @@ class TimeBombTest extends BaseCardTest {
         ).isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Helper methods =====
+    @Test
+    @DisplayName("Only time counters contribute to damage")
+    void otherCounterTypesDoNotIncreaseDamage() {
+        Permanent bomb = addReadyBomb(player1);
+        bomb.setCounterCount(CounterType.TIME, 1);
+        bomb.setCounterCount(CounterType.CHARGE, 4);
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Time Bomb");
+    }
+
+    @Test
+    @DisplayName("Activating in response to the upkeep trigger uses the existing counters")
+    void activationBeforeUpkeepTriggerResolvesDoesNotCountPendingCounter() {
+        Permanent bomb = addReadyBomb(player1);
+        bomb.setCounterCount(CounterType.TIME, 1);
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(bomb.getCounterCount(CounterType.TIME)).isEqualTo(1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
+        harness.assertInGraveyard(player1, "Time Bomb");
+        harness.assertNotOnBattlefield(player1, "Time Bomb");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Each upkeep adds one counter only to its controller's Time Bomb")
+    void upkeepAccumulatesCountersOnlyOnActivePlayersBomb() {
+        Permanent ownBomb = addReadyBomb(player1);
+        Permanent opposingBomb = addReadyBomb(player2);
+        ownBomb.setCounterCount(CounterType.TIME, 2);
+        opposingBomb.setCounterCount(CounterType.TIME, 4);
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(ownBomb.getCounterCount(CounterType.TIME)).isEqualTo(3);
+        assertThat(opposingBomb.getCounterCount(CounterType.TIME)).isEqualTo(4);
+    }
 
     private Permanent addReadyBomb(Player player) {
         return harness.addToBattlefieldAndReturn(player, new TimeBomb());
