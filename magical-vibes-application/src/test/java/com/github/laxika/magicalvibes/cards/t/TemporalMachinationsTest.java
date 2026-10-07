@@ -6,7 +6,9 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
+import com.github.laxika.magicalvibes.cards.j.Juggernaut;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,9 +18,9 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TemporalMachinations.class, GrizzlyBears.class, Spellbook.class, Juggernaut.class})
 class TemporalMachinationsTest extends BaseCardTest {
 
-    // ===== Bounce without artifact — no draw =====
 
     @Test
     @DisplayName("Bounces target creature and does not draw when no artifact controlled")
@@ -31,8 +33,7 @@ class TemporalMachinationsTest extends BaseCardTest {
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetId);
 
         GameData gd = harness.getGameData();
         // Creature bounced
@@ -42,7 +43,6 @@ class TemporalMachinationsTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore - 1);
     }
 
-    // ===== Bounce with artifact — draw a card =====
 
     @Test
     @DisplayName("Bounces target creature and draws a card when controlling an artifact")
@@ -56,8 +56,7 @@ class TemporalMachinationsTest extends BaseCardTest {
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetId);
 
         GameData gd = harness.getGameData();
         // Creature bounced
@@ -67,7 +66,6 @@ class TemporalMachinationsTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
     }
 
-    // ===== Can bounce own creature =====
 
     @Test
     @DisplayName("Can bounce own creature")
@@ -78,14 +76,12 @@ class TemporalMachinationsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.WHITE, 2);
 
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetId);
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertInHand(player1, "Grizzly Bears");
     }
 
-    // ===== Cannot target non-creatures =====
 
     @Test
     @DisplayName("Cannot target an artifact that is not a creature")
@@ -102,7 +98,6 @@ class TemporalMachinationsTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
-    // ===== Opponent's artifact does not trigger draw =====
 
     @Test
     @DisplayName("Does not draw a card when only opponent controls an artifact")
@@ -116,8 +111,7 @@ class TemporalMachinationsTest extends BaseCardTest {
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetId);
 
         GameData gd = harness.getGameData();
         // Creature bounced
@@ -126,7 +120,6 @@ class TemporalMachinationsTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore - 1);
     }
 
-    // ===== Fizzle =====
 
     @Test
     @DisplayName("Fizzles if target creature is removed before resolution")
@@ -146,6 +139,100 @@ class TemporalMachinationsTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+        harness.assertInGraveyard(player1, "Temporal Machinations");
+    }
+
+    @Test
+    @DisplayName("Returning your only artifact creature does not draw a card")
+    void bouncingOnlyArtifactDoesNotDraw() {
+        harness.addToBattlefield(player1, new Juggernaut());
+        UUID targetId = harness.getPermanentId(player1, "Juggernaut");
+        harness.setHand(player1, List.of(new TemporalMachinations()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castAndResolveSorcery(player1, 0, targetId);
+
+        harness.assertNotOnBattlefield(player1, "Juggernaut");
+        harness.assertInHand(player1, "Juggernaut");
+        harness.assertNotInHand(player1, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Returning an artifact creature still draws if another artifact remains")
+    void bouncingArtifactWithAnotherArtifactDraws() {
+        harness.addToBattlefield(player1, new Juggernaut());
+        harness.addToBattlefield(player1, new Spellbook());
+        UUID targetId = harness.getPermanentId(player1, "Juggernaut");
+        harness.setHand(player1, List.of(new TemporalMachinations()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castAndResolveSorcery(player1, 0, targetId);
+
+        harness.assertInHand(player1, "Juggernaut");
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Spellbook");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An artifact gained before resolution enables the draw")
+    void artifactGainedBeforeResolutionEnablesDraw() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.setHand(player1, List.of(new TemporalMachinations()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castSorcery(player1, 0, targetId);
+        harness.addToBattlefield(player1, new Spellbook());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertInHand(player1, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An artifact lost before resolution prevents the draw")
+    void artifactLostBeforeResolutionPreventsDraw() {
+        harness.addToBattlefield(player1, new Spellbook());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.setHand(player1, List.of(new TemporalMachinations()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castSorcery(player1, 0, targetId);
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("An illegal sole target prevents the draw even with an artifact")
+    void illegalTargetPreventsArtifactDraw() {
+        harness.addToBattlefield(player1, new Spellbook());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.setHand(player1, List.of(new TemporalMachinations()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castSorcery(player1, 0, targetId);
+        gd.playerBattlefields.get(player2.getId()).clear();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
         harness.assertInGraveyard(player1, "Temporal Machinations");
     }
 }
