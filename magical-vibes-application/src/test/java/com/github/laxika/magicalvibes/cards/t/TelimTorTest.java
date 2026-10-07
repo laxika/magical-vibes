@@ -100,4 +100,57 @@ class TelimTorTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, herder)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, herder)).isEqualTo(1);
     }
+
+    @Test
+    @DisplayName("Flanking does not weaken a blocker that has flanking")
+    void flankingDoesNotWeakenFlankingBlocker() {
+        Permanent telimTor = addCreatureReady(player1, new TelimTor());
+        telimTor.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new MtendaHerder());
+
+        prepareDeclareBlockers();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, blocker)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, blocker)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The attack trigger checks which creatures are attacking when it resolves")
+    void doesNotBoostFlankerRemovedFromCombatBeforeResolution() {
+        Permanent telimTor = addCreatureReady(player1, new TelimTor());
+        Permanent herder = addCreatureReady(player1, new MtendaHerder());
+        addCreatureReady(player2, new FemerefScouts());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(List.of(0, 1)));
+        assertThat(gd.stack).hasSize(1);
+        herder.setAttacking(false);
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, telimTor)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, telimTor)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, herder)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, herder)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The attack trigger still boosts other attackers after Telim'Tor leaves the battlefield")
+    void attackTriggerResolvesWithoutItsSource() {
+        Permanent telimTor = addCreatureReady(player1, new TelimTor());
+        Permanent herder = addCreatureReady(player1, new MtendaHerder());
+        addCreatureReady(player2, new FemerefScouts());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(List.of(0, 1)));
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(telimTor);
+        gd.playerGraveyards.get(player1.getId()).add(telimTor.getCard());
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, herder)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, herder)).isEqualTo(2);
+    }
 }
