@@ -1,19 +1,24 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.j.JaceMemoryAdept;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({StaffOfNin.class, GrizzlyBears.class, LlanowarElves.class, JaceMemoryAdept.class})
 class StaffOfNinTest extends BaseCardTest {
 
     @Test
@@ -94,10 +99,117 @@ class StaffOfNinTest extends BaseCardTest {
     }
 
     private Permanent addReadyStaff(Player player) {
-        StaffOfNin card = new StaffOfNin();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new StaffOfNin());
+    }
+
+    @Test
+    @DisplayName("Can tap a Staff that entered this turn and pays the tap cost immediately")
+    void newlyEnteredStaffCanActivate() {
+        Permanent staff = harness.addToBattlefieldAndReturn(player1, new StaffOfNin());
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        assertThat(staff.isTapped()).isTrue();
+        harness.assertLife(player2, 20);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Deals damage to a planeswalker by removing one loyalty counter")
+    void dealsDamageToPlaneswalker() {
+        addReadyStaff(player1);
+        Permanent jace = harness.addToBattlefieldAndReturn(player2, new JaceMemoryAdept());
+        jace.setCounterCount(CounterType.LOYALTY, 4);
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, null, jace.getId());
+        harness.passBothPriorities();
+
+        assertThat(jace.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Damage ability still resolves after the Staff leaves the battlefield")
+    void damageResolvesWithoutSource() {
+        Permanent staff = addReadyStaff(player1);
+        harness.setLife(player2, 20);
+        harness.activateAbility(player1, 0, null, player2.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(staff);
+        gd.playerGraveyards.get(player1.getId()).add(staff.getCard());
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Damage ability does nothing when its only target leaves the battlefield")
+    void damageDoesNotResolveAgainstMissingTarget() {
+        Permanent staff = addReadyStaff(player1);
+        Permanent elves = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
+        harness.setLife(player2, 20);
+        harness.activateAbility(player1, 0, null, elves.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(elves);
+        gd.playerGraveyards.get(player2.getId()).add(elves.getCard());
+
+        harness.passBothPriorities();
+
+        assertThat(staff.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Upkeep draw uses the stack and resolves after the Staff leaves")
+    void upkeepDrawResolvesWithoutSource() {
+        Permanent staff = addReadyStaff(player1);
+        StaffOfNin nextCard = new StaffOfNin();
+        harness.setLibrary(player1, List.of(nextCard));
+        int before = gd.playerHands.get(player1.getId()).size();
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(before);
+        gd.playerBattlefields.get(player1.getId()).remove(staff);
+        gd.playerGraveyards.get(player1.getId()).add(staff.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(before + 1).contains(nextCard);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can target its own controller")
+    void dealsDamageToItsController() {
+        addReadyStaff(player1);
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+    }
+
+    @Test
+    @DisplayName("Each Staff triggers independently during its controller's upkeep")
+    void multipleStavesDrawOneCardEach() {
+        addReadyStaff(player1);
+        addReadyStaff(player1);
+        harness.setLibrary(player1, List.of(new StaffOfNin(), new StaffOfNin()));
+        int before = gd.playerHands.get(player1.getId()).size();
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(before + 2);
+        assertThat(gd.stack).isEmpty();
     }
 }
