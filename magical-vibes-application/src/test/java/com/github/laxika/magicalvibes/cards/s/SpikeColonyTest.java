@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.c.Conviction;
 import com.github.laxika.magicalvibes.cards.m.MoxDiamond;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -12,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SpikeColony.class, SpikeBreeder.class, MoxDiamond.class})
+@CardUsed({SpikeColony.class, SpikeBreeder.class, MoxDiamond.class, Conviction.class})
 class SpikeColonyTest extends BaseCardTest {
 
     private Permanent castColony() {
@@ -102,7 +103,11 @@ class SpikeColonyTest extends BaseCardTest {
     void cannotActivateWithoutCounter() {
         Permanent colony = castColony();
         Permanent target = harness.enterBattlefieldAndReturn(player1, new SpikeBreeder());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Conviction());
+        aura.setAttachedTo(colony.getId());
         colony.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+        harness.runStateBasedActions();
+        harness.assertOnBattlefield(player1, "Spike Colony");
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(
@@ -111,5 +116,51 @@ class SpikeColonyTest extends BaseCardTest {
                 .hasMessageContaining("Not enough counters");
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Can target itself, paying the counter before resolution")
+    void canTargetItself() {
+        Permanent colony = castColony();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, indexOf(colony), 0, null, colony.getId());
+
+        assertThat(colony.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        harness.passBothPriorities();
+        assertThat(colony.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Removing the last counter kills Colony but its ability still resolves")
+    void abilityResolvesAfterLastCounterKillsSource() {
+        Permanent colony = castColony();
+        Permanent target = harness.enterBattlefieldAndReturn(player1, new SpikeBreeder());
+        colony.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, indexOf(colony), 0, null, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Spike Colony");
+        harness.assertInGraveyard(player1, "Spike Colony");
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        harness.passBothPriorities();
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Targeting itself with the last counter cannot save Colony")
+    void lastCounterCannotSaveSourceByTargetingItself() {
+        Permanent colony = castColony();
+        colony.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, indexOf(colony), 0, null, colony.getId());
+        harness.assertInGraveyard(player1, "Spike Colony");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Spike Colony");
+        harness.assertInGraveyard(player1, "Spike Colony");
+        assertThat(gd.stack).isEmpty();
     }
 }
