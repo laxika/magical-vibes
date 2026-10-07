@@ -2,7 +2,10 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AcademyDrake;
+import com.github.laxika.magicalvibes.cards.i.IcyManipulator;
+import com.github.laxika.magicalvibes.cards.i.InBolassClutches;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -17,14 +20,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({TimeOfIce.class, AcademyDrake.class, IcyManipulator.class, InBolassClutches.class})
 class TimeOfIceTest extends BaseCardTest {
-
-    // ===== Chapter I: tap target creature an opponent controls =====
 
     @Test
     @DisplayName("ETB triggers chapter I which awaits creature target selection")
     void etbTriggersChapterITargetSelection() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new AcademyDrake());
         harness.setHand(player1, List.of(new TimeOfIce()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -44,7 +46,7 @@ class TimeOfIceTest extends BaseCardTest {
     @Test
     @DisplayName("Chapter I taps target opponent creature and prevents untap")
     void chapterITapsAndPreventsUntap() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new AcademyDrake());
         harness.setHand(player1, List.of(new TimeOfIce()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -52,7 +54,7 @@ class TimeOfIceTest extends BaseCardTest {
         harness.castEnchantment(player1, 0);
         harness.passBothPriorities(); // resolve enchantment → chapter I triggers, awaits target
 
-        Permanent bears = findCreature(player2, "Grizzly Bears");
+        Permanent bears = findPermanent(player2, "Academy Drake");
         assertThat(bears).isNotNull();
 
         // Choose opponent's creature as target
@@ -75,8 +77,8 @@ class TimeOfIceTest extends BaseCardTest {
     @DisplayName("Chapter I only allows targeting opponent's creatures")
     void chapterIOnlyTargetsOpponentCreatures() {
         // Put creatures on both sides
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new AcademyDrake());
+        harness.addToBattlefield(player2, new AcademyDrake());
         harness.setHand(player1, List.of(new TimeOfIce()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -88,8 +90,8 @@ class TimeOfIceTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
 
         // The valid choices should NOT include controller's own creatures
-        Permanent ownBears = findCreature(player1, "Grizzly Bears");
-        Permanent oppBears = findCreature(player2, "Grizzly Bears");
+        Permanent ownBears = findPermanent(player1, "Academy Drake");
+        Permanent oppBears = findPermanent(player2, "Academy Drake");
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).contains(oppBears.getId());
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).doesNotContain(ownBears.getId());
@@ -99,7 +101,7 @@ class TimeOfIceTest extends BaseCardTest {
     @DisplayName("Chapter I with no opponent creatures has no valid targets")
     void chapterINoOpponentCreaturesSkipsTargeting() {
         // Only controller has a creature
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new AcademyDrake());
         harness.setHand(player1, List.of(new TimeOfIce()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -107,26 +109,22 @@ class TimeOfIceTest extends BaseCardTest {
         harness.castEnchantment(player1, 0);
         harness.passBothPriorities(); // resolve enchantment → chapter I triggers
 
-        // No valid targets → chapter I should be on the stack with no target
-        assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                && e.getDescription().contains("chapter I")
-                && e.getTargetId() == null);
+        assertThat(gd.stack).noneMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                && e.getDescription().contains("chapter I"));
     }
-
-    // ===== Untap prevention while saga is on battlefield =====
 
     @Test
     @DisplayName("Locked creature does not untap during controller's untap step while saga is on battlefield")
     void lockedCreatureDoesNotUntapWhileSagaExists() {
         Permanent saga = addSagaWithLoreCounter(player1, 0);
-        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player2, new AcademyDrake());
 
         // Simulate chapter I resolution: tap creature and add untap lock
         bears.tap();
         bears.getUntapPreventedWhileSourceOnBattlefieldIds().add(saga.getId());
 
         // Advance to player2's turn — their creature should NOT untap
-        advanceToNextTurn(player1);
+        harness.performUntapStep(player2);
 
         assertThat(bears.isTapped()).isTrue();
     }
@@ -135,7 +133,7 @@ class TimeOfIceTest extends BaseCardTest {
     @DisplayName("Locked creature untaps when saga leaves the battlefield")
     void lockedCreatureUntapsWhenSagaRemoved() {
         Permanent saga = addSagaWithLoreCounter(player1, 0);
-        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player2, new AcademyDrake());
 
         // Simulate chapter I resolution
         bears.tap();
@@ -145,7 +143,7 @@ class TimeOfIceTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(saga);
 
         // Advance to player2's turn — creature should untap (saga gone)
-        advanceToNextTurn(player1);
+        harness.performUntapStep(player2);
 
         assertThat(bears.isTapped()).isFalse();
     }
@@ -154,31 +152,29 @@ class TimeOfIceTest extends BaseCardTest {
     @DisplayName("Locked creature remains locked across multiple turns while saga is on battlefield")
     void lockPersistsAcrossMultipleTurns() {
         Permanent saga = addSagaWithLoreCounter(player1, 0);
-        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        Permanent bears = addCreatureReady(player2, new AcademyDrake());
 
         // Simulate chapter I resolution
         bears.tap();
         bears.getUntapPreventedWhileSourceOnBattlefieldIds().add(saga.getId());
 
-        // Turn 1: player2's turn — creature stays tapped
-        advanceToNextTurn(player1);
+        // Player2's first untap step — creature stays tapped
+        harness.performUntapStep(player2);
         assertThat(bears.isTapped()).isTrue();
 
-        // Turn 2: player1's turn
-        advanceToNextTurn(player2);
+        // Player1's untap step
+        harness.performUntapStep(player1);
 
-        // Turn 3: player2's turn — creature STILL stays tapped
-        advanceToNextTurn(player1);
+        // Player2's next untap step — creature STILL stays tapped
+        harness.performUntapStep(player2);
         assertThat(bears.isTapped()).isTrue();
     }
-
-    // ===== Chapter II: same as chapter I =====
 
     @Test
     @DisplayName("Chapter II triggers and taps a second opponent creature")
     void chapterIITapsAnotherCreature() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new AcademyDrake());
+        harness.addToBattlefield(player2, new AcademyDrake());
         harness.addToBattlefield(player1, new TimeOfIce());
 
         Permanent saga = findSaga(player1);
@@ -196,7 +192,7 @@ class TimeOfIceTest extends BaseCardTest {
 
         // Choose the first untapped opponent creature
         Permanent target = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears") && !p.isTapped())
+                .filter(p -> p.getCard().getName().equals("Academy Drake") && !p.isTapped())
                 .findFirst().orElse(null);
         assertThat(target).isNotNull();
 
@@ -207,14 +203,12 @@ class TimeOfIceTest extends BaseCardTest {
         assertThat(target.getUntapPreventedWhileSourceOnBattlefieldIds()).isNotEmpty();
     }
 
-    // ===== Chapter III: return all tapped creatures =====
-
     @Test
     @DisplayName("Chapter III returns all tapped creatures to owners' hands")
     void chapterIIIReturnsAllTappedCreatures() {
         harness.addToBattlefield(player1, new TimeOfIce());
-        Permanent p1Bears = addCreatureReady(player1, new GrizzlyBears());
-        Permanent p2Bears = addCreatureReady(player2, new GrizzlyBears());
+        Permanent p1Bears = addCreatureReady(player1, new AcademyDrake());
+        Permanent p2Bears = addCreatureReady(player2, new AcademyDrake());
 
         // Tap both creatures
         p1Bears.tap();
@@ -233,23 +227,23 @@ class TimeOfIceTest extends BaseCardTest {
 
         // Both tapped creatures should be returned to their owners' hands
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"))).isFalse();
+                .anyMatch(p -> p.getCard().getName().equals("Academy Drake"))).isFalse();
         assertThat(gd.playerBattlefields.get(player2.getId()).stream()
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"))).isFalse();
+                .anyMatch(p -> p.getCard().getName().equals("Academy Drake"))).isFalse();
 
         // Cards should be in their owners' hands
         assertThat(gd.playerHands.get(player1.getId()).stream()
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"))).isTrue();
+                .anyMatch(c -> c.getName().equals("Academy Drake"))).isTrue();
         assertThat(gd.playerHands.get(player2.getId()).stream()
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"))).isTrue();
+                .anyMatch(c -> c.getName().equals("Academy Drake"))).isTrue();
     }
 
     @Test
     @DisplayName("Chapter III does not return untapped creatures")
     void chapterIIIDoesNotReturnUntappedCreatures() {
         harness.addToBattlefield(player1, new TimeOfIce());
-        Permanent tappedBears = addCreatureReady(player2, new GrizzlyBears());
-        Permanent untappedBears = addCreatureReady(player2, new GrizzlyBears());
+        Permanent tappedBears = addCreatureReady(player2, new AcademyDrake());
+        addCreatureReady(player2, new AcademyDrake());
 
         // Only tap one creature
         tappedBears.tap();
@@ -265,11 +259,9 @@ class TimeOfIceTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve chapter III
 
         // Only tapped creature should be gone; untapped creature stays
-        long remainingBears = countPermanents(player2, "Grizzly Bears");
+        long remainingBears = countPermanents(player2, "Academy Drake");
         assertThat(remainingBears).isEqualTo(1);
     }
-
-    // ===== Saga lifecycle =====
 
     @Test
     @DisplayName("Saga is sacrificed after chapter III resolves")
@@ -297,35 +289,87 @@ class TimeOfIceTest extends BaseCardTest {
         assertThat(sagaInGy).isTrue();
     }
 
-    // ===== Helpers =====
+    @Test
+    void chapterIExcludesNoncreaturePermanentsAndCannotBeSkipped() {
+        Permanent creature = addCreatureReady(player2, new AcademyDrake());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new IcyManipulator());
+        harness.setHand(player1, List.of(new TimeOfIce()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-    private Permanent findSaga(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Time of Ice"))
-                .findFirst().orElse(null);
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .contains(creature.getId())
+                .doesNotContain(artifact.getId(), player1.getId());
     }
 
-    private Permanent findCreature(Player player, String name) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals(name))
-                .findFirst().orElse(null);
+    @Test
+    void chapterIIExcludesNoncreaturePermanentsAndCannotBeSkipped() {
+        Permanent creature = addCreatureReady(player2, new AcademyDrake());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new IcyManipulator());
+        addSagaWithLoreCounter(player1, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DRAW);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .contains(creature.getId())
+                .doesNotContain(artifact.getId(), player1.getId());
+    }
+
+    @Test
+    void creatureUntapsAfterOpponentGainsControlOfSaga() {
+        Permanent creature = addCreatureReady(player2, new AcademyDrake());
+        harness.setHand(player1, List.of(new TimeOfIce()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, creature.getId());
+        harness.passBothPriorities();
+        assertThat(creature.isTapped()).isTrue();
+
+        Permanent saga = findSaga(player1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new InBolassClutches()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 4);
+        harness.castEnchantment(player2, 0, saga.getId());
+        harness.passBothPriorities();
+        assertThat(findSaga(player2)).isSameAs(saga);
+
+        harness.performUntapStep(player2);
+
+        assertThat(creature.isTapped()).isFalse();
+    }
+
+    @Test
+    void chapterIIIDoesNotReturnTappedNoncreatures() {
+        addSagaWithLoreCounter(player1, 2);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new IcyManipulator());
+        artifact.tap();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DRAW);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player2, "Icy Manipulator")).isSameAs(artifact);
+        assertThat(artifact.isTapped()).isTrue();
+    }
+
+    private Permanent findSaga(Player player) {
+        return findPermanent(player, "Time of Ice");
     }
 
     private Permanent addSagaWithLoreCounter(Player player, int loreCounters) {
-        Permanent saga = new Permanent(new TimeOfIce());
+        Permanent saga = harness.addToBattlefieldAndReturn(player, new TimeOfIce());
         saga.setCounterCount(CounterType.LORE, loreCounters);
-        gd.playerBattlefields.get(player.getId()).add(saga);
         return saga;
     }
 
-    private void advanceToNextTurn(Player currentActivePlayer) {
-        harness.forceActivePlayer(currentActivePlayer);
-        harness.setHand(player1, List.of());
-        harness.setHand(player2, List.of());
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // END_STEP -> CLEANUP
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // CLEANUP -> next turn (advanceTurn)
-    }
 }
