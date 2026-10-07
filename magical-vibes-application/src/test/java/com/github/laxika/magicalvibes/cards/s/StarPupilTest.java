@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -37,8 +36,7 @@ class StarPupilTest extends BaseCardTest {
         setupPlayer2Active();
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, pupil.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, pupil.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, bears.getId());
@@ -58,13 +56,73 @@ class StarPupilTest extends BaseCardTest {
         setupPlayer2Active();
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, pupil.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, pupil.getId());
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .containsExactly(harness.getPermanentId(player1, "Grizzly Bears"));
     }
 
+    @Test
+    @DisplayName("Dying without counters still requires a target")
+    void deathWithoutCountersStillTriggers() {
+        Permanent pupil = castStarPupil();
+        Permanent recipient = addCreatureReady(player1, new StarPupil());
+        recipient.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        pupil.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Star Pupil");
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactly(recipient.getId());
+        harness.handlePermanentChosen(player1, recipient.getId());
+        harness.passBothPriorities();
+
+        assertThat(recipient.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Transfers every kind of counter and adds to existing counters")
+    void deathTransfersAllCounterTypes() {
+        Permanent pupil = castStarPupil();
+        Permanent recipient = addCreatureReady(player1, new StarPupil());
+        recipient.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        recipient.setCounterCount(CounterType.CHARGE, 2);
+        pupil.setCounterCount(CounterType.CHARGE, 3);
+        pupil.setCounterCount(CounterType.FLYING, 1);
+        pupil.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, recipient.getId());
+        harness.passBothPriorities();
+
+        assertThat(recipient.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(recipient.getCounterCount(CounterType.CHARGE)).isEqualTo(5);
+        assertThat(recipient.getCounterCount(CounterType.FLYING)).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Star Pupil");
+    }
+
+    @Test
+    @DisplayName("Dying with no legal target does not transfer counters to the opponent")
+    void noControlledCreatureMeansNoTransfer() {
+        Permanent pupil = castStarPupil();
+        Permanent opponent = addCreatureReady(player2, new StarPupil());
+        opponent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        pupil.setCounterCount(CounterType.CHARGE, 2);
+        pupil.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Star Pupil");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(opponent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(opponent.getCounterCount(CounterType.CHARGE)).isZero();
+    }
     private void setupPlayer2Active() {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
