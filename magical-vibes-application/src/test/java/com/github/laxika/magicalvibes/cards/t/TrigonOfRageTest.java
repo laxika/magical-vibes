@@ -1,15 +1,12 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
-import com.github.laxika.magicalvibes.cards.g.GoblinPiker;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.cards.v.VulshokHeartstoker;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,52 +14,74 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({TrigonOfRage.class, VulshokHeartstoker.class})
 class TrigonOfRageTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    
-
     @Test
-    @DisplayName("Has two activated abilities")
-    void hasTwoActivatedAbilities() {
-        TrigonOfRage card = new TrigonOfRage();
+    @DisplayName("Charging taps immediately but adds the counter only on resolution")
+    void chargingUsesTheStackAndRequiresTap() {
+        Permanent trigon = harness.addToBattlefieldAndReturn(player1, new TrigonOfRage());
+        harness.addMana(player1, ManaColor.RED, 4);
 
-        assertThat(card.getActivatedAbilities()).hasSize(2);
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(trigon.isTapped()).isTrue();
+        assertThat(trigon.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.passBothPriorities();
+        assertThat(trigon.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
     }
 
     @Test
-    @DisplayName("First ability: {R}{R}, tap to put a charge counter")
-    void hasChargeCounterAbility() {
-        TrigonOfRage card = new TrigonOfRage();
+    @DisplayName("Boost removes its last charge counter as a cost and resolves without its source")
+    void boostPaysCounterBeforeResolutionAndSurvivesSourceRemoval() {
+        Permanent trigon = harness.addToBattlefieldAndReturn(player1, new TrigonOfRage());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new VulshokHeartstoker());
+        trigon.setCounterCount(CounterType.CHARGE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        var ability = card.getActivatedAbilities().get(0);
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost().toString()).isEqualTo("{R}{R}");
-        assertThat(ability.getEffects())
-                .hasSize(1)
-                .anyMatch(e -> e instanceof PutCountersOnSelfEffect);
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+
+        assertThat(trigon.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(trigon.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        gd.playerBattlefields.get(player1.getId()).remove(trigon);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 
     @Test
-    @DisplayName("Second ability: {2}, tap, remove charge counter to boost target creature +3/+0")
-    void hasBoostAbility() {
-        TrigonOfRage card = new TrigonOfRage();
+    @DisplayName("Boost cannot target a noncreature artifact")
+    void boostRejectsNoncreatureTarget() {
+        Permanent trigon = harness.addToBattlefieldAndReturn(player1, new TrigonOfRage());
+        trigon.setCounterCount(CounterType.CHARGE, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        var ability = card.getActivatedAbilities().get(1);
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost().toString()).isEqualTo("{2}");
-        assertThat(ability.isNeedsTarget()).isTrue();
-        assertThat(ability.getEffects())
-                .hasSize(2)
-                .anyMatch(e -> e instanceof RemoveCounterFromSourceCost rc && rc.count() == 1 && rc.counterType() == CounterType.CHARGE)
-                .anyMatch(e -> e instanceof BoostTargetCreatureEffect bte
-                        && bte.powerBoost().equals(new Fixed(3)) && bte.toughnessBoost().equals(new Fixed(0)));
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, trigon.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(trigon.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
+        assertThat(trigon.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 
-    // ===== Entering the battlefield with charge counters =====
+    @Test
+    @DisplayName("Boost requires two mana even with a charge counter available")
+    void boostRequiresTwoMana() {
+        Permanent trigon = harness.addToBattlefieldAndReturn(player1, new TrigonOfRage());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new VulshokHeartstoker());
+        trigon.setCounterCount(CounterType.CHARGE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(trigon.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+        assertThat(trigon.isTapped()).isFalse();
+    }
 
     @Test
     @DisplayName("Enters the battlefield with 3 charge counters")
@@ -77,14 +96,10 @@ class TrigonOfRageTest extends BaseCardTest {
         assertThat(trigon.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
     }
 
-    // ===== Ability 1: Put a charge counter =====
-
     @Test
     @DisplayName("Activating first ability adds a charge counter")
     void activateFirstAbilityAddsCounter() {
-        harness.addToBattlefield(player1, new TrigonOfRage());
-
-        Permanent trigon = findPermanent(player1, "Trigon of Rage");
+        Permanent trigon = harness.addToBattlefieldAndReturn(player1, new TrigonOfRage());
         trigon.setCounterCount(CounterType.CHARGE, 3);
 
         harness.addMana(player1, ManaColor.RED, 2);
@@ -98,9 +113,7 @@ class TrigonOfRageTest extends BaseCardTest {
     @Test
     @DisplayName("First ability requires red mana")
     void firstAbilityRequiresRedMana() {
-        harness.addToBattlefield(player1, new TrigonOfRage());
-
-        Permanent trigon = findPermanent(player1, "Trigon of Rage");
+        Permanent trigon = harness.addToBattlefieldAndReturn(player1, new TrigonOfRage());
         trigon.setCounterCount(CounterType.CHARGE, 3);
 
         // Only colorless mana, should fail
@@ -110,18 +123,13 @@ class TrigonOfRageTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Ability 2: Boost target creature =====
-
     @Test
     @DisplayName("Activating second ability gives target creature +3/+0 until end of turn")
     void activateSecondAbilityBoostsCreature() {
-        harness.addToBattlefield(player1, new TrigonOfRage());
-        harness.addToBattlefield(player2, new GoblinPiker());
-
-        Permanent trigon = findPermanent(player1, "Trigon of Rage");
+        Permanent trigon = harness.addToBattlefieldAndReturn(player1, new TrigonOfRage());
         trigon.setCounterCount(CounterType.CHARGE, 3);
 
-        Permanent target = findPermanent(player2, "Goblin Piker");
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new VulshokHeartstoker());
 
         int originalPower = gqs.getEffectivePower(gd, target);
         int originalToughness = gqs.getEffectiveToughness(gd, target);
@@ -142,40 +150,34 @@ class TrigonOfRageTest extends BaseCardTest {
     @Test
     @DisplayName("+3/+0 boost resets at end of turn cleanup")
     void boostResetsAtEndOfTurn() {
-        harness.addToBattlefield(player1, new TrigonOfRage());
-        harness.addToBattlefield(player2, new GoblinPiker());
-
-        Permanent trigon = findPermanent(player1, "Trigon of Rage");
+        Permanent trigon = harness.addToBattlefieldAndReturn(player1, new TrigonOfRage());
         trigon.setCounterCount(CounterType.CHARGE, 3);
 
-        Permanent target = findPermanent(player2, "Goblin Piker");
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new VulshokHeartstoker());
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         int trigonIndex = gd.playerBattlefields.get(player1.getId()).indexOf(trigon);
         harness.activateAbility(player1, trigonIndex, 1, null, target.getId());
         harness.passBothPriorities();
 
-        // Goblin Piker is 2/1, +3/+0 = 5/1
+        // Vulshok Heartstoker is 2/2, +3/+0 = 5/2
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        // Back to 2/1
+        // Back to 2/2
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
     }
 
     @Test
     @DisplayName("Cannot activate second ability with 0 charge counters")
     void cannotActivateBoostAbilityWithNoCounters() {
-        harness.addToBattlefield(player1, new TrigonOfRage());
-        harness.addToBattlefield(player2, new GoblinPiker());
-
-        Permanent trigon = findPermanent(player1, "Trigon of Rage");
+        Permanent trigon = harness.addToBattlefieldAndReturn(player1, new TrigonOfRage());
         trigon.setCounterCount(CounterType.CHARGE, 0);
 
-        Permanent target = findPermanent(player2, "Goblin Piker");
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new VulshokHeartstoker());
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         int trigonIndex = gd.playerBattlefields.get(player1.getId()).indexOf(trigon);
@@ -186,13 +188,10 @@ class TrigonOfRageTest extends BaseCardTest {
     @Test
     @DisplayName("Can boost multiple times by untapping between uses")
     void canBoostMultipleTimes() {
-        harness.addToBattlefield(player1, new TrigonOfRage());
-        harness.addToBattlefield(player2, new GoblinPiker());
-
-        Permanent trigon = findPermanent(player1, "Trigon of Rage");
+        Permanent trigon = harness.addToBattlefieldAndReturn(player1, new TrigonOfRage());
         trigon.setCounterCount(CounterType.CHARGE, 3);
 
-        Permanent target = findPermanent(player2, "Goblin Piker");
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new VulshokHeartstoker());
 
         // First activation
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -207,20 +206,17 @@ class TrigonOfRageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(trigon.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
-        // Goblin Piker is 2/1, +3/+0 twice = 8/1
+        // Vulshok Heartstoker is 2/2, +3/+0 twice = 8/2
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(8);
     }
 
     @Test
     @DisplayName("Cannot activate second ability while tapped")
     void cannotActivateWhileTapped() {
-        harness.addToBattlefield(player1, new TrigonOfRage());
-        harness.addToBattlefield(player2, new GoblinPiker());
-
-        Permanent trigon = findPermanent(player1, "Trigon of Rage");
+        Permanent trigon = harness.addToBattlefieldAndReturn(player1, new TrigonOfRage());
         trigon.setCounterCount(CounterType.CHARGE, 3);
 
-        Permanent target = findPermanent(player2, "Goblin Piker");
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new VulshokHeartstoker());
 
         // First activation taps it
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -238,13 +234,10 @@ class TrigonOfRageTest extends BaseCardTest {
     @Test
     @DisplayName("Ability fizzles if target creature is removed before resolution")
     void fizzlesIfTargetRemoved() {
-        harness.addToBattlefield(player1, new TrigonOfRage());
-        harness.addToBattlefield(player2, new GoblinPiker());
-
-        Permanent trigon = findPermanent(player1, "Trigon of Rage");
+        Permanent trigon = harness.addToBattlefieldAndReturn(player1, new TrigonOfRage());
         trigon.setCounterCount(CounterType.CHARGE, 3);
 
-        Permanent target = findPermanent(player2, "Goblin Piker");
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new VulshokHeartstoker());
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         int trigonIndex = gd.playerBattlefields.get(player1.getId()).indexOf(trigon);
