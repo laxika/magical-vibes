@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SyggRiverCutthroat.class, Shock.class, GrizzlyBears.class})
 class SyggRiverCutthroatTest extends BaseCardTest {
 
     @Test
@@ -25,10 +27,8 @@ class SyggRiverCutthroatTest extends BaseCardTest {
         // Two Shocks make the opponent lose 4 life (damage causes loss of life).
         harness.setHand(player1, List.of(new Shock(), new Shock()));
         harness.addMana(player1, ManaColor.RED, 2);
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.castAndResolveInstant(player1, 0, player2.getId());
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
 
         advanceToEndStep(player1);
@@ -49,10 +49,8 @@ class SyggRiverCutthroatTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Shock(), new Shock()));
         harness.addMana(player1, ManaColor.RED, 2);
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         advanceToEndStep(player1);
 
@@ -72,8 +70,7 @@ class SyggRiverCutthroatTest extends BaseCardTest {
         // A single Shock is only 2 life lost — below the threshold.
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         advanceToEndStep(player1);
 
@@ -91,13 +88,66 @@ class SyggRiverCutthroatTest extends BaseCardTest {
         // The controller loses 4 life this turn; no opponent lost any.
         harness.setHand(player1, List.of(new Shock(), new Shock()));
         harness.addMana(player1, ManaColor.RED, 2);
-        harness.castInstant(player1, 0, player1.getId());
-        harness.passBothPriorities();
-        harness.castInstant(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+        harness.castAndResolveInstant(player1, 0, player1.getId());
 
         advanceToEndStep(player1);
 
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void exactlyThreeLifeLostBeforeSyggEnteredStillCountsAfterLifeGain() {
+        harness.setLife(player2, 20);
+        harness.inMutationScope(() -> {
+            harness.getLifeSupport().applyLifeLoss(gd, player2.getId(), 3, "test");
+            harness.getLifeSupport().applyGainLife(gd, player2.getId(), 3);
+        });
+        harness.addToBattlefield(player1, new SyggRiverCutthroat());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+
+        advanceToEndStep(player1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player2, 20);
+        harness.assertInHand(player1, "Grizzly Bears");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void triggersDuringOpponentsEndStep() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.addToBattlefield(player1, new SyggRiverCutthroat());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        advanceToEndStep(player2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void lifeLostAfterEndStepBeginsDoesNotTriggerRetroactively() {
+        harness.addToBattlefield(player1, new SyggRiverCutthroat());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        advanceToEndStep(player1);
+        assertThat(gd.stack).isEmpty();
+
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }
