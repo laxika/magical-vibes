@@ -135,6 +135,57 @@ class SpikeFeederTest extends BaseCardTest {
                 .hasMessageContaining("Not enough counters");
     }
 
+    @Test
+    @DisplayName("Can target itself, paying the counter before resolution")
+    void canTargetItself() {
+        Permanent feeder = harness.enterBattlefieldAndReturn(player1, new SpikeFeeder());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, feeder.getId());
+
+        assertThat(feeder.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.passBothPriorities();
+        assertThat(feeder.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Targeting itself with its last counter cannot save it")
+    void targetingItselfWithLastCounterDoesNotSaveIt() {
+        Permanent feeder = harness.enterBattlefieldAndReturn(player1, new SpikeFeeder());
+        feeder.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, feeder.getId());
+
+        harness.assertNotOnBattlefield(player1, "Spike Feeder");
+        harness.assertInGraveyard(player1, "Spike Feeder");
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Spike Feeder");
+    }
+
+    @Test
+    @DisplayName("Can spend both counters before either life ability resolves")
+    void bothLifeAbilitiesResolveAfterSourceDies() {
+        Permanent feeder = harness.enterBattlefieldAndReturn(player1, new SpikeFeeder());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        assertThat(feeder.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.assertLife(player1, 20);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.assertNotOnBattlefield(player1, "Spike Feeder");
+        harness.assertInGraveyard(player1, "Spike Feeder");
+        harness.assertLife(player1, 20);
+
+        harness.passBothPriorities();
+        harness.assertLife(player1, 22);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 24);
+        harness.assertLife(player2, 20);
+    }
+
     private Permanent addReadyFeeder(com.github.laxika.magicalvibes.model.Player player) {
         Permanent perm = addCreatureReady(player, new SpikeFeeder());
         perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
