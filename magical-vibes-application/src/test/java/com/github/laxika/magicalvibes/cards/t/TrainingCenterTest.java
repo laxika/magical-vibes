@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed(TrainingCenter.class)
 class TrainingCenterTest extends BaseCardTest {
@@ -57,18 +58,59 @@ class TrainingCenterTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("Enters tapped when put onto the battlefield with one opponent")
+    void entersTappedWithoutBeingPlayed() {
+        Permanent permanent = harness.enterBattlefieldAndReturn(player1, new TrainingCenter());
+
+        assertThat(permanent.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Enters untapped when put onto the battlefield with two opponents")
+    void entersUntappedWithoutBeingPlayed() {
+        addThirdPlayer();
+
+        Permanent permanent = harness.enterBattlefieldAndReturn(player1, new TrainingCenter());
+
+        assertThat(permanent.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An untapped Training Center can produce mana immediately and only once")
+    void newlyEnteredLandProducesManaImmediatelyAndPaysTapCost() {
+        addThirdPlayer();
+        playTrainingCenter();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(findPermanent(player1, "Training Center").isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+    }
+
+    @Test
+    @DisplayName("A Training Center that entered tapped cannot produce mana")
+    void tappedLandCannotProduceMana() {
+        playTrainingCenter();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+    }
+
     private void playTrainingCenter() {
         harness.setHand(player1, List.of(new TrainingCenter()));
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
     }
 
-    private Permanent addReadyTrainingCenter() {
-        Permanent permanent = new Permanent(new TrainingCenter());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(permanent);
-        return permanent;
+    private void addReadyTrainingCenter() {
+        harness.addToBattlefield(player1, new TrainingCenter());
     }
 
     private void addThirdPlayer() {
