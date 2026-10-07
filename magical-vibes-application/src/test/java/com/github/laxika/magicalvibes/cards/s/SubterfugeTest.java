@@ -46,6 +46,7 @@ class SubterfugeTest extends BaseCardTest {
     @DisplayName("The temporary flying and draw ability expires at end of turn")
     void temporaryEffectsExpireAtEndOfTurn() {
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
         harness.setHand(player1, List.of(new Subterfuge()));
         addManaForCast();
 
@@ -58,15 +59,78 @@ class SubterfugeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bears.hasKeyword(Keyword.FLYING)).isFalse();
-        assertThat(bears.getTemporaryTriggeredEffects(com.github.laxika.magicalvibes.model.EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER))
-                .isEmpty();
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+        bears.setAttacking(true);
+        bears.setAttackTarget(player2.getId());
+        harness.setLife(player2, 20);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
+        resolveAllTriggers();
+        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
     }
 
     @Test
-    @DisplayName("Encore creates an attacking hasty token for each opponent and sacrifices it at the next end step")
-    void encoreCreatesAttackingTokenAndSacrificesIt() {
+    @DisplayName("Encore creates an untapped hasty token and sacrifices it at the next end step")
+    void encoreCreatesUntappedTokenAndSacrificesIt() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setGraveyard(player1, List.of(new Subterfuge()));
+        addManaForEncore();
+
+        harness.activateGraveyardAbility(player1, 0);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.exiledCards).hasSize(1);
+        resolveAllTriggers();
+
+        Permanent token = findPermanent(player1, "Subterfuge");
+        assertThat(token.getCard().isToken()).isTrue();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
+        assertThat(token.isTapped()).isFalse();
+        assertThat(token.isAttacking()).isFalse();
+        harness.handlePermanentChosen(player1, token.getId());
+        resolveAllTriggers();
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Subterfuge")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opposing creature receives the ability and its controller draws the cards")
+    void opposingCreatureControllerDraws() {
+        Permanent target = addCreatureReady(player2, new Subterfuge());
+        harness.setLibrary(player2, List.of(new Subterfuge(), new Subterfuge(), new Subterfuge(), new Subterfuge()));
+        harness.setHand(player1, List.of(new Subterfuge()));
+        addManaForCast();
+
+        harness.castCreature(player1, 0, target.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
+        int controllerHandBefore = gd.playerHands.get(player2.getId()).size();
+        int casterHandBefore = gd.playerHands.get(player1.getId()).size();
+        target.setAttacking(true);
+        target.setAttackTarget(player1.getId());
+        harness.setLife(player1, 20);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(17);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(controllerHandBefore + 3);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(casterHandBefore);
+    }
+
+    @Test
+    @DisplayName("Encore activated after combat creates a token that is not attacking")
+    void encoreAfterCombatDoesNotCreateAttacker() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.setGraveyard(player1, List.of(new Subterfuge()));
         addManaForEncore();
 
@@ -74,15 +138,10 @@ class SubterfugeTest extends BaseCardTest {
         resolveAllTriggers();
 
         Permanent token = findPermanent(player1, "Subterfuge");
-        assertThat(token.getCard().isToken()).isTrue();
-        assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
-        assertThat(token.isTapped()).isTrue();
-        assertThat(token.isAttacking()).isTrue();
-        assertThat(token.getAttackTarget()).isEqualTo(player2.getId());
+        assertThat(token.isAttacking()).isFalse();
+        assertThat(token.isTapped()).isFalse();
         harness.handlePermanentChosen(player1, token.getId());
         resolveAllTriggers();
-
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(player1, TurnStep.END_STEP);
         resolveAllTriggers();
 
