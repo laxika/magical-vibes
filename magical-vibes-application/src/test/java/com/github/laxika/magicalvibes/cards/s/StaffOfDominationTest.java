@@ -105,4 +105,81 @@ class StaffOfDominationTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
+
+    @Test
+    @DisplayName("Untapping the Staff allows another life-gain activation")
+    void canReuseStaffAfterUntapping() {
+        Permanent staff = harness.addToBattlefieldAndReturn(player1, new StaffOfDomination());
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        int lifeBefore = gd.getLife(player1.getId());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        assertThat(staff.isTapped()).isTrue();
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(staff.isTapped()).isFalse();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore + 2);
+        assertThat(staff.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A tapped Staff cannot pay a tap activation cost")
+    void tappedStaffCannotGainLife() {
+        Permanent staff = harness.addToBattlefieldAndReturn(player1, new StaffOfDomination());
+        staff.tap();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        int lifeBefore = gd.getLife(player1.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Life gain still resolves after the Staff leaves the battlefield")
+    void lifeGainResolvesWithoutSource() {
+        Permanent staff = harness.addToBattlefieldAndReturn(player1, new StaffOfDomination());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        int lifeBefore = gd.getLife(player1.getId());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        gd.playerBattlefields.get(player1.getId()).remove(staff);
+        harness.setGraveyard(player1, List.of(staff.getCard()));
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore + 1);
+    }
+
+    @Test
+    @DisplayName("Self-untap affects only the Staff that activated it")
+    void selfUntapDoesNotUntapAnotherStaff() {
+        Permanent staff = harness.addToBattlefieldAndReturn(player1, new StaffOfDomination());
+        Permanent otherStaff = harness.addToBattlefieldAndReturn(player1, new StaffOfDomination());
+        staff.tap();
+        otherStaff.tap();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(staff.isTapped()).isFalse();
+        assertThat(otherStaff.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Tap ability also rejects noncreature targets")
+    void tapAbilityRejectsNonCreatureTarget() {
+        Permanent staff = harness.addToBattlefieldAndReturn(player1, new StaffOfDomination());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 3, null, staff.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a creature");
+    }
 }
