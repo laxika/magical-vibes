@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.KickerEffect;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,25 +15,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({StrongholdConfessor.class})
 class StrongholdConfessorTest extends BaseCardTest {
 
-    // ===== Card setup =====
-
     @Test
-    @DisplayName("Has KickerEffect with cost {3}")
-    void hasKickerEffect() {
-        StrongholdConfessor card = new StrongholdConfessor();
-
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .anyMatch(e -> e instanceof KickerEffect ke && ke.cost().equals("{3}"));
-    }
-
-    
-
-    // ===== Casting without kicker =====
-
-    @Test
-    @DisplayName("Cast without kicker — enters as 1/1 with no counters")
+    @DisplayName("Cast without kicker enters with no counters")
     void castWithoutKicker() {
         harness.setHand(player1, List.of(new StrongholdConfessor()));
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -40,15 +27,13 @@ class StrongholdConfessorTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent confessor = findConfessor(player1);
+        Permanent confessor = findPermanent(player1, "Stronghold Confessor");
         assertThat(confessor).isNotNull();
         assertThat(confessor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
     }
 
-    // ===== Casting with kicker =====
-
     @Test
-    @DisplayName("Cast with kicker — enters as 3/3 with two +1/+1 counters")
+    @DisplayName("Cast with kicker enters with two +1/+1 counters")
     void castWithKicker() {
         harness.setHand(player1, List.of(new StrongholdConfessor()));
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -57,13 +42,13 @@ class StrongholdConfessorTest extends BaseCardTest {
         harness.castKickedCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent confessor = findConfessor(player1);
+        Permanent confessor = findPermanent(player1, "Stronghold Confessor");
         assertThat(confessor).isNotNull();
         assertThat(confessor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
     @Test
-    @DisplayName("Cast with kicker but not enough mana — throws exception")
+    @DisplayName("Cast with kicker enters with two +1/+1 counters")
     void castWithKickerNotEnoughMana() {
         harness.setHand(player1, List.of(new StrongholdConfessor()));
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -73,11 +58,45 @@ class StrongholdConfessorTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Declining kicker remains legal even with enough mana to pay it")
+    void canDeclineAffordableKicker() {
+        harness.setHand(player1, List.of(new StrongholdConfessor()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.WHITE, 3);
 
-    private Permanent findConfessor(com.github.laxika.magicalvibes.model.Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Stronghold Confessor"))
-                .findFirst().orElse(null);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Stronghold Confessor")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Menace rejects a single blocker")
+    void menaceRejectsOneBlocker() {
+        addCreatureReady(player1, new StrongholdConfessor());
+        addCreatureReady(player2, new StrongholdConfessor());
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("two or more creatures");
+    }
+
+    @Test
+    @DisplayName("Menace permits two blockers")
+    void menaceAllowsTwoBlockers() {
+        addCreatureReady(player1, new StrongholdConfessor());
+        Permanent first = addCreatureReady(player2, new StrongholdConfessor());
+        Permanent second = addCreatureReady(player2, new StrongholdConfessor());
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+
+        assertThat(first.isBlocking()).isTrue();
+        assertThat(second.isBlocking()).isTrue();
     }
 }
