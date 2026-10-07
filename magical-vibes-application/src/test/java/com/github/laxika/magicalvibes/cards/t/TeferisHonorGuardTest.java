@@ -123,6 +123,44 @@ class TeferisHonorGuardTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The phase-out ability can be activated while summoning sick")
+    void phasesOutWhileSummoningSick() {
+        Permanent guard = harness.addToBattlefieldAndReturn(player1, new TeferisHonorGuard());
+        guard.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(guard);
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).containsExactly(guard);
+    }
+
+    @Test
+    @DisplayName("A pending flanking trigger still weakens the blocker after the Guard phases out")
+    void flankingResolvesAfterSourcePhasesOut() {
+        Permanent guard = addCreatureReady(player1, new TeferisHonorGuard());
+        guard.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new Python());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(guard);
+        assertThat(blocker.getEffectivePower()).isEqualTo(3);
+        assertThat(blocker.getEffectiveToughness()).isEqualTo(2);
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(blocker);
+        assertThat(blocker.getEffectivePower()).isEqualTo(2);
+        assertThat(blocker.getEffectiveToughness()).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("Phasing out removes Teferi's Honor Guard from combat")
     void phasesOutRemovesItFromCombat() {
         Permanent guard = addCreatureReady(player1, new TeferisHonorGuard());
