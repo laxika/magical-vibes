@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.l.LilianaVess;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -17,7 +16,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(TheFallen.class)
+@CardUsed({TheFallen.class, LilianaVess.class})
 class TheFallenTest extends BaseCardTest {
 
     @Test
@@ -82,6 +81,76 @@ class TheFallenTest extends BaseCardTest {
         assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);
     }
 
+    @Test
+    void damageHistoryPersistsAcrossMultipleUpkeeps() {
+        addCreatureReady(player1, new TheFallen());
+        declareAttackers(List.of(0));
+        resolveCombat();
+
+        advanceToNextUpkeep(player1);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(17);
+
+        gd.turnNumber = 3;
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        assertThat(gd.getLife(player2.getId())).isEqualTo(16);
+    }
+
+    @Test
+    void doesNotTriggerOnOpponentsUpkeep() {
+        addCreatureReady(player1, new TheFallen());
+        declareAttackers(List.of(0));
+        resolveCombat();
+
+        advanceToNextUpkeep(player2);
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    void separateCopiesDoNotShareDamageHistory() {
+        addCreatureReady(player1, new TheFallen());
+        addCreatureReady(player1, new TheFallen());
+        declareAttackers(List.of(0));
+        resolveCombat();
+
+        advanceToNextUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(17);
+    }
+
+    @Test
+    void returningSourceDoesNotRememberItsPreviousDamage() {
+        TheFallen card = new TheFallen();
+        Permanent fallen = addCreatureReady(player1, card);
+        declareAttackers(List.of(0));
+        resolveCombat();
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToGraveyard(gd, fallen));
+        gd.playerGraveyards.get(player1.getId()).remove(card);
+        harness.enterBattlefieldAndReturn(player1, card);
+
+        advanceToNextUpkeep(player1);
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    void damagesMarkedPlaneswalkerEvenAfterItsControllerChanges() {
+        addCreatureReady(player1, new TheFallen());
+        Permanent planeswalker = addPlaneswalker(player2, 5);
+        declareAttackers(player1, List.of(0), Map.of(0, planeswalker.getId()));
+        resolveCombat();
+        gd.playerBattlefields.get(player2.getId()).remove(planeswalker);
+        gd.playerBattlefields.get(player1.getId()).add(planeswalker);
+
+        advanceToNextUpkeep(player1);
+
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+    }
+
     private void advanceToNextUpkeep(Player activePlayer) {
         gd.turnNumber = 2;
         advanceToUpkeep(activePlayer);
@@ -89,13 +158,8 @@ class TheFallenTest extends BaseCardTest {
     }
 
     private Permanent addPlaneswalker(Player player, int loyalty) {
-        Card card = new Card();
-        card.setName("Test Planeswalker");
-        card.setType(CardType.PLANESWALKER);
-        card.setLoyalty(loyalty);
-        Permanent permanent = new Permanent(card);
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new LilianaVess());
         permanent.setCounterCount(CounterType.LOYALTY, loyalty);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 
