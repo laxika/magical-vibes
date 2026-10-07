@@ -111,6 +111,72 @@ class TwilightDroverTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Returning tokens controlled by both players produces one counter per token")
+    void tokensFromBothPlayersLeavingAddSeparateCounters() {
+        Permanent drover = harness.addToBattlefieldAndReturn(player1, new TwilightDrover());
+        Permanent ownToken = addSaprolingToken(player1);
+        Permanent opposingToken = addSaprolingToken(player2);
+
+        harness.setHand(player1, List.of(new PeelFromReality()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.forceActivePlayer(player1);
+        harness.castAndResolveInstant(player1, 0, List.of(ownToken.getId(), opposingToken.getId()));
+        resolveAllTriggers();
+
+        assertThat(drover.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(findPermanents(player1, "Saproling")).hasSize(2);
+        assertThat(findPermanents(player2, "Saproling")).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Drover pays its counter immediately and creates 1/1 tokens")
+    void abilityDoesNotRequireTappingOrHasteAndPaysCounterBeforeResolution() {
+        Permanent drover = harness.addToBattlefieldAndReturn(player1, new TwilightDrover());
+        drover.setSummoningSick(true);
+        drover.setTapped(true);
+        drover.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(drover.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(findPermanents(player1, "Spirit")).isEmpty();
+
+        harness.passBothPriorities();
+
+        assertThat(drover.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(drover.isTapped()).isTrue();
+        assertThat(findPermanents(player1, "Spirit")).hasSize(2).allSatisfy(spirit -> {
+            assertThat(gqs.getEffectivePower(gd, spirit)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, spirit)).isEqualTo(1);
+        });
+    }
+
+    @Test
+    @DisplayName("The activated ability still creates tokens after Twilight Drover is destroyed")
+    void abilityResolvesAfterSourceLeavesBattlefield() {
+        Permanent drover = addCreatureReady(player1, new TwilightDrover());
+        drover.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.setHand(player2, List.of(new Putrefy()));
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, drover.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Twilight Drover");
+        assertThat(findPermanents(player1, "Spirit")).hasSize(2);
+        assertThat(findPermanents(player2, "Spirit")).isEmpty();
+    }
+
     private Permanent addSaprolingToken(Player player) {
         harness.setHand(player, List.of(new ScatterTheSeeds()));
         harness.addMana(player, ManaColor.COLORLESS, 3);
