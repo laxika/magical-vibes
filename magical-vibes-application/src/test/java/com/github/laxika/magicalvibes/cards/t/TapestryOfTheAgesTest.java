@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -66,8 +67,7 @@ class TapestryOfTheAgesTest extends BaseCardTest {
         gd.recordSpellCast(player1.getId(), new Cancel());
         Card drawn = new Forest();
         harness.setHand(player1, List.of());
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(drawn);
+        harness.setLibrary(player1, List.of(drawn));
         addActivationMana();
 
         harness.activateAbility(player1, 0, null, null);
@@ -76,10 +76,68 @@ class TapestryOfTheAgesTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
     }
 
+    @Test
+    @DisplayName("Casting Tapestry itself enables an immediate activation")
+    void castingTapestryEnablesImmediateActivation() {
+        harness.castFromHand(player1, new TapestryOfTheAges(), "{4}");
+        harness.passBothPriorities();
+        Card drawn = new TapestryOfTheAges();
+        harness.setLibrary(player1, List.of(drawn));
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An opponent's noncreature spell does not enable activation")
+    void opponentsNoncreatureSpellDoesNotEnableActivation() {
+        addReadyTapestry(player2);
+        harness.castFromHand(player1, new TapestryOfTheAges(), "{4}");
+        harness.passBothPriorities();
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.ensurePriority(player2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("noncreature spell");
+    }
+
+    @Test
+    @DisplayName("Casting a noncreature spell last turn does not enable activation")
+    void previousTurnsSpellDoesNotEnableActivation() {
+        harness.castFromHand(player1, new TapestryOfTheAges(), "{4}");
+        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+        addActivationMana();
+        harness.ensurePriority(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("noncreature spell");
+    }
+
+    @Test
+    @DisplayName("A tapped Tapestry cannot activate even after casting a noncreature spell")
+    void tappedTapestryCannotActivate() {
+        Permanent tapestry = addReadyTapestry(player1);
+        harness.castFromHand(player1, new TapestryOfTheAges(), "{4}");
+        harness.passBothPriorities();
+        tapestry.setTapped(true);
+        addActivationMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+    }
+
     private Permanent addReadyTapestry(Player player) {
-        Permanent tapestry = new Permanent(new TapestryOfTheAges());
+        Permanent tapestry = harness.addToBattlefieldAndReturn(player, new TapestryOfTheAges());
         tapestry.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(tapestry);
         return tapestry;
     }
 
