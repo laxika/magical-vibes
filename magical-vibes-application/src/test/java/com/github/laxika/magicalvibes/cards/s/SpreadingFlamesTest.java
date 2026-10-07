@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SpreadingFlames.class, GrizzlyBears.class, HillGiant.class})
 class SpreadingFlamesTest extends BaseCardTest {
 
     @Test
@@ -61,5 +63,75 @@ class SpreadingFlamesTest extends BaseCardTest {
         assertThatThrownBy(() ->
                 harness.castInstant(player1, 0, Map.of(target.getId(), 5))
         ).isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void canAssignAllDamageToOwnCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        harness.setHand(player1, List.of(new SpreadingFlames()));
+        harness.addMana(player1, ManaColor.RED, 7);
+
+        harness.castInstant(player1, 0, Map.of(target.getId(), 6));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Hill Giant");
+        harness.assertInGraveyard(player1, "Hill Giant");
+        harness.assertInGraveyard(player1, "Spreading Flames");
+    }
+
+    @Test
+    void cannotAssignZeroDamageToATarget() {
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.setHand(player1, List.of(new SpreadingFlames()));
+        harness.addMana(player1, ManaColor.RED, 7);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0,
+                Map.of(first.getId(), 6, second.getId(), 0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotCastWithoutTargets() {
+        harness.setHand(player1, List.of(new SpreadingFlames()));
+        harness.addMana(player1, ManaColor.RED, 7);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, Map.of()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void doesNotRedistributeDamageFromAnIllegalTarget() {
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.setHand(player1, List.of(new SpreadingFlames()));
+        harness.addMana(player1, ManaColor.RED, 7);
+
+        harness.castInstant(player1, 0, Map.of(first.getId(), 4, second.getId(), 2));
+        gd.playerBattlefields.get(player2.getId()).remove(first);
+        gd.playerHands.get(player2.getId()).add(first.getCard());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Hill Giant");
+        assertThat(second.getMarkedDamage()).isEqualTo(2);
+        harness.assertInGraveyard(player1, "Spreading Flames");
+    }
+
+    @Test
+    void canAssignOneDamageToEachOfSixCreatures() {
+        Map<java.util.UUID, Integer> assignments = new java.util.LinkedHashMap<>();
+        for (int i = 0; i < 6; i++) {
+            Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+            assignments.put(target.getId(), 1);
+        }
+        harness.setHand(player1, List.of(new SpreadingFlames()));
+        harness.addMana(player1, ManaColor.RED, 7);
+
+        harness.castInstant(player1, 0, assignments);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .hasSize(6)
+                .allSatisfy(p -> assertThat(p.getMarkedDamage()).isEqualTo(1));
     }
 }
