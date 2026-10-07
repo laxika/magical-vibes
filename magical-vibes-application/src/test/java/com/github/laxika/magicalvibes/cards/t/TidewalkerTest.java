@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.b.BruteForce;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -13,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Tidewalker.class, Island.class})
+@CardUsed({Tidewalker.class, Island.class, Timebender.class, BruteForce.class})
 class TidewalkerTest extends BaseCardTest {
 
     @Test
@@ -27,8 +28,7 @@ class TidewalkerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent tidewalker = findPermanent(player1, "Tidewalker");
         assertThat(tidewalker.getCounterCount(CounterType.TIME)).isEqualTo(2);
@@ -44,8 +44,7 @@ class TidewalkerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Tidewalker");
         harness.assertInGraveyard(player1, "Tidewalker");
@@ -91,4 +90,60 @@ class TidewalkerTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Tidewalker");
         harness.assertInGraveyard(player1, "Tidewalker");
     }
+
+    @Test
+    @DisplayName("Removing the last time counter with Timebender triggers sacrifice")
+    void externalLastCounterRemovalTriggersSacrifice() {
+        harness.setHand(player1, List.of(new Timebender()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        resolveAllTriggers();
+        Permanent timebender = findPermanent(player1, "Timebender");
+
+        Permanent tidewalker = addCreatureReady(player1, new Tidewalker());
+        tidewalker.setCounterCount(CounterType.TIME, 2);
+        harness.setHand(player1, List.of(new BruteForce()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, tidewalker.getId());
+
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(timebender));
+        harness.handleListChoice(player1, "Remove two time counters");
+        harness.handlePermanentChosen(player1, tidewalker.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Tidewalker");
+        harness.assertInGraveyard(player1, "Tidewalker");
+    }
+
+    @Test
+    @DisplayName("Vanishing does not trigger upkeep removal without a time counter")
+    void noUpkeepTriggerWithoutTimeCounters() {
+        Permanent tidewalker = addCreatureReady(player1, new Tidewalker());
+        tidewalker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Tidewalker");
+    }
+
+    @Test
+    @DisplayName("Island count is fixed on entry while power follows time counters")
+    void laterIslandsDoNotChangeTimeCountersOrPower() {
+        harness.addToBattlefield(player1, new Island());
+        harness.setHand(player1, List.of(new Tidewalker()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        Permanent tidewalker = findPermanent(player1, "Tidewalker");
+        harness.addToBattlefield(player1, new Island());
+
+        assertThat(tidewalker.getCounterCount(CounterType.TIME)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, tidewalker)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, tidewalker)).isEqualTo(1);
+    }
 }
+
