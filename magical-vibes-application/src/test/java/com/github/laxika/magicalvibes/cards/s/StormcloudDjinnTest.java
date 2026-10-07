@@ -16,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({StormcloudDjinn.class, CloudchaserKestrel.class, BenalishCavalry.class})
+@CardUsed({StormcloudDjinn.class, CloudchaserKestrel.class, BenalishCavalry.class, Snapback.class})
 class StormcloudDjinnTest extends BaseCardTest {
 
     @Test
@@ -93,5 +93,60 @@ class StormcloudDjinnTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(djinn.getPowerModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Repeated activations each boost the Djinn and damage its controller")
+    void repeatedActivationsAccumulate() {
+        Permanent djinn = addCreatureReady(player1, new StormcloudDjinn());
+        harness.addMana(player1, ManaColor.RED, 4);
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        int opponentLifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(djinn.getPowerModifier()).isZero();
+        harness.assertLife(player1, lifeBefore);
+        resolveAllTriggers();
+
+        assertThat(djinn.getPowerModifier()).isEqualTo(4);
+        assertThat(djinn.getToughnessModifier()).isZero();
+        harness.assertLife(player1, lifeBefore - 2);
+        harness.assertLife(player2, opponentLifeBefore);
+    }
+
+    @Test
+    @DisplayName("The ability still deals damage when the Djinn is returned to hand in response")
+    void damageStillOccursAfterSourceLeavesBattlefield() {
+        Permanent djinn = addCreatureReady(player1, new StormcloudDjinn());
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.setHand(player2, List.of(new Snapback()));
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.castAndResolveInstant(player2, 0, djinn.getId());
+        harness.assertInHand(player1, "Stormcloud Djinn");
+        harness.assertNotOnBattlefield(player1, "Stormcloud Djinn");
+        resolveAllTriggers();
+
+        harness.assertLife(player1, lifeBefore - 1);
+    }
+
+    @Test
+    @DisplayName("The ability can be activated while the Djinn is tapped and summoning sick")
+    void abilityDoesNotRequireTappingOrHaste() {
+        Permanent djinn = harness.addToBattlefieldAndReturn(player1, new StormcloudDjinn());
+        djinn.setTapped(true);
+        harness.addMana(player1, ManaColor.RED, 2);
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(djinn.getPowerModifier()).isEqualTo(2);
+        assertThat(djinn.isTapped()).isTrue();
+        harness.assertLife(player1, lifeBefore - 1);
     }
 }
