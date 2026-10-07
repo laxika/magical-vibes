@@ -3,9 +3,8 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.cards.w.WurmsTooth;
+import com.github.laxika.magicalvibes.cards.c.CrystalRod;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -17,9 +16,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import com.github.laxika.magicalvibes.cards.c.CrystalRod;
 
-@CardUsed({GloriousAnthem.class, GrizzlyBears.class, Island.class, TemporalAdept.class, WurmsTooth.class, CrystalRod.class})
+@CardUsed({GloriousAnthem.class, GrizzlyBears.class, Island.class, TemporalAdept.class, CrystalRod.class})
 class TemporalAdeptTest extends BaseCardTest {
 
     // ===== Activating ability =====
@@ -103,14 +101,14 @@ class TemporalAdeptTest extends BaseCardTest {
     @DisplayName("Resolving returns a target artifact to its owner's hand")
     void resolvingReturnsArtifact() {
         addReadyAdept(player1);
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new WurmsTooth());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new CrystalRod());
         harness.addMana(player1, ManaColor.BLUE, 3);
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Wurm's Tooth");
-        harness.assertInHand(player2, "Wurm's Tooth");
+        harness.assertNotOnBattlefield(player2, "Crystal Rod");
+        harness.assertInHand(player2, "Crystal Rod");
     }
 
     @Test
@@ -222,7 +220,7 @@ class TemporalAdeptTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+        assertThat(gameLogContains("fizzles")).isTrue();
     }
 
     // ===== Helpers =====
@@ -236,14 +234,14 @@ class TemporalAdeptTest extends BaseCardTest {
     @DisplayName("Resolving returns an opponent's noncreature permanent to its owner's hand")
     void resolvingReturnsOpponentNoncreaturePermanent() {
         addCreatureReady(player1, new TemporalAdept());
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new WurmsTooth());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new CrystalRod());
         harness.addMana(player1, ManaColor.BLUE, 3);
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Wurm's Tooth");
-        harness.assertInHand(player2, "Wurm's Tooth");
+        harness.assertNotOnBattlefield(player2, "Crystal Rod");
+        harness.assertInHand(player2, "Crystal Rod");
     }
 
     @Test
@@ -256,5 +254,28 @@ class TemporalAdeptTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("summoning sickness");
+    }
+
+    @Test
+    @DisplayName("Ability still resolves after Temporal Adept returns to hand")
+    void resolvesAfterSourceLeavesBattlefield() {
+        Permanent firstAdept = addCreatureReady(player1, new TemporalAdept());
+        addCreatureReady(player1, new TemporalAdept());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.BLUE, 6);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.activateAbility(player1, 1, null, firstAdept.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Temporal Adept");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInHand(player2, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
     }
 }
