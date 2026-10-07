@@ -1,13 +1,14 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AmbushViper;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,25 +17,18 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Splinterfright.class, AmbushViper.class, Plains.class})
 class SplinterfrightTest extends BaseCardTest {
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting Splinterfright puts it on the stack")
     void castingPutsItOnStack() {
-        harness.setHand(player1, List.of(new Splinterfright()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new Splinterfright(), "{2}{G}");
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Splinterfright");
+        assertThat(gd.stack.getFirst().getCard()).isInstanceOf(Splinterfright.class);
     }
-
-    // ===== Dynamic power/toughness =====
 
     @Test
     @DisplayName("Splinterfright is 0/0 with no creature cards in controller's graveyard")
@@ -79,13 +73,11 @@ class SplinterfrightTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, perm)).isEqualTo(2);
     }
 
-    // ===== Upkeep mill trigger =====
-
     @Test
     @DisplayName("Splinterfright mills 2 cards at controller's upkeep")
     void millsAtUpkeep() {
-        Permanent perm = addSplinterfrightReady(player1);
-        // Ensure Splinterfright has at least 1 toughness so it survives SBAs after mill resolves
+        addSplinterfrightReady(player1);
+        // Keep Splinterfright alive when state-based actions are checked.
         harness.setGraveyard(player1, createCreatureCards(1));
 
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
@@ -101,7 +93,8 @@ class SplinterfrightTest extends BaseCardTest {
     @Test
     @DisplayName("Mill trigger does NOT fire during opponent's upkeep")
     void millDoesNotFireDuringOpponentUpkeep() {
-        Permanent perm = addSplinterfrightReady(player1);
+        addSplinterfrightReady(player1);
+        harness.setGraveyard(player1, createCreatureCards(1));
 
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
 
@@ -115,16 +108,10 @@ class SplinterfrightTest extends BaseCardTest {
     @DisplayName("Milled creature cards increase Splinterfright's P/T")
     void milledCreaturesIncreasePT() {
         Permanent perm = addSplinterfrightReady(player1);
-        gd.playerGraveyards.get(player1.getId()).clear();
-        gd.playerGraveyards.get(player1.getId()).add(new GrizzlyBears());
+        harness.setGraveyard(player1, List.of(new AmbushViper()));
 
         // Put creature cards on top of library so they get milled
-        gd.playerDecks.get(player1.getId()).clear();
-        List<Card> deck = new ArrayList<>();
-        deck.add(new GrizzlyBears());
-        deck.add(new GrizzlyBears());
-        deck.add(new GrizzlyBears()); // extra card so library isn't empty
-        gd.playerDecks.get(player1.getId()).addAll(deck);
+        harness.setLibrary(player1, List.of(new AmbushViper(), new AmbushViper(), new AmbushViper()));
 
         assertThat(gqs.getEffectivePower(gd, perm)).isEqualTo(1);
 
@@ -136,20 +123,112 @@ class SplinterfrightTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, perm)).isEqualTo(3);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Splinterfright dies on resolution when its controller has no creature cards in the graveyard")
+    void diesOnResolutionWithEmptyGraveyard() {
+        Splinterfright card = new Splinterfright();
+        harness.castFromHand(player1, card, "{2}{G}");
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
+    }
+
+    @Test
+    @DisplayName("Splinterfright's defining ability works in hand and counts itself in the graveyard")
+    void definingAbilityWorksOutsideBattlefield() {
+        Splinterfright card = new Splinterfright();
+        harness.setHand(player1, List.of(card));
+        harness.setGraveyard(player1, List.of(new AmbushViper(), new Plains()));
+
+        assertThat(gqs.getEffectiveCardPower(gd, card)).isEqualTo(1);
+        assertThat(gqs.getEffectiveCardToughness(gd, card)).isEqualTo(1);
+
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of(card, new AmbushViper(), new Plains()));
+
+        assertThat(gqs.getEffectiveCardPower(gd, card)).isEqualTo(2);
+        assertThat(gqs.getEffectiveCardToughness(gd, card)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Splinterfright's power and toughness decrease when creature cards leave the graveyard")
+    void shrinksWhenCreaturesLeaveGraveyard() {
+        Permanent perm = addSplinterfrightReady(player1);
+        harness.setGraveyard(player1, createCreatureCards(3));
+        assertThat(gqs.getEffectivePower(gd, perm)).isEqualTo(3);
+
+        harness.setGraveyard(player1, createCreatureCards(1));
+
+        assertThat(gqs.getEffectivePower(gd, perm)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, perm)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The upkeep trigger mills the remaining card when the library contains only one card")
+    void millsOnlyRemainingCard() {
+        Permanent perm = addSplinterfrightReady(player1);
+        harness.setGraveyard(player1, createCreatureCards(1));
+        AmbushViper topCard = new AmbushViper();
+        harness.setLibrary(player1, List.of(topCard));
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(topCard).hasSize(2);
+        assertThat(gqs.getEffectivePower(gd, perm)).isEqualTo(2);
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+    }
+
+    @Test
+    @DisplayName("Milling an empty library does not cause a loss")
+    void millsEmptyLibraryWithoutLosing() {
+        addSplinterfrightReady(player1);
+        harness.setGraveyard(player1, createCreatureCards(1));
+        harness.setLibrary(player1, List.of());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+    }
+
+    @Test
+    @DisplayName("The upkeep ability still mills after Splinterfright dies")
+    void upkeepTriggerResolvesAfterSourceDies() {
+        Permanent perm = addSplinterfrightReady(player1);
+        harness.setGraveyard(player1, createCreatureCards(1));
+        Plains first = new Plains();
+        Plains second = new Plains();
+        harness.setLibrary(player1, List.of(first, second, new Plains()));
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.setGraveyard(player1, List.of());
+        harness.runStateBasedActions();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(perm);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(perm.getCard(), first, second);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
 
     private Permanent addSplinterfrightReady(Player player) {
-        Splinterfright card = new Splinterfright();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new Splinterfright());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
     private List<Card> createCreatureCards(int count) {
         List<Card> creatures = new ArrayList<>();
         for (int i = 0; i < count; i++) {
-            creatures.add(new GrizzlyBears());
+            creatures.add(new AmbushViper());
         }
         return creatures;
     }
