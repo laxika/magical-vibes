@@ -13,8 +13,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(SubterraneanCavern.class)
+@CardUsed({SubterraneanCavern.class})
 class SubterraneanCavernTest extends BaseCardTest {
 
     @Test
@@ -69,9 +70,52 @@ class SubterraneanCavernTest extends BaseCardTest {
     }
 
     private Permanent addReadyCavern(Player player) {
-        Permanent perm = new Permanent(new SubterraneanCavern());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new SubterraneanCavern());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
+    }
+
+    @Test
+    @DisplayName("Life gain waits for the entry trigger to resolve")
+    void lifeGainUsesStackAndOnlyBenefitsController() {
+        harness.setHand(player1, List.of(new SubterraneanCavern()));
+
+        harness.playLand(player1, 0);
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("A tapped cavern cannot activate its mana ability")
+    void tappedCavernCannotProduceMana() {
+        Permanent cavern = addReadyCavern(player1);
+        cavern.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
+    @DisplayName("An untapped noncreature cavern can produce mana the turn it enters")
+    void noncreatureLandCanProduceManaWhileSummoningSick() {
+        Permanent cavern = harness.addToBattlefieldAndReturn(player1, new SubterraneanCavern());
+        cavern.setSummoningSick(true);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+        assertThat(cavern.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
     }
 }
