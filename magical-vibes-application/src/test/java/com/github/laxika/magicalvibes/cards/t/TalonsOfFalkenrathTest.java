@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,21 +16,19 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TalonsOfFalkenrath.class, GrizzlyBears.class, FountainOfYouth.class})
 class TalonsOfFalkenrathTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Casting Talons of Falkenrath puts it on the stack")
     void castingPutsOnStack() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
+        Permanent bearsPerm = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
 
         harness.setHand(player1, List.of(new TalonsOfFalkenrath()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null);
+        harness.castEnchantment(player1, 0, bearsPerm.getId());
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ENCHANTMENT_SPELL);
@@ -39,14 +38,13 @@ class TalonsOfFalkenrathTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Talons of Falkenrath attaches it to target creature")
     void resolvingAttachesToTarget() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
+        Permanent bearsPerm = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
 
         harness.setHand(player1, List.of(new TalonsOfFalkenrath()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null);
+        harness.castEnchantment(player1, 0, bearsPerm.getId());
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
@@ -60,9 +58,8 @@ class TalonsOfFalkenrathTest extends BaseCardTest {
     @DisplayName("Can cast at instant speed when not the active player")
     void canCastAtInstantSpeedAsNonActivePlayer() {
         harness.forceActivePlayer(player2);
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
+        Permanent bearsPerm = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
 
         harness.setHand(player1, List.of(new TalonsOfFalkenrath()));
         harness.addMana(player1, ManaColor.RED, 2);
@@ -79,13 +76,11 @@ class TalonsOfFalkenrathTest extends BaseCardTest {
     @Test
     @DisplayName("Enchanted creature can activate pump ability for +2/+0")
     void grantedAbilityBoostsPower() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
+        Permanent bearsPerm = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
 
-        Permanent auraPerm = new Permanent(new TalonsOfFalkenrath());
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new TalonsOfFalkenrath());
         auraPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
 
         harness.addMana(player1, ManaColor.RED, 2);
 
@@ -99,13 +94,11 @@ class TalonsOfFalkenrathTest extends BaseCardTest {
     @Test
     @DisplayName("Can activate pump ability multiple times")
     void canActivatePumpMultipleTimes() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
+        Permanent bearsPerm = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
 
-        Permanent auraPerm = new Permanent(new TalonsOfFalkenrath());
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new TalonsOfFalkenrath());
         auraPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
 
         harness.addMana(player1, ManaColor.RED, 6);
 
@@ -123,13 +116,11 @@ class TalonsOfFalkenrathTest extends BaseCardTest {
     @Test
     @DisplayName("Pump boost resets at end of turn")
     void pumpResetsAtEndOfTurn() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
+        Permanent bearsPerm = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
 
-        Permanent auraPerm = new Permanent(new TalonsOfFalkenrath());
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new TalonsOfFalkenrath());
         auraPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
 
         harness.addMana(player1, ManaColor.RED, 4);
 
@@ -151,13 +142,11 @@ class TalonsOfFalkenrathTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate pump ability without enough mana")
     void cannotActivateWithoutMana() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
+        Permanent bearsPerm = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
 
-        Permanent auraPerm = new Permanent(new TalonsOfFalkenrath());
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new TalonsOfFalkenrath());
         auraPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
@@ -167,13 +156,11 @@ class TalonsOfFalkenrathTest extends BaseCardTest {
     @Test
     @DisplayName("Activating pump ability does not tap the creature")
     void pumpDoesNotTap() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
+        Permanent bearsPerm = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
 
-        Permanent auraPerm = new Permanent(new TalonsOfFalkenrath());
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new TalonsOfFalkenrath());
         auraPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
 
         harness.addMana(player1, ManaColor.RED, 2);
 
@@ -186,13 +173,11 @@ class TalonsOfFalkenrathTest extends BaseCardTest {
     @Test
     @DisplayName("Creature loses granted ability when Talons of Falkenrath is removed")
     void effectsStopWhenRemoved() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
+        Permanent bearsPerm = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
 
-        Permanent auraPerm = new Permanent(new TalonsOfFalkenrath());
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new TalonsOfFalkenrath());
         auraPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
 
         gd.playerBattlefields.get(player1.getId()).remove(auraPerm);
 
@@ -204,8 +189,7 @@ class TalonsOfFalkenrathTest extends BaseCardTest {
     @Test
     @DisplayName("Can target a creature with Talons of Falkenrath")
     void canTargetCreature() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new TalonsOfFalkenrath()));
         harness.addMana(player1, ManaColor.RED, 2);
 
@@ -232,20 +216,66 @@ class TalonsOfFalkenrathTest extends BaseCardTest {
     @Test
     @DisplayName("Talons of Falkenrath does not affect other creatures")
     void doesNotAffectOtherCreatures() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
+        Permanent bearsPerm = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
 
-        Permanent otherBears = new Permanent(new GrizzlyBears());
+        Permanent otherBears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         otherBears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(otherBears);
 
-        Permanent auraPerm = new Permanent(new TalonsOfFalkenrath());
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new TalonsOfFalkenrath());
         auraPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("no activated ability");
+    }
+
+    @Test
+    @DisplayName("The opposing enchanted creature's controller can activate its granted ability")
+    void opponentCanActivateGrantedAbility() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new TalonsOfFalkenrath()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.passPriority(player1);
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("An activated pump resolves after the granting Aura leaves")
+    void activatedPumpSurvivesAuraRemoval() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new TalonsOfFalkenrath());
+        aura.setAttachedTo(creature.getId());
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        gd.playerBattlefields.get(player1.getId()).remove(aura);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Generic mana cannot pay the red portion of the pump cost")
+    void pumpRequiresRedMana() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new TalonsOfFalkenrath());
+        aura.setAttachedTo(creature.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
     }
 }
