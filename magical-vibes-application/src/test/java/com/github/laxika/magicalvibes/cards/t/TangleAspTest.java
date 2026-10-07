@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.a.Arachnoid;
+import com.github.laxika.magicalvibes.cards.m.MagmaJet;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -14,8 +16,32 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TangleAsp.class, Arachnoid.class})
+@CardUsed({TangleAsp.class, Arachnoid.class, MagmaJet.class})
 class TangleAspTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("The blocker is still destroyed if Tangle Asp dies before its trigger resolves")
+    void triggerSurvivesSourceLeavingBattlefield() {
+        Permanent asp = addCreatureReady(player1, new TangleAsp());
+        asp.setAttacking(true);
+        addCreatureReady(player2, new Arachnoid());
+        harness.setHand(player2, List.of(new MagmaJet()));
+        harness.setLibrary(player2, List.of());
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.castAndResolveInstant(player2, 0, asp.getId());
+
+        harness.assertInGraveyard(player1, "Tangle Asp");
+        harness.assertOnBattlefield(player2, "Arachnoid");
+        resolveAllTriggers();
+        harness.assertOnBattlefield(player2, "Arachnoid");
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+
+        harness.assertInGraveyard(player2, "Arachnoid");
+        harness.assertNotOnBattlefield(player2, "Arachnoid");
+    }
 
     @Test
     @DisplayName("When Tangle Asp becomes blocked, it destroys the blocker at end of combat")
