@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,6 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({TempleOfEpiphany.class})
 class TempleOfEpiphanyTest extends BaseCardTest {
 
     @Test
@@ -76,6 +78,53 @@ class TempleOfEpiphanyTest extends BaseCardTest {
         }
     }
 
+    @Test
+    @DisplayName("Scrying may leave the top card and the rest of the library in order")
+    void scryKeepOnTop() {
+        Card top = new TempleOfEpiphany();
+        Card next = new TempleOfEpiphany();
+        harness.setLibrary(player1, List.of(top, next));
+        playTempleOfEpiphany(player1);
+
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top, next);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An empty library does not require a scry choice or cause a loss")
+    void emptyLibraryScry() {
+        harness.setLibrary(player1, List.of());
+        playTempleOfEpiphany(player1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.status).isEqualTo(com.github.laxika.magicalvibes.model.GameStatus.RUNNING);
+    }
+
+    @Test
+    @DisplayName("The enter trigger still scries its controller's library after the land leaves")
+    void scryAfterSourceLeaves() {
+        Card top = new TempleOfEpiphany();
+        Card next = new TempleOfEpiphany();
+        harness.setLibrary(player1, List.of(top, next));
+        playTempleOfEpiphany(player1);
+        Permanent temple = findTemple(player1);
+        gd.playerBattlefields.get(player1.getId()).remove(temple);
+        gd.playerGraveyards.get(player1.getId()).add(temple.getCard());
+
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards()).containsExactly(top);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(next, top);
+    }
+
     private void playTempleOfEpiphany(Player player) {
         harness.setHand(player, List.of(new TempleOfEpiphany()));
         harness.forceActivePlayer(player);
@@ -84,9 +133,8 @@ class TempleOfEpiphanyTest extends BaseCardTest {
     }
 
     private Permanent addTempleReady(Player player) {
-        Permanent temple = new Permanent(new TempleOfEpiphany());
+        Permanent temple = harness.addToBattlefieldAndReturn(player, new TempleOfEpiphany());
         temple.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(temple);
         return temple;
     }
 
