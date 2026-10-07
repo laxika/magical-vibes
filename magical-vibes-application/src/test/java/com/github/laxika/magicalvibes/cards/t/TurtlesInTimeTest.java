@@ -75,11 +75,89 @@ class TurtlesInTimeTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(5);
     }
 
+    @Test
+    @DisplayName("Both players can decline without changing their hands, graveyards, or libraries")
+    void bothPlayersDecline() {
+        Card spell = new TurtlesInTime();
+        Card firstHand = new GrizzlyBears();
+        Card secondHand = new GrizzlyBears();
+        Card firstGraveyard = new GrizzlyBears();
+        Card secondGraveyard = new GrizzlyBears();
+        harness.setHand(player1, List.of(spell, firstHand));
+        harness.setHand(player2, List.of(secondHand));
+        harness.setGraveyard(player1, List.of(firstGraveyard));
+        harness.setGraveyard(player2, List.of(secondGraveyard));
+        fillLibrary(player1, 10);
+        fillLibrary(player2, 10);
+        List<Card> firstLibrary = List.copyOf(gd.playerDecks.get(player1.getId()));
+        List<Card> secondLibrary = List.copyOf(gd.playerDecks.get(player2.getId()));
+
+        castTurtlesInTime();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstHand);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(secondHand);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(firstGraveyard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(secondGraveyard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyElementsOf(firstLibrary);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactlyElementsOf(secondLibrary);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spell);
+    }
+
+    @Test
+    @DisplayName("All choices are made before either accepting player's zones change")
+    void bothPlayersAcceptAfterAllChoices() {
+        Card spell = new TurtlesInTime();
+        Card firstHand = new GrizzlyBears();
+        Card firstGraveyard = new GrizzlyBears();
+        harness.setHand(player1, List.of(spell, firstHand));
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.setGraveyard(player1, List.of(firstGraveyard));
+        harness.setGraveyard(player2, List.of(new GrizzlyBears()));
+        fillLibrary(player1, 10);
+        fillLibrary(player2, 10);
+
+        castTurtlesInTime();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstHand);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(firstGraveyard);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(10);
+
+        harness.handleMayAbilityChosen(player2, true);
+
+        for (Player player : List.of(player1, player2)) {
+            assertThat(gd.playerHands.get(player.getId())).hasSize(7).doesNotContain(spell);
+            assertThat(gd.playerGraveyards.get(player.getId())).isEmpty();
+            assertThat(gd.playerDecks.get(player.getId())).hasSize(5).doesNotContain(spell);
+        }
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spell);
+    }
+
+    @Test
+    @DisplayName("A player with an empty hand and graveyard can still choose to draw seven")
+    void emptyZonesCanStillBeShuffled() {
+        harness.setHand(player1, List.of(new TurtlesInTime()));
+        harness.setHand(player2, List.of());
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of());
+        fillLibrary(player1, 10);
+        fillLibrary(player2, 10);
+
+        castTurtlesInTime();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(7);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(3);
+    }
+
     private void castTurtlesInTime() {
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 5);
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
     }
 
     private void fillLibrary(Player player, int count) {
