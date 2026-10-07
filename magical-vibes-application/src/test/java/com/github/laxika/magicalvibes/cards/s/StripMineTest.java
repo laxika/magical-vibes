@@ -16,7 +16,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({StripMine.class})
+@CardUsed({StripMine.class, Forest.class, GrizzlyBears.class})
 class StripMineTest extends BaseCardTest {
 
     @Test
@@ -89,10 +89,8 @@ class StripMineTest extends BaseCardTest {
     @CardUsed({Forest.class})
     @DisplayName("Cannot activate destroy ability when already tapped")
     void cannotActivateWhenTapped() {
-        harness.addToBattlefield(player1, new StripMine());
+        harness.addToBattlefieldAndReturn(player1, new StripMine()).tap();
         UUID targetId = harness.addToBattlefieldAndReturn(player2, new Forest()).getId();
-        GameData gd = harness.getGameData();
-        gd.playerBattlefields.get(player1.getId()).getFirst().tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, targetId))
                 .isInstanceOf(IllegalStateException.class);
@@ -122,5 +120,53 @@ class StripMineTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Strip Mine");
         harness.assertInGraveyard(player1, "Strip Mine");
         harness.assertOnBattlefield(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("Mana ability resolves immediately, taps the land, and does not sacrifice it")
+    void manaAbilityResolvesImmediately() {
+        var stripMine = harness.addToBattlefieldAndReturn(player1, new StripMine());
+        int manaBefore = gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(manaBefore + 1);
+        assertThat(stripMine.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Strip Mine");
+        harness.assertNotInGraveyard(player1, "Strip Mine");
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can destroy an opponent's nonbasic land")
+    void destroysNonbasicLand() {
+        harness.addToBattlefield(player1, new StripMine());
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new StripMine()).getId();
+
+        harness.activateAbility(player1, 0, 1, null, targetId);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Strip Mine");
+        harness.assertInGraveyard(player2, "Strip Mine");
+    }
+
+    @Test
+    @DisplayName("Ability has no effect when its target is sacrificed in response")
+    void targetSacrificedInResponse() {
+        harness.addToBattlefield(player1, new StripMine());
+        UUID forestId = harness.addToBattlefieldAndReturn(player1, new Forest()).getId();
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new StripMine()).getId();
+
+        harness.activateAbility(player1, 0, 1, null, targetId);
+        harness.activateAbility(player2, 0, 1, null, forestId);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertInGraveyard(player1, "Strip Mine");
+        harness.assertInGraveyard(player2, "Strip Mine");
+        assertThat(gd.stack).isEmpty();
     }
 }
