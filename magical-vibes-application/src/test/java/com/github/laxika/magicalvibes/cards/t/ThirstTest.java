@@ -2,11 +2,11 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.b.BayFalcon;
 import com.github.laxika.magicalvibes.cards.c.CursedTotem;
+import com.github.laxika.magicalvibes.cards.e.EnchantmentAlteration;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -17,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Thirst.class, BayFalcon.class, CursedTotem.class})
+@CardUsed({Thirst.class, BayFalcon.class, CursedTotem.class, EnchantmentAlteration.class})
 class ThirstTest extends BaseCardTest {
 
     private Permanent attachThirst(Player auraController, Permanent enchanted) {
@@ -48,7 +48,7 @@ class ThirstTest extends BaseCardTest {
         creature.tap();
         attachThirst(player1, creature);
 
-        advanceToNextTurn(player1);
+        harness.performUntapStep(player2);
 
         assertThat(creature.isTapped()).isTrue();
     }
@@ -61,7 +61,7 @@ class ThirstTest extends BaseCardTest {
         Permanent aura = attachThirst(player1, creature);
 
         gd.playerBattlefields.get(player1.getId()).remove(aura);
-        advanceToNextTurn(player1);
+        harness.performUntapStep(player2);
 
         assertThat(creature.isTapped()).isFalse();
     }
@@ -121,13 +121,41 @@ class ThirstTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
-    private void advanceToNextTurn(Player currentActivePlayer) {
-        Player nextActivePlayer = currentActivePlayer == player1 ? player2 : player1;
-        harness.forceActivePlayer(currentActivePlayer);
-        harness.setHand(player1, List.of());
-        harness.setHand(player2, List.of());
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passUntil(nextActivePlayer, TurnStep.UNTAP);
+    @Test
+    @CardUsed({Thirst.class, BayFalcon.class, EnchantmentAlteration.class})
+    @DisplayName("The enter trigger taps the current enchanted creature after Thirst moves")
+    void enterTriggerFollowsMovedAura() {
+        Permanent original = addCreatureReady(player2, new BayFalcon());
+        Permanent destination = addCreatureReady(player2, new BayFalcon());
+        harness.setHand(player1, List.of(new Thirst(), new EnchantmentAlteration()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castEnchantment(player1, 0, original.getId());
+        harness.passBothPriorities();
+        Permanent aura = findPermanent(player1, "Thirst");
+        assertThat(original.isTapped()).isFalse();
+
+        harness.castInstant(player1, 0, aura.getId());
+        harness.passBothPriorities();
+        assertThat(aura.getAttachedTo()).isEqualTo(destination.getId());
+        harness.passBothPriorities();
+
+        assertThat(destination.isTapped()).isTrue();
+        assertThat(original.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Thirst prevents only the enchanted creature from untapping")
+    void otherCreaturesStillUntap() {
+        Permanent enchanted = addCreatureReady(player2, new BayFalcon());
+        Permanent other = addCreatureReady(player2, new BayFalcon());
+        enchanted.tap();
+        other.tap();
+        attachThirst(player1, enchanted);
+
+        harness.performUntapStep(player2);
+
+        assertThat(enchanted.isTapped()).isTrue();
+        assertThat(other.isTapped()).isFalse();
     }
 }
