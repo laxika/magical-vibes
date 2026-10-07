@@ -78,4 +78,76 @@ class TriskelavusTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("A newly cast, tapped Triskelavus can spend all three counters")
+    void canUseAllCountersWhileSummoningSickAndTapped() {
+        harness.setHand(player1, List.of(new Triskelavus()));
+        harness.addMana(player1, ManaColor.COLORLESS, 10);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent triskelavus = findPermanent(player1, "Triskelavus");
+        triskelavus.tap();
+        for (int i = 0; i < 3; i++) {
+            harness.activateAbility(player1, 0, 0, null, null);
+            assertThat(triskelavus.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2 - i);
+            harness.passBothPriorities();
+        }
+
+        assertThat(countPermanents(player1, "Triskelavite")).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, triskelavus)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, triskelavus)).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Triskelavus");
+    }
+
+    @Test
+    @DisplayName("Creating a token requires mana and does not remove a counter when payment fails")
+    void cannotCreateTokenWithoutMana() {
+        Permanent triskelavus = addCreatureReady(player1, new Triskelavus());
+        triskelavus.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(triskelavus.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        harness.assertNotOnBattlefield(player1, "Triskelavite");
+    }
+
+    @Test
+    @DisplayName("A new Triskelavite can sacrifice itself immediately to deal lethal damage to a creature")
+    void tokenCanDealLethalDamageToCreature() {
+        Permanent triskelavus = addCreatureReady(player1, new Triskelavus());
+        triskelavus.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        Permanent target = addCreatureReady(player2, new Triskelavus());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 1, null, target.getId());
+        harness.assertNotOnBattlefield(player1, "Triskelavite");
+        harness.assertOnBattlefield(player2, "Triskelavus");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Triskelavus");
+        harness.assertInGraveyard(player2, "Triskelavus");
+    }
+
+    @Test
+    @DisplayName("A Triskelavite may target itself but is sacrificed before its ability resolves")
+    void tokenCanTargetItself() {
+        Permanent triskelavus = addCreatureReady(player1, new Triskelavus());
+        triskelavus.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        Permanent token = findPermanent(player1, "Triskelavite");
+        harness.activateAbility(player1, 1, null, token.getId());
+        harness.assertNotOnBattlefield(player1, "Triskelavite");
+        harness.passBothPriorities();
+
+        assertThat(triskelavus.getMarkedDamage()).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
 }
