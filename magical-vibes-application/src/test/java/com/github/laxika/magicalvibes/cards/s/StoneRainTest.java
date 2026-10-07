@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -99,6 +98,23 @@ class StoneRainTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A regeneration shield prevents land destruction and is consumed")
+    void landCanRegenerate() {
+        var mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
+        mountain.setRegenerationShield(1);
+        harness.setHand(player1, List.of(new StoneRain()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 0, mountain.getId());
+
+        harness.assertOnBattlefield(player2, "Mountain");
+        harness.assertNotInGraveyard(player2, "Mountain");
+        assertThat(mountain.isTapped()).isTrue();
+        assertThat(mountain.getRegenerationShield()).isZero();
+        harness.assertInGraveyard(player1, "Stone Rain");
+    }
+
+    @Test
     @DisplayName("Fizzles if target is removed before resolution")
     void fizzlesIfTargetRemoved() {
         harness.addToBattlefield(player2, new Mountain());
@@ -112,8 +128,7 @@ class StoneRainTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+        assertThat(gameLogContains("fizzles")).isTrue();
     }
 
     @Test
@@ -132,8 +147,7 @@ class StoneRainTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Mountain");
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
-                .anyMatch(log -> log.contains("fizzles"));
+        assertThat(gameLogContains("fizzles")).isTrue();
         harness.assertInGraveyard(player1, "Stone Rain");
     }
 
