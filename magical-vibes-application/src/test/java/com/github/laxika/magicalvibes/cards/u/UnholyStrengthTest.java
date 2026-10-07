@@ -158,6 +158,25 @@ class UnholyStrengthTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Two Unholy Strengths on the same creature grant a combined +4/+2")
+    void multipleAurasStackTheirBoosts() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new UnholyStrength(), new UnholyStrength()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Unholy Strength"))
+                .hasSize(2)
+                .allSatisfy(aura -> assertThat(aura.getAttachedTo()).isEqualTo(bears.getId()));
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
+    }
+
+    @Test
     @DisplayName("Cannot target a noncreature permanent with Unholy Strength")
     void cannotTargetNonCreature() {
         Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
