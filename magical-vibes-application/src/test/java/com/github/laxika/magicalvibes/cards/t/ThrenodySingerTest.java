@@ -64,12 +64,74 @@ class ThrenodySingerTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void devotionIsCountedAtResolutionAndDoesNotChangeAfterward() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ThrenodySinger());
+        castSingerWithoutResolving(target);
+        harness.passBothPriorities();
+
+        Permanent additionalSinger = harness.addToBattlefieldAndReturn(player1, new ThrenodySinger());
+        harness.passBothPriorities();
+
+        assertThat(target.getEffectivePower()).isEqualTo(-1);
+        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+
+        gd.playerBattlefields.get(player1.getId()).remove(additionalSinger);
+        assertThat(target.getEffectivePower()).isEqualTo(-1);
+    }
+
+    @Test
+    void removedSourceDoesNotCountTowardDevotionWhenTriggerResolves() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ThrenodySinger());
+        castSingerWithoutResolving(target);
+        harness.passBothPriorities();
+
+        Permanent singer = gd.playerBattlefields.get(player1.getId()).getFirst();
+        gd.playerBattlefields.get(player1.getId()).remove(singer);
+        gd.playerGraveyards.get(player1.getId()).add(singer.getCard());
+        harness.passBothPriorities();
+
+        assertThat(target.getEffectivePower()).isEqualTo(1);
+        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void canBeCastDuringOpponentsTurn() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ThrenodySinger());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+
+        castSinger(target);
+
+        harness.assertOnBattlefield(player1, "Threnody Singer");
+        assertThat(target.getEffectivePower()).isZero();
+        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+    }
+
+    @Test
+    void canEnterWhenOpponentControlsNoCreatures() {
+        harness.setHand(player1, List.of(new ThrenodySinger()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Threnody Singer");
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void castSinger(Permanent target) {
+        castSingerWithoutResolving(target);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+    }
+
+    private void castSingerWithoutResolving(Permanent target) {
         harness.setHand(player1, List.of(new ThrenodySinger()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castCreature(player1, 0, target.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
     }
 }
