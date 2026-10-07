@@ -112,6 +112,68 @@ class ThornscapeBattlemageTest extends BaseCardTest {
                 .doesNotContain(creature.getId(), player1.getId());
     }
 
+    @Test
+    @DisplayName("Both kickers create two separate triggered abilities")
+    void bothKickersCreateSeparateTriggeredAbilities() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new ManaCylix());
+        harness.setHand(player1, List.of(new ThornscapeBattlemage()));
+        addMana(ManaColor.RED, ManaColor.WHITE);
+
+        castWithAdditionalCosts(List.of("{W}"), player2.getId(), true);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, artifact.getId());
+
+        assertThat(gd.stack).hasSize(2);
+        harness.assertLife(player2, 20);
+        harness.assertOnBattlefield(player2, "Mana Cylix");
+    }
+
+    @Test
+    @DisplayName("White kicker can be paid when there are no artifacts")
+    void whiteKickerWithoutLegalTarget() {
+        harness.setHand(player1, List.of(new ThornscapeBattlemage()));
+        addMana(ManaColor.WHITE);
+
+        harness.castCreatureWithRepeatedCosts(player1, 0, List.of("{W}"));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Thornscape Battlemage");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Entering without being cast does not trigger either kicker ability")
+    void enteringWithoutCastingDoesNotTriggerKickers() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new ManaCylix());
+
+        harness.enterBattlefieldAndReturn(player1, new ThornscapeBattlemage());
+
+        harness.assertOnBattlefield(player1, "Thornscape Battlemage");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(artifact);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Both kickers still deal damage when there is no artifact target")
+    void bothKickersWithoutArtifactStillDealDamage() {
+        harness.setHand(player1, List.of(new ThornscapeBattlemage()));
+        addMana(ManaColor.RED, ManaColor.WHITE);
+
+        castWithAdditionalCosts(List.of("{W}"), player2.getId(), true);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Thornscape Battlemage");
+        harness.assertLife(player2, 18);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
     private void addMana(ManaColor... colored) {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.GREEN, 1);
