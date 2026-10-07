@@ -1,7 +1,11 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.a.ArtificialEvolution;
+import com.github.laxika.magicalvibes.cards.b.Bitterblossom;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -9,10 +13,12 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ThallidGerminator.class, GrizzlyBears.class})
+@CardUsed({ThallidGerminator.class, GrizzlyBears.class, ArtificialEvolution.class, Bitterblossom.class})
 class ThallidGerminatorTest extends BaseCardTest {
 
     @Test
@@ -20,10 +26,7 @@ class ThallidGerminatorTest extends BaseCardTest {
     void upkeepTriggerAddsSporeCounter() {
         Permanent thallid = addThallid();
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        advanceToUpkeep(player1);
         harness.passBothPriorities();
 
         assertThat(thallid.getCounterCount(CounterType.FUNGUS)).isEqualTo(1);
@@ -99,9 +102,107 @@ class ThallidGerminatorTest extends BaseCardTest {
         assertThat(target.getToughnessModifier()).isZero();
     }
 
-    private Permanent addThallid() {
+    @Test
+    void opponentUpkeepDoesNotAddSporeCounter() {
+        Permanent thallid = addThallid();
+
+        advanceToUpkeep(player2);
+
+        assertThat(thallid.getCounterCount(CounterType.FUNGUS)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void counterCostIsPaidBeforeTokenResolvesAndPreservesExtraCounters() {
+        Permanent thallid = addThallid();
+        thallid.setCounterCount(CounterType.FUNGUS, 5);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(thallid.getCounterCount(CounterType.FUNGUS)).isEqualTo(2);
+        assertThat(findPermanents(player1, "Saproling")).isEmpty();
+
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Saproling")).hasSize(1);
+        assertThat(thallid.getCounterCount(CounterType.FUNGUS)).isEqualTo(2);
+    }
+
+    @Test
+    void bothAbilitiesWorkWhileTappedAndSummoningSick() {
         Permanent thallid = harness.addToBattlefieldAndReturn(player1, new ThallidGerminator());
-        thallid.setSummoningSick(false);
-        return thallid;
+        thallid.setSummoningSick(true);
+        thallid.setTapped(true);
+        thallid.setCounterCount(CounterType.FUNGUS, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 1, null, thallid.getId());
+
+        assertThat(findPermanents(player1, "Saproling")).isEmpty();
+        assertThat(thallid.getPowerModifier()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(thallid.getPowerModifier()).isEqualTo(1);
+        assertThat(thallid.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
+    void canTargetTheSaprolingSacrificedToPayTheCost() {
+        Permanent thallid = addThallid();
+        thallid.setCounterCount(CounterType.FUNGUS, 3);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        Permanent saproling = findPermanent(player1, "Saproling");
+
+        harness.activateAbility(player1, 0, 1, null, saproling.getId());
+
+        assertThat(findPermanents(player1, "Saproling")).isEmpty();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(thallid.getPowerModifier()).isZero();
+        assertThat(thallid.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    void cannotSacrificeAnOpponentsSaproling() {
+        Permanent thallid = addThallid();
+        Permanent opponentThallid = harness.addToBattlefieldAndReturn(player2, new ThallidGerminator());
+        opponentThallid.setCounterCount(CounterType.FUNGUS, 3);
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, thallid.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(findPermanents(player2, "Saproling")).hasSize(1);
+    }
+
+    @Test
+    void canSacrificeANoncreatureSaprolingPermanent() {
+        Permanent thallid = addThallid();
+        Permanent bitterblossom = harness.addToBattlefieldAndReturn(player1, new Bitterblossom());
+        harness.setHand(player1, List.of(new ArtificialEvolution()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castInstant(player1, 0, bitterblossom.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "FAERIE");
+        harness.handleListChoice(player1, "SAPROLING");
+
+        assertThat(gqs.hasEffectiveSubtype(gd, bitterblossom, CardSubtype.SAPROLING)).isTrue();
+
+        harness.activateAbility(player1, 0, 1, null, thallid.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Bitterblossom")).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(card -> card instanceof Bitterblossom);
+        assertThat(thallid.getPowerModifier()).isEqualTo(1);
+        assertThat(thallid.getToughnessModifier()).isEqualTo(1);
+    }
+
+    private Permanent addThallid() {
+        return addCreatureReady(player1, new ThallidGerminator());
     }
 }
