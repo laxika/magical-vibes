@@ -57,11 +57,45 @@ class SugarRushTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
-    private void castOn(Permanent target) {
+    @Test
+    @DisplayName("Can boost your own creature and draws only for the caster")
+    void boostsOwnCreatureAndDrawsForCaster() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Island drawnCard = new Island();
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.setHand(player2, List.of());
+        castOn(target);
+
+        assertThat(target.getPowerModifier()).isEqualTo(3);
+        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Sugar Rush");
+    }
+
+    @Test
+    @DisplayName("Does not draw when its only target leaves before resolution")
+    void doesNotDrawWhenTargetLeaves() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Island drawnCard = new Island();
+        harness.setLibrary(player1, List.of(drawnCard));
         harness.setHand(player1, List.of(new SugarRush()));
         addMana();
         harness.castInstant(player1, 0, target.getId());
+
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        harness.setExile(player2, List.of(target.getCard()));
         harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(drawnCard);
+        harness.assertInGraveyard(player1, "Sugar Rush");
+        assertThat(gd.stack).isEmpty();
+    }
+    private void castOn(Permanent target) {
+        harness.setHand(player1, List.of(new SugarRush()));
+        addMana();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 
     private void addMana() {
