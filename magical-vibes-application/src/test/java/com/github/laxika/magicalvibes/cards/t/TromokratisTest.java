@@ -5,8 +5,10 @@ import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Tromokratis.class, GrizzlyBears.class, Shock.class})
 class TromokratisTest extends BaseCardTest {
 
     @Test
@@ -78,7 +81,7 @@ class TromokratisTest extends BaseCardTest {
     @Test
     @DisplayName("Tromokratis may remain unblocked")
     void mayRemainUnblocked() {
-        Permanent tromokratis = addAttackingTromokratis();
+        addAttackingTromokratis();
         Permanent firstBlocker = addCreatureReady(player2, new GrizzlyBears());
         Permanent secondBlocker = addCreatureReady(player2, new GrizzlyBears());
 
@@ -87,6 +90,60 @@ class TromokratisTest extends BaseCardTest {
 
         assertThat(firstBlocker.isBlocking()).isFalse();
         assertThat(secondBlocker.isBlocking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A tapped defending creature prevents the other creatures from blocking Tromokratis")
+    void tappedDefendingCreaturePreventsBlocking() {
+        addAttackingTromokratis();
+        Permanent untappedBlocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent tappedCreature = addCreatureReady(player2, new GrizzlyBears());
+        tappedCreature.setTapped(true);
+
+        prepareDeclareBlockers();
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(untappedBlocker.isBlocking()).isFalse();
+        assertThat(tappedCreature.isBlocking()).isFalse();
+        gs.declareBlockers(gd, player2, List.of());
+    }
+
+    @Test
+    @DisplayName("An attacking Tromokratis regains hexproof only after the end of combat")
+    void attackerRegainsHexproofAfterCombatEnds() {
+        Permanent tromokratis = addAttackingTromokratis();
+        prepareDeclareBlockers();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> gs.declareBlockers(gd, player2, List.of()));
+
+        harness.passUntil(player1, TurnStep.END_OF_COMBAT);
+        assertThat(tromokratis.isAttacking()).isTrue();
+        assertThat(gqs.hasKeyword(gd, tromokratis, Keyword.HEXPROOF)).isFalse();
+
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
+        assertThat(tromokratis.isAttacking()).isFalse();
+        assertThat(gqs.hasKeyword(gd, tromokratis, Keyword.HEXPROOF)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Tromokratis remains without hexproof after killing the attacker it blocks")
+    void killingBlockedAttackerDoesNotRestoreHexproof() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setAttacking(true);
+        Permanent tromokratis = addCreatureReady(player2, new Tromokratis());
+        prepareDeclareBlockers();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))));
+
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Tromokratis");
+        assertThat(tromokratis.isBlocking()).isTrue();
+        assertThat(gqs.hasKeyword(gd, tromokratis, Keyword.HEXPROOF)).isFalse();
     }
 
     private Permanent addAttackingTromokratis() {
