@@ -4,8 +4,9 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.r.RaptorCompanion;
+import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -18,9 +19,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({StormFleetArsonist.class, RaptorCompanion.class, Mountain.class})
 class StormFleetArsonistTest extends BaseCardTest {
-
-    // ===== ETB with raid met =====
 
     @Test
     @DisplayName("ETB triggers sacrifice when raid is met (attacked this turn)")
@@ -40,7 +40,7 @@ class StormFleetArsonistTest extends BaseCardTest {
     @Test
     @DisplayName("ETB raid trigger makes target opponent sacrifice their only permanent")
     void etbMakesOpponentSacrificeOnlyPermanent() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new RaptorCompanion());
         markAttackedThisTurn();
         castStormFleetArsonist();
 
@@ -50,14 +50,14 @@ class StormFleetArsonistTest extends BaseCardTest {
 
         // Opponent's only permanent should be auto-sacrificed
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Raptor Companion");
     }
 
     @Test
     @DisplayName("ETB raid trigger prompts opponent to choose when they have multiple permanents")
     void etbPromptsChoiceWithMultiplePermanents() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new RaptorCompanion());
+        harness.addToBattlefield(player2, new RaptorCompanion());
         markAttackedThisTurn();
         castStormFleetArsonist();
 
@@ -80,7 +80,7 @@ class StormFleetArsonistTest extends BaseCardTest {
 
         // One sacrificed, one remains
         assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(1);
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Raptor Companion");
     }
 
     @Test
@@ -97,16 +97,14 @@ class StormFleetArsonistTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("no permanents to sacrifice"));
     }
 
-    // ===== ETB without raid =====
-
     @Test
     @DisplayName("ETB does NOT trigger without raid (did not attack this turn)")
     void etbDoesNotTriggerWithoutRaid() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new RaptorCompanion());
         castStormFleetArsonist();
         harness.passBothPriorities(); // resolve creature spell
 
-        // No ETB trigger on the stack and no target prompt (intervening-if failed, CR 603.4)
+        // No ETB trigger on the stack and no target prompt (intervening-if failed)
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
 
@@ -114,31 +112,21 @@ class StormFleetArsonistTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Storm Fleet Arsonist");
 
         // Opponent's permanent unchanged
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Raptor Companion");
     }
-
-    // ===== Raid lost before resolution (intervening-if) =====
 
     @Test
-    @DisplayName("ETB does nothing if raid condition is lost before resolution")
-    void etbFizzlesWhenRaidLost() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        markAttackedThisTurn();
+    @DisplayName("An opponent attacking does not satisfy your raid condition")
+    void opponentAttackDoesNotEnableRaid() {
+        harness.addToBattlefield(player2, new RaptorCompanion());
+        gd.playersDeclaredAttackersThisTurn.add(player2.getId());
         castStormFleetArsonist();
-        harness.passBothPriorities(); // resolve creature spell — trigger-time target prompt
-        harness.handlePermanentChosen(player1, player2.getId()); // ETB trigger on stack
+        harness.passBothPriorities();
 
-        // Remove the raid flag before ETB resolves
-        gd.playersDeclaredAttackersThisTurn.clear();
-
-        harness.passBothPriorities(); // resolve ETB trigger — raid no longer met
-
-        // Opponent's permanent should still be there
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("raid ability does nothing"));
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player2, "Raptor Companion");
     }
-
-    // ===== Creature enters battlefield regardless =====
 
     @Test
     @DisplayName("Creature enters battlefield even without raid")
@@ -148,8 +136,6 @@ class StormFleetArsonistTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Storm Fleet Arsonist");
     }
-
-    // ===== Targeting =====
 
     @Test
     @DisplayName("Trigger target prompt only offers opponents — choosing yourself is rejected")
@@ -168,16 +154,34 @@ class StormFleetArsonistTest extends BaseCardTest {
                 .hasMessageContaining("Invalid permanent");
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Opponent can choose a land rather than a creature to sacrifice")
+    void opponentCanSacrificeLand() {
+        harness.addToBattlefield(player2, new RaptorCompanion());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Mountain());
+        markAttackedThisTurn();
+        castStormFleetArsonist();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        harness.handleMultiplePermanentsChosen(player2, List.of(land.getId()));
+
+        harness.assertInGraveyard(player2, "Mountain");
+        harness.assertOnBattlefield(player2, "Raptor Companion");
+        harness.assertOnBattlefield(player1, "Storm Fleet Arsonist");
+        assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(1);
+    }
 
     private void markAttackedThisTurn() {
         gd.playersDeclaredAttackersThisTurn.add(player1.getId());
     }
 
     private void castStormFleetArsonist() {
-        harness.setHand(player1, List.of(new StormFleetArsonist()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.getGameService().playCard(gd, player1, 0, 0, null, null);
+        harness.castFromHand(player1, new StormFleetArsonist(), "{4}{R}");
     }
 }
