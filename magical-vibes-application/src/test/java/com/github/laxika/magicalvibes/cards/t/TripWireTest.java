@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.s.ShuCavalry;
 import com.github.laxika.magicalvibes.cards.s.ShuDefender;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -53,5 +54,54 @@ class TripWireTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(defender.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature with horsemanship");
+    }
+
+    @Test
+    @DisplayName("Does not destroy a target that loses horsemanship before resolution")
+    void targetLosesHorsemanshipBeforeResolution() {
+        Permanent horseman = harness.addToBattlefieldAndReturn(player2, new ShuCavalry());
+        harness.setHand(player1, List.of(new TripWire()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castSorcery(player1, 0, List.of(horseman.getId()));
+        horseman.getRemovedKeywords().add(Keyword.HORSEMANSHIP);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.findPermanentById(gd, horseman.getId())).isSameAs(horseman);
+        harness.assertNotInGraveyard(player2, "Shu Cavalry");
+        harness.assertInGraveyard(player1, "Trip Wire");
+    }
+
+    @Test
+    @DisplayName("Allows a creature with horsemanship to regenerate")
+    void allowsRegeneration() {
+        Permanent horseman = harness.addToBattlefieldAndReturn(player2, new ShuCavalry());
+        horseman.setRegenerationShield(1);
+        harness.setHand(player1, List.of(new TripWire()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castAndResolveSorcery(player1, 0, List.of(horseman.getId()));
+
+        assertThat(gqs.findPermanentById(gd, horseman.getId())).isSameAs(horseman);
+        assertThat(horseman.getRegenerationShield()).isZero();
+        assertThat(horseman.isTapped()).isTrue();
+        harness.assertNotInGraveyard(player2, "Shu Cavalry");
+        harness.assertInGraveyard(player1, "Trip Wire");
+    }
+
+    @Test
+    @DisplayName("Does not destroy an indestructible creature with horsemanship")
+    void indestructibleCreatureSurvives() {
+        Permanent horseman = harness.addToBattlefieldAndReturn(player2, new ShuCavalry());
+        horseman.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        harness.setHand(player1, List.of(new TripWire()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castAndResolveSorcery(player1, 0, List.of(horseman.getId()));
+
+        assertThat(gqs.findPermanentById(gd, horseman.getId())).isSameAs(horseman);
+        harness.assertNotInGraveyard(player2, "Shu Cavalry");
+        harness.assertInGraveyard(player1, "Trip Wire");
     }
 }
