@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.e.ExtinguisherBattleship;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GiantBeaver;
 import com.github.laxika.magicalvibes.cards.i.IrontreadCrusher;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -16,8 +16,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({StoicStarCaptain.class, IrontreadCrusher.class, ExtinguisherBattleship.class, GrizzlyBears.class})
+@CardUsed({StoicStarCaptain.class, IrontreadCrusher.class, ExtinguisherBattleship.class, GiantBeaver.class})
 class StoicStarCaptainTest extends BaseCardTest {
 
     @Test
@@ -46,9 +47,26 @@ class StoicStarCaptainTest extends BaseCardTest {
     @Test
     void seeksARandomMatchingSpacecraftIntoHand() {
         Permanent captain = addReady(player1, new StoicStarCaptain());
-        GrizzlyBears grizzlyBears = new GrizzlyBears();
+        StoicStarCaptain nonSpacecraft = new StoicStarCaptain();
         ExtinguisherBattleship spacecraft = new ExtinguisherBattleship();
-        harness.setLibrary(player1, List.of(grizzlyBears, spacecraft));
+        harness.setLibrary(player1, List.of(nonSpacecraft, spacecraft));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(captain.isTapped()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).contains(spacecraft);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nonSpacecraft);
+    }
+
+    @Test
+    void exhaustCanBeActivatedWhileTapped() {
+        Permanent captain = addReady(player1, new StoicStarCaptain());
+        captain.tap();
+        ExtinguisherBattleship spacecraft = new ExtinguisherBattleship();
+        harness.setLibrary(player1, List.of(spacecraft));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -57,7 +75,47 @@ class StoicStarCaptainTest extends BaseCardTest {
 
         assertThat(captain.isTapped()).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).contains(spacecraft);
-        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(grizzlyBears);
+    }
+
+    @Test
+    void exhaustCanBeActivatedWithSummoningSickness() {
+        Permanent captain = addReady(player1, new StoicStarCaptain());
+        captain.setSummoningSick(true);
+        ExtinguisherBattleship spacecraft = new ExtinguisherBattleship();
+        harness.setLibrary(player1, List.of(spacecraft));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(captain.isTapped()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).contains(spacecraft);
+    }
+
+    @Test
+    void exhaustCannotBeActivatedTwiceEvenWhenNothingMatches() {
+        Permanent captain = addReady(player1, new StoicStarCaptain());
+        harness.setLibrary(player1, List.of());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        captain.untap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("only once");
+    }
+
+    @Test
+    void powerBonusDoesNotApplyToSaddling() {
+        addReady(player1, new StoicStarCaptain());
+        addReady(player1, new GiantBeaver());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough creature power");
     }
 
     private Permanent addReady(Player player, Card card) {
