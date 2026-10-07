@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.List;
 
@@ -41,10 +43,7 @@ class TiborAndLumiaTest extends BaseCardTest {
 
         assertThat(dryad.hasKeyword(Keyword.FLYING)).isTrue();
 
-        harness.passBothPriorities();
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
 
         assertThat(dryad.hasKeyword(Keyword.FLYING)).isFalse();
     }
@@ -125,5 +124,79 @@ class TiborAndLumiaTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    @DisplayName("A blue-red spell triggers both abilities in the controller's chosen order")
+    void multicoloredSpellAllowsEitherTriggerOrder(boolean flyingFirst) {
+        Permanent tiborAndLumia = harness.addToBattlefieldAndReturn(player1, new TiborAndLumia());
+        harness.addToBattlefield(player2, new DryadSophisticate());
+        harness.setHand(player1, List.of(new WeeDragonauts()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castCreature(player1, 0);
+        harness.handlePermanentChosen(player1, tiborAndLumia.getId());
+
+        PendingInteraction.ColorChoice order = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(order).isNotNull();
+        String bottomTriggerColor = flyingFirst ? "red" : "blue";
+        harness.handleListChoice(player1, order.options().stream()
+                .filter(option -> option.contains("cast a " + bottomTriggerColor + " spell"))
+                .findFirst().orElseThrow());
+
+        harness.passBothPriorities();
+        assertThat(tiborAndLumia.hasKeyword(Keyword.FLYING)).isEqualTo(flyingFirst);
+        assertThat(tiborAndLumia.getMarkedDamage()).isEqualTo(flyingFirst ? 0 : 1);
+
+        harness.passBothPriorities();
+        assertThat(tiborAndLumia.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(tiborAndLumia.getMarkedDamage()).isEqualTo(flyingFirst ? 0 : 1);
+        harness.assertInGraveyard(player2, "Dryad Sophisticate");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Wee Dragonauts");
+    }
+
+    @Test
+    @DisplayName("The red trigger resolves before the creature spell that triggered it")
+    void redCreatureSpellIsNotDamagedByItsOwnCastTrigger() {
+        harness.addToBattlefield(player1, new TiborAndLumia());
+        harness.addToBattlefield(player2, new DryadSophisticate());
+        harness.setHand(player1, List.of(new ScorchedRusalka()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Dryad Sophisticate");
+        harness.assertNotOnBattlefield(player1, "Scorched Rusalka");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Scorched Rusalka");
+        harness.assertNotInGraveyard(player1, "Scorched Rusalka");
+    }
+
+    @Test
+    @DisplayName("An opponent's blue spell does not grant flying")
+    void opponentsBlueSpellDoesNotTrigger() {
+        Permanent tiborAndLumia = harness.addToBattlefieldAndReturn(player1, new TiborAndLumia());
+        harness.setHand(player2, List.of(new VertigoSpawn()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.forceActivePlayer(player2);
+        harness.clearPriorityPassed();
+
+        harness.castCreature(player2, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.passBothPriorities();
+        assertThat(tiborAndLumia.hasKeyword(Keyword.FLYING)).isFalse();
     }
 }
