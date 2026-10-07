@@ -87,4 +87,48 @@ class TahngarthsRageTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
+
+    @Test
+    @DisplayName("Declaring an enchanted creature as an attacker immediately replaces the penalty")
+    void declaredAttackerGetsBoost() {
+        Permanent creature = addCreatureReady(player2, new TrainedArmodon());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new TahngarthsRage());
+        aura.setAttachedTo(creature.getId());
+
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+
+        assertThat(creature.isAttacking()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("A blocking creature still receives the nonattacking penalty")
+    void blockingCreatureGetsPenalty() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new TrainedArmodon());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new TahngarthsRage());
+        aura.setAttachedTo(creature.getId());
+        creature.setBlocking(true);
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Resolving the Aura on a one-toughness creature puts both cards into their owners' graveyards")
+    void toughnessPenaltyKillsCreature() {
+        BayouDragonfly dragonfly = new BayouDragonfly();
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, dragonfly);
+        TahngarthsRage rage = new TahngarthsRage();
+        harness.setHand(player1, List.of(rage));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(creature);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(dragonfly);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(rage);
+    }
 }
