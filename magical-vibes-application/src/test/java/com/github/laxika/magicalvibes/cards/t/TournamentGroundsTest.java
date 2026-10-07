@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.a.AdventuringGear;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.Gingerbrute;
+import com.github.laxika.magicalvibes.cards.j.JoustingDummy;
 import com.github.laxika.magicalvibes.cards.v.VenerableKnight;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -14,7 +15,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TournamentGrounds.class, VenerableKnight.class, AdventuringGear.class, GrizzlyBears.class})
+@CardUsed({TournamentGrounds.class, VenerableKnight.class, AdventuringGear.class, Gingerbrute.class,
+        JoustingDummy.class})
 class TournamentGroundsTest extends BaseCardTest {
 
     @Test
@@ -60,9 +62,60 @@ class TournamentGroundsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.handleListChoice(player1, "BLACK");
 
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new Gingerbrute()));
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void colorlessManaCastsNonKnightSpell() {
+        harness.addToBattlefield(player1, new TournamentGrounds());
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.setHand(player1, List.of(new Gingerbrute()));
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Gingerbrute");
+    }
+
+    @Test
+    void restrictedManaCannotActivateKnightAbility() {
+        harness.addToBattlefield(player1, new TournamentGrounds());
+        harness.addToBattlefield(player1, new JoustingDummy());
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "BLACK");
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void restrictedManaCannotPayEquipCost() {
+        harness.addToBattlefield(player1, new TournamentGrounds());
+        harness.addToBattlefield(player1, new AdventuringGear());
+        harness.addToBattlefield(player1, new VenerableKnight());
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "RED");
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 0, null,
+                harness.getPermanentId(player1, "Venerable Knight")))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void restrictedBlackManaPaysGenericKnightCost() {
+        harness.addToBattlefield(player1, new TournamentGrounds());
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "BLACK");
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.setHand(player1, List.of(new JoustingDummy()));
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Jousting Dummy");
     }
 }
