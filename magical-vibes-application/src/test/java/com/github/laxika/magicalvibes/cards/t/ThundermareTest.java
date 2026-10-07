@@ -74,4 +74,40 @@ class ThundermareTest extends BaseCardTest {
         assertThat(existingThundermare.isTapped()).isTrue();
         assertThat(thundermarePermanents.get(1).isTapped()).isFalse();
     }
+
+    @Test
+    @DisplayName("ETB taps creatures present at resolution, including ones added after it triggers")
+    void etbUsesCreaturesPresentAtResolution() {
+        Permanent existingCreature = addCreatureReady(player1, new GrizzlyBears());
+        harness.castFromHand(player1, new Thundermare(), "{5}{R}");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(existingCreature.isTapped()).isFalse();
+        Permanent newCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        resolveAllTriggers();
+
+        assertThat(existingCreature.isTapped()).isTrue();
+        assertThat(newCreature.isTapped()).isTrue();
+        assertThat(findPermanent(player1, "Thundermare").isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("ETB leaves already tapped creatures and a tapped source tapped")
+    void etbDoesNotUntapTheSourceOrOtherCreatures() {
+        Permanent otherCreature = addCreatureReady(player2, new GrizzlyBears());
+        otherCreature.tap();
+        harness.castFromHand(player1, new Thundermare(), "{5}{R}");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        Permanent thundermare = findPermanent(player1, "Thundermare");
+        thundermare.tap();
+
+        resolveAllTriggers();
+
+        assertThat(otherCreature.isTapped()).isTrue();
+        assertThat(thundermare.isTapped()).isTrue();
+    }
 }
