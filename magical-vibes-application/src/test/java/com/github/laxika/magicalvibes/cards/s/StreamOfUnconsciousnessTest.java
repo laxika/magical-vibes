@@ -98,4 +98,58 @@ class StreamOfUnconsciousnessTest extends BaseCardTest {
         assertThat(target.getPowerModifier()).isEqualTo(0);
         assertThat(target.getToughnessModifier()).isEqualTo(0);
     }
+
+    @Test
+    @DisplayName("A Wizard entering before resolution enables the draw")
+    void wizardEnteringBeforeResolutionEnablesDraw() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new PricklyBoggart());
+        harness.setHand(player1, List.of(new StreamOfUnconsciousness()));
+        harness.setLibrary(player1, List.of(new PricklyBoggart()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.addToBattlefield(player1, new InkDissolver());
+        harness.passBothPriorities();
+
+        assertThat(target.getPowerModifier()).isEqualTo(-4);
+        harness.assertInHand(player1, "Prickly Boggart");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Losing the only Wizard before resolution prevents the draw")
+    void wizardLeavingBeforeResolutionPreventsDraw() {
+        Permanent wizard = harness.addToBattlefieldAndReturn(player1, new InkDissolver());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new PricklyBoggart());
+        harness.setHand(player1, List.of(new StreamOfUnconsciousness()));
+        harness.setLibrary(player1, List.of(new PricklyBoggart()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castInstant(player1, 0, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(wizard);
+        harness.passBothPriorities();
+
+        assertThat(target.getPowerModifier()).isEqualTo(-4);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("An illegal sole target prevents the draw even with a Wizard")
+    void targetLeavingBeforeResolutionPreventsDraw() {
+        harness.addToBattlefield(player1, new InkDissolver());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new PricklyBoggart());
+        harness.setHand(player1, List.of(new StreamOfUnconsciousness()));
+        harness.setLibrary(player1, List.of(new PricklyBoggart()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castInstant(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Stream of Unconsciousness");
+        assertThat(gd.stack).isEmpty();
+    }
 }
