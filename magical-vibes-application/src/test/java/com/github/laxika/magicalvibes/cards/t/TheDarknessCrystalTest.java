@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({TheDarknessCrystal.class, DoomBlade.class, GrizzlyBears.class, Shock.class})
 class TheDarknessCrystalTest extends BaseCardTest {
@@ -28,8 +29,7 @@ class TheDarknessCrystalTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .extracting(card -> card.getId())
@@ -45,8 +45,7 @@ class TheDarknessCrystalTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
         int lifeBefore = gd.getLife(player1.getId());
 
-        harness.castInstant(player2, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, target.getId());
 
         assertThat(gd.findExiledCard(target.getCard().getId())).isNotNull();
         assertThat(gd.playerGraveyards.get(player2.getId()))
@@ -74,5 +73,145 @@ class TheDarknessCrystalTest extends BaseCardTest {
         assertThat(returned.isTapped()).isTrue();
         assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(gd.findExiledCard(bears.getId())).isNull();
+    }
+
+    @Test
+    @DisplayName("Can return a creature actually exiled by this Crystal")
+    void returnsCreatureExiledByReplacement() {
+        harness.addToBattlefield(player1, new TheDarknessCrystal());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        assertThat(gd.findExiledCard(target.getCard().getId())).isNotNull();
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, target.getCard().getId(), Zone.EXILE);
+        harness.passBothPriorities();
+
+        Permanent returned = findPermanent(player1, "Grizzly Bears");
+        assertThat(returned.getCard().getId()).isEqualTo(target.getCard().getId());
+        assertThat(returned.isTapped()).isTrue();
+        assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gd.findExiledCard(target.getCard().getId())).isNull();
+    }
+
+    @Test
+    @DisplayName("A black spell can be cast with only its colored mana cost")
+    void needsNoGenericManaForDoomBlade() {
+        harness.addToBattlefield(player1, new TheDarknessCrystal());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new DoomBlade()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Does not reduce an opponent's black spells")
+    void doesNotReduceOpponentSpellCost() {
+        harness.addToBattlefield(player1, new TheDarknessCrystal());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player2, List.of(new DoomBlade()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Does not reduce colored mana requirements")
+    void cannotPayColoredCostWithGenericMana() {
+        harness.addToBattlefield(player1, new TheDarknessCrystal());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new DoomBlade()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Your own nontoken creature dies normally without gaining life")
+    void doesNotReplaceOwnCreatureDeath() {
+        harness.addToBattlefield(player1, new TheDarknessCrystal());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        int lifeBefore = gd.getLife(player1.getId());
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.findExiledCard(target.getCard().getId())).isNull();
+        harness.assertLife(player1, lifeBefore);
+    }
+
+    @Test
+    @DisplayName("Cannot return a creature exiled without a link to this Crystal")
+    void rejectsUnlinkedExiledCreature() {
+        harness.addToBattlefield(player1, new TheDarknessCrystal());
+        GrizzlyBears bears = new GrizzlyBears();
+        gd.addToExile(player2.getId(), bears);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, 0, null, bears.getId(), Zone.EXILE))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.findExiledCard(bears.getId())).isNotNull();
+    }
+
+    @Test
+    @DisplayName("Cannot return a noncreature card even when linked to this Crystal")
+    void rejectsLinkedNoncreatureCard() {
+        Permanent crystal = harness.addToBattlefieldAndReturn(player1, new TheDarknessCrystal());
+        Shock shock = new Shock();
+        gd.addToExile(player2.getId(), shock, crystal.getId());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, 0, null, shock.getId(), Zone.EXILE))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("An opponent's token does not cause exile or life gain")
+    void doesNotReplaceTokenDeath() {
+        harness.addToBattlefield(player1, new TheDarknessCrystal());
+        GrizzlyBears token = new GrizzlyBears();
+        token.setToken(true);
+        Permanent target = addCreatureReady(player2, token);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        int lifeBefore = gd.getLife(player1.getId());
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.findExiledCard(token.getId())).isNull();
+        harness.assertLife(player1, lifeBefore);
+    }
+
+    @Test
+    @DisplayName("Losing all abilities disables the death replacement")
+    void abilityLossDisablesDeathReplacement() {
+        Permanent crystal = harness.addToBattlefieldAndReturn(player1, new TheDarknessCrystal());
+        crystal.setLosesAllAbilitiesUntilEndOfTurn(true);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        int lifeBefore = gd.getLife(player1.getId());
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.findExiledCard(target.getCard().getId())).isNull();
+        harness.assertLife(player1, lifeBefore);
     }
 }
