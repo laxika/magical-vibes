@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.cards.b.BenalishInfantry;
 import com.github.laxika.magicalvibes.cards.b.BenalishKnight;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.r.RedwoodTreefolk;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -15,7 +17,8 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BenalishInfantry.class, BenalishKnight.class, GiantSpider.class, GrizzlyBears.class, RedwoodTreefolk.class, Tariff.class})
+@CardUsed({BenalishInfantry.class, BenalishKnight.class, GiantSpider.class, GrizzlyBears.class,
+        LlanowarElves.class, Ornithopter.class, RedwoodTreefolk.class, Tariff.class})
 class TariffTest extends BaseCardTest {
 
     @Test
@@ -178,5 +181,95 @@ class TariffTest extends BaseCardTest {
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         harness.assertInGraveyard(player1, "Tariff");
+    }
+
+    @Test
+    @DisplayName("Mana abilities can be used to pay during resolution")
+    void availableManaAbilitiesPreventAutomaticSacrifice() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new LlanowarElves());
+        harness.addToBattlefield(player2, new LlanowarElves());
+        harness.castFromHand(player1, new Tariff(), "{1}{W}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+    }
+
+    @Test
+    @DisplayName("All sacrifice decisions precede the simultaneous sacrifices")
+    void sacrificesWaitForEveryPlayersDecision() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GiantSpider());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player2, ManaColor.GREEN, 4);
+        harness.castFromHand(player1, new Tariff(), "{1}{W}");
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+
+        harness.handleMayAbilityChosen(player2, false);
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Giant Spider");
+        harness.assertInGraveyard(player1, "Tariff");
+    }
+
+    @Test
+    @DisplayName("Having enough mana of the wrong color does not pay the mana cost")
+    void wrongColoredManaCannotPay() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addMana(player2, ManaColor.WHITE, 2);
+        harness.castFromHand(player1, new Tariff(), "{1}{W}");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("A tied creature can be chosen and paid for")
+    void paysForChosenTiedCreature() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent chosen = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.castFromHand(player1, new Tariff(), "{1}{W}");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player2, chosen.getId());
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(2);
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+        harness.assertInGraveyard(player1, "Tariff");
+    }
+
+    @Test
+    @DisplayName("A creature with a zero mana cost can be kept without mana")
+    void zeroManaCostCanBePaid() {
+        harness.addToBattlefield(player2, new Ornithopter());
+        harness.castFromHand(player1, new Tariff(), "{1}{W}");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertOnBattlefield(player2, "Ornithopter");
+        harness.assertNotInGraveyard(player2, "Ornithopter");
+    }
+
+    @Test
+    @DisplayName("A player may decline to pay even a zero mana cost")
+    void zeroManaCostCanBeDeclined() {
+        harness.addToBattlefield(player2, new Ornithopter());
+        harness.castFromHand(player1, new Tariff(), "{1}{W}");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+
+        harness.assertNotOnBattlefield(player2, "Ornithopter");
+        harness.assertInGraveyard(player2, "Ornithopter");
     }
 }
