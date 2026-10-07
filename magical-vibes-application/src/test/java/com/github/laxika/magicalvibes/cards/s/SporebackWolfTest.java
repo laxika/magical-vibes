@@ -32,4 +32,23 @@ class SporebackWolfTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, wolf)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, wolf)).isEqualTo(2);
     }
+
+    @Test
+    @DisplayName("Each Wolf's boost follows its own controller as turns change")
+    void boostFollowsEachControllerAsTurnsChange() {
+        Permanent firstWolf = addCreatureReady(player1, new SporebackWolf());
+        Permanent secondWolf = addCreatureReady(player2, new SporebackWolf());
+
+        harness.forceActivePlayer(player1);
+        assertThat(gqs.getEffectiveToughness(gd, firstWolf)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, secondWolf)).isEqualTo(2);
+
+        harness.forceActivePlayer(player2);
+        assertThat(gqs.getEffectiveToughness(gd, firstWolf)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, secondWolf)).isEqualTo(4);
+
+        harness.forceActivePlayer(player1);
+        assertThat(gqs.getEffectiveToughness(gd, firstWolf)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, secondWolf)).isEqualTo(2);
+    }
 }
