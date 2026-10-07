@@ -13,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SwarmOfRats.class, RavenousRats.class, SengirVampire.class})
+@CardUsed({SwarmOfRats.class, RavenousRats.class, SengirVampire.class, Diminish.class})
 class SwarmOfRatsTest extends BaseCardTest {
 
     @Test
@@ -70,6 +70,42 @@ class SwarmOfRatsTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, swarm)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, swarm)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Multiple Swarms of Rats count each other")
+    void multipleSwarmsCountEachOther() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new SwarmOfRats());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new SwarmOfRats());
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Swarm of Rats in hand counts its owner's battlefield Rats without counting itself")
+    void powerAbilityFunctionsInHand() {
+        SwarmOfRats swarm = new SwarmOfRats();
+        harness.setHand(player1, List.of(swarm));
+
+        assertThat(gqs.getEffectiveCardPower(gd, swarm)).isZero();
+
+        harness.addToBattlefield(player1, new RavenousRats());
+        harness.addToBattlefield(player2, new RavenousRats());
+
+        assertThat(gqs.getEffectiveCardPower(gd, swarm)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Swarm of Rats in the graveyard counts its owner's Rats")
+    void powerAbilityFunctionsInGraveyard() {
+        SwarmOfRats swarm = new SwarmOfRats();
+        harness.setGraveyard(player1, List.of(swarm));
+        harness.addToBattlefield(player1, new RavenousRats());
+        harness.addToBattlefield(player1, new RavenousRats());
+        harness.addToBattlefield(player2, new RavenousRats());
+
+        assertThat(gqs.getEffectiveCardPower(gd, swarm)).isEqualTo(2);
     }
 
     @Test
