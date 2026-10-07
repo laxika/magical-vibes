@@ -26,8 +26,6 @@ class ThoughtweftTrioTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell -> ETB on stack
     }
 
-    // ===== Champion a Kithkin =====
-
     @Test
     @DisplayName("Auto-sacrifices when controller has no other Kithkin")
     void autoSacrificesWithNoOtherKithkin() {
@@ -95,8 +93,10 @@ class ThoughtweftTrioTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         UUID trioId = harness.getPermanentId(player1, "Thoughtweft Trio");
-        harness.castInstant(player1, 0, trioId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, trioId);
+
+        harness.assertNotOnBattlefield(player1, "Goldmeadow Stalwart");
+        harness.passBothPriorities(); // resolve the champion leaves-the-battlefield trigger
 
         harness.assertNotOnBattlefield(player1, "Thoughtweft Trio");
         harness.assertOnBattlefield(player1, "Goldmeadow Stalwart");
@@ -106,24 +106,73 @@ class ThoughtweftTrioTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Does nothing if Thoughtweft Trio leaves before its champion ability resolves")
-    void championAbilityDoesNothingIfTrioLeavesBeforeResolution() {
+    @DisplayName("Champion can exile a Kithkin permanently if Trio leaves before its entry trigger resolves")
+    void championCanExileKithkinAfterTrioLeaves() {
+        harness.addToBattlefield(player1, new GoldmeadowStalwart());
         castThoughtweftTrio();
 
         UUID trioId = harness.getPermanentId(player1, "Thoughtweft Trio");
         harness.setHand(player1, List.of(new CribSwap()));
         harness.addMana(player1, ManaColor.WHITE, 3);
-        harness.castInstant(player1, 0, trioId);
-        harness.passBothPriorities(); // resolve Crib Swap
-        harness.passBothPriorities(); // resolve the now-source-less champion ability
+        harness.castAndResolveInstant(player1, 0, trioId);
+        harness.passBothPriorities(); // resolve the champion entry trigger
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Goldmeadow Stalwart"));
 
         harness.assertNotOnBattlefield(player1, "Thoughtweft Trio");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Thoughtweft Trio"));
         assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotOnBattlefield(player1, "Goldmeadow Stalwart");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(c -> c.getName().equals("Goldmeadow Stalwart"));
+        assertThat(gd.exileReturnOnPermanentLeave).isEmpty();
     }
 
-    // ===== Can block any number of creatures =====
+    @Test
+    @DisplayName("Controller may decline champion and sacrifice Trio even with a Kithkin available")
+    void mayDeclineChampionWithKithkinAvailable() {
+        harness.addToBattlefield(player1, new GoldmeadowStalwart());
+        castThoughtweftTrio();
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInGraveyard(player1, "Thoughtweft Trio");
+        harness.assertNotOnBattlefield(player1, "Thoughtweft Trio");
+        harness.assertOnBattlefield(player1, "Goldmeadow Stalwart");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An opponent's Kithkin cannot be championed")
+    void opponentKithkinCannotBeChampioned() {
+        harness.addToBattlefield(player2, new GoldmeadowStalwart());
+        castThoughtweftTrio();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Thoughtweft Trio");
+        harness.assertOnBattlefield(player2, "Goldmeadow Stalwart");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The changeling token created by Crib Swap can be championed after Trio leaves")
+    void changelingTokenCanBeChampionedAfterTrioLeaves() {
+        castThoughtweftTrio();
+        UUID trioId = harness.getPermanentId(player1, "Thoughtweft Trio");
+        harness.setHand(player1, List.of(new CribSwap()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castAndResolveInstant(player1, 0, trioId);
+        Permanent token = gd.playerBattlefields.get(player1.getId()).getFirst();
+
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, token.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.exileReturnOnPermanentLeave).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
 
     @Test
     @DisplayName("Thoughtweft Trio can block three attackers at once")
