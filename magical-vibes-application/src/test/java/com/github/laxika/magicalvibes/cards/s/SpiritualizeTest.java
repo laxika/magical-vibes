@@ -92,8 +92,7 @@ class SpiritualizeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 3);
         harness.castAndResolveInstant(player1, 0, chainflinger.getId());
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
                 gd.playerBattlefields.get(player1.getId()).indexOf(chainflinger))));
@@ -115,5 +114,64 @@ class SpiritualizeTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, forestId))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Each resolved copy creates its own life-gain trigger")
+    void multipleCopiesEachGainLife() {
+        Permanent chainflinger = addCreatureReady(player2, new Chainflinger());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        harness.setHand(player1, List.of(new Spiritualize(), new Spiritualize()));
+        harness.addMana(player1, ManaColor.WHITE, 6);
+        harness.castAndResolveInstant(player1, 0, chainflinger.getId());
+        harness.castAndResolveInstant(player1, 0, chainflinger.getId());
+
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.activateAbility(player2, 0, 0, null, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(22);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(19);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Damage from a different creature does not grant life")
+    void doesNotWatchOtherCreatures() {
+        Permanent watched = addCreatureReady(player2, new Chainflinger());
+        addCreatureReady(player2, new Chainflinger());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setHand(player1, List.of(new Spiritualize()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castAndResolveInstant(player1, 0, watched.getId());
+
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.activateAbility(player2, 1, 0, null, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(19);
+    }
+
+    @Test
+    @DisplayName("Does not draw when the targeted creature dies before resolution")
+    void illegalTargetPreventsDrawing() {
+        Permanent target = addCreatureReady(player1, new Chainflinger());
+        addCreatureReady(player2, new Chainflinger());
+        addCreatureReady(player2, new Chainflinger());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setHand(player1, List.of(new Spiritualize()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castInstant(player1, 0, target.getId());
+
+        harness.addMana(player2, ManaColor.RED, 4);
+        harness.activateAbility(player2, 0, 0, null, target.getId());
+        harness.activateAbility(player2, 1, 0, null, target.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Chainflinger");
+        harness.assertInGraveyard(player1, "Spiritualize");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }
 }
