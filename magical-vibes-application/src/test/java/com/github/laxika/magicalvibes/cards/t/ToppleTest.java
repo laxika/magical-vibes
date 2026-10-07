@@ -68,10 +68,54 @@ class ToppleTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private void castTopple(Permanent target) {
+    @Test
+    @DisplayName("Can exile its controller's greatest-power creature")
+    void exilesOwnCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new FlowstoneCrusher());
+        harness.addToBattlefield(player2, new Mossdog());
+
+        castTopple(target);
+
+        harness.assertNotOnBattlefield(player1, "Flowstone Crusher");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getName().equals("Flowstone Crusher"));
+    }
+
+    @Test
+    @DisplayName("Does not exile a target when another creature becomes more powerful in response")
+    void rechecksGreatestPowerOnResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new FlowstoneCrusher());
+        harness.addToBattlefield(player2, new FlowstoneCrusher());
         prepareTopple();
         harness.castSorcery(player1, 0, target.getId());
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.ensurePriority(player2);
+        harness.activateAbility(player2, 0, null, null);
         harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Flowstone Crusher");
+        harness.assertOnBattlefield(player2, "Flowstone Crusher");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Topple");
+    }
+
+    @Test
+    @DisplayName("Uses modified power when selecting a target")
+    void rejectsPrintedPowerTieAfterBoost() {
+        Permanent lower = harness.addToBattlefieldAndReturn(player1, new FlowstoneCrusher());
+        harness.addToBattlefield(player1, new FlowstoneCrusher());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+        prepareTopple();
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, lower.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+    private void castTopple(Permanent target) {
+        prepareTopple();
+        harness.castAndResolveSorcery(player1, 0, target.getId());
     }
 
     private void prepareTopple() {
