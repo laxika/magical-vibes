@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.d.DeathSpark;
 import com.github.laxika.magicalvibes.cards.m.Misfortune;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -20,8 +21,7 @@ class SuffocationTest extends BaseCardTest {
     private void damagePlayerOneWithDeathSpark() {
         harness.setHand(player2, List.of(new DeathSpark()));
         harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
     }
 
     private void damagePlayerTwoWithMisfortune() {
@@ -30,8 +30,7 @@ class SuffocationTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
         harness.handleMayAbilityChosen(player2, false);
         harness.passBothPriorities();
     }
@@ -44,8 +43,7 @@ class SuffocationTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Suffocation()));
         harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(opponentLife - 4);
     }
@@ -57,8 +55,7 @@ class SuffocationTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Suffocation()));
         harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         List<DrawCardsAtNextUpkeep> scheduled = gd.getDelayedActions(DrawCardsAtNextUpkeep.class);
         assertThat(scheduled).hasSize(1);
@@ -81,8 +78,7 @@ class SuffocationTest extends BaseCardTest {
 
         harness.setHand(player2, List.of(new Suffocation()));
         harness.addMana(player2, ManaColor.BLUE, 2);
-        harness.castInstant(player2, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0);
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(opponentLife - 4);
     }
@@ -105,8 +101,7 @@ class SuffocationTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0))
                 .isInstanceOf(IllegalStateException.class)
@@ -126,12 +121,37 @@ class SuffocationTest extends BaseCardTest {
     }
 
     @Test
+    void usesMostRecentDamagerAtResolution() {
+        damagePlayerOneWithDeathSpark();
+        harness.setHand(player1, List.of(new Suffocation(), new DeathSpark()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0);
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(14);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    void damageFromPreviousTurnDoesNotEnableCast() {
+        damagePlayerOneWithDeathSpark();
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.setHand(player1, List.of(new Suffocation()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
     @DisplayName("Hits the controller of the most recent red spell that damaged you")
     void hitsMostRecentRedSpellController() {
         harness.setHand(player1, List.of(new DeathSpark()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player1.getId());
 
         damagePlayerOneWithDeathSpark();
         int opponentLife = gd.playerLifeTotals.get(player2.getId());
@@ -139,8 +159,7 @@ class SuffocationTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Suffocation()));
         harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(opponentLife - 4);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(ownLife);
