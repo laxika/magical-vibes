@@ -67,4 +67,50 @@ class SqueezeTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
     }
+
+    @Test
+    @DisplayName("Squeezes controlled by different players impose cumulative taxes")
+    void multipleSqueezesIncreaseCostCumulatively() {
+        harness.addToBattlefield(player1, new Squeeze());
+        harness.addToBattlefield(player2, new Squeeze());
+        harness.setHand(player1, List.of(new Bribery()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Squeeze in hand or graveyard does not tax sorcery spells")
+    void squeezeOutsideBattlefieldDoesNotIncreaseCost() {
+        harness.setHand(player1, List.of(new Bribery(), new Squeeze()));
+        harness.setGraveyard(player2, List.of(new Squeeze()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Enchantment spells are not taxed")
+    void enchantmentSpellsAreNotTaxed() {
+        harness.addToBattlefield(player2, new Squeeze());
+
+        harness.castFromHand(player1, new Squeeze(), "{3}{U}");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
 }
