@@ -43,12 +43,9 @@ class ThrullChampionTest extends BaseCardTest {
     @Test
     @DisplayName("Thrull Champion boosts itself")
     void boostsItself() {
-        Permanent champion = new Permanent(new ThrullChampion());
+        Permanent champion = addCreatureReady(player1, new ThrullChampion());
         int powerBefore = champion.getEffectivePower();
         int toughnessBefore = champion.getEffectiveToughness();
-
-        champion.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(champion);
 
         assertThat(gqs.getEffectivePower(gd, champion)).isEqualTo(powerBefore + 1);
         assertThat(gqs.getEffectiveToughness(gd, champion)).isEqualTo(toughnessBefore + 1);
@@ -145,6 +142,54 @@ class ThrullChampionTest extends BaseCardTest {
                 .noneMatch(permanent -> permanent.getId().equals(target.getId()));
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(permanent -> permanent.getId().equals(target.getId()));
+    }
+
+    @Test
+    @DisplayName("Multiple Champions stack their bonuses, which end when a Champion leaves")
+    void bonusesStackAndEndWhenSourceLeaves() {
+        Permanent target = addCreatureReady(player2, new BasalThrull());
+        int powerBefore = gqs.getEffectivePower(gd, target);
+        int toughnessBefore = gqs.getEffectiveToughness(gd, target);
+        Permanent first = addCreatureReady(player1, new ThrullChampion());
+        addCreatureReady(player2, new ThrullChampion());
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(powerBefore + 2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(toughnessBefore + 2);
+
+        gd.playerBattlefields.get(player1.getId()).remove(first);
+        advanceToUpkeep(player1);
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(powerBefore + 1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(toughnessBefore + 1);
+    }
+
+    @Test
+    @DisplayName("Untapping Thrull Champion does not end control of the stolen Thrull")
+    void controlPersistsAfterUntapping() {
+        Permanent champion = addCreatureReady(player1, new ThrullChampion());
+        Permanent target = addCreatureReady(player2, new BasalThrull());
+
+        activate(player1, champion, target);
+        advanceToUpkeep(player1);
+
+        assertThat(champion.isTapped()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+    }
+
+    @Test
+    @DisplayName("Losing control of the Champion before resolution prevents gaining control")
+    void abilityHasNoEffectIfSourceChangesControllerBeforeResolution() {
+        Permanent champion = addCreatureReady(player1, new ThrullChampion());
+        Permanent target = addCreatureReady(player2, new BasalThrull());
+        Permanent opponentChampion = addCreatureReady(player2, new ThrullChampion());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        activate(player2, opponentChampion, champion);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(champion, target);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
     }
 
     private void activate(Player controller, Permanent champion, Permanent target) {
