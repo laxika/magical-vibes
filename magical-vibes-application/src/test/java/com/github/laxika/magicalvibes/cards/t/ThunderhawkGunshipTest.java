@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -34,10 +34,10 @@ class ThunderhawkGunshipTest extends BaseCardTest {
 
     @Test
     void attackingCreaturesYouControlGainFlyingUntilEndOfTurn() {
-        Permanent vehicle = addReady(new ThunderhawkGunship());
-        Permanent crew = addReady(new GrizzlyBears());
-        Permanent attacker = addReady(new GrizzlyBears());
-        Permanent nonAttacker = addReady(new GrizzlyBears());
+        Permanent vehicle = addCreatureReady(player1, new ThunderhawkGunship());
+        Permanent crew = addCreatureReady(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent nonAttacker = addCreatureReady(player1, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, crew.getId());
@@ -54,8 +54,8 @@ class ThunderhawkGunshipTest extends BaseCardTest {
 
     @Test
     void crewingAnimatesTheVehicle() {
-        Permanent vehicle = addReady(new ThunderhawkGunship());
-        Permanent crew = addReady(new GrizzlyBears());
+        Permanent vehicle = addCreatureReady(player1, new ThunderhawkGunship());
+        Permanent crew = addCreatureReady(player1, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -64,10 +64,52 @@ class ThunderhawkGunshipTest extends BaseCardTest {
         assertThat(crew.isTapped()).isTrue();
     }
 
-    private Permanent addReady(Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(permanent);
-        return permanent;
+    @Test
+    void freshlyCreatedTokensCanCrewWithoutHasteAndAnimationExpires() {
+        harness.setHand(player1, List.of(new ThunderhawkGunship()));
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        Permanent vehicle = findPermanent(player1, "Thunderhawk Gunship");
+        Permanent crew = findPermanents(player1, "Astartes Warrior").getFirst();
+        assertThat(gqs.getEffectivePower(gd, crew)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, crew)).isEqualTo(2);
+        assertThat(gqs.isCreature(gd, vehicle)).isFalse();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, crew.getId());
+        assertThat(crew.isTapped()).isTrue();
+        assertThat(gqs.isCreature(gd, vehicle)).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, vehicle)).isTrue();
+        assertThat(vehicle.isTapped()).isFalse();
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
+        assertThat(gqs.isCreature(gd, vehicle)).isFalse();
+    }
+
+    @Test
+    void flyingRemainsAfterCombatAndExpiresAtEndOfTurn() {
+        addCreatureReady(player1, new ThunderhawkGunship());
+        Permanent crew = addCreatureReady(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent opponent = addCreatureReady(player2, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, crew.getId());
+        harness.passBothPriorities();
+        declareAttackers(player1, List.of(0, 2));
+        resolveAllTriggers();
+
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opponent, Keyword.FLYING)).isFalse();
+        resolveCombat();
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.FLYING)).isTrue();
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.FLYING)).isFalse();
     }
 }
