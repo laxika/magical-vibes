@@ -1,25 +1,24 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.r.RottingFensnake;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({StromkirkPatrol.class, RottingFensnake.class})
 class StromkirkPatrolTest extends BaseCardTest {
 
     private Permanent addReadyPatrol() {
-        Permanent perm = new Permanent(new StromkirkPatrol());
+        Permanent perm = harness.addToBattlefieldAndReturn(player1, new StromkirkPatrol());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(perm);
         return perm;
     }
-
-    // ===== Combat damage +1/+1 counter trigger =====
 
     @Test
     @DisplayName("Gets a +1/+1 counter when dealing combat damage to a player")
@@ -70,12 +69,11 @@ class StromkirkPatrolTest extends BaseCardTest {
         Permanent patrol = addReadyPatrol();
         patrol.setAttacking(true);
 
-        // 3/5 blocker kills the 4/3 Patrol (3 damage >= 3 toughness)
-        Permanent blocker = new Permanent(new HillGiant());
+        // The 5/1 blocker and the 4/3 Patrol deal lethal damage to each other.
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new RottingFensnake());
         blocker.setSummoningSick(false);
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -84,5 +82,52 @@ class StromkirkPatrolTest extends BaseCardTest {
 
         // Patrol should be dead
         harness.assertInGraveyard(player1, "Stromkirk Patrol");
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Surviving combat with a creature does not add a counter")
+    void noCounterWhenBlockedAndSurviving() {
+        Permanent patrol = addReadyPatrol();
+        patrol.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        patrol.setAttacking(true);
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new StromkirkPatrol());
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Stromkirk Patrol");
+        harness.assertLife(player2, 20);
+        assertThat(patrol.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Each Patrol gets its own counter only when its trigger resolves")
+    void eachPatrolGetsItsOwnCounter() {
+        Permanent first = addReadyPatrol();
+        Permanent second = addReadyPatrol();
+        first.setAttacking(true);
+        second.setAttacking(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 12);
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).hasSize(2);
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 }
