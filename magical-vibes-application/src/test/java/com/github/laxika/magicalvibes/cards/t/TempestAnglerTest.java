@@ -27,8 +27,7 @@ class TempestAnglerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         Permanent angler = getAngler();
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(angler.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
@@ -64,6 +63,45 @@ class TempestAnglerTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
         assertThat(angler.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("The counter trigger resolves before the spell that triggered it")
+    void counterResolvesBeforeDamageSpell() {
+        harness.addToBattlefield(player1, new TempestAngler());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        Permanent angler = getAngler();
+        harness.castInstant(player1, 0, angler.getId());
+
+        assertThat(angler.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+
+        harness.passBothPriorities();
+
+        assertThat(angler.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Tempest Angler");
+    }
+
+    @Test
+    @DisplayName("Each noncreature spell adds a counter to each controlled Tempest Angler")
+    void multipleSpellsTriggerEachAngler() {
+        harness.addToBattlefield(player1, new TempestAngler());
+        harness.addToBattlefield(player1, new TempestAngler());
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        List<Permanent> anglers = findPermanents(player1, "Tempest Angler");
+        harness.castInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+        harness.castInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(anglers).allSatisfy(angler ->
+                assertThat(angler.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2));
     }
 
     private Permanent getAngler() {
