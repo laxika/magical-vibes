@@ -37,8 +37,7 @@ class TarPitWarriorTest extends BaseCardTest {
     void sacrificesWhenTargetedByAbility() {
         Permanent warrior = harness.addToBattlefieldAndReturn(player1, new TarPitWarrior());
 
-        Permanent lion = harness.addToBattlefieldAndReturn(player2, new JamuraanLion());
-        lion.setSummoningSick(false);
+        Permanent lion = addCreatureReady(player2, new JamuraanLion());
 
         harness.addMana(player2, ManaColor.WHITE, 1);
         harness.activateAbility(player2, gd.playerBattlefields.get(player2.getId()).indexOf(lion),
@@ -54,7 +53,7 @@ class TarPitWarriorTest extends BaseCardTest {
     @Test
     @DisplayName("Stays on the battlefield when nothing targets it")
     void staysWhenNotTargeted() {
-        Permanent warrior = harness.addToBattlefieldAndReturn(player1, new TarPitWarrior());
+        harness.addToBattlefield(player1, new TarPitWarrior());
 
         harness.setHand(player2, List.of(new HopeCharm()));
         harness.addMana(player2, ManaColor.WHITE, 1);
@@ -62,5 +61,29 @@ class TarPitWarriorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Tar Pit Warrior");
+    }
+
+    @Test
+    @DisplayName("Own spell triggers sacrifice before the spell resolves")
+    void sacrificesBeforeOwnTargetingSpellResolves() {
+        Permanent warrior = harness.addToBattlefieldAndReturn(player1, new TarPitWarrior());
+        harness.setHand(player1, List.of(new HopeCharm()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castInstant(player1, 0, 0, warrior.getId());
+
+        harness.assertOnBattlefield(player1, "Tar Pit Warrior");
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Tar Pit Warrior");
+        harness.assertInGraveyard(player1, "Tar Pit Warrior");
+        harness.assertNotInGraveyard(player1, "Hope Charm");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Hope Charm");
+        assertThat(gd.stack).isEmpty();
     }
 }
