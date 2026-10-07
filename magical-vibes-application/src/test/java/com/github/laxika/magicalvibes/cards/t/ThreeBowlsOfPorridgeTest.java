@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.f.FerociousWerefox;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -10,7 +11,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ThreeBowlsOfPorridge.class, GrizzlyBears.class})
+@CardUsed({ThreeBowlsOfPorridge.class, GrizzlyBears.class, FerociousWerefox.class})
 class ThreeBowlsOfPorridgeTest extends BaseCardTest {
 
     @Test
@@ -73,5 +74,86 @@ class ThreeBowlsOfPorridgeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Three Bowls of Porridge");
+    }
+
+    @Test
+    void sacrificeAndLifeGainWaitUntilResolution() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new ThreeBowlsOfPorridge());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, 2, null, null);
+
+        assertThat(source.isTapped()).isTrue();
+        harness.assertOnBattlefield(player1, "Three Bowls of Porridge");
+        harness.assertLife(player1, 20);
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Three Bowls of Porridge");
+        harness.assertInGraveyard(player1, "Three Bowls of Porridge");
+        harness.assertLife(player1, 23);
+    }
+
+    @Test
+    void chosenModeCannotBeChosenAgainBeforeResolution() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new ThreeBowlsOfPorridge());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        source.untap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("only once");
+
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    void separatePermanentsTrackChosenModesIndependently() {
+        harness.addToBattlefield(player1, new ThreeBowlsOfPorridge());
+        harness.addToBattlefield(player1, new ThreeBowlsOfPorridge());
+        Permanent firstTarget = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent secondTarget = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, 1, null, firstTarget.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, 1, null, secondTarget.getId());
+        harness.passBothPriorities();
+
+        assertThat(firstTarget.isTapped()).isTrue();
+        assertThat(secondTarget.isTapped()).isTrue();
+    }
+
+    @Test
+    void tapModeCanTargetAnAlreadyTappedCreature() {
+        harness.addToBattlefield(player1, new ThreeBowlsOfPorridge());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        target.tap();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void damageModeDealsExactlyTwoDamageToYourOwnCreature() {
+        harness.addToBattlefield(player1, new ThreeBowlsOfPorridge());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new FerociousWerefox());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Ferocious Werefox");
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
     }
 }
