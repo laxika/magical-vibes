@@ -25,15 +25,13 @@ class SupperForSpidersTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, harness.getPermanentId(player2, "Llanowar Elves"));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Llanowar Elves"));
         harness.passBothPriorities();
 
         harness.setHand(player1, List.of(new SupperForSpiders()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         Permanent returned = findPermanent(player1, "Llanowar Elves");
         assertThat(returned.getCard().getType()).isEqualTo(CardType.ARTIFACT);
@@ -51,15 +49,13 @@ class SupperForSpidersTest extends BaseCardTest {
         harness.addToBattlefield(player2, new LlanowarElves());
         harness.setHand(player1, List.of(new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, harness.getPermanentId(player2, "Llanowar Elves"));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Llanowar Elves"));
         harness.passBothPriorities();
 
         harness.setHand(player1, List.of(new SupperForSpiders()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         Permanent returned = findPermanent(player1, "Llanowar Elves");
         harness.tapPermanent(player1, gd.playerBattlefields.get(player1.getId()).indexOf(returned));
@@ -73,5 +69,61 @@ class SupperForSpidersTest extends BaseCardTest {
         assertThat(gd.getLife(player1.getId())).isEqualTo(23);
         assertThat(findPermanents(player1, "Llanowar Elves")).isEmpty();
         assertThat(findPermanents(player2, "Llanowar Elves")).isEmpty();
+        harness.assertInGraveyard(player2, "Llanowar Elves");
+        harness.assertNotInGraveyard(player1, "Llanowar Elves");
+    }
+
+    @Test
+    void returnsEveryEligibleOpponentCardButLeavesYourOwnGraveyardAlone() {
+        harness.addToBattlefield(player2, new LlanowarElves());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new LlanowarElves());
+        harness.setHand(player1, List.of(new LightningBolt(), new LightningBolt(), new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Llanowar Elves"));
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Grizzly Bears"));
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Llanowar Elves"));
+
+        harness.setHand(player1, List.of(new SupperForSpiders()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(findPermanents(player1, "Llanowar Elves")).hasSize(1);
+        assertThat(findPermanents(player1, "Grizzly Bears")).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .allSatisfy(permanent -> assertThat(gqs.isCreature(gd, permanent)).isFalse());
+        harness.assertInGraveyard(player1, "Llanowar Elves");
+        harness.assertNotInGraveyard(player2, "Llanowar Elves");
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @CardUsed(SculptingSteel.class)
+    void copyingReturnedFoodCopiesOriginalCreatureTypes() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Grizzly Bears"));
+
+        harness.setHand(player1, List.of(new SupperForSpiders(), new SculptingSteel()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0);
+        Permanent food = findPermanent(player1, "Grizzly Bears");
+
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, food.getId());
+
+        Permanent copy = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> !permanent.getId().equals(food.getId()))
+                .findFirst().orElseThrow();
+        assertThat(gqs.isCreature(gd, copy)).isTrue();
+        assertThat(copy.getCard().hasType(CardType.ARTIFACT)).isFalse();
+        assertThat(copy.getCard().getSubtypes()).containsExactly(CardSubtype.BEAR);
+        assertThat(gqs.isCreature(gd, food)).isFalse();
     }
 }
