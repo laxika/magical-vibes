@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.List;
 
@@ -86,5 +88,58 @@ class SphereOfTruthTest extends BaseCardTest {
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
         assertThat(gd.getLife(player2.getId())).isEqualTo(16);
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {1, 2})
+    @DisplayName("Fully prevents white damage of at most 2 without gaining life")
+    void fullyPreventsSmallWhiteDamage(int swampCount) {
+        harness.addToBattlefield(player1, new SphereOfTruth());
+        harness.addToBattlefield(player2, new Karma());
+        for (int i = 0; i < swampCount; i++) {
+            harness.addToBattlefield(player1, new Swamp());
+        }
+        harness.setLife(player1, 20);
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Prevents 2 again for later damage from the same white source")
+    void preventsEachDamageEventFromTheSameSource() {
+        harness.addToBattlefield(player1, new SphereOfTruth());
+        harness.addToBattlefield(player2, new Karma());
+        harness.addToBattlefield(player1, new Swamp());
+        harness.addToBattlefield(player1, new Swamp());
+        harness.addToBattlefield(player1, new Swamp());
+        harness.setLife(player1, 20);
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        harness.assertLife(player1, 19);
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("Multiple Spheres each prevent 2 damage from the same white source")
+    void multipleSpheresCombineTheirPrevention() {
+        harness.addToBattlefield(player1, new SphereOfTruth());
+        harness.addToBattlefield(player1, new SphereOfTruth());
+        harness.setLife(player1, 20);
+        addCreatureReady(player2, new IridescentAngel());
+
+        declareAttackers(player2, List.of(0));
+        resolveCombat(player2);
+
+        harness.assertLife(player1, 20);
     }
 }
