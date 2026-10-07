@@ -52,9 +52,8 @@ class TorchBreathTest extends BaseCardTest {
     @Test
     @DisplayName("Deals X damage to a blue planeswalker")
     void damagesBluePlaneswalker() {
-        Permanent planeswalker = new Permanent(new MuYanlingSkyDancer());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new MuYanlingSkyDancer());
         planeswalker.setCounterCount(CounterType.LOYALTY, 5);
-        gd.playerBattlefields.get(player2.getId()).add(planeswalker);
         harness.setHand(player1, List.of(new TorchBreath()));
         harness.addMana(player1, ManaColor.RED, 1);
 
@@ -93,5 +92,92 @@ class TorchBreathTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, 2, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A reduction larger than X still requires red mana and preserves X")
+    void reducesCostForXOne() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setHand(player1, List.of(new TorchBreath()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, 1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("X zero deals no damage and still costs red mana")
+    void castsForXZero() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setHand(player1, List.of(new TorchBreath()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player1, "Torch Breath");
+    }
+
+    @Test
+    @DisplayName("X above the reduction requires remaining generic mana and deals the chosen X")
+    void reducesCostForXThreeAndOwnCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AirElemental());
+        harness.setHand(player1, List.of(new TorchBreath()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player1, 0, 3, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(target.getMarkedDamage()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Blue targets do not waive the red mana requirement")
+    void reductionCannotPayColoredMana() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setHand(player1, List.of(new TorchBreath()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, 2, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Nonblue targets cannot use the blue target discount")
+    void rejectsUnderpaymentForNonblueTarget() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new TorchBreath()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, 2, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("An uncounterable spell does not resolve after its only target dies")
+    void doesNotResolveWithMissingTarget() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setHand(player1, List.of(new TorchBreath()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setHand(player2, List.of(new TorchBreath()));
+        harness.addMana(player2, ManaColor.RED, 3);
+
+        harness.castInstant(player1, 0, 2, target.getId());
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, 4, target.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Air Elemental");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Torch Breath");
+        assertThat(gd.stack).isEmpty();
+        assertThat(target.getMarkedDamage()).isEqualTo(4);
     }
 }
