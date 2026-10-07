@@ -26,6 +26,22 @@ class SunastianFalconerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Mana is added to the controller's existing pool without affecting the opponent")
+    void addsManaOnlyToControllersExistingPool() {
+        addCreatureReady(player2, new SunastianFalconer());
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player2, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isEqualTo(5);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Sunastian Falconer's mana ability cannot be activated while it has summoning sickness")
     void cannotActivateWhileSummoningSick() {
         harness.addToBattlefield(player1, new SunastianFalconer());
