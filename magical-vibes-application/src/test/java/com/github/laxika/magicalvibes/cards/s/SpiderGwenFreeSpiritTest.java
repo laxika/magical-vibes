@@ -67,6 +67,67 @@ class SpiderGwenFreeSpiritTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
+    @Test
+    @DisplayName("Spider-Gwen cannot draw without a card to discard")
+    void emptyHandDoesNotDraw() {
+        Permanent gwen = addCreatureReady(player1, new SpiderGwenFreeSpirit());
+        Card draw = new Forest();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(draw));
+
+        tap(gwen);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(draw);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Spider-Gwen's tap trigger resolves after she leaves the battlefield")
+    void triggerResolvesWithoutSource() {
+        Permanent gwen = addCreatureReady(player1, new SpiderGwenFreeSpirit());
+        Card discard = new Forest();
+        Card draw = new Forest();
+        harness.setHand(player1, List.of(discard));
+        harness.setLibrary(player1, List.of(draw));
+
+        tap(gwen);
+        gd.playerBattlefields.get(player1.getId()).remove(gwen);
+        gd.playerGraveyards.get(player1.getId()).add(gwen.getCard());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(draw);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(discard);
+    }
+
+    @Test
+    @DisplayName("Spider-Gwen triggers again when untapped and tapped in the same turn")
+    void triggersForEachTap() {
+        Permanent gwen = addCreatureReady(player1, new SpiderGwenFreeSpirit());
+        Card first = new Forest();
+        Card second = new Forest();
+        Card third = new Forest();
+        harness.setHand(player1, List.of(first));
+        harness.setLibrary(player1, List.of(second, third));
+
+        tap(gwen);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+        gwen.untap();
+        tap(gwen);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(third);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(first, second);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
     private void tap(Permanent permanent) {
         permanent.tap();
         harness.inMutationScope(
