@@ -14,6 +14,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.Map;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
 @CardUsed({TornadoElemental.class, AdvancedHoverguard.class, AuriokWindwalker.class,
         FangrenPathcutter.class, PlasmaElemental.class})
 class TornadoElementalTest extends BaseCardTest {
@@ -28,8 +31,7 @@ class TornadoElementalTest extends BaseCardTest {
         harness.setHand(player1, List.of(new TornadoElemental()));
         harness.addMana(player1, ManaColor.GREEN, 7);
         harness.castCreature(player1, 0, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Advanced Hoverguard");
         harness.assertNotOnBattlefield(player2, "Auriok Windwalker");
@@ -44,8 +46,7 @@ class TornadoElementalTest extends BaseCardTest {
         harness.setHand(player1, List.of(new TornadoElemental()));
         harness.addMana(player1, ManaColor.GREEN, 7);
         harness.castCreature(player1, 0, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertOnBattlefield(player2, "Plasma Elemental");
     }
@@ -65,6 +66,7 @@ class TornadoElementalTest extends BaseCardTest {
 
         harness.assertLife(player2, 14);
         harness.assertOnBattlefield(player2, "Fangren Pathcutter");
+        assertThat(attacker.getMarkedDamage()).isEqualTo(4);
     }
 
     @Test
@@ -83,5 +85,40 @@ class TornadoElementalTest extends BaseCardTest {
         harness.assertLife(player2, 20);
         harness.assertNotOnBattlefield(player2, "Fangren Pathcutter");
         harness.assertInGraveyard(player2, "Fangren Pathcutter");
+    }
+
+    @Test
+    @DisplayName("Damage cannot be split between a blocker and the defending player")
+    void cannotSplitDamageBetweenBlockerAndPlayer() {
+        harness.setLife(player2, 20);
+        Permanent attacker = addCreatureReady(player1, new TornadoElemental());
+        Permanent blocker = addCreatureReady(player2, new FangrenPathcutter());
+        attacker.setAttacking(true);
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+
+        resolveCombat();
+
+        assertThatThrownBy(() -> harness.handleCombatDamageAssigned(player1, 0,
+                Map.of(blocker.getId(), 3, player2.getId(), 3)))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(player2.getId(), 6));
+        harness.assertLife(player2, 14);
+        harness.assertOnBattlefield(player2, "Fangren Pathcutter");
+    }
+
+    @Test
+    @DisplayName("Assigning damage as though unblocked remains optional after blockers leave combat")
+    void offersChoiceWhenBlockedWithoutRemainingBlockers() {
+        harness.setLife(player2, 20);
+        Permanent attacker = addCreatureReady(player1, new TornadoElemental());
+        attacker.setAttacking(true);
+        attacker.setBlockedWithoutBlockers(true);
+
+        resolveCombat();
+
+        harness.assertLife(player2, 20);
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
     }
 }
