@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.Mordenkainen;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -20,7 +21,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TashaUnholyArchmage.class, GrizzlyBears.class, Shock.class, Forest.class})
+@CardUsed({TashaUnholyArchmage.class, GrizzlyBears.class, Shock.class, Forest.class, Mordenkainen.class})
 class TashaUnholyArchmageTest extends BaseCardTest {
 
     @Test
@@ -94,11 +95,92 @@ class TashaUnholyArchmageTest extends BaseCardTest {
                 .containsExactlyInAnyOrder(shock, forest, secondShock);
     }
 
+    @Test
+    void plusOneDoesNotTriggerForAnotherPlaneswalker() {
+        addReadyTasha(4);
+        Permanent otherPlaneswalker = harness.addToBattlefieldAndReturn(player1, new Mordenkainen());
+        otherPlaneswalker.setCounterCount(CounterType.LOYALTY, 5);
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+        gs.declareAttackers(gd, player2, List.of(0), Map.of(0, otherPlaneswalker.getId()));
+        resolveAllTriggers();
+
+        assertThat(attacker.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+    }
+
+    @Test
+    void minusTwoLetsOpponentChooseAmongCreatures() {
+        addReadyTasha(4);
+        Card first = new GrizzlyBears();
+        Card second = new GrizzlyBears();
+        Card land = new Forest();
+        harness.setGraveyard(player2, List.of(land, first, second));
+
+        harness.activateAbility(player1, 0, 1, null, player2.getId());
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
+        harness.handleGraveyardCardChosen(player2, 1);
+        resolveAllTriggers();
+
+        Permanent returned = findPermanent(player1, "Grizzly Bears");
+        assertThat(returned.getCard()).isSameAs(second);
+        assertThat(gqs.hasKeyword(gd, returned, Keyword.WARD)).isTrue();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(land, first);
+    }
+
+    @Test
+    void minusTwoDoesNothingWithoutCreatureCards() {
+        addReadyTasha(4);
+        Card land = new Forest();
+        harness.setGraveyard(player2, List.of(land));
+        harness.activateAbility(player1, 0, 1, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(land);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void minusSixStopsAtThirdCreatureLeavingUnrevealedCardsInLibrary() {
+        addReadyTasha(7);
+        Card first = new GrizzlyBears();
+        Card second = new GrizzlyBears();
+        Card third = new GrizzlyBears();
+        Card unrevealed = new Forest();
+        harness.setLibrary(player2, List.of(first, second, third, unrevealed));
+        harness.activateAbility(player1, 0, 2, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Grizzly Bears")).hasSize(3);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(unrevealed);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void minusSixReturnsAvailableCreaturesWhenLibraryHasFewerThanThree() {
+        addReadyTasha(7);
+        Card creature = new GrizzlyBears();
+        Card land = new Forest();
+        harness.setLibrary(player2, List.of(land, creature));
+        harness.activateAbility(player1, 0, 2, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Grizzly Bears").getCard()).isSameAs(creature);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(land);
+    }
+
     private Permanent addReadyTasha(int loyalty) {
-        Permanent permanent = new Permanent(new TashaUnholyArchmage());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player1, new TashaUnholyArchmage());
         permanent.setCounterCount(CounterType.LOYALTY, loyalty);
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(permanent);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return permanent;
