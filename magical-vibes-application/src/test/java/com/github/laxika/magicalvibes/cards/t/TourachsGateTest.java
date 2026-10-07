@@ -88,8 +88,8 @@ class TourachsGateTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Tourach's Gate removes a time counter during its controller's upkeep")
-    void upkeepRemovesTimeCounter() {
+    @DisplayName("Tourach's Gate is sacrificed when upkeep removes its last time counter")
+    void upkeepSacrificesAfterRemovingLastTimeCounter() {
         Permanent land = harness.addToBattlefieldAndReturn(player1, new HavenwoodBattleground());
         Permanent aura = addGate(land);
         aura.setCounterCount(CounterType.TIME, 1);
@@ -97,8 +97,8 @@ class TourachsGateTest extends BaseCardTest {
         advanceToUpkeep(player1);
         resolveAllTriggers();
 
-        assertThat(aura.getCounterCount(CounterType.TIME)).isZero();
-        harness.assertOnBattlefield(player1, "Tourach's Gate");
+        harness.assertNotOnBattlefield(player1, "Tourach's Gate");
+        harness.assertInGraveyard(player1, "Tourach's Gate");
     }
 
     @Test
@@ -170,6 +170,49 @@ class TourachsGateTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Tourach's Gate survives upkeep when time counters remain")
+    void upkeepRemovesOneOfSeveralCounters() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new HavenwoodBattleground());
+        Permanent aura = addGate(land);
+        aura.setCounterCount(CounterType.TIME, 3);
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(aura.getCounterCount(CounterType.TIME)).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Tourach's Gate");
+    }
+
+    @Test
+    @DisplayName("Tourach's Gate does not remove counters during its opponent's upkeep")
+    void opponentUpkeepDoesNotRemoveCounters() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new HavenwoodBattleground());
+        Permanent aura = addGate(land);
+        aura.setCounterCount(CounterType.TIME, 1);
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(aura.getCounterCount(CounterType.TIME)).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Tourach's Gate");
+    }
+
+    @Test
+    @DisplayName("A Thrull can replenish counters in response to the upkeep trigger")
+    void canReplenishCountersBeforeUpkeepResolves() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new HavenwoodBattleground());
+        Permanent aura = addGate(land);
+        harness.addToBattlefield(player1, new ArmorThrull());
+
+        advanceToUpkeep(player1);
+        harness.activateAbility(player1, indexOf(aura), 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(aura.getCounterCount(CounterType.TIME)).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Tourach's Gate");
+        harness.assertInGraveyard(player1, "Armor Thrull");
+    }
     private Permanent addGate(Permanent land) {
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new TourachsGate());
         aura.setAttachedTo(land.getId());
