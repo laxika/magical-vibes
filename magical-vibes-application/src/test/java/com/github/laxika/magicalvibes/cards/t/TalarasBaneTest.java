@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.a.ArchonOfJustice;
 import com.github.laxika.magicalvibes.cards.g.GlenElendraArchmage;
 import com.github.laxika.magicalvibes.cards.h.HotheadedGiant;
+import com.github.laxika.magicalvibes.cards.p.Primalcrux;
 import com.github.laxika.magicalvibes.cards.r.RavensCrime;
 import com.github.laxika.magicalvibes.cards.w.WickerboughElder;
 import com.github.laxika.magicalvibes.cards.w.WistfulSelkie;
@@ -25,7 +26,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
         ArchonOfJustice.class,
         GlenElendraArchmage.class,
         RavensCrime.class,
-        WistfulSelkie.class
+        WistfulSelkie.class,
+        Primalcrux.class
 })
 class TalarasBaneTest extends BaseCardTest {
 
@@ -38,8 +40,7 @@ class TalarasBaneTest extends BaseCardTest {
 
         int startingLife = gd.playerLifeTotals.get(player1.getId());
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.RevealedHandChoice.class);
         // Only the green creature (Wickerbough Elder) is a legal choice; the red Hotheaded Giant is filtered out.
@@ -66,8 +67,7 @@ class TalarasBaneTest extends BaseCardTest {
 
         int startingLife = gd.playerLifeTotals.get(player1.getId());
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         // Archon of Justice (white), Wickerbough Elder (green), and Wistful Selkie (green/blue)
         // are legal. The blue Glen Elendra Archmage and black Raven's Crime are not.
@@ -91,12 +91,60 @@ class TalarasBaneTest extends BaseCardTest {
 
         int startingLife = gd.playerLifeTotals.get(player1.getId());
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(startingLife);
         assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A creature's characteristic-defining toughness applies while it is in hand")
+    void gainsLifeFromCharacteristicDefiningToughnessInHand() {
+        harness.addToBattlefield(player2, new WistfulSelkie());
+        harness.addToBattlefield(player1, new WickerboughElder());
+        harness.setHand(player2, List.of(new Primalcrux()));
+        harness.setHand(player1, List.of(new TalarasBane()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        int startingLife = gd.playerLifeTotals.get(player1.getId());
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertLife(player1, startingLife + 3);
+        harness.assertInGraveyard(player2, "Primalcrux");
+        harness.assertNotInHand(player2, "Primalcrux");
+    }
+
+    @Test
+    void multicoloredCreatureCanBeDiscardedForItsToughness() {
+        harness.setHand(player2, List.of(new WistfulSelkie(), new ArchonOfJustice()));
+        harness.setHand(player1, List.of(new TalarasBane()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        int startingLife = gd.playerLifeTotals.get(player1.getId());
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertLife(player1, startingLife + 2);
+        harness.assertInGraveyard(player2, "Wistful Selkie");
+        harness.assertNotInHand(player2, "Wistful Selkie");
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    void emptyHandDoesNotRequireAChoiceOrGainLife() {
+        harness.setHand(player2, List.of());
+        harness.setHand(player1, List.of(new TalarasBane()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        int startingLife = gd.playerLifeTotals.get(player1.getId());
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertLife(player1, startingLife);
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
     }
 
