@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TitanOfLittjara.class, GrizzlyBears.class, Forest.class})
+@CardUsed({TitanOfLittjara.class, GrizzlyBears.class, Forest.class, Unsummon.class})
 class TitanOfLittjaraTest extends BaseCardTest {
 
     @Test
@@ -67,5 +68,119 @@ class TitanOfLittjaraTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
         assertThat(gqs.computeStaticBonus(gd, findPermanent(player1, "Titan of Littjara"))
                 .grantedSubtypes()).contains(CardSubtype.BEAR);
+    }
+
+    @Test
+    void attackTriggerDrawsForOtherMatchingCreatures() {
+        Permanent titan = harness.addToBattlefieldAndReturn(player1, new TitanOfLittjara());
+        titan.setChosenSubtype(CardSubtype.BEAR);
+        titan.setSummoningSick(false);
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(titan.getChosenSubtype()).isEqualTo(CardSubtype.BEAR);
+    }
+
+    @Test
+    void originalIllusionTypeMatchesEvenWhenChosenTypesDiffer() {
+        Permanent otherTitan = harness.addToBattlefieldAndReturn(player1, new TitanOfLittjara());
+        otherTitan.setChosenSubtype(CardSubtype.ELF);
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        castTitanAndChooseBear();
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void sharingTwoCreatureTypesStillCountsEachCreatureOnlyOnce() {
+        Permanent otherTitan = harness.addToBattlefieldAndReturn(player1, new TitanOfLittjara());
+        otherTitan.setChosenSubtype(CardSubtype.BEAR);
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        castTitanAndChooseBear();
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void acceptingZeroCardDrawStillDiscards() {
+        harness.setLibrary(player1, List.of(new Forest()));
+        castTitanAndChooseBear();
+        harness.setHand(player1, List.of(new Forest()));
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void matchingCreaturesAreCountedAtResolution() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
+        castTitanAndChooseBear();
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player2, 0, bear.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(bear.getCard());
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    void sourceLeavingBeforeResolutionRetainsItsLastKnownChosenType() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        castTitanAndChooseBear();
+        Permanent titan = findPermanent(player1, "Titan of Littjara");
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player2, 0, titan.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(titan.getCard());
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    private void castTitanAndChooseBear() {
+        harness.setHand(player1, List.of(new TitanOfLittjara()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "BEAR");
     }
 }
