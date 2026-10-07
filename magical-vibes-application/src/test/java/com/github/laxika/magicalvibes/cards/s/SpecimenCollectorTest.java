@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.h.HardEvidence;
+import com.github.laxika.magicalvibes.cards.u.UnholyHeat;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SpecimenCollector.class, Shock.class})
+@CardUsed({SpecimenCollector.class, UnholyHeat.class, HardEvidence.class})
 class SpecimenCollectorTest extends BaseCardTest {
 
     @Test
@@ -32,6 +33,10 @@ class SpecimenCollectorTest extends BaseCardTest {
         assertThat(squirrel.getCard().getToughness()).isEqualTo(1);
         assertThat(crab.getCard().getPower()).isZero();
         assertThat(crab.getCard().getToughness()).isEqualTo(3);
+        assertThat(squirrel.getCard().getColor()).isEqualTo(CardColor.GREEN);
+        assertThat(crab.getCard().getColor()).isEqualTo(CardColor.BLUE);
+        assertThat(squirrel.getCard().isToken()).isTrue();
+        assertThat(crab.getCard().isToken()).isTrue();
     }
 
     @Test
@@ -41,10 +46,9 @@ class SpecimenCollectorTest extends BaseCardTest {
         Permanent squirrel = findPermanent(player1, "Squirrel");
         Permanent specimenCollector = findPermanent(player1, "Specimen Collector");
 
-        harness.setHand(player1, List.of(new Shock()));
+        harness.setHand(player1, List.of(new UnholyHeat()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, specimenCollector.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, specimenCollector.getId());
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .containsExactlyInAnyOrder(squirrel.getId(), findPermanent(player1, "Crab").getId());
@@ -60,16 +64,18 @@ class SpecimenCollectorTest extends BaseCardTest {
     void deathTriggerRequiresOwnToken() {
         castSpecimenCollector();
         Permanent specimenCollector = findPermanent(player1, "Specimen Collector");
-        Permanent opponentToken = harness.addToBattlefieldAndReturn(player2, tokenCard());
+        Permanent nontoken = harness.addToBattlefieldAndReturn(player1, new SpecimenCollector());
+        harness.enterBattlefieldAndReturn(player2, new SpecimenCollector());
+        resolveAllTriggers();
+        Permanent opponentToken = findPermanent(player2, "Squirrel");
 
-        harness.setHand(player1, List.of(new Shock()));
+        harness.setHand(player1, List.of(new UnholyHeat()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, specimenCollector.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, specimenCollector.getId());
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .contains(findPermanent(player1, "Squirrel").getId(), findPermanent(player1, "Crab").getId())
-                .doesNotContain(opponentToken.getId(), specimenCollector.getId());
+                .doesNotContain(opponentToken.getId(), nontoken.getId());
     }
 
     private void castSpecimenCollector() {
@@ -77,18 +83,74 @@ class SpecimenCollectorTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
-    private Card tokenCard() {
-        Card card = new Card();
-        card.setName("Opponent Token");
-        card.setType(CardType.CREATURE);
-        card.setColor(CardColor.GREEN);
-        card.setPower(2);
-        card.setToughness(2);
-        card.setToken(true);
-        return card;
+    @Test
+    void deathCanCopyCrabWithoutCopyingTappedState() {
+        castSpecimenCollector();
+        Permanent crab = findPermanent(player1, "Crab");
+        crab.setTapped(true);
+        killCollector();
+        harness.handlePermanentChosen(player1, crab.getId());
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Crab")).hasSize(2);
+        Permanent copy = findPermanents(player1, "Crab").stream()
+                .filter(p -> !p.getId().equals(crab.getId())).findFirst().orElseThrow();
+        assertThat(copy.isTapped()).isFalse();
+        assertThat(copy.getCard().getPower()).isZero();
+        assertThat(copy.getCard().getToughness()).isEqualTo(3);
+        assertThat(copy.getCard().getColor()).isEqualTo(CardColor.BLUE);
+    }
+
+    @Test
+    void deathCanCopyNoncreatureToken() {
+        castSpecimenCollector();
+        harness.setHand(player1, List.of(new HardEvidence()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveSorcery(player1, 0, 0);
+        Permanent clue = findPermanent(player1, "Clue");
+        killCollector();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .contains(clue.getId());
+        harness.handlePermanentChosen(player1, clue.getId());
+        resolveAllTriggers();
+        assertThat(findPermanents(player1, "Clue")).hasSize(2)
+                .allSatisfy(p -> assertThat(p.getCard().getType()).isEqualTo(CardType.ARTIFACT));
+    }
+
+    @Test
+    void deathDoesNotCopyTokenRemovedInResponse() {
+        castSpecimenCollector();
+        Permanent squirrel = findPermanent(player1, "Squirrel");
+        killCollector();
+        harness.setHand(player1, List.of(new UnholyHeat()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.handlePermanentChosen(player1, squirrel.getId());
+        harness.castAndResolveInstant(player1, 0, squirrel.getId());
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Squirrel")).isEmpty();
+        assertThat(findPermanents(player1, "Crab")).hasSize(1);
+    }
+
+    @Test
+    void deathWithoutEligibleTokensDoesNotPromptOrCreateToken() {
+        harness.addToBattlefield(player1, new SpecimenCollector());
+        killCollector();
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Specimen Collector");
+    }
+
+    private void killCollector() {
+        harness.setHand(player1, List.of(new UnholyHeat()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, findPermanent(player1, "Specimen Collector").getId());
     }
 }
