@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({UndercityTroll.class, GiantSpider.class})
 class UndercityTrollTest extends BaseCardTest {
 
     @Test
@@ -70,9 +72,7 @@ class UndercityTrollTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        declareAttackers(player1, List.of(0));
-        resolveAllTriggers();
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
         resolveAllTriggers();
@@ -80,6 +80,42 @@ class UndercityTrollTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(troll);
         assertThat(troll.getRegenerationShield()).isZero();
         assertThat(troll.getMarkedDamage()).isZero();
+        assertThat(troll.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Combat damage to a creature does not make the troll renowned")
+    void blockedCombatDoesNotGrantRenown() {
+        Permanent troll = addCreatureReady(player1, new UndercityTroll());
+        Permanent blocker = addCreatureReady(player2, new UndercityTroll());
+
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(troll.isRenowned()).isFalse();
+        assertThat(blocker.isRenowned()).isFalse();
+        assertThat(troll.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(blocker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(troll);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Regeneration can be activated while tapped and does not untap the creature")
+    void regenerationWhileTapped() {
+        Permanent troll = addCreatureReady(player1, new UndercityTroll());
+        troll.setTapped(true);
+
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(troll.getRegenerationShield()).isEqualTo(1);
         assertThat(troll.isTapped()).isTrue();
     }
 }
