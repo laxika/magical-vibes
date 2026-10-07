@@ -59,7 +59,7 @@ class ToweringTitanTest extends BaseCardTest {
     @DisplayName("The team trample grant expires at end of turn")
     void trampleExpiresAtEndOfTurn() {
         Permanent titan = addTitanWithCounter();
-        Permanent defender = addCreatureReady(player1, new CarnivorousPlant());
+        addCreatureReady(player1, new CarnivorousPlant());
         Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, null);
@@ -84,6 +84,63 @@ class ToweringTitanTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("a creature with defender");
+    }
+
+    @Test
+    void diesWhenOnlyOpponentControlsCreatures() {
+        harness.addToBattlefield(player2, new CarnivorousPlant());
+        harness.setHand(player1, List.of(new ToweringTitan()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Towering Titan");
+        harness.assertInGraveyard(player1, "Towering Titan");
+    }
+
+    @Test
+    void countsModifiedToughnessWithoutCountingDamage() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        bears.setMarkedDamage(1);
+        harness.setHand(player1, List.of(new ToweringTitan()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Towering Titan")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
+    }
+
+    @Test
+    void sacrificeIsPaidBeforeTrampleResolvesAndLaterCreaturesDoNotGainIt() {
+        Permanent titan = addTitanWithCounter();
+        addCreatureReady(player1, new CarnivorousPlant());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertInGraveyard(player1, "Carnivorous Plant");
+        assertThat(gqs.hasKeyword(gd, titan, Keyword.TRAMPLE)).isFalse();
+        harness.passBothPriorities();
+        assertThat(gqs.hasKeyword(gd, titan, Keyword.TRAMPLE)).isTrue();
+
+        Permanent laterCreature = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+        assertThat(gqs.hasKeyword(gd, laterCreature, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    void cannotSacrificeOpponentsDefender() {
+        addTitanWithCounter();
+        harness.addToBattlefield(player2, new CarnivorousPlant());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("a creature with defender");
+        harness.assertOnBattlefield(player2, "Carnivorous Plant");
     }
 
     private Permanent addTitanWithCounter() {
