@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.b.BayFalcon;
 import com.github.laxika.magicalvibes.cards.c.CharcoalDiamond;
 import com.github.laxika.magicalvibes.cards.d.DarkRitual;
+import com.github.laxika.magicalvibes.cards.r.RayOfCommand;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Soulshriek.class, BayFalcon.class, DarkRitual.class, CharcoalDiamond.class})
+@CardUsed({Soulshriek.class, BayFalcon.class, DarkRitual.class, CharcoalDiamond.class, RayOfCommand.class})
 class SoulshriekTest extends BaseCardTest {
 
     @Test
@@ -102,6 +103,70 @@ class SoulshriekTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Bay Falcon");
 
+        harness.passUntil(TurnStep.END_STEP);
+        harness.assertOnBattlefield(player1, "Bay Falcon");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Bay Falcon");
+        harness.assertInGraveyard(player1, "Bay Falcon");
+    }
+
+    @Test
+    void cannotSacrificeCreatureAnOpponentTook() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        Permanent falcon = harness.addToBattlefieldAndReturn(player1, new BayFalcon());
+        harness.setHand(player1, List.of(new Soulshriek()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castAndResolveInstant(player1, 0, falcon.getId());
+
+        harness.setHand(player2, List.of(new RayOfCommand()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.castAndResolveInstant(player2, 0, falcon.getId());
+        harness.assertOnBattlefield(player2, "Bay Falcon");
+
+        harness.passUntil(TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Bay Falcon");
+        harness.assertNotInGraveyard(player1, "Bay Falcon");
+    }
+
+    @Test
+    void graveyardChangesAfterResolutionDoNotChangeBoost() {
+        Permanent falcon = harness.addToBattlefieldAndReturn(player1, new BayFalcon());
+        int basePower = gqs.getEffectivePower(gd, falcon);
+        harness.setGraveyard(player1, List.of(new BayFalcon()));
+        harness.setHand(player1, List.of(new Soulshriek()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castAndResolveInstant(player1, 0, falcon.getId());
+
+        harness.setGraveyard(player1, List.of(new BayFalcon(), new BayFalcon()));
+
+        assertThat(gqs.getEffectivePower(gd, falcon)).isEqualTo(basePower + 1);
+    }
+
+    @Test
+    void castDuringEndStepExpiresBeforeNextEndStepSacrifice() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        Permanent falcon = harness.addToBattlefieldAndReturn(player1, new BayFalcon());
+        int basePower = gqs.getEffectivePower(gd, falcon);
+        harness.setGraveyard(player1, List.of(new BayFalcon()));
+        harness.passUntil(TurnStep.END_STEP);
+        harness.setHand(player1, List.of(new Soulshriek()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castAndResolveInstant(player1, 0, falcon.getId());
+        assertThat(gqs.getEffectivePower(gd, falcon)).isEqualTo(basePower + 1);
+
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.assertOnBattlefield(player1, "Bay Falcon");
+        assertThat(gqs.getEffectivePower(gd, falcon)).isEqualTo(basePower);
+        harness.passUntilWithNoAttackers(player2, TurnStep.END_STEP);
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Bay Falcon");
