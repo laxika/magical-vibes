@@ -2,11 +2,13 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.PerilousVoyage;
+import com.github.laxika.magicalvibes.cards.q.QueensBaySoldier;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,9 +17,9 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({SunriseSeeker.class, Forest.class, QueensBaySoldier.class, PerilousVoyage.class})
 class SunriseSeekerTest extends BaseCardTest {
 
-    // ===== Explore reveals a land — put into hand =====
 
     @Test
     @DisplayName("Explore with land on top puts land into hand")
@@ -55,12 +57,11 @@ class SunriseSeekerTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 
-    // ===== Explore reveals a non-land — +1/+1 counter and may graveyard =====
 
     @Test
     @DisplayName("Explore with non-land on top puts +1/+1 counter on creature")
     void exploreNonLandAddsCounter() {
-        gd.playerDecks.get(player1.getId()).addFirst(new GrizzlyBears());
+        gd.playerDecks.get(player1.getId()).addFirst(new QueensBaySoldier());
 
         castSeeker();
 
@@ -72,7 +73,7 @@ class SunriseSeekerTest extends BaseCardTest {
     @Test
     @DisplayName("Explore with non-land on top prompts may ability")
     void exploreNonLandPromptsMayAbility() {
-        gd.playerDecks.get(player1.getId()).addFirst(new GrizzlyBears());
+        gd.playerDecks.get(player1.getId()).addFirst(new QueensBaySoldier());
 
         castSeeker();
 
@@ -83,7 +84,7 @@ class SunriseSeekerTest extends BaseCardTest {
     @Test
     @DisplayName("Explore non-land — accept puts card into graveyard")
     void exploreNonLandAcceptPutsInGraveyard() {
-        Card creature = new GrizzlyBears();
+        Card creature = new QueensBaySoldier();
         gd.playerDecks.get(player1.getId()).addFirst(creature);
 
         castSeeker();
@@ -98,7 +99,7 @@ class SunriseSeekerTest extends BaseCardTest {
     @Test
     @DisplayName("Explore non-land — decline leaves card on top of library")
     void exploreNonLandDeclineLeavesOnTop() {
-        Card creature = new GrizzlyBears();
+        Card creature = new QueensBaySoldier();
         gd.playerDecks.get(player1.getId()).addFirst(creature);
 
         castSeeker();
@@ -110,22 +111,66 @@ class SunriseSeekerTest extends BaseCardTest {
                 .noneMatch(c -> c.getId().equals(creature.getId()));
     }
 
-    // ===== Explore with empty library =====
 
     @Test
-    @DisplayName("Explore with empty library does nothing")
+    @DisplayName("Explore with empty library adds a counter without prompting")
     void exploreEmptyLibrary() {
-        gd.playerDecks.get(player1.getId()).clear();
+        harness.setLibrary(player1, List.of());
 
         castSeeker();
 
         Permanent seeker = findSeeker();
         assertThat(seeker).isNotNull();
-        assertThat(seeker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
+        assertThat(seeker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Explore still puts a land into hand after the creature leaves the battlefield")
+    void exploreLandAfterSeekerLeaves() {
+        Card land = new Forest();
+        harness.setLibrary(player1, List.of(land));
+
+        castSeekerAndBounceBeforeExplore();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Sunrise Seeker");
+        harness.assertInHand(player1, "Sunrise Seeker");
+        assertThat(gd.playerHands.get(player1.getId())).contains(land);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Explore still allows a nonland to go to the graveyard after the creature leaves")
+    void exploreNonLandAfterSeekerLeaves() {
+        Card revealed = new QueensBaySoldier();
+        harness.setLibrary(player1, List.of(revealed));
+
+        castSeekerAndBounceBeforeExplore();
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "Sunrise Seeker");
+        harness.assertInHand(player1, "Sunrise Seeker");
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(revealed);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    private void castSeekerAndBounceBeforeExplore() {
+        harness.setHand(player1, List.of(new SunriseSeeker()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new PerilousVoyage()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0, harness.getPermanentId(player1, "Sunrise Seeker"));
+    }
+
 
     private void castSeeker() {
         harness.setHand(player1, List.of(new SunriseSeeker()));
@@ -138,8 +183,6 @@ class SunriseSeekerTest extends BaseCardTest {
     }
 
     private Permanent findSeeker() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Sunrise Seeker"))
-                .findFirst().orElse(null);
+        return gqs.findPermanentById(gd, harness.getPermanentId(player1, "Sunrise Seeker"));
     }
 }
