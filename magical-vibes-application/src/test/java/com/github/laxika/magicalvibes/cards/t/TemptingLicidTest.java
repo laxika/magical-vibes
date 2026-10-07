@@ -161,4 +161,57 @@ class TemptingLicidTest extends BaseCardTest {
         assertThat(unableBlocker.isBlocking()).isFalse();
         assertThat(ableBlocker.isBlocking()).isTrue();
     }
+
+    @Test
+    @DisplayName("Ending the Aura effect removes the blocking requirement and leaves the Licid tapped")
+    void endingEffectRemovesBlockingRequirement() {
+        Permanent host = addCreatureReady(player1, new SpinedWurm());
+        Permanent licid = addCreatureReady(player1, new TemptingLicid());
+        addCreatureReady(player2, new SpinedWurm());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 1, null, host.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, null, null);
+
+        assertThat(licid.isTapped()).isTrue();
+        host.setAttacking(true);
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of());
+
+        assertThat(findPermanent(player2, "Spined Wurm").isBlocking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A Licid targeting itself goes to the graveyard after becoming an Aura")
+    void targetingItselfLeavesNoLegalAttachment() {
+        Permanent licid = addCreatureReady(player1, new TemptingLicid());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, licid.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Tempting Licid");
+        harness.assertInGraveyard(player1, "Tempting Licid");
+    }
+
+    @Test
+    @DisplayName("Tapped creatures are not forced to block the enchanted creature")
+    void tappedBlockerIsNotRequired() {
+        Permanent host = addCreatureReady(player1, new SpinedWurm());
+        addCreatureReady(player1, new TemptingLicid());
+        Permanent tappedBlocker = addCreatureReady(player2, new SpinedWurm());
+        Permanent ableBlocker = addCreatureReady(player2, new SpinedWurm());
+        tappedBlocker.setTapped(true);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 1, null, host.getId());
+        harness.passBothPriorities();
+        host.setAttacking(true);
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(1, 0)));
+
+        assertThat(tappedBlocker.isBlocking()).isFalse();
+        assertThat(ableBlocker.isBlocking()).isTrue();
+    }
 }
