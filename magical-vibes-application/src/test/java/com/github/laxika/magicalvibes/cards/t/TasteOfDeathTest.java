@@ -55,6 +55,10 @@ class TasteOfDeathTest extends BaseCardTest {
         assertThat(secondChoice.playerId()).isEqualTo(player2.getId());
         assertThat(secondChoice.maxCount()).isEqualTo(3);
 
+        assertThat(countPermanents(player1, "Grizzly Bears")).isEqualTo(4);
+        assertThat(countPermanents(player2, "Grizzly Bears")).isEqualTo(4);
+        assertThat(countPermanents(player1, "Food")).isZero();
+
         List<Permanent> player2Creatures = findPermanents(player2, "Grizzly Bears");
         harness.handleMultiplePermanentsChosen(player2,
                 player2Creatures.subList(0, 3).stream().map(Permanent::getId).toList());
@@ -80,11 +84,32 @@ class TasteOfDeathTest extends BaseCardTest {
         assertThat(countPermanents(player1, "Food")).isEqualTo(2);
     }
 
+    @Test
+    @DisplayName("Food is created even when neither player controls a creature")
+    void createsFoodWithoutCreatures() {
+        castTasteOfDeath();
+
+        assertThat(countPermanents(player1, "Food")).isEqualTo(3);
+        assertThat(countPermanents(player2, "Food")).isZero();
+    }
+
+    @Test
+    @DisplayName("Players with fewer than three creatures sacrifice all of them")
+    void sacrificesAllAvailableCreaturesAndKeepsExistingFood() {
+        castTasteOfDeath();
+        addCreatures(player1, 1);
+        addCreatures(player2, 2);
+
+        castTasteOfDeath();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        assertThat(countPermanents(player1, "Food")).isEqualTo(6);
+        assertThat(countPermanents(player2, "Food")).isZero();
+    }
+
     private void castTasteOfDeath() {
-        harness.setHand(player1, List.of(new TasteOfDeath()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new TasteOfDeath(), "{4}{B}{B}");
         harness.passBothPriorities();
     }
 
