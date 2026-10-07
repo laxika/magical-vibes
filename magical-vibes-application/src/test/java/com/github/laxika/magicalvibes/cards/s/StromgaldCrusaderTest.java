@@ -157,4 +157,54 @@ class StromgaldCrusaderTest extends BaseCardTest {
                 .hasMessageContaining("Not enough mana");
     }
 
+    @Test
+    @DisplayName("Repeated boosts accumulate on the source without boosting another Crusader")
+    void repeatedBoostsAccumulateOnlyOnSource() {
+        Permanent crusader = addCreatureReady(player1, new StromgaldCrusader());
+        Permanent other = addCreatureReady(player1, new StromgaldCrusader());
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.activateAbility(player1, 0, 1, null, null);
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, crusader)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, crusader)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Both abilities can be activated while tapped and summoning sick")
+    void abilitiesWorkWhileTappedAndSummoningSick() {
+        Permanent crusader = harness.addToBattlefieldAndReturn(player1, new StromgaldCrusader());
+        crusader.setSummoningSick(true);
+        crusader.setTapped(true);
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.activateAbility(player1, 0, 1, null, null);
+        resolveAllTriggers();
+
+        assertThat(gqs.hasKeyword(gd, crusader, Keyword.FLYING)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, crusader)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, crusader)).isEqualTo(1);
+        assertThat(crusader.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Granted flying prevents a nonflying black creature from blocking")
+    void grantedFlyingPreventsGroundBlocker() {
+        addCreatureReady(player1, new StromgaldCrusader());
+        addCreatureReady(player2, new StromgaldCrusader());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
 }
