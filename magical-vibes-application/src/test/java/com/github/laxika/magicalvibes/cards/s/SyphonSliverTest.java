@@ -2,14 +2,19 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.b.BonescytheSliver;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SyphonSliver.class, BonescytheSliver.class, GrizzlyBears.class})
 class SyphonSliverTest extends BaseCardTest {
 
     @Test
@@ -56,5 +61,67 @@ class SyphonSliverTest extends BaseCardTest {
         Permanent opponentSliver = addCreatureReady(player2, new BonescytheSliver());
 
         assertThat(gqs.hasKeyword(gd, opponentSliver, Keyword.LIFELINK)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Syphon Sliver gains life from its own combat damage")
+    void gainsLifeFromOwnCombatDamage() {
+        addCreatureReady(player1, new SyphonSliver());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("A Sliver with double strike gains life in both combat damage steps")
+    void gainsLifeFromBothDoubleStrikeDamageSteps() {
+        addCreatureReady(player1, new SyphonSliver());
+        addCreatureReady(player1, new BonescytheSliver());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        declareAttackers(List.of(1));
+        resolveCombat();
+
+        harness.assertLife(player1, 24);
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    @DisplayName("Multiple Syphon Slivers do not multiply lifelink life gain")
+    void multipleSourcesDoNotMultiplyLifeGain() {
+        addCreatureReady(player1, new SyphonSliver());
+        addCreatureReady(player1, new SyphonSliver());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Lifelink gains life from creature damage even when Syphon Sliver dies simultaneously")
+    void gainsLifeBeforeDyingFromCombatDamage() {
+        addCreatureReady(player1, new SyphonSliver());
+        addCreatureReady(player2, new SyphonSliver());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 22);
+        harness.assertInGraveyard(player1, "Syphon Sliver");
+        harness.assertInGraveyard(player2, "Syphon Sliver");
     }
 }
