@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.c.ColossalDreadmaw;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.k.KazanduMammoth;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({TurntimberSymbiosis.class, TurntimberSerpentineWood.class,
-        GrizzlyBears.class, ColossalDreadmaw.class, Shock.class})
+        GrizzlyBears.class, ColossalDreadmaw.class, Shock.class, KazanduMammoth.class})
 class TurntimberSymbiosisTest extends BaseCardTest {
 
     @Test
@@ -33,10 +34,7 @@ class TurntimberSymbiosisTest extends BaseCardTest {
         assertThat(choice.validCardIds()).containsExactlyInAnyOrder(chosen.getId(), expensive.getId());
         harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
 
-        Permanent entered = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().getId().equals(chosen.getId()))
-                .findFirst()
-                .orElseThrow();
+        Permanent entered = findPermanent(player1, chosen.getName());
         assertThat(entered.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
     }
 
@@ -51,10 +49,7 @@ class TurntimberSymbiosisTest extends BaseCardTest {
         assertThat(choice.validCardIds()).containsExactly(chosen.getId());
         harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
 
-        Permanent entered = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().getId().equals(chosen.getId()))
-                .findFirst()
-                .orElseThrow();
+        Permanent entered = findPermanent(player1, chosen.getName());
         assertThat(entered.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
@@ -88,6 +83,96 @@ class TurntimberSymbiosisTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
+    }
+
+    @Test
+    void creatureWithManaValueExactlyThreeEntersOnItsFrontFaceWithCounters() {
+        Card chosen = new KazanduMammoth();
+        setLibrary(chosen);
+        castSymbiosis();
+
+        harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
+
+        Permanent entered = findPermanent(player1, chosen.getName());
+        assertThat(entered.getCard()).isInstanceOf(KazanduMammoth.class);
+        assertThat(entered.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void mayDeclineCreatureAndBottomAllLookedAtCards() {
+        Card creature = new GrizzlyBears();
+        Card other = new TurntimberSymbiosis();
+        setLibrary(creature, other);
+        castSymbiosis();
+
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(creature, other);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void onlyLooksAtSevenCardsAndLeavesUntouchedCardsAboveTheRest() {
+        Card chosen = new GrizzlyBears();
+        List<Card> rest = List.of(new TurntimberSymbiosis(), new TurntimberSymbiosis(),
+                new TurntimberSymbiosis(), new TurntimberSymbiosis(),
+                new TurntimberSymbiosis(), new TurntimberSymbiosis());
+        Card eighth = new GrizzlyBears();
+        Card ninth = new TurntimberSymbiosis();
+        setLibrary(chosen, rest.get(0), rest.get(1), rest.get(2), rest.get(3),
+                rest.get(4), rest.get(5), eighth, ninth);
+        castSymbiosis();
+
+        PendingInteraction.LibraryRevealChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);
+        assertThat(choice.validCardIds()).containsExactly(chosen.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
+
+        List<Card> library = gd.playerDecks.get(player1.getId());
+        assertThat(library).hasSize(8);
+        assertThat(library.subList(0, 2)).containsExactly(eighth, ninth);
+        assertThat(library.subList(2, 8)).containsExactlyInAnyOrderElementsOf(rest);
+        assertThat(findPermanent(player1, chosen.getName()).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
+                .isEqualTo(3);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void resolvesWithFewerThanSevenCardsAndNoCreature() {
+        Card first = new TurntimberSymbiosis();
+        Card second = new TurntimberSymbiosis();
+        setLibrary(first, second);
+        castSymbiosis();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(first, second);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void resolvesWithAnEmptyLibrary() {
+        setLibrary();
+        castSymbiosis();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void landFaceEntersTappedWithoutOfferingUnaffordableLifePayment() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setLife(player1, 2);
+        harness.setHand(player1, List.of(new TurntimberSymbiosis()));
+
+        gs.playCard(gd, player1, 0, 1, null, null);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(2);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     private void castSymbiosis() {
