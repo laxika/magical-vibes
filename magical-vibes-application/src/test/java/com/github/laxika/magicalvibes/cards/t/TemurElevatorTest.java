@@ -55,4 +55,72 @@ class TemurElevatorTest extends BaseCardTest {
 
         assertThat(gd.playersWithCityBlessing).contains(player1.getId());
     }
+
+    @Test
+    @DisplayName("Adds red mana immediately and taps the land without using the stack")
+    void addsRedManaAsManaAbility() {
+        var elevator = harness.addToBattlefieldAndReturn(player1, new TemurElevator());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, ManaColor.RED.name());
+
+        assertThat(elevator.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isOne();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(19);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Nine permanents do not grant the city's blessing")
+    void ninePermanentsDoNotGrantBlessing() {
+        for (int i = 0; i < 8; i++) {
+            harness.addToBattlefield(player1, new TemurElevator());
+        }
+        harness.setHand(player1, List.of(new TemurElevator()));
+        harness.setLife(player1, 20);
+
+        harness.playLand(player1, 0);
+        harness.activateAbility(player1, 8, null, null);
+        harness.handleListChoice(player1, ManaColor.GREEN.name());
+
+        assertThat(gd.playersWithCityBlessing).doesNotContain(player1.getId());
+        assertThat(gd.getLife(player1.getId())).isEqualTo(19);
+    }
+
+    @Test
+    @DisplayName("Opponent's permanents do not count toward ascend")
+    void opposingPermanentsDoNotCountForAscend() {
+        for (int i = 0; i < 9; i++) {
+            harness.addToBattlefield(player2, new TemurElevator());
+        }
+        harness.setHand(player1, List.of(new TemurElevator()));
+
+        harness.playLand(player1, 0);
+
+        assertThat(gd.playersWithCityBlessing).doesNotContain(player1.getId());
+    }
+
+    @Test
+    @DisplayName("The city's blessing persists below ten permanents and prevents life loss")
+    void blessingPersistsAfterLosingPermanents() {
+        for (int i = 0; i < 9; i++) {
+            harness.addToBattlefield(player1, new TemurElevator());
+        }
+        harness.setHand(player1, List.of(new TemurElevator()));
+        harness.setLife(player1, 20);
+        harness.playLand(player1, 0);
+        assertThat(gd.playersWithCityBlessing).contains(player1.getId());
+
+        gd.playerBattlefields.get(player1.getId()).subList(1, 10).clear();
+        harness.runStateBasedActions();
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, ManaColor.RED.name());
+
+        assertThat(gd.playersWithCityBlessing).contains(player1.getId());
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isOne();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+    }
 }
