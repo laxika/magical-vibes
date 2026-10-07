@@ -31,8 +31,7 @@ class TandemTacticsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new TandemTactics()));
         addMana();
 
-        harness.castInstant(player1, 0, List.of(first.getId(), second.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, List.of(first.getId(), second.getId()));
 
         assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(4);
@@ -48,8 +47,7 @@ class TandemTacticsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new TandemTactics()));
         addMana();
 
-        harness.castInstant(player1, 0, List.of(target.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, List.of(target.getId()));
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
@@ -62,8 +60,7 @@ class TandemTacticsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new TandemTactics()));
         addMana();
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
     }
@@ -75,8 +72,7 @@ class TandemTacticsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new TandemTactics()));
         addMana();
 
-        harness.castInstant(player1, 0, List.of(target.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, List.of(target.getId()));
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
@@ -96,5 +92,72 @@ class TandemTacticsTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of(artifact.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Still boosts the remaining legal target and gains life when one target leaves")
+    void oneTargetLeavesBeforeResolution() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new TandemTactics()));
+        addMana();
+
+        harness.castInstant(player1, 0, List.of(first.getId(), second.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(first);
+        gd.playerGraveyards.get(player1.getId()).add(first.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(4);
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Tandem Tactics");
+    }
+
+    @Test
+    @DisplayName("Does not gain life when all chosen targets leave before resolution")
+    void allTargetsLeaveBeforeResolution() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new TandemTactics()));
+        addMana();
+
+        harness.castInstant(player1, 0, List.of(first.getId(), second.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(first);
+        gd.playerGraveyards.get(player1.getId()).add(first.getCard());
+        gd.playerBattlefields.get(player2.getId()).remove(second);
+        gd.playerGraveyards.get(player2.getId()).add(second.getCard());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertInGraveyard(player1, "Tandem Tactics");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot choose the same creature twice")
+    void cannotChooseDuplicateTargets() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new TandemTactics()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of(target.getId(), target.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("All targets must be different");
+    }
+
+    @Test
+    @DisplayName("Cannot choose more than two creatures")
+    void cannotChooseThreeTargets() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent third = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new TandemTactics()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0,
+                List.of(first.getId(), second.getId(), third.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Must target between 0 and 2 targets");
     }
 }
