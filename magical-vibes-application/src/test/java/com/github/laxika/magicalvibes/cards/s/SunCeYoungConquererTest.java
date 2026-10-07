@@ -113,6 +113,60 @@ class SunCeYoungConquererTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A creature controlled by another player returns to its owner's hand")
+    void stolenCreatureReturnsToOwner() {
+        ShuDefender card = new ShuDefender();
+        card.setOwnerId(player2.getId());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, card);
+        gd.stolenCreatures.put(target.getId(), player2.getId());
+        castSunCe();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "Shu Defender");
+        harness.assertInHand(player2, "Shu Defender");
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(card);
+    }
+
+    @Test
+    @DisplayName("The ETB ability still resolves after Sun Ce leaves the battlefield")
+    void abilityResolvesWithoutSource() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ShuDefender());
+        castSunCe();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+
+        Permanent source = findPermanent(player1, "Sun Ce, Young Conquerer");
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        gd.playerGraveyards.get(player1.getId()).add(source.getCard());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player2, "Shu Defender");
+        harness.assertInHand(player2, "Shu Defender");
+    }
+
+    @Test
+    @DisplayName("The ETB ability does nothing when its target leaves before resolution")
+    void removedTargetDoesNotReturnFromGraveyard() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ShuDefender());
+        castSunCe();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerGraveyards.get(player2.getId()).add(target.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(target.getCard());
+        assertThat(gd.playerHands.get(player2.getId())).doesNotContain(target.getCard());
+    }
+
+    @Test
     @DisplayName("Sun Ce cannot be blocked by a creature without horsemanship")
     void cannotBeBlockedByCreatureWithoutHorsemanship() {
         Permanent blocker = addCreatureReady(player2, new ShuDefender());
