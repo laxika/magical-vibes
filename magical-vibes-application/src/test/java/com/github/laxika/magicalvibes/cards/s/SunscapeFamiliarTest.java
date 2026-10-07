@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GaeasHerald;
 import com.github.laxika.magicalvibes.cards.m.ManaCylix;
+import com.github.laxika.magicalvibes.cards.q.QuestingPhelddagrif;
 import com.github.laxika.magicalvibes.cards.s.SeaSnidd;
 import com.github.laxika.magicalvibes.cards.s.SkyshroudBlessing;
 import com.github.laxika.magicalvibes.cards.v.VolcanoImp;
@@ -17,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({SunscapeFamiliar.class, GaeasHerald.class, SeaSnidd.class, VolcanoImp.class,
-        ManaCylix.class, SkyshroudBlessing.class})
+        ManaCylix.class, SkyshroudBlessing.class, QuestingPhelddagrif.class})
 class SunscapeFamiliarTest extends BaseCardTest {
 
     @Test
@@ -85,6 +86,54 @@ class SunscapeFamiliarTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.GREEN, 1);
 
         assertThatThrownBy(() -> harness.castCreature(player2, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+    @Test
+    @DisplayName("A spell that is both green and blue receives the reduction")
+    void greenAndBlueSpellCostsOneLess() {
+        harness.addToBattlefield(player1, new SunscapeFamiliar());
+        harness.setHand(player1, List.of(new QuestingPhelddagrif()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard().getName().equals("Questing Phelddagrif"));
+    }
+
+    @Test
+    @DisplayName("Multiple Familiars stack their reductions")
+    void multipleFamiliarsReduceTheSameSpell() {
+        harness.addToBattlefield(player1, new SunscapeFamiliar());
+        harness.addToBattlefield(player1, new SunscapeFamiliar());
+        harness.setHand(player1, List.of(new SeaSnidd()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard().getName().equals("Sea Snidd"));
+    }
+
+    @Test
+    @DisplayName("Excess reductions cannot pay colored mana requirements")
+    void reductionsCannotRemoveColoredManaRequirements() {
+        harness.addToBattlefield(player1, new SunscapeFamiliar());
+        harness.addToBattlefield(player1, new SunscapeFamiliar());
+        harness.setHand(player1, List.of(new GaeasHerald()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A Familiar in hand does not reduce spell costs")
+    void familiarInHandDoesNotReduceCosts() {
+        harness.setHand(player1, List.of(new GaeasHerald(), new SunscapeFamiliar()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
     }
 }
