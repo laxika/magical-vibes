@@ -25,8 +25,7 @@ class TyrantOfValakutTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 3);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
         harness.castWithAlternateCost(player1, 0, List.of());
         harness.passBothPriorities();
 
@@ -61,5 +60,40 @@ class TyrantOfValakutTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castWithAlternateCost(player1, 0, List.of()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Surge ETB can deal exactly 3 damage to a player")
+    void surgeEtbCanTargetPlayer() {
+        harness.setHand(player1, List.of(new Shock(), new TyrantOfValakut()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.assertLife(player2, 18);
+        harness.castWithAlternateCost(player1, 0, List.of());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 15);
+        harness.assertOnBattlefield(player1, "Tyrant of Valakut");
+    }
+
+    @Test
+    @DisplayName("Casting another spell does not trigger damage when the normal cost is paid")
+    void normalCostAfterAnotherSpellDoesNotTriggerDamage() {
+        harness.setHand(player1, List.of(new Shock(), new TyrantOfValakut()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player2, 18);
+        harness.assertOnBattlefield(player1, "Tyrant of Valakut");
     }
 }
