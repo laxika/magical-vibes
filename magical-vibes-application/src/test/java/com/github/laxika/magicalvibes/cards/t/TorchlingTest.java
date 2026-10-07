@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.a.AvenRiftwatcher;
 import com.github.laxika.magicalvibes.cards.d.DeadGone;
 import com.github.laxika.magicalvibes.cards.e.Electrolyze;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
+import com.github.laxika.magicalvibes.cards.s.SeedsOfStrength;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -20,7 +21,8 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Torchling.class, AvenRiftwatcher.class, DeadGone.class, ProdigalPyromancer.class, Electrolyze.class})
+@CardUsed({Torchling.class, AvenRiftwatcher.class, DeadGone.class, ProdigalPyromancer.class,
+        Electrolyze.class, SeedsOfStrength.class})
 class TorchlingTest extends BaseCardTest {
 
     @Test
@@ -60,12 +62,8 @@ class TorchlingTest extends BaseCardTest {
     @Test
     @DisplayName("Redirects a single-target spell that targets only Torchling")
     void redirectsSpellTargetingOnlyTorchling() {
-        Torchling torchlingCard = new Torchling();
-        AvenRiftwatcher replacementCard = new AvenRiftwatcher();
-        harness.addToBattlefield(player1, torchlingCard);
-        harness.addToBattlefield(player1, replacementCard);
-        Permanent torchling = findPermanent(player1, "Torchling");
-        Permanent replacement = findPermanent(player1, "Aven Riftwatcher");
+        Permanent torchling = harness.addToBattlefieldAndReturn(player1, new Torchling());
+        Permanent replacement = harness.addToBattlefieldAndReturn(player1, new AvenRiftwatcher());
 
         harness.forceActivePlayer(player2);
         DeadGone deadGone = new DeadGone();
@@ -90,7 +88,7 @@ class TorchlingTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot redirect a spell targeting another creature")
     void cannotTargetSpellThatTargetsAnotherCreature() {
-        Permanent torchling = addCreatureReady(player1, new Torchling());
+        addCreatureReady(player1, new Torchling());
         Permanent replacement = addCreatureReady(player1, new AvenRiftwatcher());
 
         harness.forceActivePlayer(player2);
@@ -145,7 +143,7 @@ class TorchlingTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot redirect a spell with no targets")
     void cannotRedirectSpellWithNoTargets() {
-        Permanent torchling = addCreatureReady(player1, new Torchling());
+        addCreatureReady(player1, new Torchling());
         AvenRiftwatcher creatureSpell = new AvenRiftwatcher();
 
         harness.forceActivePlayer(player2);
@@ -182,5 +180,103 @@ class TorchlingTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(torchling.getPowerModifier()).isEqualTo(0);
         assertThat(torchling.getToughnessModifier()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Can redirect one target of a spell targeting only Torchling multiple times")
+    void redirectsOneOfRepeatedTargets() {
+        Permanent torchling = addCreatureReady(player1, new Torchling());
+        Permanent replacement = addCreatureReady(player1, new AvenRiftwatcher());
+        SeedsOfStrength spell = new SeedsOfStrength();
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(spell));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.castInstant(player2, 0, List.of(torchling.getId(), torchling.getId(), torchling.getId()));
+        harness.passPriority(player2);
+
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, 0, 2, null, spell.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, replacement.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, torchling)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, torchling)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, replacement)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, replacement)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Redirection leaves the spell unchanged when no other legal target exists")
+    void noAlternativeTargetLeavesSpellUnchanged() {
+        Permanent torchling = addCreatureReady(player1, new Torchling());
+        DeadGone spell = new DeadGone();
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(spell));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castModalInstant(player2, 0, 0, List.of(torchling.getId()));
+        harness.passPriority(player2);
+
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, 0, 2, null, spell.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(torchling);
+        assertThat(torchling.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A tapped creature is not required to block Torchling")
+    void tappedCreatureCannotBeForcedToBlock() {
+        Permanent torchling = addCreatureReady(player1, new Torchling());
+        Permanent blocker = addCreatureReady(player2, new AvenRiftwatcher());
+        blocker.tap();
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, 0, 1, null, blocker.getId());
+        harness.passBothPriorities();
+
+        torchling.setAttacking(true);
+        prepareDeclareBlockers(player1);
+        gs.declareBlockers(gd, player2, List.of());
+
+        assertThat(blocker.isBlocking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Repeated power boosts can reduce Torchling to zero toughness")
+    void powerBoostsCanKillTorchling() {
+        Torchling card = new Torchling();
+        addCreatureReady(player1, card);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        for (int i = 0; i < 3; i++) {
+            harness.activateAbility(player1, 0, 3, null, null);
+            harness.passBothPriorities();
+        }
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
+    }
+
+    @Test
+    @DisplayName("The toughness boost applies independently and expires at end of turn")
+    void toughnessBoostExpires() {
+        Permanent torchling = addCreatureReady(player1, new Torchling());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, 4, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, torchling)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, torchling)).isEqualTo(4);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, torchling)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, torchling)).isEqualTo(3);
     }
 }
