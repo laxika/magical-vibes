@@ -94,6 +94,68 @@ class TerashisCryTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Terashi's Cry");
     }
 
+    @Test
+    @DisplayName("Cannot choose the same creature twice")
+    void rejectsDuplicateTargets() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new LanternKami());
+        prepareCard();
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0,
+                List.of(creature.getId(), creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Already tapped creatures remain legal targets")
+    void canTargetTappedCreature() {
+        Permanent tapped = harness.addToBattlefieldAndReturn(player2, new LanternKami());
+        Permanent untapped = harness.addToBattlefieldAndReturn(player2, new LanternKami());
+        tapped.tap();
+
+        cast(List.of(tapped.getId(), untapped.getId()));
+
+        assertThat(tapped.isTapped()).isTrue();
+        assertThat(untapped.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Terashi's Cry");
+    }
+
+    @Test
+    @DisplayName("Still taps remaining targets when one creature leaves the battlefield")
+    void resolvesWithOneTargetGone() {
+        Permanent removed = harness.addToBattlefieldAndReturn(player2, new LanternKami());
+        Permanent remaining = harness.addToBattlefieldAndReturn(player2, new LanternKami());
+        Permanent unchosen = harness.addToBattlefieldAndReturn(player2, new LanternKami());
+        prepareCard();
+        harness.castSorcery(player1, 0, List.of(removed.getId(), remaining.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(removed);
+        gd.playerGraveyards.get(player2.getId()).add(removed.getCard());
+
+        harness.passBothPriorities();
+
+        assertThat(removed.isTapped()).isFalse();
+        assertThat(remaining.isTapped()).isTrue();
+        assertThat(unchosen.isTapped()).isFalse();
+        harness.assertInGraveyard(player1, "Terashi's Cry");
+    }
+
+    @Test
+    @DisplayName("Does not affect unchosen creatures when all targets leave the battlefield")
+    void allTargetsGone() {
+        Permanent removed = harness.addToBattlefieldAndReturn(player2, new LanternKami());
+        Permanent unchosen = harness.addToBattlefieldAndReturn(player2, new LanternKami());
+        prepareCard();
+        harness.castSorcery(player1, 0, List.of(removed.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(removed);
+        gd.playerGraveyards.get(player2.getId()).add(removed.getCard());
+
+        harness.passBothPriorities();
+
+        assertThat(removed.isTapped()).isFalse();
+        assertThat(unchosen.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Terashi's Cry");
+    }
+
     private void cast(List<UUID> targets) {
         prepareCard();
         harness.castAndResolveSorcery(player1, 0, targets);
