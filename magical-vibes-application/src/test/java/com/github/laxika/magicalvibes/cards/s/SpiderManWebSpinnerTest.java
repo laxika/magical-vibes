@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -61,5 +62,37 @@ class SpiderManWebSpinnerTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, fountainId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid permanent");
+    }
+    @Test
+    @CardUsed({SpiderManWebSpinner.class})
+    @DisplayName("Haste allows a newly entered Spider-Man to attack and double strike deals damage twice")
+    void newlyEnteredSpiderManAttacksAndDealsDoubleStrikeDamage() {
+        Permanent spiderMan = harness.addToBattlefieldAndReturn(player1, new SpiderManWebSpinner());
+        harness.setLife(player2, 20);
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, spiderMan.getId());
+        resolveAllTriggers();
+        resolveCombat();
+
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    @CardUsed({SpiderManWebSpinner.class})
+    @DisplayName("Spider-Man can target himself and the restriction expires at end of turn")
+    void selfTargetRestrictionExpiresAtEndOfTurn() {
+        Permanent spiderMan = addCreatureReady(player1, new SpiderManWebSpinner());
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, spiderMan.getId());
+        resolveAllTriggers();
+
+        assertThat(spiderMan.isCantBlockThisTurn()).isTrue();
+        harness.passUntil(player1, TurnStep.END_STEP);
+        assertThat(spiderMan.isCantBlockThisTurn()).isTrue();
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(spiderMan.isCantBlockThisTurn()).isFalse();
     }
 }
