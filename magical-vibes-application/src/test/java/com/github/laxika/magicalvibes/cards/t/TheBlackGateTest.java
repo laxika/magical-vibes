@@ -37,6 +37,35 @@ class TheBlackGateTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Declining the life payment makes The Black Gate enter tapped without losing life")
+    void decliningLifeEntersTapped() {
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new TheBlackGate()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.playLand(player1, 0);
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(findPermanent(player1, "The Black Gate").isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("With fewer than 3 life, The Black Gate enters tapped without offering payment")
+    void insufficientLifeEntersTapped() {
+        harness.setLife(player1, 2);
+        harness.setHand(player1, List.of(new TheBlackGate()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.playLand(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(2);
+        assertThat(findPermanent(player1, "The Black Gate").isTapped()).isTrue();
+    }
+
+    @Test
     @DisplayName("The Black Gate produces black mana")
     void producesBlackMana() {
         Permanent gate = addGateReady(player1);
@@ -98,11 +127,113 @@ class TheBlackGateTest extends BaseCardTest {
                 .hasMessageContaining("can't block");
     }
 
+    @Test
+    @DisplayName("The player with the most life is determined when the ability resolves")
+    void lifeLeaderChangesBeforeResolution() {
+        harness.setLife(player1, 30);
+        harness.setLife(player2, 20);
+        Permanent gate = addGateReady(player1);
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        addManaForAbility();
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        assertThat(gate.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        harness.setLife(player2, 40);
+        harness.passBothPriorities();
+
+        assertThat(bls.canBlockAttacker(gd, blocker, target,
+                gd.playerBattlefields.get(player2.getId()))).isFalse();
+    }
+
+    @Test
+    @DisplayName("Only the targeted creature is protected, including against blockers entering later")
+    void restrictionOnlyAppliesToTargetAndIncludesLaterBlockers() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 30);
+        addGateReady(player1);
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        Permanent other = addCreatureReady(player1, new GrizzlyBears());
+        addManaForAbility();
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        harness.passBothPriorities();
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+
+        assertThat(bls.canBlockAttacker(gd, blocker, target,
+                gd.playerBattlefields.get(player2.getId()))).isFalse();
+        assertThat(bls.canBlockAttacker(gd, blocker, other,
+                gd.playerBattlefields.get(player2.getId()))).isTrue();
+    }
+
+    @Test
+    @DisplayName("Choosing the controller does not prevent the opponent's creatures from blocking")
+    void unchosenPlayerCanStillBlock() {
+        harness.setLife(player1, 30);
+        harness.setLife(player2, 20);
+        addGateReady(player1);
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        addManaForAbility();
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(bls.canBlockAttacker(gd, blocker, target,
+                gd.playerBattlefields.get(player2.getId()))).isTrue();
+    }
+
+    @Test
+    @DisplayName("The restriction resolves after The Black Gate leaves and expires at end of turn")
+    void restrictionSurvivesSourceLeavingButExpires() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 30);
+        Permanent gate = addGateReady(player1);
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        addManaForAbility();
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(gate);
+        gd.playerGraveyards.get(player1.getId()).add(gate.getCard());
+        harness.passBothPriorities();
+
+        assertThat(bls.canBlockAttacker(gd, blocker, target,
+                gd.playerBattlefields.get(player2.getId()))).isFalse();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(bls.canBlockAttacker(gd, blocker, target,
+                gd.playerBattlefields.get(player2.getId()))).isTrue();
+    }
+
+    @Test
+    @DisplayName("If the target leaves before resolution, no player choice or blocking restriction occurs")
+    void removedTargetDoesNotPromptForPlayer() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        addGateReady(player1);
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        Permanent other = addCreatureReady(player1, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        addManaForAbility();
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+        gd.playerGraveyards.get(player1.getId()).add(target.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(bls.canBlockAttacker(gd, blocker, other,
+                gd.playerBattlefields.get(player2.getId()))).isTrue();
+    }
+
     private Permanent addGateReady(Player player) {
-        Permanent gate = new Permanent(new TheBlackGate());
-        gate.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(gate);
-        return gate;
+        return harness.addToBattlefieldAndReturn(player, new TheBlackGate());
     }
 
     private void addManaForAbility() {
