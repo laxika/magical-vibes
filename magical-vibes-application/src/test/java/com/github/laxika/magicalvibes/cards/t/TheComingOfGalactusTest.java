@@ -17,8 +17,117 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TheComingOfGalactus.class, Forest.class, FountainOfYouth.class, GrizzlyBears.class})
+@CardUsed({TheComingOfGalactus.class, Forest.class, FountainOfYouth.class, GrizzlyBears.class, TrollAscetic.class})
 class TheComingOfGalactusTest extends BaseCardTest {
+
+    @Test
+    void chapterICanChooseNoTargetEvenWhenNonlandPermanentsExist() {
+        Permanent saga = addSagaWithLore(0);
+        Permanent fountain = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+
+        advanceToNextChapter();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validIds()).contains(player1.getId(), fountain.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(saga);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(fountain);
+        assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(1);
+    }
+
+    @Test
+    void chapterITriggersWhenTheSagaEntersAndCanDestroyItself() {
+        harness.castFromHand(player1, new TheComingOfGalactus(), "{2}{B}{B}{G}");
+        harness.passBothPriorities();
+
+        Permanent saga = findPermanent(player1, "The Coming of Galactus");
+        assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(1);
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validIds()).contains(saga.getId());
+
+        harness.handlePermanentChosen(player1, saga.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "The Coming of Galactus");
+        harness.assertInGraveyard(player1, "The Coming of Galactus");
+    }
+
+    @Test
+    void chapterIExcludesOpposingHexproofPermanentsButAllowsControlledOnes() {
+        addSagaWithLore(0);
+        Permanent opposingTroll = harness.addToBattlefieldAndReturn(player2, new TrollAscetic());
+        Permanent controlledTroll = harness.addToBattlefieldAndReturn(player1, new TrollAscetic());
+
+        advanceToNextChapter();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validIds()).contains(controlledTroll.getId()).doesNotContain(opposingTroll.getId());
+
+        harness.handlePermanentChosen(player1, controlledTroll.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(controlledTroll);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opposingTroll);
+    }
+
+    @Test
+    void chapterIVDoesNotSacrificeTheSagaBeforeItsAbilityResolves() {
+        Permanent saga = addSagaWithLore(3);
+
+        advanceToNextChapter();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(saga);
+        assertThat(countPermanents(player1, "Galactus")).isZero();
+        assertThat(gd.stack).isNotEmpty();
+
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Galactus")).isEqualTo(1);
+        harness.assertInGraveyard(player1, "The Coming of Galactus");
+    }
+
+    @Test
+    void lifeLossChaptersDoNotChangeTheirControllersLife() {
+        addSagaWithLore(1);
+        int controllerLife = gd.playerLifeTotals.get(player1.getId());
+        int opponentLife = gd.playerLifeTotals.get(player2.getId());
+
+        advanceToNextChapter();
+        harness.passBothPriorities();
+        advanceToNextChapter();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, controllerLife);
+        harness.assertLife(player2, opponentLife - 4);
+    }
+
+    @Test
+    void galactusMustTargetALandEvenWhenOnlyItsControllerHasOne() {
+        addSagaWithLore(3);
+        advanceToNextChapter();
+        harness.passBothPriorities();
+
+        Permanent galactus = findPermanent(player1, "Galactus");
+        galactus.setSummoningSick(false);
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        declareAttackers(player1, java.util.List.of(gd.playerBattlefields.get(player1.getId()).indexOf(galactus)));
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validIds()).containsExactly(forest.getId());
+
+        harness.handlePermanentChosen(player1, forest.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Forest");
+        harness.assertInGraveyard(player1, "Forest");
+    }
 
     @Test
     void chapterIDestroysUpToOneTargetNonlandPermanent() {
