@@ -29,8 +29,7 @@ class SylvanOfferingTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.castSorcery(player1, 0, 2);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 2);
 
         PendingInteraction.PermanentChoice firstChoice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
@@ -59,18 +58,64 @@ class SylvanOfferingTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("X zero creates no tokens")
-    void zeroCreatesNoTokens() {
+    @DisplayName("X zero leaves no tokens after the zero-toughness Treefolk die")
+    void zeroLeavesNoTokensOnBattlefield() {
         harness.setHand(player1, List.of(new SylvanOffering()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(findPermanents(player1, "Treefolk")).isEmpty();
         assertThat(findPermanents(player2, "Treefolk")).isEmpty();
         assertThat(findPermanents(player1, "Elf Warrior")).isEmpty();
         assertThat(findPermanents(player2, "Elf Warrior")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The only opponent receives both kinds of tokens")
+    void sameOpponentReceivesBothTokenKinds() {
+        harness.setHand(player1, List.of(new SylvanOffering()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 3);
+
+        for (Player player : List.of(player1, player2)) {
+            assertThat(findPermanents(player, "Treefolk")).singleElement().satisfies(token -> {
+                assertThat(token.getCard().getColor()).isEqualTo(CardColor.GREEN);
+                assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.TREEFOLK);
+                assertThat(token.getEffectivePower()).isEqualTo(3);
+                assertThat(token.getEffectiveToughness()).isEqualTo(3);
+            });
+            assertThat(findPermanents(player, "Elf Warrior")).hasSize(3)
+                    .allSatisfy(this::assertElfWarrior);
+        }
+    }
+
+    @Test
+    @DisplayName("X zero still creates Treefolk, which survive until the spell finishes resolving")
+    void zeroTreefolkExistDuringSecondOpponentChoice() {
+        var player3 = addThirdPlayer();
+        harness.setHand(player1, List.of(new SylvanOffering()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
+        for (Player player : List.of(player1, player2)) {
+            assertThat(findPermanents(player, "Treefolk")).singleElement().satisfies(token -> {
+                assertThat(token.getEffectivePower()).isZero();
+                assertThat(token.getEffectiveToughness()).isZero();
+            });
+        }
+
+        harness.handlePermanentChosen(player1, player3.getId());
+
+        for (Player player : List.of(player1, player2, player3)) {
+            assertThat(findPermanents(player, "Treefolk")).isEmpty();
+            assertThat(findPermanents(player, "Elf Warrior")).isEmpty();
+        }
     }
 
     private void assertElfWarrior(Permanent token) {
