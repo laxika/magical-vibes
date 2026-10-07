@@ -1,13 +1,15 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.g.GreenwoodSentinel;
+import com.github.laxika.magicalvibes.cards.o.OnakkeOgre;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
+import com.github.laxika.magicalvibes.cards.h.HeavyArbalest;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SurgeMare.class, GreenwoodSentinel.class, OnakkeOgre.class, HeavyArbalest.class})
 class SurgeMareTest extends BaseCardTest {
 
     @Test
@@ -66,11 +69,11 @@ class SurgeMareTest extends BaseCardTest {
     @Test
     @DisplayName("Surge Mare can't be blocked by a green creature")
     void cannotBeBlockedByGreenCreature() {
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GreenwoodSentinel());
         Permanent mare = addMareReady();
         mare.setAttacking(true);
 
-        beginBlockers();
+        prepareDeclareBlockers();
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(mare);
@@ -82,11 +85,11 @@ class SurgeMareTest extends BaseCardTest {
     @Test
     @DisplayName("Surge Mare can be blocked by a non-green creature")
     void canBeBlockedByNonGreenCreature() {
-        Permanent blocker = addCreatureReady(player2, new HillGiant());
+        Permanent blocker = addCreatureReady(player2, new OnakkeOgre());
         Permanent mare = addMareReady();
         mare.setAttacking(true);
 
-        beginBlockers();
+        prepareDeclareBlockers();
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(mare);
@@ -149,11 +152,60 @@ class SurgeMareTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 
-    private void beginBlockers() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+    @Test
+    @DisplayName("Noncombat damage to its controller does not trigger looting")
+    void damageToControllerDoesNotTrigger() {
+        Permanent mare = addMareReady();
+        Permanent arbalest = addCreatureReady(player1, new HeavyArbalest());
+        arbalest.setAttachedTo(mare.getId());
+
+        harness.activateAbility(player1, 0, 1, null, player1.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Noncombat damage to an opponent triggers looting")
+    void noncombatDamageToOpponentTriggers() {
+        Permanent mare = addMareReady();
+        Permanent arbalest = addCreatureReady(player1, new HeavyArbalest());
+        arbalest.setAttachedTo(mare.getId());
+
+        harness.activateAbility(player1, 0, 1, null, player2.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+    }
+
+    @Test
+    @DisplayName("Looting with an empty hand discards the newly drawn card")
+    void emptyHandDiscardsDrawnCard() {
+        harness.setHand(player1, List.of());
+        SurgeMare drawnCard = new SurgeMare();
+        gd.playerDecks.get(player1.getId()).clear();
+        gd.playerDecks.get(player1.getId()).add(drawnCard);
+        Permanent mare = addMareReady();
+        mare.setPowerModifier(2);
+        mare.setToughnessModifier(-2);
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.DiscardChoice) {
+            harness.handleCardChosen(player1, 0);
+        }
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(drawnCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 
     private void addBlueMana(int count) {
