@@ -135,12 +135,46 @@ class TreetopBracersTest extends BaseCardTest {
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new TreetopBracers());
         aura.setAttachedTo(attacker.getId());
 
-        Permanent blocker = addCreatureReady(player2, new GiantSpider());
+        addCreatureReady(player2, new GiantSpider());
 
         prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can only be blocked by creatures with flying");
+    }
+
+    @Test
+    @DisplayName("Treetop Bracers does not affect another creature's stats or blockers")
+    void doesNotAffectOtherCreatures() {
+        Permanent enchanted = addCreatureReady(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new TreetopBracers());
+        aura.setAttachedTo(enchanted.getId());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
+
+        declareAttackersAndPrepareBlockers(List.of(1));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Multiple Treetop Bracers bonuses add together")
+    void multipleAurasStackBonuses() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new TreetopBracers(), new TreetopBracers()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
     }
 }
