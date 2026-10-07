@@ -2,7 +2,10 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.w.WarbriarBlessing;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.GameStatus;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
@@ -15,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ToweringWaveMystic.class, Forest.class, GrizzlyBears.class})
+@CardUsed({ToweringWaveMystic.class, Forest.class, GrizzlyBears.class, WarbriarBlessing.class})
 class ToweringWaveMysticTest extends BaseCardTest {
 
     @Test
@@ -89,6 +92,45 @@ class ToweringWaveMysticTest extends BaseCardTest {
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(5);
+    }
+
+    @Test
+    @DisplayName("Fight damage triggers milling even though it is not combat damage")
+    void fightDamageTriggersMill() {
+        Permanent mystic = addCreatureReady(player1, new ToweringWaveMystic());
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        setLibrary(player2, 5);
+        harness.setHand(player1, List.of(new WarbriarBlessing()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castEnchantment(player1, 0, mystic.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(mystic.getMarkedDamage()).isEqualTo(2);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(3);
+        assertThat(gd.playerGraveyards.get(player2.getId()).stream()
+                .filter(Forest.class::isInstance).toList()).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Milling more cards than remain mills the entire library")
+    void millsOnlyRemainingCards() {
+        Permanent mystic = addCreatureReady(player1, new ToweringWaveMystic());
+        mystic.setAttacking(true);
+        setLibrary(player2, 1);
+
+        resolveCombat();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
     }
 
     private void setLibrary(Player player, int size) {
