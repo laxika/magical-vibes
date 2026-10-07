@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.c.CoilingOracle;
+import com.github.laxika.magicalvibes.cards.d.DingusStaff;
 import com.github.laxika.magicalvibes.cards.e.EnchantedEvening;
-import com.github.laxika.magicalvibes.cards.s.SealOfFire;
-import com.github.laxika.magicalvibes.cards.s.SimicSignet;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,7 +15,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({StompAndHowl.class, EnchantedEvening.class, SealOfFire.class, SimicSignet.class})
+@CardUsed({StompAndHowl.class, EnchantedEvening.class, SealOfFire.class, SimicSignet.class,
+        CoilingOracle.class, DingusStaff.class})
 class StompAndHowlTest extends BaseCardTest {
 
     @Test
@@ -86,6 +87,66 @@ class StompAndHowlTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Simic Signet");
         harness.assertInGraveyard(player2, "Simic Signet");
         harness.assertOnBattlefield(player2, "Enchanted Evening");
+    }
+
+    @Test
+    @DisplayName("Requires both an artifact target and an enchantment target when casting")
+    void cannotCastWithOnlyOneTarget() {
+        harness.addToBattlefield(player2, new SimicSignet());
+        harness.setHand(player1, List.of(new StompAndHowl()));
+        addMana();
+
+        UUID artifactId = harness.getPermanentId(player2, "Simic Signet");
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(artifactId)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Rejects an enchantment in the artifact target position")
+    void rejectsEnchantmentAsArtifactTarget() {
+        UUID firstId = harness.addToBattlefieldAndReturn(player2, new SealOfFire()).getId();
+        UUID secondId = harness.addToBattlefieldAndReturn(player2, new SealOfFire()).getId();
+        harness.setHand(player1, List.of(new StompAndHowl()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(firstId, secondId)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Destroys the artifact when the enchantment is sacrificed in response")
+    void destroysArtifactWhenEnchantmentLeaves() {
+        UUID artifactId = harness.addToBattlefieldAndReturn(player2, new SimicSignet()).getId();
+        UUID enchantmentId = harness.addToBattlefieldAndReturn(player2, new SealOfFire()).getId();
+        harness.setHand(player1, List.of(new StompAndHowl()));
+        addMana();
+        harness.castSorcery(player1, 0, List.of(artifactId, enchantmentId));
+
+        harness.activateAbility(player2, 1, null, player1.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Simic Signet");
+        harness.assertNotOnBattlefield(player2, "Simic Signet");
+        harness.assertInGraveyard(player2, "Seal of Fire");
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("An artifact destroyed with an enchantment creature sees that creature die")
+    void simultaneousDestructionPreservesDeathTriggers() {
+        harness.addToBattlefield(player2, new EnchantedEvening());
+        UUID staffId = harness.addToBattlefieldAndReturn(player2, new DingusStaff()).getId();
+        UUID creatureId = harness.addToBattlefieldAndReturn(player2, new CoilingOracle()).getId();
+        harness.setHand(player1, List.of(new StompAndHowl()));
+        addMana();
+
+        harness.castAndResolveSorcery(player1, 0, List.of(staffId, creatureId));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Dingus Staff");
+        harness.assertInGraveyard(player2, "Coiling Oracle");
+        harness.assertLife(player2, 18);
     }
 
     private void addMana() {
