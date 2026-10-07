@@ -2,12 +2,14 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.model.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ThornedMoloch.class, GrizzlyBears.class, Shock.class})
 class ThornedMolochTest extends BaseCardTest {
 
     private Permanent addMoloch() {
@@ -46,8 +49,14 @@ class ThornedMolochTest extends BaseCardTest {
                 .count();
         assertThat(triggeredOnStack).isEqualTo(1);
 
-        harness.passBothPriorities(); // resolve Shock
         harness.passBothPriorities(); // resolve prowess trigger
+
+        assertThat(gqs.getEffectivePower(gd, moloch)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, moloch)).isEqualTo(3);
+        assertThat(gd.stack).hasSize(1);
+        harness.assertLife(player2, 20);
+
+        resolveAllTriggers(); // resolve Shock
 
         assertThat(gqs.getEffectivePower(gd, moloch)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, moloch)).isEqualTo(3);
@@ -77,9 +86,8 @@ class ThornedMolochTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, moloch)).isEqualTo(3);
 
@@ -119,5 +127,75 @@ class ThornedMolochTest extends BaseCardTest {
         Permanent moloch = addMoloch();
 
         assertThat(gqs.hasKeyword(gd, moloch, Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Each noncreature spell gives its own cumulative prowess boost")
+    void multipleNoncreatureSpellsStackBoosts() {
+        Permanent moloch = addMoloch();
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, moloch)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, moloch)).isEqualTo(4);
+        harness.assertLife(player2, 16);
+
+        endTurn();
+
+        assertThat(gqs.getEffectivePower(gd, moloch)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, moloch)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("An opponent's noncreature spell does not trigger prowess")
+    void opponentSpellDoesNotPump() {
+        Permanent moloch = addMoloch();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, player1.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, moloch)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, moloch)).isEqualTo(2);
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("Attacking Moloch kills a blocker before it can deal damage")
+    void attackingFirstStrikePreventsBlockerDamage() {
+        Permanent moloch = addMoloch();
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(moloch);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+        assertThat(moloch.getMarkedDamage()).isZero();
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Blocking Moloch deals damage simultaneously with an ordinary attacker")
+    void blockingDoesNotGrantFirstStrike() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent moloch = addCreatureReady(player2, new ThornedMoloch());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(moloch);
+        harness.assertLife(player2, 20);
     }
 }
