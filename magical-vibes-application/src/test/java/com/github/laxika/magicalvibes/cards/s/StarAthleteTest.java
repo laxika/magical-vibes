@@ -62,11 +62,106 @@ class StarAthleteTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
         resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Star Athlete");
         harness.assertInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @CardUsed(StarAthlete.class)
+    void blitzHasHasteImmediatelyWhenTheSpellResolves() {
+        harness.setHand(player1, List.of(new StarAthlete()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreatureWithAlternateCost(player1, 0, List.of());
+        harness.passBothPriorities();
+
+        Permanent athlete = findPermanent(player1, "Star Athlete");
+        assertThat(gqs.hasKeyword(gd, athlete, Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    @CardUsed(StarAthlete.class)
+    void normalCastingDoesNotGrantHasteOrScheduleSacrifice() {
+        harness.setHand(player1, List.of(new StarAthlete()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        Permanent athlete = findPermanent(player1, "Star Athlete");
+        assertThat(gqs.hasKeyword(gd, athlete, Keyword.HASTE)).isFalse();
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Star Athlete");
+        harness.assertNotInGraveyard(player1, "Star Athlete");
+    }
+
+    @Test
+    @CardUsed(StarAthlete.class)
+    void canTargetYourOwnNonlandPermanentAndDeclineSacrifice() {
+        addCreatureReady(player1, new StarAthlete());
+        Permanent target = addCreatureReady(player1, new StarAthlete());
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertLife(player1, 15);
+        assertThat(findPermanents(player1, "Star Athlete")).hasSize(2);
+    }
+
+    @Test
+    @CardUsed(StarAthlete.class)
+    void blitzDrawsWhenSacrificedBeforeTheEndStep() {
+        harness.setHand(player1, List.of(new StarAthlete()));
+        harness.setLibrary(player1, List.of(new StarAthlete()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithAlternateCost(player1, 0, List.of());
+        resolveAllTriggers();
+
+        Permanent athlete = findPermanent(player1, "Star Athlete");
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, athlete.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Star Athlete");
+        harness.assertInHand(player1, "Star Athlete");
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @CardUsed(StarAthlete.class)
+    void normallyCastCreatureDoesNotDrawWhenItDies() {
+        harness.setHand(player1, List.of(new StarAthlete()));
+        harness.setLibrary(player1, List.of(new StarAthlete()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        Permanent athlete = findPermanent(player1, "Star Athlete");
+        athlete.setSummoningSick(false);
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, athlete.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Star Athlete");
+        harness.assertNotInHand(player1, "Star Athlete");
+        harness.assertLife(player1, 20);
     }
 }
