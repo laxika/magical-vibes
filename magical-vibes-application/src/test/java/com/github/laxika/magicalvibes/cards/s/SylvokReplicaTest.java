@@ -2,25 +2,27 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
-import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.t.TrueConviction;
+import com.github.laxika.magicalvibes.cards.c.CarapaceForger;
+import com.github.laxika.magicalvibes.cards.d.DarksteelMyr;
 import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
+import com.github.laxika.magicalvibes.cards.a.AccordersShield;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SylvokReplica.class, AccordersShield.class, TrueConviction.class,
+        CarapaceForger.class, Island.class, DarksteelMyr.class})
 class SylvokReplicaTest extends BaseCardTest {
-
-    // ===== Activation =====
 
     @Test
     @DisplayName("Activating ability sacrifices Sylvok Replica and puts ability on the stack")
@@ -43,8 +45,6 @@ class SylvokReplicaTest extends BaseCardTest {
         assertThat(entry.getTargetId()).isEqualTo(target.getId());
     }
 
-    // ===== Resolution =====
-
     @Test
     @DisplayName("Resolving ability destroys target artifact")
     void resolvingAbilityDestroysTargetArtifact() {
@@ -55,8 +55,8 @@ class SylvokReplicaTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Leonin Scimitar");
-        harness.assertInGraveyard(player2, "Leonin Scimitar");
+        harness.assertNotOnBattlefield(player2, "Accorder's Shield");
+        harness.assertInGraveyard(player2, "Accorder's Shield");
     }
 
     @Test
@@ -69,8 +69,8 @@ class SylvokReplicaTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Glorious Anthem");
-        harness.assertInGraveyard(player2, "Glorious Anthem");
+        harness.assertNotOnBattlefield(player2, "True Conviction");
+        harness.assertInGraveyard(player2, "True Conviction");
     }
 
     @Test
@@ -83,11 +83,9 @@ class SylvokReplicaTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player1, "Leonin Scimitar");
-        harness.assertInGraveyard(player1, "Leonin Scimitar");
+        harness.assertNotOnBattlefield(player1, "Accorder's Shield");
+        harness.assertInGraveyard(player1, "Accorder's Shield");
     }
-
-    // ===== Mana requirements =====
 
     @Test
     @DisplayName("Cannot activate without enough mana")
@@ -110,8 +108,6 @@ class SylvokReplicaTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Summoning sickness =====
-
     @Test
     @DisplayName("Can activate with summoning sickness (no tap cost)")
     void canActivateWithSummoningSickness() {
@@ -125,13 +121,11 @@ class SylvokReplicaTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
     }
 
-    // ===== Target filter =====
-
     @Test
     @DisplayName("Cannot target creature")
     void cannotTargetCreature() {
         addReadyReplica(player1);
-        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player2, new CarapaceForger());
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
@@ -149,8 +143,6 @@ class SylvokReplicaTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Fizzle =====
-
     @Test
     @DisplayName("Ability fizzles if target is removed before resolution")
     void fizzlesIfTargetRemoved() {
@@ -162,7 +154,7 @@ class SylvokReplicaTest extends BaseCardTest {
 
         // Remove target before resolution
         gd.playerBattlefields.get(player2.getId())
-                .removeIf(p -> p.getCard().getName().equals("Leonin Scimitar"));
+                .removeIf(p -> p.getCard().getName().equals("Accorder's Shield"));
 
         harness.passBothPriorities();
 
@@ -170,35 +162,82 @@ class SylvokReplicaTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Can destroy an artifact creature")
+    void destroysArtifactCreature() {
+        addReadyReplica(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SylvokReplica());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Sylvok Replica");
+        harness.assertInGraveyard(player2, "Sylvok Replica");
+    }
+
+    @Test
+    @DisplayName("Can target itself and sacrifice itself before resolution")
+    void canTargetItself() {
+        Permanent replica = addReadyReplica(player1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, replica.getId());
+
+        harness.assertNotOnBattlefield(player1, "Sylvok Replica");
+        harness.assertInGraveyard(player1, "Sylvok Replica");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Indestructible target survives but Replica is still sacrificed")
+    void indestructibleTargetSurvives() {
+        addReadyReplica(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new DarksteelMyr());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Darksteel Myr");
+        harness.assertNotOnBattlefield(player1, "Sylvok Replica");
+        harness.assertInGraveyard(player1, "Sylvok Replica");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can activate while tapped")
+    void canActivateWhileTapped() {
+        Permanent replica = addReadyReplica(player1);
+        replica.tap();
+        Permanent target = addReadyArtifact(player2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Sylvok Replica");
+        harness.assertInGraveyard(player2, "Accorder's Shield");
+    }
 
     private Permanent addReadyReplica(Player player) {
-        SylvokReplica card = new SylvokReplica();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new SylvokReplica());
     }
 
     private Permanent addReadyArtifact(Player player) {
-        LeoninScimitar card = new LeoninScimitar();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new AccordersShield());
     }
 
     private Permanent addReadyEnchantment(Player player) {
-        GloriousAnthem card = new GloriousAnthem();
-        Permanent perm = new Permanent(card);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new TrueConviction());
     }
 
     private Permanent addReadyLand(Player player) {
-        Island card = new Island();
-        Permanent perm = new Permanent(card);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new Island());
     }
 }
