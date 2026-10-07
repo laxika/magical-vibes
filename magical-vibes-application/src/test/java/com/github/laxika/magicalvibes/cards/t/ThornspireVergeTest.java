@@ -74,9 +74,63 @@ class ThornspireVergeTest extends BaseCardTest {
     }
 
     private Permanent addReadyVerge(Player player) {
-        Permanent verge = new Permanent(new ThornspireVerge());
-        verge.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(verge);
-        return verge;
+        return addCreatureReady(player, new ThornspireVerge());
+    }
+
+    @Test
+    @DisplayName("A tapped Forest still enables green mana")
+    void tappedForestEnablesGreenMana() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        forest.tap();
+        Permanent verge = addReadyVerge(player1);
+
+        harness.activateAbility(player1, 1, 1, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(verge.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A newly controlled Verge can produce red mana immediately")
+    void newlyControlledVergeProducesRedManaImmediately() {
+        Permanent verge = harness.addToBattlefieldAndReturn(player1, new ThornspireVerge());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(verge.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Losing the qualifying Forest disables green mana even if it is in the graveyard")
+    void losingForestDisablesGreenMana() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent verge = addReadyVerge(player1);
+        harness.activateAbility(player1, 1, 1, null, null);
+        verge.untap();
+        gd.playerBattlefields.get(player1.getId()).remove(forest);
+        harness.setGraveyard(player1, java.util.List.of(forest.getCard()));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(verge.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A tapped Verge cannot produce additional mana")
+    void tappedVergeCannotProduceAdditionalMana() {
+        harness.addToBattlefield(player1, new Mountain());
+        addReadyVerge(player1);
+        harness.activateAbility(player1, 1, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
     }
 }
