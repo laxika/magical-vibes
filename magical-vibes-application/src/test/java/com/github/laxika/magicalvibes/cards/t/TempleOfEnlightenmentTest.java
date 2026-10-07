@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,6 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({TempleOfEnlightenment.class})
 class TempleOfEnlightenmentTest extends BaseCardTest {
 
     @Test
@@ -57,6 +59,37 @@ class TempleOfEnlightenmentTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Scrying can keep the top card without changing library order")
+    void scryKeepsTopCard() {
+        Card top = new TempleOfEnlightenment();
+        Card bottom = new TempleOfEnlightenment();
+        harness.setLibrary(player1, List.of(top, bottom));
+        playTempleOfEnlightenment(player1);
+
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top, bottom);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The enter trigger resolves with an empty library without asking for input")
+    void scryWithEmptyLibrary() {
+        harness.setLibrary(player1, List.of());
+        playTempleOfEnlightenment(player1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(findTemple(player1).isTapped()).isTrue();
+    }
+
+    @Test
     @DisplayName("Temple of Enlightenment produces the chosen white or blue mana")
     void producesChosenMana() {
         for (ManaColor color : List.of(ManaColor.WHITE, ManaColor.BLUE)) {
@@ -84,9 +117,8 @@ class TempleOfEnlightenmentTest extends BaseCardTest {
     }
 
     private Permanent addTempleReady(Player player) {
-        Permanent temple = new Permanent(new TempleOfEnlightenment());
+        Permanent temple = harness.addToBattlefieldAndReturn(player, new TempleOfEnlightenment());
         temple.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(temple);
         return temple;
     }
 
