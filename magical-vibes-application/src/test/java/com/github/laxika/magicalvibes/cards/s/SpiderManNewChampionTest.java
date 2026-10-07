@@ -55,4 +55,52 @@ class SpiderManNewChampionTest extends BaseCardTest {
 
         assertThat(target.getMarkedDamage()).isEqualTo(1);
     }
+
+    @Test
+    void canDealDiscardDamageToItsController() {
+        harness.addToBattlefield(player1, new SpiderManNewChampion());
+        harness.setHand(player1, List.of(new Censor()));
+        harness.setLibrary(player1, List.of(new Peek()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void doesNotTriggerWhenAnOpponentDiscards() {
+        harness.addToBattlefield(player1, new SpiderManNewChampion());
+        harness.setHand(player2, List.of(new Censor()));
+        harness.setLibrary(player2, List.of(new Peek()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.activateHandAbility(player2, 0, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void doesNotTriggerWhenDiscardingAnEmptyHand() {
+        harness.addToBattlefield(player1, new SpiderManNewChampion());
+        harness.setHand(player1, List.of(new DangerousWager()));
+        harness.setLibrary(player1, List.of(new Peek(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castInstant(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        harness.assertLife(player2, 20);
+    }
 }
