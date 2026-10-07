@@ -17,8 +17,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({Triskelion.class, Juggernaut.class, GarrukWildspeaker.class})
 class TriskelionTest extends BaseCardTest {
 
-    // ===== ETB: enters with three +1/+1 counters =====
-
     @Test
     @DisplayName("Enters the battlefield with three +1/+1 counters (1/1 becomes 4/4)")
     void entersWithThreePlusCounters() {
@@ -26,8 +24,7 @@ class TriskelionTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.castFromHand(player1, new Triskelion(), "{6}");
 
-        harness.passBothPriorities(); // resolve creature spell
-        harness.passBothPriorities(); // resolve ETB effect
+        harness.passBothPriorities();
 
         Permanent triskelion = findTriskelion(player1);
 
@@ -47,8 +44,6 @@ class TriskelionTest extends BaseCardTest {
         assertThat(findTriskelion(player1).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
                 .isEqualTo(3);
     }
-
-    // ===== Activated ability: deal 1 damage to any target =====
 
     @Test
     @DisplayName("Activated ability deals 1 damage to target creature")
@@ -146,17 +141,13 @@ class TriskelionTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, player2.getId());
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(permanent -> permanent.getCard() instanceof Triskelion);
+        harness.assertNotOnBattlefield(player1, "Triskelion");
 
         harness.passBothPriorities();
 
         harness.assertLife(player2, 19);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(card -> card instanceof Triskelion);
+        harness.assertInGraveyard(player1, "Triskelion");
     }
-
-    // ===== Cannot activate without counters =====
 
     @Test
     @DisplayName("Cannot activate ability when zero +1/+1 counters remain")
@@ -172,7 +163,61 @@ class TriskelionTest extends BaseCardTest {
                 .hasMessageContaining("Not enough counters");
     }
 
-    // ===== Helpers =====
+    @Test
+    void canActivateWhileSummoningSickAndTapped() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player1, new Triskelion(), "{6}");
+        harness.passBothPriorities();
+        Permanent triskelion = findTriskelion(player1);
+        triskelion.setTapped(true);
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        assertThat(triskelion.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        harness.assertLife(player2, 20);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    void canSpendAllCountersBeforeAnyAbilityResolves() {
+        Permanent triskelion = addReadyTriskelion(player1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setLife(player2, 20);
+
+        for (int i = 0; i < 3; i++) {
+            harness.activateAbility(player1, 0, null, player2.getId());
+        }
+
+        assertThat(triskelion.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertLife(player2, 20);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough counters");
+
+        for (int i = 0; i < 3; i++) {
+            harness.passBothPriorities();
+        }
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    void canTargetItselfWithItsLastCounter() {
+        Permanent triskelion = addReadyTriskelion(player1);
+        triskelion.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, triskelion.getId());
+        harness.assertOnBattlefield(player1, "Triskelion");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Triskelion");
+        harness.assertInGraveyard(player1, "Triskelion");
+    }
 
     private Permanent addReadyTriskelion(Player player) {
         Permanent perm = addCreatureReady(player, new Triskelion());
