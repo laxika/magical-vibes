@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.GameStateMessage;
+import com.github.laxika.magicalvibes.service.JacksonConfig;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -67,10 +69,9 @@ class SummonersEggTest extends BaseCardTest {
     @DisplayName("Death trigger turns an imprinted creature face up and puts it onto the battlefield")
     void deathTriggerReturnsImprintedCreatureToBattlefield() {
         SummonersEgg eggCard = new SummonersEgg();
-        harness.addToBattlefield(player1, eggCard);
+        Permanent egg = harness.addToBattlefieldAndReturn(player1, eggCard);
 
         GoblinBrawler imprintedCard = new GoblinBrawler();
-        Permanent egg = findPermanent(player1, "Summoner's Egg");
         gd.setImprintedCard(egg.getCard(), imprintedCard);
         gd.addToExile(player1.getId(), imprintedCard, egg.getId(), true);
 
@@ -87,10 +88,9 @@ class SummonersEggTest extends BaseCardTest {
     @DisplayName("Death trigger leaves a noncreature imprinted card in exile")
     void deathTriggerLeavesNoncreatureInExile() {
         SummonersEgg eggCard = new SummonersEgg();
-        harness.addToBattlefield(player1, eggCard);
+        Permanent egg = harness.addToBattlefieldAndReturn(player1, eggCard);
 
         Card imprintedCard = new ConjurersBauble();
-        Permanent egg = findPermanent(player1, "Summoner's Egg");
         gd.setImprintedCard(egg.getCard(), imprintedCard);
         gd.addToExile(player1.getId(), imprintedCard, egg.getId(), true);
 
@@ -123,13 +123,88 @@ class SummonersEggTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Goblin Brawler");
     }
 
+    @Test
+    @DisplayName("An empty hand leaves nothing imprinted and dying returns nothing")
+    void emptyHandDoesNotImprint() {
+        harness.setHand(player1, List.of(new SummonersEgg()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        Permanent egg = findPermanent(player1, "Summoner's Egg");
+        assertThat(gd.getImprintedCard(egg.getCard())).isNull();
+        assertThat(gd.exiledCards).isEmpty();
+        destroyEgg(egg.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Summoner's Egg");
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.exiledCards).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The imprint trigger can still exile a card after the Egg dies in response")
+    void imprintResolvesAfterEggDies() {
+        harness.setHand(player2, List.of(new DevourInShadow()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        GoblinBrawler card = new GoblinBrawler();
+        harness.setHand(player1, List.of(new SummonersEgg(), card));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        Permanent egg = findPermanent(player1, "Summoner's Egg");
+
+        destroyEgg(egg.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ImprintFromHandChoice.class);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertNotInHand(player1, "Goblin Brawler");
+        harness.assertNotOnBattlefield(player1, "Goblin Brawler");
+        harness.assertInGraveyard(player1, "Summoner's Egg");
+        assertThat(gd.findExiledCard(card.getId())).isNotNull();
+        assertThat(gd.findExiledCard(card.getId()).faceDown()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Neither player can inspect the card exiled face down with the Egg")
+    void imprintedCardIsHiddenFromBothPlayers() throws Exception {
+        harness.setHand(player1, List.of(new SummonersEgg(), new GoblinBrawler()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+        Permanent egg = findPermanent(player1, "Summoner's Egg");
+        harness.publishState();
+
+        var mapper = new JacksonConfig().objectMapper();
+        GameStateMessage controllerState = mapper.readValue(harness.getConn1()
+                .getMessagesContaining("\"type\":\"GAME_STATE\"").getLast(), GameStateMessage.class);
+        GameStateMessage opponentState = mapper.readValue(harness.getConn2()
+                .getMessagesContaining("\"type\":\"GAME_STATE\"").getLast(), GameStateMessage.class);
+        for (GameStateMessage state : List.of(controllerState, opponentState)) {
+            var view = state.battlefields().stream().flatMap(List::stream)
+                    .filter(permanent -> permanent.id().equals(egg.getId())).findFirst().orElseThrow();
+            assertThat(view.faceDownExiledCards()).isEmpty();
+            assertThat(view.faceDownExiledCount()).isEqualTo(1);
+        }
+    }
+
     private void destroyEgg(UUID eggId) {
         harness.setHand(player2, List.of(new DevourInShadow()));
         harness.addMana(player2, ManaColor.BLACK, 2);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.castInstant(player2, 0, eggId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, eggId);
     }
 }
