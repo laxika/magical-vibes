@@ -113,6 +113,50 @@ class ThrullWizardTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Two generic mana cannot pay either alternative")
+    void countersWhenOnlyTwoGenericManaAreAvailable() {
+        addReadyWizard();
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        castBasalThrull();
+
+        harness.activateAbility(player1, 0, null, targetSpellId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Basal Thrull");
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can activate a summoning sick Wizard because the ability has no tap cost")
+    void canActivateWhileSummoningSick() {
+        harness.addToBattlefield(player1, new ThrullWizard());
+        gd.playerBattlefields.get(player1.getId()).getFirst().setSummoningSick(true);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        castBasalThrull();
+
+        harness.activateAbility(player1, 0, null, targetSpellId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Basal Thrull");
+    }
+
+    @Test
+    @DisplayName("Can counter its controller's own black spell")
+    void canCounterOwnBlackSpell() {
+        addReadyWizard();
+        BasalThrull thrull = new BasalThrull();
+        harness.castFromHand(player1, thrull, "{B}{B}");
+
+        harness.activateAbility(player1, 0, null, thrull.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Basal Thrull");
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addReadyWizard() {
         Permanent wizard = addCreatureReady(player1, new ThrullWizard());
         harness.addMana(player1, ManaColor.BLACK, 1);
