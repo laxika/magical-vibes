@@ -77,6 +77,64 @@ class ThinkTankTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(graveyardBefore);
     }
 
+    @Test
+    @DisplayName("Each Think Tank resolves its own surveil choice")
+    void multipleCopiesSurveilSeparately() {
+        addThinkTank(player1);
+        addThinkTank(player1);
+        Card first = new AngelicWall();
+        Card second = new AngelicWall();
+        harness.setLibrary(player1, List.of(first, second, new AngelicWall()));
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(first).doesNotContain(second);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(second);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(second);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The upkeep ability resolves after Think Tank leaves the battlefield")
+    void triggerResolvesWithoutSource() {
+        addThinkTank(player1);
+        Card topCard = new AngelicWall();
+        harness.setLibrary(player1, List.of(topCard, new AngelicWall()));
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(topCard);
+        assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(topCard);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The second player's Think Tank surveils that player's library")
+    void secondPlayerSurveilsOwnLibrary() {
+        addThinkTank(player2);
+        Card topCard = new AngelicWall();
+        Card opponentTopCard = new AngelicWall();
+        harness.setLibrary(player2, List.of(topCard, new AngelicWall()));
+        harness.setLibrary(player1, List.of(opponentTopCard, new AngelicWall()));
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(topCard);
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(opponentTopCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(topCard, opponentTopCard);
+    }
     private void addThinkTank(Player player) {
         harness.addToBattlefield(player, new ThinkTank());
     }
