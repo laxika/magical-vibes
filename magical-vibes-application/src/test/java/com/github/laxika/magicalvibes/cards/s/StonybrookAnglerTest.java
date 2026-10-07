@@ -2,9 +2,9 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.a.AxegrinderGiant;
 import com.github.laxika.magicalvibes.cards.w.WanderersTwig;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -19,12 +19,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({StonybrookAngler.class, AxegrinderGiant.class, WanderersTwig.class})
 class StonybrookAnglerTest extends BaseCardTest {
 
-    // ===== Activating ability =====
 
     @Test
     @DisplayName("Activating ability puts it on the stack targeting a creature")
     void activatingPutsOnStack() {
-        addReadyAngler(player1);
+        Permanent angler = addReadyAngler(player1);
         Permanent target = addCreatureReady(player2, new AxegrinderGiant());
         addAnglerMana(player1);
 
@@ -33,7 +32,7 @@ class StonybrookAnglerTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(entry.getCard().getName()).isEqualTo("Stonybrook Angler");
+        assertThat(entry.getSourcePermanentId()).isEqualTo(angler.getId());
         assertThat(entry.getTargetId()).isEqualTo(target.getId());
     }
 
@@ -49,7 +48,6 @@ class StonybrookAnglerTest extends BaseCardTest {
         assertThat(angler.isTapped()).isTrue();
     }
 
-    // ===== Tapping untapped creatures =====
 
     @Test
     @DisplayName("Taps an untapped creature")
@@ -67,7 +65,6 @@ class StonybrookAnglerTest extends BaseCardTest {
         assertThat(target.isTapped()).isTrue();
     }
 
-    // ===== Untapping tapped creatures =====
 
     @Test
     @DisplayName("Untaps a tapped creature")
@@ -100,7 +97,6 @@ class StonybrookAnglerTest extends BaseCardTest {
         assertThat(target.isTapped()).isFalse();
     }
 
-    // ===== Targeting own creatures =====
 
     @Test
     @DisplayName("Can tap own untapped creature")
@@ -116,7 +112,6 @@ class StonybrookAnglerTest extends BaseCardTest {
         assertThat(ownCreature.isTapped()).isTrue();
     }
 
-    // ===== Invalid targets =====
 
     @Test
     @DisplayName("Cannot target a non-creature permanent")
@@ -130,7 +125,6 @@ class StonybrookAnglerTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
-    // ===== Costs =====
 
     @Test
     @DisplayName("Cannot activate ability without enough mana")
@@ -168,7 +162,6 @@ class StonybrookAnglerTest extends BaseCardTest {
                 .hasMessageContaining("summoning sick");
     }
 
-    // ===== Fizzle =====
 
     @Test
     @DisplayName("Fizzles if target creature is removed before resolution")
@@ -185,15 +178,30 @@ class StonybrookAnglerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+        assertThat(gameLogContains("fizzles")).isTrue();
     }
 
-    // ===== Helpers =====
+
+    @Test
+    @DisplayName("Can decline to untap itself after paying its tap cost")
+    void canDeclineToUntapItself() {
+        Permanent angler = addReadyAngler(player1);
+        addAnglerMana(player1);
+
+        harness.activateAbility(player1, 0, null, angler.getId());
+        assertThat(angler.isTapped()).isTrue();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        assertThat(angler.isTapped()).isTrue();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(angler.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
 
     private Permanent addReadyAngler(Player player) {
-        Permanent perm = harness.addToBattlefieldAndReturn(player, new StonybrookAngler());
-        perm.setSummoningSick(false);
-        return perm;
+        return addCreatureReady(player, new StonybrookAngler());
     }
 
     private void addAnglerMana(Player player) {
