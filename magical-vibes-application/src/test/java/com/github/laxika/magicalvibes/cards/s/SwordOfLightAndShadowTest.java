@@ -50,6 +50,10 @@ class SwordOfLightAndShadowTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(gd.playerGraveyards.get(player1.getId()).getFirst().getId()));
         resolveAllTriggers();
 
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
         harness.assertLife(player1, 23);
         harness.assertInHand(player1, "Darksteel Gargoyle");
         harness.assertNotInGraveyard(player1, "Darksteel Gargoyle");
@@ -128,6 +132,50 @@ class SwordOfLightAndShadowTest extends BaseCardTest {
 
         harness.assertLife(player1, 20);
         harness.assertInGraveyard(player1, "Darksteel Gargoyle");
+    }
+
+    @Test
+    @DisplayName("An illegal graveyard target prevents the entire combat-damage ability from resolving")
+    void illegalGraveyardTargetAlsoPreventsLifeGain() {
+        harness.setLife(player1, 20);
+        DarksteelGargoyle target = new DarksteelGargoyle();
+        harness.setGraveyard(player1, List.of(target));
+        Permanent creature = addCreatureReady(player1, new DarksteelGargoyle());
+        Permanent sword = addSwordReady(player1);
+        sword.setAttachedTo(creature.getId());
+        creature.setAttacking(true);
+
+        resolveCombat();
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        gd.playerGraveyards.get(player1.getId()).remove(target);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
+        harness.assertNotInHand(player1, "Darksteel Gargoyle");
+    }
+
+    @Test
+    @DisplayName("A chosen legal graveyard target may still be left in the graveyard on resolution")
+    void mayDeclineReturnAfterChoosingTarget() {
+        harness.setLife(player1, 20);
+        DarksteelGargoyle target = new DarksteelGargoyle();
+        harness.setGraveyard(player1, List.of(target));
+        Permanent creature = addCreatureReady(player1, new DarksteelGargoyle());
+        Permanent sword = addSwordReady(player1);
+        sword.setAttachedTo(creature.getId());
+        creature.setAttacking(true);
+
+        resolveCombat();
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 23);
+        harness.assertInGraveyard(player1, "Darksteel Gargoyle");
+        harness.assertNotInHand(player1, "Darksteel Gargoyle");
     }
 
     private Permanent addSwordReady(Player player) {
