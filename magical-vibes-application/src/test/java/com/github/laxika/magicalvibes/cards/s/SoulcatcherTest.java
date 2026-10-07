@@ -57,12 +57,53 @@ class SoulcatcherTest extends BaseCardTest {
     }
 
     private void killWithFirebolt(Player caster, Permanent target) {
+        castFirebolt(caster, target);
+        harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("Triggers on its own death but cannot put a counter on itself in the graveyard")
+    void triggersWhenSoulcatcherItselfDies() {
+        Permanent soulcatcher = harness.addToBattlefieldAndReturn(player1, new Soulcatcher());
+
+        castFirebolt(player2, soulcatcher);
+
+        harness.assertNotOnBattlefield(player1, "Soulcatcher");
+        harness.assertInGraveyard(player1, "Soulcatcher");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(soulcatcher.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Each surviving Soulcatcher gets its own counter when a flyer dies")
+    void eachSoulcatcherGetsACounter() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new Soulcatcher());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new Soulcatcher());
+        Permanent flyer = harness.addToBattlefieldAndReturn(player2, new AvenArcher());
+
+        castFirebolt(player1, flyer);
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    private void castFirebolt(Player caster, Permanent target) {
         harness.forceActivePlayer(caster);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.setHand(caster, List.of(new Firebolt()));
         harness.addMana(caster, ManaColor.RED, 1);
         harness.castAndResolveSorcery(caster, 0, target.getId());
-        harness.passBothPriorities();
     }
 }
