@@ -10,15 +10,17 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed(TitanicBulvox.class)
 class TitanicBulvoxTest extends BaseCardTest {
 
     @Test
-    void hasTrampleOnTheBattlefield() {
+    void losesTrampleWhileFaceDown() {
         Permanent bulvox = harness.addToBattlefieldAndReturn(player1, new TitanicBulvox());
 
-        assertThat(gqs.hasKeyword(gd, bulvox, Keyword.TRAMPLE)).isTrue();
+        bulvox.setFaceDown(true);
+        assertThat(gqs.hasKeyword(gd, bulvox, Keyword.TRAMPLE)).isFalse();
     }
 
     @Test
@@ -41,5 +43,19 @@ class TitanicBulvoxTest extends BaseCardTest {
 
         assertThat(bulvox.isFaceDown()).isFalse();
         assertThat(gqs.hasKeyword(gd, bulvox, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    void cannotTurnFaceUpWithoutThreeGreenMana() {
+        Permanent bulvox = harness.addToBattlefieldAndReturn(player1, new TitanicBulvox());
+        bulvox.setFaceDown(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        assertThatThrownBy(() -> harness.turnFaceUp(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        assertThat(bulvox.isFaceDown()).isTrue();
     }
 }
