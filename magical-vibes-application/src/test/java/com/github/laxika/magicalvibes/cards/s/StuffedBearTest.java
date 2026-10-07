@@ -41,12 +41,56 @@ class StuffedBearTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, bear)).isFalse();
         assertThat(gqs.isArtifact(bear)).isTrue();
         assertThat(bear.getTransientSubtypes()).doesNotContain(CardSubtype.BEAR);
+        assertThat(gqs.getEffectiveColors(gd, bear)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Animation waits for resolution and affects only its source")
+    void animationWaitsForResolutionAndAffectsOnlySource() {
+        Permanent bear = addStuffedBear();
+        Permanent otherBear = addStuffedBear();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gqs.isCreature(gd, bear)).isFalse();
+        assertThat(gqs.isCreature(gd, otherBear)).isFalse();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, bear)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(4);
+        assertThat(gqs.isCreature(gd, otherBear)).isFalse();
+        assertThat(gqs.getEffectiveColors(gd, otherBear)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped newly entered Stuffed Bear can activate repeatedly without growing")
+    void tappedBearCanActivateRepeatedly() {
+        Permanent bear = addStuffedBear();
+        bear.setSummoningSick(true);
+        bear.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(bear.isTapped()).isTrue();
+        assertThat(gqs.isCreature(gd, bear)).isTrue();
+        assertThat(gqs.isArtifact(bear)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(4);
+        assertThat(gqs.getEffectiveColors(gd, bear)).containsExactly(CardColor.GREEN);
+        assertThat(bear.getTransientSubtypes()).containsExactly(CardSubtype.BEAR);
     }
 
     private Permanent addStuffedBear() {
