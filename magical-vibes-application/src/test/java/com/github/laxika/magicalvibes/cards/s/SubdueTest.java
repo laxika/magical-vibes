@@ -86,6 +86,39 @@ class SubdueTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("A subdued blocker still receives combat damage but deals none")
+    void preventsDamageByBlockerButNotDamageToIt() {
+        Permanent attacker = addCreatureReady(player2, new DAvenantArcher());
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(player1.getId());
+        Permanent blocker = addCreatureReady(player1, new AzureDrake());
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+
+        castSubdue(blocker);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
+
+        assertThat(attacker.getMarkedDamage()).isZero();
+        assertThat(blocker.getMarkedDamage()).isEqualTo(1);
+        assertThat(blocker.getToughnessModifier()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Other creatures still deal combat damage and receive no boost")
+    void affectsOnlyTargetCreature() {
+        Permanent target = addAttacker(player1, player2);
+        Permanent other = addAttacker(player1, player2);
+        harness.setLife(player2, 20);
+
+        castSubdue(target);
+        resolveCombat();
+
+        harness.assertLife(player2, 19);
+        assertThat(other.getToughnessModifier()).isZero();
+    }
     private void castSubdue(Permanent target) {
         harness.setHand(player1, List.of(new Subdue()));
         harness.addMana(player1, ManaColor.GREEN, 1);
