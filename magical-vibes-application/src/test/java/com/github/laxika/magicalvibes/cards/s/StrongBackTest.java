@@ -83,4 +83,92 @@ class StrongBackTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, otherCreature.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Strong Back resolves attached and counts itself")
+    void resolvesAndCountsItself() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new StrongBack()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Strong Back").getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Another Strong Back costs only its colored mana and both boosts apply")
+    void reducesAnotherStrongBackAndStacksBoosts() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent strongBack = harness.addToBattlefieldAndReturn(player1, new StrongBack());
+        strongBack.setAttachedTo(creature.getId());
+        harness.setHand(player1, List.of(new StrongBack()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Strong Back")).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(10);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(10);
+    }
+
+    @Test
+    @DisplayName("Aura reduction cannot pay the colored part of the cost")
+    void doesNotReduceColoredMana() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent strongBack = harness.addToBattlefieldAndReturn(player1, new StrongBack());
+        strongBack.setAttachedTo(creature.getId());
+        harness.setHand(player1, List.of(new StrongBack()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Attachments controlled by an opponent count and the boost updates when moved")
+    void countsOpposingAttachmentsAndUpdatesWhenMoved() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent otherCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent strongBack = harness.addToBattlefieldAndReturn(player1, new StrongBack());
+        strongBack.setAttachedTo(creature.getId());
+        Permanent scimitar = harness.addToBattlefieldAndReturn(player2, new LeoninScimitar());
+        scimitar.setAttachedTo(creature.getId());
+        Permanent cagemail = harness.addToBattlefieldAndReturn(player2, new Cagemail());
+        cagemail.setAttachedTo(creature.getId());
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(11);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(11);
+
+        scimitar.setAttachedTo(otherCreature.getId());
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, otherCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, otherCreature)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Strong Back does not reduce its opponent's spells or equip abilities")
+    void doesNotReduceOpponentsCosts() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent strongBack = harness.addToBattlefieldAndReturn(player1, new StrongBack());
+        strongBack.setAttachedTo(creature.getId());
+        Permanent scimitar = harness.addToBattlefieldAndReturn(player2, new LeoninScimitar());
+        harness.forceActivePlayer(player2);
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player2, gd.playerBattlefields.get(player2.getId()).indexOf(scimitar),
+                null, creature.getId())).isInstanceOf(IllegalStateException.class);
+
+        harness.setHand(player2, List.of(new StrongBack()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        assertThatThrownBy(() -> harness.castEnchantment(player2, 0, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
 }
