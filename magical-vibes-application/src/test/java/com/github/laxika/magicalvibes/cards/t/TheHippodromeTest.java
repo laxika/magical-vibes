@@ -67,6 +67,70 @@ class TheHippodromeTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
     }
 
+    @Test
+    void chaosMayDestroyCreatureWithExactlyZeroPower() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        target.setPowerModifier(3);
+
+        triggerChaosAndChooseTarget(target);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void chaosControllerMayDeclineToDestroyOwnCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        triggerChaosAndChooseTarget(target);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void chaosCanTargetPositivePowerCreatureThatFallsToZeroBeforeResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new CrawWurm());
+
+        triggerChaosAndChooseTarget(target);
+        target.setPowerModifier(-1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInGraveyard(player2, "Craw Wurm");
+    }
+
+    @Test
+    void chaosCanTargetPositivePowerCreatureButDoesNotDestroyIt() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new CrawWurm());
+
+        triggerChaosAndChooseTarget(target);
+        harness.passBothPriorities();
+        if (gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class) != null) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void powerPenaltyEndsWhenPlaneLeavesCommandZone() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new CrawWurm());
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
+
+        gd.planechase.faceUp.clear();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
+    }
+
     private void triggerChaosAndChooseTarget(Permanent target) {
         harness.inMutationScope(() -> planar.chaos(gd));
         harness.inMutationScope(() -> GameTestEngineContext.get().getBean(TriggerCollectionService.class)
