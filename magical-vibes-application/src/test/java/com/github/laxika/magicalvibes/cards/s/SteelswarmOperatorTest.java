@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.c.CopperMyr;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.IcyManipulator;
+import com.github.laxika.magicalvibes.cards.t.TemporalAdept;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SteelswarmOperator.class, CopperMyr.class, IcyManipulator.class, GrizzlyBears.class})
+@CardUsed({SteelswarmOperator.class, CopperMyr.class, IcyManipulator.class, GrizzlyBears.class, TemporalAdept.class})
 class SteelswarmOperatorTest extends BaseCardTest {
 
     @Test
@@ -86,13 +87,103 @@ class SteelswarmOperatorTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).getArtifactAbilityOnlyMana(ManaColor.BLUE)).isEqualTo(2);
     }
 
+    @Test
+    void firstAbilityManaCannotCastNonartifactSpell() {
+        addReadyOperator();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+        assertThat(gd.playerManaPools.get(player1.getId()).getArtifactSpellOnlyMana(ManaColor.BLUE)).isEqualTo(1);
+    }
+
+    @Test
+    void secondAbilityManaCannotCastNonartifactSpell() {
+        addReadyOperator();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+        assertThat(gd.playerManaPools.get(player1.getId()).getArtifactAbilityOnlyMana(ManaColor.BLUE)).isEqualTo(2);
+    }
+
+    @Test
+    void bothAbilitiesRequireAnUntappedSource() {
+        Permanent operator = addCreatureReady(player1, new SteelswarmOperator());
+        operator.setTapped(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).getArtifactSpellOnlyMana(ManaColor.BLUE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).getArtifactAbilityOnlyMana(ManaColor.BLUE)).isZero();
+    }
+
+    @Test
+    void bothAbilitiesCannotBeActivatedWhileSummoningSick() {
+        harness.addToBattlefield(player1, new SteelswarmOperator());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).getArtifactSpellOnlyMana(ManaColor.BLUE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).getArtifactAbilityOnlyMana(ManaColor.BLUE)).isZero();
+    }
+
+    @Test
+    void firstAbilityManaPaysColoredArtifactSpellCostImmediately() {
+        Permanent operator = addCreatureReady(player1, new SteelswarmOperator());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new SteelswarmOperator()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(operator.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).getArtifactSpellOnlyMana(ManaColor.BLUE)).isZero();
+    }
+
+    @Test
+    void secondAbilityManaCannotPayNonartifactAbility() {
+        addReadyOperator();
+        Permanent adept = addCreatureReady(player1, new TemporalAdept());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        assertThat(adept.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getArtifactAbilityOnlyMana(ManaColor.BLUE)).isEqualTo(2);
+    }
+
     private void addReadyOperator() {
-        Permanent operator = harness.addToBattlefieldAndReturn(player1, new SteelswarmOperator());
-        operator.setSummoningSick(false);
+        addCreatureReady(player1, new SteelswarmOperator());
     }
 
     private void addReadyIcyManipulator() {
-        Permanent icy = harness.addToBattlefieldAndReturn(player1, new IcyManipulator());
-        icy.setSummoningSick(false);
+        addCreatureReady(player1, new IcyManipulator());
     }
 }
