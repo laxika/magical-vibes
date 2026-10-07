@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.Levitation;
 import com.github.laxika.magicalvibes.cards.r.RazorfootGriffin;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +15,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({Squall.class, AirElemental.class, GiantSpider.class, GrizzlyBears.class,
-        RazorfootGriffin.class, SkyshroudFalcon.class})
+        RazorfootGriffin.class, SkyshroudFalcon.class, Levitation.class})
 class SquallTest extends BaseCardTest {
 
     private void castSquall() {
@@ -90,8 +91,23 @@ class SquallTest extends BaseCardTest {
 
         castSquall();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+    @Test
+    @DisplayName("Squall damages creatures with granted flying but leaves grounded creatures alone")
+    void damagesCreaturesWithGrantedFlying() {
+        harness.addToBattlefield(player2, new Levitation());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GiantSpider());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+
+        castSquall();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        assertThat(findPermanent(player2, "Giant Spider").getMarkedDamage()).isEqualTo(2);
+        assertThat(findPermanent(player1, "Grizzly Bears").getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Levitation");
     }
 }
