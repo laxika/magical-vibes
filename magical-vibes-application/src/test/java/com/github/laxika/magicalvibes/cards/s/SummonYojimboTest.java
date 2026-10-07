@@ -103,6 +103,74 @@ class SummonYojimboTest extends BaseCardTest {
                 .containsExactly("Treasure");
     }
 
+    @Test
+    void chapterIExilesAnUntappedOpponentEnchantmentCreature() {
+        addSagaWithLore(0);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SummonYojimbo());
+
+        advanceToNextChapter();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+        assertThat(gd.findExiledCard(target.getCard().getId())).isNotNull();
+    }
+
+    @Test
+    void chapterIIChargesSeparatelyForTwoAttackersEvenAfterSagaLeaves() {
+        Permanent saga = addSagaWithLore(1);
+        advanceToNextChapter();
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player1.getId()).remove(saga);
+        gd.playerGraveyards.get(player1.getId()).add(saga.getCard());
+        addReadyCreature(player2, new GrizzlyBears());
+        addReadyCreature(player2, new GrizzlyBears());
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> declareAttackers(player2, List.of(0, 1), null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana to pay attack tax");
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(2);
+
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        declareAttackers(player2, List.of(0, 1), null);
+
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void chapterIVCountsOpponentsRatherThanQualifyingCreaturesAndUsesCurrentPower() {
+        Permanent saga = addSagaWithLore(3);
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        first.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        second.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+
+        advanceToNextChapter();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(saga);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken())
+                .extracting(permanent -> permanent.getCard().getName())
+                .containsExactly("Treasure");
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(saga);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(saga.getCard());
+    }
+
+    @Test
+    void chapterIVDoesNotCountControllersOwnCreatureOrAnOpponentBelowFourPower() {
+        addSagaWithLore(3);
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        advanceToNextChapter();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().isToken());
+    }
+
     private Permanent addSagaWithLore(int lore) {
         Permanent saga = harness.addToBattlefieldAndReturn(player1, new SummonYojimbo());
         saga.setCounterCount(CounterType.LORE, lore);
