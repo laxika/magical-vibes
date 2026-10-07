@@ -43,4 +43,20 @@ class TalasWarriorTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
+
+    @Test
+    @DisplayName("Talas Warrior can block an opposing creature")
+    void canBlockOpposingCreature() {
+        harness.setLife(player2, 20);
+        addCreatureReady(player1, new BearCub());
+        addCreatureReady(player2, new TalasWarrior());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Bear Cub");
+        harness.assertInGraveyard(player2, "Talas Warrior");
+    }
 }
