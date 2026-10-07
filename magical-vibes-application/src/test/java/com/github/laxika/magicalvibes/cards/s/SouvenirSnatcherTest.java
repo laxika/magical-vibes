@@ -25,10 +25,8 @@ class SouvenirSnatcherTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, fountain.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(permanent -> permanent.getId().equals(fountain.getId()));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(permanent -> permanent.getId().equals(fountain.getId()));
+        harness.assertOnBattlefield(player1, "Fountain of Youth");
+        harness.assertNotOnBattlefield(player2, "Fountain of Youth");
     }
 
     @Test
@@ -43,6 +41,97 @@ class SouvenirSnatcherTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, hulk.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid permanent");
+    }
+
+    @Test
+    void castingNormallyDoesNotStealAnArtifact() {
+        harness.addToBattlefield(player2, new FountainOfYouth());
+
+        harness.castFromHand(player1, new SouvenirSnatcher(), "{4}{U}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Souvenir Snatcher");
+        harness.assertOnBattlefield(player2, "Fountain of Youth");
+        harness.assertNotOnBattlefield(player1, "Fountain of Youth");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void controlTriggerResolvesAfterSnatcherDies() {
+        Permanent snatcher = addCreatureReady(player1, new SouvenirSnatcher());
+        Permanent fountain = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+
+        triggerMutation(snatcher);
+        harness.handlePermanentChosen(player1, fountain.getId());
+        snatcher.setMarkedDamage(4);
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Souvenir Snatcher");
+        harness.assertOnBattlefield(player1, "Fountain of Youth");
+        harness.assertNotOnBattlefield(player2, "Fountain of Youth");
+    }
+
+    @Test
+    void controlDoesNotExpireWhenSnatcherDies() {
+        Permanent snatcher = addCreatureReady(player1, new SouvenirSnatcher());
+        Permanent fountain = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+
+        triggerMutation(snatcher);
+        harness.handlePermanentChosen(player1, fountain.getId());
+        harness.passBothPriorities();
+        snatcher.setMarkedDamage(4);
+        harness.runStateBasedActions();
+
+        harness.assertInGraveyard(player1, "Souvenir Snatcher");
+        harness.assertOnBattlefield(player1, "Fountain of Youth");
+        harness.assertNotOnBattlefield(player2, "Fountain of Youth");
+    }
+
+    @Test
+    void repeatedMutationsStealDifferentArtifactsWithoutReturningTheFirst() {
+        Permanent snatcher = addCreatureReady(player1, new SouvenirSnatcher());
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+
+        triggerMutation(snatcher);
+        harness.handlePermanentChosen(player1, first.getId());
+        harness.passBothPriorities();
+        triggerMutation(snatcher);
+        harness.handlePermanentChosen(player1, second.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .contains(first, second);
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .doesNotContain(first, second);
+    }
+
+    @Test
+    void canTargetAnArtifactAlreadyControlledByTheTriggerController() {
+        Permanent snatcher = addCreatureReady(player1, new SouvenirSnatcher());
+        Permanent fountain = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
+
+        triggerMutation(snatcher);
+        harness.handlePermanentChosen(player1, fountain.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(fountain);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void mutationWithOnlyArtifactCreaturesAvailableDoesNotStealAnything() {
+        Permanent snatcher = addCreatureReady(player1, new SouvenirSnatcher());
+        harness.addToBattlefield(player2, new PhyrexianHulk());
+
+        triggerMutation(snatcher);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction())
+                .isNotInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.assertOnBattlefield(player2, "Phyrexian Hulk");
+        harness.assertNotOnBattlefield(player1, "Phyrexian Hulk");
     }
 
     private void triggerMutation(Permanent snatcher) {
