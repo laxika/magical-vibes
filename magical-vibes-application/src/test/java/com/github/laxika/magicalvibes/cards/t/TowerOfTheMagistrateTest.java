@@ -7,10 +7,13 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -88,13 +91,77 @@ class TowerOfTheMagistrateTest extends BaseCardTest {
         assertThat(gqs.hasProtectionFromSourceCardTypes(gd, target, artifactCreature)).isFalse();
     }
 
+    @Test
+    void protectionAbilityPaysManaAndTapsTowerBeforeResolving() {
+        Permanent tower = addReady(new TowerOfTheMagistrate());
+        Permanent target = addCreatureReady(player1, new WildJhovall());
+        Permanent artifact = addCreatureReady(player2, new HengeGuardian());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+
+        assertThat(tower.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.hasProtectionFromSourceCardTypes(gd, target, artifact)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasProtectionFromSourceCardTypes(gd, target, artifact)).isTrue();
+    }
+
+    @Test
+    void cannotActivateProtectionWithoutMana() {
+        Permanent tower = addReady(new TowerOfTheMagistrate());
+        Permanent target = addCreatureReady(player1, new WildJhovall());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(tower.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void artifactCreatureCannotBlockProtectedAttacker() {
+        addReady(new TowerOfTheMagistrate());
+        Permanent attacker = addCreatureReady(player1, new WildJhovall());
+        addCreatureReady(player2, new HengeGuardian());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, 1, null, attacker.getId());
+        harness.passBothPriorities();
+
+        declareAttackersAndPrepareBlockers(List.of(1));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 1))))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void protectedCreatureCanBlockArtifactAndPreventsItsDamage() {
+        addReady(new TowerOfTheMagistrate());
+        Permanent blocker = addCreatureReady(player1, new WildJhovall());
+        Permanent attacker = addCreatureReady(player2, new HengeGuardian());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, 1, null, blocker.getId());
+        harness.passBothPriorities();
+
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(1, 0)));
+        resolveCombat(player2);
+
+        harness.assertOnBattlefield(player1, "Wild Jhovall");
+        assertThat(blocker.getMarkedDamage()).isZero();
+        assertThat(attacker.getMarkedDamage()).isEqualTo(3);
+        harness.assertLife(player1, 20);
+    }
+
     private Permanent addReady(Card card) {
         return addReady(player1, card);
     }
 
     private Permanent addReady(Player player, Card card) {
-        Permanent permanent = harness.addToBattlefieldAndReturn(player, card);
-        permanent.setSummoningSick(false);
-        return permanent;
+        return addCreatureReady(player, card);
     }
 }
