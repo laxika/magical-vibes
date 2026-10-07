@@ -75,7 +75,6 @@ class StompedByTheFootTest extends BaseCardTest {
         harness.castInstant(player1, 0, target.getId());
         harness.passBothPriorities();
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(target.getEffectivePower()).isEqualTo(6);
@@ -106,5 +105,52 @@ class StompedByTheFootTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castKickedInstantWithSacrifice(player1, 0, target.getId(), sacrifice.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("an artifact or creature");
+    }
+
+    @Test
+    void sacrificeIsPaidBeforeTheSpellResolves() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ColossalDreadmaw());
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new Spellbook());
+        harness.setHand(player1, List.of(new StompedByTheFoot()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castKickedInstantWithSacrifice(player1, 0, target.getId(), sacrifice.getId());
+
+        harness.assertNotOnBattlefield(player1, "Spellbook");
+        harness.assertInGraveyard(player1, "Spellbook");
+        assertThat(target.getEffectiveToughness()).isEqualTo(6);
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    void canSacrificeTheTargetToPayKicker() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new StompedByTheFoot()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castKickedInstantWithSacrifice(player1, 0, target.getId(), target.getId());
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Stomped by the Foot");
+    }
+
+    @Test
+    void unkickedSpellKillsACreatureWithTwoToughness() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new StompedByTheFoot()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 }
