@@ -101,4 +101,41 @@ class SteamSpitterTest extends BaseCardTest {
         assertThat(blocker.getBlockingTargetIds()).contains(attacker.getId());
     }
 
+    @Test
+    @DisplayName("A tapped Steam Spitter can activate and boosts only itself")
+    void tappedSourceBoostsOnlyItself() {
+        Permanent otherSpider = addCreatureReady(player1, new SteamSpitter());
+        Permanent source = addCreatureReady(player1, new SteamSpitter());
+        source.setTapped(true);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 1, null, null);
+
+        assertThat(source.getPowerModifier()).isZero();
+        harness.passBothPriorities();
+
+        assertThat(source.getPowerModifier()).isEqualTo(1);
+        assertThat(source.getToughnessModifier()).isZero();
+        assertThat(source.isTapped()).isTrue();
+        assertThat(otherSpider.getPowerModifier()).isZero();
+        assertThat(otherSpider.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Multiple activations can be stacked before either resolves")
+    void activationsStackBeforeResolution() {
+        Permanent spider = addCreatureReady(player1, new SteamSpitter());
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(spider.getPowerModifier()).isZero();
+        harness.passBothPriorities();
+        assertThat(spider.getPowerModifier()).isEqualTo(1);
+        harness.passBothPriorities();
+        assertThat(spider.getPowerModifier()).isEqualTo(2);
+        assertThat(spider.getToughnessModifier()).isZero();
+    }
+
 }
