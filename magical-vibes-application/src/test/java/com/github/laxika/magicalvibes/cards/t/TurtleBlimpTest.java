@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.ActionNewsCrew;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -13,8 +13,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TurtleBlimp.class, GrizzlyBears.class})
+@CardUsed({TurtleBlimp.class, ActionNewsCrew.class})
 class TurtleBlimpTest extends BaseCardTest {
 
     @Test
@@ -23,10 +24,11 @@ class TurtleBlimpTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 5);
 
         harness.castArtifact(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
-        Permanent token = findPermanents(player1, "Mutant").getFirst();
+        assertThat(findPermanents(player1, "Mutant")).hasSize(1);
+        assertThat(findPermanents(player2, "Mutant")).isEmpty();
+        Permanent token = findPermanent(player1, "Mutant");
         assertThat(token.getEffectivePower()).isEqualTo(2);
         assertThat(token.getEffectiveToughness()).isEqualTo(2);
         assertThat(token.getCard().getColor()).isEqualTo(CardColor.RED);
@@ -35,8 +37,8 @@ class TurtleBlimpTest extends BaseCardTest {
 
     @Test
     void crewAnimatesBlimpUntilEndOfTurn() {
-        Permanent blimp = addReady(new TurtleBlimp());
-        Permanent crewer = addCreatureReady(player1, new GrizzlyBears());
+        Permanent blimp = addCreatureReady(player1, new TurtleBlimp());
+        Permanent crewer = addCreatureReady(player1, new ActionNewsCrew());
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -44,17 +46,44 @@ class TurtleBlimpTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, blimp)).isTrue();
         assertThat(crewer.isTapped()).isTrue();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.isCreature(gd, blimp)).isFalse();
     }
 
-    private Permanent addReady(TurtleBlimp blimp) {
-        Permanent permanent = new Permanent(blimp);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(permanent);
-        return permanent;
+    @Test
+    void newlyCreatedMutantCanCrewImmediately() {
+        harness.setHand(player1, List.of(new TurtleBlimp()));
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.castArtifact(player1, 0);
+        resolveAllTriggers();
+        Permanent blimp = findPermanent(player1, "Turtle Blimp");
+        Permanent mutant = findPermanent(player1, "Mutant");
+
+        assertThat(mutant.isSummoningSick()).isTrue();
+        assertThat(mutant.isTapped()).isFalse();
+        assertThat(gqs.isCreature(gd, blimp)).isFalse();
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(mutant.isTapped()).isTrue();
+        assertThat(gqs.isCreature(gd, blimp)).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, blimp)).isTrue();
+        assertThat(blimp.isTapped()).isFalse();
+        assertThat(findPermanents(player1, "Mutant")).hasSize(1);
+    }
+
+    @Test
+    void tappedCreatureCannotPayCrewCost() {
+        Permanent blimp = harness.addToBattlefieldAndReturn(player1, new TurtleBlimp());
+        Permanent crewer = addCreatureReady(player1, new ActionNewsCrew());
+        crewer.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough creature power");
+        assertThat(gqs.isCreature(gd, blimp)).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 }
