@@ -44,4 +44,43 @@ class TimeDistortionTest extends BaseCardTest {
         assertThat(gd.planechase.faceUp).singleElement().extracting(PlanarObject::getCard)
                 .isInstanceOf(Panopticon.class);
     }
+
+    @Test
+    void waitsForEncounterTriggerToResolveAndPreservesCurrentTurn() {
+        List<UUID> originalOrder = List.copyOf(gd.orderedPlayerIds);
+        gd.planechase.deck.addFirst(new TimeDistortion());
+
+        harness.inMutationScope(() -> planar.reveal(gd, true));
+
+        assertThat(gd.orderedPlayerIds).containsExactlyElementsOf(originalOrder);
+        assertThat(gd.planechase.faceUp).singleElement().extracting(PlanarObject::getCard)
+                .isInstanceOf(TimeDistortion.class);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.orderedPlayerIds).containsExactly(originalOrder.get(1), originalOrder.get(0));
+        assertThat(gd.activePlayerId).isEqualTo(player1.getId());
+        assertThat(gd.currentStep).isEqualTo(TurnStep.PRECOMBAT_MAIN);
+    }
+
+    @Test
+    void twoConsecutiveEncountersRestoreOriginalTurnOrder() {
+        List<UUID> originalOrder = List.copyOf(gd.orderedPlayerIds);
+        gd.planechase.deck.addFirst(new TimeDistortion());
+        gd.planechase.deck.addFirst(new TimeDistortion());
+
+        harness.inMutationScope(() -> planar.reveal(gd, true));
+        harness.passBothPriorities();
+
+        assertThat(gd.orderedPlayerIds).containsExactly(originalOrder.get(1), originalOrder.get(0));
+        assertThat(gd.planechase.faceUp).singleElement().extracting(PlanarObject::getCard)
+                .isInstanceOf(TimeDistortion.class);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.orderedPlayerIds).containsExactlyElementsOf(originalOrder);
+        assertThat(gd.activePlayerId).isEqualTo(player1.getId());
+        assertThat(gd.planechase.faceUp).singleElement().extracting(PlanarObject::getCard)
+                .isInstanceOf(Panopticon.class);
+    }
 }
