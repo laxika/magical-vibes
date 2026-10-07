@@ -79,4 +79,68 @@ class UnlivingLegionnaireTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("only once");
     }
+
+    @Test
+    void powerUpCannotTargetOpponentsCreatureCard() {
+        harness.enterBattlefieldAndReturn(player1, new UnlivingLegionnaire());
+        Card creature = new UnlivingLegionnaire();
+        harness.setGraveyard(player2, List.of(creature));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, 0, 0, null, creature.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("your graveyard");
+    }
+
+    @Test
+    void powerUpDoesNotPutCountersWhenItsOnlyTargetIsGone() {
+        Permanent legionnaire = harness.enterBattlefieldAndReturn(player1, new UnlivingLegionnaire());
+        Card creature = new UnlivingLegionnaire();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, 0, null, creature.getId(), Zone.GRAVEYARD);
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(legionnaire.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertNotInHand(player1, "Unliving Legionnaire");
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null, Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("only once");
+    }
+
+    @Test
+    void powerUpRequiresFullCostWhenSourceDidNotEnterThisTurn() {
+        Permanent legionnaire = addCreatureReady(player1, new UnlivingLegionnaire());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null, Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, 0, 0, null, null, Zone.GRAVEYARD);
+        harness.passBothPriorities();
+
+        assertThat(legionnaire.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void powerUpCannotBeActivatedAgainWhileFirstActivationIsOnStack() {
+        harness.enterBattlefieldAndReturn(player1, new UnlivingLegionnaire());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, 0, null, null, Zone.GRAVEYARD);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null, Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("only once");
+        harness.passBothPriorities();
+    }
 }
