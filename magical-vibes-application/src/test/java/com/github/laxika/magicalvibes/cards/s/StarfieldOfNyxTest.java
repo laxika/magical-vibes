@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Insight;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({StarfieldOfNyx.class, SylvanEchoes.class, GossamerChains.class, Insight.class,
-        Browse.class, GrizzlyBears.class, Pacifism.class})
+        Browse.class, GrizzlyBears.class, Pacifism.class, StillLife.class})
 class StarfieldOfNyxTest extends BaseCardTest {
 
     /** Starfield plus four more enchantments — the "five or more enchantments" threshold. */
@@ -51,6 +52,7 @@ class StarfieldOfNyxTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.handleMultipleCardsChosen(player1, List.of(insight.getId()));
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         harness.assertOnBattlefield(player1, "Insight");
         harness.assertNotInGraveyard(player1, "Insight");
@@ -124,5 +126,125 @@ class StarfieldOfNyxTest extends BaseCardTest {
         Permanent opponentEchoes = findPermanent(player2, "Sylvan Echoes");
 
         assertThat(gqs.isCreature(gd, opponentEchoes)).isFalse();
+    }
+
+    @Test
+    void targetIsRequiredEvenWhenReturnWillBeDeclined() {
+        harness.addToBattlefield(player1, new StarfieldOfNyx());
+        harness.setGraveyard(player1, List.of(new Insight()));
+
+        advanceToUpkeep(player1);
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.minCount()).isEqualTo(1);
+        assertThat(choice.maxCount()).isEqualTo(1);
+    }
+
+    @Test
+    void canDeclineReturnAfterChoosingTarget() {
+        harness.addToBattlefield(player1, new StarfieldOfNyx());
+        Card insight = new Insight();
+        harness.setGraveyard(player1, List.of(insight));
+
+        advanceToUpkeep(player1);
+        harness.handleMultipleCardsChosen(player1, List.of(insight.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.assertInGraveyard(player1, "Insight");
+        harness.assertNotOnBattlefield(player1, "Insight");
+    }
+
+    @Test
+    void returnedAuraChoosesAttachment() {
+        harness.addToBattlefield(player1, new StarfieldOfNyx());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Card pacifism = new Pacifism();
+        harness.setGraveyard(player1, List.of(pacifism));
+
+        advanceToUpkeep(player1);
+        harness.handleMultipleCardsChosen(player1, List.of(pacifism.getId()));
+        harness.passBothPriorities();
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, bears.getId());
+
+        assertThat(findPermanent(player1, "Pacifism").getAttachedTo()).isEqualTo(bears.getId());
+        harness.assertNotInGraveyard(player1, "Pacifism");
+    }
+
+    @Test
+    void auraWithNoLegalHostStaysInGraveyard() {
+        harness.addToBattlefield(player1, new StarfieldOfNyx());
+        Card pacifism = new Pacifism();
+        harness.setGraveyard(player1, List.of(pacifism));
+
+        advanceToUpkeep(player1);
+        harness.handleMultipleCardsChosen(player1, List.of(pacifism.getId()));
+        harness.passBothPriorities();
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        harness.assertInGraveyard(player1, "Pacifism");
+        harness.assertNotOnBattlefield(player1, "Pacifism");
+    }
+
+    @Test
+    void stopsAnimatingWhenEnchantmentCountFallsBelowFive() {
+        addFiveEnchantments();
+        Permanent echoes = findPermanent(player1, "Sylvan Echoes");
+        assertThat(gqs.isCreature(gd, echoes)).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).remove(findPermanent(player1, "Browse"));
+
+        assertThat(gqs.isCreature(gd, echoes)).isFalse();
+    }
+
+    @Test
+    void doesNotReturnCardsDuringOpponentsUpkeep() {
+        harness.addToBattlefield(player1, new StarfieldOfNyx());
+        harness.setGraveyard(player1, List.of(new Insight()));
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Insight");
+    }
+
+    @Test
+    void anotherStarfieldCanAnimateTheFirst() {
+        for (int i = 0; i < 5; i++) {
+            harness.addToBattlefield(player1, new StarfieldOfNyx());
+        }
+
+        for (Permanent starfield : findPermanents(player1, "Starfield of Nyx")) {
+            assertThat(gqs.isCreature(gd, starfield)).isTrue();
+            assertThat(gqs.getEffectivePower(gd, starfield)).isEqualTo(5);
+            assertThat(gqs.getEffectiveToughness(gd, starfield)).isEqualTo(5);
+        }
+    }
+
+    @Test
+    void laterStarfieldSetsBasePowerOfAlreadyAnimatedEnchantment() {
+        Permanent stillLife = harness.enterBattlefieldAndReturn(player1, new StillLife());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, stillLife)).isEqualTo(4);
+
+        for (int i = 0; i < 4; i++) {
+            harness.enterBattlefieldAndReturn(player1, new StarfieldOfNyx());
+        }
+
+        assertThat(gqs.isCreature(gd, stillLife)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, stillLife)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, stillLife)).isEqualTo(3);
     }
 }
