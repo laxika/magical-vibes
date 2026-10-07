@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.IvoryMask;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
@@ -14,7 +15,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GrizzlyBears.class, TeferisPuzzleBox.class})
+@CardUsed({GrizzlyBears.class, IvoryMask.class, TeferisPuzzleBox.class})
 class TeferisPuzzleBoxTest extends BaseCardTest {
 
     private void advanceToDraw(Player activePlayer) {
@@ -190,6 +191,56 @@ class TeferisPuzzleBoxTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .containsExactlyInAnyOrder(library.get(3), library.get(4));
+    }
+
+    @Test
+    @DisplayName("Shroud does not prevent the non-targeting hand exchange")
+    void exchangesHandOfPlayerWithShroud() {
+        harness.addToBattlefield(player1, new TeferisPuzzleBox());
+        harness.addToBattlefield(player2, new IvoryMask());
+        Card handCard = new GrizzlyBears();
+        List<Card> library = libraryCards(5);
+        harness.setHand(player2, List.of(handCard));
+        harness.setLibrary(player2, library);
+
+        advanceToDraw(player2);
+        harness.passBothPriorities();
+
+        PendingInteraction.LibraryReorder reorder =
+                gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class);
+        assertThat(reorder).isNotNull();
+        chooseCurrentOrder(player2);
+
+        assertThat(gd.playerHands.get(player2.getId()))
+                .containsExactlyInAnyOrder(library.get(1), library.get(2));
+        assertThat(gd.playerDecks.get(player2.getId())).contains(handCard, library.get(0));
+    }
+
+    @Test
+    @DisplayName("Can redraw the entire hand when the normal draw empties the library")
+    void redrawsHandFromOtherwiseEmptyLibrary() {
+        harness.addToBattlefield(player1, new TeferisPuzzleBox());
+        Card handCard = new GrizzlyBears();
+        Card normalDraw = new GrizzlyBears();
+        Card opponentHandCard = new GrizzlyBears();
+        Card opponentLibraryCard = new GrizzlyBears();
+        harness.setHand(player1, List.of(handCard));
+        harness.setLibrary(player1, List.of(normalDraw));
+        harness.setHand(player2, List.of(opponentHandCard));
+        harness.setLibrary(player2, List.of(opponentLibraryCard));
+
+        advanceToDraw(player1);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(handCard, normalDraw);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+
+        harness.passBothPriorities();
+        chooseCurrentOrder(player1);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(handCard, normalDraw);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(opponentHandCard);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentLibraryCard);
     }
 
     @Test
