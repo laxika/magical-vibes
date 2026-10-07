@@ -89,9 +89,8 @@ class TormentTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(bears);
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(card -> card instanceof Torment);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(permanent -> permanent.getCard() instanceof Torment);
+        harness.assertInGraveyard(player1, "Torment");
+        harness.assertNotOnBattlefield(player1, "Torment");
     }
 
     @Test
@@ -102,5 +101,41 @@ class TormentTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void multipleCopiesStackWithoutReducingToughnessOrAffectingOtherCreatures() {
+        Permanent enchanted = harness.addToBattlefieldAndReturn(player2, new VenerableMonk());
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new VenerableMonk());
+        harness.setHand(player1, List.of(new Torment(), new Torment()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castEnchantment(player1, 0, enchanted.getId());
+        harness.passBothPriorities();
+        harness.castEnchantment(player1, 0, enchanted.getId());
+        harness.passBothPriorities();
+        harness.runStateBasedActions();
+
+        assertThat(gqs.getEffectivePower(gd, enchanted)).isEqualTo(-4);
+        assertThat(gqs.getEffectiveToughness(gd, enchanted)).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(enchanted);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(2);
+    }
+
+    @Test
+    void auraGoesToItsOwnersGraveyardWhenEnchantedCreatureLeaves() {
+        Permanent enchanted = harness.addToBattlefieldAndReturn(player2, new VenerableMonk());
+        harness.setHand(player1, List.of(new Torment()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castEnchantment(player1, 0, enchanted.getId());
+        harness.passBothPriorities();
+
+        gd.playerBattlefields.get(player2.getId()).remove(enchanted);
+        harness.runStateBasedActions();
+
+        harness.assertInGraveyard(player1, "Torment");
+        harness.assertNotInGraveyard(player2, "Torment");
+        harness.assertNotOnBattlefield(player1, "Torment");
     }
 }
