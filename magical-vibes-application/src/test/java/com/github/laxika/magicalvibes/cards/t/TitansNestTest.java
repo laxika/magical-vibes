@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.Fireball;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MindStone;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -18,6 +19,92 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({TitansNest.class, Fireball.class, GrizzlyBears.class, MindStone.class})
 class TitansNestTest extends BaseCardTest {
+
+    @Test
+    void surveilCanLeaveTheCardOnTop() {
+        harness.addToBattlefield(player1, new TitansNest());
+        Card topCard = new TitansNest();
+        harness.setLibrary(player1, List.of(topCard));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(topCard);
+    }
+
+    @Test
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        harness.addToBattlefield(player1, new TitansNest());
+        Card topCard = new TitansNest();
+        harness.setLibrary(player1, List.of(topCard));
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+    }
+
+    @Test
+    void surveillingAnEmptyLibraryDoesNotLoseTheGame() {
+        harness.addToBattlefield(player1, new TitansNest());
+        harness.setLibrary(player1, List.of());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+    }
+
+    @Test
+    void cannotExileFromOpponentsGraveyardToPayTheCost() {
+        harness.addToBattlefield(player1, new TitansNest());
+        harness.setGraveyard(player1, List.of());
+        Card opponentsCard = new TitansNest();
+        harness.setGraveyard(player2, List.of(opponentsCard));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentsCard);
+        assertThat(gd.playerManaPools.get(player1.getId()).getColoredSpellWithoutXOnlyColorless()).isZero();
+    }
+
+    @Test
+    void manaAbilityResolvesImmediatelyAndExilesTheChosenCard() {
+        harness.addToBattlefield(player1, new TitansNest());
+        Card exiledCard = new TitansNest();
+        harness.setGraveyard(player1, List.of(exiledCard));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleGraveyardCardChosen(player1, 0);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.findExiledCard(exiledCard.getId())).isNotNull();
+        assertThat(gd.findExiledCard(exiledCard.getId()).card()).isSameAs(exiledCard);
+        assertThat(gd.playerManaPools.get(player1.getId()).getColoredSpellWithoutXOnlyColorless()).isEqualTo(1);
+    }
+
+    @Test
+    void restrictedManaCannotPayForActivatedAbilities() {
+        harness.addToBattlefield(player1, new TitansNest());
+        harness.addToBattlefield(player1, new MindStone());
+        harness.setGraveyard(player1, List.of(new TitansNest()));
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleGraveyardCardChosen(player1, 0);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Mind Stone");
+        assertThat(gd.playerManaPools.get(player1.getId()).getColoredSpellWithoutXOnlyColorless()).isEqualTo(1);
+    }
 
     @Test
     void upkeepSurveilsOne() {
