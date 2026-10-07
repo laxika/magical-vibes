@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TwistedExperiment.class, GrizzlyBears.class, FountainOfYouth.class})
+@CardUsed({TwistedExperiment.class, GrizzlyBears.class, FountainOfYouth.class, LlanowarElves.class})
 class TwistedExperimentTest extends BaseCardTest {
 
     @Test
@@ -96,13 +97,48 @@ class TwistedExperimentTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent with Twisted Experiment")
     void cannotTargetNonCreature() {
-        harness.addToBattlefield(player1, new FountainOfYouth());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
         harness.setHand(player1, List.of(new TwistedExperiment()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        Permanent artifact = findPermanent(player1, "Fountain of Youth");
-
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Reducing toughness to zero kills the creature and puts the Aura in its owner's graveyard")
+    void zeroToughnessKillsCreatureAndRemovesAura() {
+        Permanent elves = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
+        harness.setHand(player1, List.of(new TwistedExperiment()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castEnchantment(player1, 0, elves.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Llanowar Elves");
+        harness.assertInGraveyard(player2, "Llanowar Elves");
+        harness.assertNotOnBattlefield(player1, "Twisted Experiment");
+        harness.assertInGraveyard(player1, "Twisted Experiment");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Twisted Experiment affects only the enchanted creature")
+    void unrelatedCreaturesAreUnaffected() {
+        Permanent enchanted = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent friendly = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opposing = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new TwistedExperiment()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castEnchantment(player1, 0, enchanted.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, enchanted)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, enchanted)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, friendly)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, friendly)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opposing)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opposing)).isEqualTo(2);
     }
 }
