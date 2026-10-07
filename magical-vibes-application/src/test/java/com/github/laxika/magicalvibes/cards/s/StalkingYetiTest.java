@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.b.BoxingRing;
 import com.github.laxika.magicalvibes.cards.k.KrovikanScoundrel;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -10,12 +11,10 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({StalkingYeti.class, KrovikanScoundrel.class})
+@CardUsed({StalkingYeti.class, KrovikanScoundrel.class, BoxingRing.class})
 class StalkingYetiTest extends BaseCardTest {
 
     @Test
@@ -116,10 +115,74 @@ class StalkingYetiTest extends BaseCardTest {
                 .hasMessageContaining("Not enough mana");
     }
 
+    @Test
+    @DisplayName("The damage exchange does not enable Boxing Ring's fight restriction")
+    void damageExchangeDoesNotCountAsFighting() {
+        Permanent opponentScoundrel = addCreatureReady(player2, new KrovikanScoundrel());
+
+        castYeti();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, opponentScoundrel.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Stalking Yeti");
+        harness.assertInGraveyard(player2, "Krovikan Scoundrel");
+        Permanent ring = harness.addToBattlefieldAndReturn(player1, new BoxingRing());
+        assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(player1, ring), null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(findPermanents(player1, "Treasure")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Both creatures deal damage even when both take lethal damage")
+    void bothCreaturesDealLethalDamage() {
+        Permanent opposingYeti = addCreatureReady(player2, new StalkingYeti());
+
+        castYeti();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, opposingYeti.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Stalking Yeti");
+        harness.assertInGraveyard(player2, "Stalking Yeti");
+        harness.assertNotOnBattlefield(player1, "Stalking Yeti");
+        harness.assertNotOnBattlefield(player2, "Stalking Yeti");
+    }
+
+    @Test
+    @DisplayName("The ETB ability does nothing if its target leaves before resolution")
+    void etbDoesNothingIfTargetLeavesBeforeResolution() {
+        Permanent opponentScoundrel = addCreatureReady(player2, new KrovikanScoundrel());
+
+        castYeti();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, opponentScoundrel.getId());
+        Permanent yeti = findPermanent(player1, "Stalking Yeti");
+        gd.playerBattlefields.get(player2.getId()).remove(opponentScoundrel);
+        harness.passBothPriorities();
+
+        assertThat(yeti.getMarkedDamage()).isZero();
+        assertThat(opponentScoundrel.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("The self-bounce ability cannot activate while its ETB ability is on the stack")
+    void selfBounceRequiresEmptyStack() {
+        Permanent opponentScoundrel = addCreatureReady(player2, new KrovikanScoundrel());
+
+        castYeti();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, opponentScoundrel.getId());
+        Permanent yeti = findPermanent(player1, "Stalking Yeti");
+        addAbilityMana(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(player1, yeti), null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("stack is empty");
+    }
+
     private void castYeti() {
-        harness.setHand(player1, List.of(new StalkingYeti()));
-        harness.addMana(player1, ManaColor.RED, 4);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new StalkingYeti(), "{2}{R}{R}");
     }
 
     private void addAbilityMana(Player player) {
