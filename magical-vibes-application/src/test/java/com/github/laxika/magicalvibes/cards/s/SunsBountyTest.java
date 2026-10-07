@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.List;
 
@@ -24,8 +26,7 @@ class SunsBountyTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SunsBounty()));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         harness.assertLife(player1, 24);
         harness.assertInGraveyard(player1, "Sun's Bounty");
@@ -94,6 +95,69 @@ class SunsBountyTest extends BaseCardTest {
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, shelf));
 
         assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(bounty);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(bounty);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(bounty);
+    }
+
+    @Test
+    @DisplayName("Recover exiles Sun's Bounty when the chosen payment cannot be made")
+    void recoverExilesSourceWhenPaymentCannotBeMade() {
+        Card bounty = new SunsBounty();
+        harness.setGraveyard(player1, List.of(bounty));
+        Permanent druid = harness.addToBattlefieldAndReturn(player1, new BorealDruid());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, druid));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(bounty);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(bounty);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(bounty);
+    }
+
+    @Test
+    @DisplayName("Recover does not trigger while Sun's Bounty is in hand")
+    void recoverDoesNotTriggerFromHand() {
+        Card bounty = new SunsBounty();
+        harness.setHand(player1, List.of(bounty));
+        Permanent druid = harness.addToBattlefieldAndReturn(player1, new BorealDruid());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, druid));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).contains(bounty);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(bounty);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    @DisplayName("An older recover trigger cannot move Sun's Bounty after it is recovered and recast")
+    void olderRecoverTriggerCannotMoveRecastCard(boolean payForOlderTrigger) {
+        Card bounty = new SunsBounty();
+        harness.setGraveyard(player1, List.of(bounty));
+        Permanent firstDruid = harness.addToBattlefieldAndReturn(player1, new BorealDruid());
+        Permanent secondDruid = harness.addToBattlefieldAndReturn(player1, new BorealDruid());
+        harness.addMana(player1, ManaColor.WHITE, 6);
+
+        harness.inMutationScope(() -> {
+            harness.getPermanentRemovalService().removePermanentToGraveyard(gd, firstDruid);
+            harness.getPermanentRemovalService().removePermanentToGraveyard(gd, secondDruid);
+        });
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.playerHands.get(player1.getId())).contains(bounty);
+
+        harness.castAndResolveInstant(player1, gd.playerHands.get(player1.getId()).indexOf(bounty));
+        harness.assertLife(player1, 24);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(bounty);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, payForOlderTrigger);
+
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(bounty);
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(bounty);
         assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(bounty);
