@@ -1,132 +1,119 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.a.ArcaneAdaptation;
+import com.github.laxika.magicalvibes.cards.b.BalothGorger;
+import com.github.laxika.magicalvibes.cards.c.CastDown;
+import com.github.laxika.magicalvibes.cards.y.YavimayaSapherd;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ThallidOmnivore.class, BalothGorger.class, YavimayaSapherd.class})
 class ThallidOmnivoreTest extends BaseCardTest {
 
-    // ===== Ability structure =====
-
     @Test
-    @DisplayName("Thallid Omnivore has two activated abilities")
-    void hasTwoActivatedAbilities() {
-        ThallidOmnivore card = new ThallidOmnivore();
-        assertThat(card.getActivatedAbilities()).hasSize(2);
+    @DisplayName("Cannot activate without another creature to sacrifice")
+    void cannotActivateWithoutAnotherCreature() {
+        addThallidOmnivoreReady(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Thallid Omnivore");
     }
-
-    
-
-    
-
-    // ===== Sacrifice a Saproling: +2/+2 and life gain =====
 
     @Test
     @DisplayName("Sacrificing a Saproling via ability 0 gives +2/+2 and 2 life")
     void sacrificeSaprolingGivesBoostAndLifeGain() {
         addThallidOmnivoreReady(player1);
-        harness.addToBattlefield(player1, createSaprolingToken());
+        addSaprolingToken();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         int lifeBefore = harness.getGameData().getLife(player1.getId());
 
-        // Ability 0 = sacrifice Saproling; only 1 Saproling → auto-sacrifice
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
 
-        harness.assertInGraveyard(player1, "Saproling");
+        harness.assertNotOnBattlefield(player1, "Saproling");
 
-        Permanent omnivore = findOmnivore(gd, player1);
+        Permanent omnivore = findPermanent(player1, "Thallid Omnivore");
         assertThat(omnivore.getPowerModifier()).isEqualTo(2);
         assertThat(omnivore.getToughnessModifier()).isEqualTo(2);
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore + 2);
     }
 
-    // ===== Sacrifice a non-Saproling creature: +2/+2, no life =====
-
     @Test
     @DisplayName("Sacrificing a non-Saproling creature via ability 1 gives +2/+2 but no life gain")
     void sacrificeNonSaprolingGivesBoostNoLifeGain() {
         addThallidOmnivoreReady(player1);
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new BalothGorger());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         int lifeBefore = harness.getGameData().getLife(player1.getId());
 
-        // Ability 1 = sacrifice another creature; only 1 other creature → auto-sacrifice
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
 
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Baloth Gorger");
 
-        Permanent omnivore = findOmnivore(gd, player1);
+        Permanent omnivore = findPermanent(player1, "Thallid Omnivore");
         assertThat(omnivore.getPowerModifier()).isEqualTo(2);
         assertThat(omnivore.getToughnessModifier()).isEqualTo(2);
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore);
     }
 
-    // ===== Cannot sacrifice itself =====
-
     @Test
     @DisplayName("Cannot sacrifice Thallid Omnivore to its own second ability (excludeSelf)")
     void cannotSacrificeItself() {
         addThallidOmnivoreReady(player1);
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new BalothGorger());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        // Ability 1 with excludeSelf; only 1 other creature → auto-sacrifices Bears
         harness.activateAbility(player1, 0, 1, null, null);
 
         harness.assertOnBattlefield(player1, "Thallid Omnivore");
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Baloth Gorger");
     }
-
-    // ===== Mana cost required =====
 
     @Test
     @DisplayName("Ability requires {1} mana to activate")
     void abilityRequiresMana() {
         addThallidOmnivoreReady(player1);
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new BalothGorger());
 
         org.assertj.core.api.Assertions.assertThatThrownBy(() ->
                 harness.activateAbility(player1, 0, 1, null, null)
         ).isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Boost resets at end of turn =====
-
     @Test
     @DisplayName("Boost resets at end of turn")
     void boostResetsAtEndOfTurn() {
         addThallidOmnivoreReady(player1);
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new BalothGorger());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        Permanent omnivore = findOmnivore(harness.getGameData(), player1);
+        Permanent omnivore = findPermanent(player1, "Thallid Omnivore");
         assertThat(omnivore.getPowerModifier()).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
@@ -137,58 +124,114 @@ class ThallidOmnivoreTest extends BaseCardTest {
         assertThat(omnivore.getToughnessModifier()).isEqualTo(0);
     }
 
-    // ===== Multiple activations =====
-
     @Test
     @DisplayName("Can activate both abilities across turns of sacrifice")
     void canActivateBothAbilities() {
         addThallidOmnivoreReady(player1);
-        harness.addToBattlefield(player1, createSaprolingToken());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        addSaprolingToken();
+        harness.addToBattlefield(player1, new BalothGorger());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         int lifeBefore = harness.getGameData().getLife(player1.getId());
 
-        // Ability 0: sacrifice Saproling → +2/+2 and 2 life (auto-sacrifice, only 1 Saproling)
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        // Ability 1: sacrifice Bears → +2/+2 (auto-sacrifice, only 1 other creature left)
         harness.activateAbility(player1, 0, 1, null, null);
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Baloth Gorger"));
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
 
-        Permanent omnivore = findOmnivore(gd, player1);
+        Permanent omnivore = findPermanent(player1, "Thallid Omnivore");
         assertThat(omnivore.getPowerModifier()).isEqualTo(4);
         assertThat(omnivore.getToughnessModifier()).isEqualTo(4);
 
-        // Only gained 2 life (from Saproling sacrifice)
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore + 2);
     }
 
-    // ===== Helper methods =====
+    @Test
+    @DisplayName("Sacrificing a Saproling through the general creature choice still gains life")
+    void generalCreatureSacrificeGainsLifeForSaproling() {
+        addThallidOmnivoreReady(player1);
+        addSaprolingToken();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        int lifeBefore = gd.getLife(player1.getId());
 
-    private Permanent addThallidOmnivoreReady(Player player) {
-        ThallidOmnivore card = new ThallidOmnivore();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Saproling"));
+
+        harness.assertNotOnBattlefield(player1, "Saproling");
+        harness.assertLife(player1, lifeBefore);
+        assertThat(findPermanent(player1, "Thallid Omnivore").getPowerModifier()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Thallid Omnivore").getPowerModifier()).isEqualTo(2);
+        assertThat(findPermanent(player1, "Thallid Omnivore").getToughnessModifier()).isEqualTo(2);
+        harness.assertLife(player1, lifeBefore + 2);
     }
 
-    private Card createSaprolingToken() {
-        Card card = new Card();
-        card.setName("Saproling");
-        card.setType(CardType.CREATURE);
-        card.setColor(CardColor.GREEN);
-        card.setPower(1);
-        card.setToughness(1);
-        card.setSubtypes(List.of(CardSubtype.SAPROLING));
-        return card;
+    @Test
+    @CardUsed({ArcaneAdaptation.class})
+    @DisplayName("The source cannot sacrifice itself even when it is a Saproling")
+    void saprolingSourceCannotSacrificeItself() {
+        addThallidOmnivoreReady(player1);
+        harness.setHand(player1, List.of(new ArcaneAdaptation()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "SAPROLING");
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Thallid Omnivore");
     }
 
-    private Permanent findOmnivore(GameData gd, Player player) {
-        return findPermanent(player, "Thallid Omnivore");
+    @Test
+    @DisplayName("An opponent's creature cannot pay the sacrifice cost")
+    void cannotSacrificeOpponentsCreature() {
+        addThallidOmnivoreReady(player1);
+        harness.addToBattlefield(player2, new BalothGorger());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player2, "Baloth Gorger");
+    }
+
+    @Test
+    @CardUsed({CastDown.class})
+    @DisplayName("Life gain still resolves when Omnivore is destroyed in response")
+    void gainsLifeEvenWhenSourceLeavesBattlefield() {
+        addThallidOmnivoreReady(player1);
+        addSaprolingToken();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        int lifeBefore = gd.getLife(player1.getId());
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.setHand(player2, List.of(new CastDown()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castInstant(player2, 0, harness.getPermanentId(player1, "Thallid Omnivore"));
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Thallid Omnivore");
+        harness.assertLife(player1, lifeBefore);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, lifeBefore + 2);
+        harness.assertLife(player2, 20);
+    }
+
+    private void addThallidOmnivoreReady(Player player) {
+        harness.addToBattlefield(player, new ThallidOmnivore());
+    }
+
+    private void addSaprolingToken() {
+        harness.enterBattlefieldAndReturn(player1, new YavimayaSapherd());
+        resolveAllTriggers();
     }
 }
