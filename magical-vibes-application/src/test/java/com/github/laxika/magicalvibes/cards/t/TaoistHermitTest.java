@@ -67,4 +67,36 @@ class TaoistHermitTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("hexproof");
     }
+    @Test
+    @DisplayName("Controller can target own Taoist Hermit with damaging abilities")
+    void controllerCanTargetWithAbility() {
+        Permanent hermit = addCreatureReady(player1, new TaoistHermit());
+        addCreatureReady(player1, new FireBowman());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 1, null, hermit.getId());
+        harness.passBothPriorities();
+
+        assertThat(hermit.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Taoist Hermit");
+        harness.assertInGraveyard(player1, "Fire Bowman");
+    }
+
+    @Test
+    @DisplayName("Hexproof does not prevent lethal damage from the controller's spell")
+    void controllerCanDealLethalDamage() {
+        Permanent hermit = addCreatureReady(player1, new TaoistHermit());
+        harness.setHand(player1, List.of(new FireAmbush()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castAndResolveSorcery(player1, 0, hermit.getId());
+
+        harness.assertNotOnBattlefield(player1, "Taoist Hermit");
+        harness.assertInGraveyard(player1, "Taoist Hermit");
+    }
 }
