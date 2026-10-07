@@ -103,6 +103,69 @@ class SpikeRogueTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    @DisplayName("Targeted ability can put the counter back on itself")
+    void targetedAbilityCanTargetItself() {
+        Permanent spikeRogue = addReadySpikeRogue(2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, battlefieldIndex(spikeRogue), 0, null, spikeRogue.getId());
+        assertThat(spikeRogue.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.passBothPriorities();
+
+        assertThat(spikeRogue.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Spending its last counter does not stop the ability from helping another creature")
+    void lastCounterAbilityResolvesAfterSourceDies() {
+        Permanent spikeRogue = addReadySpikeRogue(1);
+        Permanent recipient = harness.enterBattlefieldAndReturn(player1, new SpikeRogue());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, battlefieldIndex(spikeRogue), 0, null, recipient.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(spikeRogue);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(spikeRogue.getCard());
+        harness.passBothPriorities();
+
+        assertThat(recipient.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Spending its last counter on its own untargeted ability cannot save it")
+    void lastCounterCannotBeRestoredAfterSourceDies() {
+        Permanent spikeRogue = addReadySpikeRogue(1);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, battlefieldIndex(spikeRogue), 1, null, null);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(spikeRogue);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(spikeRogue);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(spikeRogue.getCard());
+    }
+
+    @Test
+    @DisplayName("A creature used to pay the counter cost may die before the ability resolves")
+    void donorDiesWhenItsLastCounterIsSpent() {
+        Permanent spikeRogue = addReadySpikeRogue(2);
+        Permanent donor = harness.enterBattlefieldAndReturn(player1, new SpikeRogue());
+        donor.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, battlefieldIndex(spikeRogue), 1, null, null);
+        harness.handlePermanentChosen(player1, donor.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(donor);
+        assertThat(spikeRogue.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        harness.passBothPriorities();
+
+        assertThat(spikeRogue.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(donor.getCard());
+    }
+
     private Permanent addReadySpikeRogue(int counters) {
         Permanent spikeRogue = addCreatureReady(player1, new SpikeRogue());
         spikeRogue.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, counters);
