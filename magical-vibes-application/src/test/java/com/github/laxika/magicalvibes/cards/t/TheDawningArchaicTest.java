@@ -6,9 +6,8 @@ import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -20,25 +19,32 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TheDawningArchaic.class, Shock.class, CounselOfTheSoratami.class, GrizzlyBears.class})
 class TheDawningArchaicTest extends BaseCardTest {
 
     private void addReadyAttacker() {
-        Permanent archaic = new Permanent(new TheDawningArchaic());
-        archaic.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(archaic);
+        addCreatureReady(player1, new TheDawningArchaic());
     }
 
     private void declareAttack() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player1, List.of(0));
+        declareAttackers(List.of(0));
     }
 
     @Nested
     @DisplayName("Cost reduction")
+    @CardUsed({TheDawningArchaic.class, Shock.class, CounselOfTheSoratami.class, GrizzlyBears.class})
     class CostReduction {
+        @Test
+        void reductionCannotMakeTheCostNegative() {
+            harness.setGraveyard(player1, java.util.stream.IntStream.range(0, 11)
+                    .mapToObj(i -> (Card) new Shock()).toList());
+            harness.setHand(player1, List.of(new TheDawningArchaic()));
+
+            harness.castCreature(player1, 0);
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        }
 
         @Test
         @DisplayName("Costs the full {10} with an empty graveyard")
@@ -93,7 +99,45 @@ class TheDawningArchaicTest extends BaseCardTest {
 
     @Nested
     @DisplayName("Attack trigger")
+    @CardUsed({TheDawningArchaic.class, Shock.class, CounselOfTheSoratami.class, GrizzlyBears.class})
     class AttackTrigger {
+        @Test
+        void targetLeavingGraveyardBeforeResolutionCannotBeCast() {
+            addReadyAttacker();
+            Card shock = new Shock();
+            harness.setGraveyard(player1, List.of(shock));
+            declareAttack();
+            harness.handleMultipleCardsChosen(player1, List.of(shock.getId()));
+            harness.setGraveyard(player1, List.of());
+
+            harness.passBothPriorities();
+
+            assertThat(gd.stack).isEmpty();
+            assertThat(gd.interaction.isAwaitingInput()).isFalse();
+            assertThat(gd.getPlayerExiledCards(player1.getId()))
+                    .noneMatch(c -> c.getId().equals(shock.getId()));
+        }
+
+        @Test
+        @CardUsed({TheDawningArchaic.class, Shock.class, CounselOfTheSoratami.class,
+                GrizzlyBears.class, ThrillOfPossibility.class})
+        void mandatoryDiscardMustBePaidBeforeTheSpellIsCast() {
+            addReadyAttacker();
+            Card thrill = new ThrillOfPossibility();
+            Card discard = new GrizzlyBears();
+            harness.setGraveyard(player1, List.of(thrill));
+            harness.setHand(player1, List.of(discard));
+            declareAttack();
+            harness.handleMultipleCardsChosen(player1, List.of(thrill.getId()));
+            harness.passBothPriorities();
+
+            harness.handleMayAbilityChosen(player1, true);
+
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class))
+                    .as("The mandatory discard must be selected before casting Thrill of Possibility")
+                    .isNotNull();
+            assertThat(gd.stack).noneMatch(entry -> entry.getCard().getId().equals(thrill.getId()));
+        }
 
         @Test
         @DisplayName("Only instant and sorcery cards from your own graveyard are legal targets")
@@ -135,11 +179,11 @@ class TheDawningArchaicTest extends BaseCardTest {
             declareAttack();
 
             harness.handleMultipleCardsChosen(player1, List.of(counsel.getId()));
-            harness.passBothPriorities(); // resolve attack trigger → queues the may-cast
+            harness.passBothPriorities(); // resolve attack trigger Ă˘â€ â€™ queues the may-cast
             harness.handleMayAbilityChosen(player1, true);
             harness.passBothPriorities(); // resolve Counsel of the Soratami
 
-            // Cast without paying its mana cost — no mana was ever added.
+            // Cast without paying its mana cost Ă˘â‚¬â€ť no mana was ever added.
             assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 2);
             assertThat(gd.playerGraveyards.get(player1.getId()))
                     .noneMatch(c -> c.getId().equals(counsel.getId()));
