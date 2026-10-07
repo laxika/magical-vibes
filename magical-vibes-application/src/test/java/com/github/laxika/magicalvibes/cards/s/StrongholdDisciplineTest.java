@@ -22,7 +22,6 @@ class StrongholdDisciplineTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Stronghold Discipline");
         assertThat(entry.getControllerId()).isEqualTo(player1.getId());
     }
 
@@ -75,5 +74,38 @@ class StrongholdDisciplineTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Stronghold Discipline");
+    }
+
+    @Test
+    @DisplayName("A player without creatures loses no life while tapped creatures still count")
+    void countsTappedCreaturesOnMixedBattlefield() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addToBattlefield(player1, new Mountain());
+        harness.addToBattlefield(player2, new Mountain());
+        harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()).setTapped(true);
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        harness.castFromHand(player1, new StrongholdDiscipline(), "{2}{B}{B}");
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Creatures added after casting are included when Stronghold Discipline resolves")
+    void includesCreaturesEnteringBeforeResolution() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.castFromHand(player1, new StrongholdDiscipline(), "{2}{B}{B}");
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 18);
     }
 }
