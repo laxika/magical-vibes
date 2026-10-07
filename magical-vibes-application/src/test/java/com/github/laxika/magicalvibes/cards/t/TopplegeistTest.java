@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Topplegeist.class, GrizzlyBears.class, Forest.class, Naturalize.class, Pacifism.class})
 class TopplegeistTest extends BaseCardTest {
 
     @Test
@@ -26,8 +28,7 @@ class TopplegeistTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.castCreature(player1, 0, 0, target.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(target.isTapped()).isTrue();
     }
@@ -91,6 +92,52 @@ class TopplegeistTest extends BaseCardTest {
         advanceToUpkeep(player1);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Delirium is checked again when the upkeep ability resolves")
+    void doesNotTapWhenDeliriumIsLostBeforeResolution() {
+        setDelirium();
+        addCreatureReady(player1, new Topplegeist());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+
+        advanceToUpkeep(player2);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new Forest(), new Naturalize()));
+        resolveAllTriggers();
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Four cards sharing fewer than four card types do not enable delirium")
+    void doesNotTriggerWithFourCardsOfThreeTypes() {
+        harness.setGraveyard(player1, List.of(
+                new GrizzlyBears(), new GrizzlyBears(), new Forest(), new Naturalize()));
+        addCreatureReady(player1, new Topplegeist());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The opponent's graveyard does not enable delirium")
+    void doesNotTriggerUsingOpponentsGraveyard() {
+        harness.setGraveyard(player2, List.of(
+                new GrizzlyBears(), new Forest(), new Naturalize(), new Pacifism()));
+        addCreatureReady(player1, new Topplegeist());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
         assertThat(target.isTapped()).isFalse();
     }
 
