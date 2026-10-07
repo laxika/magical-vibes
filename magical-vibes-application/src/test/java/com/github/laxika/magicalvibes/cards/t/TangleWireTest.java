@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.k.KorHaven;
 import com.github.laxika.magicalvibes.cards.m.Mossdog;
 import com.github.laxika.magicalvibes.cards.n.NobleStand;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -12,6 +13,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -36,8 +38,7 @@ class TangleWireTest extends BaseCardTest {
         Permanent stand = harness.enterBattlefieldAndReturn(player1, new NobleStand());
 
         advanceToUpkeep(player1);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(wire.getCounterCount(CounterType.FADE)).isEqualTo(3);
         assertThat(wire.isTapped()).isTrue();
@@ -100,10 +101,84 @@ class TangleWireTest extends BaseCardTest {
         wire.setCounterCount(CounterType.FADE, 0);
 
         advanceToUpkeep(player1);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(wire);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(wire.getCard());
+    }
+
+    @Test
+    void removingLastFadeCounterDoesNotSacrificeWire() {
+        Permanent wire = harness.enterBattlefieldAndReturn(player1, new TangleWire());
+        wire.setCounterCount(CounterType.FADE, 1);
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(wire.getCounterCount(CounterType.FADE)).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(wire);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(wire.getCard());
+    }
+
+    @Test
+    void zeroFadeCountersDoNotTapOpponentsPermanents() {
+        Permanent wire = harness.enterBattlefieldAndReturn(player1, new TangleWire());
+        wire.setCounterCount(CounterType.FADE, 0);
+        Permanent mossdog = harness.enterBattlefieldAndReturn(player2, new Mossdog());
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(mossdog.isTapped()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(wire);
+    }
+
+    @Test
+    void readsFadeCountersWhenTapTriggerResolves() {
+        Permanent wire = harness.enterBattlefieldAndReturn(player1, new TangleWire());
+        Permanent firstDog = harness.enterBattlefieldAndReturn(player2, new Mossdog());
+        Permanent secondDog = harness.enterBattlefieldAndReturn(player2, new Mossdog());
+
+        advanceToUpkeep(player2);
+        wire.setCounterCount(CounterType.FADE, 1);
+        resolveAllTriggers();
+
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.maxCount()).isEqualTo(1);
+        harness.handleMultiplePermanentsChosen(player2, List.of(secondDog.getId()));
+
+        assertThat(firstDog.isTapped()).isFalse();
+        assertThat(secondDog.isTapped()).isTrue();
+        assertThat(secondDog.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void alreadyTappedPermanentsDoNotSatisfyTapRequirement() {
+        Permanent wire = harness.enterBattlefieldAndReturn(player1, new TangleWire());
+        wire.setCounterCount(CounterType.FADE, 1);
+        Permanent tappedDog = harness.enterBattlefieldAndReturn(player2, new Mossdog());
+        Permanent untappedDog = harness.enterBattlefieldAndReturn(player2, new Mossdog());
+
+        advanceToUpkeep(player2);
+        tappedDog.setTapped(true);
+        resolveAllTriggers();
+
+        assertThat(tappedDog.isTapped()).isTrue();
+        assertThat(untappedDog.isTapped()).isTrue();
+    }
+
+    @Test
+    void faceDownWireDoesNotTriggerDuringOpponentsUpkeep() {
+        Permanent wire = harness.enterBattlefieldAndReturn(player1, new TangleWire());
+        wire.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        Permanent mossdog = harness.enterBattlefieldAndReturn(player2, new Mossdog());
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(mossdog.isTapped()).isFalse();
+        assertThat(wire.getCounterCount(CounterType.FADE)).isEqualTo(4);
     }
 }
