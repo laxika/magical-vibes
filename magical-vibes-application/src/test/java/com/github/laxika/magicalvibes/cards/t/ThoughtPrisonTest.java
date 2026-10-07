@@ -3,9 +3,11 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.a.AlphaMyr;
 import com.github.laxika.magicalvibes.cards.b.Battlegrowth;
 import com.github.laxika.magicalvibes.cards.b.BrownOuphe;
+import com.github.laxika.magicalvibes.cards.c.ChaliceOfTheVoid;
 import com.github.laxika.magicalvibes.cards.c.CopperMyr;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
+import com.github.laxika.magicalvibes.cards.p.PullFromEternity;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -19,7 +21,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({ThoughtPrison.class, Battlegrowth.class, BrownOuphe.class, AlphaMyr.class,
-        CopperMyr.class, Forest.class, Ornithopter.class})
+        CopperMyr.class, Forest.class, Ornithopter.class, ChaliceOfTheVoid.class,
+        TelJiladChosen.class, PullFromEternity.class})
 class ThoughtPrisonTest extends BaseCardTest {
 
     @Test
@@ -72,10 +75,7 @@ class ThoughtPrisonTest extends BaseCardTest {
     void matchingColorDamagesCaster() {
         addPrisonWithImprint(new Battlegrowth());
         harness.setLife(player1, 20);
-        harness.setHand(player1, List.of(new BrownOuphe()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new BrownOuphe(), "{G}");
         harness.passBothPriorities();
 
         harness.assertLife(player1, 18);
@@ -86,10 +86,7 @@ class ThoughtPrisonTest extends BaseCardTest {
     void matchingManaValueDamagesCaster() {
         addPrisonWithImprint(new AlphaMyr());
         harness.setLife(player1, 20);
-        harness.setHand(player1, List.of(new CopperMyr()));
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new CopperMyr(), "{2}");
         harness.passBothPriorities();
 
         harness.assertLife(player1, 18);
@@ -104,10 +101,7 @@ class ThoughtPrisonTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new BrownOuphe()));
-        harness.addMana(player2, ManaColor.GREEN, 1);
-
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, new BrownOuphe(), "{G}");
         harness.passBothPriorities();
 
         harness.assertLife(player2, 18);
@@ -119,9 +113,92 @@ class ThoughtPrisonTest extends BaseCardTest {
     void ignoresNonmatchingSpell() {
         addPrisonWithImprint(new Battlegrowth());
         harness.setLife(player1, 20);
-        harness.setHand(player1, List.of(new Ornithopter()));
+        harness.castFromHand(player1, new Ornithopter(), "{0}");
+        harness.passBothPriorities();
 
-        harness.castArtifact(player1, 0);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Matching color alone triggers damage even when mana values differ")
+    void matchingOnlyColorDamagesCaster() {
+        addPrisonWithImprint(new TelJiladChosen());
+        harness.setLife(player1, 20);
+
+        harness.castFromHand(player1, new BrownOuphe(), "{G}");
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("Color identity does not make a colorless imprinted card share green")
+    void colorIdentityDoesNotCountAsColor() {
+        addPrisonWithImprint(new CopperMyr());
+        harness.setLife(player1, 20);
+
+        harness.castFromHand(player1, new BrownOuphe(), "{G}");
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Without an imprinted card spells do not trigger damage")
+    void noImprintDoesNotTrigger() {
+        harness.addToBattlefield(player1, new ThoughtPrison());
+        harness.setLife(player1, 20);
+
+        harness.castFromHand(player1, new Ornithopter(), "{0}");
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Both X symbols contribute to a spell's mana value on the stack")
+    void doubleXSpellMatchesTwiceChosenX() {
+        addPrisonWithImprint(new AlphaMyr());
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new ChaliceOfTheVoid()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castArtifact(player1, 0, 1);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("A double-X spell does not match an imprinted card with mana value X")
+    void doubleXSpellDoesNotMatchChosenXAlone() {
+        addPrisonWithImprint(new Battlegrowth());
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new ChaliceOfTheVoid()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castArtifact(player1, 0, 1);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Moving the imprinted card out of exile stops future matching triggers")
+    @CardUsed({ThoughtPrison.class, AlphaMyr.class, PullFromEternity.class, CopperMyr.class})
+    void imprintedCardLeavingExileStopsTriggers() {
+        CardChoiceSetup setup = castAndResolveEtb(List.of(new AlphaMyr()));
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+        harness.setHand(player1, List.of(new PullFromEternity()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castAndResolveInstant(player1, 0, setup.chosenCard().getId());
+        assertThat(gd.getPlayerExiledCards(player2.getId())).doesNotContain(setup.chosenCard());
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(setup.chosenCard());
+        harness.setLife(player1, 20);
+
+        harness.castFromHand(player1, new CopperMyr(), "{2}");
         harness.passBothPriorities();
 
         harness.assertLife(player1, 20);
@@ -144,6 +221,7 @@ class ThoughtPrisonTest extends BaseCardTest {
     private void addPrisonWithImprint(Card imprintedCard) {
         ThoughtPrison prison = new ThoughtPrison();
         harness.addToBattlefield(player1, prison);
+        harness.setExile(player2, List.of(imprintedCard));
         gd.setImprintedCard(prison, imprintedCard);
     }
 
