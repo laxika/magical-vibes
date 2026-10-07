@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.n.NaturalAffinity;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(SpawningPool.class)
+@CardUsed({SpawningPool.class, NaturalAffinity.class})
 class SpawningPoolTest extends BaseCardTest {
 
     // ===== Enters the battlefield tapped =====
@@ -118,8 +119,7 @@ class SpawningPoolTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, pool)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.isCreature(gd, pool)).isFalse();
         assertThat(gqs.effectiveCreatureSubtypes(gd, pool)).isEmpty();
@@ -215,6 +215,77 @@ class SpawningPoolTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature");
+    }
+
+    @Test
+    @DisplayName("Another card's animation does not grant Spawning Pool regeneration")
+    void externalAnimationDoesNotGrantRegeneration() {
+        Permanent pool = addPoolReady(player1);
+        harness.castFromHand(player1, new NaturalAffinity(), "{2}{G}");
+        harness.passBothPriorities();
+        assertThat(gqs.isCreature(gd, pool)).isTrue();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        assertThat(pool.getRegenerationShield()).isZero();
+    }
+
+    @Test
+    @DisplayName("An animated Spawning Pool can still tap for black mana")
+    void animatedPoolStillProducesMana() {
+        Permanent pool = addPoolReady(player1);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.tapPermanent(player1, 0);
+
+        assertThat(pool.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A newly played animated Pool cannot tap for mana but can regenerate")
+    void newlyPlayedAnimatedPoolHasSummoningSickness() {
+        harness.setHand(player1, List.of(new SpawningPool()));
+        harness.playLand(player1, 0);
+        Permanent pool = findPermanent(player1, "Spawning Pool");
+        pool.untap();
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.tapPermanent(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(pool.getRegenerationShield()).isEqualTo(1);
+        assertThat(pool.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("An unused regeneration shield expires at end of turn")
+    void unusedRegenerationShieldExpires() {
+        Permanent pool = addPoolReady(player1);
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        assertThat(pool.getRegenerationShield()).isEqualTo(1);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(pool.getRegenerationShield()).isZero();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     // ===== Helper methods =====
