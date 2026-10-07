@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.r.RumblingBaloth;
 import com.github.laxika.magicalvibes.cards.w.WilyGoblin;
+import com.github.laxika.magicalvibes.cards.y.YouComeToARiver;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -16,7 +17,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SpoilsOfTheHunt.class, HillGiant.class, RumblingBaloth.class, WilyGoblin.class})
+@CardUsed({SpoilsOfTheHunt.class, HillGiant.class, RumblingBaloth.class, WilyGoblin.class,
+        YouComeToARiver.class})
 class SpoilsOfTheHuntTest extends BaseCardTest {
 
     @Test
@@ -58,6 +60,60 @@ class SpoilsOfTheHuntTest extends BaseCardTest {
     }
 
     @Test
+    void oneTreasureBoostsOnlyPowerAndDamageIsOneWay() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new RumblingBaloth());
+
+        castWithTreasureMana(source, victim);
+
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, source)).isEqualTo(3);
+        assertThat(source.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player2, "Rumbling Baloth");
+    }
+
+    @Test
+    void stillBoostsSourceWhenVictimLeavesBeforeResolution() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new RumblingBaloth());
+        prepareTreasureMana();
+        harness.castInstant(player1, 0, List.of(source.getId(), victim.getId()));
+
+        returnTargetInResponse(victim);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(4);
+        harness.assertInHand(player2, "Rumbling Baloth");
+        harness.assertNotInGraveyard(player2, "Rumbling Baloth");
+        harness.assertInGraveyard(player1, "Spoils of the Hunt");
+    }
+
+    @Test
+    void dealsNoDamageWhenSourceLeavesBeforeResolution() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new RumblingBaloth());
+        harness.setHand(player1, List.of(new SpoilsOfTheHunt()));
+        addMana();
+        harness.castInstant(player1, 0, List.of(source.getId(), victim.getId()));
+
+        returnTargetInResponse(source);
+        harness.passBothPriorities();
+
+        assertThat(victim.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(victim);
+        harness.assertInHand(player1, "Hill Giant");
+        harness.assertInGraveyard(player1, "Spoils of the Hunt");
+    }
+
+    private void returnTargetInResponse(Permanent target) {
+        harness.setHand(player2, List.of(new YouComeToARiver()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castInstant(player2, 0, 0, target.getId());
+        harness.passBothPriorities();
+    }
+
+    @Test
     @DisplayName("Both targets must have the required controller")
     void rejectsTargetsWithWrongController() {
         Permanent ownSource = harness.addToBattlefieldAndReturn(player1, new HillGiant());
@@ -82,26 +138,26 @@ class SpoilsOfTheHuntTest extends BaseCardTest {
     private void castSpoils(Permanent source, Permanent victim) {
         harness.setHand(player1, List.of(new SpoilsOfTheHunt()));
         addMana();
-        harness.castInstant(player1, 0, List.of(source.getId(), victim.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, List.of(source.getId(), victim.getId()));
     }
 
     private void castWithTreasureMana(Permanent source, Permanent victim) {
+        prepareTreasureMana();
+        harness.castAndResolveInstant(player1, 0, List.of(source.getId(), victim.getId()));
+    }
+
+    private void prepareTreasureMana() {
         harness.setHand(player1, List.of(new WilyGoblin(), new SpoilsOfTheHunt()));
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent treasure = findPermanent(player1, "Treasure");
         int treasureIndex = gd.playerBattlefields.get(player1.getId()).indexOf(treasure);
         harness.activateAbility(player1, treasureIndex, null, null);
         harness.handleListChoice(player1, "RED");
-
-        harness.castInstant(player1, 0, List.of(source.getId(), victim.getId()));
-        harness.passBothPriorities();
     }
 
     private void castWithTwoTreasureMana(Permanent source, Permanent victim) {
@@ -110,17 +166,14 @@ class SpoilsOfTheHuntTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         sacrificeTreasureForColorless();
         sacrificeTreasureForColorless();
 
-        harness.castInstant(player1, 0, List.of(source.getId(), victim.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, List.of(source.getId(), victim.getId()));
     }
 
     private void sacrificeTreasureForColorless() {
