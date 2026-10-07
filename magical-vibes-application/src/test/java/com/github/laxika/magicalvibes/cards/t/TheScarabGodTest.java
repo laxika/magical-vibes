@@ -11,8 +11,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.DelayedGraveyardToHandReturn;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -21,6 +21,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TheScarabGod.class, GrizzlyBears.class, Plains.class, WrathOfGod.class, ZombieGoliath.class})
 class TheScarabGodTest extends BaseCardTest {
 
     @Test
@@ -30,8 +31,7 @@ class TheScarabGodTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ZombieGoliath());
         harness.addToBattlefield(player1, new ZombieGoliath());
 
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
 
         harness.setLife(player2, 20);
         harness.forceActivePlayer(player1);
@@ -85,7 +85,7 @@ class TheScarabGodTest extends BaseCardTest {
         assertThat(token.getCard().getPower()).isEqualTo(4);
         assertThat(token.getCard().getToughness()).isEqualTo(4);
         assertThat(token.getCard().getColor()).isEqualTo(CardColor.BLACK);
-        assertThat(token.getCard().getSubtypes()).contains(CardSubtype.BEAR, CardSubtype.ZOMBIE);
+        assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.ZOMBIE);
     }
 
     @Test
@@ -105,18 +105,82 @@ class TheScarabGodTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Upkeep counts Zombies at resolution, including a token created in response")
+    void upkeepCountsZombiesAtResolution() {
+        Permanent scarab = harness.addToBattlefieldAndReturn(player1, new TheScarabGod());
+        harness.addToBattlefield(player2, new ZombieGoliath());
+        Card bears = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(bears));
+        harness.setLibrary(player1, List.of(new Plains(), new Plains()));
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UNTAP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbilityWithGraveyardTargets(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(scarab), 0, List.of(bears.getId()));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 19);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards()).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(bears);
+    }
+
+    @Test
+    @DisplayName("The upkeep ability does not trigger during an opponent's upkeep")
+    void opponentUpkeepDoesNotTrigger() {
+        harness.addToBattlefield(player1, new TheScarabGod());
+        harness.addToBattlefield(player1, new ZombieGoliath());
+        harness.setLife(player2, 20);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UNTAP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player2, 20);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Two activations targeting the same card create only one token")
+    void removedGraveyardTargetDoesNotCreateAnotherToken() {
+        Permanent scarab = harness.addToBattlefieldAndReturn(player1, new TheScarabGod());
+        Card bears = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(bears));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        int idx = gd.playerBattlefields.get(player1.getId()).indexOf(scarab);
+        harness.activateAbilityWithGraveyardTargets(player1, idx, 0, List.of(bears.getId()));
+        harness.activateAbilityWithGraveyardTargets(player1, idx, 0, List.of(bears.getId()));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(p -> p.getCard().isToken()).hasSize(1);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(bears);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("When The Scarab God dies, it returns to hand at the beginning of the next end step")
     void diesReturnsToHandAtNextEndStep() {
         Permanent scarab = harness.addToBattlefieldAndReturn(player1, new TheScarabGod());
         Card scarabCard = scarab.getCard();
 
-        harness.setHand(player1, List.of(new WrathOfGod()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
-        harness.getGameService().playCard(gd, player1, 0, 0, null, null);
+        harness.castFromHand(player1, new WrathOfGod(), "{2}{W}{W}");
         harness.passBothPriorities(); // Wrath resolves
         harness.passBothPriorities(); // resolve death trigger
 
-        assertThat(gd.getDelayedActions(DelayedGraveyardToHandReturn.class)).hasSize(1);
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getId().equals(scarabCard.getId()));
 
@@ -125,9 +189,13 @@ class TheScarabGodTest extends BaseCardTest {
         gs.advanceStep(gd);
 
         assertThat(gd.playerHands.get(player1.getId()))
+                .noneMatch(c -> c.getId().equals(scarabCard.getId()));
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId()))
                 .anyMatch(c -> c.getId().equals(scarabCard.getId()));
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .noneMatch(c -> c.getId().equals(scarabCard.getId()));
-        assertThat(gd.getDelayedActions(DelayedGraveyardToHandReturn.class)).isEmpty();
     }
 }
