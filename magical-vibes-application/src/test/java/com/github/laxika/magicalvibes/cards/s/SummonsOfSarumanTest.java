@@ -28,8 +28,7 @@ class SummonsOfSarumanTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castSorcery(player1, 0, 2);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 2);
 
         Permanent army = findPermanent(player1, "Orc Army");
         assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
@@ -62,5 +61,86 @@ class SummonsOfSarumanTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .containsExactly(costCardTwo, costCardOne, spell);
+    }
+
+    @Test
+    void acceptingOneMilledSpellDoesNotAllowCastingAnother() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Shock first = new Shock();
+        Shock second = new Shock();
+        harness.setLibrary(player1, List.of(first, second));
+        harness.setHand(player1, List.of(new SummonsOfSaruman()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveSorcery(player1, 0, 2);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(first, second);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(target.getCard());
+    }
+
+    @Test
+    void mayDeclineCastingAndLeavesMilledSpellInGraveyard() {
+        Shock milled = new Shock();
+        Shock alreadyInGraveyard = new Shock();
+        harness.setGraveyard(player1, List.of(alreadyInGraveyard));
+        harness.setLibrary(player1, List.of(milled));
+        harness.setHand(player1, List.of(new SummonsOfSaruman()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveSorcery(player1, 0, 1);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(findPermanent(player1, "Orc Army").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
+                .isEqualTo(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(milled, alreadyInGraveyard);
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void zeroXMillsNothingAndNewZeroToughnessArmyDies() {
+        Shock libraryCard = new Shock();
+        harness.setLibrary(player1, List.of(libraryCard));
+        harness.setHand(player1, List.of(new SummonsOfSaruman()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void castsMilledSorceryWithManaValueExactlyX() {
+        CounselOfTheSoratami spell = new CounselOfTheSoratami();
+        GrizzlyBears drawnFirst = new GrizzlyBears();
+        GrizzlyBears drawnSecond = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(spell, new GrizzlyBears(), new GrizzlyBears(),
+                drawnFirst, drawnSecond));
+        harness.setHand(player1, List.of(new SummonsOfSaruman()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 3);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnFirst, drawnSecond);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(spell);
+        assertThat(findPermanent(player1, "Orc Army").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
+                .isEqualTo(3);
     }
 }
