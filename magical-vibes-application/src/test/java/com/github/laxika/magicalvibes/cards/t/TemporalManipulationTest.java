@@ -7,23 +7,10 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(TemporalManipulation.class)
+@CardUsed({TemporalManipulation.class})
 class TemporalManipulationTest extends BaseCardTest {
-
-    /** Stops auto-pass at PRECOMBAT_MAIN for both players so turns advance one at a time. */
-    private void enableAutoStop() {
-        Set<TurnStep> stops1 = ConcurrentHashMap.newKeySet();
-        stops1.add(TurnStep.PRECOMBAT_MAIN);
-        gd.playerAutoStopSteps.put(player1.getId(), stops1);
-        Set<TurnStep> stops2 = ConcurrentHashMap.newKeySet();
-        stops2.add(TurnStep.PRECOMBAT_MAIN);
-        gd.playerAutoStopSteps.put(player2.getId(), stops2);
-    }
 
     private void advanceTurn() {
         harness.forceStep(TurnStep.CLEANUP);
@@ -42,39 +29,42 @@ class TemporalManipulationTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving queues one extra turn for the caster")
     void resolvingQueuesOneExtraTurn() {
-        enableAutoStop();
-        cast();
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
+            cast();
 
-        assertThat(gd.activePlayerId).isEqualTo(player1.getId());
-        assertThat(gd.extraTurns).containsExactly(player1.getId());
+            assertThat(gd.activePlayerId).isEqualTo(player1.getId());
+            assertThat(gd.extraTurns).containsExactly(player1.getId());
+        });
     }
 
     @Test
     @DisplayName("The extra turn is taken by the caster after the current turn ends")
     void extraTurnTakenByCaster() {
-        enableAutoStop();
-        int turnBefore = gd.turnNumber;
-        cast();
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
+            int turnBefore = gd.turnNumber;
+            cast();
 
-        advanceTurn();
+            advanceTurn();
 
-        assertThat(gd.activePlayerId).isEqualTo(player1.getId());
-        assertThat(gd.turnNumber).isEqualTo(turnBefore + 1);
-        assertThat(gd.extraTurns).isEmpty();
+            assertThat(gd.activePlayerId).isEqualTo(player1.getId());
+            assertThat(gd.turnNumber).isEqualTo(turnBefore + 1);
+            assertThat(gd.extraTurns).isEmpty();
+        });
     }
 
     @Test
     @DisplayName("Normal turn order resumes after the single extra turn")
     void normalTurnOrderResumes() {
-        enableAutoStop();
-        int turnBefore = gd.turnNumber;
-        cast();
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
+            int turnBefore = gd.turnNumber;
+            cast();
 
-        advanceTurn(); // extra turn
-        advanceTurn(); // back to opponent
+            advanceTurn(); // extra turn
+            advanceTurn(); // back to opponent
 
-        assertThat(gd.activePlayerId).isEqualTo(player2.getId());
-        assertThat(gd.turnNumber).isEqualTo(turnBefore + 2);
+            assertThat(gd.activePlayerId).isEqualTo(player2.getId());
+            assertThat(gd.turnNumber).isEqualTo(turnBefore + 2);
+        });
     }
 
     @Test
@@ -86,5 +76,47 @@ class TemporalManipulationTest extends BaseCardTest {
         assertThat(g.playerGraveyards.get(player1.getId()))
                 .contains(card);
         assertThat(g.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Two resolutions grant two consecutive extra turns before the opponent's turn")
+    void twoResolutionsGrantTwoExtraTurns() {
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
+            cast();
+            cast();
+
+            advanceTurn();
+            assertThat(gd.activePlayerId).isEqualTo(player1.getId());
+            assertThat(gd.currentTurnIsExtraTurn).isTrue();
+            assertThat(gd.extraTurns).containsExactly(player1.getId());
+
+            advanceTurn();
+            assertThat(gd.activePlayerId).isEqualTo(player1.getId());
+            assertThat(gd.currentTurnIsExtraTurn).isTrue();
+            assertThat(gd.extraTurns).isEmpty();
+
+            advanceTurn();
+            assertThat(gd.activePlayerId).isEqualTo(player2.getId());
+            assertThat(gd.currentTurnIsExtraTurn).isFalse();
+        });
+    }
+
+    @Test
+    @DisplayName("Casting during an extra turn grants another extra turn before normal turns resume")
+    void castingDuringExtraTurnGrantsAnotherExtraTurn() {
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
+            cast();
+            advanceTurn();
+            assertThat(gd.currentTurnIsExtraTurn).isTrue();
+
+            cast();
+            advanceTurn();
+            assertThat(gd.activePlayerId).isEqualTo(player1.getId());
+            assertThat(gd.currentTurnIsExtraTurn).isTrue();
+
+            advanceTurn();
+            assertThat(gd.activePlayerId).isEqualTo(player2.getId());
+            assertThat(gd.currentTurnIsExtraTurn).isFalse();
+        });
     }
 }
