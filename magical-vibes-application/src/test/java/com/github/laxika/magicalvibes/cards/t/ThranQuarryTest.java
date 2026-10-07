@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -92,6 +94,35 @@ class ThranQuarryTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Thran Quarry");
         harness.assertNotInGraveyard(player1, "Thran Quarry");
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ManaColor.class, names = {"WHITE", "BLUE", "BLACK", "RED", "GREEN"})
+    @DisplayName("Can produce each color immediately without using the stack")
+    void producesEachColor(ManaColor color) {
+        Permanent quarry = harness.addToBattlefieldAndReturn(player1, new ThranQuarry());
+        int before = gd.playerManaPools.get(player1.getId()).get(color);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, color.name());
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(color)).isEqualTo(before + 1);
+        assertThat(quarry.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not trigger when its controller has a creature as the end step begins")
+    void doesNotTriggerWithCreatureAtBeginningOfEndStep() {
+        harness.addToBattlefield(player1, new ThranQuarry());
+        harness.addToBattlefield(player1, new CoralMerfolk());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player2, TurnStep.END_STEP);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Thran Quarry");
     }
 
     private void advanceToEndStep(Player activePlayer) {
