@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.IvoryMask;
 import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.cards.p.Panharmonicon;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -20,7 +21,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Forest.class, GildedDrake.class, GorillaWarrior.class, GrizzlyBears.class, IvoryMask.class, TaintedAether.class})
+@CardUsed({Forest.class, GildedDrake.class, GorillaWarrior.class, GrizzlyBears.class,
+        IvoryMask.class, Opalescence.class, Panharmonicon.class, TaintedAether.class, Unsummon.class})
 class TaintedAetherTest extends BaseCardTest {
 
     @Test
@@ -211,5 +213,65 @@ class TaintedAetherTest extends BaseCardTest {
         assertThat(choice.validIds()).containsExactlyInAnyOrder(
                 harness.getPermanentId(player2, "Gilded Drake"),
                 harness.getPermanentId(player2, "Forest"));
+    }
+
+    @Test
+    @DisplayName("A creature that changes controller and leaves uses its last battlefield controller")
+    void usesLastControllerAfterCreatureChangesControlAndLeaves() {
+        harness.addToBattlefield(player2, new Forest());
+        harness.addToBattlefield(player1, new TaintedAether());
+        Permanent gorilla = harness.addToBattlefieldAndReturn(player2, new GorillaWarrior());
+
+        harness.castFromHand(player1, new GildedDrake(), "{1}{U}");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, gorilla.getId());
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Gilded Drake");
+        harness.assertOnBattlefield(player1, "Gorilla Warrior");
+
+        UUID drakeId = harness.getPermanentId(player2, "Gilded Drake");
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.BLUE, 1);
+        harness.castInstant(player1, 0, drakeId);
+        harness.passBothPriorities();
+        harness.assertInHand(player1, "Gilded Drake");
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Forest");
+        harness.assertOnBattlefield(player1, "Gorilla Warrior");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The controller may sacrifice an existing creature instead of the entering creature")
+    void canChooseExistingCreatureToSacrifice() {
+        harness.addToBattlefield(player1, new TaintedAether());
+        Permanent existing = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent entering = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of(existing.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(entering).doesNotContain(existing);
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Multiple Tainted Aethers each require a sacrifice")
+    void multipleAethersEachRequireSacrifice() {
+        harness.addToBattlefield(player1, new TaintedAether());
+        harness.addToBattlefield(player1, new TaintedAether());
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.enterBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player2, List.of(forest.getId()));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Forest");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }
