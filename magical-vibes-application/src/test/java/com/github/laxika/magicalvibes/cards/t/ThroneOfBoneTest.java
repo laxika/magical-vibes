@@ -198,4 +198,72 @@ class ThroneOfBoneTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
     }
+
+    @Test
+    @DisplayName("Tapped Throne of Bone triggers and its generic payment accepts colored mana")
+    void tappedThroneAcceptsColoredMana() {
+        var throne = harness.addToBattlefieldAndReturn(player1, new ThroneOfBone());
+        throne.setTapped(true);
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.castFromHand(player1, new ScatheZombies(), "{2}{B}");
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(throne.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("One black spell allows only one payment per Throne of Bone")
+    void oneTriggerDoesNotRepeatPayment() {
+        harness.addToBattlefield(player1, new ThroneOfBone());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.castFromHand(player1, new ScatheZombies(), "{2}{B}");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).noneMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY);
+    }
+
+    @Test
+    @DisplayName("Declining one Throne's payment does not prevent paying for another")
+    void independentPaymentChoices() {
+        harness.addToBattlefield(player1, new ThroneOfBone());
+        harness.addToBattlefield(player1, new ThroneOfBone());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.castFromHand(player1, new ScatheZombies(), "{2}{B}");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("A black creature entering without being cast does not trigger Throne of Bone")
+    void enteringWithoutCastingDoesNotTrigger() {
+        harness.addToBattlefield(player1, new ThroneOfBone());
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.enterBattlefieldAndReturn(player1, new ScatheZombies());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
+    }
 }
