@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.c.ColossalRattlewurm;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +17,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TrickShot.class})
+@CardUsed({TrickShot.class, ColossalRattlewurm.class})
 class TrickShotTest extends BaseCardTest {
 
     @Test
@@ -67,11 +68,73 @@ class TrickShotTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void killsCreatureAndTokenWithLethalDamage() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new ColossalRattlewurm());
+        Permanent token = addCreature(player2, "Soldier", 2, 2, true);
+
+        castTrickShot(List.of(creature.getId(), token.getId()));
+
+        harness.assertInGraveyard(player2, "Colossal Rattlewurm");
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(creature, token);
+    }
+
+    @Test
+    void stillDealsTwoDamageWhenFirstTargetLeavesBattlefield() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new ColossalRattlewurm());
+        Permanent token = addCreature(player1, "Soldier", 3, 3, true);
+        harness.setHand(player1, List.of(new TrickShot()));
+        addMana();
+        harness.castInstant(player1, 0, List.of(creature.getId(), token.getId()));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToExile(gd, creature));
+
+        harness.passBothPriorities();
+
+        assertThat(token.getMarkedDamage()).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(token);
+    }
+
+    @Test
+    void stillDealsSixDamageWhenTokenTargetLeavesBattlefield() {
+        Permanent creature = addCreature(player1, "Creature", 7, 7, false);
+        Permanent token = addCreature(player2, "Soldier", 3, 3, true);
+        harness.setHand(player1, List.of(new TrickShot()));
+        addMana();
+        harness.castInstant(player1, 0, List.of(creature.getId(), token.getId()));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToExile(gd, token));
+
+        harness.passBothPriorities();
+
+        assertThat(creature.getMarkedDamage()).isEqualTo(6);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
+    }
+
+    @Test
+    void firstTargetMayAlsoBeACreatureToken() {
+        Permanent firstToken = addCreature(player1, "First Soldier", 7, 7, true);
+        Permanent secondToken = addCreature(player2, "Second Soldier", 3, 3, true);
+
+        castTrickShot(List.of(firstToken.getId(), secondToken.getId()));
+
+        assertThat(firstToken.getMarkedDamage()).isEqualTo(6);
+        assertThat(secondToken.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    void cannotCastWithoutRequiredCreatureTarget() {
+        harness.setHand(player1, List.of(new TrickShot()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, List.<UUID>of()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
     private void castTrickShot(List<UUID> targetIds) {
         harness.setHand(player1, List.of(new TrickShot()));
         addMana();
-        harness.castInstant(player1, 0, targetIds);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetIds);
     }
 
     private void addMana() {
