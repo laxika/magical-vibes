@@ -80,4 +80,44 @@ class TheZephyrMazeTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, land.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    void chaosCanGiveAnOpposingCreatureFlying() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.inMutationScope(() -> triggers.processNextSpellTargetTrigger(gd));
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+    }
+
+    @Test
+    void leavingThePlaneEndsStaticBoostsButDoesNotEndChaosGrantedFlying() {
+        Permanent flying = harness.addToBattlefieldAndReturn(player2, new SuntailHawk());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent nonflying = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.inMutationScope(() -> triggers.processNextSpellTargetTrigger(gd));
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, flying)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, nonflying)).isZero();
+
+        harness.inMutationScope(() -> gd.planechase.faceUp.clear());
+
+        assertThat(gqs.getEffectivePower(gd, flying)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, nonflying)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
+        assertThat(gqs.getEffectiveToughness(gd, flying)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, nonflying)).isEqualTo(2);
+    }
 }
