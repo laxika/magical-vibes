@@ -74,9 +74,7 @@ class UnderworldDreamsTest extends BaseCardTest {
         harness.clearPriorityPassed();
 
         harness.castFromHand(player2, new CounselOfTheSoratami(), "{2}{U}");
-        harness.passBothPriorities(); // resolve Counsel of the Soratami
-        harness.passBothPriorities(); // resolve first Underworld Dreams trigger
-        harness.passBothPriorities(); // resolve second Underworld Dreams trigger
+        resolveAllTriggers();
 
         harness.assertLife(player2, 18);
     }
@@ -89,8 +87,7 @@ class UnderworldDreamsTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         advanceToDraw(player2);
-        harness.passBothPriorities(); // resolve first trigger
-        harness.passBothPriorities(); // resolve second trigger
+        resolveAllTriggers();
 
         harness.assertLife(player2, 18);
     }
@@ -124,5 +121,42 @@ class UnderworldDreamsTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve Underworld Dreams trigger
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+    }
+
+    @Test
+    @DisplayName("Controller drawing two cards from a spell causes no damage")
+    void doesNotTriggerOnControllerDrawSpell() {
+        harness.addToBattlefield(player1, new UnderworldDreams());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castFromHand(player1, new CounselOfTheSoratami(), "{2}{U}");
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Drawing two cards from a one-card library triggers only for the successful draw")
+    void triggersOnlyForCardsActuallyDrawn() {
+        harness.addToBattlefield(player1, new UnderworldDreams());
+        harness.addToBattlefield(player2, new PlatinumAngel());
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+        harness.setLife(player2, 20);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castFromHand(player2, new CounselOfTheSoratami(), "{2}{U}");
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        harness.assertLife(player2, 19);
     }
 }
