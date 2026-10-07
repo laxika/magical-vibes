@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.b.BoggartRamGang;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.h.HornedTurtle;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -20,7 +20,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TheGreatAerie.class, GrizzlyBears.class, HillGiant.class, HornedTurtle.class})
+@CardUsed({TheGreatAerie.class, GrizzlyBears.class, HillGiant.class, HornedTurtle.class, BoggartRamGang.class})
 class TheGreatAerieTest extends BaseCardTest {
 
     private PlanechaseService planar;
@@ -40,8 +40,8 @@ class TheGreatAerieTest extends BaseCardTest {
 
     @Test
     void planeswalkingToTheGreatAerieBolstersTheLeastToughCreature() {
-        Permanent bear = addCreature(player1, new GrizzlyBears());
-        Permanent giant = addCreature(player1, new HillGiant());
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
+        Permanent giant = addCreatureReady(player1, new HillGiant());
 
         harness.inMutationScope(() -> planar.trigger(
                 gd, source, EffectSlot.PLANESWALK_TO_TRIGGERED, player1.getId()));
@@ -53,8 +53,8 @@ class TheGreatAerieTest extends BaseCardTest {
 
     @Test
     void bolstersTheLeastToughCreatureAtThePlanarControllersUpkeep() {
-        Permanent bear = addCreature(player1, new GrizzlyBears());
-        Permanent giant = addCreature(player1, new HillGiant());
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
+        Permanent giant = addCreatureReady(player1, new HillGiant());
 
         harness.forceStep(TurnStep.UPKEEP);
         harness.inMutationScope(() -> GameTestEngineContext.get().getBean(StepTriggerService.class)
@@ -67,8 +67,8 @@ class TheGreatAerieTest extends BaseCardTest {
 
     @Test
     void chaosMakesTheChosenCreaturesDealDamageEqualToTheirToughness() {
-        Permanent ownCreature = addCreature(player1, new GrizzlyBears());
-        Permanent opposingCreature = addCreature(player2, new HornedTurtle());
+        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent opposingCreature = addCreatureReady(player2, new HornedTurtle());
 
         harness.inMutationScope(() -> planar.chaos(gd));
         harness.passBothPriorities();
@@ -80,10 +80,94 @@ class TheGreatAerieTest extends BaseCardTest {
         assertThat(opposingCreature.getMarkedDamage()).isEqualTo(2);
     }
 
-    private Permanent addCreature(com.github.laxika.magicalvibes.model.Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    void bolsterLetsTheControllerChooseAmongTiedCreatures() {
+        Permanent first = addCreatureReady(player1, new GrizzlyBears());
+        Permanent second = addCreatureReady(player1, new GrizzlyBears());
+        Permanent opponent = addCreatureReady(player2, new GrizzlyBears());
+
+        harness.inMutationScope(() -> planar.trigger(
+                gd, source, EffectSlot.PLANESWALK_TO_TRIGGERED, player1.getId()));
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, java.util.List.of(second.getId()));
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(opponent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void bolsterDoesNothingWithoutCreaturesYouControl() {
+        Permanent opponent = addCreatureReady(player2, new GrizzlyBears());
+
+        harness.inMutationScope(() -> planar.trigger(
+                gd, source, EffectSlot.PLANESWALK_TO_TRIGGERED, player1.getId()));
+        harness.passBothPriorities();
+
+        assertThat(opponent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void upkeepBolstersTheNewActivePlayersCreatures() {
+        Permanent own = addCreatureReady(player1, new GrizzlyBears());
+        Permanent opponent = addCreatureReady(player2, new GrizzlyBears());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(StepTriggerService.class)
+                .handleUpkeepTriggers(gd));
+        harness.passBothPriorities();
+
+        assertThat(own.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(opponent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    void chaosDoesNoDamageWhenOnlyOneCreatureIsChosen() {
+        Permanent own = addCreatureReady(player1, new GrizzlyBears());
+        Permanent opponent = addCreatureReady(player2, new HornedTurtle());
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handlePermanentChosen(player1, opponent.getId());
+        harness.passBothPriorities();
+
+        assertThat(own.getMarkedDamage()).isZero();
+        assertThat(opponent.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void chaosDoesNoDamageWhenOneTargetChangesController() {
+        Permanent own = addCreatureReady(player1, new GrizzlyBears());
+        Permanent opponent = addCreatureReady(player2, new HornedTurtle());
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, own.getId());
+        harness.handlePermanentChosen(player1, opponent.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(opponent);
+        gd.playerBattlefields.get(player1.getId()).add(opponent);
+        harness.passBothPriorities();
+
+        assertThat(own.getMarkedDamage()).isZero();
+        assertThat(opponent.getMarkedDamage()).isZero();
+    }
+    @Test
+    void chaosUsesBothToughnessesBeforeWitherDamageIsDealt() {
+        Permanent own = addCreatureReady(player1, new BoggartRamGang());
+        Permanent opponent = addCreatureReady(player2, new HornedTurtle());
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, own.getId());
+        harness.handlePermanentChosen(player1, opponent.getId());
+        harness.passBothPriorities();
+
+        assertThat(opponent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(3);
+        harness.assertNotOnBattlefield(player1, "Boggart Ram-Gang");
+        harness.assertInGraveyard(player1, "Boggart Ram-Gang");
+        harness.assertOnBattlefield(player2, "Horned Turtle");
     }
 }
