@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,9 +20,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Soulstinger.class, AirElemental.class, Assassinate.class, GrizzlyBears.class, HillGiant.class})
 class SoulstingerTest extends BaseCardTest {
-
-    // ===== ETB: two -1/-1 counters on target creature you control =====
 
     @Test
     @DisplayName("ETB puts two -1/-1 counters on a creature you control")
@@ -55,8 +55,6 @@ class SoulstingerTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature you control");
     }
 
-    // ===== Death trigger: hand out -1/-1 counters equal to its own (you may, any creature) =====
-
     @Test
     @DisplayName("On death, may put a -1/-1 counter on target creature — including an opponent's — for each on it")
     void deathTriggerTargetsAnyCreatureIncludingOpponents() {
@@ -73,8 +71,7 @@ class SoulstingerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        gs.playCard(gd, player1, 0, 0, stinger.getId(), null);
-        harness.passBothPriorities(); // Assassinate resolves — Soulstinger dies, death trigger asks for a target
+        harness.castAndResolveSorcery(player1, 0, stinger.getId());
 
         // The death trigger's target is ANY creature (not restricted to the ETB's "you control"),
         // so the opponent's Hill Giant is a legal target.
@@ -103,8 +100,7 @@ class SoulstingerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        gs.playCard(gd, player1, 0, 0, stinger.getId(), null);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, stinger.getId());
 
         UUID giantId = harness.getPermanentId(player2, "Hill Giant");
         harness.handlePermanentChosen(player1, giantId);
@@ -114,5 +110,64 @@ class SoulstingerTest extends BaseCardTest {
         Permanent giant = findPermanent(player2, "Hill Giant");
         assertThat(giant.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
         assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Soulstinger can put its enter counters on itself")
+    void enteringCreatureCanTargetItself() {
+        Permanent stinger = harness.enterBattlefieldAndReturn(player1, new Soulstinger());
+
+        harness.handlePermanentChosen(player1, stinger.getId());
+        harness.passBothPriorities();
+
+        assertThat(stinger.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, stinger)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, stinger)).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Dying without counters still requires a target but places no counters")
+    void deathWithoutCountersPlacesNone() {
+        Permanent stinger = addCreatureReady(player1, new Soulstinger());
+        stinger.tap();
+        Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new Assassinate()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveSorcery(player1, 0, stinger.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, giant.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(giant.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The death trigger can target a friendly creature and uses the counters at death")
+    void deathTriggerCanTargetFriendlyCreature() {
+        Permanent stinger = addCreatureReady(player1, new Soulstinger());
+        stinger.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 3);
+        stinger.tap();
+        Permanent elemental = harness.addToBattlefieldAndReturn(player1, new AirElemental());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new Assassinate()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveSorcery(player1, 0, stinger.getId());
+        harness.handlePermanentChosen(player1, elemental.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(elemental.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, elemental)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, elemental)).isEqualTo(1);
     }
 }
