@@ -96,6 +96,63 @@ class ThranFoundryTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("An empty graveyard is a legal target")
+    void canTargetEmptyGraveyard() {
+        addReadyFoundry(player1);
+        harness.setGraveyard(player2, List.of());
+        ThranFoundry libraryCard = new ThranFoundry();
+        harness.setLibrary(player2, List.of(libraryCard));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(libraryCard);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Cards added to the graveyard before resolution are also shuffled")
+    void shufflesCardsPresentAtResolution() {
+        addReadyFoundry(player1);
+        ThranFoundry originalCard = new ThranFoundry();
+        ThranFoundry laterCard = new ThranFoundry();
+        harness.setGraveyard(player2, List.of(originalCard));
+        harness.setLibrary(player2, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(originalCard);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        harness.setGraveyard(player2, List.of(originalCard, laterCard));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId()))
+                .containsExactlyInAnyOrder(originalCard, laterCard);
+    }
+
+    @Test
+    @DisplayName("A noncreature Foundry can activate the turn it enters")
+    void canActivateTheTurnItEnters() {
+        harness.enterBattlefieldAndReturn(player1, new ThranFoundry());
+        ThranFoundry graveyardCard = new ThranFoundry();
+        harness.setGraveyard(player1, List.of(graveyardCard));
+        harness.setLibrary(player1, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Thran Foundry");
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(graveyardCard);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(1);
+    }
+
     private Permanent addReadyFoundry(Player player) {
         Permanent foundry = harness.addToBattlefieldAndReturn(player, new ThranFoundry());
         foundry.setSummoningSick(false);
