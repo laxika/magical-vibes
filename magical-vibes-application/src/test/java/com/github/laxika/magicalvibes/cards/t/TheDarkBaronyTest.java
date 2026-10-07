@@ -70,4 +70,77 @@ class TheDarkBaronyTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
         harness.assertInGraveyard(player2, "Grizzly Bears");
     }
+
+    @Test
+    void millingMultipleCardsLosesLifeOnlyForNonblackCards() {
+        harness.setLibrary(player2, List.of(new GrizzlyBears(), new ZulaportEnforcer(), new HillGiant()));
+        var graveyard = GameTestEngineContext.get().getBean(
+                com.github.laxika.magicalvibes.service.graveyard.GraveyardService.class);
+
+        harness.inMutationScope(() -> graveyard.resolveMillPlayer(gd, player2.getId(), 3));
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 18);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(3);
+    }
+
+    @Test
+    void nonblackTokensDyingDoNotCauseLifeLoss() {
+        GrizzlyBears tokenCard = new GrizzlyBears();
+        tokenCard.setToken(true);
+        Permanent token = harness.addToBattlefieldAndReturn(player2, tokenCard);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, token));
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void chaosDiscardingNonblackCardAlsoCausesLifeLossAndKeepsControllersHand() {
+        harness.setHand(player1, List.of(new HillGiant()));
+        harness.setHand(player2, List.of(new GrizzlyBears(), new ZulaportEnforcer()));
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 19);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void chaosDiscardingBlackCardDoesNotCauseLifeLoss() {
+        harness.setHand(player2, List.of(new ZulaportEnforcer()));
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player2, "Zulaport Enforcer");
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void chaosWithEmptyOpponentHandDoesNotDiscardControllersCards() {
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player2, List.of());
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
 }
