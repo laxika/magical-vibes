@@ -1,11 +1,9 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.s.Shatter;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,69 +14,23 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({TrigonOfThought.class, Shatter.class})
 class TrigonOfThoughtTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    
-
-    @Test
-    @DisplayName("Has two activated abilities")
-    void hasTwoActivatedAbilities() {
-        TrigonOfThought card = new TrigonOfThought();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-    }
-
-    @Test
-    @DisplayName("First ability: {U}{U}, {T} to put a charge counter on self")
-    void firstAbilityStructure() {
-        TrigonOfThought card = new TrigonOfThought();
-
-        var ability = card.getActivatedAbilities().get(0);
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isEqualTo("{U}{U}");
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(PutCountersOnSelfEffect.class);
-    }
-
-    @Test
-    @DisplayName("Second ability: {2}, {T}, remove a charge counter to draw a card")
-    void secondAbilityStructure() {
-        TrigonOfThought card = new TrigonOfThought();
-
-        var ability = card.getActivatedAbilities().get(1);
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isEqualTo("{2}");
-        assertThat(ability.getEffects())
-                .hasSize(2)
-                .anyMatch(e -> e instanceof RemoveCounterFromSourceCost rc && rc.count() == 1 && rc.counterType() == CounterType.CHARGE)
-                .anyMatch(e -> e instanceof DrawCardEffect dc && dc.amount().equals(new Fixed(1)));
-    }
-
-    // ===== Entering the battlefield with charge counters =====
 
     @Test
     @DisplayName("Enters the battlefield with 3 charge counters")
     void entersWithThreeChargeCounters() {
-        harness.setHand(player1, List.of(new TrigonOfThought()));
-        harness.addMana(player1, ManaColor.COLORLESS, 5);
-
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new TrigonOfThought(), "{5}");
         harness.passBothPriorities();
 
         Permanent trigon = findPermanent(player1, "Trigon of Thought");
         assertThat(trigon.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
     }
 
-    // ===== First activated ability: put a charge counter =====
-
     @Test
     @DisplayName("First ability adds a charge counter")
     void firstAbilityAddsChargeCounter() {
-        harness.addToBattlefield(player1, new TrigonOfThought());
-
-        Permanent trigon = findPermanent(player1, "Trigon of Thought");
+        Permanent trigon = harness.addToBattlefieldAndReturn(player1, new TrigonOfThought());
         trigon.setCounterCount(CounterType.CHARGE, 1);
 
         harness.addMana(player1, ManaColor.BLUE, 2);
@@ -88,14 +40,10 @@ class TrigonOfThoughtTest extends BaseCardTest {
         assertThat(trigon.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
     }
 
-    // ===== Second activated ability: draw a card =====
-
     @Test
     @DisplayName("Second ability removes a charge counter and draws a card")
     void secondAbilityDrawsCard() {
-        harness.addToBattlefield(player1, new TrigonOfThought());
-
-        Permanent trigon = findPermanent(player1, "Trigon of Thought");
+        Permanent trigon = harness.addToBattlefieldAndReturn(player1, new TrigonOfThought());
         trigon.setCounterCount(CounterType.CHARGE, 3);
 
         int initialHandSize = gd.playerHands.get(player1.getId()).size();
@@ -111,9 +59,7 @@ class TrigonOfThoughtTest extends BaseCardTest {
     @Test
     @DisplayName("Can activate second ability multiple times with enough counters (untapping between)")
     void canActivateMultipleTimes() {
-        harness.addToBattlefield(player1, new TrigonOfThought());
-
-        Permanent trigon = findPermanent(player1, "Trigon of Thought");
+        Permanent trigon = harness.addToBattlefieldAndReturn(player1, new TrigonOfThought());
         trigon.setCounterCount(CounterType.CHARGE, 3);
 
         int initialHandSize = gd.playerHands.get(player1.getId()).size();
@@ -136,9 +82,7 @@ class TrigonOfThoughtTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate second ability with 0 charge counters")
     void cannotActivateWithNoCounters() {
-        harness.addToBattlefield(player1, new TrigonOfThought());
-
-        Permanent trigon = findPermanent(player1, "Trigon of Thought");
+        Permanent trigon = harness.addToBattlefieldAndReturn(player1, new TrigonOfThought());
         trigon.setCounterCount(CounterType.CHARGE, 0);
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -149,9 +93,7 @@ class TrigonOfThoughtTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate second ability while tapped")
     void cannotActivateWhileTapped() {
-        harness.addToBattlefield(player1, new TrigonOfThought());
-
-        Permanent trigon = findPermanent(player1, "Trigon of Thought");
+        Permanent trigon = harness.addToBattlefieldAndReturn(player1, new TrigonOfThought());
         trigon.setCounterCount(CounterType.CHARGE, 3);
 
         // First activation taps it
@@ -164,5 +106,99 @@ class TrigonOfThoughtTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Charging taps immediately but adds its counter only on resolution")
+    void chargingUsesTheStackAndWorksWithoutExistingCounters() {
+        Permanent trigon = harness.addToBattlefieldAndReturn(player1, new TrigonOfThought());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(trigon.isTapped()).isTrue();
+        assertThat(trigon.getCounterCount(CounterType.CHARGE)).isZero();
+        harness.passBothPriorities();
+        assertThat(trigon.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Charging requires two blue mana and cannot use generic mana instead")
+    void chargingRequiresBlueMana() {
+        Permanent trigon = harness.addToBattlefieldAndReturn(player1, new TrigonOfThought());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(trigon.isTapped()).isFalse();
+        assertThat(trigon.getCounterCount(CounterType.CHARGE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Charging cannot be activated while tapped")
+    void cannotChargeWhileTapped() {
+        Permanent trigon = harness.addToBattlefieldAndReturn(player1, new TrigonOfThought());
+        trigon.tap();
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(trigon.getCounterCount(CounterType.CHARGE)).isZero();
+    }
+
+    @Test
+    @DisplayName("The last charge counter is paid immediately and drawing waits for resolution")
+    void lastCounterIsAnActivationCost() {
+        Permanent trigon = harness.addToBattlefieldAndReturn(player1, new TrigonOfThought());
+        trigon.setCounterCount(CounterType.CHARGE, 1);
+        harness.setHand(player1, List.of());
+        TrigonOfThought drawnCard = new TrigonOfThought();
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(trigon.isTapped()).isTrue();
+        assertThat(trigon.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+    }
+
+    @Test
+    @DisplayName("Drawing still resolves after the Trigon is destroyed in response")
+    void drawingSurvivesSourceDestruction() {
+        Permanent trigon = harness.addToBattlefieldAndReturn(player1, new TrigonOfThought());
+        trigon.setCounterCount(CounterType.CHARGE, 1);
+        harness.setHand(player1, List.of());
+        TrigonOfThought drawnCard = new TrigonOfThought();
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        harness.setHand(player2, List.of(new Shatter()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castInstant(player2, 0, trigon.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(trigon);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+    }
+
+    @Test
+    @DisplayName("Drawing requires two mana even with an available charge counter")
+    void cannotDrawWithInsufficientMana() {
+        Permanent trigon = harness.addToBattlefieldAndReturn(player1, new TrigonOfThought());
+        trigon.setCounterCount(CounterType.CHARGE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(trigon.isTapped()).isFalse();
+        assertThat(trigon.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
     }
 }
