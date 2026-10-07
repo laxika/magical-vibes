@@ -11,8 +11,9 @@ import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HermeticStudy.class, ThievingMagpie.class})
+@CardUsed({CacklingFiend.class, GiantSpider.class, HermeticStudy.class, ThievingMagpie.class})
 class ThievingMagpieTest extends BaseCardTest {
 
     @Test
@@ -62,9 +63,14 @@ class ThievingMagpieTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         addCreatureReady(player1, new ThievingMagpie());
-        addCreatureReady(player2, new CacklingFiend());
+        Permanent blocker = addCreatureReady(player2, new CacklingFiend());
 
-        declareAttackers(List.of(0));
+        declareAttackersAndPrepareBlockers(List.of(0));
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(blocker.isBlocking()).isFalse();
+        gs.declareBlockers(gd, player2, List.of());
         resolveCombat();
         resolveAllTriggers();
 
@@ -135,6 +141,45 @@ class ThievingMagpieTest extends BaseCardTest {
     private void prepareDrawState() {
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new ThievingMagpie()));
+    }
+
+    @Test
+    @DisplayName("Noncombat damage to an opponent's creature does not draw a card")
+    void noncombatDamageToCreatureDoesNotDraw() {
+        prepareDrawState();
+        harness.setHand(player2, List.of());
+        Permanent magpie = addCreatureReady(player1, new ThievingMagpie());
+        Permanent target = addCreatureReady(player2, new CacklingFiend());
+        Permanent study = harness.addToBattlefieldAndReturn(player1, new HermeticStudy());
+        study.setAttachedTo(magpie.getId());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Cackling Fiend");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The defending player's Magpie draws for its own controller when attacking")
+    void opponentMagpieDrawsForItsController() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new ThievingMagpie()));
+        harness.setLibrary(player2, List.of(new ThievingMagpie()));
+        harness.setLife(player1, 20);
+        addCreatureReady(player2, new ThievingMagpie());
+
+        declareAttackers(player2, List.of(0));
+        resolveCombat(player2);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 19);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }
 
     @Test
