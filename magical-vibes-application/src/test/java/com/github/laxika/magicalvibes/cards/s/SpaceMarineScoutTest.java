@@ -1,10 +1,8 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.p.PrairieStream;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -15,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SpaceMarineScout.class, Forest.class, Plains.class, GrizzlyBears.class})
+@CardUsed({SpaceMarineScout.class, Forest.class, Plains.class, PrairieStream.class})
 class SpaceMarineScoutTest extends BaseCardTest {
 
     @Test
@@ -23,7 +21,7 @@ class SpaceMarineScoutTest extends BaseCardTest {
     void mayPutPlainsOntoBattlefieldTapped() {
         castScout();
         harness.addToBattlefield(player2, new Forest());
-        harness.setLibrary(player1, List.of(new Plains(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Plains(), new Forest()));
 
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -40,7 +38,7 @@ class SpaceMarineScoutTest extends BaseCardTest {
     void decliningSearchDoesNothing() {
         castScout();
         harness.addToBattlefield(player2, new Forest());
-        harness.setLibrary(player1, List.of(new Plains(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Plains(), new Forest()));
 
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -56,7 +54,7 @@ class SpaceMarineScoutTest extends BaseCardTest {
         castScout();
         harness.addToBattlefield(player1, new Forest());
         harness.addToBattlefield(player2, new Forest());
-        harness.setLibrary(player1, List.of(new Plains(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Plains(), new Forest()));
 
         harness.passBothPriorities();
 
@@ -66,9 +64,60 @@ class SpaceMarineScoutTest extends BaseCardTest {
     }
 
     private void castScout() {
-        harness.setHand(player1, List.of(new SpaceMarineScout()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SpaceMarineScout(), "{2}{W}");
+    }
+
+    @Test
+    @DisplayName("Concealed Position checks land counts again when it resolves")
+    void noSearchWhenLandCountsBecomeEqualBeforeResolution() {
+        castScout();
+        harness.addToBattlefield(player2, new Forest());
+        harness.setLibrary(player1, List.of(new Plains()));
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.addToBattlefield(player1, new Forest());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotOnBattlefield(player1, "Plains");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Concealed Position can find a nonbasic Plains and still puts it in tapped")
+    void findsNonbasicPlainsTappedDespiteTwoBasicLands() {
+        castScout();
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new Forest());
+        harness.addToBattlefield(player2, new Forest());
+        harness.addToBattlefield(player2, new Forest());
+        harness.setLibrary(player1, List.of(new PrairieStream(), new Forest()));
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(findPermanent(player1, "Prairie Stream").isTapped()).isTrue();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Concealed Position finishes when the library has no Plains")
+    void searchWithNoMatchingPlains() {
+        castScout();
+        harness.addToBattlefield(player2, new Forest());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        harness.assertNotOnBattlefield(player1, "Forest");
     }
 }
