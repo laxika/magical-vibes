@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.i.Imperiosaur;
+import com.github.laxika.magicalvibes.cards.l.LlanowarMentor;
 import com.github.laxika.magicalvibes.cards.n.NimbusMaze;
 import com.github.laxika.magicalvibes.cards.p.PatriciansScorn;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -14,8 +15,10 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TakePossession.class, Imperiosaur.class, NimbusMaze.class, PatriciansScorn.class})
+@CardUsed({TakePossession.class, Imperiosaur.class, NimbusMaze.class, PatriciansScorn.class,
+        LlanowarMentor.class})
 class TakePossessionTest extends BaseCardTest {
 
     @Test
@@ -97,5 +100,71 @@ class TakePossessionTest extends BaseCardTest {
                 .anyMatch(permanent -> permanent.getId().equals(creature.getId()));
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getId().equals(creature.getId()));
+    }
+
+    @Test
+    void splitSecondPreventsSpellsAndNonManaAbilities() {
+        Permanent mentor = harness.addToBattlefieldAndReturn(player2, new LlanowarMentor());
+        mentor.setSummoningSick(false);
+        harness.setHand(player2, List.of(new PatriciansScorn()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.setHand(player1, List.of(new TakePossession()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.castEnchantment(player1, 0, mentor.getId());
+
+        assertThatThrownBy(() -> harness.castInstant(player2, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("split second");
+        assertThat(mentor.isTapped()).isFalse();
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    void splitSecondAllowsManaAbilities() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new NimbusMaze());
+        harness.setHand(player1, List.of(new TakePossession()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.castEnchantment(player1, 0, land.getId());
+        harness.activateAbility(player2, 0, 0, null, null);
+
+        assertThat(land.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Nimbus Maze");
+        assertThat(land.isTapped()).isTrue();
+    }
+
+    @Test
+    void stealingAuraChangesControlOfItsEnchantedPermanent() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new Imperiosaur());
+        harness.setHand(player1, List.of(new TakePossession()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        Permanent firstAura = findPermanent(player1, "Take Possession");
+
+        harness.setHand(player2, List.of(new TakePossession()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 5);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castEnchantment(player2, 0, firstAura.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .contains(firstAura, creature);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .doesNotContain(firstAura, creature);
+        assertThat(firstAura.getAttachedTo()).isEqualTo(creature.getId());
     }
 }
