@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.d.DreamstoneHedron;
+import com.github.laxika.magicalvibes.cards.g.GingerbreadHunter;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HangarbackWalker;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -22,7 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({TroyanGutsyExplorer.class, DreamstoneHedron.class, HangarbackWalker.class,
-        HillGiant.class, Island.class, GrizzlyBears.class})
+        HillGiant.class, Island.class, GrizzlyBears.class, GingerbreadHunter.class})
 class TroyanGutsyExplorerTest extends BaseCardTest {
 
     @Test
@@ -55,11 +55,27 @@ class TroyanGutsyExplorerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Troyan's mana casts a spell with mana value exactly five")
+    void manaCastsManaValueFiveSpell() {
+        addReadyTroyan(player1);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.setHand(player1, List.of(new GingerbreadHunter()));
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() instanceof GingerbreadHunter);
+    }
+
+    @Test
     @DisplayName("Troyan's mana does not cast a spell with mana value four")
     void manaCannotCastManaValueFourSpell() {
         addReadyTroyan(player1);
         harness.activateAbility(player1, 0, 0, null, null);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
         harness.setHand(player1, List.of(new HillGiant()));
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
@@ -84,7 +100,7 @@ class TroyanGutsyExplorerTest extends BaseCardTest {
     @DisplayName("Troyan draws a card then discards a card")
     void loots() {
         addReadyTroyan(player1);
-        setDeck(player1, List.of(new Island()));
+        harness.setLibrary(player1, List.of(new Island()));
         harness.setHand(player1, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
@@ -100,14 +116,37 @@ class TroyanGutsyExplorerTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
     }
 
-    private void addReadyTroyan(Player player) {
-        Permanent permanent = new Permanent(new TroyanGutsyExplorer());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
+    @Test
+    @DisplayName("Troyan's restricted mana cannot pay for its loot ability")
+    void restrictedManaCannotPayForActivatedAbility() {
+        addReadyTroyan(player1);
+        harness.activateAbility(player1, 0, 0, null, null);
+        gd.playerBattlefields.get(player1.getId()).getFirst().setTapped(false);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
     }
 
-    private void setDeck(Player player, List<Card> cards) {
-        gd.playerDecks.get(player.getId()).clear();
-        gd.playerDecks.get(player.getId()).addAll(cards);
+    @Test
+    @DisplayName("Troyan can discard the card it just drew")
+    void canDiscardDrawnCard() {
+        addReadyTroyan(player1);
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Island()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .singleElement().isInstanceOf(GrizzlyBears.class);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .singleElement().isInstanceOf(Island.class);
+    }
+
+    private void addReadyTroyan(Player player) {
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new TroyanGutsyExplorer());
+        permanent.setSummoningSick(false);
     }
 }
