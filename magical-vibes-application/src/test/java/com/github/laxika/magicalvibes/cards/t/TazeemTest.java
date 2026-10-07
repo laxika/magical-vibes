@@ -64,4 +64,50 @@ class TazeemTest extends BaseCardTest {
                 .hasMessageContaining("Creatures can't block");
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.BlockerDeclaration.class);
     }
+
+    @Test
+    void chaosWithNoLandsDrawsNothingEvenWithOtherPermanents() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new Forest());
+        int before = gd.playerHands.get(player1.getId()).size();
+        int opponentBefore = gd.playerHands.get(player2.getId()).size();
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(before);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(opponentBefore);
+    }
+
+    @Test
+    void chaosCountsLandsAtResolutionAndResolvesAfterPlaneLeaves() {
+        harness.addToBattlefield(player1, new Forest());
+        int before = gd.playerHands.get(player1.getId()).size();
+        int opponentBefore = gd.playerHands.get(player2.getId()).size();
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.addToBattlefield(player1, new Forest());
+        gd.planechase.faceUp.clear();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(before + 2);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(opponentBefore);
+    }
+
+    @Test
+    void restrictionAppliesToPlanarControllersCreaturesAndEndsWhenPlaneLeaves() {
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setAttacking(true);
+        prepareDeclareBlockers(player2);
+
+        assertThat(bls.getBlockingIllegalityReason(gd, blocker, attacker,
+                gd.playerBattlefields.get(player1.getId())))
+                .contains("Creatures can't block");
+
+        gd.planechase.faceUp.clear();
+
+        assertThat(bls.getBlockingIllegalityReason(gd, blocker, attacker,
+                gd.playerBattlefields.get(player1.getId()))).isEmpty();
+    }
 }
