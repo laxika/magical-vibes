@@ -102,10 +102,69 @@ class SpikeBreederTest extends BaseCardTest {
                 .hasMessageContaining("Not enough counters");
     }
 
+    @Test
+    @DisplayName("Can target itself, paying the counter before resolution")
+    void canTargetItself() {
+        Permanent breeder = readyBreeder();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, battlefieldIndex(breeder), 0, null, breeder.getId());
+
+        assertThat(breeder.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        harness.passBothPriorities();
+        assertThat(breeder.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Token ability resolves after removing the last counter kills the source")
+    void createsTokenAfterSourceDiesFromPayingCost() {
+        Permanent breeder = readyBreeder();
+        breeder.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, battlefieldIndex(breeder), 1, null, null);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(breeder);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(breeder.getCard());
+        assertThat(countPermanents(player1, "Spike")).isZero();
+        harness.passBothPriorities();
+        assertThat(countPermanents(player1, "Spike")).isEqualTo(1);
+        assertThat(countPermanents(player2, "Spike")).isZero();
+    }
+
+    @Test
+    @DisplayName("Counter ability resolves after removing the last counter kills the source")
+    void putsCounterOnCreatureAfterSourceDiesFromPayingCost() {
+        Permanent breeder = readyBreeder();
+        breeder.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent wall = harness.addToBattlefieldAndReturn(player2, new WallOfBlossoms());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, battlefieldIndex(breeder), 0, null, wall.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(breeder);
+        assertThat(wall.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.passBothPriorities();
+        assertThat(wall.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Targeting itself with the last counter cannot save the source")
+    void diesBeforeSelfTargetedCounterCanResolve() {
+        Permanent breeder = readyBreeder();
+        breeder.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, battlefieldIndex(breeder), 0, null, breeder.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(breeder);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(breeder.getCard());
+        assertThat(breeder.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
     private Permanent readyBreeder() {
-        Permanent breeder = addCreatureReady(player1, new SpikeBreeder());
-        breeder.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
-        return breeder;
+        return harness.enterBattlefieldAndReturn(player1, new SpikeBreeder());
     }
 
     private int battlefieldIndex(Permanent permanent) {
