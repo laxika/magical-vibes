@@ -82,8 +82,7 @@ class TowerOfChampionsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.gameLog.stream().map(entry -> entry.plainText()))
-                .anyMatch(log -> log.contains("fizzles"));
+        assertThat(gameLogContains("fizzles")).isTrue();
     }
 
     @Test
@@ -98,6 +97,45 @@ class TowerOfChampionsTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         assertThat(tower.isTapped()).isFalse();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(8);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped Tower cannot activate even with enough mana")
+    void cannotActivateWhileTapped() {
+        Permanent tower = harness.addToBattlefieldAndReturn(player1, new TowerOfChampions());
+        Permanent target = addCreatureReady(player1, new AlphaMyr());
+        tower.setTapped(true);
+        harness.forceActivePlayer(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(tower.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(8);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The ability can boost a friendly creature after the Tower leaves")
+    void boostsFriendlyCreatureAfterSourceLeaves() {
+        Permanent tower = harness.addToBattlefieldAndReturn(player1, new TowerOfChampions());
+        Permanent target = addCreatureReady(player1, new AlphaMyr());
+        int basePower = gqs.getEffectivePower(gd, target);
+        int baseToughness = gqs.getEffectiveToughness(gd, target);
+        harness.forceActivePlayer(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(basePower);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(baseToughness);
+
+        gd.playerBattlefields.get(player1.getId()).remove(tower);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(basePower + 6);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(baseToughness + 6);
         assertThat(gd.stack).isEmpty();
     }
 }
