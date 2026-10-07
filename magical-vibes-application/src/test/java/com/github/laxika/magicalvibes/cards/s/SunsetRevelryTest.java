@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GavonyTrapper;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -13,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SunsetRevelry.class, GrizzlyBears.class, Island.class})
+@CardUsed({SunsetRevelry.class, GavonyTrapper.class, Island.class})
 class SunsetRevelryTest extends BaseCardTest {
 
     private long humanTokenCount() {
@@ -25,8 +25,7 @@ class SunsetRevelryTest extends BaseCardTest {
     private void cast() {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
     }
 
     @Test
@@ -35,9 +34,9 @@ class SunsetRevelryTest extends BaseCardTest {
         Island drawn = new Island();
         harness.setLife(player1, 10);
         harness.setLife(player2, 20);
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GavonyTrapper());
         harness.setHand(player1, List.of(new SunsetRevelry()));
-        harness.setHand(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player2, List.of(new GavonyTrapper(), new GavonyTrapper()));
         harness.setLibrary(player1, List.of(drawn));
 
         cast();
@@ -50,11 +49,11 @@ class SunsetRevelryTest extends BaseCardTest {
     @Test
     @DisplayName("Does not apply any effect when the opponent is not ahead")
     void appliesNoEffectsWhenOpponentIsNotAhead() {
-        GrizzlyBears kept = new GrizzlyBears();
+        GavonyTrapper kept = new GavonyTrapper();
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
         harness.setHand(player1, List.of(new SunsetRevelry(), kept));
-        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.setHand(player2, List.of(new GavonyTrapper()));
         harness.setLibrary(player1, List.of(new Island()));
 
         cast();
@@ -67,19 +66,111 @@ class SunsetRevelryTest extends BaseCardTest {
     @Test
     @DisplayName("Resolves each clause independently")
     void resolvesEachClauseIndependently() {
-        GrizzlyBears kept = new GrizzlyBears();
+        GavonyTrapper kept = new GavonyTrapper();
         harness.setLife(player1, 10);
         harness.setLife(player2, 20);
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GavonyTrapper());
+        harness.addToBattlefield(player2, new GavonyTrapper());
         harness.setHand(player1, List.of(new SunsetRevelry(), kept));
-        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.setHand(player2, List.of(new GavonyTrapper()));
         harness.setLibrary(player1, List.of(new Island()));
 
         cast();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(14);
         assertThat(humanTokenCount()).isEqualTo(2);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(kept);
+    }
+
+    @Test
+    void gainsLifeWithoutCreatingTokensOrDrawing() {
+        harness.setLife(player1, 19);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new SunsetRevelry()));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new Island()));
+
+        cast();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(23);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void createsTokensWithoutGainingLifeOrDrawing() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 19);
+        harness.addToBattlefield(player2, new GavonyTrapper());
+        harness.setHand(player1, List.of(new SunsetRevelry()));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new Island()));
+
+        cast();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(humanTokenCount()).isEqualTo(2);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void castingRevelryBreaksHandSizeTieAndDrawsWithoutOtherBenefits() {
+        Island drawn = new Island();
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new SunsetRevelry()));
+        harness.setHand(player2, List.of(new Island()));
+        harness.setLibrary(player1, List.of(drawn));
+
+        cast();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+    }
+
+    @Test
+    void checksResourcesAtResolutionRatherThanCasting() {
+        Island drawn = new Island();
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new SunsetRevelry()));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(drawn));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castSorcery(player1, 0, 0);
+
+        harness.setLife(player1, 10);
+        harness.addToBattlefield(player2, new GavonyTrapper());
+        harness.setHand(player2, List.of(new Island()));
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(14);
+        assertThat(humanTokenCount()).isEqualTo(2);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+    }
+
+    @Test
+    void doesNothingWhenResourcesBecomeEqualBeforeResolution() {
+        Island kept = new Island();
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 20);
+        harness.addToBattlefield(player2, new GavonyTrapper());
+        harness.setHand(player1, List.of(new SunsetRevelry(), kept));
+        harness.setHand(player2, List.of(new Island(), new Island()));
+        harness.setLibrary(player1, List.of(new Island()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castSorcery(player1, 0, 0);
+
+        harness.setLife(player1, 20);
+        harness.addToBattlefield(player1, new GavonyTrapper());
+        harness.setHand(player2, List.of(new Island()));
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(kept);
     }
 }
