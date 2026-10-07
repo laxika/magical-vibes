@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TorrentOfSouls.class, GrizzlyBears.class, HolyDay.class})
 class TorrentOfSoulsTest extends BaseCardTest {
 
     @Test
@@ -103,8 +105,7 @@ class TorrentOfSoulsTest extends BaseCardTest {
         assertThat(bears.hasKeyword(Keyword.HASTE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(bears.getEffectivePower()).isEqualTo(2);
         assertThat(bears.hasKeyword(Keyword.HASTE)).isFalse();
@@ -121,5 +122,131 @@ class TorrentOfSoulsTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, instant.getId(), List.of(player1.getId())))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void reanimatedCreatureAlsoReceivesBoostAndHaste() {
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setHand(player1, List.of(new TorrentOfSouls()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castSorcery(player1, 0, creature.getId(), List.of(player1.getId()));
+        harness.passBothPriorities();
+
+        Permanent returned = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().getId().equals(creature.getId()))
+                .findFirst().orElseThrow();
+        assertThat(returned.getEffectivePower()).isEqualTo(4);
+        assertThat(returned.getEffectiveToughness()).isEqualTo(2);
+        assertThat(returned.hasKeyword(Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    void bothColorsCanChooseNoGraveyardTarget() {
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new TorrentOfSouls()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castSorcery(player1, 0, List.of(player1.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(creature);
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(bears);
+        assertThat(bears.getEffectivePower()).isEqualTo(4);
+        assertThat(bears.hasKeyword(Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    void targetingOpponentBoostsOnlyOpponentsCreatures() {
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+        Permanent opponentBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new TorrentOfSouls()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castSorcery(player1, 0, creature.getId(), List.of(player2.getId()));
+        harness.passBothPriorities();
+
+        Permanent returned = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().getId().equals(creature.getId()))
+                .findFirst().orElseThrow();
+        assertThat(returned.getEffectivePower()).isEqualTo(2);
+        assertThat(returned.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(opponentBears.getEffectivePower()).isEqualTo(4);
+        assertThat(opponentBears.hasKeyword(Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    void creaturesEnteringAfterResolutionDoNotReceiveBoostOrHaste() {
+        Permanent existing = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new TorrentOfSouls(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.RED, 5);
+        harness.castSorcery(player1, 0, List.of(player1.getId()));
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent later = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> !p.getId().equals(existing.getId()))
+                .findFirst().orElseThrow();
+        assertThat(existing.getEffectivePower()).isEqualTo(4);
+        assertThat(existing.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(later.getEffectivePower()).isEqualTo(2);
+        assertThat(later.hasKeyword(Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    void removedGraveyardTargetDoesNotPreventPlayerEffect() {
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new TorrentOfSouls()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.castSorcery(player1, 0, creature.getId(), List.of(player1.getId()));
+
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(creature));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(bears);
+        assertThat(bears.getEffectivePower()).isEqualTo(4);
+        assertThat(bears.hasKeyword(Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    void cannotTargetCreatureInOpponentsGraveyard() {
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(creature));
+        harness.setHand(player1, List.of(new TorrentOfSouls()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, creature.getId(), List.of(player1.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void redOnlyCanStillChooseGraveyardTargetWithoutReturningIt() {
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new TorrentOfSouls()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castSorcery(player1, 0, creature.getId(), List.of(player1.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(creature);
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(bears);
+        assertThat(bears.getEffectivePower()).isEqualTo(4);
+        assertThat(bears.hasKeyword(Keyword.HASTE)).isTrue();
     }
 }
