@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -34,10 +33,7 @@ class TajuruPathwardenTest extends BaseCardTest {
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat();
 
         harness.handleCombatDamageAssigned(player1, 0, Map.of(
                 blocker.getId(), 2,
@@ -47,5 +43,18 @@ class TajuruPathwardenTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(permanent -> permanent.getId().equals(blocker.getId()));
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+    }
+
+    @Test
+    void trampleDealsFullDamageWhenAllBlockersHaveLeftCombat() {
+        harness.setLife(player2, 20);
+        Permanent pathwarden = addCreatureReady(player1, new TajuruPathwarden());
+        pathwarden.setAttacking(true);
+        pathwarden.setBlockedWithoutBlockers(true);
+
+        resolveCombat();
+
+        harness.assertLife(player2, 15);
+        harness.assertOnBattlefield(player1, "Tajuru Pathwarden");
     }
 }
