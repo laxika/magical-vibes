@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.s.SerraSphinx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -118,6 +117,54 @@ class TenebTheHarvesterTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
+    @Test
+    @DisplayName("Without enough mana, accepting the payment does not return the creature")
+    void cannotReturnCreatureWithoutBlackMana() {
+        Card target = new SerraSphinx();
+        harness.setGraveyard(player2, List.of(target));
+
+        dealCombatDamageWithTeneb();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        chooseTarget(target);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(target);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().getId().equals(target.getId()));
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("With no creature cards in any graveyard, no payment is offered")
+    void noPaymentWhenGraveyardsAreEmpty() {
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of());
+
+        dealCombatDamageWithTeneb();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The triggered ability still returns its target after Teneb leaves the battlefield")
+    void triggerResolvesWithoutTenebOnBattlefield() {
+        Card target = new SerraSphinx();
+        harness.setGraveyard(player2, List.of(target));
+
+        dealCombatDamageWithTeneb();
+        addManaForTeneb();
+        chooseTarget(target);
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(target.getId()));
+        assertThat(gd.playerGraveyards.get(player2.getId())).doesNotContain(target);
+    }
+
     private void addManaForTeneb() {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -128,10 +175,8 @@ class TenebTheHarvesterTest extends BaseCardTest {
     }
 
     private void dealCombatDamageWithTeneb(List<BlockerAssignment> blockers) {
-        Permanent teneb = addCreatureReady(player1, new TenebTheHarvester());
-        teneb.setAttacking(true);
-
-        prepareDeclareBlockers();
+        addCreatureReady(player1, new TenebTheHarvester());
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, blockers);
         resolveCombat();
     }
