@@ -23,15 +23,13 @@ class SuddenStrengthTest extends BaseCardTest {
     @Test
     @DisplayName("Gives target creature +3/+3 and draws a card")
     void boostsAndDraws() {
-        harness.addToBattlefield(player1, new SuntailHawk());
+        Permanent hawk = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
         harness.setHand(player1, List.of(new SuddenStrength()));
         harness.setLibrary(player1, List.of(new SuntailHawk()));
         addMana();
 
-        UUID hawkId = harness.getPermanentId(player1, "Suntail Hawk");
-        harness.castAndResolveInstant(player1, 0, hawkId);
+        harness.castAndResolveInstant(player1, 0, hawk.getId());
 
-        Permanent hawk = findPermanent(player1, "Suntail Hawk");
         assertThat(hawk.getPowerModifier()).isEqualTo(3);
         assertThat(hawk.getToughnessModifier()).isEqualTo(3);
         assertThat(harness.getGameData().playerHands.get(player1.getId())).hasSize(1);
@@ -40,15 +38,13 @@ class SuddenStrengthTest extends BaseCardTest {
     @Test
     @DisplayName("Can target an opponent's creature while the caster draws")
     void targetsOpponentCreatureAndDrawsForCaster() {
-        harness.addToBattlefield(player2, new SuntailHawk());
+        Permanent hawk = harness.addToBattlefieldAndReturn(player2, new SuntailHawk());
         harness.setHand(player1, List.of(new SuddenStrength()));
         harness.setLibrary(player1, List.of(new SuntailHawk()));
         addMana();
 
-        UUID hawkId = harness.getPermanentId(player2, "Suntail Hawk");
-        harness.castAndResolveInstant(player1, 0, hawkId);
+        harness.castAndResolveInstant(player1, 0, hawk.getId());
 
-        Permanent hawk = findPermanent(player2, "Suntail Hawk");
         assertThat(hawk.getPowerModifier()).isEqualTo(3);
         assertThat(hawk.getToughnessModifier()).isEqualTo(3);
         assertThat(harness.getGameData().playerHands.get(player1.getId())).hasSize(1);
@@ -74,19 +70,17 @@ class SuddenStrengthTest extends BaseCardTest {
     @Test
     @DisplayName("Boost wears off at cleanup")
     void boostWearsOffAtCleanup() {
-        harness.addToBattlefield(player1, new SuntailHawk());
+        Permanent hawk = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
         harness.setHand(player1, List.of(new SuddenStrength()));
         harness.setLibrary(player1, List.of(new SuntailHawk()));
         addMana();
 
-        UUID hawkId = harness.getPermanentId(player1, "Suntail Hawk");
-        harness.castAndResolveInstant(player1, 0, hawkId);
+        harness.castAndResolveInstant(player1, 0, hawk.getId());
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        Permanent hawk = findPermanent(player1, "Suntail Hawk");
         assertThat(hawk.getPowerModifier()).isZero();
         assertThat(hawk.getToughnessModifier()).isZero();
     }
@@ -105,6 +99,34 @@ class SuddenStrengthTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    @DisplayName("Two copies on the stack each boost the creature and draw one card")
+    void twoCopiesBoostAndDrawIndependently() {
+        Permanent hawk = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
+        harness.setHand(player1, List.of(new SuddenStrength(), new SuddenStrength()));
+        harness.setLibrary(player1, List.of(new SuntailHawk(), new BorderPatrol()));
+        addMana();
+        addMana();
+
+        harness.castInstant(player1, 0, hawk.getId());
+        harness.castInstant(player1, 0, hawk.getId());
+        harness.passBothPriorities();
+
+        assertThat(hawk.getPowerModifier()).isEqualTo(3);
+        assertThat(hawk.getToughnessModifier()).isEqualTo(3);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(hawk.getPowerModifier()).isEqualTo(6);
+        assertThat(hawk.getToughnessModifier()).isEqualTo(6);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+    }
     private void addMana() {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
