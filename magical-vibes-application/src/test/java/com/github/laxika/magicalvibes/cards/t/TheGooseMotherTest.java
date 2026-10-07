@@ -40,7 +40,6 @@ class TheGooseMotherTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, food.getId());
-        harness.passBothPriorities();
 
         assertThat(countPermanents(player1, "Food")).isZero();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
@@ -59,6 +58,58 @@ class TheGooseMotherTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(countPermanents(player1, "Food")).isOne();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
+    }
+
+    @Test
+    @DisplayName("X zero creates no counters or Food")
+    void zeroXCreatesNoCountersOrFood() {
+        Permanent goose = castGoose(0);
+
+        assertThat(goose.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(countPermanents(player1, "Food")).isZero();
+    }
+
+    @Test
+    @DisplayName("Even X creates exactly half as many Food tokens")
+    void evenXCreatesHalfAsManyFoodTokens() {
+        Permanent goose = castGoose(4);
+
+        assertThat(goose.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+        assertThat(countPermanents(player1, "Food")).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Created Food can be tapped and sacrificed for two mana to gain three life")
+    void foodTokenCanGainLife() {
+        castGoose(1);
+        Permanent food = findPermanent(player1, "Food");
+        harness.setLife(player1, 10);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(food), null, null);
+
+        assertThat(countPermanents(player1, "Food")).isZero();
+        harness.assertLife(player1, 10);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 13);
+    }
+
+    @Test
+    @DisplayName("Attacking without Food cannot draw a card")
+    void attackingWithoutFoodDoesNotDraw() {
+        harness.setLibrary(player1, List.of(new TheGooseMother()));
+        Permanent goose = castGoose(0);
+        goose.setSummoningSick(false);
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(goose)));
+        harness.passBothPriorities();
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
     }
 
