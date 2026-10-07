@@ -60,8 +60,8 @@ class UnforgeTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Does not damage the creature when an indestructible Equipment survives")
-    void indestructibleEquipmentSurvivesWithoutDamagingAttachedCreature() {
+    @DisplayName("Still damages the attached creature when indestructible Equipment survives")
+    void indestructibleEquipmentSurvivesButAttachedCreatureTakesDamage() {
         harness.addToBattlefield(player2, new DarksteelForge());
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new QuicksilverBehemoth());
         Permanent equipment = harness.addToBattlefieldAndReturn(player2, new Skullclamp());
@@ -72,7 +72,52 @@ class UnforgeTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Skullclamp");
         harness.assertOnBattlefield(player2, "Quicksilver Behemoth");
         assertThat(equipment.getAttachedTo()).isEqualTo(creature.getId());
-        assertThat(creature.getMarkedDamage()).isZero();
+        assertThat(creature.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Destroying the Equipment that grants protection allows the subsequent damage")
+    void destroyingProtectionEquipmentAllowsDamage() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new QuicksilverBehemoth());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player2, new SwordOfFireAndIce());
+        equipment.setAttachedTo(creature.getId());
+        castUnforge(equipment);
+
+        harness.assertInGraveyard(player2, "Sword of Fire and Ice");
+        harness.assertOnBattlefield(player2, "Quicksilver Behemoth");
+        assertThat(creature.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Can destroy its controller's Equipment and damage its controller's creature")
+    void canTargetOwnEquipment() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new QuicksilverBehemoth());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new Skullclamp());
+        equipment.setAttachedTo(creature.getId());
+        castUnforge(equipment);
+
+        harness.assertInGraveyard(player1, "Skullclamp");
+        harness.assertOnBattlefield(player1, "Quicksilver Behemoth");
+        assertThat(creature.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Does not deal additional damage when its Equipment target leaves before resolution")
+    void missingEquipmentTargetPreventsDamage() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new QuicksilverBehemoth());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player2, new Skullclamp());
+        equipment.setAttachedTo(creature.getId());
+        harness.setHand(player1, List.of(new Unforge(), new Unforge()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castInstant(player1, 0, equipment.getId());
+        harness.castAndResolveInstant(player1, 0, equipment.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Skullclamp");
+        harness.assertOnBattlefield(player2, "Quicksilver Behemoth");
+        assertThat(creature.getMarkedDamage()).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
