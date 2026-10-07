@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
+import com.github.laxika.magicalvibes.cards.d.DivineOffering;
+import com.github.laxika.magicalvibes.cards.g.GoForTheThroat;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -9,42 +10,38 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.EquipEffect;
-import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Strandwalker.class, SpinEngine.class, GoForTheThroat.class, DivineOffering.class})
 class StrandwalkerTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    
-
-    
-
     @Test
-    @DisplayName("Strandwalker has equip {4} ability")
+    @DisplayName("Equip requires four mana and does not tap Strandwalker")
     void hasEquipAbility() {
-        Strandwalker card = new Strandwalker();
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new Strandwalker());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new SpinEngine());
+        harness.addMana(player1, ManaColor.WHITE, 3);
 
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{4}");
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getTargetFilter())
-                .isInstanceOf(ControlledPermanentPredicateTargetFilter.class);
-        assertThat(card.getActivatedAbilities().get(0).getTimingRestriction())
-                .isEqualTo(ActivationTimingRestriction.SORCERY_SPEED);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(EquipEffect.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        assertThat(equipment.getAttachedTo()).isNull();
+
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(equipment.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(equipment.isTapped()).isFalse();
     }
-
-    // ===== Living weapon ETB =====
 
     @Test
     @DisplayName("Casting Strandwalker triggers living weapon ETB on the stack")
@@ -74,15 +71,8 @@ class StrandwalkerTest extends BaseCardTest {
         // Resolve living weapon ETB trigger
         harness.passBothPriorities();
 
-        List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
-
-        // Should have Strandwalker (equipment) and Phyrexian Germ (token)
-        Permanent strandwalker = battlefield.stream()
-                .filter(p -> p.getCard().getName().equals("Strandwalker"))
-                .findFirst().orElseThrow();
-        Permanent germ = battlefield.stream()
-                .filter(p -> p.getCard().getName().equals("Phyrexian Germ"))
-                .findFirst().orElseThrow();
+        Permanent strandwalker = findPermanent(player1, "Strandwalker");
+        Permanent germ = findPermanent(player1, "Phyrexian Germ");
 
         // Strandwalker should be attached to the Germ token
         assertThat(strandwalker.getAttachedTo()).isEqualTo(germ.getId());
@@ -104,11 +94,10 @@ class StrandwalkerTest extends BaseCardTest {
         assertThat(germ.getCard().getPower()).isEqualTo(0);
         assertThat(germ.getCard().getToughness()).isEqualTo(0);
         assertThat(germ.getCard().isToken()).isTrue();
+        assertThat(germ.getCard().getColor()).isEqualTo(CardColor.BLACK);
         assertThat(germ.getCard().getSubtypes())
                 .containsExactlyInAnyOrder(CardSubtype.PHYREXIAN, CardSubtype.GERM);
     }
-
-    // ===== Germ gets equipment bonuses =====
 
     @Test
     @DisplayName("Germ token gets +2/+4 and reach from Strandwalker")
@@ -128,8 +117,6 @@ class StrandwalkerTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, germ, Keyword.REACH)).isTrue();
     }
 
-    // ===== Equip to another creature =====
-
     @Test
     @DisplayName("Equipping Strandwalker to another creature moves it from the Germ")
     void equipToAnotherCreature() {
@@ -141,26 +128,22 @@ class StrandwalkerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Add a creature to equip to
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new SpinEngine());
 
-        // Equip to bears
+        // Equip to the other creature
         harness.addMana(player1, ManaColor.WHITE, 4);
-        harness.activateAbility(player1, 0, null, bears.getId());
+        harness.activateAbility(player1, 0, null, creature.getId());
         harness.passBothPriorities();
 
         Permanent strandwalker = findPermanent(player1, "Strandwalker");
 
-        assertThat(strandwalker.getAttachedTo()).isEqualTo(bears.getId());
+        assertThat(strandwalker.getAttachedTo()).isEqualTo(creature.getId());
 
-        // Bears should get +2/+4 and reach
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);  // 2 + 2
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(6);  // 2 + 4
-        assertThat(gqs.hasKeyword(gd, bears, Keyword.REACH)).isTrue();
+        // The creature should get +2/+4 and reach
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.REACH)).isTrue();
     }
-
-    // ===== Germ dies when equipment is moved =====
 
     @Test
     @DisplayName("Germ token dies (0 toughness) when Strandwalker is moved to another creature")
@@ -172,20 +155,16 @@ class StrandwalkerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new SpinEngine());
 
-        // Equip to bears — this moves the equipment, Germ becomes 0/0 and dies
+        // Equip to the other creature — this moves the equipment, Germ becomes 0/0 and dies
         harness.addMana(player1, ManaColor.WHITE, 4);
-        harness.activateAbility(player1, 0, null, bears.getId());
+        harness.activateAbility(player1, 0, null, creature.getId());
         harness.passBothPriorities();
 
         // Germ should be dead (0 toughness, state-based action)
         harness.assertNotOnBattlefield(player1, "Phyrexian Germ");
     }
-
-    // ===== Equipment stays when Germ is removed =====
 
     @Test
     @DisplayName("Strandwalker stays on battlefield when Germ is removed")
@@ -197,11 +176,75 @@ class StrandwalkerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        // Remove germ from battlefield manually (simulating it dying)
         Permanent germ = findPermanent(player1, "Phyrexian Germ");
-        gd.playerBattlefields.get(player1.getId()).remove(germ);
+        harness.setHand(player1, List.of(new GoForTheThroat()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castInstant(player1, 0, germ.getId());
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Phyrexian Germ");
 
         // Equipment should still be on the battlefield
         harness.assertOnBattlefield(player1, "Strandwalker");
+        assertThat(findPermanent(player1, "Strandwalker").getAttachedTo()).isNull();
+    }
+
+    @Test
+    void equipRejectsOpponentCreature() {
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new Strandwalker());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new SpinEngine());
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(equipment.getAttachedTo()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void equipRequiresEmptyStack() {
+        harness.setHand(player1, List.of(new Strandwalker()));
+        harness.addMana(player1, ManaColor.WHITE, 9);
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new SpinEngine());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(findPermanent(player1, "Strandwalker").getAttachedTo())
+                .isEqualTo(findPermanent(player1, "Phyrexian Germ").getId());
+    }
+
+    @Test
+    void germDiesWhenEquipmentDestroyed() {
+        harness.setHand(player1, List.of(new Strandwalker(), new DivineOffering()));
+        harness.addMana(player1, ManaColor.WHITE, 7);
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.castInstant(player1, 0, harness.getPermanentId(player1, "Strandwalker"));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Strandwalker");
+        harness.assertNotOnBattlefield(player1, "Phyrexian Germ");
+    }
+
+    @Test
+    void livingWeaponResolvesWhenEquipmentIsDestroyedInResponse() {
+        harness.setHand(player1, List.of(new Strandwalker(), new DivineOffering()));
+        harness.addMana(player1, ManaColor.WHITE, 7);
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+
+        harness.castInstant(player1, 0, harness.getPermanentId(player1, "Strandwalker"));
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Strandwalker");
+        harness.assertNotOnBattlefield(player1, "Phyrexian Germ");
+        assertThat(gd.stack).isEmpty();
     }
 }
