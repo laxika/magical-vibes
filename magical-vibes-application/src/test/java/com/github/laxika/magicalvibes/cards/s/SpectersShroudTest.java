@@ -65,6 +65,7 @@ class SpectersShroudTest extends BaseCardTest {
         harness.setHand(player2, List.of(new DarksteelGargoyle(), new DarksteelGargoyle()));
 
         resolveCombat();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).playerId())
@@ -106,6 +107,62 @@ class SpectersShroudTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Combat damage to a player with an empty hand resolves without a discard prompt")
+    void emptyHandDoesNotRequireDiscardChoice() {
+        Permanent creature = addCreatureReady(player1, new DarksteelGargoyle());
+        Permanent shroud = addShroudReady(player1);
+        shroud.setAttachedTo(creature.getId());
+        creature.setAttacking(true);
+        harness.setHand(player2, List.of());
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Equipment controlled by the damaged player still makes that player discard")
+    void opponentControlledCreatureMakesEquipmentControllerDiscard() {
+        Permanent creature = addCreatureReady(player2, new DarksteelGargoyle());
+        Permanent shroud = addShroudReady(player1);
+        shroud.setAttachedTo(creature.getId());
+        creature.setAttacking(true);
+        harness.setHand(player1, List.of(new DarksteelGargoyle(), new DarksteelGargoyle()));
+        harness.setHand(player2, List.of(new DarksteelGargoyle()));
+
+        resolveCombat(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Moving the Equipment transfers its power bonus to the newly equipped creature")
+    void reequippingTransfersPowerBonus() {
+        Permanent shroud = addShroudReady(player1);
+        Permanent firstCreature = addCreatureReady(player1, new DarksteelGargoyle());
+        Permanent secondCreature = addCreatureReady(player1, new DarksteelGargoyle());
+        shroud.setAttachedTo(firstCreature.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, secondCreature.getId());
+        harness.passBothPriorities();
+
+        assertThat(shroud.getAttachedTo()).isEqualTo(secondCreature.getId());
+        assertThat(gqs.getEffectivePower(gd, firstCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, secondCreature)).isEqualTo(4);
     }
 
     private Permanent addShroudReady(Player player) {
