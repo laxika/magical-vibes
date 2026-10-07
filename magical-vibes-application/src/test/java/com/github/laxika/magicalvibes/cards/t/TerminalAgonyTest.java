@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.RavensCrime;
+import com.github.laxika.magicalvibes.cards.s.SlipperyBogle;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TerminalAgony.class, GrizzlyBears.class, RavensCrime.class})
+@CardUsed({TerminalAgony.class, GrizzlyBears.class, RavensCrime.class, SlipperyBogle.class})
 class TerminalAgonyTest extends BaseCardTest {
 
     @Test
@@ -78,6 +79,77 @@ class TerminalAgonyTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Terminal Agony");
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Declining madness puts Terminal Agony into the graveyard without paying mana")
+    void decliningMadnessPutsCardIntoGraveyard() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        TerminalAgony agony = discardViaRavensCrime();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInGraveyard(player1, "Terminal Agony");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .noneMatch(card -> card.getId().equals(agony.getId()));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Madness cannot be paid with two black mana instead of black and red")
+    void madnessRequiresBothColors() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        TerminalAgony agony = discardViaRavensCrime();
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInGraveyard(player1, "Terminal Agony");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .noneMatch(card -> card.getId().equals(agony.getId()));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Madness without a legal creature target puts the card into the graveyard without paying")
+    void madnessWithoutLegalTargetDoesNotSpendMana() {
+        TerminalAgony agony = discardViaRavensCrime();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInGraveyard(player1, "Terminal Agony");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .noneMatch(card -> card.getId().equals(agony.getId()));
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+    }
+
+    @Test
+    @CardUsed({SlipperyBogle.class})
+    @DisplayName("An opposing hexproof creature is not a legal madness target")
+    void madnessWithOnlyOpposingHexproofCreatureDoesNotSpendMana() {
+        harness.addToBattlefield(player2, new SlipperyBogle());
+        TerminalAgony agony = discardViaRavensCrime();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+        harness.assertInGraveyard(player1, "Terminal Agony");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .noneMatch(card -> card.getId().equals(agony.getId()));
+        harness.assertOnBattlefield(player2, "Slippery Bogle");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     private TerminalAgony discardViaRavensCrime() {
