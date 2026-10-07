@@ -48,6 +48,94 @@ class SpiderIslandersTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void mayhemRequiresThisSpecificCardToHaveBeenDiscarded() {
+        SpiderIslanders card = new SpiderIslanders();
+        SpiderIslanders otherCard = new SpiderIslanders();
+        harness.setGraveyard(player1, List.of(card, otherCard));
+        gd.cardsDiscardedOrCycledThisTurn.put(player1.getId(), new HashSet<>(Set.of(otherCard.getId())));
+        prepareMainPhase();
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(card, otherCard);
+    }
+
+    @Test
+    void mayhemCannotBeCastOutsideMainPhase() {
+        SpiderIslanders card = prepareMayhemCard();
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
+    }
+
+    @Test
+    void mayhemCannotBeCastDuringOpponentsTurn() {
+        SpiderIslanders card = prepareMayhemCard();
+        harness.forceActivePlayer(player2);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
+    }
+
+    @Test
+    void mayhemCannotBeCastWithAnotherSpellOnTheStack() {
+        SpiderIslanders card = prepareMayhemCard();
+        harness.setHand(player1, List.of(new SpiderIslanders()));
+        harness.addMana(player1, ManaColor.RED, 6);
+        harness.castCreature(player1, 0);
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    void mayhemRequiresRedMana() {
+        SpiderIslanders card = prepareMayhemCard();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
+    }
+
+    @Test
+    void mayhemRequiresTheFullAlternateCost() {
+        SpiderIslanders card = prepareMayhemCard();
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
+    }
+
+    @Test
+    void mayhemCostDoesNotApplyWhenCastingFromHand() {
+        harness.setHand(player1, List.of(new SpiderIslanders()));
+        prepareMainPhase();
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    private SpiderIslanders prepareMayhemCard() {
+        SpiderIslanders card = new SpiderIslanders();
+        harness.setGraveyard(player1, List.of(card));
+        gd.cardsDiscardedOrCycledThisTurn.put(player1.getId(), new HashSet<>(Set.of(card.getId())));
+        prepareMainPhase();
+        return card;
+    }
+
     private void prepareMainPhase() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
