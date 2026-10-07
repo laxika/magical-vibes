@@ -100,11 +100,96 @@ class SynthesizerLabshipTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void nineChargeCountersMakeLabshipACreatureUntilCountersDropBelowNine() {
+        Permanent labship = harness.addToBattlefieldAndReturn(player1, new SynthesizerLabship());
+        labship.setCounterCount(CounterType.CHARGE, 8);
+        assertThat(gqs.isCreature(gd, labship)).isFalse();
+
+        labship.setCounterCount(CounterType.CHARGE, 9);
+        assertThat(gqs.isCreature(gd, labship)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, labship)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, labship)).isEqualTo(4);
+
+        labship.setCounterCount(CounterType.CHARGE, 8);
+        assertThat(gqs.isCreature(gd, labship)).isFalse();
+        assertThat(gqs.hasKeyword(gd, labship, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, labship, Keyword.VIGILANCE)).isFalse();
+    }
+
+    @Test
+    void combatTriggerStillResolvesAfterSourceLosesItsChargeCounters() {
+        Permanent labship = harness.addToBattlefieldAndReturn(player1, new SynthesizerLabship());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new SynthesizerLabship());
+        labship.setCounterCount(CounterType.CHARGE, 2);
+
+        advanceToCombat(player1);
+        harness.handlePermanentChosen(player1, artifact.getId());
+        labship.setCounterCount(CounterType.CHARGE, 0);
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, artifact)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, artifact)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, artifact)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, artifact, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    void combatTriggerStillResolvesAfterSourceLeavesBattlefield() {
+        Permanent labship = harness.addToBattlefieldAndReturn(player1, new SynthesizerLabship());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new SynthesizerLabship());
+        labship.setCounterCount(CounterType.CHARGE, 2);
+
+        advanceToCombat(player1);
+        harness.handlePermanentChosen(player1, artifact.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(labship);
+        gd.playerGraveyards.get(player1.getId()).add(labship.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, artifact)).isTrue();
+        assertThat(gqs.hasKeyword(gd, artifact, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    void doesNotAnimateArtifactsDuringOpponentsCombat() {
+        Permanent labship = harness.addToBattlefieldAndReturn(player1, new SynthesizerLabship());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new SynthesizerLabship());
+        labship.setCounterCount(CounterType.CHARGE, 2);
+
+        advanceToCombat(player2);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gqs.isCreature(gd, artifact)).isFalse();
+    }
+
+    @Test
+    void stationCanTapASummoningSickCreature() {
+        Permanent labship = harness.addToBattlefieldAndReturn(player1, new SynthesizerLabship());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        bears.setSummoningSick(true);
+
+        harness.activateAbility(player1, battlefieldIndex(labship), null, null);
+        harness.passBothPriorities();
+
+        assertThat(bears.isTapped()).isTrue();
+        assertThat(labship.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
+    }
+
+    @Test
+    void stationCannotBeActivatedDuringCombat() {
+        Permanent labship = harness.addToBattlefieldAndReturn(player1, new SynthesizerLabship());
+        addCreatureReady(player1, new GrizzlyBears());
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(labship), null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
     private void advanceToCombat(com.github.laxika.magicalvibes.model.Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.BEGINNING_OF_COMBAT);
     }
 
     private int battlefieldIndex(Permanent permanent) {
