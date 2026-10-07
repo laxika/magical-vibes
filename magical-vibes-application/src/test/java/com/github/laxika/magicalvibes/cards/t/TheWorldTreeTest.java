@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -82,8 +81,8 @@ class TheWorldTreeTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .extracting(permanent -> permanent.getCard().getName())
@@ -91,6 +90,101 @@ class TheWorldTreeTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId()))
                 .extracting(Card::getName)
                 .containsExactly("Grizzly Bears");
+    }
+
+    @Test
+    void grantsAnyColorManaToItselfAtSixLands() {
+        Permanent tree = addReadyTree();
+        for (int i = 0; i < 5; i++) {
+            harness.addToBattlefield(player1, new Forest());
+        }
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "WHITE");
+
+        assertThat(tree.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void removesGrantedManaAbilityWhenLandCountFallsBelowSix() {
+        addReadyTree();
+        for (int i = 0; i < 5; i++) {
+            harness.addToBattlefield(player1, new Forest());
+        }
+        harness.activateAbility(player1, 1, 0, null, null);
+        harness.handleListChoice(player1, "RED");
+
+        gd.playerBattlefields.get(player1.getId()).remove(5);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 2, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.tapPermanent(player1, 2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+    }
+
+    @Test
+    void canChooseZeroGods() {
+        addReadyTree();
+        harness.setLibrary(player1, List.of(new HeliodGodOfTheSun(), new NyleaGodOfTheHunt()));
+        addSearchAbilityMana();
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void canStopAfterChoosingOnlyOneGod() {
+        addReadyTree();
+        harness.setLibrary(player1, List.of(new HeliodGodOfTheSun(), new NyleaGodOfTheHunt()));
+        addSearchAbilityMana();
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        harness.handleCardChosen(player1, -1);
+
+        harness.assertOnBattlefield(player1, "Heliod, God of the Sun");
+        harness.assertNotOnBattlefield(player1, "Nylea, God of the Hunt");
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .extracting(Card::getName).containsExactly("Nylea, God of the Hunt");
+        assertThat(findPermanent(player1, "Heliod, God of the Sun").isTapped()).isFalse();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void resolvesSearchWhenLibraryContainsNoGods() {
+        addReadyTree();
+        harness.setLibrary(player1, List.of(new Forest()));
+        addSearchAbilityMana();
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotActivateSearchWhileTapped() {
+        Permanent tree = addReadyTree();
+        tree.tap();
+        addSearchAbilityMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "The World Tree");
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
     }
 
     private Permanent addReadyTree() {
