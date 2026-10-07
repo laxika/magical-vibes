@@ -1,13 +1,15 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.PithDriller;
+import com.github.laxika.magicalvibes.cards.c.ChainedThroatseeker;
+import com.github.laxika.magicalvibes.cards.b.BlightedAgent;
+import com.github.laxika.magicalvibes.cards.v.VaultSkirge;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.effect.EquipEffect;
-import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,51 +19,39 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SwordOfWarAndPeace.class, PithDriller.class, ChainedThroatseeker.class,
+        BlightedAgent.class, VaultSkirge.class})
 class SwordOfWarAndPeaceTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    
-
-    
-
-    
-
     @Test
-    @DisplayName("Sword of War and Peace has equip {2} ability")
+    @DisplayName("Equip attaches the Sword for two mana")
     void hasEquipAbility() {
-        SwordOfWarAndPeace card = new SwordOfWarAndPeace();
+        Permanent sword = addSwordReady(player1);
+        Permanent creature = addCreatureReady(player1, new PithDriller());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{2}");
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getTargetFilter())
-                .isInstanceOf(ControlledPermanentPredicateTargetFilter.class);
-        assertThat(card.getActivatedAbilities().get(0).getTimingRestriction())
-                .isEqualTo(ActivationTimingRestriction.SORCERY_SPEED);
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(EquipEffect.class);
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(sword.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
     }
-
-    // ===== Static effects: power/toughness boost =====
 
     @Test
     @DisplayName("Equipped creature gets +2/+2")
     void equippedCreatureGetsBoost() {
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new PithDriller());
         Permanent sword = addSwordReady(player1);
         sword.setAttachedTo(creature.getId());
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);   // 2 + 2
-        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4); // 2 + 2
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(6); // 4 + 2
     }
 
     @Test
     @DisplayName("Equipped creature loses boost when Sword is removed")
     void creatureLosesBoostWhenEquipmentRemoved() {
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new PithDriller());
         Permanent sword = addSwordReady(player1);
         sword.setAttachedTo(creature.getId());
 
@@ -70,15 +60,13 @@ class SwordOfWarAndPeaceTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(sword);
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
     }
-
-    // ===== Static effects: protection from red and white =====
 
     @Test
     @DisplayName("Equipped creature has protection from red")
     void equippedCreatureHasProtectionFromRed() {
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new PithDriller());
         Permanent sword = addSwordReady(player1);
         sword.setAttachedTo(creature.getId());
 
@@ -88,7 +76,7 @@ class SwordOfWarAndPeaceTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature has protection from white")
     void equippedCreatureHasProtectionFromWhite() {
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new PithDriller());
         Permanent sword = addSwordReady(player1);
         sword.setAttachedTo(creature.getId());
 
@@ -98,7 +86,7 @@ class SwordOfWarAndPeaceTest extends BaseCardTest {
     @Test
     @DisplayName("Equipped creature does NOT have protection from blue")
     void equippedCreatureNoProtectionFromBlue() {
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new PithDriller());
         Permanent sword = addSwordReady(player1);
         sword.setAttachedTo(creature.getId());
 
@@ -108,7 +96,7 @@ class SwordOfWarAndPeaceTest extends BaseCardTest {
     @Test
     @DisplayName("Creature loses protection when Sword is removed")
     void creatureLosesProtectionWhenEquipmentRemoved() {
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new PithDriller());
         Permanent sword = addSwordReady(player1);
         sword.setAttachedTo(creature.getId());
 
@@ -130,24 +118,24 @@ class SwordOfWarAndPeaceTest extends BaseCardTest {
         assertThat(gqs.hasProtectionFrom(gd, sword, CardColor.WHITE)).isFalse();
     }
 
-    // ===== Combat damage trigger: damage to player by their hand size =====
-
     @Test
     @DisplayName("Deals damage to damaged player equal to the number of cards in their hand")
     void dealsDamageEqualToOpponentHandSize() {
         harness.setLife(player2, 20);
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new PithDriller());
         Permanent sword = addSwordReady(player1);
         sword.setAttachedTo(creature.getId());
         creature.setAttacking(true);
 
         // Give opponent 5 cards in hand
         harness.setHand(player2, new ArrayList<>(List.of(
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
-                new GrizzlyBears(), new GrizzlyBears())));
+                new PithDriller(), new PithDriller(), new PithDriller(),
+                new PithDriller(), new PithDriller())));
         harness.setHand(player1, new ArrayList<>());
 
-        resolveCombat();
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
+        harness.passUntil(TurnStep.END_COMBAT);
 
         // Combat damage: 4 (2 base + 2 sword) + 5 (hand size damage) = 9
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(11);
@@ -157,7 +145,7 @@ class SwordOfWarAndPeaceTest extends BaseCardTest {
     @DisplayName("Deals no extra damage when opponent's hand is empty")
     void noExtraDamageWhenOpponentHandEmpty() {
         harness.setLife(player2, 20);
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new PithDriller());
         Permanent sword = addSwordReady(player1);
         sword.setAttachedTo(creature.getId());
         creature.setAttacking(true);
@@ -165,30 +153,32 @@ class SwordOfWarAndPeaceTest extends BaseCardTest {
         harness.setHand(player2, new ArrayList<>());
         harness.setHand(player1, new ArrayList<>());
 
-        resolveCombat();
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
+        harness.passUntil(TurnStep.END_COMBAT);
 
         // Only combat damage: 4 (2 base + 2 sword)
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
     }
-
-    // ===== Combat damage trigger: life gain by controller's hand size =====
 
     @Test
     @DisplayName("Controller gains 1 life per card in their hand")
     void gainsLifeEqualToControllerHandSize() {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new PithDriller());
         Permanent sword = addSwordReady(player1);
         sword.setAttachedTo(creature.getId());
         creature.setAttacking(true);
 
         // Give controller 3 cards in hand
         harness.setHand(player1, new ArrayList<>(List.of(
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears())));
+                new PithDriller(), new PithDriller(), new PithDriller())));
         harness.setHand(player2, new ArrayList<>());
 
-        resolveCombat();
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
+        harness.passUntil(TurnStep.END_COMBAT);
 
         // Controller gains 3 life
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(23);
@@ -199,7 +189,7 @@ class SwordOfWarAndPeaceTest extends BaseCardTest {
     void noLifeGainWhenControllerHandEmpty() {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new PithDriller());
         Permanent sword = addSwordReady(player1);
         sword.setAttachedTo(creature.getId());
         creature.setAttacking(true);
@@ -207,31 +197,33 @@ class SwordOfWarAndPeaceTest extends BaseCardTest {
         harness.setHand(player1, new ArrayList<>());
         harness.setHand(player2, new ArrayList<>());
 
-        resolveCombat();
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
+        harness.passUntil(TurnStep.END_COMBAT);
 
         // No life gained
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
     }
-
-    // ===== Both effects fire =====
 
     @Test
     @DisplayName("Both damage and life gain fire when equipped creature deals combat damage")
     void bothEffectsFireOnCombatDamage() {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new PithDriller());
         Permanent sword = addSwordReady(player1);
         sword.setAttachedTo(creature.getId());
         creature.setAttacking(true);
 
         // Opponent has 4 cards, controller has 2 cards
         harness.setHand(player2, new ArrayList<>(List.of(
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears())));
+                new PithDriller(), new PithDriller(), new PithDriller(), new PithDriller())));
         harness.setHand(player1, new ArrayList<>(List.of(
-                new GrizzlyBears(), new GrizzlyBears())));
+                new PithDriller(), new PithDriller())));
 
-        resolveCombat();
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
+        harness.passUntil(TurnStep.END_COMBAT);
 
         // Combat damage: 4 (2 base + 2 sword) + 4 (hand size damage) = 8 total to opponent
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(12);
@@ -240,29 +232,27 @@ class SwordOfWarAndPeaceTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
     }
 
-    // ===== No trigger when blocked =====
-
     @Test
     @DisplayName("No trigger when equipped creature is blocked and deals no player damage")
     void noTriggerWhenBlocked() {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new PithDriller());
         Permanent sword = addSwordReady(player1);
         sword.setAttachedTo(creature.getId());
         creature.setAttacking(true);
 
         // Blocker with 5 toughness survives the 4 power creature
-        Permanent blocker = new Permanent(new SerraAngel());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        Permanent blocker = addCreatureReady(player2, new ChainedThroatseeker());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears(), new GrizzlyBears())));
-        harness.setHand(player1, new ArrayList<>(List.of(new GrizzlyBears())));
+        harness.setHand(player2, new ArrayList<>(List.of(new PithDriller(), new PithDriller())));
+        harness.setHand(player1, new ArrayList<>(List.of(new PithDriller())));
 
-        resolveCombat();
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
+        harness.passUntil(TurnStep.END_COMBAT);
 
         // No hand-size damage dealt
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
@@ -271,14 +261,12 @@ class SwordOfWarAndPeaceTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
     }
 
-    // ===== Re-equip =====
-
     @Test
     @DisplayName("Sword can be moved to another creature")
     void canReEquipToAnotherCreature() {
         Permanent sword = addSwordReady(player1);
-        Permanent creature1 = addCreatureReady(player1, new GrizzlyBears());
-        Permanent creature2 = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature1 = addCreatureReady(player1, new PithDriller());
+        Permanent creature2 = addCreatureReady(player1, new PithDriller());
 
         sword.setAttachedTo(creature1.getId());
         assertThat(gqs.getEffectivePower(gd, creature1)).isEqualTo(4);
@@ -299,48 +287,50 @@ class SwordOfWarAndPeaceTest extends BaseCardTest {
         assertThat(gqs.hasProtectionFrom(gd, creature2, CardColor.WHITE)).isTrue();
     }
 
-    // ===== Animated equipment (creature itself deals combat damage) =====
-
     @Test
-    @DisplayName("Animated Sword deals damage by opponent hand size when it deals combat damage as a creature")
-    void animatedSwordDealsDamageByHandSize() {
+    @DisplayName("Animated Sword does not trigger hand-size damage from its own combat damage")
+    void animatedSwordDoesNotTriggerHandSizeDamage() {
         harness.setLife(player2, 20);
         Permanent sword = addAnimatedSword(player1);
         sword.setAttacking(true);
 
         // Give opponent 5 cards in hand
         harness.setHand(player2, new ArrayList<>(List.of(
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
-                new GrizzlyBears(), new GrizzlyBears())));
+                new PithDriller(), new PithDriller(), new PithDriller(),
+                new PithDriller(), new PithDriller())));
         harness.setHand(player1, new ArrayList<>());
 
-        resolveCombat();
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
+        harness.passUntil(TurnStep.END_COMBAT);
 
-        // Combat damage: 3 (animated) + 5 (hand size damage) = 8
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(12);
+        // Only the animated Sword's three combat damage is dealt.
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
     }
 
     @Test
-    @DisplayName("Animated Sword grants life by controller hand size when it deals combat damage as a creature")
-    void animatedSwordGrantsLifeByHandSize() {
+    @DisplayName("Animated Sword does not trigger life gain from its own combat damage")
+    void animatedSwordDoesNotTriggerLifeGain() {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
         Permanent sword = addAnimatedSword(player1);
         sword.setAttacking(true);
 
         harness.setHand(player1, new ArrayList<>(List.of(
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears())));
+                new PithDriller(), new PithDriller(), new PithDriller())));
         harness.setHand(player2, new ArrayList<>());
 
-        resolveCombat();
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
+        harness.passUntil(TurnStep.END_COMBAT);
 
-        // Controller gains 3 life
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(23);
+        // The Sword is not an equipped creature.
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
     }
 
     @Test
-    @DisplayName("Animated Sword fires both damage and life gain when dealing combat damage as a creature")
-    void animatedSwordFiresBothEffects() {
+    @DisplayName("Animated Sword triggers neither effect from its own combat damage")
+    void animatedSwordDoesNotTriggerEitherEffect() {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
         Permanent sword = addAnimatedSword(player1);
@@ -348,35 +338,116 @@ class SwordOfWarAndPeaceTest extends BaseCardTest {
 
         // Opponent has 4 cards, controller has 2 cards
         harness.setHand(player2, new ArrayList<>(List.of(
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears())));
+                new PithDriller(), new PithDriller(), new PithDriller(), new PithDriller())));
         harness.setHand(player1, new ArrayList<>(List.of(
-                new GrizzlyBears(), new GrizzlyBears())));
+                new PithDriller(), new PithDriller())));
 
-        resolveCombat();
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
+        harness.passUntil(TurnStep.END_COMBAT);
 
-        // Combat damage: 3 (animated) + 4 (hand size damage) = 7 total to opponent
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(13);
+        // Only the animated Sword's three combat damage is dealt.
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
 
-        // Controller gains 2 life (2 cards in hand)
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
+        // No life gain triggers.
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Sword damage does not inherit the equipped creature's infect")
+    void swordDamageDoesNotHaveInfect() {
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new PithDriller(), new PithDriller()));
+        Permanent creature = addCreatureReady(player1, new BlightedAgent());
+        Permanent sword = addSwordReady(player1);
+        sword.setAttachedTo(creature.getId());
+        creature.setAttacking(true);
+
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
+        harness.passUntil(TurnStep.END_COMBAT);
+
+        assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(3);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Sword damage does not inherit the equipped creature's lifelink")
+    void swordDamageDoesNotHaveLifelink() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new PithDriller(), new PithDriller()));
+        Permanent creature = addCreatureReady(player1, new VaultSkirge());
+        Permanent sword = addSwordReady(player1);
+        sword.setAttachedTo(creature.getId());
+        creature.setAttacking(true);
+
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
+        harness.passUntil(TurnStep.END_COMBAT);
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(23);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
+    }
+
+    @Test
+    @DisplayName("Hand sizes are counted on resolution even after the Sword leaves")
+    void usesCurrentHandsAfterSwordLeavesBattlefield() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new PithDriller()));
+        harness.setHand(player2, List.of(new PithDriller()));
+        Permanent creature = addCreatureReady(player1, new PithDriller());
+        Permanent sword = addSwordReady(player1);
+        sword.setAttachedTo(creature.getId());
+        creature.setAttacking(true);
+
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
+        harness.setHand(player1, List.of(new PithDriller(), new PithDriller(), new PithDriller()));
+        harness.setHand(player2, List.of(new PithDriller(), new PithDriller()));
+        gd.playerBattlefields.get(player1.getId()).remove(sword);
+        harness.passUntil(TurnStep.END_COMBAT);
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(23);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(14);
+    }
+
+    @Test
+    @DisplayName("Sword controller gains life when another player controls the equipped creature")
+    void equipmentControllerGainsLife() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new PithDriller(), new PithDriller()));
+        harness.setHand(player2, List.of(new PithDriller()));
+        Permanent creature = addCreatureReady(player1, new PithDriller());
+        Permanent sword = addSwordReady(player2);
+        sword.setAttachedTo(creature.getId());
+        creature.setAttacking(true);
+
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
+        harness.passUntil(TurnStep.END_COMBAT);
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
+    }
 
     private Permanent addAnimatedSword(Player player) {
-        Permanent perm = new Permanent(new SwordOfWarAndPeace());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new SwordOfWarAndPeace());
         perm.setSummoningSick(false);
         perm.setAnimatedUntilEndOfTurn(true);
         perm.setAnimatedPower(3);
         perm.setAnimatedToughness(3);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
     private Permanent addSwordReady(Player player) {
-        Permanent perm = new Permanent(new SwordOfWarAndPeace());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new SwordOfWarAndPeace());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }
