@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.b.BarbedLightning;
 import com.github.laxika.magicalvibes.cards.c.CrazedGoblin;
 import com.github.laxika.magicalvibes.cards.d.DroolingOgre;
+import com.github.laxika.magicalvibes.cards.d.DarksteelIngot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TurnTheTables.class, BarbedLightning.class, CrazedGoblin.class, DroolingOgre.class})
+@CardUsed({TurnTheTables.class, BarbedLightning.class, CrazedGoblin.class, DroolingOgre.class, DarksteelIngot.class})
 class TurnTheTablesTest extends BaseCardTest {
 
     @Test
@@ -141,14 +142,78 @@ class TurnTheTablesTest extends BaseCardTest {
         assertThat(gd.getLife(player1.getId())).isEqualTo(17);
     }
 
+    @Test
+    @DisplayName("Still redirects to a creature removed from combat after resolution")
+    void redirectsAfterTargetLeavesCombat() {
+        Permanent attacker = addCreatureReady(player2, new CrazedGoblin());
+        Permanent target = addCreatureReady(player2, new DroolingOgre());
+        attacker.setAttacking(true);
+        target.setAttacking(true);
+        castTurnTheTables(target);
+
+        target.setAttacking(false);
+        prepareDeclareBlockers(player2);
+        gs.declareBlockers(gd, player1, List.of());
+        resolveCombat(player2);
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        assertThat(target.getMarkedDamageBySource()).containsEntry(attacker.getId(), 1);
+    }
+
+    @Test
+    @DisplayName("Does not redirect after the destination leaves the battlefield")
+    void doesNotRedirectAfterTargetLeavesBattlefield() {
+        Permanent attacker = addCreatureReady(player2, new CrazedGoblin());
+        Permanent target = addCreatureReady(player2, new DroolingOgre());
+        attacker.setAttacking(true);
+        target.setAttacking(true);
+        castTurnTheTables(target);
+
+        harness.setHand(player2, List.of(new BarbedLightning()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.castModalInstantWithModes(player2, 0, 1, 2, new int[]{0}, List.of(target.getId()));
+        harness.passBothPriorities();
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(target.getCard());
+
+        prepareDeclareBlockers(player2);
+        gs.declareBlockers(gd, player1, List.of());
+        resolveCombat(player2);
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(19);
+    }
+
+    @Test
+    @DisplayName("Preserves the damage source after the destination changes controllers")
+    void preservesDamageSourceAfterTargetChangesControllers() {
+        Permanent attacker = addCreatureReady(player2, new CrazedGoblin());
+        Permanent target = addCreatureReady(player2, new DroolingOgre());
+        attacker.setAttacking(true);
+        target.setAttacking(true);
+        castTurnTheTables(target);
+
+        harness.castFromHand(player1, new DarksteelIngot(), "{3}");
+        resolveAllTriggers();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+        assertThat(target.isAttacking()).isFalse();
+
+        prepareDeclareBlockers(player2);
+        gs.declareBlockers(gd, player1, List.of());
+        resolveCombat(player2);
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        assertThat(target.getMarkedDamageBySource()).containsEntry(attacker.getId(), 1);
+    }
+
     private void castTurnTheTables(Permanent target) {
         harness.setHand(player1, List.of(new TurnTheTables()));
         addTurnTheTablesMana();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 
     private void addTurnTheTablesMana() {
