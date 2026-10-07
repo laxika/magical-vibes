@@ -31,8 +31,7 @@ class ThunderWallTest extends BaseCardTest {
         addCreatureReady(player1, new KjeldoranSkyknight());
         Permanent wall = addCreatureReady(player2, new ThunderWall());
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(wall.isBlocking()).isTrue();
@@ -101,5 +100,41 @@ class ThunderWallTest extends BaseCardTest {
 
         assertThat(wall.getPowerModifier()).isEqualTo(0);
         assertThat(wall.getToughnessModifier()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("The ability can be activated while Thunder Wall is tapped")
+    void abilityCanBeActivatedWhileTapped() {
+        Permanent wall = addCreatureReady(player1, new ThunderWall());
+        wall.setTapped(true);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(wall.getPowerModifier()).isEqualTo(1);
+        assertThat(wall.getToughnessModifier()).isEqualTo(1);
+        assertThat(wall.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The boost uses the stack and affects only the activating Thunder Wall")
+    void boostAffectsOnlyItsSourceOnResolution() {
+        Permanent source = addCreatureReady(player1, new ThunderWall());
+        Permanent other = addCreatureReady(player1, new ThunderWall());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(source.getPowerModifier()).isZero();
+        assertThat(source.getToughnessModifier()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(source.getPowerModifier()).isEqualTo(1);
+        assertThat(source.getToughnessModifier()).isEqualTo(1);
+        assertThat(other.getPowerModifier()).isZero();
+        assertThat(other.getToughnessModifier()).isZero();
     }
 }
