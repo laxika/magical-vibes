@@ -28,8 +28,6 @@ class ThunderingWurmTest extends BaseCardTest {
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
     }
 
-    // ===== ETB with a land card in hand =====
-
     @Test
     @DisplayName("Discarding a land card keeps Thundering Wurm on the battlefield")
     void discardingLandKeepsWurm() {
@@ -56,8 +54,6 @@ class ThunderingWurmTest extends BaseCardTest {
         harness.assertInHand(player1, "Forest");
     }
 
-    // ===== ETB with only non-land cards — auto-sacrifice =====
-
     @Test
     @DisplayName("Auto-sacrifices when controller has no land cards in hand")
     void autoSacrificesWithNoLandInHand() {
@@ -71,8 +67,6 @@ class ThunderingWurmTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
-
-    // ===== Filtered discard — only land cards are valid =====
 
     @Test
     @DisplayName("Discard choice only shows land card indices when hand has mixed types")
@@ -90,7 +84,40 @@ class ThunderingWurmTest extends BaseCardTest {
                 .containsExactlyInAnyOrder(1, 3);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("An opponent's land cannot prevent sacrifice when the controller's hand is empty")
+    void emptyHandSacrificesDespiteOpponentsLand() {
+        harness.castFromHand(player1, new ThunderingWurm(), "{2}{G}");
+        harness.setHand(player2, List.of(new Forest()));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Thundering Wurm");
+        harness.assertInGraveyard(player1, "Thundering Wurm");
+        harness.assertInHand(player2, "Forest");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A land acquired after entering can be discarded when the trigger resolves")
+    void landAvailabilityIsCheckedWhenTriggerResolves() {
+        harness.castFromHand(player1, new ThunderingWurm(), "{2}{G}");
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new GrizzlyBears(), new Forest(), new Forest()));
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 2);
+
+        harness.assertOnBattlefield(player1, "Thundering Wurm");
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Forest");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
 
     private void castWurmWithLandInHand() {
         harness.castFromHand(player1, new ThunderingWurm(), "{2}{G}");
