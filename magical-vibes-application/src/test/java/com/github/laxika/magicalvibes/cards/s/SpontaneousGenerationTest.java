@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.g.Gush;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -11,7 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SpontaneousGeneration.class, SpidersilkArmor.class})
+@CardUsed({SpontaneousGeneration.class, SpidersilkArmor.class, Gush.class})
 class SpontaneousGenerationTest extends BaseCardTest {
 
     @Test
@@ -21,8 +22,7 @@ class SpontaneousGenerationTest extends BaseCardTest {
                 new SpontaneousGeneration(), new SpidersilkArmor(), new SpidersilkArmor(), new SpidersilkArmor()));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(countPermanents(player1, "Saproling")).isEqualTo(3);
     }
@@ -33,8 +33,7 @@ class SpontaneousGenerationTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SpontaneousGeneration()));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(countPermanents(player1, "Saproling")).isZero();
     }
@@ -46,8 +45,7 @@ class SpontaneousGenerationTest extends BaseCardTest {
         harness.setHand(player2, List.of(new SpidersilkArmor(), new SpidersilkArmor()));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(countPermanents(player1, "Saproling")).isZero();
         assertThat(countPermanents(player2, "Saproling")).isZero();
@@ -59,12 +57,31 @@ class SpontaneousGenerationTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SpontaneousGeneration(), new SpidersilkArmor()));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         Permanent token = findPermanent(player1, "Saproling");
         assertThat(token.getCard().getPower()).isEqualTo(1);
         assertThat(token.getCard().getToughness()).isEqualTo(1);
         assertThat(token.getCard().getColor()).isEqualTo(com.github.laxika.magicalvibes.model.CardColor.GREEN);
+    }
+
+    @Test
+    @DisplayName("Counts cards drawn in response at resolution")
+    void countsCardsDrawnInResponse() {
+        harness.setHand(player1, List.of(new SpontaneousGeneration(), new Gush()));
+        harness.setLibrary(player1, List.of(new SpidersilkArmor(), new SpidersilkArmor()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.addMana(player1, ManaColor.BLUE, 5);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(countPermanents(player1, "Saproling")).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Saproling")).isEqualTo(2);
+        assertThat(countPermanents(player2, "Saproling")).isZero();
     }
 }
