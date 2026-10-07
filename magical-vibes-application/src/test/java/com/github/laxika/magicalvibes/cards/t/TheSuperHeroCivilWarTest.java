@@ -1,10 +1,13 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.c.ColossalDreadmaw;
+import com.github.laxika.magicalvibes.cards.c.CrawWurm;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.r.RobeOfMirrors;
+import com.github.laxika.magicalvibes.cards.w.WordOfSeizing;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -13,9 +16,12 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TheSuperHeroCivilWar.class, ColossalDreadmaw.class, GrizzlyBears.class, HillGiant.class})
+@CardUsed({TheSuperHeroCivilWar.class, CrawWurm.class, GrizzlyBears.class, HillGiant.class,
+        RobeOfMirrors.class, WordOfSeizing.class})
 class TheSuperHeroCivilWarTest extends BaseCardTest {
 
     @Test
@@ -24,17 +30,17 @@ class TheSuperHeroCivilWarTest extends BaseCardTest {
         Permanent saga = addSaga(0);
         Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
-        Permanent dreadmaw = harness.addToBattlefieldAndReturn(player2, new ColossalDreadmaw());
+        Permanent wurm = harness.addToBattlefieldAndReturn(player2, new CrawWurm());
 
         triggerChapter();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
-                .contains(bear.getId(), giant.getId(), dreadmaw.getId());
+                .contains(bear.getId(), giant.getId(), wurm.getId());
         harness.handlePermanentChosen(player1, giant.getId());
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .contains(bear.getId())
-                .doesNotContain(dreadmaw.getId());
+                .doesNotContain(wurm.getId());
         harness.handlePermanentChosen(player1, bear.getId());
         harness.passBothPriorities();
 
@@ -88,6 +94,189 @@ class TheSuperHeroCivilWarTest extends BaseCardTest {
         assertThat(ownCreature.getMarkedDamage()).isEqualTo(2);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(opposingCreature);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(saga);
+    }
+
+    @Test
+    void chapterICanChooseNoTargets() {
+        addSaga(0);
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        triggerChapter();
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(bear);
+    }
+
+    @Test
+    void chapterICanChooseOneCreatureAtTheManaValueLimit() {
+        addSaga(0);
+        Permanent wurm = harness.addToBattlefieldAndReturn(player2, new CrawWurm());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        triggerChapter();
+        harness.handlePermanentChosen(player1, wurm.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(wurm);
+    }
+
+    @Test
+    void chapterIControlPersistsWhenSagaChangesController() {
+        Permanent saga = addSaga(0);
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        triggerChapter();
+        harness.handlePermanentChosen(player1, bear.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(bear);
+
+        harness.setHand(player2, List.of(new WordOfSeizing()));
+        harness.addMana(player2, ManaColor.RED, 5);
+        harness.castAndResolveInstant(player2, 0, saga.getId());
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(saga);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(bear);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(bear);
+    }
+
+    @Test
+    void chapterIStillResolvesWhenSagaChangesControllerInResponse() {
+        Permanent saga = addSaga(0);
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        triggerChapter();
+        harness.handlePermanentChosen(player1, bear.getId());
+        harness.setHand(player2, List.of(new WordOfSeizing()));
+        harness.addMana(player2, ManaColor.RED, 5);
+        harness.castAndResolveInstant(player2, 0, saga.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(saga);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(bear);
+    }
+
+    @Test
+    void chapterIControlEndsWhenSagaLeavesTheBattlefield() {
+        Permanent saga = addSaga(0);
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        triggerChapter();
+        harness.handlePermanentChosen(player1, bear.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(bear);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .sacrificePermanentToGraveyard(gd, saga));
+        harness.runStateBasedActions();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(bear);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bear);
+    }
+
+    @Test
+    void chapterIIDoesNotAffectCreaturesEnteringAfterResolution() {
+        addSaga(1);
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        triggerChapter();
+        harness.passBothPriorities();
+        Permanent lateCreature = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, lateCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, lateCreature)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, lateCreature, Keyword.VIGILANCE)).isFalse();
+    }
+
+    @Test
+    void chapterIIICanDeclineTheSecondTarget() {
+        Permanent saga = addSaga(2);
+        Permanent giant = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        triggerChapter();
+        harness.handlePermanentChosen(player1, giant.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(giant.getMarkedDamage()).isZero();
+        assertThat(bear.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(bear);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(saga);
+    }
+
+    @Test
+    void chapterIIICanFightAnotherCreatureYouControl() {
+        addSaga(2);
+        Permanent giant = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        triggerChapter();
+        harness.handlePermanentChosen(player1, giant.getId());
+        harness.handlePermanentChosen(player1, bear.getId());
+        harness.passBothPriorities();
+
+        assertThat(giant.getMarkedDamage()).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bear);
+    }
+
+    @Test
+    void chapterIIIDoesNotFightIfFirstTargetChangesController() {
+        addSaga(2);
+        Permanent giant = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        triggerChapter();
+        harness.handlePermanentChosen(player1, giant.getId());
+        harness.handlePermanentChosen(player1, bear.getId());
+        harness.setHand(player2, List.of(new WordOfSeizing()));
+        harness.addMana(player2, ManaColor.RED, 5);
+        harness.castAndResolveInstant(player2, 0, giant.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(giant, bear);
+        assertThat(giant.getMarkedDamage()).isZero();
+        assertThat(bear.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void chapterICannotChooseACreatureWithShroud() {
+        Permanent shroudedBear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new RobeOfMirrors()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castEnchantment(player1, 0, shroudedBear.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.hasKeyword(gd, shroudedBear, Keyword.SHROUD)).isTrue();
+        Permanent legalBear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        addSaga(0);
+
+        triggerChapter();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .contains(legalBear.getId())
+                .doesNotContain(shroudedBear.getId());
+    }
+
+    @Test
+    void chapterIIICannotChooseACreatureWithShroudAsEitherTarget() {
+        Permanent shroudedBear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new RobeOfMirrors()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castEnchantment(player1, 0, shroudedBear.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.hasKeyword(gd, shroudedBear, Keyword.SHROUD)).isTrue();
+        Permanent giant = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        Permanent legalBear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        addSaga(2);
+
+        triggerChapter();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .contains(giant.getId())
+                .doesNotContain(shroudedBear.getId());
+        harness.handlePermanentChosen(player1, giant.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .contains(legalBear.getId())
+                .doesNotContain(shroudedBear.getId());
     }
 
     private Permanent addSaga(int loreCounters) {
