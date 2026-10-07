@@ -24,6 +24,92 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class TestOfFaithTest extends BaseCardTest {
 
     @Test
+    void addsCountersOnlyAsDamageIsPreventedAcrossMultipleEvents() {
+        Permanent gargoyle = harness.addToBattlefieldAndReturn(player1, new DarksteelGargoyle());
+        harness.setHand(player1, List.of(new TestOfFaith()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player1, 0, gargoyle.getId());
+
+        assertThat(gargoyle.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+
+        harness.setHand(player1, List.of(new Fireball()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveSorcery(player1, 0, 1, gargoyle.getId());
+
+        assertThat(gargoyle.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gargoyle.getMarkedDamage()).isZero();
+
+        harness.setHand(player1, List.of(new Fireball()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castAndResolveSorcery(player1, 0, 3, gargoyle.getId());
+
+        assertThat(gargoyle.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(gargoyle.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    void multipleCopiesPreventSixDamageInTotal() {
+        Permanent gargoyle = harness.addToBattlefieldAndReturn(player1, new DarksteelGargoyle());
+        harness.setHand(player1, List.of(new TestOfFaith(), new TestOfFaith()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.castAndResolveInstant(player1, 0, gargoyle.getId());
+        harness.castAndResolveInstant(player1, 0, gargoyle.getId());
+
+        harness.setHand(player1, List.of(new Fireball()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
+        harness.castAndResolveSorcery(player1, 0, 7, gargoyle.getId());
+
+        assertThat(gargoyle.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);
+        assertThat(gargoyle.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    void countersRemainAfterTheUnusedShieldExpires() {
+        Permanent gargoyle = harness.addToBattlefieldAndReturn(player1, new DarksteelGargoyle());
+        harness.setHand(player1, List.of(new TestOfFaith()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player1, 0, gargoyle.getId());
+
+        harness.setHand(player1, List.of(new Fireball()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveSorcery(player1, 0, 1, gargoyle.getId());
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new BarbedLightning()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.castModalInstant(player2, 0, 0, List.of(gargoyle.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gargoyle.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gargoyle.getMarkedDamage()).isEqualTo(3);
+    }
+
+    @Test
+    void countersIncreaseToughnessBeforeLethalDamageIsChecked() {
+        Permanent golem = harness.addToBattlefieldAndReturn(player1, new DrossGolem());
+        harness.setHand(player1, List.of(new TestOfFaith()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player1, 0, golem.getId());
+
+        harness.setHand(player1, List.of(new Fireball()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.castAndResolveSorcery(player1, 0, 5, golem.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(golem);
+        assertThat(golem.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(golem.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
     void preventsThreeDamageAndAddsThreePlusOneCounters() {
         Permanent gargoyle = harness.addToBattlefieldAndReturn(player1, new DarksteelGargoyle());
         harness.setHand(player1, List.of(new TestOfFaith()));
