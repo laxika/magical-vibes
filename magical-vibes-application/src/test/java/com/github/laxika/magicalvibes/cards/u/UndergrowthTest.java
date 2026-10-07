@@ -36,8 +36,9 @@ class UndergrowthTest extends BaseCardTest {
 
         castUndergrowth(true);
 
-        assertThat(gd.combatDamageExemptPredicate).isNotNull();
         assertThat(gqs.isPreventedFromDealingDamage(gd, soldier, true)).isFalse();
+        declareAttackers(player1, List.of(0));
+        harness.assertLife(player2, 19);
     }
 
     @Test
@@ -69,8 +70,7 @@ class UndergrowthTest extends BaseCardTest {
         Permanent blocker = addCreatureReady(player2, new SoldierOfFortune());
 
         castUndergrowth(false);
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -110,6 +110,51 @@ class UndergrowthTest extends BaseCardTest {
 
         assertThat(gd.preventAllCombatDamage).isFalse();
         assertThat(gd.combatDamageExemptPredicate).isNull();
+    }
+
+    @Test
+    void paidAdditionalCostAllowsOpposingRedBlockerDamage() {
+        Permanent attacker = addCreatureReady(player1, new SoldierOfFortune());
+        Permanent blocker = addCreatureReady(player2, new SoldierOfFortune());
+
+        castUndergrowth(true);
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+        harness.assertInGraveyard(player1, "Soldier of Fortune");
+        harness.assertInGraveyard(player2, "Soldier of Fortune");
+    }
+
+    @Test
+    void paidAdditionalCostDoesNotOverrideAnotherUndergrowth() {
+        addCreatureReady(player1, new SoldierOfFortune());
+        castUndergrowth(false);
+        castUndergrowth(true);
+
+        declareAttackers(player1, List.of(0));
+
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void paidAdditionalCostPreventionEndsAtCleanup() {
+        Permanent crow = addCreatureReady(player1, new StormCrow());
+        castUndergrowth(true);
+        assertThat(gqs.isPreventedFromDealingDamage(gd, crow, true)).isTrue();
+
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.isPreventedFromDealingDamage(gd, crow, true)).isFalse();
     }
 
     private void castUndergrowth(boolean kicked) {
