@@ -86,6 +86,40 @@ class StasisCellTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    @DisplayName("Attaching Stasis Cell does not tap an untapped creature")
+    void attachingDoesNotTapCreature() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new BorosRecruit());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new BorosRecruit());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new StasisCell());
+        aura.setAttachedTo(first.getId());
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.activateAbility(player1, indexOf(player1, aura), null, second.getId());
+        harness.passBothPriorities();
+
+        assertThat(aura.getAttachedTo()).isEqualTo(second.getId());
+        assertThat(second.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Moving Stasis Cell releases the old creature and locks the new creature")
+    void movingAuraTransfersUntapPrevention() {
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new BorosRecruit());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new BorosRecruit());
+        first.tap();
+        second.tap();
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new StasisCell());
+        aura.setAttachedTo(first.getId());
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.activateAbility(player1, indexOf(player1, aura), null, second.getId());
+        harness.passBothPriorities();
+        harness.performUntapStep(player2);
+
+        assertThat(first.isTapped()).isFalse();
+        assertThat(second.isTapped()).isTrue();
+    }
     private int indexOf(Player player, Permanent permanent) {
         return gd.playerBattlefields.get(player.getId()).indexOf(permanent);
     }
