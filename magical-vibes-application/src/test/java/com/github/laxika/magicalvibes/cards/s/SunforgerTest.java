@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.cards.b.BorosRecruit;
 import com.github.laxika.magicalvibes.cards.c.Char;
 import com.github.laxika.magicalvibes.cards.c.Convolute;
 import com.github.laxika.magicalvibes.cards.d.DevouringLight;
+import com.github.laxika.magicalvibes.cards.f.FlashConscription;
+import com.github.laxika.magicalvibes.cards.f.FieryConclusion;
 import com.github.laxika.magicalvibes.cards.l.LightningHelix;
 import com.github.laxika.magicalvibes.cards.r.RainOfEmbers;
 import com.github.laxika.magicalvibes.model.Card;
@@ -23,7 +25,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Sunforger.class, BorosRecruit.class, LightningHelix.class, Char.class,
-        RainOfEmbers.class, Convolute.class, DevouringLight.class})
+        RainOfEmbers.class, Convolute.class, DevouringLight.class, SeedSpark.class,
+        FlashConscription.class, FieryConclusion.class})
 class SunforgerTest extends BaseCardTest {
 
     @Test
@@ -63,19 +66,19 @@ class SunforgerTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Sunforger grants its search ability only to the equipped creature")
-    void searchAbilityRequiresAnEquippedCreature() {
+    @DisplayName("Sunforger cannot pay the unattach cost while unattached")
+    void searchAbilityRequiresAttachment() {
         addCreatureReady(player1, new BorosRecruit());
         addSunforgerReady(player1);
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+        assertThatThrownBy(() -> activateSearch(player1, 1))
                 .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
-    @DisplayName("Equipped creature unattaches Sunforger and casts a red-or-white instant for free")
+    @DisplayName("Sunforger unattaches and casts a red-or-white instant for free")
     void unattachesAndCastsMatchingInstantForFree() {
         Permanent creature = addCreatureReady(player1, new BorosRecruit());
         Permanent sunforger = addSunforgerReady(player1);
@@ -84,7 +87,7 @@ class SunforgerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.activateAbility(player1, 0, null, null);
+        activateSearch(player1, 1);
         assertThat(sunforger.getAttachedTo()).isNull();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
 
@@ -115,7 +118,7 @@ class SunforgerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.activateAbility(player1, 0, null, null);
+        activateSearch(player1, 1);
         harness.passBothPriorities();
         harness.handleCardChosen(player1, 0);
         harness.handlePermanentChosen(player1, player2.getId());
@@ -136,7 +139,7 @@ class SunforgerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.activateAbility(player1, 0, null, null);
+        activateSearch(player1, 1);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -155,7 +158,7 @@ class SunforgerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.activateAbility(player1, 0, null, null);
+        activateSearch(player1, 1);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -174,7 +177,7 @@ class SunforgerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.activateAbility(player1, 0, null, null);
+        activateSearch(player1, 1);
         harness.passBothPriorities();
         harness.handleCardChosen(player1, 0);
 
@@ -182,6 +185,147 @@ class SunforgerTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId()))
                 .extracting(Card::getName).containsExactly("Devouring Light");
+    }
+
+    @Test
+    @DisplayName("Sunforger casts a white instant with mana value exactly four")
+    void castsWhiteInstantAtManaValueLimit() {
+        Permanent creature = addCreatureReady(player1, new BorosRecruit());
+        Permanent sunforger = addSunforgerReady(player1);
+        sunforger.setAttachedTo(creature.getId());
+        harness.setLibrary(player1, List.of(new SeedSpark()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        activateSearch(player1, 1);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.handlePermanentChosen(player1, sunforger.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Seed Spark");
+        harness.assertInGraveyard(player1, "Sunforger");
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(creature);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Sunforger excludes a red instant with mana value above four")
+    void excludesInstantAboveManaValueLimit() {
+        Permanent creature = addCreatureReady(player1, new BorosRecruit());
+        Permanent sunforger = addSunforgerReady(player1);
+        sunforger.setAttachedTo(creature.getId());
+        harness.setLibrary(player1, List.of(new FlashConscription()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        activateSearch(player1, 1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .extracting(Card::getName).containsExactly("Flash Conscription");
+    }
+
+    @Test
+    @DisplayName("A restricted search may fail to find an eligible instant")
+    void mayFailToFindMatchingInstant() {
+        Permanent creature = addCreatureReady(player1, new BorosRecruit());
+        Permanent sunforger = addSunforgerReady(player1);
+        sunforger.setAttachedTo(creature.getId());
+        harness.setLibrary(player1, List.of(new LightningHelix()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        activateSearch(player1, 1);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(sunforger.getAttachedTo()).isNull();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .extracting(Card::getName).containsExactly("Lightning Helix");
+    }
+
+    @Test
+    @DisplayName("The Equipment controller can activate Sunforger attached to an opponent's creature")
+    void equipmentControllerSearchesOwnLibraryWithOpposingCreatureEquipped() {
+        Permanent creature = addCreatureReady(player2, new BorosRecruit());
+        Permanent sunforger = addSunforgerReady(player1);
+        sunforger.setAttachedTo(creature.getId());
+        harness.setLibrary(player1, List.of(new LightningHelix()));
+        harness.setLibrary(player2, List.of(new Char()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        activateSearch(player1, 0);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(sunforger.getAttachedTo()).isNull();
+        harness.assertLife(player1, 23);
+        harness.assertLife(player2, 17);
+        harness.assertInGraveyard(player1, "Lightning Helix");
+        assertThat(gd.playerDecks.get(player2.getId()))
+                .extracting(Card::getName).containsExactly("Char");
+    }
+
+    @Test
+    @DisplayName("The equipped creature's controller cannot activate another player's Sunforger")
+    void opposingCreatureControllerCannotActivateSearch() {
+        Permanent creature = addCreatureReady(player2, new BorosRecruit());
+        Permanent sunforger = addSunforgerReady(player1);
+        sunforger.setAttachedTo(creature.getId());
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(sunforger.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Casting without paying mana still requires Fiery Conclusion's sacrifice cost")
+    void paysMandatoryAdditionalCostBeforeFreeSpellResolves() {
+        Permanent creature = addCreatureReady(player1, new BorosRecruit());
+        Permanent target = addCreatureReady(player2, new BorosRecruit());
+        Permanent sunforger = addSunforgerReady(player1);
+        sunforger.setAttachedTo(creature.getId());
+        harness.setLibrary(player1, List.of(new FieryConclusion()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        activateSearch(player1, 1);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.handlePermanentChosen(player1, target.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isNotNull();
+        harness.handlePermanentChosen(player1, creature.getId());
+        harness.assertInGraveyard(player1, "Boros Recruit");
+        harness.assertOnBattlefield(player2, "Boros Recruit");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Boros Recruit");
+        harness.assertInGraveyard(player1, "Fiery Conclusion");
+        harness.assertOnBattlefield(player1, "Sunforger");
+    }
+
+    private void activateSearch(Player player, int permanentIndex) {
+        Permanent source = gd.playerBattlefields.get(player.getId()).get(permanentIndex);
+        var abilities = source.getCard().getActivatedAbilities();
+        int abilityIndex = java.util.stream.IntStream.range(0, abilities.size())
+                .filter(index -> "{R}{W}".equals(abilities.get(index).getManaCost()))
+                .findFirst().orElse(0);
+        harness.activateAbility(player, permanentIndex, abilityIndex, null, null);
     }
 
     private Permanent addSunforgerReady(Player player) {
