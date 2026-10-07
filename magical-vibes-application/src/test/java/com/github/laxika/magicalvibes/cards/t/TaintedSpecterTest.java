@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.b.BayFalcon;
+import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.n.NobleElephant;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -14,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TaintedSpecter.class, BayFalcon.class, NobleElephant.class})
+@CardUsed({TaintedSpecter.class, BayFalcon.class, Boomerang.class, NobleElephant.class})
 class TaintedSpecterTest extends BaseCardTest {
 
     @Test
@@ -103,6 +104,136 @@ class TaintedSpecterTest extends BaseCardTest {
     void cannotActivateAtInstantSpeed() {
         setupSpecter();
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The blast damages the source and creatures controlled by either player")
+    void discardDamagesBothBattlefieldsIncludingSource() {
+        setupSpecter();
+        harness.addToBattlefield(player1, new BayFalcon());
+        harness.addToBattlefield(player2, new NobleElephant());
+        harness.setHand(player2, List.of(new NobleElephant()));
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+        harness.handleCardChosen(player2, 0);
+
+        harness.assertInGraveyard(player1, "Bay Falcon");
+        harness.assertNotOnBattlefield(player1, "Bay Falcon");
+        assertThat(findPermanent(player1, "Tainted Specter").getMarkedDamage()).isEqualTo(1);
+        assertThat(findPermanent(player2, "Noble Elephant").getMarkedDamage()).isEqualTo(1);
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("The target chooses which single card to discard from a larger hand")
+    void targetChoosesDiscardedCard() {
+        setupSpecter();
+        harness.setHand(player2, List.of(new BayFalcon(), new NobleElephant()));
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+        harness.handleCardChosen(player2, 1);
+
+        harness.assertInHand(player2, "Bay Falcon");
+        harness.assertNotInHand(player2, "Noble Elephant");
+        harness.assertInGraveyard(player2, "Noble Elephant");
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("The target chooses one card to put above an existing library")
+    void targetChoosesCardToPutOnTop() {
+        setupSpecter();
+        BayFalcon falcon = new BayFalcon();
+        NobleElephant elephant = new NobleElephant();
+        TaintedSpecter libraryCard = new TaintedSpecter();
+        harness.setHand(player2, List.of(falcon, elephant));
+        harness.setLibrary(player2, List.of(libraryCard));
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handleMultipleCardsChosen(player2, List.of(elephant.getId()));
+
+        harness.assertInHand(player2, "Bay Falcon");
+        harness.assertNotInHand(player2, "Noble Elephant");
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(elephant, libraryCard);
+        harness.assertNotInGraveyard(player2, "Noble Elephant");
+        assertThat(findPermanent(player1, "Tainted Specter").getMarkedDamage()).isZero();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("The ability still deals damage after its source leaves the battlefield")
+    void abilityResolvesAfterSourceIsReturnedToHand() {
+        setupSpecter();
+        harness.addToBattlefield(player2, new BayFalcon());
+        harness.setHand(player2, List.of(new Boomerang(), new NobleElephant()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.castAndResolveInstant(player2, 0, harness.getPermanentId(player1, "Tainted Specter"));
+        harness.assertNotOnBattlefield(player1, "Tainted Specter");
+        harness.assertInHand(player1, "Tainted Specter");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+        harness.handleCardChosen(player2, 0);
+
+        harness.assertInGraveyard(player2, "Noble Elephant");
+        harness.assertInGraveyard(player2, "Bay Falcon");
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Cannot activate during an opponent's main phase")
+    void cannotActivateDuringOpponentsMainPhase() {
+        setupSpecter();
+        harness.forceActivePlayer(player2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot activate with another spell on the stack during its controller's main phase")
+    void cannotActivateWithNonemptyStack() {
+        setupSpecter();
+        harness.addToBattlefield(player2, new BayFalcon());
+        harness.setHand(player1, List.of(new Boomerang()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castInstant(player1, 0, harness.getPermanentId(player2, "Bay Falcon"));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(findPermanent(player1, "Tainted Specter").isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Cannot pay the tap cost while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        setupSpecter();
+        findPermanent(player1, "Tainted Specter").setSummoningSick(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot pay the tap cost when already tapped")
+    void cannotActivateWhileTapped() {
+        setupSpecter();
+        findPermanent(player1, "Tainted Specter").tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
