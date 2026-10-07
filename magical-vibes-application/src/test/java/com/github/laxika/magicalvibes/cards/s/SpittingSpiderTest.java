@@ -15,7 +15,8 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SpittingSpider.class, Forest.class, GrizzlyBears.class, SuntailHawk.class})
+@CardUsed({SpittingSpider.class, Forest.class, GrizzlyBears.class, SuntailHawk.class,
+        WindDrake.class, AshayaSoulOfTheWild.class})
 class SpittingSpiderTest extends BaseCardTest {
 
     @Test
@@ -98,7 +99,7 @@ class SpittingSpiderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        harness.assertLife(player2, 20);
     }
 
     @Test
@@ -131,6 +132,50 @@ class SpittingSpiderTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot sacrifice a land controlled by the opponent")
+    void cannotSacrificeOpponentsLand() {
+        harness.addToBattlefield(player1, new SpittingSpider());
+        harness.addToBattlefield(player2, new Forest());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player2, "Forest");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can activate while tapped and summoning sick, sacrificing a tapped land")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent spider = harness.addToBattlefieldAndReturn(player1, new SpittingSpider());
+        spider.tap();
+        spider.setSummoningSick(true);
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        forest.tap();
+        harness.addToBattlefield(player2, new SuntailHawk());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertInGraveyard(player2, "Suntail Hawk");
+        harness.assertOnBattlefield(player1, "Spitting Spider");
+    }
+
+    @Test
+    @DisplayName("Damages a flyer that enters after activation but before resolution")
+    void checksFlyingCreaturesAtResolution() {
+        harness.addToBattlefield(player1, new SpittingSpider());
+        harness.addToBattlefield(player1, new Forest());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.addToBattlefield(player2, new SuntailHawk());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Suntail Hawk");
     }
 
     @Test
