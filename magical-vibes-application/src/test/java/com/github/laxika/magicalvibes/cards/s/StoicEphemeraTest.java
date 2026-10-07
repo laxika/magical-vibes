@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.m.MistralCharger;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.action.SacrificeAtEndOfCombat;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -47,8 +48,7 @@ class StoicEphemeraTest extends BaseCardTest {
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
 
         harness.assertNotOnBattlefield(player2, "Stoic Ephemera");
         harness.assertInGraveyard(player2, "Stoic Ephemera");
@@ -68,6 +68,47 @@ class StoicEphemeraTest extends BaseCardTest {
 
         assertThat(gd.hasDelayedAction(SacrificeAtEndOfCombat.class)).isFalse();
         harness.assertOnBattlefield(player2, "Stoic Ephemera");
+    }
+
+    @Test
+    @DisplayName("End-of-combat sacrifice uses the stack and allows responses")
+    void endOfCombatSacrificeAllowsResponses() {
+        Permanent attacker = addCreatureReady(player1, new MistralCharger());
+        attacker.setAttacking(true);
+        Permanent ephemera = addCreatureReady(player2, new StoicEphemera());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+
+        harness.assertOnBattlefield(player2, "Stoic Ephemera");
+        assertThat(gd.stack).anyMatch(entry ->
+                entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                        && ephemera.getId().equals(entry.getSourcePermanentId())
+                        && player2.getId().equals(entry.getControllerId()));
+
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Stoic Ephemera");
+        harness.assertInGraveyard(player2, "Stoic Ephemera");
+    }
+
+    @Test
+    @DisplayName("Only the Stoic Ephemera that blocked is sacrificed")
+    void nonblockingCopySurvives() {
+        Permanent attacker = addCreatureReady(player1, new MistralCharger());
+        attacker.setAttacking(true);
+        Permanent blockingEphemera = addCreatureReady(player2, new StoicEphemera());
+        Permanent nonblockingEphemera = addCreatureReady(player2, new StoicEphemera());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .contains(nonblockingEphemera).doesNotContain(blockingEphemera);
+        harness.assertInGraveyard(player2, "Stoic Ephemera");
     }
 
 }
