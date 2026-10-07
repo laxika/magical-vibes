@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.d.DwynensElite;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.ProwessOfTheFair;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -15,8 +16,10 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ThranduilTheStrategist.class, DwynensElite.class, GrizzlyBears.class, Forest.class})
+@CardUsed({ThranduilTheStrategist.class, DwynensElite.class, GrizzlyBears.class, Forest.class,
+        ProwessOfTheFair.class})
 class ThranduilTheStrategistTest extends BaseCardTest {
 
     @Test
@@ -28,10 +31,7 @@ class ThranduilTheStrategistTest extends BaseCardTest {
         harness.playLand(player1, 0);
         harness.passBothPriorities();
 
-        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().isToken())
-                .findFirst()
-                .orElseThrow();
+        Permanent token = findPermanent(player1, "Elf");
         assertThat(token.getEffectivePower()).isEqualTo(1);
         assertThat(token.getEffectiveToughness()).isEqualTo(1);
         assertThat(token.getCard().getSubtypes()).contains(CardSubtype.ELF);
@@ -63,5 +63,56 @@ class ThranduilTheStrategistTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Other noncreature Elves can tap for mana immediately")
+    void grantsManaAbilityToNoncreatureElf() {
+        harness.addToBattlefield(player1, new ThranduilTheStrategist());
+        Permanent elfEnchantment = harness.addToBattlefieldAndReturn(player1, new ProwessOfTheFair());
+
+        harness.activateAbility(player1, 1, 0, null, null);
+        harness.handleListChoice(player1, ManaColor.BLUE.name());
+
+        assertThat(elfEnchantment.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opponent's land does not trigger landfall")
+    void opponentsLandDoesNotCreateToken() {
+        harness.addToBattlefield(player1, new ThranduilTheStrategist());
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new Forest()));
+
+        harness.playLand(player2, 0);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Elf")).isZero();
+        assertThat(countPermanents(player2, "Elf")).isZero();
+    }
+
+    @Test
+    @DisplayName("Landfall tokens gain the mana ability but must overcome summoning sickness")
+    void landfallTokenCanProduceManaOnceReady() {
+        harness.addToBattlefield(player1, new ThranduilTheStrategist());
+        harness.setHand(player1, List.of(new Forest()));
+        harness.playLand(player1, 0);
+        harness.passBothPriorities();
+        Permanent token = findPermanent(player1, "Elf");
+        int tokenIndex = gd.playerBattlefields.get(player1.getId()).indexOf(token);
+
+        assertThatThrownBy(() ->
+                harness.activateAbility(player1, tokenIndex, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        token.setSummoningSick(false);
+        harness.activateAbility(player1, tokenIndex, 0, null, null);
+        harness.handleListChoice(player1, ManaColor.GREEN.name());
+
+        assertThat(token.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
     }
 }
