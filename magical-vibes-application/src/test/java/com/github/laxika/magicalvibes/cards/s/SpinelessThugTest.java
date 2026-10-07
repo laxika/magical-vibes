@@ -57,10 +57,9 @@ class SpinelessThugTest extends BaseCardTest {
     void cannotBeDeclaredAsBlocker() {
         addCreatureReady(player2, new SpinelessThug());
 
-        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
-        attacker.setAttacking(true);
+        addCreatureReady(player1, new GrizzlyBears());
 
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -73,10 +72,9 @@ class SpinelessThugTest extends BaseCardTest {
         addCreatureReady(player2, new SpinelessThug());
         Permanent grizzlyBears = addCreatureReady(player2, new GrizzlyBears());
 
-        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
-        attacker.setAttacking(true);
+        addCreatureReady(player1, new GrizzlyBears());
 
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(1, 0)));
 
