@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.a.AetherFlash;
-import com.github.laxika.magicalvibes.cards.b.BenalishKnight;
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -15,8 +15,106 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AetherFlash.class, BenalishKnight.class, Forest.class, GrizzlyBears.class, Island.class, StrandsOfNight.class, Swamp.class})
+@CardUsed({AetherFlash.class, Disenchant.class, Forest.class, GrizzlyBears.class, Island.class, StrandsOfNight.class, Swamp.class})
 class StrandsOfNightTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("A tapped Swamp can be sacrificed and all costs are paid before resolution")
+    void paysCostsBeforeReturningCreature() {
+        Card creature = new GrizzlyBears();
+        harness.addToBattlefield(player1, new StrandsOfNight());
+        harness.addToBattlefieldAndReturn(player1, new Swamp()).setTapped(true);
+        harness.setGraveyard(player1, List.of(creature));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.setLife(player1, 20);
+
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(creature.getId()));
+
+        harness.assertLife(player1, 18);
+        harness.assertInGraveyard(player1, "Swamp");
+        harness.assertNotOnBattlefield(player1, "Swamp");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().getId().equals(creature.getId()))
+                .singleElement().satisfies(permanent -> assertThat(permanent.isTapped()).isFalse());
+    }
+
+    @Test
+    @DisplayName("The activated ability resolves after Strands of Night is destroyed")
+    void resolvesAfterSourceIsDestroyed() {
+        Card creature = new GrizzlyBears();
+        harness.addToBattlefield(player1, new StrandsOfNight());
+        harness.addToBattlefield(player1, new Swamp());
+        harness.setGraveyard(player1, List.of(creature));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.setHand(player2, List.of(new Disenchant()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(creature.getId()));
+        harness.castAndResolveInstant(player2, 0, harness.getPermanentId(player1, "Strands of Night"));
+
+        harness.assertNotOnBattlefield(player1, "Strands of Night");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Returning a creature triggers Aether Flash")
+    void returnedCreatureTriggersEntersBattlefieldAbility() {
+        Card creature = new GrizzlyBears();
+        harness.addToBattlefield(player1, new StrandsOfNight());
+        harness.addToBattlefield(player1, new Swamp());
+        harness.addToBattlefield(player2, new AetherFlash());
+        harness.setGraveyard(player1, List.of(creature));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(creature.getId()));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Chooses which Swamp to sacrifice when multiple Swamps are controlled")
+    void choosesSwampToSacrifice() {
+        Card creature = new GrizzlyBears();
+        harness.addToBattlefield(player1, new StrandsOfNight());
+        var firstSwamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
+        var chosenSwamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
+        harness.setGraveyard(player1, List.of(creature));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.setLife(player1, 20);
+
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(creature.getId()));
+        harness.handlePermanentChosen(player1, chosenSwamp.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .contains(firstSwamp).doesNotContain(chosenSwamp);
+        harness.assertInGraveyard(player1, "Swamp");
+        harness.assertLife(player1, 18);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+    }
 
     @Test
     @DisplayName("Returns target creature from your graveyard, paying 2 life and sacrificing a Swamp")
@@ -233,8 +331,7 @@ class StrandsOfNightTest extends BaseCardTest {
         gd.playerGraveyards.get(player1.getId()).removeIf(card -> card.getId().equals(creature.getId()));
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(permanent -> permanent.getCard().getId().equals(creature.getId()));
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertLife(player1, 18);
         harness.assertNotOnBattlefield(player1, "Swamp");
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
