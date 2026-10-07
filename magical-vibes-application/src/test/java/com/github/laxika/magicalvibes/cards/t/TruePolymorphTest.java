@@ -76,6 +76,50 @@ class TruePolymorphTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Copying a noncreature artifact removes the creature's activated ability")
+    void creatureBecomesNoncreatureArtifact() {
+        Permanent target = addCreatureReady(player1, new ProdigalPyromancer());
+        Permanent copySource = harness.addToBattlefieldAndReturn(player2, new DarksteelRelic());
+
+        castTruePolymorph(target, copySource);
+
+        assertThat(gqs.isCreature(gd, target)).isFalse();
+        assertThatThrownBy(() -> harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(target), null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Copies the current copied abilities of a permanent that is already a copy")
+    void copiesAnExistingCopy() {
+        Permanent firstCopy = addCreatureReady(player1, new GrizzlyBears());
+        Permanent original = addCreatureReady(player2, new ProdigalPyromancer());
+        Permanent secondCopy = addCreatureReady(player1, new GrizzlyBears());
+
+        castTruePolymorph(firstCopy, original);
+        castTruePolymorph(secondCopy, firstCopy);
+        activateCopiedPyromancer(secondCopy);
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+    }
+
+    @Test
+    @DisplayName("Does not change the copy source when the first target leaves")
+    void firstTargetLeavesBeforeResolution() {
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        Permanent copySource = addCreatureReady(player1, new ProdigalPyromancer());
+        harness.setHand(player1, List.of(new TruePolymorph()));
+        addCastMana();
+        harness.castInstant(player1, 0, List.of(target.getId(), copySource.getId()));
+
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+        harness.passBothPriorities();
+        activateCopiedPyromancer(copySource);
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+    }
+
     private void castTruePolymorph(Permanent target, Permanent copySource) {
         harness.setHand(player1, List.of(new TruePolymorph()));
         addCastMana();
