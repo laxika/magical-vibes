@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({SunspringExpedition.class, Forest.class})
 class SunspringExpeditionTest extends BaseCardTest {
 
     @Test
@@ -67,5 +69,60 @@ class SunspringExpeditionTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void opponentLandDoesNotTriggerLandfall() {
+        Permanent expedition = harness.addToBattlefieldAndReturn(player1, new SunspringExpedition());
+
+        harness.enterBattlefieldAndReturn(player2, new Forest());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(expedition.getCounterCount(CounterType.QUEST)).isZero();
+    }
+
+    @Test
+    void landEnteringWithoutBeingPlayedTriggersLandfall() {
+        Permanent expedition = harness.addToBattlefieldAndReturn(player1, new SunspringExpedition());
+
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(expedition.getCounterCount(CounterType.QUEST)).isEqualTo(1);
+    }
+
+    @Test
+    void activationPaysCostsImmediatelyAndGainsLifeOnlyOnResolution() {
+        Permanent expedition = harness.addToBattlefieldAndReturn(player1, new SunspringExpedition());
+        expedition.setCounterCount(CounterType.QUEST, 4);
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 15);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(expedition.getCounterCount(CounterType.QUEST)).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(expedition.getCard());
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(10);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
+    }
+
+    @Test
+    void twoQuestCountersCannotPayCostAndFailedActivationPreservesPermanent() {
+        Permanent expedition = harness.addToBattlefieldAndReturn(player1, new SunspringExpedition());
+        expedition.setCounterCount(CounterType.QUEST, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(expedition.getCounterCount(CounterType.QUEST)).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(expedition);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
     }
 }
