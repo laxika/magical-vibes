@@ -157,6 +157,48 @@ class TitaniaVoiceOfGaeaTest extends BaseCardTest {
     }
 
     @Test
+    void gainsLifeOnceForMultipleLandsMilledTogether() {
+        harness.addToBattlefield(player1, new TitaniaVoiceOfGaea());
+        harness.addToBattlefield(player1, new ArgothSanctumOfNature());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new ArgothianOpportunist()));
+        harness.setLife(player1, 20);
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.activateAbility(player1, 1, 1, null, null);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 22);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
+    }
+
+    @Test
+    void opponentsLandDoesNotGainLife() {
+        harness.addToBattlefield(player1, new TitaniaVoiceOfGaea());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.setLife(player1, 20);
+
+        harness.inMutationScope(
+                () -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, land));
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void threeLandsDoNotTriggerMeld() {
+        harness.addToBattlefield(player1, new TitaniaVoiceOfGaea());
+        harness.addToBattlefield(player1, new ArgothSanctumOfNature());
+        harness.setGraveyard(player1, List.of(new Forest(), new Forest(), new Forest()));
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Titania, Voice of Gaea");
+        harness.assertOnBattlefield(player1, "Argoth, Sanctum of Nature");
+    }
+
+    @Test
     void copiedTitaniaAndRealArgothRemainExiledWithoutMelding() {
         Permanent copy = harness.addToBattlefieldAndReturn(player1, new ArgothianOpportunist());
         copy.setCard(new TitaniaVoiceOfGaea());
@@ -213,6 +255,26 @@ class TitaniaVoiceOfGaeaTest extends BaseCardTest {
                 () -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, titania));
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
+        assertThat(gqs.isLand(gd, land)).isTrue();
+        assertThat(gqs.isCreature(gd, land)).isTrue();
+        assertThat(gqs.hasKeyword(gd, land, Keyword.HASTE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, land)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, land)).isEqualTo(8);
+    }
+
+    @Test
+    void repeatedAnimationAddsCountersAndSurvivesNextUpkeep() {
+        harness.addToBattlefield(player1, new TitaniaGaeaIncarnate());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addMana(player1, ManaColor.GREEN, 8);
+
+        harness.activateAbility(player1, 0, null, land.getId());
+        resolveAllTriggers();
+        harness.activateAbility(player1, 0, null, land.getId());
+        resolveAllTriggers();
+        advanceToUpkeep(player2);
+
+        assertThat(land.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(8);
         assertThat(gqs.isLand(gd, land)).isTrue();
         assertThat(gqs.isCreature(gd, land)).isTrue();
         assertThat(gqs.hasKeyword(gd, land, Keyword.HASTE)).isTrue();
