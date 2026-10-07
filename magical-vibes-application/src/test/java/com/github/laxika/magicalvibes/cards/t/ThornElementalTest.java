@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.PrimalRage;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ThornElemental.class, GrizzlyBears.class})
+@CardUsed({ThornElemental.class, GrizzlyBears.class, PrimalRage.class})
 class ThornElementalTest extends BaseCardTest {
 
     @Test
@@ -151,6 +152,24 @@ class ThornElementalTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(permanent -> permanent.getId().equals(firstBlocker.getId())
                         || permanent.getId().equals(secondBlocker.getId()));
+    }
+
+    @Test
+    @DisplayName("Thorn Elemental with trample can still assign all damage as though unblocked")
+    void trampleDoesNotRequireDamageToBlockersWhenAssigningAsUnblocked() {
+        harness.setLife(player2, 20);
+        Permanent thornElemental = addCreatureReady(player1, new ThornElemental());
+        harness.addToBattlefield(player1, new PrimalRage());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        declareBlockers(thornElemental, blocker);
+        resolveCombat();
+
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(player2.getId(), 7));
+
+        harness.assertLife(player2, 13);
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(blocker.getMarkedDamage()).isZero();
+        assertThat(thornElemental.getMarkedDamage()).isEqualTo(2);
     }
 
     private void declareBlockers(Permanent attacker, Permanent... blockers) {
