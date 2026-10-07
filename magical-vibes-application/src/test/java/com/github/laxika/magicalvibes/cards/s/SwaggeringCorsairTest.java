@@ -1,15 +1,14 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SwaggeringCorsair.class})
 class SwaggeringCorsairTest extends BaseCardTest {
 
     @Test
@@ -40,21 +39,30 @@ class SwaggeringCorsairTest extends BaseCardTest {
         assertThat(corsair.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
+    @Test
+    void raidAppliesToEachCorsairWithoutUsingTheStack() {
+        castCorsair(true);
+        assertThat(gd.stack).isEmpty();
+
+        castCorsair(false);
+
+        assertThat(findPermanents(player1, "Swaggering Corsair"))
+                .hasSize(2)
+                .allSatisfy(corsair -> assertThat(corsair.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
+                        .isEqualTo(1));
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void castCorsair(boolean attackedThisTurn) {
         if (attackedThisTurn) {
             gd.playersDeclaredAttackersThisTurn.add(player1.getId());
         }
 
-        harness.setHand(player1, List.of(new SwaggeringCorsair()));
-        harness.addMana(player1, ManaColor.RED, 3);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SwaggeringCorsair(), "{2}{R}");
         harness.passBothPriorities();
     }
 
     private Permanent findCorsair() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().getName().equals("Swaggering Corsair"))
-                .findFirst()
-                .orElse(null);
+        return findPermanent(player1, "Swaggering Corsair");
     }
 }
