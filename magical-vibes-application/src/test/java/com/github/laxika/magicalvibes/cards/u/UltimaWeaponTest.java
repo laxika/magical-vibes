@@ -5,14 +5,12 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -38,7 +36,7 @@ class UltimaWeaponTest extends BaseCardTest {
         weapon.setAttachedTo(creature.getId());
         Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
 
-        declareUltimaAttackers(player1, List.of(0));
+        declareAttackers(player1, List.of(0));
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, opponentCreature.getId());
@@ -55,7 +53,7 @@ class UltimaWeaponTest extends BaseCardTest {
         addWeaponReady(player1);
         addCreatureReady(player2, new GrizzlyBears());
 
-        declareUltimaAttackers(player1, List.of(0));
+        declareAttackers(player1, List.of(0));
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
         assertThat(gd.stack).noneMatch(entry -> entry.getCard().getClass() == UltimaWeapon.class);
@@ -75,17 +73,54 @@ class UltimaWeaponTest extends BaseCardTest {
     }
 
     private Permanent addWeaponReady(Player player) {
-        Permanent permanent = new Permanent(new UltimaWeapon());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        return harness.addToBattlefieldAndReturn(player, new UltimaWeapon());
     }
 
-    private void declareUltimaAttackers(Player player, List<Integer> attackerIndices) {
-        harness.forceActivePlayer(player);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player, attackerIndices, Map.of());
+    @Test
+    @DisplayName("Attack trigger offers only opposing creatures as targets")
+    void attackTriggerRestrictsTargets() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent weapon = addWeaponReady(player1);
+        weapon.setAttachedTo(creature.getId());
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
+        addWeaponReady(player2);
+
+        declareAttackers(List.of(0));
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.validPermanentIds()).containsExactly(opponentCreature.getId());
+        assertThat(choice.validPlayerIds()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Another creature attacking does not trigger Ultima Weapon")
+    void noTriggerWhenEquippedCreatureDoesNotAttack() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        Permanent weapon = addWeaponReady(player1);
+        weapon.setAttachedTo(creature.getId());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(List.of(1));
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        assertThat(gd.stack).noneMatch(entry -> entry.getCard().getClass() == UltimaWeapon.class);
+    }
+
+    @Test
+    @DisplayName("Detaching Ultima Weapon removes its bonus")
+    void detachingRemovesBoost() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent weapon = addWeaponReady(player1);
+        weapon.setAttachedTo(creature.getId());
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(9);
+
+        weapon.setAttachedTo(null);
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
     }
 }
