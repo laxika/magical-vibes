@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.b.BogImp;
 import com.github.laxika.magicalvibes.cards.c.ChaosBalor;
+import com.github.laxika.magicalvibes.cards.c.ChainDevil;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.k.KarlachRagingTiefling;
 import com.github.laxika.magicalvibes.model.Card;
@@ -15,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TieflingOutcasts.class, KarlachRagingTiefling.class, ChaosBalor.class, GrizzlyBears.class})
+@CardUsed({TieflingOutcasts.class, KarlachRagingTiefling.class, ChaosBalor.class, GrizzlyBears.class, ChainDevil.class, BogImp.class})
 class TieflingOutcastsTest extends BaseCardTest {
 
     @Test
@@ -48,5 +50,60 @@ class TieflingOutcastsTest extends BaseCardTest {
                 .findFirst()
                 .orElseThrow();
         assertThat(copy.getKeywords()).doesNotContain(Keyword.DOUBLE_TEAM);
+    }
+
+    @Test
+    void boostsDevilsWithoutChangingToughness() {
+        addCreatureReady(player1, new TieflingOutcasts());
+        Permanent devil = addCreatureReady(player1, new ChainDevil());
+        Permanent opponentDevil = addCreatureReady(player2, new ChainDevil());
+
+        assertThat(gqs.getEffectivePower(gd, devil)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, devil)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponentDevil)).isEqualTo(4);
+    }
+
+    @Test
+    void boostsImpsYouControlOnly() {
+        addCreatureReady(player1, new TieflingOutcasts());
+        Permanent imp = addCreatureReady(player1, new BogImp());
+        Permanent opponentImp = addCreatureReady(player2, new BogImp());
+
+        assertThat(gqs.getEffectivePower(gd, imp)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, imp)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, opponentImp)).isEqualTo(1);
+    }
+
+    @Test
+    void multipleOutcastsBoostEachOtherAndStopWhenSourceLeaves() {
+        Permanent first = addCreatureReady(player1, new TieflingOutcasts());
+        Permanent second = addCreatureReady(player1, new TieflingOutcasts());
+        Permanent tiefling = addCreatureReady(player1, new KarlachRagingTiefling());
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, tiefling)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, tiefling)).isEqualTo(2);
+
+        gd.playerBattlefields.get(player1.getId()).remove(first);
+
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, tiefling)).isEqualTo(3);
+    }
+
+    @Test
+    void originalDoesNotConjureAgainOnAnotherAttack() {
+        Permanent outcasts = addCreatureReady(player1, new TieflingOutcasts());
+        harness.setHand(player1, List.of());
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+
+        outcasts.setTapped(false);
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 }
