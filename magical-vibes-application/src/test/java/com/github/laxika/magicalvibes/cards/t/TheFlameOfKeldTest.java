@@ -1,82 +1,59 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LightningBolt;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.b.BalothGorger;
+import com.github.laxika.magicalvibes.cards.g.GhituChronicler;
+import com.github.laxika.magicalvibes.cards.a.AncientAnimus;
+import com.github.laxika.magicalvibes.cards.p.PaintersServant;
+import com.github.laxika.magicalvibes.cards.w.WizardsLightning;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({TheFlameOfKeld.class, BalothGorger.class, WizardsLightning.class, GhituChronicler.class, PaintersServant.class, AncientAnimus.class})
 class TheFlameOfKeldTest extends BaseCardTest {
-
-    // ===== Chapter I: discard your hand =====
 
     @Test
     @DisplayName("Chapter I discards controller's entire hand")
     void chapterIDiscardsHand() {
-        Card card1 = new GrizzlyBears();
-        Card card2 = new LightningBolt();
-        harness.setHand(player1, List.of(card1, card2));
-
-        harness.setHand(player1, List.of(new GrizzlyBears(), new LightningBolt(), new GrizzlyBears()));
-        harness.addToBattlefield(player1, new TheFlameOfKeld());
-
-        Permanent saga = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("The Flame of Keld"))
-                .findFirst().orElse(null);
-        assertThat(saga).isNotNull();
-        // Saga just entered — lore counter already 1 from ETB, chapter I on stack
-        // But we're adding it directly, so we need to trigger chapter I manually.
-        // Instead, let's cast it properly:
-
-        // Reset: cast the saga
-        harness.setHand(player1, List.of(new TheFlameOfKeld(), new GrizzlyBears(), new LightningBolt()));
+        harness.setHand(player2, List.of(new BalothGorger()));
+        harness.setHand(player1, List.of(new TheFlameOfKeld(), new BalothGorger(), new WizardsLightning()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        // Remove the saga we added to battlefield earlier
-        gd.playerBattlefields.get(player1.getId()).clear();
 
         harness.castEnchantment(player1, 0);
         harness.passBothPriorities(); // resolve enchantment → chapter I triggers
 
-        GameData gd = harness.getGameData();
         // Chapter I ability on stack
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getDescription()).contains("chapter I");
 
-        // Hand should still have the 2 remaining cards (GrizzlyBears and LightningBolt)
+        // Hand should still have the 2 remaining cards (BalothGorger and WizardsLightning)
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
 
         harness.passBothPriorities(); // resolve chapter I (discard hand)
 
-        gd = harness.getGameData();
         // Hand should be empty
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         // Cards should be in graveyard
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        harness.assertInHand(player2, "Baloth Gorger");
     }
 
     @Test
     @DisplayName("Chapter I with empty hand does nothing")
     void chapterIWithEmptyHand() {
-        harness.setHand(player1, List.of(new TheFlameOfKeld()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new TheFlameOfKeld(), "{1}{R}");
         harness.passBothPriorities(); // resolve enchantment → chapter I triggers
 
         // Hand is now empty (spell was cast from hand)
@@ -84,21 +61,14 @@ class TheFlameOfKeldTest extends BaseCardTest {
 
         harness.passBothPriorities(); // resolve chapter I
 
-        GameData gd = harness.getGameData();
         // Hand is still empty, no errors
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
-    // ===== Chapter II: draw two cards =====
-
     @Test
     @DisplayName("Chapter II draws two cards")
     void chapterIIDrawsTwoCards() {
-        harness.addToBattlefield(player1, new TheFlameOfKeld());
-        Permanent saga = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("The Flame of Keld"))
-                .findFirst().orElse(null);
-        assertThat(saga).isNotNull();
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new TheFlameOfKeld());
         saga.setCounterCount(CounterType.LORE, 1);
 
         // Clear the hand
@@ -110,29 +80,20 @@ class TheFlameOfKeldTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities(); // advance to precombat main → chapter II triggers
 
-        GameData gd = harness.getGameData();
         assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(2);
         assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                 && e.getDescription().contains("chapter II"));
 
         harness.passBothPriorities(); // resolve chapter II
 
-        gd = harness.getGameData();
-        // Should have drawn 2 cards (note: draw step also draws 1, so hand = 1 from draw step + 2 from chapter II = 3)
-        // Actually — draw step is skipped when we advance from DRAW step. Let's just check deck size.
+        // forceStep does not perform the draw-step action.
         assertThat(gd.playerDecks.get(player1.getId()).size()).isEqualTo(deckSizeBefore - 2);
     }
 
-    // ===== Chapter III: red source damage boost =====
-
     @Test
-    @DisplayName("Chapter III sets red source damage bonus for the controller")
+    @DisplayName("Chapter III also boosts damage to its controller")
     void chapterIIISetsRedDamageBonus() {
-        harness.addToBattlefield(player1, new TheFlameOfKeld());
-        Permanent saga = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("The Flame of Keld"))
-                .findFirst().orElse(null);
-        assertThat(saga).isNotNull();
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new TheFlameOfKeld());
         saga.setCounterCount(CounterType.LORE, 2);
 
         harness.forceActivePlayer(player1);
@@ -141,18 +102,17 @@ class TheFlameOfKeldTest extends BaseCardTest {
         harness.passBothPriorities(); // advance to precombat main → chapter III triggers
         harness.passBothPriorities(); // resolve chapter III
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.colorSourceDamageBonusThisTurn.getOrDefault(player1.getId(), java.util.Map.of()).getOrDefault(CardColor.RED, 0)).isEqualTo(2);
+        harness.setHand(player1, List.of(new WizardsLightning()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+        harness.assertLife(player1, 15);
     }
 
     @Test
     @DisplayName("Chapter III boosts red spell damage by 2")
     void chapterIIIBoostsRedSpellDamage() {
-        harness.addToBattlefield(player1, new TheFlameOfKeld());
-        Permanent saga = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("The Flame of Keld"))
-                .findFirst().orElse(null);
-        assertThat(saga).isNotNull();
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new TheFlameOfKeld());
         saga.setCounterCount(CounterType.LORE, 2);
 
         harness.forceActivePlayer(player1);
@@ -161,30 +121,25 @@ class TheFlameOfKeldTest extends BaseCardTest {
         harness.passBothPriorities(); // advance to precombat main → chapter III triggers
         harness.passBothPriorities(); // resolve chapter III
 
-        // Now cast a Lightning Bolt targeting player2 — should deal 3 + 2 = 5 damage
+        // Now cast a Wizard's Lightning targeting player2 — should deal 3 + 2 = 5 damage
         harness.setLife(player2, 20);
-        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.setHand(player1, List.of(new WizardsLightning()));
         harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities(); // resolve Lightning Bolt
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
-        GameData gd = harness.getGameData();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15); // 20 - 5 = 15
     }
 
     @Test
     @DisplayName("Chapter III does not boost non-red source damage")
     void chapterIIIDoesNotBoostNonRedDamage() {
-        harness.addToBattlefield(player1, new TheFlameOfKeld());
-        Permanent saga = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("The Flame of Keld"))
-                .findFirst().orElse(null);
-        assertThat(saga).isNotNull();
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new TheFlameOfKeld());
         saga.setCounterCount(CounterType.LORE, 2);
 
         // Add a green creature
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new BalothGorger());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
@@ -192,38 +147,21 @@ class TheFlameOfKeldTest extends BaseCardTest {
         harness.passBothPriorities(); // advance to precombat main → chapter III triggers
         harness.passBothPriorities(); // resolve chapter III
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.colorSourceDamageBonusThisTurn.getOrDefault(player1.getId(), java.util.Map.of()).getOrDefault(CardColor.RED, 0)).isEqualTo(2);
-
         // Green creature combat damage should NOT be boosted
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElse(null);
-        assertThat(bears).isNotNull();
-        int combatDamage = gqs.applyCombatDamageMultiplier(gd, 2, bears, null);
-        assertThat(combatDamage).isEqualTo(2); // no bonus for green
+        Permanent bears = findPermanent(player1, "Baloth Gorger");
+        bears.setAttacking(true);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
+        harness.assertLife(player2, 16);
     }
 
     @Test
     @DisplayName("Chapter III boost applies to red combat damage")
     void chapterIIIBoostsRedCombatDamage() {
-        harness.addToBattlefield(player1, new TheFlameOfKeld());
-        Permanent saga = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("The Flame of Keld"))
-                .findFirst().orElse(null);
-        assertThat(saga).isNotNull();
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new TheFlameOfKeld());
         saga.setCounterCount(CounterType.LORE, 2);
 
-        // Add a red 2/2 creature
-        Card redCreature = new Card();
-        redCreature.setName("Red Warrior");
-        redCreature.setType(CardType.CREATURE);
-        redCreature.setColor(CardColor.RED);
-        redCreature.setColors(List.of(CardColor.RED));
-        redCreature.setPower(2);
-        redCreature.setToughness(2);
-        redCreature.setToken(true);
-        harness.addToBattlefield(player1, redCreature);
+        Permanent redPerm = harness.addToBattlefieldAndReturn(player1, new GhituChronicler());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
@@ -231,30 +169,20 @@ class TheFlameOfKeldTest extends BaseCardTest {
         harness.passBothPriorities(); // advance to precombat main → chapter III triggers
         harness.passBothPriorities(); // resolve chapter III
 
-        // Verify the combat damage multiplier includes the bonus
-        GameData gd = harness.getGameData();
-        Permanent redPerm = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Red Warrior"))
-                .findFirst().orElse(null);
-        assertThat(redPerm).isNotNull();
-
-        // Combat damage: 2 (base) + 2 (bonus) = 4
-        int combatDamage = gqs.applyCombatDamageMultiplier(gd, 2, redPerm, null);
-        assertThat(combatDamage).isEqualTo(4);
+        redPerm.setAttacking(true);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
+        harness.assertLife(player2, 17);
     }
 
     @Test
     @DisplayName("Chapter III boost does not apply to green combat damage")
     void chapterIIIDoesNotBoostGreenCombatDamage() {
-        harness.addToBattlefield(player1, new TheFlameOfKeld());
-        Permanent saga = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("The Flame of Keld"))
-                .findFirst().orElse(null);
-        assertThat(saga).isNotNull();
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new TheFlameOfKeld());
         saga.setCounterCount(CounterType.LORE, 2);
 
-        // Add a green creature (Grizzly Bears)
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        // Add a green creature (Baloth Gorger)
+        harness.addToBattlefield(player1, new BalothGorger());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
@@ -262,45 +190,119 @@ class TheFlameOfKeldTest extends BaseCardTest {
         harness.passBothPriorities(); // advance to precombat main → chapter III triggers
         harness.passBothPriorities(); // resolve chapter III
 
-        GameData gd = harness.getGameData();
-        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                .findFirst().orElse(null);
-        assertThat(bears).isNotNull();
+        Permanent bears = findPermanent(player1, "Baloth Gorger");
 
-        // Combat damage: 2 (base), no bonus for green
-        int combatDamage = gqs.applyCombatDamageMultiplier(gd, 2, bears, null);
-        assertThat(combatDamage).isEqualTo(2);
+        bears.setAttacking(true);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
+        harness.assertLife(player2, 16);
     }
-
-    // ===== Saga lifecycle =====
 
     @Test
     @DisplayName("Saga is sacrificed after chapter III resolves")
     void sagaSacrificedAfterChapterIII() {
-        harness.addToBattlefield(player1, new TheFlameOfKeld());
-        Permanent saga = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("The Flame of Keld"))
-                .findFirst().orElse(null);
-        assertThat(saga).isNotNull();
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new TheFlameOfKeld());
         saga.setCounterCount(CounterType.LORE, 2);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
         harness.clearPriorityPassed();
         harness.passBothPriorities(); // precombat main → chapter III triggers
+        harness.assertOnBattlefield(player1, "The Flame of Keld");
         harness.passBothPriorities(); // resolve chapter III
 
-        GameData gd = harness.getGameData();
+        harness.assertNotOnBattlefield(player1, "The Flame of Keld");
+        harness.assertInGraveyard(player1, "The Flame of Keld");
+    }
 
-        // Saga should be sacrificed
-        boolean sagaOnBf = gd.playerBattlefields.get(player1.getId()).stream()
-                .anyMatch(p -> p.getCard().getName().equals("The Flame of Keld"));
-        assertThat(sagaOnBf).isFalse();
+    private void resolveChapterIII() {
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new TheFlameOfKeld());
+        saga.setCounterCount(CounterType.LORE, 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DRAW);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+    }
 
-        // Saga should be in graveyard
-        boolean sagaInGraveyard = gd.playerGraveyards.get(player1.getId()).stream()
-                .anyMatch(c -> c.getName().equals("The Flame of Keld"));
-        assertThat(sagaInGraveyard).isTrue();
+    @Test
+    @DisplayName("Chapter III boosts damage to creatures")
+    void boostsDamageToPermanents() {
+        resolveChapterIII();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GhituChronicler());
+        harness.setHand(player1, List.of(new WizardsLightning()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        assertThat(target.getMarkedDamage()).isEqualTo(5);
+        harness.assertInGraveyard(player2, "Ghitu Chronicler");
+    }
+
+    @Test
+    @DisplayName("Chapter III does not boost opposing red sources")
+    void doesNotBoostOpposingSources() {
+        resolveChapterIII();
+        harness.setHand(player2, List.of(new WizardsLightning()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.ensurePriority(player2);
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        harness.assertLife(player1, 17);
+    }
+
+    @Test
+    @DisplayName("Chapter III expires at the end of the turn")
+    void bonusExpiresAtEndOfTurn() {
+        resolveChapterIII();
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.setHand(player1, List.of(new WizardsLightning()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.ensurePriority(player1);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @DisplayName("Chapter III boosts combat damage from a creature made red")
+    void boostsCombatDamageFromSourceMadeRed() {
+        resolveChapterIII();
+        Permanent painter = harness.addToBattlefieldAndReturn(player1, new PaintersServant());
+        painter.setChosenColor(CardColor.RED);
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new BalothGorger());
+        bears.setAttacking(true);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
+        harness.assertLife(player2, 14);
+    }
+
+    @Test
+    @DisplayName("Chapter III boosts fight damage from a creature made red")
+    void boostsFightDamageFromSourceMadeRed() {
+        resolveChapterIII();
+        Permanent painter = harness.addToBattlefieldAndReturn(player1, new PaintersServant());
+        painter.setChosenColor(CardColor.RED);
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new BalothGorger());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GhituChronicler());
+        harness.setHand(player1, List.of(new AncientAnimus()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, List.of(bears.getId(), target.getId()));
+        harness.assertInGraveyard(player2, "Ghitu Chronicler");
+        assertThat(target.getMarkedDamage()).isEqualTo(6);
+        assertThat(bears.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Two chapter III effects each add two damage")
+    void multipleChapterIIIEffectsStack() {
+        resolveChapterIII();
+        resolveChapterIII();
+        harness.setHand(player1, List.of(new WizardsLightning()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.assertLife(player2, 13);
     }
 }
