@@ -35,7 +35,6 @@ class SydriGalvanicGeniusTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, millstone)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, millstone)).isFalse();
@@ -58,7 +57,6 @@ class SydriGalvanicGeniusTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, clayStatue, Keyword.LIFELINK)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, clayStatue, Keyword.DEATHTOUCH)).isFalse();
@@ -84,5 +82,55 @@ class SydriGalvanicGeniusTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, grizzlyBears.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be an artifact creature");
+    }
+
+    @Test
+    @DisplayName("Both abilities can target an opponent's artifact, including one animated by Sydri")
+    void animatesAndGrantsKeywordsToOpponentsArtifact() {
+        harness.addToBattlefield(player1, new SydriGalvanicGenius());
+        harness.addToBattlefield(player2, new Millstone());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        Permanent millstone = findPermanent(player2, "Millstone");
+        harness.activateAbility(player1, 0, 0, null, millstone.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, millstone)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, millstone)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, millstone)).isEqualTo(2);
+
+        harness.activateAbility(player1, 0, 1, null, millstone.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, millstone, Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, millstone, Keyword.LIFELINK)).isTrue();
+        harness.assertOnBattlefield(player2, "Millstone");
+        harness.assertNotOnBattlefield(player1, "Millstone");
+    }
+
+    @Test
+    @DisplayName("An animation activation does not resolve if its target has already become a creature")
+    void animationRechecksNoncreatureRestrictionOnResolution() {
+        harness.addToBattlefield(player1, new SydriGalvanicGenius());
+        harness.addToBattlefield(player1, new Millstone());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        Permanent millstone = findPermanent(player1, "Millstone");
+        harness.activateAbility(player1, 0, 0, null, millstone.getId());
+        harness.activateAbility(player1, 0, 0, null, millstone.getId());
+        assertThat(gd.stack).hasSize(2);
+
+        harness.passBothPriorities();
+        assertThat(gqs.isCreature(gd, millstone)).isTrue();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gameLogContains("fizzles (illegal target)")).isTrue();
+        assertThat(gqs.getEffectivePower(gd, millstone)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, millstone)).isEqualTo(2);
     }
 }
