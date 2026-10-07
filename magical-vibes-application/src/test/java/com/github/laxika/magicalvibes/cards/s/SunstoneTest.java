@@ -64,8 +64,8 @@ class SunstoneTest extends BaseCardTest {
 
         Permanent attacker = addCreatureReady(player1, new BalduvianBears());
         Permanent blocker = addCreatureReady(player2, new BalduvianBears());
-        declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(player1,
+                List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
                 gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
@@ -107,13 +107,59 @@ class SunstoneTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("A tapped Sunstone can sacrifice a tapped snow land")
+    void canActivateWithTappedSourceAndTappedSnowLand() {
+        harness.setLife(player1, 20);
+        Permanent sunstone = harness.addToBattlefieldAndReturn(player1, new Sunstone());
+        sunstone.tap();
+        Permanent snowLand = addLand(player1, true);
+        snowLand.tap();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(snowLand);
+        harness.assertInGraveyard(player1, "Snow-Covered Mountain");
+        harness.passBothPriorities();
+
+        addCreatureReady(player2, new BalduvianBears());
+        declareAttackers(player2, List.of(0));
+        resolveCombat(player2);
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(sunstone);
+    }
+
+    @Test
+    @DisplayName("Cannot sacrifice an opponent's snow land to activate Sunstone")
+    void cannotActivateUsingOpponentsSnowLand() {
+        addSunstone(player1);
+        addLand(player2, true);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot activate without two mana")
+    void cannotActivateWithoutEnoughMana() {
+        addSunstone(player1);
+        Permanent snowLand = addLand(player1, true);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(snowLand);
+    }
+
     private void addSunstone(Player player) {
-        gd.playerBattlefields.get(player.getId()).add(new Permanent(new Sunstone()));
+        harness.addToBattlefield(player, new Sunstone());
     }
 
     private Permanent addLand(Player player, boolean snow) {
-        Permanent land = new Permanent(snow ? new SnowCoveredMountain() : new Mountain());
-        gd.playerBattlefields.get(player.getId()).add(land);
-        return land;
+        return harness.addToBattlefieldAndReturn(player,
+                snow ? new SnowCoveredMountain() : new Mountain());
     }
 }
