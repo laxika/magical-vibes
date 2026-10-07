@@ -11,8 +11,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({StenchOfEvil.class, SnowCoveredPlains.class, SnowCoveredForest.class,
@@ -121,11 +119,9 @@ class StenchOfEvilTest extends BaseCardTest {
         harness.addToBattlefield(player2, new SnowCoveredPlains());
         StenchOfEvil stench = new StenchOfEvil();
         harness.forceActivePlayer(player2);
-        harness.setHand(player2, List.of(stench));
-        harness.addMana(player2, ManaColor.BLACK, 4);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
 
-        harness.castSorcery(player2, 0, 0);
+        harness.castFromHand(player2, stench, "{2}{B}{B}");
         harness.activateAbility(player2, 0, null, null);
         harness.passBothPriorities();
 
@@ -140,6 +136,62 @@ class StenchOfEvilTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, false);
 
         harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Paying for every destroyed Plains prevents all damage")
+    void payingForEveryLandAvoidsAllDamage() {
+        harness.setLife(player2, 20);
+        harness.addToBattlefield(player2, new SnowCoveredPlains());
+        harness.addToBattlefield(player2, new SnowCoveredPlains());
+        harness.addMana(player2, ManaColor.COLORLESS, 4);
+        castStenchOfEvil();
+
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A regenerated Plains survives and does not cause a payment or damage")
+    void regeneratedPlainsAreNotCounted() {
+        Permanent plains = harness.addToBattlefieldAndReturn(player2, new SnowCoveredPlains());
+        plains.setRegenerationShield(1);
+        harness.setLife(player2, 20);
+        castStenchOfEvil();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(plains);
+        assertThat(plains.isTapped()).isTrue();
+        assertThat(plains.getRegenerationShield()).isZero();
+        harness.assertLife(player2, 20);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("One Circle activation prevents simultaneous damage from multiple destroyed Plains")
+    void onePreventionShieldCoversAllDestroyedLandsDamage() {
+        harness.setLife(player2, 20);
+        harness.addToBattlefield(player2, new CircleOfProtectionBlack());
+        harness.addToBattlefield(player2, new SnowCoveredPlains());
+        harness.addToBattlefield(player2, new SnowCoveredPlains());
+        StenchOfEvil stench = new StenchOfEvil();
+        harness.forceActivePlayer(player2);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castFromHand(player2, stench, "{2}{B}{B}");
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player2, stench.getId());
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player2, false);
+        harness.handleMayAbilityChosen(player2, false);
+
+        harness.assertLife(player2, 20);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     private void castStenchOfEvil() {
