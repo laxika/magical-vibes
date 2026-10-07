@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SparkReaper;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -12,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TyrantsScorn.class, GrizzlyBears.class, AirElemental.class})
+@CardUsed({TyrantsScorn.class, GrizzlyBears.class, AirElemental.class, SparkReaper.class})
 class TyrantsScornTest extends BaseCardTest {
 
     @Test
@@ -44,6 +45,45 @@ class TyrantsScornTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, 0, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Destroy mode includes creatures with mana value exactly three")
+    void destroyModeIncludesManaValueThree() {
+        harness.addToBattlefield(player2, new SparkReaper());
+        cast(0, "Spark Reaper");
+
+        harness.assertNotOnBattlefield(player2, "Spark Reaper");
+        harness.assertInGraveyard(player2, "Spark Reaper");
+    }
+
+    @Test
+    @DisplayName("Bounce mode can return your own creature without destroying it")
+    void bounceModeCanTargetOwnCreature() {
+        var target = harness.addToBattlefieldAndReturn(player1, new SparkReaper());
+        harness.setHand(player1, List.of(new TyrantsScorn()));
+        addMana();
+
+        harness.castInstant(player1, 0, 1, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Spark Reaper");
+        harness.assertInHand(player1, "Spark Reaper");
+        harness.assertInGraveyard(player1, "Tyrant's Scorn");
+    }
+
+    @Test
+    @DisplayName("Destroy mode can destroy your own creature")
+    void destroyModeCanTargetOwnCreature() {
+        var target = harness.addToBattlefieldAndReturn(player1, new SparkReaper());
+        harness.setHand(player1, List.of(new TyrantsScorn()));
+        addMana();
+
+        harness.castInstant(player1, 0, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Spark Reaper");
+        harness.assertInGraveyard(player1, "Spark Reaper");
     }
 
     private void cast(int mode, String targetName) {
