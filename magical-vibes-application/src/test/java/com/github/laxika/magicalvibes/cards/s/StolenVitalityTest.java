@@ -27,8 +27,7 @@ class StolenVitalityTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castInstant(player1, 0, bear.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bear.getId());
 
         assertThat(bear.getEffectivePower()).isEqualTo(5);
         assertThat(bear.getEffectiveToughness()).isEqualTo(3);
@@ -47,8 +46,7 @@ class StolenVitalityTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.castInstant(player1, 0, bear.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bear.getId());
 
         assertThat(bear.getEffectivePower()).isEqualTo(5);
         assertThat(bear.getEffectiveToughness()).isEqualTo(3);
@@ -64,8 +62,7 @@ class StolenVitalityTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castInstant(player1, 0, bear.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bear.getId());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
@@ -86,5 +83,49 @@ class StolenVitalityTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, mountain.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("On your turn, an opposing creature gains trample rather than first strike")
+    void opposingCreatureGainsTrampleOnYourTurn() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new StolenVitality()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0, bear.getId());
+
+        assertThat(bear.getEffectivePower()).isEqualTo(5);
+        assertThat(bear.getEffectiveToughness()).isEqualTo(3);
+        assertThat(bear.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(bear.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("On an opponent's turn, their creature gains first strike and loses it at cleanup")
+    void opposingCreatureGainsFirstStrikeUntilCleanup() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new StolenVitality()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castAndResolveInstant(player1, 0, bear.getId());
+
+        assertThat(bear.getEffectivePower()).isEqualTo(5);
+        assertThat(bear.getEffectiveToughness()).isEqualTo(3);
+        assertThat(bear.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(bear.hasKeyword(Keyword.TRAMPLE)).isFalse();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(bear.getEffectivePower()).isEqualTo(2);
+        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(bear.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(bear.hasKeyword(Keyword.TRAMPLE)).isFalse();
     }
 }
