@@ -32,8 +32,7 @@ class SpectralProcessionTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SpectralProcession()));
         harness.addMana(player1, ManaColor.WHITE, 3); // {2/W}{2/W}{2/W} paid with three white
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         List<Permanent> tokens = spiritTokens(player1);
         assertThat(tokens).hasSize(3);
@@ -46,8 +45,7 @@ class SpectralProcessionTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SpectralProcession()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         List<Permanent> tokens = spiritTokens(player1);
 
@@ -66,8 +64,7 @@ class SpectralProcessionTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SpectralProcession()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(spiritTokens(player1)).hasSize(3).allSatisfy(token -> {
             assertThat(token.getCard().getColor()).isEqualTo(CardColor.WHITE);
@@ -82,11 +79,54 @@ class SpectralProcessionTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SpectralProcession()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Spectral Procession");
+    }
+
+    @Test
+    @DisplayName("Spectral Procession can be paid for entirely with generic mana")
+    void resolvesWithSixColorlessMana() {
+        prepareMain(player1);
+        harness.setHand(player1, List.of(new SpectralProcession()));
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(spiritTokens(player1)).hasSize(3);
+        harness.assertInGraveyard(player1, "Spectral Procession");
+    }
+
+    @Test
+    @DisplayName("Spectral Procession accepts a mixture of white and generic mana")
+    void resolvesWithMixedPayment() {
+        prepareMain(player1);
+        harness.setHand(player1, List.of(new SpectralProcession()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(spiritTokens(player1)).hasSize(3);
+        harness.assertInGraveyard(player1, "Spectral Procession");
+    }
+
+    @Test
+    @DisplayName("Tokens enter untapped under the spell controller's control")
+    void createsTokensForSecondPlayer() {
+        prepareMain(player2);
+        harness.setHand(player2, List.of(new SpectralProcession()));
+        harness.addMana(player2, ManaColor.WHITE, 3);
+
+        harness.castAndResolveSorcery(player2, 0, 0);
+
+        assertThat(spiritTokens(player2)).hasSize(3).allSatisfy(token -> {
+            assertThat(token.isTapped()).isFalse();
+            assertThat(token.isAttacking()).isFalse();
+        });
+        assertThat(spiritTokens(player1)).isEmpty();
+        harness.assertInGraveyard(player2, "Spectral Procession");
     }
 
     private List<Permanent> spiritTokens(Player player) {
