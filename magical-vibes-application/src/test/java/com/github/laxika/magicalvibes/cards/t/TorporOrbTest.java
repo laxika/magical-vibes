@@ -8,6 +8,10 @@ import com.github.laxika.magicalvibes.cards.s.SuturePriest;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.cards.e.EtchedMonstrosity;
+import com.github.laxika.magicalvibes.cards.m.MarchOfTheMachines;
+import com.github.laxika.magicalvibes.cards.m.MycosynthWellspring;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,19 +20,16 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({TorporOrb.class, PriestOfUrabrask.class, SuturePriest.class, GrizzlyBears.class, SurgeNode.class, EtchedMonstrosity.class, MycosynthWellspring.class, MarchOfTheMachines.class})
 class TorporOrbTest extends BaseCardTest {
 
-    // ===== Suppresses creature's own ETB triggered ability =====
 
     @Test
     @DisplayName("Suppresses a creature's own ETB triggered ability (Priest of Urabrask gets no mana)")
     void suppressesCreatureOwnETBTriggeredAbility() {
         harness.addToBattlefield(player1, new TorporOrb());
 
-        harness.setHand(player1, List.of(new PriestOfUrabrask()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new PriestOfUrabrask(), "{2}{R}");
 
         // Resolve creature spell — Priest enters but ETB does not trigger
         harness.passBothPriorities();
@@ -41,7 +42,6 @@ class TorporOrbTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(0);
     }
 
-    // ===== Suppresses other permanents' creature-enters triggers =====
 
     @Test
     @DisplayName("Suppresses Suture Priest's ally creature trigger when Torpor Orb is on battlefield")
@@ -89,16 +89,13 @@ class TorporOrbTest extends BaseCardTest {
         harness.assertLife(player2, 20);
     }
 
-    // ===== Does NOT suppress non-creature ETB =====
 
     @Test
     @DisplayName("Does not suppress a non-creature artifact's ETB replacement effects")
     void doesNotSuppressNonCreatureArtifactETB() {
         harness.addToBattlefield(player1, new TorporOrb());
 
-        harness.setHand(player1, List.of(new SurgeNode()));
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SurgeNode(), "{1}");
 
         // Resolve artifact spell
         harness.passBothPriorities();
@@ -108,15 +105,11 @@ class TorporOrbTest extends BaseCardTest {
                 .anyMatch(p -> p.getCard().getName().equals("Surge Node") && p.getCounterCount(CounterType.CHARGE) == 6);
     }
 
-    // ===== Without Torpor Orb, triggers work normally =====
 
     @Test
     @DisplayName("Without Torpor Orb, Priest of Urabrask's ETB triggers normally")
     void withoutTorporOrbETBTriggersNormally() {
-        harness.setHand(player1, List.of(new PriestOfUrabrask()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new PriestOfUrabrask(), "{2}{R}");
 
         // Resolve creature spell — Priest enters, ETB goes on stack
         harness.passBothPriorities();
@@ -126,5 +119,68 @@ class TorporOrbTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Priest of Urabrask");
         // Mana was awarded (ETB not suppressed)
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(3);
+    }
+
+    @Test
+    void creatureEntryReplacementCountersAreNotSuppressed() {
+        harness.addToBattlefield(player1, new TorporOrb());
+        harness.castFromHand(player1, new EtchedMonstrosity(), "{5}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Etched Monstrosity");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getCard().getName().equals("Etched Monstrosity")
+                        && p.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) == 5);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void noncreatureEntryTriggeredAbilityStillTriggers() {
+        harness.addToBattlefield(player1, new TorporOrb());
+        harness.castFromHand(player1, new MycosynthWellspring(), "{2}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Mycosynth Wellspring");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void artifactAnimatedAsItEntersDoesNotTrigger() {
+        harness.addToBattlefield(player1, new TorporOrb());
+        harness.addToBattlefield(player1, new MarchOfTheMachines());
+        harness.castFromHand(player1, new MycosynthWellspring(), "{2}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Mycosynth Wellspring");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void opponentsOrbSuppressesCreatureEntry() {
+        harness.addToBattlefield(player2, new TorporOrb());
+        harness.castFromHand(player1, new PriestOfUrabrask(), "{2}{R}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Priest of Urabrask");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+    }
+
+    @Test
+    void orbEnteringAfterTriggerDoesNotRemoveIt() {
+        harness.castFromHand(player1, new PriestOfUrabrask(), "{2}{R}");
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.enterBattlefieldAndReturn(player2, new TorporOrb());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
     }
 }
