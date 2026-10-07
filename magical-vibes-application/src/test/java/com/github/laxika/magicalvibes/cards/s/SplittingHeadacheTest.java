@@ -27,8 +27,22 @@ class SplittingHeadacheTest extends BaseCardTest {
     }
 
     @Nested
+    @CardUsed({SplittingHeadache.class, Cinderbones.class, WaspLancer.class})
     @DisplayName("Mode 0: Target player discards two cards")
     class DiscardTwoMode {
+
+        @Test
+        @DisplayName("An empty hand requires no discard choice")
+        void emptyHandRequiresNoChoice() {
+            harness.setHand(player2, List.of());
+
+            castMode(0, player2.getId());
+
+            assertThat(gd.interaction.activeInteraction()).isNull();
+            assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+            assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+            harness.assertInGraveyard(player1, "Splitting Headache");
+        }
 
         @Test
         @DisplayName("Target player discards two chosen cards")
@@ -62,8 +76,29 @@ class SplittingHeadacheTest extends BaseCardTest {
     }
 
     @Nested
+    @CardUsed({SplittingHeadache.class, Cinderbones.class, WaspLancer.class})
     @DisplayName("Mode 1: Reveal hand, you choose a card, that player discards it")
     class RevealChooseMode {
+
+        @Test
+        @DisplayName("The caster can reveal their own hand and discard a noncreature card")
+        void casterChoosesFromOwnHand() {
+            Card toDiscard = new SplittingHeadache();
+            Card keep = new WaspLancer();
+            harness.setHand(player1, List.of(new SplittingHeadache(), toDiscard, keep));
+            harness.addMana(player1, ManaColor.BLACK, 4);
+
+            harness.castModalSorcery(player1, 0, 1, List.of(player1.getId()));
+            harness.passBothPriorities();
+
+            assertThat(gameLogContains(player1.getUsername() + " reveals their hand")).isTrue();
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.RevealedHandChoice.class);
+            harness.handleCardChosen(player1, 0);
+
+            assertThat(gd.playerHands.get(player1.getId())).containsExactly(keep);
+            assertThat(gd.playerGraveyards.get(player1.getId())).contains(toDiscard).hasSize(2);
+            assertThat(gd.interaction.activeInteraction()).isNull();
+        }
 
         @Test
         @DisplayName("Controller chooses a card from the revealed hand to discard")
