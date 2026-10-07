@@ -3,8 +3,10 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.a.AetherBurst;
 import com.github.laxika.magicalvibes.cards.c.CephalidRetainer;
 import com.github.laxika.magicalvibes.cards.e.EngulfingFlames;
+import com.github.laxika.magicalvibes.cards.p.PsionicGift;
 import com.github.laxika.magicalvibes.cards.w.WildMongrel;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -16,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({SpellbaneCentaur.class, AetherBurst.class, CephalidRetainer.class,
-        EngulfingFlames.class, WildMongrel.class})
+        EngulfingFlames.class, WildMongrel.class, PsionicGift.class})
 class SpellbaneCentaurTest extends BaseCardTest {
 
     @Test
@@ -105,5 +107,100 @@ class SpellbaneCentaurTest extends BaseCardTest {
         harness.castInstant(player1, 0, harness.getPermanentId(player2, "Spellbane Centaur"));
 
         assertThat(gd.stack).anyMatch(se -> se.getCard().getName().equals("Engulfing Flames"));
+    }
+
+    @Test
+    void controllersOwnBlueSpellCannotTargetProtectedCreature() {
+        harness.addToBattlefield(player1, new SpellbaneCentaur());
+        harness.addToBattlefield(player1, new WildMongrel());
+        harness.setHand(player1, List.of(new AetherBurst()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0,
+                harness.getPermanentId(player1, "Wild Mongrel")))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be the target of blue");
+    }
+
+    @Test
+    void controllersOwnBlueAbilityCannotTargetProtectedCreature() {
+        addCreatureReady(player1, new CephalidRetainer());
+        harness.addToBattlefield(player1, new SpellbaneCentaur());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null,
+                harness.getPermanentId(player1, "Spellbane Centaur")))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("blue");
+    }
+
+    @Test
+    void blueSpellLosesItsTargetWhenCentaurEntersBeforeResolution() {
+        harness.addToBattlefield(player2, new WildMongrel());
+        harness.setHand(player1, List.of(new AetherBurst()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, harness.getPermanentId(player2, "Wild Mongrel"));
+
+        harness.addToBattlefield(player2, new SpellbaneCentaur());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Wild Mongrel");
+        harness.assertNotInHand(player2, "Wild Mongrel");
+        harness.assertInGraveyard(player1, "Aether Burst");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void grantedAbilityFromCreatureThatBecameBlueCannotTargetProtectedCreature() {
+        Permanent mongrel = addCreatureReady(player1, new WildMongrel());
+        Permanent gift = harness.addToBattlefieldAndReturn(player1, new PsionicGift());
+        gift.setAttachedTo(mongrel.getId());
+        harness.addToBattlefield(player2, new SpellbaneCentaur());
+        harness.setHand(player1, List.of(new EngulfingFlames()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "BLUE");
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null,
+                harness.getPermanentId(player2, "Spellbane Centaur")))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("blue");
+    }
+
+    @Test
+    void blueAuraDoesNotMakeGrantedAbilityFromGreenCreatureBlue() {
+        Permanent mongrel = addCreatureReady(player1, new WildMongrel());
+        Permanent gift = harness.addToBattlefieldAndReturn(player1, new PsionicGift());
+        gift.setAttachedTo(mongrel.getId());
+        Permanent centaur = harness.addToBattlefieldAndReturn(player2, new SpellbaneCentaur());
+
+        harness.activateAbility(player1, 0, 1, null, centaur.getId());
+        harness.passBothPriorities();
+
+        assertThat(centaur.getMarkedDamage()).isEqualTo(1);
+        assertThat(mongrel.isTapped()).isTrue();
+    }
+
+    @Test
+    void abilityLosesItsTargetWhenItsSourceBecomesBlueBeforeResolution() {
+        Permanent mongrel = addCreatureReady(player1, new WildMongrel());
+        Permanent gift = harness.addToBattlefieldAndReturn(player1, new PsionicGift());
+        gift.setAttachedTo(mongrel.getId());
+        Permanent centaur = harness.addToBattlefieldAndReturn(player2, new SpellbaneCentaur());
+        harness.setHand(player1, List.of(new EngulfingFlames()));
+
+        harness.activateAbility(player1, 0, 1, null, centaur.getId());
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "BLUE");
+        harness.passBothPriorities();
+
+        assertThat(centaur.getMarkedDamage()).isZero();
+        assertThat(gd.stack).isEmpty();
     }
 }
