@@ -76,8 +76,78 @@ class TidepoolTurtleTest extends BaseCardTest {
     }
 
     private Permanent addReadyTurtle() {
+        return addCreatureReady(player1, new TidepoolTurtle());
+    }
+
+    @Test
+    @DisplayName("Scrying can leave the top card and the rest of the library unchanged")
+    void scryCanKeepTopCard() {
+        addReadyTurtle();
+        Card top = new TidepoolTurtle();
+        Card second = new TidepoolTurtle();
+        harness.setLibrary(player1, List.of(top, second));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
+                .containsExactly(top);
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top, second);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Scrying an empty library resolves without requiring a choice")
+    void scryEmptyLibrary() {
+        addReadyTurtle();
+        harness.setLibrary(player1, List.of());
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Turtle can activate its ability repeatedly")
+    void tappedSummoningSickTurtleCanActivateRepeatedly() {
         Permanent turtle = harness.addToBattlefieldAndReturn(player1, new TidepoolTurtle());
-        turtle.setSummoningSick(false);
-        return turtle;
+        turtle.setSummoningSick(true);
+        turtle.setTapped(true);
+        harness.addMana(player1, ManaColor.BLUE, 6);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(turtle.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("The activated ability still resolves after Tidepool Turtle leaves the battlefield")
+    void abilityResolvesWithoutSource() {
+        Permanent turtle = addReadyTurtle();
+        Card top = new TidepoolTurtle();
+        harness.setLibrary(player1, List.of(top));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.activateAbility(player1, 0, null, null);
+        gd.playerBattlefields.get(player1.getId()).remove(turtle);
+        gd.playerGraveyards.get(player1.getId()).add(turtle.getCard());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
+                .containsExactly(top);
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 }
