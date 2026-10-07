@@ -71,4 +71,74 @@ class SparksmithTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("A Goblin dealt lethal damage still counts for the damage to the controller")
+    void lethalGoblinTargetCountsForBothDamageAmounts() {
+        harness.setLife(player1, 20);
+        addCreatureReady(player1, new Sparksmith());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GoblinSkyRaider());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Goblin Sky Raider");
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Can target itself and still damages its controller")
+    void canTargetItself() {
+        harness.setLife(player1, 20);
+        Permanent sparksmith = addCreatureReady(player1, new Sparksmith());
+
+        harness.activateAbility(player1, 0, null, sparksmith.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Sparksmith");
+        harness.assertLife(player1, 19);
+    }
+
+    @Test
+    @DisplayName("Deals no damage when no Goblins remain at resolution")
+    void dealsZeroDamageWhenNoGoblinsRemain() {
+        harness.setLife(player1, 20);
+        Permanent sparksmith = addCreatureReady(player1, new Sparksmith());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GlorySeeker());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(sparksmith);
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Glory Seeker");
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("An absent target prevents the entire ability from resolving")
+    void absentTargetPreventsControllerDamage() {
+        harness.setLife(player1, 20);
+        Permanent sparksmith = addCreatureReady(player1, new Sparksmith());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GlorySeeker());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        assertThat(sparksmith.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot pay the tap cost while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        harness.addToBattlefield(player1, new Sparksmith());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GlorySeeker());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
 }
