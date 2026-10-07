@@ -43,6 +43,7 @@ class TargNarTest extends BaseCardTest {
         addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(List.of(0, 1));
+        assertThat(gd.stack).isEmpty();
         resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, targNar)).isEqualTo(2);
@@ -81,5 +82,40 @@ class TargNarTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, targNar)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, targNar)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Repeated activations double the current power and toughness")
+    void repeatedActivationsCompound() {
+        Permanent targNar = addCreatureReady(player1, new TargNar());
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, targNar)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, targNar)).isEqualTo(8);
+    }
+
+    @Test
+    @DisplayName("Doubling includes the resolved pack tactics bonus")
+    void doublingIncludesPackTacticsBonus() {
+        Permanent targNar = addCreatureReady(player1, new TargNar());
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        declareAttackers(List.of(0, 1, 2));
+        resolveAllTriggers();
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, targNar)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, targNar)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
     }
 }
