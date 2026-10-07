@@ -64,11 +64,51 @@ class TidalWaveTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLUE, 2);
 
         harness.assertOnBattlefield(player1, "Wall");
-        harness.castInstant(player2, 0, wall.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, wall.getId());
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Boomerang");
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A Wall created during an end step survives until the following end step")
+    void wallCreatedDuringEndStepWaitsForFollowingEndStep() {
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.END_STEP);
+
+        harness.castFromHand(player1, new TidalWave(), "{2}{U}");
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Wall");
+        assertThat(gd.stack).isEmpty();
+
+        harness.setLibrary(player2, List.of(new TidalWave()));
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.assertOnBattlefield(player1, "Wall");
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player2, TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Wall");
+    }
+
+    @Test
+    @DisplayName("Each Tidal Wave sacrifices only its own Wall token")
+    void separateSpellsHaveSeparateSacrificeTriggers() {
+        harness.castFromHand(player1, new TidalWave(), "{2}{U}");
+        harness.passBothPriorities();
+        harness.castFromHand(player1, new TidalWave(), "{2}{U}");
+        harness.passBothPriorities();
+        assertThat(findPermanents(player1, "Wall")).hasSize(2);
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Wall")).hasSize(1);
+
+        resolveAllTriggers();
+        harness.assertNotOnBattlefield(player1, "Wall");
     }
 }
