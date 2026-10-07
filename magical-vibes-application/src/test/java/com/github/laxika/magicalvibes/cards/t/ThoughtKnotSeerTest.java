@@ -55,8 +55,7 @@ class ThoughtKnotSeerTest extends BaseCardTest {
         harness.setHand(player2, List.of(new DoomBlade()));
         harness.addMana(player2, ManaColor.BLACK, 2);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, harness.getPermanentId(player1, "Thought-Knot Seer"));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, harness.getPermanentId(player1, "Thought-Knot Seer"));
 
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
@@ -76,6 +75,104 @@ class ThoughtKnotSeerTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castCreature(player1, 0, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("opponent");
+    }
+
+    @Test
+    void emptyHandRequiresNoChoice() {
+        harness.setHand(player2, List.of());
+
+        castThoughtKnotSeer();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class)).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertOnBattlefield(player1, "Thought-Knot Seer");
+    }
+
+    @Test
+    void landOnlyHandIsLeftUnchanged() {
+        Card land = new Forest();
+        harness.setHand(player2, List.of(land));
+
+        castThoughtKnotSeer();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class)).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(land);
+    }
+
+    @Test
+    void nonlandChoiceIsMandatoryAndLandCannotBeChosen() {
+        Card land = new Forest();
+        Card nonland = new Peek();
+        harness.setHand(player2, List.of(land, nonland));
+
+        castThoughtKnotSeer();
+
+        PendingInteraction.RevealedHandChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.optional()).isFalse();
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(land);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(nonland);
+    }
+
+    @Test
+    void exiledCardStaysExiledWhenSeerDies() {
+        Card exiled = new GrizzlyBears();
+        Card draw = new Forest();
+        harness.setHand(player2, List.of(exiled));
+        harness.setLibrary(player2, List.of(draw));
+        castThoughtKnotSeer();
+        harness.handleCardChosen(player1, 0);
+
+        harness.setHand(player2, List.of(new DoomBlade()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, harness.getPermanentId(player1, "Thought-Knot Seer"));
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Thought-Knot Seer");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(exiled);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(draw);
+    }
+
+    @Test
+    void leavingBeforeEnterTriggerResolvesDrawsBeforeChoosingCard() {
+        Card draw = new GrizzlyBears();
+        harness.setHand(player2, List.of(new DoomBlade()));
+        harness.setLibrary(player2, List.of(draw));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new ThoughtKnotSeer()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castCreature(player1, 0, 0, player2.getId());
+        harness.passBothPriorities();
+
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, harness.getPermanentId(player1, "Thought-Knot Seer"));
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(draw);
+        harness.assertInGraveyard(player1, "Thought-Knot Seer");
+
+        harness.passBothPriorities();
+        PendingInteraction.RevealedHandChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIndices()).containsExactly(0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(draw);
     }
 
     private void castThoughtKnotSeer() {
