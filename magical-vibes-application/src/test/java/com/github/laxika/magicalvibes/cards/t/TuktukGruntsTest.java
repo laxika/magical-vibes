@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CliffThreader;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({TuktukGrunts.class, CliffThreader.class})
 class TuktukGruntsTest extends BaseCardTest {
 
     @Test
@@ -22,8 +24,7 @@ class TuktukGruntsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 5);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent grunts = findPermanent(player1, "Tuktuk Grunts");
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -59,8 +60,8 @@ class TuktukGruntsTest extends BaseCardTest {
     @DisplayName("A non-Ally creature entering does not trigger it")
     void nonAllyEntryDoesNotTrigger() {
         Permanent grunts = harness.addToBattlefieldAndReturn(player1, new TuktukGrunts());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.setHand(player1, List.of(new CliffThreader()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
@@ -76,11 +77,40 @@ class TuktukGruntsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 5);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(findPermanent(player1, "Tuktuk Grunts")
                 .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("An opponent's Ally entry does not trigger your Grunts")
+    void opponentsAllyEntryDoesNotTrigger() {
+        Permanent grunts = harness.addToBattlefieldAndReturn(player1, new TuktukGrunts());
+        harness.enterBattlefieldAndReturn(player2, new TuktukGrunts());
+
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player2, false);
+        resolveAllTriggers();
+
+        assertThat(grunts.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Haste allows attacking on the turn it enters")
+    void canAttackOnTheTurnItEnters() {
+        harness.setHand(player1, List.of(new TuktukGrunts()));
+        harness.addMana(player1, ManaColor.RED, 5);
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+
+        harness.assertLife(player2, 17);
     }
 }
