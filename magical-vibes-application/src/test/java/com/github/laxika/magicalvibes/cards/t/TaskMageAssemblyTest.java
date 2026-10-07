@@ -75,8 +75,8 @@ class TaskMageAssemblyTest extends BaseCardTest {
     @DisplayName("Any player may activate it at sorcery speed to damage a creature")
     void anyPlayerMayActivateIt() {
         harness.addToBattlefield(player1, new TaskMageAssembly());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
+        var bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        UUID bearsId = bears.getId();
         harness.addMana(player2, ManaColor.COLORLESS, 2);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -86,7 +86,118 @@ class TaskMageAssemblyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(harness.getPermanentId(player1, "Grizzly Bears")).isEqualTo(bearsId);
-        assertThat(findPermanent(player1, "Grizzly Bears").getMarkedDamage()).isEqualTo(1);
+        assertThat(bears.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Does not trigger again while the sacrifice ability is already on the stack")
+    void doesNotDuplicatePendingStateTrigger() {
+        harness.addToBattlefield(player1, new TaskMageAssembly());
+
+        harness.runStateBasedActions();
+        harness.runStateBasedActions();
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Task Mage Assembly");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Repeated activations kill the last creature and trigger the sacrifice")
+    void killingLastCreatureTriggersSacrifice() {
+        harness.addToBattlefield(player1, new TaskMageAssembly());
+        var bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, bears.getId());
+        harness.passBothPriorities();
+        assertThat(bears.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Task Mage Assembly");
+
+        harness.activateAbility(player1, 0, null, bears.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Task Mage Assembly");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Task Mage Assembly");
+        harness.assertNotOnBattlefield(player1, "Task Mage Assembly");
+    }
+
+    @Test
+    @DisplayName("Any-player permission does not allow activation during another player's turn")
+    void opponentCannotActivateDuringControllersTurn() {
+        harness.addToBattlefield(player1, new TaskMageAssembly());
+        var bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, bears.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery");
+        assertThat(gd.stack).isEmpty();
+        assertThat(bears.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Cannot activate again while its damage ability is on the stack")
+    void cannotActivateWithNonemptyStack() {
+        harness.addToBattlefield(player1, new TaskMageAssembly());
+        var bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.activateAbility(player1, 0, null, bears.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("stack");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(bears.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The activating opponent pays two generic mana, not the enchantment's controller")
+    void activatingOpponentPaysGenericMana() {
+        harness.addToBattlefield(player1, new TaskMageAssembly());
+        var bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player2, 0, null, bears.getId());
+
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotalAllMana()).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(2);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player2.getId());
+        harness.passBothPriorities();
+        assertThat(bears.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Cannot target a noncreature permanent")
+    void cannotTargetNoncreaturePermanent() {
+        var assembly = harness.addToBattlefieldAndReturn(player1, new TaskMageAssembly());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, assembly.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Task Mage Assembly");
     }
 
     @Test
