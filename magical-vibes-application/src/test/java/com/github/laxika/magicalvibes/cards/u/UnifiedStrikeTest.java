@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.u;
 
 import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -89,6 +90,52 @@ class UnifiedStrikeTest extends BaseCardTest {
                 .hasMessageContaining("Target must be an attacking creature");
     }
 
+    @Test
+    @DisplayName("Does not exile when the Soldier count falls before resolution")
+    void soldierCountCanFallBeforeResolution() {
+        Permanent soldier = addCreatureReady(player1, new GlorySeeker());
+        Permanent attacker = addAttacker(player2, new GlorySeeker());
+        harness.setHand(player1, List.of(new UnifiedStrike()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castInstant(player1, 0, attacker.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(soldier);
+        harness.setGraveyard(player1, List.of(soldier.getCard()));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Glory Seeker");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Checks increased effective power when the spell resolves")
+    void powerCanIncreaseBeforeResolution() {
+        addCreatureReady(player1, new GlorySeeker());
+        Permanent attacker = addAttacker(player2, new GlorySeeker());
+        harness.setHand(player1, List.of(new UnifiedStrike()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castInstant(player1, 0, attacker.getId());
+
+        attacker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Glory Seeker");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Soldiers in graveyards and exile do not count")
+    void soldiersOutsideBattlefieldDoNotCount() {
+        Permanent attacker = addAttacker(player2, new GlorySeeker());
+        harness.setGraveyard(player1, List.of(new GlorySeeker()));
+        harness.setExile(player1, List.of(new GlorySeeker()));
+
+        cast(attacker);
+
+        harness.assertOnBattlefield(player2, "Glory Seeker");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
     private void cast(Permanent target) {
         harness.setHand(player1, List.of(new UnifiedStrike()));
         harness.addMana(player1, ManaColor.WHITE, 1);
@@ -96,8 +143,7 @@ class UnifiedStrikeTest extends BaseCardTest {
     }
 
     private Permanent addAttacker(Player controller, Card card) {
-        Permanent attacker = harness.addToBattlefieldAndReturn(controller, card);
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(controller, card);
         attacker.setAttacking(true);
         attacker.setAttackTarget(player1.getId());
         return attacker;
