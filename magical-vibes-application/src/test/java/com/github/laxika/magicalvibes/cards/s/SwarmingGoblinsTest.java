@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.p.PowerWordKill;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.service.effect.normalfx.D20RollService;
@@ -17,7 +21,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SwarmingGoblins.class})
+@CardUsed({SwarmingGoblins.class, PowerWordKill.class})
 class SwarmingGoblinsTest extends BaseCardTest {
 
     private RollD20EffectHandler rollD20EffectHandler;
@@ -66,19 +70,64 @@ class SwarmingGoblinsTest extends BaseCardTest {
     }
 
     private void castSwarmingGoblins() {
-        harness.setHand(player1, List.of(new SwarmingGoblins()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castFromHand(player1, new SwarmingGoblins(), "{4}{R}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+    }
 
-        harness.castCreature(player1, 0);
+    @Test
+    @DisplayName("A result of 1 creates one Goblin")
+    void minimumResultCreatesOneGoblin() {
+        setRoll(1);
+
+        castSwarmingGoblins();
+
+        assertGoblins(1);
+    }
+
+    @Test
+    @DisplayName("A result of 10 creates two Goblins")
+    void firstMiddleResultCreatesTwoGoblins() {
+        setRoll(10);
+
+        castSwarmingGoblins();
+
+        assertGoblins(2);
+    }
+
+    @Test
+    @CardUsed({SwarmingGoblins.class, PowerWordKill.class})
+    @DisplayName("The enter trigger creates tokens even after Swarming Goblins is destroyed")
+    void triggerResolvesAfterSourceLeaves() {
+        setRoll(20);
+        harness.castFromHand(player1, new SwarmingGoblins(), "{4}{R}");
         harness.passBothPriorities();
+        assertThat(findPermanents(player1, "Goblin")).isEmpty();
+        Permanent source = findPermanents(player1, "Swarming Goblins").getFirst();
+
+        harness.setHand(player2, List.of(new PowerWordKill()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.ensurePriority(player2);
+        harness.castInstant(player2, 0, source.getId());
         harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Swarming Goblins");
+        assertThat(findPermanents(player1, "Goblin")).isEmpty();
+        resolveAllTriggers();
+
+        assertGoblins(3);
+        assertThat(findPermanents(player2, "Goblin")).isEmpty();
     }
 
     private void assertGoblins(int expectedCount) {
         List<Permanent> goblins = findPermanents(player1, "Goblin");
         assertThat(goblins).hasSize(expectedCount);
         assertThat(goblins).allSatisfy(goblin -> {
+            assertThat(goblin.getCard().isToken()).isTrue();
+            assertThat(goblin.getCard().getType()).isEqualTo(CardType.CREATURE);
+            assertThat(goblin.getCard().getColor()).isEqualTo(CardColor.RED);
+            assertThat(goblin.getCard().getSubtypes()).containsExactly(CardSubtype.GOBLIN);
             assertThat(goblin.getEffectivePower()).isEqualTo(1);
             assertThat(goblin.getEffectiveToughness()).isEqualTo(1);
         });
