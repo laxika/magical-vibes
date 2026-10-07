@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -13,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SuntailHawk.class, GrizzlyBears.class})
+@CardUsed({SuntailHawk.class, GrizzlyBears.class, GiantSpider.class})
 class SuntailHawkTest extends BaseCardTest {
 
     @Test
@@ -44,5 +45,35 @@ class SuntailHawkTest extends BaseCardTest {
                 gd.playerBattlefields.get(player1.getId()).indexOf(hawk))));
 
         assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A creature with reach can block Suntail Hawk")
+    void reachAllowsBlocking() {
+        Permanent hawk = addCreatureReady(player1, new SuntailHawk());
+        Permanent blocker = addCreatureReady(player2, new GiantSpider());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(hawk))));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Suntail Hawk can block a creature without flying")
+    void flyingCreatureCanBlockGroundCreature() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent hawk = addCreatureReady(player2, new SuntailHawk());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(hawk),
+                gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
+
+        assertThat(hawk.isBlocking()).isTrue();
     }
 }
