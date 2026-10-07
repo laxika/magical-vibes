@@ -112,6 +112,36 @@ class ThreeVisitsTest extends BaseCardTest {
                 && gameLogContains("Library is shuffled.")).isTrue();
     }
 
+    @Test
+    @DisplayName("Search takes exactly the selected Forest from the controller's library")
+    void takesOnlySelectedForestFromControllersLibrary() {
+        Forest firstForest = new Forest();
+        Forest selectedForest = new Forest();
+        Forest opponentsForest = new Forest();
+        Plains plains = new Plains();
+        setupAndCast();
+        harness.setLibrary(player1, List.of(firstForest, plains, selectedForest));
+        harness.setLibrary(player2, List.of(opponentsForest));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
+                .containsExactly(firstForest, selectedForest);
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .singleElement().satisfies(permanent -> {
+                    assertThat(permanent.getCard()).isSameAs(selectedForest);
+                    assertThat(permanent.isTapped()).isFalse();
+                });
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(firstForest, plains);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentsForest);
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Three Visits");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
+    }
+
     private void setupAndCast() {
         harness.castFromHand(player1, new ThreeVisits(), "{1}{G}");
     }
