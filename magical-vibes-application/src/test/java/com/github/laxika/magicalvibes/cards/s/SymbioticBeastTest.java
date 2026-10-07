@@ -76,4 +76,47 @@ class SymbioticBeastTest extends BaseCardTest {
         assertThat(countPermanents(player2, "Insect")).isEqualTo(4);
         harness.assertNotOnBattlefield(player1, "Insect");
     }
+
+    @Test
+    @DisplayName("Nonlethal damage does not create Insect tokens")
+    void nonlethalDamageDoesNotTrigger() {
+        harness.addToBattlefield(player1, new SymbioticBeast());
+        harness.setHand(player2, List.of(new Starstorm()));
+        harness.addMana(player2, ManaColor.RED, 5);
+        harness.forceActivePlayer(player2);
+
+        harness.castInstant(player2, 0, 3, null);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Symbiotic Beast");
+        harness.assertNotOnBattlefield(player1, "Insect");
+        harness.assertNotOnBattlefield(player2, "Insect");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Beasts dying simultaneously each create tokens after the damage spell resolves")
+    void simultaneousDeathsCreateTokensForEachController() {
+        harness.addToBattlefield(player1, new SymbioticBeast());
+        harness.addToBattlefield(player2, new SymbioticBeast());
+        harness.setHand(player1, List.of(new Starstorm()));
+        harness.addMana(player1, ManaColor.RED, 6);
+        harness.forceActivePlayer(player1);
+
+        harness.castInstant(player1, 0, 4, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Symbiotic Beast");
+        harness.assertInGraveyard(player2, "Symbiotic Beast");
+        harness.assertNotOnBattlefield(player1, "Insect");
+        harness.assertNotOnBattlefield(player2, "Insect");
+        assertThat(gd.stack).hasSize(2);
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Insect")).isEqualTo(4);
+        assertThat(countPermanents(player2, "Insect")).isEqualTo(4);
+        assertThat(gd.stack).isEmpty();
+    }
 }
