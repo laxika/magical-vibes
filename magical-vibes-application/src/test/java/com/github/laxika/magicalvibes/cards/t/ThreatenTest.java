@@ -1,7 +1,5 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -114,8 +112,7 @@ class ThreatenTest extends BaseCardTest {
     @DisplayName("Cannot target a non-creature permanent")
     void cannotTargetNonCreature() {
         addCreatureReady(player1, new GrizzlyBears()); // valid target so spell is playable
-        Permanent enchantment = new Permanent(new Pacifism());
-        gd.playerBattlefields.get(player2.getId()).add(enchantment);
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new Pacifism());
         harness.setHand(player1, List.of(new Threaten()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.WHITE, 2);
@@ -139,7 +136,40 @@ class ThreatenTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+        assertThat(gameLogContains("fizzles")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Threaten lets a newly entered creature you already control attack")
+    void ownSummoningSickCreatureCanAttack() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        target.setSummoningSick(true);
+        harness.setHand(player1, List.of(new Threaten()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(target)));
+
+        assertThat(target.isAttacking()).isTrue();
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Threaten affects only the targeted creature")
+    void otherCreaturesRemainUnaffected() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent other = addCreatureReady(player2, new GrizzlyBears());
+        target.tap();
+        other.tap();
+        harness.setHand(player1, List.of(new Threaten()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target).doesNotContain(other);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(other).doesNotContain(target);
+        assertThat(target.isTapped()).isFalse();
+        assertThat(other.isTapped()).isTrue();
+        assertThat(other.hasKeyword(Keyword.HASTE)).isFalse();
     }
 }
-
