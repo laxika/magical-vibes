@@ -89,6 +89,48 @@ class TendrilsOfAgonyTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Targeting yourself at 1 life finishes the life gain before checking defeat")
+    void targetingSelfAtOneLifeRestoresLifeBeforeStateBasedActions() {
+        harness.setLife(player1, 1);
+        harness.setLife(player2, 20);
+
+        castTendrilsOfAgony(player1.getId());
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 1);
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Tendrils of Agony");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Storm counts a face-down creature spell and its copies are not cast")
+    void stormCountsCreatureSpellWithoutCountingCopiesAsCasts() {
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new ScornfulEgotist()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passBothPriorities();
+
+        castTendrilsOfAgony(player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(1);
+        assertThat(gd.getTotalSpellsCastThisTurnCount()).isEqualTo(2);
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 14);
+        harness.assertLife(player2, 16);
+        assertThat(gd.getTotalSpellsCastThisTurnCount()).isEqualTo(2);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card instanceof TendrilsOfAgony)
+                .hasSize(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void castTendrilsOfAgony(UUID targetId) {
         harness.setHand(player1, List.of(new TendrilsOfAgony()));
         harness.addMana(player1, ManaColor.BLACK, 4);
