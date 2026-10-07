@@ -7,8 +7,11 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed(TigereyeCameo.class)
 class TigereyeCameoTest extends BaseCardTest {
@@ -51,5 +54,42 @@ class TigereyeCameoTest extends BaseCardTest {
         assertThat(gameData.stack).isEmpty();
         assertThat(gameData.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
         assertThat(gameData.stack).isEmpty();
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {0, 1})
+    @DisplayName("A tapped Cameo cannot produce either color")
+    void tappedCameoCannotProduceMana(int abilityIndex) {
+        Permanent cameo = harness.addToBattlefieldAndReturn(player1, new TigereyeCameo());
+        cameo.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, abilityIndex, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+
+        assertThat(cameo.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {0, 1})
+    @DisplayName("Producing one color pays the tap cost for both color options")
+    void cannotProduceBothColorsWithoutUntapping(int abilityIndex) {
+        Permanent cameo = harness.addToBattlefieldAndReturn(player1, new TigereyeCameo());
+
+        harness.activateAbility(player1, 0, abilityIndex, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1 - abilityIndex, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+
+        assertThat(cameo.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN))
+                .isEqualTo(abilityIndex == 0 ? 1 : 0);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE))
+                .isEqualTo(abilityIndex == 1 ? 1 : 0);
+        assertThat(gd.stack).isEmpty();
     }
 }
