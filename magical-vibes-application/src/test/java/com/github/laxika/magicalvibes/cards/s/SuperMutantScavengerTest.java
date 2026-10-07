@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.b.Bonesplitter;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.Oakenform;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -79,14 +78,122 @@ class SuperMutantScavengerTest extends BaseCardTest {
         harness.assertNotInHand(player1, "Oakenform");
     }
 
+    @Test
+    @DisplayName("ETB returns Equipment as well as Auras")
+    void returnsEquipmentOnEntering() {
+        Bonesplitter equipment = new Bonesplitter();
+        harness.setGraveyard(player1, List.of(equipment));
+
+        castScavenger();
+        harness.handleMultipleCardsChosen(player1, List.of(equipment.getId()));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Bonesplitter");
+        harness.assertNotInGraveyard(player1, "Bonesplitter");
+    }
+
+    @Test
+    @DisplayName("Death returns Auras as well as Equipment")
+    void returnsAuraOnDeath() {
+        Oakenform aura = new Oakenform();
+        harness.setGraveyard(player1, List.of(aura));
+        Permanent scavenger = addCreatureReady(player1, new SuperMutantScavenger());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().tryDestroyPermanent(gd, scavenger));
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(aura.getId()));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Oakenform");
+        harness.assertNotInGraveyard(player1, "Oakenform");
+    }
+
+    @Test
+    @DisplayName("The trigger returns only one card when an Aura and Equipment are available")
+    void returnsOnlyOneMatchingCard() {
+        Oakenform aura = new Oakenform();
+        Bonesplitter equipment = new Bonesplitter();
+        GrizzlyBears creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(aura, equipment, creature));
+
+        castScavenger();
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.cards()).containsExactlyInAnyOrder(aura, equipment);
+        assertThat(choice.minCount()).isZero();
+        assertThat(choice.maxCount()).isEqualTo(1);
+        harness.handleMultipleCardsChosen(player1, List.of(equipment.getId()));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Bonesplitter");
+        harness.assertInGraveyard(player1, "Oakenform");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotInHand(player1, "Oakenform");
+    }
+
+    @Test
+    @DisplayName("The trigger cannot target cards in an opponent's graveyard")
+    void onlyTargetsControllersGraveyard() {
+        Oakenform ownAura = new Oakenform();
+        Bonesplitter opposingEquipment = new Bonesplitter();
+        harness.setGraveyard(player1, List.of(ownAura));
+        harness.setGraveyard(player2, List.of(opposingEquipment));
+
+        castScavenger();
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.cards()).containsExactly(ownAura);
+        harness.handleMultipleCardsChosen(player1, List.of(ownAura.getId()));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Oakenform");
+        harness.assertInGraveyard(player2, "Bonesplitter");
+        harness.assertNotInHand(player1, "Bonesplitter");
+    }
+
+    @Test
+    @DisplayName("A target that leaves the graveyard is not returned and cannot be replaced")
+    void doesNotRetargetWhenTargetLeavesGraveyard() {
+        Oakenform aura = new Oakenform();
+        Bonesplitter equipment = new Bonesplitter();
+        harness.setGraveyard(player1, List.of(aura, equipment));
+
+        castScavenger();
+        harness.handleMultipleCardsChosen(player1, List.of(aura.getId()));
+        harness.setGraveyard(player1, List.of(equipment));
+        harness.setExile(player1, List.of(aura));
+        harness.passBothPriorities();
+
+        harness.assertNotInHand(player1, "Oakenform");
+        harness.assertNotInHand(player1, "Bonesplitter");
+        harness.assertInGraveyard(player1, "Bonesplitter");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The death trigger may choose zero targets")
+    void mayDeclineDeathReturn() {
+        harness.setGraveyard(player1, List.of(new Bonesplitter()));
+        Permanent scavenger = addCreatureReady(player1, new SuperMutantScavenger());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().tryDestroyPermanent(gd, scavenger));
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Bonesplitter");
+        harness.assertNotInHand(player1, "Bonesplitter");
+        harness.assertInGraveyard(player1, "Super Mutant Scavenger");
+    }
+
     private void castScavenger() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new SuperMutantScavenger()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new SuperMutantScavenger(), "{4}{G}");
         harness.passBothPriorities();
     }
 }
