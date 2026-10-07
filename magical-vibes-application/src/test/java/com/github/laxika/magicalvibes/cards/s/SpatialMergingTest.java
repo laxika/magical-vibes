@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.p.Panopticon;
+import com.github.laxika.magicalvibes.cards.t.TheGoldenCityOfOrazca;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -18,7 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SpatialMerging.class, Panopticon.class})
+@CardUsed({SpatialMerging.class, Panopticon.class, TheGoldenCityOfOrazca.class, SolRing.class})
 class SpatialMergingTest extends BaseCardTest {
 
     private PlanechaseService planar;
@@ -77,5 +78,58 @@ class SpatialMergingTest extends BaseCardTest {
         assertThat(gd.planechase.faceUp).extracting(PlanarObject::getCard)
                 .containsExactly(firstPlane, secondPlane);
         assertThat(gd.planechase.deck).containsExactly(source);
+    }
+
+    @Test
+    void skipsOnePhenomenonStopsAtSecondPlaneAndTriggersBothArrivals() {
+        SpatialMerging source = new SpatialMerging();
+        SpatialMerging other = new SpatialMerging();
+        Panopticon firstPlane = new Panopticon();
+        Panopticon secondPlane = new Panopticon();
+        Panopticon unrevealed = new Panopticon();
+        int controllerHandSize = gd.playerHands.get(player1.getId()).size();
+        int opponentHandSize = gd.playerHands.get(player2.getId()).size();
+        gd.planechase.faceUp.add(new PlanarObject(source, gd.nextTimestamp()));
+        gd.planechase.deck.addAll(List.of(other, firstPlane, secondPlane, unrevealed));
+
+        harness.inMutationScope(() -> planar.trigger(gd, gd.planechase.faceUp.getFirst(),
+                EffectSlot.ENCOUNTER_TRIGGERED, player1.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.planechase.faceUp).extracting(PlanarObject::getCard)
+                .containsExactly(firstPlane, secondPlane);
+        assertThat(gd.planechase.deck).containsExactly(unrevealed, source, other);
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(controllerHandSize);
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(controllerHandSize + 2);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(opponentHandSize);
+        assertThat(gd.planechase.faceUp).extracting(PlanarObject::getCard)
+                .containsExactly(firstPlane, secondPlane);
+    }
+
+    @Test
+    void arrivingAtAscendPlaneGrantsBlessingBeforeArrivalTriggersResolve() {
+        SpatialMerging source = new SpatialMerging();
+        TheGoldenCityOfOrazca firstPlane = new TheGoldenCityOfOrazca();
+        Panopticon secondPlane = new Panopticon();
+        for (int i = 0; i < 10; i++) {
+            harness.addToBattlefield(player1, new SolRing());
+        }
+        gd.planechase.faceUp.add(new PlanarObject(source, gd.nextTimestamp()));
+        gd.planechase.deck.addAll(List.of(firstPlane, secondPlane));
+        assertThat(gd.playersWithCityBlessing).doesNotContain(player1.getId());
+
+        harness.inMutationScope(() -> planar.trigger(gd, gd.planechase.faceUp.getFirst(),
+                EffectSlot.ENCOUNTER_TRIGGERED, player1.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.planechase.faceUp).extracting(PlanarObject::getCard)
+                .containsExactly(firstPlane, secondPlane);
+        assertThat(gd.playersWithCityBlessing).contains(player1.getId());
+        assertThat(gd.playersWithCityBlessing).doesNotContain(player2.getId());
     }
 }
