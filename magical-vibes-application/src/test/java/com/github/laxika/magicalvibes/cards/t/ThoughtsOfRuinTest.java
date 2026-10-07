@@ -112,4 +112,79 @@ class ThoughtsOfRuinTest extends BaseCardTest {
         assertThat(landCount(player1)).isEqualTo(4);
         assertThat(landCount(player2)).isEqualTo(4);
     }
+
+    @Test
+    @DisplayName("A player with too few lands sacrifices all of them after the other player chooses")
+    void tooFewLandsAreSacrificedTogetherWithChosenLands() {
+        harness.addToBattlefield(player1, new MikokoroCenterOfTheSea());
+        addSokLands(player2);
+        harness.setHand(player1, List.of(new ThoughtsOfRuin(), new ThoughtsOfRuin(), new ThoughtsOfRuin()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        assertThat(choice.maxCount()).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Mikokoro, Center of the Sea");
+        harness.handleMultiplePermanentsChosen(player2, landIds(player2, 2));
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(landCount(player1)).isZero();
+        assertThat(landCount(player2)).isEqualTo(2);
+        harness.assertInGraveyard(player1, "Mikokoro, Center of the Sea");
+        harness.assertInGraveyard(player2, "Mikokoro, Center of the Sea");
+        harness.assertInGraveyard(player2, "Miren, the Moaning Well");
+    }
+
+    @Test
+    @DisplayName("Chosen lands remain on the battlefield until both players have chosen")
+    void sacrificesWaitForBothPlayersChoices() {
+        addSokLands(player1);
+        addSokLands(player2);
+        harness.setHand(player1, List.of(new ThoughtsOfRuin(), new ThoughtsOfRuin()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.handleMultiplePermanentsChosen(player1, landIds(player1, 1));
+
+        assertThat(landCount(player1)).isEqualTo(4);
+        assertThat(landCount(player2)).isEqualTo(4);
+        harness.assertNotInGraveyard(player1, "Mikokoro, Center of the Sea");
+        harness.handleMultiplePermanentsChosen(player2, landIds(player2, 1));
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(landCount(player1)).isEqualTo(3);
+        assertThat(landCount(player2)).isEqualTo(3);
+        harness.assertInGraveyard(player1, "Mikokoro, Center of the Sea");
+        harness.assertInGraveyard(player2, "Mikokoro, Center of the Sea");
+    }
+
+    @Test
+    @DisplayName("Returning Oboro in response increases the hand size used on resolution")
+    void countsCardsInHandAtResolution() {
+        addSokLands(player1);
+        addSokLands(player2);
+        harness.setHand(player1, List.of(new ThoughtsOfRuin()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castSorcery(player1, 0);
+        harness.activateAbility(player1, 2, 1, null, null);
+        harness.passBothPriorities();
+        harness.assertInHand(player1, "Oboro, Palace in the Clouds");
+        harness.passBothPriorities();
+
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.maxCount()).isEqualTo(1);
+        harness.handleMultiplePermanentsChosen(player1, landIds(player1, 1));
+        harness.handleMultiplePermanentsChosen(player2, landIds(player2, 1));
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(landCount(player1)).isEqualTo(2);
+        assertThat(landCount(player2)).isEqualTo(3);
+    }
 }
