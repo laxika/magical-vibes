@@ -3,15 +3,19 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.b.BalothGorger;
+import com.github.laxika.magicalvibes.cards.k.KarnsTemporalSundering;
+import com.github.laxika.magicalvibes.cards.o.Opt;
+import com.github.laxika.magicalvibes.cards.s.ShannaSisaysLegacy;
 import com.github.laxika.magicalvibes.cards.s.SparringConstruct;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,6 +24,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ThranTemporalGateway.class, SparringConstruct.class, BalothGorger.class, Opt.class,
+        KarnsTemporalSundering.class, ShannaSisaysLegacy.class, TheFlameOfKeld.class})
 class ThranTemporalGatewayTest extends BaseCardTest {
 
     
@@ -61,9 +67,9 @@ class ThranTemporalGatewayTest extends BaseCardTest {
     void resolvingPromptsOnlyHistoricPermanentChoices() {
         addReadyGateway();
         // SparringConstruct is an artifact creature (historic permanent) — index 0
-        // GrizzlyBears is a regular creature (not historic) — index 1
-        // LightningBolt is an instant (not a permanent) — index 2
-        harness.setHand(player1, List.of(new SparringConstruct(), new GrizzlyBears(), new LightningBolt()));
+        // BalothGorger is a regular creature (not historic) — index 1
+        // Opt is an instant (not a permanent) — index 2
+        harness.setHand(player1, List.of(new SparringConstruct(), new BalothGorger(), new Opt()));
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.activateAbility(player1, 0, null, null);
@@ -118,8 +124,8 @@ class ThranTemporalGatewayTest extends BaseCardTest {
     @DisplayName("No historic permanent cards in hand skips choice")
     void noHistoricPermanentsInHandSkipsChoice() {
         addReadyGateway();
-        // GrizzlyBears is not historic, LightningBolt is not a permanent
-        harness.setHand(player1, List.of(new GrizzlyBears(), new LightningBolt()));
+        // BalothGorger is not historic, Opt is not a permanent
+        harness.setHand(player1, List.of(new BalothGorger(), new Opt()));
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.activateAbility(player1, 0, null, null);
@@ -135,8 +141,7 @@ class ThranTemporalGatewayTest extends BaseCardTest {
     @Test
     @DisplayName("Non-creature artifact can activate tap ability the turn it enters")
     void canActivateWithoutSummoningSickness() {
-        Permanent gateway = new Permanent(new ThranTemporalGateway());
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(gateway);
+        Permanent gateway = harness.addToBattlefieldAndReturn(player1, new ThranTemporalGateway());
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.activateAbility(player1, 0, null, null);
@@ -168,10 +173,99 @@ class ThranTemporalGatewayTest extends BaseCardTest {
                 .hasMessageContaining("Not enough mana");
     }
 
+    @Test
+    @DisplayName("Artifacts, legendary permanents and Sagas qualify, but legendary sorceries do not")
+    void allHistoricPermanentCategoriesAreEligible() {
+        addReadyGateway();
+        harness.setHand(player1, List.of(new SparringConstruct(), new ShannaSisaysLegacy(),
+                new TheFlameOfKeld(), new KarnsTemporalSundering(), new BalothGorger(), new Opt()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        PendingInteraction.HandCardChoice choice = harness.getGameData().interaction
+                .activeInteraction(PendingInteraction.HandCardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIndices()).containsExactly(0, 1, 2);
+    }
+
+    @Test
+    @DisplayName("A legendary creature enters without paying its colored mana cost")
+    void legendaryCreatureEntersWithoutBeingCast() {
+        addReadyGateway();
+        ShannaSisaysLegacy shanna = new ShannaSisaysLegacy();
+        harness.setHand(player1, List.of(shanna));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(harness.getGameData().playerHands.get(player1.getId())).isEmpty();
+        assertThat(harness.getGameData().playerBattlefields.get(player1.getId()))
+                .anySatisfy(permanent -> {
+                    assertThat(permanent.getCard()).isSameAs(shanna);
+                    assertThat(permanent.isTapped()).isFalse();
+                    assertThat(permanent.isSummoningSick()).isTrue();
+                });
+        assertThat(harness.getGameData().stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A Saga put onto the battlefield triggers its first chapter")
+    void sagaEntersAndResolvesFirstChapter() {
+        addReadyGateway();
+        harness.setHand(player1, List.of(new TheFlameOfKeld(), new Opt()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player1, "The Flame of Keld");
+        assertThat(harness.getGameData().playerBattlefields.get(player1.getId()))
+                .anySatisfy(permanent -> {
+                    assertThat(permanent.getCard()).isInstanceOf(TheFlameOfKeld.class);
+                    assertThat(permanent.getCounterCount(CounterType.LORE)).isEqualTo(1);
+                });
+        assertThat(harness.getGameData().playerHands.get(player1.getId())).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(harness.getGameData().playerHands.get(player1.getId())).isEmpty();
+        assertThat(harness.getGameData().playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof Opt);
+    }
+
+    @Test
+    @DisplayName("The ability still puts a card onto the battlefield after Gateway leaves")
+    void abilityResolvesWithoutGatewayOnBattlefield() {
+        Permanent gateway = addReadyGateway();
+        harness.setHand(player1, List.of(new SparringConstruct()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.getGameData().playerBattlefields.get(player1.getId()).remove(gateway);
+        harness.getGameData().playerGraveyards.get(player1.getId()).add(gateway.getCard());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Sparring Construct");
+        assertThat(harness.getGameData().playerHands.get(player1.getId())).isEmpty();
+        assertThat(harness.getGameData().stack).isEmpty();
+    }
+
     private Permanent addReadyGateway() {
-        Permanent gateway = new Permanent(new ThranTemporalGateway());
+        Permanent gateway = harness.addToBattlefieldAndReturn(player1, new ThranTemporalGateway());
         gateway.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(gateway);
         return gateway;
     }
 }
