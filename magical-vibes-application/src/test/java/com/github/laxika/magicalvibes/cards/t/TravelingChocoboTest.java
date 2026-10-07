@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.g.GysahlGreens;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SoulWarden;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -79,13 +80,143 @@ class TravelingChocoboTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.stack).hasSize(2);
         harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(22);
+    }
+
+    @Test
+    void showsUncastableTopCardOnlyToController() {
+        harness.addToBattlefield(player1, new TravelingChocobo());
+        harness.setLibrary(player1, List.of(new GysahlGreens()));
+        harness.setLibrary(player2, List.of(new Forest()));
+        harness.clearMessages();
+
+        harness.publishState();
+
+        assertThat(harness.getConn1().getSentMessages()).anyMatch(message ->
+                message.contains("\"revealedLibraryTopCards\":[[{")
+                        && message.contains("Gysahl Greens")
+                        && message.contains("}],[]]"));
+        assertThat(harness.getConn2().getSentMessages()).anyMatch(message ->
+                message.contains("\"revealedLibraryTopCards\":[[],[]]"));
+    }
+
+    @Test
+    void doesNotRevealItselfFromLibraryWithoutBattlefieldPermission() {
+        harness.setLibrary(player1, List.of(new TravelingChocobo()));
+        harness.setLibrary(player2, List.of(new Forest()));
+        harness.clearMessages();
+
+        harness.publishState();
+
+        assertThat(harness.getConn1().getSentMessages()).anyMatch(message ->
+                message.contains("\"revealedLibraryTopCards\":[[],[]]"));
+        assertThat(harness.getConn2().getSentMessages()).anyMatch(message ->
+                message.contains("\"revealedLibraryTopCards\":[[],[]]"));
+    }
+
+    @Test
+    void cannotPlaySecondLandFromLibrary() {
+        harness.addToBattlefield(player1, new TravelingChocobo());
+        Forest secondLand = new Forest();
+        harness.setLibrary(player1, List.of(new Forest(), secondLand));
+
+        harness.castFromLibraryTop(player1);
+
+        assertThatThrownBy(() -> harness.castFromLibraryTop(player1))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(secondLand);
+    }
+
+    @Test
+    void birdFromLibraryStillRequiresMana() {
+        harness.addToBattlefield(player1, new TravelingChocobo());
+        TravelingChocobo bird = new TravelingChocobo();
+        harness.setLibrary(player1, List.of(bird));
+
+        assertThatThrownBy(() -> harness.castFromLibraryTop(player1))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(bird);
+    }
+
+    @Test
+    void birdFromLibraryStillRequiresSorceryTiming() {
+        harness.addToBattlefield(player1, new TravelingChocobo());
+        TravelingChocobo bird = new TravelingChocobo();
+        harness.setLibrary(player1, List.of(bird));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        assertThatThrownBy(() -> harness.castFromLibraryTop(player1))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(bird);
+    }
+
+    @Test
+    void multipleChocobosAddOneLandfallTriggerEach() {
+        harness.addToBattlefield(player1, new TravelingChocobo());
+        harness.addToBattlefield(player1, new TravelingChocobo());
+        harness.addToBattlefield(player1, new ChocoboRacetrack());
+        harness.setHand(player1, List.of(new Forest()));
+
+        harness.playLand(player1, 0);
+
+        assertThat(gd.stack).hasSize(3);
+    }
+
+    @Test
+    void newlyEnteringChocoboDoublesTriggersForItsOwnEntry() {
+        harness.addToBattlefield(player1, new SoulWarden());
+        harness.setHand(player1, List.of(new TravelingChocobo()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.assertLife(player1, 22);
+    }
+
+    @Test
+    void opponentsBirdDoesNotDoubleYourTriggers() {
+        harness.addToBattlefield(player1, new TravelingChocobo());
+        harness.addToBattlefield(player1, new SoulWarden());
+
+        harness.enterBattlefieldAndReturn(player2, new TravelingChocobo());
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 21);
+    }
+
+    @Test
+    void yourBirdDoesNotDoubleOpponentsTriggers() {
+        harness.addToBattlefield(player1, new TravelingChocobo());
+        harness.addToBattlefield(player2, new SoulWarden());
+
+        harness.enterBattlefieldAndReturn(player1, new TravelingChocobo());
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 21);
+    }
+
+    @Test
+    void nonBirdCreatureDoesNotDoubleTriggers() {
+        harness.addToBattlefield(player1, new TravelingChocobo());
+        harness.addToBattlefield(player1, new SoulWarden());
+
+        harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 21);
     }
 }
