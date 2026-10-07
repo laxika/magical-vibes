@@ -93,4 +93,50 @@ class StuporTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("A two-card hand loses both cards and resolution completes")
+    void twoCardHandDiscardsBothCards() {
+        Forest first = new Forest();
+        Forest second = new Forest();
+        harness.setHand(player2, List.of(first, second));
+        harness.setHand(player1, List.of(new Stupor()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.DiscardChoice) {
+            harness.handleCardChosen(player2, 0);
+        }
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactlyInAnyOrder(first, second);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Stupor");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The opponent chooses the exact second card after the random discard")
+    void opponentChoosesSecondCardFromRemainingHand() {
+        harness.setHand(player2, List.of(new Forest(), new Forest(), new Forest()));
+        Forest retainedByCaster = new Forest();
+        harness.setHand(player1, List.of(new Stupor(), retainedByCaster));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
+        Forest chosen = (Forest) gd.playerHands.get(player2.getId()).get(1);
+        Forest retained = (Forest) gd.playerHands.get(player2.getId()).getFirst();
+
+        harness.handleCardChosen(player2, 1);
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(retained);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2).contains(chosen);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(retainedByCaster);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Stupor");
+        assertThat(gd.stack).isEmpty();
+    }
 }
