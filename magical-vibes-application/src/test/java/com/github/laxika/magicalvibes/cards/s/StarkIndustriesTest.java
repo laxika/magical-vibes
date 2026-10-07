@@ -13,8 +13,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(StarkIndustries.class)
+@CardUsed({StarkIndustries.class})
 class StarkIndustriesTest extends BaseCardTest {
 
     @Test
@@ -69,9 +70,48 @@ class StarkIndustriesTest extends BaseCardTest {
     }
 
     private Permanent addReadyLand(Player player) {
-        Permanent land = new Permanent(new StarkIndustries());
+        Permanent land = harness.addToBattlefieldAndReturn(player, new StarkIndustries());
         land.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(land);
         return land;
+    }
+
+    @Test
+    @DisplayName("Entry life gain waits for the trigger to resolve")
+    void lifeGainUsesTheStack() {
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new StarkIndustries()));
+
+        harness.playLand(player1, 0);
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 21);
+    }
+
+    @Test
+    @DisplayName("A tapped land cannot activate its mana ability")
+    void tappedLandCannotProduceMana() {
+        Permanent land = addReadyLand(player1);
+        land.setTapped(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+    }
+
+    @Test
+    @DisplayName("Entering without being played gains life only for its controller")
+    void entryUnderOpponentControlGainsOpponentLife() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        Permanent land = harness.enterBattlefieldAndReturn(player2, new StarkIndustries());
+
+        assertThat(land.isTapped()).isTrue();
+        resolveAllTriggers();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 21);
     }
 }
