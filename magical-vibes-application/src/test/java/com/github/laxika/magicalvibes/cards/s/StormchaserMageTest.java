@@ -24,8 +24,7 @@ class StormchaserMageTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, mage)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, mage)).isEqualTo(4);
@@ -52,8 +51,7 @@ class StormchaserMageTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, mage)).isEqualTo(2);
 
@@ -63,6 +61,54 @@ class StormchaserMageTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, mage)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, mage)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Each noncreature spell gives a separate cumulative prowess boost")
+    void multipleSpellsStackBoosts() {
+        Permanent mage = addReadyMage();
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+        harness.castInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, mage)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, mage)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("An opponent's noncreature spell does not trigger prowess")
+    void opponentsSpellDoesNotPump() {
+        Permanent mage = addReadyMage();
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, mage)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, mage)).isEqualTo(3);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Prowess triggers on the controller's spell during an opponent's turn")
+    void controllersSpellDuringOpponentsTurnPumps() {
+        Permanent mage = addReadyMage();
+        harness.forceActivePlayer(player2);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.passPriority(player2);
+
+        harness.castInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, mage)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, mage)).isEqualTo(4);
     }
 
     private Permanent addReadyMage() {
