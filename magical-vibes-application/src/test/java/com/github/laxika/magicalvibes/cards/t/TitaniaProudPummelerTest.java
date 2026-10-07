@@ -40,4 +40,34 @@ class TitaniaProudPummelerTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(powerBefore + 1);
         assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(toughnessBefore + 1);
     }
+
+    @Test
+    @DisplayName("Titania's own melee triggers once when she attacks")
+    void ownMeleeTriggersOnce() {
+        Permanent titania = addCreatureReady(player1, new TitaniaProudPummeler());
+        int powerBefore = gqs.getEffectivePower(gd, titania);
+        int toughnessBefore = gqs.getEffectiveToughness(gd, titania);
+
+        declareAttackers(player1, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, titania)).isEqualTo(powerBefore + 1);
+        assertThat(gqs.getEffectiveToughness(gd, titania)).isEqualTo(toughnessBefore + 1);
+    }
+
+    @Test
+    @DisplayName("Other creatures lose granted melee when Titania leaves")
+    void grantedMeleeEndsWhenTitaniaLeaves() {
+        Permanent titania = addCreatureReady(player1, new TitaniaProudPummeler());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.MELEE)).isTrue();
+
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, titania);
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.MELEE)).isFalse();
+        int powerBefore = gqs.getEffectivePower(gd, creature);
+        declareAttackers(player1, List.of(0));
+        resolveAllTriggers();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(powerBefore);
+    }
 }
