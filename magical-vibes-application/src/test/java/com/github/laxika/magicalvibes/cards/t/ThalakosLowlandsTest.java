@@ -8,10 +8,12 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(ThalakosLowlands.class)
+@CardUsed({ThalakosLowlands.class})
 class ThalakosLowlandsTest extends BaseCardTest {
 
     @Test
@@ -88,6 +90,78 @@ class ThalakosLowlandsTest extends BaseCardTest {
 
         advanceToNextTurn(player1);
         advanceToNextTurn(player2);
+        assertThat(lowlands.isTapped()).isFalse();
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {1, 2})
+    @DisplayName("Colored mana does not prevent untapping for a new controller")
+    void newControllerUntapsNormally(int abilityIndex) {
+        Permanent lowlands = addReadyLowlands(player1);
+        harness.activateAbility(player1, 0, abilityIndex, null, null);
+
+        gd.playerBattlefields.get(player1.getId()).remove(lowlands);
+        gd.playerBattlefields.get(player2.getId()).add(lowlands);
+        harness.performUntapStep(player2);
+
+        assertThat(lowlands.isTapped()).isFalse();
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {1, 2})
+    @DisplayName("Colored mana restriction expires on the activating player's next untap even after control changes")
+    void restrictionExpiresDuringActivatingPlayersUntap(int abilityIndex) {
+        Permanent lowlands = addReadyLowlands(player1);
+        harness.activateAbility(player1, 0, abilityIndex, null, null);
+
+        gd.playerBattlefields.get(player1.getId()).remove(lowlands);
+        gd.playerBattlefields.get(player2.getId()).add(lowlands);
+        harness.performUntapStep(player1);
+        gd.playerBattlefields.get(player2.getId()).remove(lowlands);
+        gd.playerBattlefields.get(player1.getId()).add(lowlands);
+        harness.performUntapStep(player1);
+
+        assertThat(lowlands.isTapped()).isFalse();
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {1, 2})
+    @DisplayName("An opponent's untap does not consume the colored mana restriction")
+    void opponentsUntapDoesNotConsumeRestriction(int abilityIndex) {
+        Permanent lowlands = addReadyLowlands(player1);
+        harness.activateAbility(player1, 0, abilityIndex, null, null);
+
+        harness.performUntapStep(player2);
+        assertThat(lowlands.isTapped()).isTrue();
+        harness.performUntapStep(player1);
+        assertThat(lowlands.isTapped()).isTrue();
+        harness.performUntapStep(player1);
+        assertThat(lowlands.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Colorless mana allows the land to untap at the next untap step")
+    void colorlessManaUntapsAtNextStep() {
+        Permanent lowlands = addReadyLowlands(player1);
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        harness.performUntapStep(player1);
+
+        assertThat(lowlands.isTapped()).isFalse();
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {1, 2})
+    @DisplayName("Colored mana restriction expires even if the land is already untapped")
+    void restrictionExpiresWhileAlreadyUntapped(int abilityIndex) {
+        Permanent lowlands = addReadyLowlands(player1);
+        harness.activateAbility(player1, 0, abilityIndex, null, null);
+        lowlands.untap();
+
+        harness.performUntapStep(player1);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.performUntapStep(player1);
+
         assertThat(lowlands.isTapped()).isFalse();
     }
 
