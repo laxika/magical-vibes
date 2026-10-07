@@ -27,8 +27,7 @@ class ThorinMountainKingTest extends BaseCardTest {
         Permanent victim = addCreatureReady(player2, new ColossalDreadmaw());
 
         castThorin(List.of(host.getId(), firstEquipment.getId(), secondEquipment.getId()));
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
@@ -49,14 +48,101 @@ class ThorinMountainKingTest extends BaseCardTest {
         Permanent victim = addCreatureReady(player2, new ColossalDreadmaw());
 
         castThorin(List.of(host.getId()));
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
         assertThat(victim.getMarkedDamage()).isZero();
     }
 
+    @Test
+    @DisplayName("Thorin can attach Equipment without choosing a damage target")
+    void canDeclineDamageTarget() {
+        Permanent host = addCreatureReady(player1, new GrizzlyBears());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+        Permanent victim = addCreatureReady(player2, new ColossalDreadmaw());
+
+        castThorin(List.of(host.getId(), equipment.getId()));
+        resolveAllTriggers();
+        harness.handlePermanentChosen(player1, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(equipment.getAttachedTo()).isEqualTo(host.getId());
+        assertThat(victim.getMarkedDamage()).isZero();
+        assertThat(host.getMarkedDamage()).isZero();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Equipment already attached to the chosen creature does not trigger damage")
+    void alreadyAttachedEquipmentDoesNotTriggerDamage() {
+        Permanent host = addCreatureReady(player1, new GrizzlyBears());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+        equipment.setAttachedTo(host.getId());
+
+        castThorin(List.of(host.getId(), equipment.getId()));
+        resolveAllTriggers();
+
+        assertThat(equipment.getAttachedTo()).isEqualTo(host.getId());
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(host.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Thorin moves Equipment and can damage a friendly creature")
+    void movesEquipmentAndDamagesFriendlyCreature() {
+        Permanent previousHost = addCreatureReady(player1, new GrizzlyBears());
+        Permanent host = addCreatureReady(player1, new GrizzlyBears());
+        Permanent victim = addCreatureReady(player1, new ColossalDreadmaw());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+        equipment.setAttachedTo(previousHost.getId());
+
+        castThorin(List.of(host.getId(), equipment.getId()));
+        resolveAllTriggers();
+        harness.handlePermanentChosen(player1, victim.getId());
+        resolveAllTriggers();
+
+        assertThat(equipment.getAttachedTo()).isEqualTo(host.getId());
+        assertThat(victim.getMarkedDamage()).isEqualTo(3);
+        assertThat(previousHost.getMarkedDamage()).isZero();
+    }
+    @Test
+    @DisplayName("Thorin still attaches legal Equipment when another Equipment target leaves")
+    void ignoresEquipmentThatLeavesBeforeResolution() {
+        Permanent host = addCreatureReady(player1, new GrizzlyBears());
+        Permanent firstEquipment = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+        Permanent secondEquipment = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+        Permanent victim = addCreatureReady(player2, new ColossalDreadmaw());
+
+        castThorin(List.of(host.getId(), firstEquipment.getId(), secondEquipment.getId()));
+        harness.passBothPriorities();
+        harness.getPermanentRemovalService().sacrificePermanentToGraveyard(gd, firstEquipment);
+        resolveAllTriggers();
+        harness.handlePermanentChosen(player1, victim.getId());
+        resolveAllTriggers();
+
+        assertThat(secondEquipment.getAttachedTo()).isEqualTo(host.getId());
+        assertThat(victim.getMarkedDamage()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Damage uses the equipped creature's last known power after it leaves")
+    void damageUsesLastKnownPower() {
+        Permanent host = addCreatureReady(player1, new GrizzlyBears());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+        Permanent victim = addCreatureReady(player2, new ColossalDreadmaw());
+
+        castThorin(List.of(host.getId(), equipment.getId()));
+        resolveAllTriggers();
+        harness.handlePermanentChosen(player1, victim.getId());
+        harness.getPermanentRemovalService().sacrificePermanentToGraveyard(gd, host);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(victim.getMarkedDamage()).isEqualTo(3);
+    }
     private void castThorin(List<java.util.UUID> targetIds) {
         harness.setHand(player1, List.of(new ThorinMountainKing()));
         harness.addMana(player1, ManaColor.RED, 1);
