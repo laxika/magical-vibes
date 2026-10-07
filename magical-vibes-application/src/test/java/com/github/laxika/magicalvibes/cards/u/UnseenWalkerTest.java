@@ -47,8 +47,7 @@ class UnseenWalkerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, attacker.getId());
         harness.passBothPriorities();
 
-        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
@@ -92,8 +91,7 @@ class UnseenWalkerTest extends BaseCardTest {
         harness.addToBattlefield(player2, new Forest());
         Permanent blocker = addCreatureReady(player2, new ViashinoWarrior());
 
-        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(walker)));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(walker)));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
@@ -107,8 +105,7 @@ class UnseenWalkerTest extends BaseCardTest {
         Permanent walker = addCreatureReady(player1, new UnseenWalker());
         Permanent blocker = addCreatureReady(player2, new ViashinoWarrior());
 
-        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(walker)));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(walker)));
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
@@ -127,5 +124,59 @@ class UnseenWalkerTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gqs.hasKeyword(gd, target, Keyword.FORESTWALK)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Ability requires two green mana even when three mana are available")
+    void requiresTwoGreenMana() {
+        harness.addToBattlefield(player1, new UnseenWalker());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new ViashinoWarrior());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FORESTWALK)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Walker can grant forestwalk repeatedly")
+    void canActivateRepeatedlyWhileTappedAndSummoningSick() {
+        Permanent walker = harness.addToBattlefieldAndReturn(player1, new UnseenWalker());
+        walker.setTapped(true);
+        walker.setSummoningSick(true);
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new ViashinoWarrior());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new ViashinoWarrior());
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, 0, null, first.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 0, null, second.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, first, Keyword.FORESTWALK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.FORESTWALK)).isTrue();
+        assertThat(walker.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Granted forestwalk does not prevent blocking when only the attacker controls a Forest")
+    void attackersForestDoesNotPreventBlocking() {
+        harness.addToBattlefield(player1, new UnseenWalker());
+        Permanent attacker = addCreatureReady(player1, new ViashinoWarrior());
+        harness.addToBattlefield(player1, new Forest());
+        Permanent blocker = addCreatureReady(player2, new ViashinoWarrior());
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.activateAbility(player1, 0, 0, null, attacker.getId());
+        harness.passBothPriorities();
+        declareAttackersAndPrepareBlockers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
+
+        assertThat(blocker.isBlocking()).isTrue();
     }
 }
