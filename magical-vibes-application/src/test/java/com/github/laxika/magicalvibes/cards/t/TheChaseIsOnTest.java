@@ -27,8 +27,7 @@ class TheChaseIsOnTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castInstant(player1, 0, bear.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bear.getId());
 
         assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
@@ -44,8 +43,7 @@ class TheChaseIsOnTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castInstant(player1, 0, bear.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bear.getId());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
@@ -66,5 +64,45 @@ class TheChaseIsOnTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, forest.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Does not investigate when its only target leaves the battlefield")
+    void doesNotInvestigateWhenTargetLeavesBattlefield() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new TheChaseIsOn()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castInstant(player1, 0, bear.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(bear);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Clue")).isEmpty();
+        harness.assertInGraveyard(player1, "The Chase Is On");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The investigated Clue can be sacrificed for two mana to draw a card")
+    void investigatedClueDrawsCard() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new TheChaseIsOn()));
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveInstant(player1, 0, bear.getId());
+        Permanent clue = findPermanent(player1, "Clue");
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        int clueIndex = gd.playerBattlefields.get(player1.getId()).indexOf(clue);
+        harness.activateAbility(player1, clueIndex, null, null);
+
+        assertThat(findPermanents(player1, "Clue")).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Forest");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 }
