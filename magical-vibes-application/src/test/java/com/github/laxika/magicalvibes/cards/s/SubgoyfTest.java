@@ -57,4 +57,51 @@ class SubgoyfTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, subgoyf)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, subgoyf)).isEqualTo(3);
     }
+
+    @Test
+    @DisplayName("Creature subtypes do not contribute from the opponent's graveyard")
+    void excludesCreatureSubtypesInOpponentsGraveyard() {
+        Permanent subgoyf = addCreatureReady(player1, new Subgoyf());
+        harness.setGraveyard(player2, List.of(new GrizzlyBears(), new Subgoyf()));
+
+        assertThat(gqs.getEffectivePower(gd, subgoyf)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, subgoyf)).isEqualTo(1);
+
+        harness.setGraveyard(player2, List.of(new GrizzlyBears(), new Forest(), new Forest()));
+        assertThat(gqs.getEffectivePower(gd, subgoyf)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, subgoyf)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The characteristic-defining ability applies in hand and in the graveyard")
+    void definesPowerAndToughnessOutsideBattlefield() {
+        Subgoyf subgoyf = new Subgoyf();
+        harness.setHand(player1, List.of(subgoyf));
+        harness.setGraveyard(player2, List.of(new Forest(), new JaceBeleren()));
+
+        assertThat(gqs.getEffectiveCardPower(gd, subgoyf)).isEqualTo(2);
+        assertThat(gqs.getEffectiveCardToughness(gd, subgoyf)).isEqualTo(3);
+
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of(subgoyf, new Bonesplitter()));
+        assertThat(gqs.getEffectiveCardPower(gd, subgoyf)).isEqualTo(3);
+        assertThat(gqs.getEffectiveCardToughness(gd, subgoyf)).isEqualTo(4);
+
+        harness.setGraveyard(player2, List.of());
+        assertThat(gqs.getEffectiveCardPower(gd, subgoyf)).isEqualTo(1);
+        assertThat(gqs.getEffectiveCardToughness(gd, subgoyf)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Subtypes on cards outside graveyards do not contribute")
+    void ignoresSubtypesOutsideGraveyards() {
+        Permanent subgoyf = addCreatureReady(player1, new Subgoyf());
+        harness.addToBattlefield(player2, new JaceBeleren());
+        harness.setHand(player1, List.of(new EerieProcession()));
+        harness.setExile(player2, List.of(new Bonesplitter()));
+        harness.setGraveyard(player2, List.of(new Forest()));
+
+        assertThat(gqs.getEffectivePower(gd, subgoyf)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, subgoyf)).isEqualTo(2);
+    }
 }
