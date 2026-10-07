@@ -1,12 +1,16 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
+import com.github.laxika.magicalvibes.cards.j.JaceCunningCastaway;
+import com.github.laxika.magicalvibes.cards.m.MarkOfTheVampire;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +19,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({SunCrownedHunters.class, Shock.class, FugitiveWizard.class,
+        JaceCunningCastaway.class, MarkOfTheVampire.class})
 class SunCrownedHuntersTest extends BaseCardTest {
 
     // ===== Non-combat damage trigger =====
@@ -28,8 +34,7 @@ class SunCrownedHuntersTest extends BaseCardTest {
         harness.setLife(player1, 20);
 
         UUID huntersId = harness.getPermanentId(player2, "Sun-Crowned Hunters");
-        harness.castInstant(player1, 0, huntersId);
-        harness.passBothPriorities(); // Resolve Shock — 2 damage to Hunters (non-lethal for 5/4)
+        harness.castAndResolveInstant(player1, 0, huntersId);
 
         // ON_DEALT_DAMAGE trigger should be on the stack with target set to opponent
         assertThat(gd.stack).hasSize(1);
@@ -55,8 +60,7 @@ class SunCrownedHuntersTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         UUID huntersId = harness.getPermanentId(player2, "Sun-Crowned Hunters");
-        harness.castInstant(player1, 0, huntersId);
-        harness.passBothPriorities(); // Resolve Shock
+        harness.castAndResolveInstant(player1, 0, huntersId);
         harness.passBothPriorities(); // Resolve trigger
 
         // Controller (player2) should NOT take damage from their own Hunters
@@ -73,8 +77,7 @@ class SunCrownedHuntersTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         UUID huntersId = harness.getPermanentId(player2, "Sun-Crowned Hunters");
-        harness.castInstant(player1, 0, huntersId);
-        harness.passBothPriorities(); // Resolve Shock
+        harness.castAndResolveInstant(player1, 0, huntersId);
 
         assertThat(gd.stack).hasSize(1);
         StackEntry trigger = gd.stack.getFirst();
@@ -88,9 +91,7 @@ class SunCrownedHuntersTest extends BaseCardTest {
     @DisplayName("When dealt non-lethal combat damage, enrage trigger fires and deals 3 to opponent")
     void combatDamageTriggersEnrage() {
         harness.addToBattlefield(player2, new SunCrownedHunters());
-        harness.addToBattlefield(player1, new FugitiveWizard()); // 1/1 attacker
-
-        Permanent attacker = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new FugitiveWizard());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
 
@@ -106,9 +107,7 @@ class SunCrownedHuntersTest extends BaseCardTest {
         harness.clearPriorityPassed();
 
         // Resolve combat damage — auto-pass will resolve the trigger too
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
 
         // Hunters should survive (5/4 takes 1 damage from 1/1)
         harness.assertOnBattlefield(player2, "Sun-Crowned Hunters");
@@ -126,9 +125,7 @@ class SunCrownedHuntersTest extends BaseCardTest {
     @DisplayName("Combat enrage trigger deals exactly 3 damage to opponent")
     void combatDamageDealsExact3() {
         harness.addToBattlefield(player2, new SunCrownedHunters());
-        harness.addToBattlefield(player1, new FugitiveWizard()); // 1/1 attacker
-
-        Permanent attacker = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new FugitiveWizard());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
 
@@ -144,9 +141,7 @@ class SunCrownedHuntersTest extends BaseCardTest {
         harness.clearPriorityPassed();
 
         // Resolve combat damage and enrage trigger
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
 
         // Opponent should have taken exactly 3 damage from the enrage trigger
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
@@ -182,16 +177,14 @@ class SunCrownedHuntersTest extends BaseCardTest {
         UUID huntersId = harness.getPermanentId(player2, "Sun-Crowned Hunters");
 
         // First Shock — 2 damage
-        harness.castInstant(player1, 0, huntersId);
-        harness.passBothPriorities(); // Resolve first Shock
+        harness.castAndResolveInstant(player1, 0, huntersId);
         harness.passBothPriorities(); // Resolve first trigger (3 to opponent)
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
 
         // Second Shock — 2 more damage (4 total on 5/4 = lethal)
         huntersId = harness.getPermanentId(player2, "Sun-Crowned Hunters");
-        harness.castInstant(player1, 0, huntersId);
-        harness.passBothPriorities(); // Resolve second Shock — triggers enrage, Hunters die
+        harness.castAndResolveInstant(player1, 0, huntersId);
 
         // Enrage trigger should be on the stack even though Hunters died
         assertThat(gd.stack).hasSize(1);
@@ -203,5 +196,66 @@ class SunCrownedHuntersTest extends BaseCardTest {
 
         // Opponent should have taken 3 + 3 = 6 damage total from triggers
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(14);
+    }
+
+    @Test
+    @DisplayName("Enrage can target an opponent's planeswalker")
+    void canDamageOpponentsPlaneswalker() {
+        Permanent hunters = harness.addToBattlefieldAndReturn(player2, new SunCrownedHunters());
+        Permanent jace = harness.addToBattlefieldAndReturn(player1, new JaceCunningCastaway());
+        jace.setCounterCount(CounterType.LOYALTY, 3);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setLife(player1, 20);
+
+        harness.castAndResolveInstant(player1, 0, hunters.getId());
+        harness.handlePermanentChosen(player2, jace.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Jace, Cunning Castaway");
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Enrage can target its controller's planeswalker")
+    void canDamageControllersPlaneswalker() {
+        Permanent hunters = harness.addToBattlefieldAndReturn(player2, new SunCrownedHunters());
+        Permanent jace = harness.addToBattlefieldAndReturn(player2, new JaceCunningCastaway());
+        jace.setCounterCount(CounterType.LOYALTY, 3);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.castAndResolveInstant(player1, 0, hunters.getId());
+        harness.handlePermanentChosen(player2, jace.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Jace, Cunning Castaway");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Enrage retains granted lifelink when a planeswalker requires target selection")
+    void grantedLifelinkAppliesWithPlaneswalkerPresent() {
+        Permanent hunters = harness.addToBattlefieldAndReturn(player2, new SunCrownedHunters());
+        Permanent jace = harness.addToBattlefieldAndReturn(player1, new JaceCunningCastaway());
+        jace.setCounterCount(CounterType.LOYALTY, 3);
+        harness.setHand(player1, List.of(new MarkOfTheVampire()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        harness.castEnchantment(player1, 0, hunters.getId());
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.castAndResolveInstant(player1, 0, hunters.getId());
+        harness.handlePermanentChosen(player2, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 23);
     }
 }
