@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.Humility;
+import com.github.laxika.magicalvibes.cards.m.MarchOfTheMachines;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -19,7 +21,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Spellbook.class, GrizzlyBears.class, Forest.class, Mountain.class, Plains.class})
+@CardUsed({Spellbook.class, GrizzlyBears.class, Forest.class, Mountain.class, Plains.class,
+        Humility.class, MarchOfTheMachines.class})
 class SpellbookTest extends BaseCardTest {
 
     // ===== Hand limit enforcement =====
@@ -145,6 +148,34 @@ class SpellbookTest extends BaseCardTest {
         // No discard prompt — Spellbook removes hand size limit
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(9);
+    }
+
+    @Test
+    @CardUsed({Spellbook.class, Forest.class, Humility.class, MarchOfTheMachines.class})
+    @DisplayName("Animated Spellbook with no abilities does not remove the hand limit")
+    void spellbookLosingAbilitiesRestoresHandLimit() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.addToBattlefield(player1, new Spellbook());
+        harness.addToBattlefield(player1, new MarchOfTheMachines());
+        harness.addToBattlefield(player1, new Humility());
+        harness.setHand(player1, List.of(
+                new Forest(), new Forest(), new Forest(), new Forest(),
+                new Forest(), new Forest(), new Forest(), new Forest()
+        ));
+
+        harness.runStateBasedActions();
+        harness.assertOnBattlefield(player1, "Spellbook");
+        harness.getGameService().advanceStep(gd);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).remainingCount())
+                .isEqualTo(1);
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(7);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
     }
 
     // ===== Only controller benefits =====
