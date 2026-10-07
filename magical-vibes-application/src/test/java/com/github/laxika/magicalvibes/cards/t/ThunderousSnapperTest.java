@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.f.FlaxenIntruder;
+import com.github.laxika.magicalvibes.cards.g.GarenbrigPaladin;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.Card;
@@ -16,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ThunderousSnapper.class, GrizzlyBears.class, HillGiant.class})
+@CardUsed({ThunderousSnapper.class, GrizzlyBears.class, HillGiant.class, GarenbrigPaladin.class, FlaxenIntruder.class})
 class ThunderousSnapperTest extends BaseCardTest {
 
     @Test
@@ -65,6 +67,55 @@ class ThunderousSnapperTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Each Snapper draws independently for a qualifying creature spell")
+    void eachSnapperDrawsForQualifyingCreature() {
+        harness.addToBattlefield(player1, new ThunderousSnapper());
+        harness.addToBattlefield(player1, new ThunderousSnapper());
+        Card firstDraw = new ThunderousSnapper();
+        Card secondDraw = new ThunderousSnapper();
+        harness.setLibrary(player1, List.of(firstDraw, secondDraw));
+        harness.setHand(player1, List.of(new GarenbrigPaladin()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw);
+        assertThat(countPermanents(player1, "Garenbrig Paladin")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A Snapper being cast does not trigger its own battlefield ability")
+    void castingSnapperDoesNotDraw() {
+        harness.setLibrary(player1, List.of(new ThunderousSnapper()));
+        harness.setHand(player1, List.of(new ThunderousSnapper()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(countPermanents(player1, "Thunderous Snapper")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Uses the adventure spell's mana value rather than the creature's")
+    void drawsForHighManaValueAdventure() {
+        harness.addToBattlefield(player1, new ThunderousSnapper());
+        Card drawnCard = new ThunderousSnapper();
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.setHand(player1, List.of(new FlaxenIntruder()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.castAdventure(player1, 0, List.of());
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
     }
 
     private Card highManaValueSorcery(int manaValue) {
