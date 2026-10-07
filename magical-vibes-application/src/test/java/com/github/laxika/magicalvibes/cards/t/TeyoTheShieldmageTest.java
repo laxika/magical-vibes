@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.c.ChandrasPyrohelix;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -14,11 +15,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TeyoTheShieldmage.class, Shock.class})
+@CardUsed({TeyoTheShieldmage.class, ChandrasPyrohelix.class})
 class TeyoTheShieldmageTest extends BaseCardTest {
 
     @Test
@@ -28,10 +30,10 @@ class TeyoTheShieldmageTest extends BaseCardTest {
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player2, List.of(new Shock()));
-        harness.addMana(player2, ManaColor.RED, 1);
+        harness.setHand(player2, List.of(new ChandrasPyrohelix()));
+        harness.addMana(player2, ManaColor.RED, 2);
 
-        assertThatThrownBy(() -> harness.castInstant(player2, 0, player1.getId()))
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, Map.of(player1.getId(), 2)))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -54,11 +56,75 @@ class TeyoTheShieldmageTest extends BaseCardTest {
         assertThat(teyo.getCounterCount(CounterType.LOYALTY)).isZero();
     }
 
+    @Test
+    void controllerCanTargetThemself() {
+        addReadyTeyo(player1, 3);
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new ChandrasPyrohelix()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castInstant(player1, 0, Map.of(player1.getId(), 2));
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    void doesNotProtectTeyoItself() {
+        Permanent teyo = addReadyTeyo(player1, 3);
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new ChandrasPyrohelix()));
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.castInstant(player2, 0, Map.of(teyo.getId(), 2));
+        harness.passBothPriorities();
+
+        assertThat(teyo.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
+    }
+
+    @Test
+    void protectionEndsWhenLastLoyaltyIsSpentButTokenStillResolves() {
+        addReadyTeyo(player1, 2);
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.runStateBasedActions();
+        harness.assertNotOnBattlefield(player1, "Teyo, the Shieldmage");
+        harness.assertInGraveyard(player1, "Teyo, the Shieldmage");
+        assertThat(gqs.playerHasHexproof(gd, player1.getId())).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        Permanent wall = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(wall.getCard().isToken()).isTrue();
+        assertThat(wall.getCard().getColors()).containsExactly(CardColor.WHITE);
+        assertThat(wall.getEffectivePower()).isZero();
+        assertThat(wall.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, wall, Keyword.DEFENDER)).isTrue();
+
+        harness.setHand(player2, List.of(new ChandrasPyrohelix()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.castInstant(player2, 0, Map.of(player1.getId(), 2));
+        harness.passBothPriorities();
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    void cannotActivateWithoutTwoLoyaltyCounters() {
+        Permanent teyo = addReadyTeyo(player1, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(teyo.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(teyo);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addReadyTeyo(Player player, int loyalty) {
-        Permanent teyo = new Permanent(new TeyoTheShieldmage());
+        Permanent teyo = harness.addToBattlefieldAndReturn(player, new TeyoTheShieldmage());
         teyo.setCounterCount(CounterType.LOYALTY, loyalty);
         teyo.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(teyo);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return teyo;
