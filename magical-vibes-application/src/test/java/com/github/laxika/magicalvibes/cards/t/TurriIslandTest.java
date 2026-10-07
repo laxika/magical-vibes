@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.PrimalHuntbeast;
 import com.github.laxika.magicalvibes.cards.w.WalkingCorpse;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -21,7 +22,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TurriIsland.class, Divination.class, Forest.class, GrizzlyBears.class, WalkingCorpse.class})
+@CardUsed({TurriIsland.class, Divination.class, Forest.class, GrizzlyBears.class, WalkingCorpse.class, PrimalHuntbeast.class})
 class TurriIslandTest extends BaseCardTest {
 
     private PlanechaseService planar;
@@ -74,5 +75,135 @@ class TurriIslandTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .extracting(Card::getName)
                 .containsExactly("Forest");
+    }
+
+    @Test
+    void creatureReductionAlsoAppliesToPlanarController() {
+        harness.setHand(player1, List.of(new WalkingCorpse()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Walking Corpse");
+    }
+
+    @Test
+    void reductionCannotPayColoredMana() {
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void reductionStopsWhenPlaneIsNoLongerFaceUp() {
+        gd.planechase.faceUp.clear();
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void chaosPutsAllThreeCreaturesIntoHandWithoutAChoice() {
+        GrizzlyBears first = new GrizzlyBears();
+        WalkingCorpse second = new WalkingCorpse();
+        GrizzlyBears third = new GrizzlyBears();
+        Forest fourth = new Forest();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(first, second, third, fourth));
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(first, second, third);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(fourth);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void chaosPutsAllNoncreaturesIntoGraveyard() {
+        Forest first = new Forest();
+        Divination second = new Divination();
+        Forest third = new Forest();
+        WalkingCorpse fourth = new WalkingCorpse();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(first, second, third, fourth));
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(first, second, third);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(fourth);
+    }
+
+    @Test
+    void chaosRevealsAllAvailableCardsInAShortLibrary() {
+        WalkingCorpse creature = new WalkingCorpse();
+        Forest land = new Forest();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(creature, land));
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(creature);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(land);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void chaosDoesNothingWithAnEmptyLibrary() {
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of());
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void chaosUsesCurrentPlanarControllersLibrary() {
+        WalkingCorpse creature = new WalkingCorpse();
+        Forest land = new Forest();
+        GrizzlyBears otherPlayersCard = new GrizzlyBears();
+        harness.forceActivePlayer(player2);
+        gd.planechase.controllerId = player2.getId();
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(creature, land));
+        harness.setLibrary(player1, List.of(otherPlayersCard));
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(creature);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(land);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(otherPlayersCard);
+    }
+
+    @Test
+    void reductionRemovesExactlyTwoGenericMana() {
+        harness.setHand(player1, List.of(new PrimalHuntbeast()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Primal Huntbeast");
     }
 }
