@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -50,8 +51,7 @@ class TitaniaVoiceOfGaeaTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         assertThat(gd.stack).anyMatch(entry -> entry.getSourcePermanentId().equals(titania.getId()));
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent melded = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard() instanceof TitaniaGaeaIncarnate)
@@ -154,5 +154,102 @@ class TitaniaVoiceOfGaeaTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, land.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(land.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void copiedTitaniaAndRealArgothRemainExiledWithoutMelding() {
+        Permanent copy = harness.addToBattlefieldAndReturn(player1, new ArgothianOpportunist());
+        copy.setCard(new TitaniaVoiceOfGaea());
+        Permanent argoth = harness.addToBattlefieldAndReturn(player1, new ArgothSanctumOfNature());
+        harness.setGraveyard(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(copy, argoth);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(p -> p.getCard() instanceof TitaniaGaeaIncarnate);
+        assertThat(gd.findExiledCard(copy.getOriginalCard().getId())).isNotNull();
+        assertThat(gd.findExiledCard(argoth.getOriginalCard().getId())).isNotNull();
+    }
+
+    @Test
+    void controllerChoosesWhichArgothToExileWhenMultipleAreEligible() {
+        harness.addToBattlefield(player1, new TitaniaVoiceOfGaea());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new ArgothSanctumOfNature());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new ArgothSanctumOfNature());
+        second.tap();
+        harness.setGraveyard(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handlePermanentChosen(player1, second.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(first).doesNotContain(second);
+        harness.assertOnBattlefield(player1, "Titania, Gaea Incarnate");
+    }
+
+    @Test
+    void repeatedAnimationAccumulatesCountersAndSurvivesSourceLeavingAndTurnEnding() {
+        Permanent titania = harness.addToBattlefieldAndReturn(player1, new TitaniaGaeaIncarnate());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.activateAbility(player1, 0, null, land.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, land.getId());
+        harness.passBothPriorities();
+
+        assertThat(land.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(8);
+        assertThat(gqs.getEffectivePower(gd, land)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, land)).isEqualTo(8);
+
+        harness.inMutationScope(
+                () -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, titania));
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.isLand(gd, land)).isTrue();
+        assertThat(gqs.isCreature(gd, land)).isTrue();
+        assertThat(gqs.hasKeyword(gd, land, Keyword.HASTE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, land)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, land)).isEqualTo(8);
+    }
+
+    @Test
+    void animationResolvesAfterTitaniaLeavesTheBattlefield() {
+        Permanent titania = harness.addToBattlefieldAndReturn(player1, new TitaniaGaeaIncarnate());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, land.getId());
+        harness.inMutationScope(
+                () -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, titania));
+        harness.passBothPriorities();
+
+        assertThat(land.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+        assertThat(gqs.isLand(gd, land)).isTrue();
+        assertThat(gqs.isCreature(gd, land)).isTrue();
+        assertThat(gqs.hasKeyword(gd, land, Keyword.HASTE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, land)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, land)).isEqualTo(4);
+    }
+
+    @Test
+    void meldedFaceCannotAnimateANonlandCreature() {
+        harness.addToBattlefield(player1, new TitaniaGaeaIncarnate());
+        harness.addToBattlefield(player1, new Forest());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new ArgothianOpportunist());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 }
