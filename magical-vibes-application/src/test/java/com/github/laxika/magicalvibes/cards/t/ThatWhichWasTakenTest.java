@@ -11,10 +11,12 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ThatWhichWasTaken.class, GnarledMass.class})
+@CardUsed({ThatWhichWasTaken.class, GnarledMass.class, TerashisGrasp.class})
 class ThatWhichWasTakenTest extends BaseCardTest {
 
     @Test
@@ -70,6 +72,52 @@ class ThatWhichWasTakenTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, otherTaken.getId());
         harness.passBothPriorities();
 
+        assertThat(otherTaken.getCounterCount(CounterType.DIVINITY)).isEqualTo(1);
+    }
+
+    @Test
+    void removingDivinityCounterRemovesIndestructible() {
+        addTaken(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GnarledMass());
+        target.setCounterCount(CounterType.DIVINITY, 1);
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
+
+        target.setCounterCount(CounterType.DIVINITY, 0);
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isFalse();
+    }
+
+    @Test
+    void divinityCounterDoesNotGrantIndestructibleAfterSourceLeaves() {
+        Permanent taken = addTaken(player2);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GnarledMass());
+        target.setCounterCount(CounterType.DIVINITY, 1);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
+        harness.setHand(player1, List.of(new TerashisGrasp()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.castAndResolveSorcery(player1, 0, taken.getId());
+
+        harness.assertInGraveyard(player2, "That Which Was Taken");
+        assertThat(target.getCounterCount(CounterType.DIVINITY)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isFalse();
+    }
+
+    @Test
+    void divinityCounterProtectsNoncreaturePermanentFromDestruction() {
+        addTaken(player1);
+        Permanent otherTaken = addTaken(player2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.activateAbility(player1, 0, null, otherTaken.getId());
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new TerashisGrasp()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.castAndResolveSorcery(player1, 0, otherTaken.getId());
+
+        harness.assertOnBattlefield(player2, "That Which Was Taken");
+        harness.assertNotInGraveyard(player2, "That Which Was Taken");
         assertThat(otherTaken.getCounterCount(CounterType.DIVINITY)).isEqualTo(1);
     }
 
