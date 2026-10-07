@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TomeShredder.class, Forest.class, Shock.class, MindRot.class})
 class TomeShredderTest extends BaseCardTest {
 
     @Test
@@ -52,5 +54,68 @@ class TomeShredderTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("graveyard");
+    }
+
+    @Test
+    void canExileSorceryAndPaysCostsBeforeResolution() {
+        Permanent shredder = addCreatureReady(player1, new TomeShredder());
+        Card sorcery = new MindRot();
+        harness.setGraveyard(player1, List.of(sorcery));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleGraveyardCardChosen(player1, 0);
+
+        assertThat(shredder.isTapped()).isTrue();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(sorcery);
+        assertThat(shredder.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(shredder.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void hasteAllowsTapAbilityWhileSummoningSick() {
+        Permanent shredder = harness.addToBattlefieldAndReturn(player1, new TomeShredder());
+        shredder.setSummoningSick(true);
+        harness.setGraveyard(player1, List.of(new Shock()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleGraveyardCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(shredder.isTapped()).isTrue();
+        assertThat(shredder.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void cannotActivateWhileTapped() {
+        Permanent shredder = addCreatureReady(player1, new TomeShredder());
+        shredder.setTapped(true);
+        Card instant = new Shock();
+        harness.setGraveyard(player1, List.of(instant));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("tapped");
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(instant);
+        assertThat(shredder.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void cannotPayWithOpponentsGraveyard() {
+        Permanent shredder = addCreatureReady(player1, new TomeShredder());
+        Card instant = new Shock();
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of(instant));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("graveyard");
+
+        assertThat(shredder.isTapped()).isFalse();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(instant);
     }
 }
