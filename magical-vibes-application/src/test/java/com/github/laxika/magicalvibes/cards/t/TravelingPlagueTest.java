@@ -66,10 +66,11 @@ class TravelingPlagueTest extends BaseCardTest {
 
         harness.handlePermanentChosen(player2, playerOneCreature.getId());
 
-        Permanent returnedPlague = findPermanent(player1, "Traveling Plague");
+        Permanent returnedPlague = findPermanent(player2, "Traveling Plague");
         assertThat(returnedPlague.getAttachedTo()).isEqualTo(playerOneCreature.getId());
         assertThat(returnedPlague.getCounterCount(CounterType.PLAGUE)).isZero();
         harness.assertNotInGraveyard(player1, "Traveling Plague");
+        harness.assertNotOnBattlefield(player1, "Traveling Plague");
     }
 
     @Test
@@ -96,11 +97,50 @@ class TravelingPlagueTest extends BaseCardTest {
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, oldCreature));
         resolveAllTriggers();
 
-        Permanent returnedPlague = findPermanent(player1, "Traveling Plague");
+        Permanent returnedPlague = findPermanent(player2, "Traveling Plague");
         assertThat(returnedPlague.getAttachedTo()).isEqualTo(replacementCreature.getId());
         assertThat(returnedPlague.getCounterCount(CounterType.PLAGUE)).isZero();
         harness.assertInHand(player2, "Aven Flock");
         harness.assertNotInGraveyard(player1, "Traveling Plague");
+    }
+
+    @Test
+    @DisplayName("Returns under the dying creature controller's control after plague counters kill it")
+    void returnsAfterCountersReduceToughnessToZero() {
+        Permanent oldCreature = addCreatureReady(player2, new AvenFlock());
+        Permanent replacementCreature = addCreatureReady(player1, new AvenFlock());
+        castTravelingPlagueOn(player1, oldCreature);
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Aven Flock");
+        Permanent returnedPlague = findPermanent(player2, "Traveling Plague");
+        assertThat(returnedPlague.getAttachedTo()).isEqualTo(replacementCreature.getId());
+        assertThat(returnedPlague.getCounterCount(CounterType.PLAGUE)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, replacementCreature)).isEqualTo(3);
+        harness.assertNotOnBattlefield(player1, "Traveling Plague");
+    }
+
+    @Test
+    @DisplayName("Does not return if the Aura is no longer in the graveyard when the trigger resolves")
+    void doesNotReturnWhenRemovedFromGraveyardBeforeResolution() {
+        Permanent oldCreature = addCreatureReady(player2, new AvenFlock());
+        addCreatureReady(player1, new AvenFlock());
+        castTravelingPlagueOn(player1, oldCreature);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, oldCreature));
+        harness.assertInGraveyard(player1, "Traveling Plague");
+        harness.setGraveyard(player1, List.of());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Traveling Plague");
+        harness.assertNotOnBattlefield(player2, "Traveling Plague");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     @Test
