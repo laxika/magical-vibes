@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MotherBear;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -15,15 +15,15 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TreetopAmbusher.class, GrizzlyBears.class})
+@CardUsed({TreetopAmbusher.class, MotherBear.class})
 class TreetopAmbusherTest extends BaseCardTest {
 
     @Test
     @DisplayName("Attack trigger targets a creature I control")
     void attackTriggerRestrictsTargets() {
         Permanent ambusher = addCreatureReady(player1, new TreetopAmbusher());
-        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
-        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent ownCreature = addCreatureReady(player1, new MotherBear());
+        Permanent opponentCreature = addCreatureReady(player2, new MotherBear());
 
         declareAttackers(List.of(0));
 
@@ -37,7 +37,7 @@ class TreetopAmbusherTest extends BaseCardTest {
     @DisplayName("Attack trigger gives the target +1/+1 until end of turn")
     void attackTriggerBoostsTargetUntilEndOfTurn() {
         addCreatureReady(player1, new TreetopAmbusher());
-        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent ownCreature = addCreatureReady(player1, new MotherBear());
 
         declareAttackers(List.of(0));
         harness.handlePermanentChosen(player1, ownCreature.getId());
@@ -62,8 +62,7 @@ class TreetopAmbusherTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castWithAlternateCost(player1, 0, (java.util.UUID) null);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent ambusher = findPermanent(player1, "Treetop Ambusher");
         assertThat(ambusher.hasKeyword(Keyword.HASTE)).isTrue();
@@ -72,6 +71,73 @@ class TreetopAmbusherTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
+        harness.assertInHand(player1, "Treetop Ambusher");
+        harness.assertNotOnBattlefield(player1, "Treetop Ambusher");
+    }
+
+    @Test
+    @DisplayName("Treetop Ambusher can boost itself when it attacks")
+    void attackTriggerCanTargetItself() {
+        Permanent ambusher = addCreatureReady(player1, new TreetopAmbusher());
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, ambusher.getId());
+        resolveAllTriggers();
+
+        assertThat(ambusher.getPowerModifier()).isEqualTo(1);
+        assertThat(ambusher.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Normal casting grants neither haste nor an end-step return")
+    void normalCastingDoesNotApplyDash() {
+        harness.setHand(player1, List.of(new TreetopAmbusher()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        Permanent ambusher = findPermanent(player1, "Treetop Ambusher");
+        assertThat(ambusher.hasKeyword(Keyword.HASTE)).isFalse();
+
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Treetop Ambusher");
+        harness.assertNotInHand(player1, "Treetop Ambusher");
+    }
+
+    @Test
+    @DisplayName("Dash does not create an enters-the-battlefield trigger")
+    void dashDoesNotCreateAnEnterTrigger() {
+        harness.setHand(player1, List.of(new TreetopAmbusher()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castWithAlternateCost(player1, 0, (java.util.UUID) null);
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, harness::passBothPriorities);
+
+        harness.assertOnBattlefield(player1, "Treetop Ambusher");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Dash creates exactly one return trigger at the next end step")
+    void dashCreatesOnlyOneDelayedReturnTrigger() {
+        harness.setHand(player1, List.of(new TreetopAmbusher()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castWithAlternateCost(player1, 0, (java.util.UUID) null);
+        resolveAllTriggers();
+        harness.passUntil(TurnStep.END_STEP);
+
+        harness.assertOnBattlefield(player1, "Treetop Ambusher");
+        harness.assertNotInHand(player1, "Treetop Ambusher");
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
         harness.assertInHand(player1, "Treetop Ambusher");
         harness.assertNotOnBattlefield(player1, "Treetop Ambusher");
     }
