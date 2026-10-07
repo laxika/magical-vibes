@@ -20,4 +20,16 @@ class SteadfastGuardTest extends BaseCardTest {
 
         assertThat(guard.isTapped()).isFalse();
     }
+
+    @Test
+    void dealsCombatDamageWithoutTappingWhenSecondPlayerAttacks() {
+        Permanent guard = addCreatureReady(player2, new SteadfastGuard());
+        harness.setLife(player1, 20);
+
+        declareAttackers(player2, List.of(0));
+        resolveCombat(player2);
+
+        harness.assertLife(player1, 18);
+        assertThat(guard.isTapped()).isFalse();
+    }
 }
