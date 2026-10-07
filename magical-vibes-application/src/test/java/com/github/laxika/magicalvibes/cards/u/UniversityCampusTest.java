@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({UniversityCampus.class, Forest.class})
 class UniversityCampusTest extends BaseCardTest {
@@ -46,9 +47,7 @@ class UniversityCampusTest extends BaseCardTest {
     @Test
     @DisplayName("Paying four mana and tapping surveils one")
     void paidAbilitySurveilsOne() {
-        Permanent campus = new Permanent(new UniversityCampus());
-        campus.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(campus);
+        Permanent campus = addReadyCampus();
         Forest topCard = new Forest();
         harness.setLibrary(player1, List.of(topCard));
         harness.addMana(player1, ManaColor.COLORLESS, 4);
@@ -63,10 +62,71 @@ class UniversityCampusTest extends BaseCardTest {
         assertThat(campus.isTapped()).isTrue();
     }
 
+    @Test
+    void surveilCanKeepTopCardWithoutChangingLibraryOrder() {
+        addReadyCampus();
+        UniversityCampus topCard = new UniversityCampus();
+        UniversityCampus nextCard = new UniversityCampus();
+        harness.setLibrary(player1, List.of(topCard, nextCard));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard, nextCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void surveilWithEmptyLibraryResolvesWithoutChoice() {
+        Permanent campus = addReadyCampus();
+        harness.setLibrary(player1, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(campus.isTapped()).isTrue();
+    }
+
+    @Test
+    void surveilRequiresFourMana() {
+        Permanent campus = addReadyCampus();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(campus.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(3);
+    }
+
+    @Test
+    void tappedCampusCannotActivateEitherAbility() {
+        Permanent campus = addReadyCampus();
+        campus.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(4);
+    }
+
     private Permanent addReadyCampus() {
-        Permanent campus = new Permanent(new UniversityCampus());
+        Permanent campus = harness.addToBattlefieldAndReturn(player1, new UniversityCampus());
         campus.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(campus);
         return campus;
     }
 }
