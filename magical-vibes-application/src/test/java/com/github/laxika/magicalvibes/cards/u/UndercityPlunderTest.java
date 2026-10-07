@@ -63,6 +63,81 @@ class UndercityPlunderTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void emptyHandCannotAvoidConjuringByAcceptingAnImpossibleDiscard() {
+        UndercityPlunder libraryCard = new UndercityPlunder();
+        harness.setLibrary(player2, List.of(libraryCard));
+        harness.setHand(player2, List.of());
+        harness.setHand(player1, List.of(new UndercityPlunder()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        if (gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class) != null) {
+            harness.handleMayAbilityChosen(player2, true);
+        }
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId()).getFirst().getName())
+                .isEqualTo(libraryCard.getName());
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(libraryCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void discardingLastCardCannotAvoidConjuringByAcceptingAnImpossibleDiscard() {
+        UndercityPlunder libraryCard = new UndercityPlunder();
+        harness.setLibrary(player2, List.of(libraryCard));
+        harness.setHand(player2, List.of(new UndercityPlunder()));
+        cast();
+        harness.handleCardChosen(player2, 0);
+
+        if (gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class) != null) {
+            harness.handleMayAbilityChosen(player2, true);
+        }
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId()).getFirst().getName())
+                .isEqualTo(libraryCard.getName());
+    }
+
+    @Test
+    void decliningWithEmptyLibraryDoesNotConjureAnything() {
+        harness.setLibrary(player2, List.of());
+        harness.setHand(player2, List.of(new UndercityPlunder(), new UndercityPlunder()));
+        cast();
+        harness.handleCardChosen(player2, 0);
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void conjuredSpellCanActuallyBeCastUsingOnlyGreenMana() {
+        harness.setLibrary(player2, List.of(new UndercityPlunder()));
+        harness.setHand(player2, List.of(new UndercityPlunder(), new UndercityPlunder()));
+        cast();
+        harness.handleCardChosen(player2, 0);
+        harness.handleMayAbilityChosen(player2, false);
+        Card conjured = gd.playerHands.get(player1.getId()).getFirst();
+
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleCardChosen(player2, 0);
+        if (gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class) != null) {
+            harness.handleMayAbilityChosen(player2, false);
+        }
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(conjured);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
     private void cast() {
         harness.setHand(player1, List.of(new UndercityPlunder()));
         harness.addMana(player1, ManaColor.BLACK, 2);
