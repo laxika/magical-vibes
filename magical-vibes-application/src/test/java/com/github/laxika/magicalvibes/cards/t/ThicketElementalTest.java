@@ -89,6 +89,31 @@ class ThicketElementalTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Stops at the first creature and a revealed Thicket Elemental was not kicked")
+    void revealedThicketElementalDoesNotTriggerKickerAbility() {
+        ThicketElemental revealedCreature = new ThicketElemental();
+        RagingKavu remainingCreature = new RagingKavu();
+        harness.setHand(player1, List.of(new ThicketElemental()));
+        harness.setLibrary(player1, List.of(revealedCreature, remainingCreature, new Forest()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castKickedCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(revealedCreature.getId()));
+        harness.assertNotOnBattlefield(player1, "Raging Kavu");
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .extracting(Card::getName)
+                .containsExactlyInAnyOrder("Raging Kavu", "Forest");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
     @DisplayName("Declining the kicked ability leaves the library unchanged")
     void kickedAbilityMayBeDeclined() {
         harness.setHand(player1, List.of(new ThicketElemental()));
@@ -101,8 +126,7 @@ class ThicketElementalTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(permanent -> permanent.getCard().getName().equals("Raging Kavu"));
+        harness.assertNotOnBattlefield(player1, "Raging Kavu");
         assertThat(gd.playerDecks.get(player1.getId()))
                 .extracting(Card::getName)
                 .containsExactly("Forest", "Raging Kavu");
