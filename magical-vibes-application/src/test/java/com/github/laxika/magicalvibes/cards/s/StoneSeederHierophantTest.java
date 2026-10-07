@@ -85,4 +85,73 @@ class StoneSeederHierophantTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, creature.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("A land entering without being played untaps only the Hierophant")
+    void landEnteringWithoutBeingPlayedUntapsOnlySelf() {
+        Permanent hierophant = harness.addToBattlefieldAndReturn(player1, new StoneSeederHierophant());
+        Permanent recruit = harness.addToBattlefieldAndReturn(player1, new BorosRecruit());
+        hierophant.tap();
+        recruit.tap();
+
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+
+        assertThat(hierophant.isTapped()).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(hierophant.isTapped()).isFalse();
+        assertThat(recruit.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The activated ability can untap a land you control")
+    void activatedAbilityUntapsOwnLand() {
+        Permanent hierophant = harness.addToBattlefieldAndReturn(player1, new StoneSeederHierophant());
+        hierophant.setSummoningSick(false);
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        forest.tap();
+
+        harness.activateAbility(player1, 0, 0, null, forest.getId());
+
+        assertThat(hierophant.isTapped()).isTrue();
+        assertThat(forest.isTapped()).isTrue();
+        harness.passBothPriorities();
+
+        assertThat(forest.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An untapped land is a legal target")
+    void activatedAbilityCanTargetUntappedLand() {
+        Permanent hierophant = harness.addToBattlefieldAndReturn(player1, new StoneSeederHierophant());
+        hierophant.setSummoningSick(false);
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        harness.activateAbility(player1, 0, 0, null, forest.getId());
+        harness.passBothPriorities();
+
+        assertThat(hierophant.isTapped()).isTrue();
+        assertThat(forest.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Landfall does not remove summoning sickness")
+    void landfallDoesNotAllowSummoningSickActivation() {
+        Permanent hierophant = harness.addToBattlefieldAndReturn(player1, new StoneSeederHierophant());
+        hierophant.setSummoningSick(true);
+        hierophant.tap();
+        Permanent forest = harness.enterBattlefieldAndReturn(player1, new Forest());
+        harness.passBothPriorities();
+
+        assertThat(hierophant.isTapped()).isFalse();
+        forest.tap();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, forest.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+
+        assertThat(hierophant.isTapped()).isFalse();
+        assertThat(forest.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
 }
