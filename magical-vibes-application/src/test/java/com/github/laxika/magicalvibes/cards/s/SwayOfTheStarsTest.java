@@ -113,6 +113,47 @@ class SwayOfTheStarsTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(player2DeckBefore - 7);
     }
 
+    @Test
+    @DisplayName("An empty library is refilled from the other zones before drawing seven")
+    void drawsSevenFromShuffledZonesWithInitiallyEmptyLibrary() {
+        fillDeck(player1, 20);
+        harness.setLibrary(player2, List.of());
+        harness.setHand(player2, List.of(new GnarledMass(), new GnarledMass()));
+        harness.setGraveyard(player2, List.of(new GnarledMass(), new GnarledMass()));
+        harness.addToBattlefield(player2, new GnarledMass());
+        harness.addToBattlefield(player2, new GnarledMass());
+        harness.addToBattlefield(player2, new GnarledMass());
+
+        castSway();
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(7);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.playersAttemptedDrawFromEmptyLibrary).doesNotContain(player2.getId());
+        harness.assertLife(player2, 7);
+    }
+
+    @Test
+    @DisplayName("Token copies leave the battlefield without becoming drawable cards")
+    void tokenCopiesAreNotRetainedInLibraryOrHand() {
+        harness.setHand(player2, List.of());
+        harness.setGraveyard(player2, List.of());
+        var token = new GnarledMass();
+        token.setToken(true);
+        harness.addToBattlefield(player2, token);
+        fillDeck(player1, 20);
+        fillDeck(player2, 20);
+        int deckBefore = gd.playerDecks.get(player2.getId()).size();
+
+        castSway();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckBefore - 7);
+        assertThat(gd.playerDecks.get(player2.getId())).noneMatch(Card::isToken);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(7).noneMatch(Card::isToken);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
     private void castSway() {
         harness.castFromHand(player1, new SwayOfTheStars(), "{8}{U}{U}");
         harness.passBothPriorities();
