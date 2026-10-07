@@ -8,13 +8,10 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -32,11 +29,7 @@ class UlashtTheHateSeedTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GhorClanSavage());
         harness.addToBattlefield(player2, new BloodscaleProwler());
 
-        harness.setHand(player1, List.of(new UlashtTheHateSeed()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new UlashtTheHateSeed(), "{2}{R}{G}");
         harness.passBothPriorities();
 
         Permanent ulasht = findPermanent(player1, "Ulasht, the Hate Seed");
@@ -99,11 +92,57 @@ class UlashtTheHateSeedTest extends BaseCardTest {
                         && permanent.getCard().getToughness() == 1);
     }
 
-    private Permanent addReadyUlasht() {
-        return addReadyUlasht(player1);
+    @Test
+    @DisplayName("With no other creatures, Ulasht enters without counters and dies")
+    void entersWithoutCountersAndDies() {
+        harness.addToBattlefield(player1, new IzzetSignet());
+        harness.addToBattlefield(player2, new GiantSolifuge());
+
+        harness.castFromHand(player1, new UlashtTheHateSeed(), "{2}{R}{G}");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Ulasht, the Hate Seed");
+        harness.assertInGraveyard(player1, "Ulasht, the Hate Seed");
     }
 
-    private Permanent addReadyUlasht(Player player) {
-        return addCreatureReady(player, new UlashtTheHateSeed());
+    @Test
+    @DisplayName("A newly cast Ulasht can activate while summoning sick, paying its counter before resolution")
+    void newlyCastUlashtCanCreateToken() {
+        harness.addToBattlefield(player1, new GiantSolifuge());
+        harness.castFromHand(player1, new UlashtTheHateSeed(), "{2}{R}{G}");
+        harness.passBothPriorities();
+        Permanent ulasht = findPermanent(player1, "Ulasht, the Hate Seed");
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 1, 1, null, null);
+
+        assertThat(ulasht.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(countPermanents(player1, "Saproling")).isZero();
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Saproling")).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Ulasht, the Hate Seed");
+    }
+
+    @Test
+    @DisplayName("Removing the last counter kills Ulasht before its damage ability resolves")
+    void lastCounterDamageResolvesAfterSourceDies() {
+        Permanent ulasht = addReadyUlasht();
+        ulasht.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GhorClanSavage());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Ulasht, the Hate Seed");
+        harness.assertInGraveyard(player1, "Ulasht, the Hate Seed");
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+    }
+
+    private Permanent addReadyUlasht() {
+        return addCreatureReady(player1, new UlashtTheHateSeed());
     }
 }
