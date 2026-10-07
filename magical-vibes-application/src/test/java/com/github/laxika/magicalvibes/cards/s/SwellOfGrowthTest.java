@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SwellOfGrowth.class, Forest.class, GrizzlyBears.class})
+@CardUsed({SwellOfGrowth.class, Forest.class, GrizzlyBears.class, Unsummon.class})
 class SwellOfGrowthTest extends BaseCardTest {
 
     @Test
@@ -96,6 +97,73 @@ class SwellOfGrowthTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, forest.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("The creature is boosted even when there are no lands in hand")
+    void boostsWithoutLandInHand() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setHand(player1, List.of(new SwellOfGrowth(), bears));
+        addMana();
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(target.getPowerModifier()).isEqualTo(2);
+        assertThat(target.getToughnessModifier()).isEqualTo(2);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(bears);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Swell of Growth");
+    }
+
+    @Test
+    @DisplayName("Puts only one land onto the battlefield on the opponent's turn without using a land play")
+    void putsOneLandOnOpponentsTurnAfterLandPlayUsed() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Forest chosen = new Forest();
+        Forest remaining = new Forest();
+        harness.forceActivePlayer(player2);
+        gd.landsPlayedThisTurn.put(player1.getId(), 1);
+        harness.setHand(player1, List.of(new SwellOfGrowth(), chosen, remaining));
+        addMana();
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(countPermanents(player1, "Forest")).isEqualTo(1);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(remaining);
+        assertThat(gd.landsPlayedThisTurn.get(player1.getId())).isEqualTo(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(target.getPowerModifier()).isEqualTo(2);
+        assertThat(target.getToughnessModifier()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("An illegal creature target prevents the land effect as well")
+    void doesNotPutLandWhenTargetLeavesBattlefield() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Forest forest = new Forest();
+        harness.setHand(player1, List.of(new SwellOfGrowth(), forest));
+        harness.setHand(player2, List.of(new Unsummon()));
+        addMana();
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.castInstant(player2, 0, target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(forest);
+        harness.assertNotOnBattlefield(player1, "Forest");
+        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Swell of Growth");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     private void addMana() {
