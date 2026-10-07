@@ -170,6 +170,56 @@ class SpittingSlugTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, slug, Keyword.FIRST_STRIKE)).isFalse();
     }
 
+    @Test
+    void payingOnceWhenBlockingMultipleCreaturesDoesNotGrantThemFirstStrike() {
+        harness.addToBattlefield(player2, new HighGround());
+        Permanent slug = addReadySlug(player2);
+        Permanent attacker1 = addReadyBear(player1);
+        Permanent attacker2 = addReadyBear(player1);
+        attacker1.setAttacking(true);
+        attacker2.setAttacking(true);
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(1, 0),
+                new BlockerAssignment(1, 1)));
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gqs.hasKeyword(gd, slug, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, attacker1, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, attacker2, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void decliningDoesNotAffectUnrelatedCreaturesAndGrantExpiresAtEndOfTurn() {
+        Permanent slug = addReadySlug(player1);
+        slug.setAttacking(true);
+        Permanent blocker = addReadyBear(player2);
+        Permanent unrelatedAttacker = addReadyBear(player1);
+        Permanent unrelatedDefender = addReadyBear(player2);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gqs.hasKeyword(gd, blocker, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, slug, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, unrelatedAttacker, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, unrelatedDefender, Keyword.FIRST_STRIKE)).isFalse();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, blocker, Keyword.FIRST_STRIKE)).isFalse();
+    }
+
     private Permanent addReadySlug(Player player) {
         return addCreatureReady(player, new SpittingSlug());
     }
