@@ -24,8 +24,7 @@ class SylvanTutorTest extends BaseCardTest {
     @DisplayName("Resolving offers only creature cards from the library")
     void offersOnlyCreatures() {
         setupLibrary();
-        cast();
-        harness.passBothPriorities();
+        castAndResolve();
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
@@ -37,8 +36,7 @@ class SylvanTutorTest extends BaseCardTest {
     @DisplayName("Choosing a creature reveals it before putting it on top")
     void choosingCreatureRevealsIt() {
         setupLibrary();
-        cast();
-        harness.passBothPriorities();
+        castAndResolve();
 
         GameData gd = harness.getGameData();
         String chosenName = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
@@ -58,8 +56,7 @@ class SylvanTutorTest extends BaseCardTest {
     @DisplayName("Choosing a creature puts it on top of the library")
     void choosingCreaturePutsOnTop() {
         setupLibrary();
-        cast();
-        harness.passBothPriorities();
+        castAndResolve();
 
         GameData gd = harness.getGameData();
         List<Card> offered = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards();
@@ -75,8 +72,7 @@ class SylvanTutorTest extends BaseCardTest {
     @DisplayName("Failing to find is allowed")
     void failToFindIsAllowed() {
         setupLibrary();
-        cast();
-        harness.passBothPriorities();
+        castAndResolve();
 
         GameData gd = harness.getGameData();
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
@@ -90,26 +86,71 @@ class SylvanTutorTest extends BaseCardTest {
     @Test
     @DisplayName("No interaction when the library has no creatures")
     void noCreaturesNoInteraction() {
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new Island(), new Island()));
+        harness.setLibrary(player1, List.of(new Island(), new Island()));
 
-        cast();
-        harness.passBothPriorities();
+        castAndResolve();
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
     }
 
-    private void cast() {
+    @Test
+    @DisplayName("An empty library still completes the spell")
+    void emptyLibraryCompletesSpell() {
+        harness.setLibrary(player1, List.of());
+
+        castAndResolve();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof SylvanTutor);
+    }
+
+    @Test
+    @DisplayName("The only card in the library can be found and remains on top")
+    void findsOnlyCardInLibrary() {
+        Card creature = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(creature));
+
+        castAndResolve();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(creature);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Choosing the second creature preserves every card and leaves the opponent's library alone")
+    void choosesSecondCreatureFromOwnLibrary() {
+        Card firstCreature = new GrizzlyBears();
+        Card chosenCreature = new GrizzlyBears();
+        Card land = new Island();
+        Card opponentCreature = new GrizzlyBears();
+        Card opponentLand = new Island();
+        harness.setLibrary(player1, List.of(firstCreature, land, chosenCreature));
+        harness.setLibrary(player2, List.of(opponentCreature, opponentLand));
+
+        castAndResolve();
+        harness.handleCardChosen(player1, 1);
+
+        List<Card> library = gd.playerDecks.get(player1.getId());
+        assertThat(library.getFirst()).isSameAs(chosenCreature);
+        assertThat(library).containsExactlyInAnyOrder(firstCreature, land, chosenCreature);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentCreature, opponentLand);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    private void castAndResolve() {
         harness.setHand(player1, List.of(new SylvanTutor()));
         harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.castSorcery(player1, 0, 0);
+        harness.castAndResolveSorcery(player1, 0, 0);
     }
 
     private void setupLibrary() {
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new GrizzlyBears(), new Island(), new Island()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new Island(), new Island()));
     }
 }
