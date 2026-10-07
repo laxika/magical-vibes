@@ -43,6 +43,53 @@ class ToothOfChissGoriaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A newly entered Tooth can boost its controller's creature but cannot tap twice")
+    void canActivateImmediatelyButCannotActivateAgainWhileTapped() {
+        Permanent tooth = harness.addToBattlefieldAndReturn(player1, new ToothOfChissGoria());
+        Permanent skyhunter = addCreatureReady(player1, new LeoninSkyhunter());
+
+        harness.activateAbility(player1, 0, null, skyhunter.getId());
+        harness.passBothPriorities();
+
+        assertThat(tooth.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, skyhunter)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, skyhunter)).isEqualTo(2);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, skyhunter.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, skyhunter)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Affinity counts tapped artifacts and cannot reduce the cost below zero")
+    void affinityCountsTappedArtifactsAndStopsAtZero() {
+        for (int i = 0; i < 4; i++) {
+            Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Bonesplitter());
+            artifact.setTapped(true);
+        }
+        harness.setHand(player1, List.of(new ToothOfChissGoria()));
+
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Tooth of Chiss-Goria");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Affinity does not count the spell itself or artifacts in hand")
+    void affinityDoesNotCountArtifactsInHand() {
+        harness.setHand(player1, List.of(new ToothOfChissGoria(), new Bonesplitter()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castArtifact(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+    }
+
+    @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNoncreaturePermanent() {
         Permanent tooth = harness.addToBattlefieldAndReturn(player1, new ToothOfChissGoria());
