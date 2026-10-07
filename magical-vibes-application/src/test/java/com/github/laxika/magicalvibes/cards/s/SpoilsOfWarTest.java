@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
+import com.github.laxika.magicalvibes.cards.o.OrderOfTheWhiteShield;
 import com.github.laxika.magicalvibes.cards.z.ZuranOrb;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({SpoilsOfWar.class, BalduvianBears.class, SnowCoveredMountain.class,
-        SoldeviSimulacrum.class, ZuranOrb.class})
+        SoldeviSimulacrum.class, ZuranOrb.class, OrderOfTheWhiteShield.class})
 class SpoilsOfWarTest extends BaseCardTest {
 
     @Test
@@ -181,5 +182,62 @@ class SpoilsOfWarTest extends BaseCardTest {
 
         assertThat(staying.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(leaving.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("With X zero, costs only one black mana and resolves without targets")
+    void castsForZeroWithOnlyBlackMana() {
+        harness.setGraveyard(player2, List.of(new SnowCoveredMountain()));
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new BalduvianBears());
+        harness.setHand(player1, List.of(new SpoilsOfWar()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castSorcery(player1, 0, Map.of());
+        harness.passBothPriorities();
+
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertInGraveyard(player1, "Spoils of War");
+    }
+
+    @Test
+    @DisplayName("With X zero, cannot declare a creature target receiving zero counters")
+    void rejectsTargetWhenGraveyardCountIsZero() {
+        harness.setGraveyard(player2, List.of());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new BalduvianBears());
+        harness.setHand(player1, List.of(new SpoilsOfWar()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, Map.of(bears.getId(), 0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Pays exactly X plus one black mana regardless of the announced X")
+    void usesDefinedXInsteadOfAnnouncedX() {
+        harness.setGraveyard(player2, List.of(new BalduvianBears(), new ZuranOrb()));
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new BalduvianBears());
+        harness.setHand(player1, List.of(new SpoilsOfWar()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castSorceryForX(player1, 0, 10, Map.of(bears.getId(), 2));
+        harness.passBothPriorities();
+
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        harness.assertInGraveyard(player1, "Spoils of War");
+    }
+
+    @Test
+    @DisplayName("Cannot target a creature with protection from black")
+    void rejectsCreatureWithProtectionFromBlack() {
+        harness.setGraveyard(player2, List.of(new BalduvianBears()));
+        Permanent legalTarget = harness.addToBattlefieldAndReturn(player1, new BalduvianBears());
+        Permanent protectedTarget = harness.addToBattlefieldAndReturn(player1, new OrderOfTheWhiteShield());
+        harness.setHand(player1, List.of(new SpoilsOfWar()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, Map.of(protectedTarget.getId(), 1)))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(legalTarget.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 }
