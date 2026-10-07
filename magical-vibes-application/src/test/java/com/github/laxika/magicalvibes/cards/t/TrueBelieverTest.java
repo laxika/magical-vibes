@@ -22,8 +22,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({TrueBeliever.class, Shock.class, GlorySeeker.class, GoblinSharpshooter.class})
 class TrueBelieverTest extends BaseCardTest {
 
-    // ===== Casting =====
-
     @Test
     @DisplayName("Casting True Believer puts it on the stack")
     void castingPutsItOnStack() {
@@ -33,7 +31,7 @@ class TrueBelieverTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("True Believer");
+        assertThat(entry.getCard()).isInstanceOf(TrueBeliever.class);
     }
 
     @Test
@@ -46,8 +44,6 @@ class TrueBelieverTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
     }
-
-    // ===== Resolving =====
 
     @Test
     @DisplayName("Resolving puts True Believer onto the battlefield")
@@ -69,8 +65,6 @@ class TrueBelieverTest extends BaseCardTest {
         Permanent perm = findPermanent(player1, "True Believer");
         assertThat(perm.isSummoningSick()).isTrue();
     }
-
-    // ===== Player shroud — spells cannot target player =====
 
     @Test
     @DisplayName("Opponent cannot target player with a spell when True Believer is on battlefield")
@@ -96,8 +90,7 @@ class TrueBelieverTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player1.getId());
 
         harness.assertLife(player1, 18);
     }
@@ -113,8 +106,6 @@ class TrueBelieverTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("shroud");
     }
-
-    // ===== Shroud only while on battlefield =====
 
     @Test
     @DisplayName("Player can be targeted after True Believer is removed from battlefield")
@@ -137,8 +128,7 @@ class TrueBelieverTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
 
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
 
         harness.assertLife(player1, 18);
     }
@@ -157,8 +147,6 @@ class TrueBelieverTest extends BaseCardTest {
                 .hasMessageContaining("shroud");
     }
 
-    // ===== Shroud does not protect the creature itself =====
-
     @Test
     @DisplayName("True Believer grants shroud to the player, not to creatures")
     void shroudProtectsPlayerNotCreatures() {
@@ -171,13 +159,10 @@ class TrueBelieverTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
 
-        harness.castInstant(player2, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, creature.getId());
 
         harness.assertInGraveyard(player1, "Glory Seeker");
     }
-
-    // ===== Multiple True Believers =====
 
     @Test
     @DisplayName("Multiple True Believers on battlefield still grant shroud")
@@ -220,5 +205,76 @@ class TrueBelieverTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("shroud");
     }
-}
 
+    @Test
+    @DisplayName("Own activated abilities cannot target a player with shroud")
+    void ownAbilityCannotTargetProtectedPlayer() {
+        harness.addToBattlefield(player1, new TrueBeliever());
+        addCreatureReady(player1, new GoblinSharpshooter());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, player1.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("shroud");
+    }
+
+    @Test
+    @DisplayName("A spell does not resolve against a player who gains shroud before resolution")
+    void gainingShroudMakesSpellTargetIllegal() {
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, player1.getId());
+
+        harness.addToBattlefield(player1, new TrueBeliever());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Shock");
+    }
+
+    @Test
+    @DisplayName("An ability does not resolve against a player who gains shroud before resolution")
+    void gainingShroudMakesAbilityTargetIllegal() {
+        harness.setLife(player1, 20);
+        addCreatureReady(player1, new GoblinSharpshooter());
+        harness.activateAbility(player1, 0, null, player1.getId());
+
+        harness.addToBattlefield(player1, new TrueBeliever());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("True Believer itself can be targeted and destroyed")
+    void trueBelieverCanBeTargeted() {
+        Permanent believer = harness.addToBattlefieldAndReturn(player1, new TrueBeliever());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, believer.getId());
+
+        harness.assertNotOnBattlefield(player1, "True Believer");
+        harness.assertInGraveyard(player1, "True Believer");
+    }
+
+    @Test
+    @DisplayName("Shroud follows True Believer's current controller")
+    void shroudFollowsCurrentController() {
+        Permanent believer = harness.addToBattlefieldAndReturn(player1, new TrueBeliever());
+        gd.playerBattlefields.get(player1.getId()).remove(believer);
+        gd.playerBattlefields.get(player2.getId()).add(believer);
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("shroud");
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+
+        harness.assertLife(player1, 18);
+    }
+}
