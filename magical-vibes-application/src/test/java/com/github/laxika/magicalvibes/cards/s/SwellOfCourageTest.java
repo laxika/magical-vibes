@@ -24,11 +24,7 @@ class SwellOfCourageTest extends BaseCardTest {
     void spellBoostsOwnCreatures() {
         Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new BurrentonBombardier());
         Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new BurrentonBombardier());
-        harness.setHand(player1, List.of(new SwellOfCourage()));
-        harness.addMana(player1, ManaColor.WHITE, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new SwellOfCourage(), "{3}{W}{W}");
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
@@ -42,15 +38,10 @@ class SwellOfCourageTest extends BaseCardTest {
     @DisplayName("Spell boost wears off at cleanup")
     void spellBoostWearsOff() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new BurrentonBombardier());
-        harness.setHand(player1, List.of(new SwellOfCourage()));
-        harness.addMana(player1, ManaColor.WHITE, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new SwellOfCourage(), "{3}{W}{W}");
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(creature.getEffectivePower()).isEqualTo(2);
@@ -152,5 +143,58 @@ class SwellOfCourageTest extends BaseCardTest {
         harness.assertInHand(player1, "Swell of Courage");
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(5);
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Creatures entering after the spell resolves do not receive its boost")
+    void spellDoesNotBoostLaterCreatures() {
+        Permanent original = harness.addToBattlefieldAndReturn(player1, new BurrentonBombardier());
+        harness.castFromHand(player1, new SwellOfCourage(), "{3}{W}{W}");
+        harness.passBothPriorities();
+
+        Permanent newcomer = harness.enterBattlefieldAndReturn(player1, new BurrentonBombardier());
+
+        assertThat(original.getEffectivePower()).isEqualTo(4);
+        assertThat(original.getEffectiveToughness()).isEqualTo(4);
+        assertThat(newcomer.getEffectivePower()).isEqualTo(2);
+        assertThat(newcomer.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Reinforce discards the card as a cost before placing counters on resolution")
+    void reinforceDiscardsBeforeResolution() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new BurrentonBombardier());
+        harness.setHand(player1, List.of(new SwellOfCourage()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateHandAbility(player1, 0, creature.getId(), 3);
+
+        harness.assertInGraveyard(player1, "Swell of Courage");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Reinforce counters remain after cleanup")
+    void reinforceCountersRemainAfterCleanup() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new BurrentonBombardier());
+        harness.setHand(player1, List.of(new SwellOfCourage()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateHandAbility(player1, 0, creature.getId(), 3);
+        harness.passBothPriorities();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(TurnStep.UPKEEP);
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(creature.getEffectivePower()).isEqualTo(5);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(5);
     }
 }
