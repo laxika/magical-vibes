@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -71,6 +72,86 @@ class TriSentinelActOfVengeanceTest extends BaseCardTest {
 
         Permanent returned = findPermanent(player1, "Tri-Sentinel, Act of Vengeance");
         assertThat(returned.getGrantedKeywords()).contains(Keyword.HASTE);
+    }
+
+    @Test
+    void enteringDamageKillsCreatureWithThreeOrLessToughness() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        castTriSentinel(List.of(target.getId()));
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void mayDeclineToDamageAnAvailableOpposingCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+
+        castTriSentinel(List.of());
+
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player1, "Tri-Sentinel, Act of Vengeance");
+    }
+
+    @Test
+    void unearthExilesAtNextEndStep() {
+        harness.setGraveyard(player1, List.of(new TriSentinelActOfVengeance()));
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Tri-Sentinel, Act of Vengeance");
+        harness.assertNotInGraveyard(player1, "Tri-Sentinel, Act of Vengeance");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getName().equals("Tri-Sentinel, Act of Vengeance"));
+    }
+
+    @Test
+    void unearthCannotBeActivatedDuringUpkeep() {
+        harness.setGraveyard(player1, List.of(new TriSentinelActOfVengeance()));
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Tri-Sentinel, Act of Vengeance");
+    }
+
+    @Test
+    void unearthCannotBeActivatedOnOpponentsTurn() {
+        harness.setGraveyard(player2, List.of(new TriSentinelActOfVengeance()));
+        harness.addMana(player2, ManaColor.COLORLESS, 7);
+        harness.ensurePriority(player2);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player2, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player2, "Tri-Sentinel, Act of Vengeance");
+    }
+
+    @Test
+    void unearthRequiresSevenMana() {
+        harness.setGraveyard(player1, List.of(new TriSentinelActOfVengeance()));
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Tri-Sentinel, Act of Vengeance");
+    }
+
+    @Test
+    void unearthCannotBeActivatedWithSpellOnStack() {
+        harness.setGraveyard(player1, List.of(new TriSentinelActOfVengeance()));
+        harness.setHand(player1, List.of(new TriSentinelActOfVengeance()));
+        harness.addMana(player1, ManaColor.COLORLESS, 14);
+        harness.castCreature(player1, 0, List.of());
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Tri-Sentinel, Act of Vengeance");
     }
 
     private void castTriSentinel(List<UUID> targetIds) {
