@@ -167,6 +167,73 @@ class SpellbinderTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    @DisplayName("The imprint trigger can exile an instant after Spellbinder leaves")
+    void imprintResolvesAfterSpellbinderLeaves() {
+        MetalFatigue instant = new MetalFatigue();
+        harness.setHand(player1, List.of(new Spellbinder(), instant));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent spellbinder = findPermanent(player1, "Spellbinder");
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().destroyPermanentToGraveyard(gd, spellbinder));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ImprintFromHandChoice.class);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(instant);
+        harness.assertNotInHand(player1, "Metal Fatigue");
+        harness.assertInGraveyard(player1, "Spellbinder");
+    }
+
+    @Test
+    @DisplayName("Combat damage cannot copy an instant that has left exile")
+    void cannotCopyInstantThatLeftExile() {
+        MetalFatigue instant = new MetalFatigue();
+        Permanent spellbinder = addReadySpellbinderWithImprint(instant);
+        Permanent creature = addCreatureReady(player1, new MyrMoonvessel());
+        spellbinder.setAttachedTo(creature.getId());
+        creature.setAttacking(true);
+        gd.removeFromExile(instant.getId());
+        harness.setGraveyard(player1, List.of(instant));
+
+        resolveCombat();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Metal Fatigue");
+    }
+
+    @Test
+    @DisplayName("Spellbinder's controller casts the copy when an opponent controls the equipped creature")
+    void equipmentControllerCastsCopyFromOpponentsCreature() {
+        MetalFatigue instant = new MetalFatigue();
+        Permanent spellbinder = addReadySpellbinderWithImprint(instant);
+        Permanent creature = addCreatureReady(player2, new MyrMoonvessel());
+        spellbinder.setAttachedTo(creature.getId());
+        creature.setAttacking(true);
+
+        resolveCombat(player2);
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.stack).anyMatch(entry -> entry.isCopy()
+                && entry.getControllerId().equals(player1.getId()));
+        harness.passBothPriorities();
+
+        assertThat(spellbinder.isTapped()).isTrue();
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(instant);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
     private Permanent addReadySpellbinderWithImprint(MetalFatigue imprintedCard) {
         Spellbinder spellbinderCard = new Spellbinder();
         Permanent spellbinder = harness.addToBattlefieldAndReturn(player1, spellbinderCard);
