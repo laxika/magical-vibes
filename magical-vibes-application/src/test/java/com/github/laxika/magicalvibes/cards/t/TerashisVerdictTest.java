@@ -24,8 +24,8 @@ class TerashisVerdictTest extends BaseCardTest {
     void destroysPowerThreeAttacker() {
         Permanent attacker = addAttacker(player2, new GnarledMass());
 
-        cast(attacker.getId());
-        harness.passBothPriorities();
+        prepare();
+        harness.castAndResolveInstant(player1, 0, attacker.getId());
 
         harness.assertNotOnBattlefield(player2, "Gnarled Mass");
         harness.assertInGraveyard(player2, "Gnarled Mass");
@@ -75,6 +75,32 @@ class TerashisVerdictTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Gnarled Mass");
         harness.assertNotInGraveyard(player2, "Gnarled Mass");
+    }
+
+    @Test
+    @DisplayName("Can destroy an attacker whose effective power is reduced to 3")
+    void destroysAttackerWithReducedPower() {
+        Permanent attacker = addAttacker(player2, new FrostOgre());
+        attacker.setPowerModifier(-2);
+
+        prepare();
+        harness.castAndResolveInstant(player1, 0, attacker.getId());
+
+        harness.assertNotOnBattlefield(player2, "Frost Ogre");
+        harness.assertInGraveyard(player2, "Frost Ogre");
+    }
+
+    @Test
+    @DisplayName("Can destroy an attacking creature controlled by the caster")
+    void destroysOwnAttacker() {
+        Permanent attacker = addAttacker(player1, new GnarledMass());
+        attacker.setAttackTarget(player2.getId());
+
+        prepare();
+        harness.castAndResolveInstant(player1, 0, attacker.getId());
+
+        harness.assertNotOnBattlefield(player1, "Gnarled Mass");
+        harness.assertInGraveyard(player1, "Gnarled Mass");
     }
 
     private void prepare() {
