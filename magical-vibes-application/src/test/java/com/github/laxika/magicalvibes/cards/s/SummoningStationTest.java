@@ -104,6 +104,69 @@ class SummoningStationTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Skyhunter Prowler");
     }
 
+    @Test
+    void canActivateOnTheTurnItEntersAsANoncreatureArtifact() {
+        Permanent station = harness.addToBattlefieldAndReturn(player1, new SummoningStation());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(station.isTapped()).isTrue();
+        harness.assertOnBattlefield(player1, "Pincher");
+    }
+
+    @Test
+    void untapsWhenItsControllersArtifactDiesAndCanCreateAnotherToken() {
+        Permanent station = addReadyStation(player1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.addToBattlefield(player1, new ConjurersBauble());
+
+        destroyArtifacts();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        assertThat(station.isTapped()).isFalse();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().getName().equals("Pincher"))).hasSize(2);
+        assertThat(station.isTapped()).isTrue();
+    }
+
+    @Test
+    void triggersEvenWhenStationIsAlreadyUntapped() {
+        Permanent station = addReadyStation(player1);
+        harness.addToBattlefield(player2, new ConjurersBauble());
+
+        destroyArtifacts();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        assertThat(station.isTapped()).isFalse();
+    }
+
+    @Test
+    void doesNotUntapWhenItsPincherTokenDies() {
+        Permanent station = addReadyStation(player1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        Permanent token = findPermanent(player1, "Pincher");
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new DevourInShadow()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castAndResolveInstant(player1, 0, token.getId());
+
+        harness.assertNotOnBattlefield(player1, "Pincher");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(station.isTapped()).isTrue();
+    }
+
     private Permanent addReadyStation(Player player) {
         Permanent station = harness.addToBattlefieldAndReturn(player, new SummoningStation());
         station.setSummoningSick(false);
