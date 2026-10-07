@@ -74,6 +74,24 @@ class TalismanOfProgressTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Opponent-controlled Talisman gives mana and deals damage to that opponent")
+    void opponentControlledTalisman() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 17);
+        Permanent talisman = harness.addToBattlefieldAndReturn(player2, new TalismanOfProgress());
+
+        harness.activateAbility(player2, 0, 1, null, null);
+        harness.handleListChoice(player2, "BLUE");
+
+        assertThat(talisman.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
     @DisplayName("Cannot activate when already tapped")
     void cannotActivateWhileTapped() {
         harness.addToBattlefield(player1, new TalismanOfProgress());
