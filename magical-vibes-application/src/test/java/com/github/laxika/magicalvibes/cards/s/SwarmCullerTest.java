@@ -97,6 +97,86 @@ class SwarmCullerTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    @DisplayName("Drawing happens during the sacrifice ability's resolution")
+    void drawsBeforePlayersCanRespondToTheSacrifice() {
+        Permanent culler = addCreatureReady(player1, new SwarmCuller());
+        Permanent sacrifice = addCreatureReady(player1, new SwarmCuller());
+        SwarmCuller drawn = new SwarmCuller();
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(drawn));
+
+        tapAndResolve(culler);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, sacrifice.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(culler);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Another Swarm Culler can be sacrificed and does not trigger from the source's tap")
+    void canSacrificeAnotherSwarmCuller() {
+        Permanent culler = addCreatureReady(player1, new SwarmCuller());
+        Permanent sacrifice = addCreatureReady(player1, new SwarmCuller());
+        SwarmCuller drawn = new SwarmCuller();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(drawn));
+
+        tapAndResolve(culler);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, sacrifice.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(culler);
+        harness.assertInGraveyard(player1, "Swarm Culler");
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Opponent-controlled creatures and artifacts cannot be sacrificed")
+    void cannotSacrificeOpponentsPermanents() {
+        Permanent culler = addCreatureReady(player1, new SwarmCuller());
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new MindStone());
+        SwarmCuller drawn = new SwarmCuller();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(drawn));
+
+        tapAndResolve(culler);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(culler);
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(creature, artifact);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Tapping to attack triggers the optional sacrifice")
+    void attackingTriggersSacrificeAndDraw() {
+        Permanent culler = addCreatureReady(player1, new SwarmCuller());
+        Permanent sacrifice = addCreatureReady(player1, new SwarmCuller());
+        SwarmCuller drawn = new SwarmCuller();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(drawn));
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, sacrifice.getId());
+        resolveAllTriggers();
+
+        assertThat(culler.isTapped()).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(culler);
+        harness.assertInGraveyard(player1, "Swarm Culler");
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+    }
     private void tapAndResolve(Permanent permanent) {
         permanent.tap();
         harness.inMutationScope(
