@@ -99,6 +99,34 @@ class TimeOfNeedTest extends BaseCardTest {
         assertThat(gameLogContains("Library is shuffled")).isTrue();
     }
 
+    @Test
+    @DisplayName("Search takes exactly one chosen creature from only the caster's library")
+    void choosesOneOfMultipleLegendaryCreaturesFromOwnLibrary() {
+        setupAndCast();
+        Card first = new KokushoTheEveningStar();
+        Card chosen = new KokushoTheEveningStar();
+        Card land = new Forest();
+        Card opponentsCard = new KokushoTheEveningStar();
+        harness.setLibrary(player1, List.of(first, land, chosen));
+        harness.setLibrary(player2, List.of(opponentsCard));
+
+        harness.passBothPriorities();
+
+        PendingInteraction.LibrarySearch search =
+                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search).isNotNull();
+        assertThat(search.params().cards()).containsExactly(first, chosen);
+
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(chosen);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(first, land);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentsCard);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gameLogContains("reveals Kokusho, the Evening Star")).isTrue();
+        assertThat(gameLogContains("Library is shuffled")).isTrue();
+    }
     private void setupAndCast() {
         harness.castFromHand(player1, new TimeOfNeed(), "{1}{G}");
     }
