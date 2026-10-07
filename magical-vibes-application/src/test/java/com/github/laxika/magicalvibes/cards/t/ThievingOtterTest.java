@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.cards.v.ViridianLongbow;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -40,12 +39,9 @@ class ThievingOtterTest extends BaseCardTest {
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Forest()));
         Permanent otter = addAttacker(player1, new ThievingOtter());
-        Permanent blocker = addReadyCreature(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
                 gd.playerBattlefields.get(player1.getId()).indexOf(otter))));
@@ -60,8 +56,8 @@ class ThievingOtterTest extends BaseCardTest {
     void drawsOnNoncombatDamageToOpponent() {
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Forest()));
-        Permanent otter = addReadyCreature(player1, new ThievingOtter());
-        Permanent longbow = addReadyCreature(player1, new ViridianLongbow());
+        Permanent otter = addCreatureReady(player1, new ThievingOtter());
+        Permanent longbow = harness.addToBattlefieldAndReturn(player1, new ViridianLongbow());
         longbow.setAttachedTo(otter.getId());
 
         harness.activateAbility(player1, 0, 0, null, player2.getId());
@@ -72,24 +68,51 @@ class ThievingOtterTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 
+    @Test
+    @DisplayName("Does not draw when it deals damage to its own controller")
+    void doesNotDrawOnDamageToController() {
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest()));
+        Permanent otter = addCreatureReady(player1, new ThievingOtter());
+        Permanent longbow = harness.addToBattlefieldAndReturn(player1, new ViridianLongbow());
+        longbow.setAttachedTo(otter.getId());
+
+        harness.activateAbility(player1, 0, 0, null, player1.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 19);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Does not draw when it deals noncombat damage to a creature")
+    void doesNotDrawOnNoncombatDamageToCreature() {
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest()));
+        Permanent otter = addCreatureReady(player1, new ThievingOtter());
+        Permanent longbow = harness.addToBattlefieldAndReturn(player1, new ViridianLongbow());
+        longbow.setAttachedTo(otter.getId());
+        Permanent target = addCreatureReady(player2, new ThievingOtter());
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
     private Permanent addAttacker(Player player, Card card) {
-        Permanent attacker = addReadyCreature(player, card);
+        Permanent attacker = addCreatureReady(player, card);
         attacker.setAttacking(true);
         return attacker;
     }
 
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent creature = new Permanent(card);
-        creature.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(creature);
-        return creature;
-    }
-
     private void resolveUnblockedCombat() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of());
         harness.passBothPriorities();
         harness.passBothPriorities();
