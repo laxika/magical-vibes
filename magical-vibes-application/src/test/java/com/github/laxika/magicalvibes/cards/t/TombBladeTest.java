@@ -68,11 +68,85 @@ class TombBladeTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Tomb Blade");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(cardInExile -> cardInExile.getName().equals("Tomb Blade"));
+    }
+
+    @Test
+    @DisplayName("The damaged player chooses which creature to sacrifice")
+    void damagedPlayerChoosesCreature() {
+        Permanent blade = addCreatureReady(player1, new TombBlade());
+        blade.setAttacking(true);
+        Permanent first = addCreatureReady(player2, new TombBlade());
+        Permanent second = addCreatureReady(player2, new TombBlade());
+
+        resolveCombat();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handlePermanentChosen(player2, second.getId());
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(15);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(first).doesNotContain(second);
+        harness.assertInGraveyard(player2, "Tomb Blade");
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A damaged player with no creatures loses no additional life")
+    void noCreaturesMeansNoAdditionalLifeLoss() {
+        Permanent blade = addCreatureReady(player1, new TombBlade());
+        blade.setAttacking(true);
+
+        resolveCombat();
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(15);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Tomb Blade");
+    }
+
+    @Test
+    @DisplayName("Creature count is evaluated when the trigger resolves")
+    void countsCreaturesAtResolution() {
+        Permanent blade = addCreatureReady(player1, new TombBlade());
+        blade.setAttacking(true);
+        addCreatureReady(player2, new TombBlade());
+
+        resolveCombat();
+        addCreatureReady(player2, new TombBlade());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(13);
+        assertThat(countPermanents(player2, "Tomb Blade")).isEqualTo(2);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Sacrificing an unearthed Tomb Blade exiles it and pays the sacrifice")
+    void sacrificingUnearthedBladeExilesIt() {
+        harness.setGraveyard(player1, List.of(new TombBlade()));
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+        Permanent attacker = addCreatureReady(player2, new TombBlade());
+        attacker.setAttacking(true);
+
+        resolveCombat(player2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(15);
+        harness.assertNotOnBattlefield(player1, "Tomb Blade");
+        harness.assertNotInGraveyard(player1, "Tomb Blade");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getName().equals("Tomb Blade"));
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }
