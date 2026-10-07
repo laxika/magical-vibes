@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.u;
 
 import com.github.laxika.magicalvibes.cards.d.DiregrafGhoul;
+import com.github.laxika.magicalvibes.cards.f.ForceOfDespair;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
@@ -17,7 +18,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({UndeadAugur.class, DiregrafGhoul.class, GrizzlyBears.class, Shock.class})
+@CardUsed({UndeadAugur.class, DiregrafGhoul.class, ForceOfDespair.class, GrizzlyBears.class, Shock.class})
 class UndeadAugurTest extends BaseCardTest {
 
     @Test
@@ -71,6 +72,91 @@ class UndeadAugurTest extends BaseCardTest {
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore - 1);
     }
 
+    @Test
+    @DisplayName("Own death draws and loses life together when its single ability resolves")
+    void ownDeathResolvesAsOneAbility() {
+        harness.addToBattlefield(player1, new UndeadAugur());
+        Card drawn = new UndeadAugur();
+        gd.playerDecks.get(player1.getId()).addFirst(drawn);
+        int lifeBefore = gd.getLife(player1.getId());
+
+        killWithShock(player2, player1, "Undead Augur");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .anyMatch(card -> card.getId().equals(drawn.getId()));
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore - 1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opponent's Zombie dying does not trigger Undead Augur")
+    void opponentZombieDeathDoesNotTrigger() {
+        harness.addToBattlefield(player1, new UndeadAugur());
+        harness.addToBattlefield(player2, new DiregrafGhoul());
+        Card topCard = new UndeadAugur();
+        gd.playerDecks.get(player1.getId()).addFirst(topCard);
+        int lifeBefore = gd.getLife(player1.getId());
+
+        killWithShock(player1, player2, "Diregraf Ghoul");
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst().getId()).isEqualTo(topCard.getId());
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore);
+    }
+
+    @Test
+    @DisplayName("Each Undead Augur triggers independently for another Zombie's death")
+    void multipleAugursEachTrigger() {
+        harness.addToBattlefield(player1, new UndeadAugur());
+        harness.addToBattlefield(player1, new UndeadAugur());
+        harness.addToBattlefield(player1, new DiregrafGhoul());
+        Card firstDraw = new UndeadAugur();
+        Card secondDraw = new UndeadAugur();
+        gd.playerDecks.get(player1.getId()).addFirst(secondDraw);
+        gd.playerDecks.get(player1.getId()).addFirst(firstDraw);
+        int lifeBefore = gd.getLife(player1.getId());
+
+        killWithShock(player2, player1, "Diregraf Ghoul");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .anyMatch(card -> card.getId().equals(firstDraw.getId()))
+                .anyMatch(card -> card.getId().equals(secondDraw.getId()));
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore - 2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Augurs see each other die simultaneously and each also triggers for itself")
+    void simultaneousAugurDeathsTriggerForEachZombie() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.enterBattlefieldAndReturn(player1, new UndeadAugur());
+        harness.enterBattlefieldAndReturn(player1, new UndeadAugur());
+        List<Card> draws = List.of(new UndeadAugur(), new UndeadAugur(),
+                new UndeadAugur(), new UndeadAugur());
+        gd.playerDecks.get(player1.getId()).addAll(0, draws);
+        int lifeBefore = gd.getLife(player1.getId());
+        harness.setHand(player1, List.of(new ForceOfDespair()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveInstant(player1, 0);
+        harness.assertNotOnBattlefield(player1, "Undead Augur");
+        for (int i = 0; i < 4; i++) {
+            harness.passBothPriorities();
+        }
+
+        for (Card drawn : draws) {
+            assertThat(gd.playerHands.get(player1.getId()))
+                    .anyMatch(card -> card.getId().equals(drawn.getId()));
+        }
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore - 4);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void killWithShock(Player caster, Player targetController, String targetName) {
         harness.forceActivePlayer(caster);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -78,7 +164,6 @@ class UndeadAugurTest extends BaseCardTest {
         harness.setHand(caster, List.of(new Shock()));
         harness.addMana(caster, ManaColor.RED, 1);
         UUID targetId = harness.getPermanentId(targetController, targetName);
-        harness.castInstant(caster, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(caster, 0, targetId);
     }
 }
