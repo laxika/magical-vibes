@@ -123,6 +123,53 @@ class TurnaboutTest extends BaseCardTest {
         assertThat(creature.isTapped()).isTrue();
     }
 
+    @Test
+    @DisplayName("Can target its controller and leaves the opponent's tapped lands alone")
+    void untapsControllersLands() {
+        Permanent ownLand = harness.addToBattlefieldAndReturn(player1, new Forest());
+        ownLand.tap();
+        Permanent opposingLand = harness.addToBattlefieldAndReturn(player2, new Forest());
+        opposingLand.tap();
+
+        castTurnabout(player1.getId());
+        harness.handleListChoice(player1, "UNTAP_LAND");
+
+        assertThat(ownLand.isTapped()).isFalse();
+        assertThat(opposingLand.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Turnabout");
+    }
+
+    @Test
+    @DisplayName("Can choose a type the target player does not control")
+    void resolvesWithNoMatchingPermanents() {
+        Permanent creature = addCreatureReady(player2, new ArgothianSwine());
+        creature.tap();
+
+        castTurnabout(player2.getId());
+        harness.handleListChoice(player1, "UNTAP_ARTIFACT");
+
+        assertThat(creature.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Turnabout");
+    }
+
+    @Test
+    @DisplayName("Creature untapping includes artifact creatures without untapping other artifacts")
+    void untapsArtifactCreaturesAsCreatures() {
+        Permanent artifactCreature = addCreatureReady(player2, new HoppingAutomaton());
+        artifactCreature.tap();
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new Whetstone());
+        artifact.tap();
+        Permanent opposingCreature = addCreatureReady(player1, new ArgothianSwine());
+        opposingCreature.tap();
+
+        castTurnabout(player2.getId());
+        harness.handleListChoice(player1, "UNTAP_CREATURE");
+
+        assertThat(artifactCreature.isTapped()).isFalse();
+        assertThat(artifact.isTapped()).isTrue();
+        assertThat(opposingCreature.isTapped()).isTrue();
+    }
+
     private void castTurnabout(UUID targetPlayerId) {
         harness.setHand(player1, List.of(new Turnabout()));
         harness.addMana(player1, ManaColor.BLUE, 2);
