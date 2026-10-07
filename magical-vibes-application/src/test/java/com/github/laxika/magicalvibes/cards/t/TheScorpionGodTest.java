@@ -7,10 +7,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.DelayedGraveyardToHandReturn;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,6 +19,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TheScorpionGod.class, GrizzlyBears.class, Shock.class, WrathOfGod.class})
 class TheScorpionGodTest extends BaseCardTest {
 
     @Test
@@ -28,7 +28,7 @@ class TheScorpionGodTest extends BaseCardTest {
         harness.addToBattlefield(player1, new TheScorpionGod());
         Permanent dying = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         dying.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
-        setDeck(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -47,7 +47,7 @@ class TheScorpionGodTest extends BaseCardTest {
     void doesNotDrawWithoutMinusOneCounter() {
         harness.addToBattlefield(player1, new TheScorpionGod());
         harness.addToBattlefield(player2, new GrizzlyBears());
-        setDeck(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -98,11 +98,10 @@ class TheScorpionGodTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new WrathOfGod()));
         harness.addMana(player1, ManaColor.WHITE, 4);
-        harness.getGameService().playCard(gd, player1, 0, 0, null, null);
+        harness.castSorcery(player1, 0);
         harness.passBothPriorities(); // Wrath resolves — dies, death trigger on stack
         harness.passBothPriorities(); // resolve death trigger — register delayed return
 
-        assertThat(gd.getDelayedActions(DelayedGraveyardToHandReturn.class)).hasSize(1);
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getId().equals(scorpionCard.getId()));
 
@@ -111,14 +110,71 @@ class TheScorpionGodTest extends BaseCardTest {
         gs.advanceStep(gd);
 
         assertThat(gd.playerHands.get(player1.getId()))
+                .noneMatch(c -> c.getId().equals(scorpionCard.getId()));
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId()))
                 .anyMatch(c -> c.getId().equals(scorpionCard.getId()));
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .noneMatch(c -> c.getId().equals(scorpionCard.getId()));
-        assertThat(gd.getDelayedActions(DelayedGraveyardToHandReturn.class)).isEmpty();
     }
 
-    private void setDeck(Player player, List<Card> cards) {
-        gd.playerDecks.get(player.getId()).clear();
-        gd.playerDecks.get(player.getId()).addAll(cards);
+    @Test
+    @DisplayName("Draws for itself and each countered creature dying simultaneously")
+    void drawsForAllCounteredCreaturesIncludingItselfInWrath() {
+        Permanent scorpion = harness.addToBattlefieldAndReturn(player1, new TheScorpionGod());
+        scorpion.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        bear.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player1, List.of(new WrathOfGod()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(3);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(c -> c.getId().equals(scorpion.getCard().getId()));
+    }
+
+    @Test
+    @DisplayName("Draws when The Scorpion God itself dies with a -1/-1 counter")
+    void drawsWhenItselfDiesWithCounter() {
+        Permanent scorpion = harness.addToBattlefieldAndReturn(player1, new TheScorpionGod());
+        scorpion.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new WrathOfGod()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(c -> c.getId().equals(scorpion.getCard().getId()));
+    }
+
+    @Test
+    @DisplayName("Can put a counter on another creature controlled by its controller")
+    void canTargetOwnOtherCreature() {
+        harness.addToBattlefield(player1, new TheScorpionGod());
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, bear.getId());
+        harness.passBothPriorities();
+
+        assertThat(bear.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
     }
 }
