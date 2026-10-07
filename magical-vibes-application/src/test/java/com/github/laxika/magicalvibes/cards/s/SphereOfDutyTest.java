@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.a.AvenFisher;
 import com.github.laxika.magicalvibes.cards.c.CrashingCentaur;
 import com.github.laxika.magicalvibes.cards.f.FlameBurst;
 import com.github.laxika.magicalvibes.cards.h.HowlingGale;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -13,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SphereOfDuty.class, HowlingGale.class, FlameBurst.class, CrashingCentaur.class})
+@CardUsed({SphereOfDuty.class, HowlingGale.class, FlameBurst.class, CrashingCentaur.class, AvenFisher.class})
 class SphereOfDutyTest extends BaseCardTest {
 
     @Test
@@ -84,5 +86,67 @@ class SphereOfDutyTest extends BaseCardTest {
         resolveCombat(player2);
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Multiple Spheres combine their prevention without gaining life")
+    void multipleSpheresStack() {
+        harness.addToBattlefield(player1, new SphereOfDuty());
+        harness.addToBattlefield(player1, new SphereOfDuty());
+        harness.setLife(player1, 20);
+        addCreatureReady(player2, new CrashingCentaur());
+
+        declareAttackers(player2, List.of(0));
+        resolveCombat(player2);
+
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Prevention applies to both normal casting and flashback in the same turn")
+    void preventsRepeatedDamageEvents() {
+        harness.addToBattlefield(player1, new SphereOfDuty());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player2, List.of(new HowlingGale()));
+        harness.addMana(player2, ManaColor.GREEN, 4);
+
+        harness.castAndResolveInstant(player2, 0);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 19);
+
+        harness.castAndResolveFlashback(player2, 0, null);
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Does not prevent green damage to the controller's creatures")
+    void doesNotProtectCreatures() {
+        harness.addToBattlefield(player1, new SphereOfDuty());
+        Permanent flyer = harness.addToBattlefieldAndReturn(player1, new AvenFisher());
+        harness.setLife(player1, 20);
+        harness.setHand(player2, List.of(new HowlingGale()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+
+        harness.castAndResolveInstant(player2, 0);
+
+        harness.assertLife(player1, 20);
+        assertThat(flyer.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Aven Fisher");
+    }
+
+    @Test
+    @DisplayName("Does not prevent non-green combat damage")
+    void doesNotPreventNonGreenCombatDamage() {
+        harness.addToBattlefield(player1, new SphereOfDuty());
+        harness.setLife(player1, 20);
+        addCreatureReady(player2, new AvenFisher());
+
+        declareAttackers(player2, List.of(0));
+        resolveCombat(player2);
+
+        harness.assertLife(player1, 18);
     }
 }
