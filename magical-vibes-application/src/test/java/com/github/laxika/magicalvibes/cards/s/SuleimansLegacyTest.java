@@ -3,15 +3,16 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HarmattanEfreet;
 import com.github.laxika.magicalvibes.cards.n.NettletoothDjinn;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.a.ArcaneAdaptation;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-@CardUsed({SuleimansLegacy.class, HarmattanEfreet.class, NettletoothDjinn.class, GrizzlyBears.class})
+@CardUsed({SuleimansLegacy.class, HarmattanEfreet.class, NettletoothDjinn.class, GrizzlyBears.class,
+        ArcaneAdaptation.class})
 class SuleimansLegacyTest extends BaseCardTest {
 
     @Test
@@ -50,10 +51,7 @@ class SuleimansLegacyTest extends BaseCardTest {
     void enteringDjinnIsDestroyed() {
         harness.addToBattlefield(player1, new SuleimansLegacy());
 
-        harness.setHand(player1, List.of(new NettletoothDjinn()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new NettletoothDjinn(), "{3}{G}");
         harness.passBothPriorities(); // resolve creature
         harness.passBothPriorities(); // resolve Legacy trigger
 
@@ -68,11 +66,8 @@ class SuleimansLegacyTest extends BaseCardTest {
     void enteringEfreetCannotBeRegenerated() {
         harness.addToBattlefield(player1, new SuleimansLegacy());
 
-        harness.setHand(player2, List.of(new HarmattanEfreet()));
-        harness.addMana(player2, ManaColor.BLUE, 2);
-        harness.addMana(player2, ManaColor.COLORLESS, 2);
         harness.forceActivePlayer(player2);
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, new HarmattanEfreet(), "{2}{U}{U}");
         harness.passBothPriorities(); // resolve creature → Legacy trigger queues
         Permanent efreet = findPermanent(player2, "Harmattan Efreet");
         efreet.setRegenerationShield(1);
@@ -87,10 +82,7 @@ class SuleimansLegacyTest extends BaseCardTest {
     void nonDjinnEnteringDoesNotTrigger() {
         harness.addToBattlefield(player1, new SuleimansLegacy());
 
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
@@ -98,9 +90,39 @@ class SuleimansLegacyTest extends BaseCardTest {
     }
 
     private void castLegacy() {
-        harness.setHand(player1, List.of(new SuleimansLegacy()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new SuleimansLegacy(), "{R}{W}");
+    }
+
+    @Test
+    @DisplayName("Opponent's creature entering as a Djinn is destroyed")
+    void opponentCreatureWithGrantedDjinnTypeIsDestroyed() {
+        harness.addToBattlefield(player1, new SuleimansLegacy());
+        Permanent adaptation = harness.addToBattlefieldAndReturn(player2, new ArcaneAdaptation());
+        adaptation.setChosenSubtype(CardSubtype.DJINN);
+        harness.forceActivePlayer(player2);
+
+        harness.castFromHand(player2, new GrizzlyBears(), "{1}{G}");
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Legacy controller's type grant does not affect an opponent's entering creature")
+    void ownTypeGrantDoesNotDestroyOpponentCreature() {
+        harness.addToBattlefield(player1, new SuleimansLegacy());
+        Permanent adaptation = harness.addToBattlefieldAndReturn(player1, new ArcaneAdaptation());
+        adaptation.setChosenSubtype(CardSubtype.EFREET);
+        harness.forceActivePlayer(player2);
+
+        harness.castFromHand(player2, new GrizzlyBears(), "{1}{G}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        org.assertj.core.api.Assertions.assertThat(gd.stack).isEmpty();
+        resolveAllTriggers();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 }
