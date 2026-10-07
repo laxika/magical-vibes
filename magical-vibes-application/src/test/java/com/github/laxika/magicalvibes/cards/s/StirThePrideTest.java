@@ -121,6 +121,96 @@ class StirThePrideTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Entwined creatures gain life equal to their boosted combat damage")
+    void entwinedLifeGainUsesBoostedDamage() {
+        Permanent attacker = addCreatureReady(player1, new MyrMoonvessel());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new StirThePride()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.castModalInstantWithModes(player1, 0, 1, 2, new int[]{0, 1}, List.of());
+        harness.passBothPriorities();
+        attacker.setAttacking(true);
+
+        harness.resolveCombatDamage();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+        resolveAllTriggers();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(23);
+    }
+
+    @Test
+    @DisplayName("Each resolution grants a separate life-gain ability")
+    void repeatedGrantsGainLifeTwice() {
+        Permanent attacker = addCreatureReady(player1, new MyrMoonvessel());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        castSingleMode(1);
+        castSingleMode(1);
+        attacker.setAttacking(true);
+
+        harness.resolveCombatDamage();
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
+    }
+
+    @Test
+    @DisplayName("Damage to a blocker gains life even when the granted creature dies")
+    void lethalCombatDamageStillTriggersLifeGain() {
+        Permanent attacker = addCreatureReady(player1, new MyrMoonvessel());
+        Permanent blocker = addCreatureReady(player2, new MyrMoonvessel());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        castSingleMode(1);
+        attacker.setAttacking(true);
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+
+        harness.resolveCombatDamage();
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(21);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("The boost affects only creatures present when the spell resolves")
+    void boostDoesNotAffectLaterEntrants() {
+        Permanent early = harness.addToBattlefieldAndReturn(player1, new MyrMoonvessel());
+        castSingleMode(0);
+
+        Permanent late = harness.addToBattlefieldAndReturn(player1, new MyrMoonvessel());
+
+        assertThat(early.getEffectivePower()).isEqualTo(3);
+        assertThat(early.getEffectiveToughness()).isEqualTo(3);
+        assertThat(late.getEffectivePower()).isEqualTo(1);
+        assertThat(late.getEffectiveToughness()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The life-gain mode does not grant an ability to opposing creatures")
+    void opposingCreaturesDoNotGainLife() {
+        Permanent attacker = addCreatureReady(player2, new MyrMoonvessel());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        castSingleMode(1);
+        harness.forceActivePlayer(player2);
+        attacker.setAttacking(true);
+
+        harness.resolveCombatDamage();
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
     private void castSingleMode(int mode) {
         harness.setHand(player1, List.of(new StirThePride()));
         harness.addMana(player1, ManaColor.WHITE, 1);
