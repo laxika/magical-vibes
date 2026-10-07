@@ -77,6 +77,56 @@ class SunhomeFortressOfTheLegionTest extends BaseCardTest {
                 .hasMessageContaining("creature");
     }
 
+    @Test
+    @DisplayName("Double strike ability uses the stack and grants nothing before resolution")
+    void doubleStrikeAbilityUsesTheStack() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new SunhomeFortressOfTheLegion());
+        Permanent recruit = harness.addToBattlefieldAndReturn(player1, new BorosRecruit());
+        addAbilityMana();
+
+        harness.activateAbility(player1, 0, 1, null, recruit.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(land.isTapped()).isTrue();
+        assertThat(gqs.hasKeyword(gd, recruit, Keyword.DOUBLE_STRIKE)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.hasKeyword(gd, recruit, Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, recruit, Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A land tapped for mana cannot also pay the double strike ability's tap cost")
+    void cannotActivateDoubleStrikeAfterTappingForMana() {
+        harness.addToBattlefield(player1, new SunhomeFortressOfTheLegion());
+        Permanent recruit = harness.addToBattlefieldAndReturn(player1, new BorosRecruit());
+        addAbilityMana();
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, recruit.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.hasKeyword(gd, recruit, Keyword.DOUBLE_STRIKE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Colorless mana cannot replace the red and white activation costs")
+    void cannotActivateWithOnlyColorlessMana() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new SunhomeFortressOfTheLegion());
+        Permanent recruit = harness.addToBattlefieldAndReturn(player1, new BorosRecruit());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, recruit.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(land.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.hasKeyword(gd, recruit, Keyword.DOUBLE_STRIKE)).isFalse();
+    }
+
     private void addAbilityMana() {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.RED, 1);
