@@ -4,13 +4,11 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -19,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({TroopOfPonies.class, Forest.class, GrizzlyBears.class, Island.class, Plains.class})
 class TroopOfPoniesTest extends BaseCardTest {
@@ -61,8 +60,8 @@ class TroopOfPoniesTest extends BaseCardTest {
         seedLibrary();
 
         harness.passBothPriorities();
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent.getCard().hasType(CardType.LAND))
@@ -82,13 +81,138 @@ class TroopOfPoniesTest extends BaseCardTest {
     @DisplayName("No basic lands in the library resolves without a search prompt")
     void noBasicLandsNoPrompt() {
         setupAndActivate();
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.add(new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
 
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Both selected lands are revealed and their destinations can be chosen")
+    void revealsChosenLandsAndShuffles() {
+        setupAndActivate();
+        seedLibrary();
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 1);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Forest");
+        assertThat(findPermanent(player1, "Forest").isTapped()).isTrue();
+        harness.assertInHand(player1, "Plains");
+        assertThat(gameLogContains("reveals Forest")).isTrue();
+        assertThat(gameLogContains("reveals Plains")).isTrue();
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An already tapped Troop of Ponies cannot pay the tap cost")
+    void tappedCreatureCannotActivate() {
+        addCreatureReady(player1, new TroopOfPonies()).setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Troop of Ponies");
+        harness.assertNotInGraveyard(player1, "Troop of Ponies");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Finding no lands is allowed even when basic lands are available")
+    void mayFindZeroLands() {
+        setupAndActivate();
+        seedLibrary();
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(4);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
+    }
+
+    @Test
+    @DisplayName("A single available basic land enters tapped and does not go to hand")
+    void oneAvailableLandEntersTapped() {
+        setupAndActivate();
+        harness.setLibrary(player1, List.of(new Forest(), new GrizzlyBears()));
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Forest");
+        assertThat(findPermanent(player1, "Forest").isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Finding only one land is allowed when more basics remain")
+    void mayDeclineSecondLand() {
+        setupAndActivate();
+        seedLibrary();
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, -1);
+
+        harness.assertOnBattlefield(player1, "Plains");
+        assertThat(findPermanent(player1, "Plains").isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
+    }
+
+    @Test
+    @DisplayName("The ability resolves with an empty library")
+    void emptyLibraryResolves() {
+        setupAndActivate();
+        harness.setLibrary(player1, List.of());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Summoning sickness prevents paying the tap cost")
+    void summoningSicknessPreventsActivation() {
+        harness.addToBattlefield(player1, new TroopOfPonies());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Troop of Ponies");
+        harness.assertNotInGraveyard(player1, "Troop of Ponies");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The ability cannot be activated with only one mana")
+    void insufficientManaPreventsActivation() {
+        addCreatureReady(player1, new TroopOfPonies());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Troop of Ponies");
+        assertThat(findPermanent(player1, "Troop of Ponies").isTapped()).isFalse();
+        harness.assertNotInGraveyard(player1, "Troop of Ponies");
+        assertThat(gd.stack).isEmpty();
     }
 
     private void setupAndActivate() {
@@ -99,8 +223,6 @@ class TroopOfPoniesTest extends BaseCardTest {
     }
 
     private void seedLibrary() {
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new Plains(), new Forest(), new Island(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Plains(), new Forest(), new Island(), new GrizzlyBears()));
     }
 }
