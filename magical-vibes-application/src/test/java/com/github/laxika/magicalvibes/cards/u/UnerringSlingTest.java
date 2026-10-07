@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.u;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.d.DarkBanishing;
+import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.Card;
@@ -18,7 +19,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({UnerringSling.class, GrizzlyBears.class, SuntailHawk.class, AirElemental.class})
+@CardUsed({UnerringSling.class, GrizzlyBears.class, SuntailHawk.class, AirElemental.class,
+        DarkBanishing.class, GiantGrowth.class})
 class UnerringSlingTest extends BaseCardTest {
 
     @Test
@@ -98,7 +100,6 @@ class UnerringSlingTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(DarkBanishing.class)
     @DisplayName("Uses the tapped creature's power if it leaves before resolution")
     void usesTappedCreaturePowerAfterItLeaves() {
         addSlingReady();
@@ -111,8 +112,7 @@ class UnerringSlingTest extends BaseCardTest {
         harness.setHand(player2, List.of(new DarkBanishing()));
         harness.addMana(player2, ManaColor.COLORLESS, 2);
         harness.addMana(player2, ManaColor.BLACK, 1);
-        harness.castInstant(player2, 0, elemental.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, elemental.getId());
 
         harness.assertNotOnBattlefield(player1, "Air Elemental");
         harness.passBothPriorities();
@@ -120,19 +120,110 @@ class UnerringSlingTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Suntail Hawk");
     }
 
+    @Test
+    @DisplayName("The chosen four-power creature kills a four-toughness flier")
+    void chosenCreatureDeterminesDamageAmount() {
+        addSlingReady();
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent payer = addCreatureReady(player1, new AirElemental());
+        Permanent target = addCombatCreature(new AirElemental(), true, false);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.handlePermanentChosen(player1, payer.getId());
+        harness.passBothPriorities();
+
+        assertThat(bears.isTapped()).isFalse();
+        assertThat(payer.isTapped()).isTrue();
+        harness.assertInGraveyard(player2, "Air Elemental");
+    }
+
+    @Test
+    @DisplayName("Reads the tapped creature's power at resolution")
+    void usesPowerAfterRespondingWithGiantGrowth() {
+        addSlingReady();
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent target = addCombatCreature(new AirElemental(), true, false);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Air Elemental");
+    }
+
+    @Test
+    @DisplayName("A summoning-sick creature can pay the additional tap cost")
+    void summoningSickCreatureCanPayTapCost() {
+        addSlingReady();
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        bears.setSummoningSick(true);
+        Permanent target = addCombatCreature(new AirElemental(), true, false);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(bears.isTapped()).isTrue();
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("An already tapped creature cannot pay the tap cost")
+    void tappedCreatureCannotPayTapCost() {
+        addSlingReady();
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        bears.tap();
+        Permanent target = addCombatCreature(new AirElemental(), true, false);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opponent's untapped creature cannot pay the tap cost")
+    void opposingCreatureCannotPayTapCost() {
+        addSlingReady();
+        Permanent target = addCombatCreature(new AirElemental(), true, false);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(target.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The ability deals no damage if its target leaves combat")
+    void targetMustStillBeAttackingOrBlockingAtResolution() {
+        Permanent sling = addSlingReady();
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent target = addCombatCreature(new AirElemental(), true, false);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        target.setAttacking(false);
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Air Elemental");
+        assertThat(sling.isTapped()).isTrue();
+        assertThat(bears.isTapped()).isTrue();
+    }
+
     private Permanent addSlingReady() {
-        Permanent sling = new Permanent(new UnerringSling());
-        sling.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(sling);
-        return sling;
+        return addCreatureReady(player1, new UnerringSling());
     }
 
     private Permanent addCombatCreature(Card card, boolean attacking, boolean blocking) {
-        Permanent creature = new Permanent(card);
-        creature.setSummoningSick(false);
+        Permanent creature = addCreatureReady(player2, card);
         creature.setAttacking(attacking);
         creature.setBlocking(blocking);
-        gd.playerBattlefields.get(player2.getId()).add(creature);
         return creature;
     }
 }
