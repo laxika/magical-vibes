@@ -20,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TheMasamune.class, ExultantCultist.class, Forest.class, GrizzlyBears.class, Shock.class})
+@CardUsed({TheMasamune.class, ExultantCultist.class, Forest.class, GrizzlyBears.class, Shock.class, TurnToFrog.class})
 class TheMasamuneTest extends BaseCardTest {
 
     @Test
@@ -81,10 +81,66 @@ class TheMasamuneTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
     }
 
+
+    @Test
+    @DisplayName("Death triggers double even when another player controls The Masamune")
+    void doublesDeathTriggerWithOpponentsEquipment() {
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        Permanent creature = addCreatureReady(player1, new ExultantCultist());
+        Permanent masamune = addCreatureReady(player2, new TheMasamune());
+        masamune.setAttachedTo(creature.getId());
+
+        killWithShock(creature);
+
+        assertThat(gd.stack).hasSize(2);
+        resolveAllTriggers();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Losing the equipped creature's abilities stops emblem trigger doubling")
+    void abilityLossStopsEmblemTriggerDoubling() {
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        Permanent equippedCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent masamune = addCreatureReady(player1, new TheMasamune());
+        masamune.setAttachedTo(equippedCreature.getId());
+        harness.setHand(player1, List.of(new TurnToFrog()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, equippedCreature.getId());
+        gd.emblems.add(new Emblem(player1.getId(), List.of(
+                new EmblemCreatureDeathTriggerEffect(List.of(new DrawCardEffect()), null)),
+                new ExultantCultist()));
+        Permanent dyingCreature = addCreatureReady(player1, new GrizzlyBears());
+
+        killWithShock(dyingCreature);
+
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Equip attaches The Masamune for two mana")
+    void equipAttachesToControlledCreature() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent masamune = addCreatureReady(player1, new TheMasamune());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 1, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(masamune.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isFalse();
+        creature.setAttacking(true);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isTrue();
+    }
+
     private void killWithShock(Permanent target) {
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, target.getId());
     }
 }
