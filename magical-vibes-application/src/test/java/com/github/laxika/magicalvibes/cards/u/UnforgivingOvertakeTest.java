@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.u;
 import com.github.laxika.magicalvibes.cards.a.AirResponseUnit;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.v.VilisBrokerOfBlood;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,7 +16,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({UnforgivingOvertake.class, AirResponseUnit.class, FountainOfYouth.class, GrizzlyBears.class})
+@CardUsed({UnforgivingOvertake.class, AirResponseUnit.class, FountainOfYouth.class, GrizzlyBears.class,
+        VilisBrokerOfBlood.class})
 class UnforgivingOvertakeTest extends BaseCardTest {
 
     @Test
@@ -70,6 +72,65 @@ class UnforgivingOvertakeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A destroyed Vehicle's controller also loses 2 life")
+    void vehicleControllerLosesLife() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AirResponseUnit());
+        harness.setLife(player1, 20);
+
+        castForNonStartingPlayer(target);
+
+        harness.assertInGraveyard(player1, "Air Response Unit");
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Can destroy the caster's creature and make the caster lose life")
+    void canTargetOwnCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setLife(player2, 20);
+
+        castForNonStartingPlayer(target);
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("The starting player can cast the spell for its full cost")
+    void startingPlayerPaysFullCost() {
+        harness.forceActivePlayer(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new UnforgivingOvertake()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.setLife(player2, 20);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Vilis is destroyed before its controller loses life, so it does not trigger")
+    void destroyedCreatureDoesNotSeeSubsequentLifeLoss() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new VilisBrokerOfBlood());
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+
+        castForNonStartingPlayer(target);
+
+        harness.assertInGraveyard(player1, "Vilis, Broker of Blood");
+        harness.assertLife(player1, 18);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
     @DisplayName("Cannot target a noncreature non-Vehicle permanent")
     void cannotTargetOtherPermanent() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
@@ -87,8 +148,7 @@ class UnforgivingOvertakeTest extends BaseCardTest {
         harness.setHand(player2, List.of(new UnforgivingOvertake()));
         harness.addMana(player2, ManaColor.BLACK, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
-        harness.castSorcery(player2, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player2, 0, target.getId());
     }
 
     private void forceNonStartingPlayer() {
