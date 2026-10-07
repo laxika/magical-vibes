@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +20,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({TitansStrength.class, GrizzlyBears.class, Forest.class})
 class TitansStrengthTest extends BaseCardTest {
 
     @Test
@@ -30,8 +32,7 @@ class TitansStrengthTest extends BaseCardTest {
         harness.setHand(player1, List.of(new TitansStrength()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         GameData gd = harness.getGameData();
         Permanent bear = gd.playerBattlefields.get(player1.getId()).getFirst();
@@ -55,8 +56,7 @@ class TitansStrengthTest extends BaseCardTest {
         List<Card> deck = gd.playerDecks.get(player1.getId());
         Card originalTop = deck.getFirst();
 
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.getGameService().handleInteractionAnswer(gd, player1,
                 new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
@@ -76,8 +76,7 @@ class TitansStrengthTest extends BaseCardTest {
         harness.setHand(player1, List.of(new TitansStrength()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         GameData gd = harness.getGameData();
         harness.getGameService().handleInteractionAnswer(gd, player1,
@@ -105,5 +104,68 @@ class TitansStrengthTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, landId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Can boost an opposing creature while the caster keeps their own top card")
+    void opposingCreatureAndScryKeep() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Card top = new Forest();
+        Card next = new Forest();
+        Card opponentTop = new Forest();
+        harness.setLibrary(player1, List.of(top, next));
+        harness.setLibrary(player2, List.of(opponentTop));
+        harness.setHand(player1, List.of(new TitansStrength()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, bear.getId());
+
+        assertThat(bear.getEffectivePower()).isEqualTo(5);
+        assertThat(bear.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
+                .containsExactly(top);
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top, next);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentTop);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Titan's Strength");
+    }
+
+    @Test
+    @DisplayName("Still boosts the creature when the caster's library is empty")
+    void emptyLibraryStillBoosts() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new TitansStrength()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, bear.getId());
+
+        assertThat(bear.getEffectivePower()).isEqualTo(5);
+        assertThat(bear.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Titan's Strength");
+    }
+
+    @Test
+    @DisplayName("Does not scry if the sole target leaves before resolution")
+    void removedTargetPreventsScry() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Card top = new Forest();
+        Card next = new Forest();
+        harness.setLibrary(player1, List.of(top, next));
+        harness.setHand(player1, List.of(new TitansStrength()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, bear.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(bear);
+        gd.playerHands.get(player1.getId()).add(bear.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top, next);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Titan's Strength");
     }
 }
