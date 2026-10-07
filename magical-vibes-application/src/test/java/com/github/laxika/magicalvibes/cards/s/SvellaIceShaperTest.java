@@ -5,12 +5,12 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.v.VillageRites;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -19,9 +19,10 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({SvellaIceShaper.class, CounselOfTheSoratami.class, Forest.class,
-        GrizzlyBears.class, LlanowarElves.class, Mountain.class})
+        GrizzlyBears.class, LlanowarElves.class, Mountain.class, VillageRites.class})
 class SvellaIceShaperTest extends BaseCardTest {
 
     @Test
@@ -60,11 +61,11 @@ class SvellaIceShaperTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(search.params().cards()).extracting(Card::getName)
                 .containsExactlyInAnyOrder("Counsel of the Soratami", "Grizzly Bears");
-        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(5);
 
         int counselIndex = search.params().cards().indexOf(counsel);
         int handBefore = gd.playerHands.get(player1.getId()).size();
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(counselIndex));
+        harness.handleCardChosen(player1, counselIndex);
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId()).size() - handBefore).isEqualTo(2);
@@ -83,8 +84,7 @@ class SvellaIceShaperTest extends BaseCardTest {
 
         harness.activateAbility(player1, battlefieldIndex(svella), 1, null, null);
         harness.passBothPriorities();
-        harness.getGameService().handleInteractionAnswer(
-                gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+        harness.handleCardChosen(player1, -1);
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(4);
@@ -92,13 +92,98 @@ class SvellaIceShaperTest extends BaseCardTest {
                 .noneMatch(card -> card.getName().equals("Counsel of the Soratami"));
     }
 
+    @Test
+    @DisplayName("A spell cast for free still requires its creature sacrifice cost")
+    void paysMandatoryAdditionalCost() {
+        Permanent svella = addSvella();
+        VillageRites rites = new VillageRites();
+        List<Card> library = List.of(rites, new Forest(), new Mountain(), new Forest());
+        harness.setLibrary(player1, library);
+        activateFreeCast(svella);
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .containsExactlyElementsOf(library);
+        harness.handlePermanentChosen(player1, svella.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(svella);
+        harness.passBothPriorities();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(rites, svella.getCard());
+    }
+
+    @Test
+    @DisplayName("Can cast a creature from a library with fewer than four cards")
+    void castsFromShortLibrary() {
+        Permanent svella = addSvella();
+        GrizzlyBears bears = new GrizzlyBears();
+        Forest forest = new Forest();
+        harness.setLibrary(player1, List.of(bears, forest));
+        activateFreeCast(svella);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Grizzly Bears").getCard()).isSameAs(bears);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest);
+    }
+
+    @Test
+    @DisplayName("Land-only cards are bottomed while the untouched fifth card stays on top")
+    void landOnlyCardsGoToBottom() {
+        Permanent svella = addSvella();
+        List<Card> lands = List.of(new Forest(), new Mountain(), new Forest(), new Mountain());
+        GrizzlyBears fifth = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(lands.get(0), lands.get(1), lands.get(2), lands.get(3), fifth));
+        activateFreeCast(svella);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(fifth);
+        assertThat(gd.playerDecks.get(player1.getId()).subList(1, 5))
+                .containsExactlyInAnyOrderElementsOf(lands);
+    }
+
+    @Test
+    @DisplayName("An empty library finishes the ability without offering a choice")
+    void emptyLibraryFinishesNormally() {
+        Permanent svella = addSvella();
+        harness.setLibrary(player1, List.of());
+        activateFreeCast(svella);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Summoning sickness prevents both tap abilities")
+    void summoningSicknessPreventsActivation() {
+        Permanent svella = addSvella();
+        svella.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(svella), 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(svella), 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        assertThat(countPermanents(player1, "Icy Manalith")).isZero();
+    }
+
+    private void activateFreeCast(Permanent svella) {
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.activateAbility(player1, battlefieldIndex(svella), 1, null, null);
+        harness.passBothPriorities();
+    }
+
     private Permanent addSvella() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        Permanent svella = harness.addToBattlefieldAndReturn(player1, new SvellaIceShaper());
-        svella.setSummoningSick(false);
-        return svella;
+        return addCreatureReady(player1, new SvellaIceShaper());
     }
 
     private int battlefieldIndex(Permanent permanent) {
