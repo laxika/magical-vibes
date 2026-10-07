@@ -2,7 +2,10 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.l.LouisoixsSacrifice;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -11,9 +14,10 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TripleTriad.class, HillGiant.class, GrizzlyBears.class})
+@CardUsed({TripleTriad.class, HillGiant.class, GrizzlyBears.class, Island.class, LouisoixsSacrifice.class})
 class TripleTriadTest extends BaseCardTest {
 
     @Test
@@ -46,6 +50,144 @@ class TripleTriadTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         assertThatThrownBy(() -> harness.castFromExile(player1, cards.opponentCard().getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("No permission to play this exiled card");
+    }
+
+    @Test
+    void canPayMandatoryAdditionalManaCostForFreeSpell() {
+        harness.addToBattlefield(player1, new TripleTriad());
+        CardRef cards = setTopCards(new TripleTriad(), new LouisoixsSacrifice());
+        resolveTripleTriadTrigger();
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castFromExile(player1, cards.ownCard().getId());
+
+        harness.castFromExile(player1, cards.opponentCard().getId(), cards.ownCard().getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Triple Triad");
+        harness.assertInGraveyard(player2, "Louisoix's Sacrifice");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+    }
+
+    @Test
+    void rejectsGreaterManaValueCardButAllowsOwnCard() {
+        harness.addToBattlefield(player1, new TripleTriad());
+        CardRef cards = setTopCards(new GrizzlyBears(), new HillGiant());
+        resolveTripleTriadTrigger();
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, cards.opponentCard().getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("No permission to play this exiled card");
+        harness.castFromExile(player1, cards.ownCard().getId());
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.findExiledCard(cards.opponentCard().getId())).isNotNull();
+    }
+
+    @Test
+    void cannotCastCreatureDuringUpkeep() {
+        harness.addToBattlefield(player1, new TripleTriad());
+        CardRef cards = setTopCards(new HillGiant(), new GrizzlyBears());
+        resolveTripleTriadTrigger();
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, cards.ownCard().getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Cannot cast sorcery-speed spell from exile now");
+        assertThat(gd.findExiledCard(cards.ownCard().getId())).isNotNull();
+    }
+
+    @Test
+    void ownLandIsPlayableButDoesNotGrantPermissionForAnotherZeroManaValueCard() {
+        harness.addToBattlefield(player1, new TripleTriad());
+        CardRef cards = setTopCards(new Island(), new Island());
+        resolveTripleTriadTrigger();
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, cards.opponentCard().getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("No permission to play this exiled card");
+        harness.castFromExile(player1, cards.ownCard().getId());
+        harness.assertOnBattlefield(player1, "Island");
+        assertThat(gd.findExiledCard(cards.ownCard().getId())).isNull();
+    }
+
+    @Test
+    void canPlayOpponentLandWithAvailableLandPlay() {
+        harness.addToBattlefield(player1, new TripleTriad());
+        CardRef cards = setTopCards(new TripleTriad(), new Island());
+        resolveTripleTriadTrigger();
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castFromExile(player1, cards.opponentCard().getId());
+        harness.assertOnBattlefield(player1, "Island");
+        harness.assertNotOnBattlefield(player2, "Island");
+    }
+
+    @Test
+    void cannotExceedLandPlayLimit() {
+        harness.addToBattlefield(player1, new TripleTriad());
+        CardRef cards = setTopCards(new TripleTriad(), new Island());
+        resolveTripleTriadTrigger();
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new Island()));
+        harness.playLand(player1, 0);
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, cards.opponentCard().getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Cannot play a land from exile now");
+        assertThat(gd.findExiledCard(cards.opponentCard().getId())).isNotNull();
+    }
+
+    @Test
+    void emptyOwnLibraryStillExilesOpponentCardWithoutGrantingPermission() {
+        harness.addToBattlefield(player1, new TripleTriad());
+        Island opponentCard = new Island();
+        harness.setLibrary(player1, List.of());
+        harness.setLibrary(player2, List.of(opponentCard));
+        resolveTripleTriadTrigger();
+        assertThat(gd.findExiledCard(opponentCard.getId())).isNotNull();
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, opponentCard.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("No permission to play this exiled card");
+    }
+
+    @Test
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        harness.addToBattlefield(player1, new TripleTriad());
+        CardRef cards = setTopCards(new Island(), new Island());
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.findExiledCard(cards.ownCard().getId())).isNull();
+        assertThat(gd.findExiledCard(cards.opponentCard().getId())).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(cards.ownCard());
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(cards.opponentCard());
+    }
+
+    @Test
+    void permissionsExpireAtEndOfTurnWhileCardsStayExiled() {
+        harness.addToBattlefield(player1, new TripleTriad());
+        CardRef cards = setTopCards(new Island(), new Island());
+        resolveTripleTriadTrigger();
+        harness.setLibrary(player1, List.of(new Island(), new Island()));
+        harness.setLibrary(player2, List.of(new Island(), new Island()));
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gd.findExiledCard(cards.ownCard().getId())).isNotNull();
+        assertThatThrownBy(() -> harness.castFromExile(player1, cards.ownCard().getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("No permission to play this exiled card");
     }
