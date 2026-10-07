@@ -39,11 +39,7 @@ class ThornscapeFamiliarTest extends BaseCardTest {
     @DisplayName("Spells of other colors are not reduced")
     void otherColorsAreNotReduced() {
         harness.addToBattlefield(player1, new ThornscapeFamiliar());
-        harness.setHand(player1, List.of(new AmphibiousKavu()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+        assertThatThrownBy(() -> harness.castFromHand(player1, new AmphibiousKavu(), "{1}{G}"))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -51,11 +47,52 @@ class ThornscapeFamiliarTest extends BaseCardTest {
     @DisplayName("The reduction only applies to the controller's spells")
     void opponentSpellsAreNotReduced() {
         harness.addToBattlefield(player1, new ThornscapeFamiliar());
-        harness.setHand(player2, List.of(new CalderaKavu()));
-        harness.addMana(player2, ManaColor.RED, 1);
-        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        assertThatThrownBy(() -> harness.castFromHand(player2, new CalderaKavu(), "{1}{R}"))
+                .isInstanceOf(IllegalStateException.class);
+    }
 
-        assertThatThrownBy(() -> harness.castCreature(player2, 0))
+    @Test
+    @DisplayName("Multiple Familiars each reduce the generic cost")
+    void multipleFamiliarsStack() {
+        harness.addToBattlefield(player1, new ThornscapeFamiliar());
+        harness.addToBattlefield(player1, new ThornscapeFamiliar());
+
+        harness.castFromHand(player1, new CalderaKavu(), "{R}");
+
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard().getName().equals("Caldera Kavu"));
+    }
+
+    @Test
+    @DisplayName("Excess reduction stops at zero generic mana")
+    void excessReductionStopsAtZeroGenericMana() {
+        harness.addToBattlefield(player1, new ThornscapeFamiliar());
+        harness.addToBattlefield(player1, new ThornscapeFamiliar());
+        harness.addToBattlefield(player1, new ThornscapeFamiliar());
+
+        harness.castFromHand(player1, new AncientSpider(), "{G}{W}");
+
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard().getName().equals("Ancient Spider"));
+    }
+
+    @Test
+    @DisplayName("Excess reduction cannot pay a colored mana requirement")
+    void excessReductionDoesNotReduceColoredMana() {
+        harness.addToBattlefield(player1, new ThornscapeFamiliar());
+        harness.addToBattlefield(player1, new ThornscapeFamiliar());
+        harness.addToBattlefield(player1, new ThornscapeFamiliar());
+
+        assertThatThrownBy(() -> harness.castFromHand(player1, new AncientSpider(), "{G}"))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A Familiar in hand does not reduce spell costs")
+    void familiarInHandDoesNotReduceCosts() {
+        harness.setHand(player1, List.of(new CalderaKavu(), new ThornscapeFamiliar()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
     }
 }
