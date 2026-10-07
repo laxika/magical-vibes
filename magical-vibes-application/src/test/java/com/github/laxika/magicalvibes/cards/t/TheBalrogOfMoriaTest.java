@@ -63,12 +63,80 @@ class TheBalrogOfMoriaTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
+    @Test
+    void cyclingTriggerResolvesBeforeTheDraw() {
+        harness.setHand(player1, List.of(new TheBalrogOfMoria()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertInGraveyard(player1, "The Balrog of Moria");
+        assertThat(countPermanents(player1, "Treasure")).isZero();
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Treasure")).isEqualTo(2);
+        harness.assertNotInHand(player1, "Grizzly Bears");
+        harness.passBothPriorities();
+        harness.assertInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void deathTriggerCanExileBalrogWithoutOpposingCreatures() {
+        Permanent balrog = harness.addToBattlefieldAndReturn(player1, new TheBalrogOfMoria());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        destroyBalrog(balrog);
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.exiledCards).anyMatch(entry -> entry.card().getId().equals(balrog.getCard().getId()));
+        harness.assertNotInGraveyard(player1, "The Balrog of Moria");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void reflexiveTriggerCanChooseNoCreature() {
+        Permanent balrog = harness.addToBattlefieldAndReturn(player1, new TheBalrogOfMoria());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        destroyBalrog(balrog);
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.exiledCards).anyMatch(entry -> entry.card().getId().equals(balrog.getCard().getId()));
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void reflexiveTriggerExilesOnlyOneOfTwoOpposingCreatures() {
+        Permanent balrog = harness.addToBattlefieldAndReturn(player1, new TheBalrogOfMoria());
+        Permanent firstBear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent secondBear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        destroyBalrog(balrog);
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, firstBear.getId());
+
+        assertThat(gd.exiledCards).anyMatch(entry -> entry.card().getId().equals(balrog.getCard().getId()));
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(firstBear, secondBear);
+        harness.passBothPriorities();
+
+        assertThat(gd.exiledCards).anyMatch(entry -> entry.card().getId().equals(firstBear.getCard().getId()));
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(secondBear);
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+    }
+
     private void destroyBalrog(Permanent balrog) {
         harness.setHand(player1, List.of(new Murder()));
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castInstant(player1, 0, balrog.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, balrog.getId());
         harness.passBothPriorities();
     }
 }
