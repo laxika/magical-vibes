@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.a.AetherFlash;
+import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -10,10 +11,12 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SouthernPaladin.class, HillGiant.class, GrizzlyBears.class, AetherFlash.class})
+@CardUsed({SouthernPaladin.class, HillGiant.class, GrizzlyBears.class, AetherFlash.class, Boomerang.class})
 class SouthernPaladinTest extends BaseCardTest {
 
     @Test
@@ -108,6 +111,60 @@ class SouthernPaladinTest extends BaseCardTest {
         assertThat(paladin.isTapped()).isFalse();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
         harness.assertOnBattlefield(player2, "Hill Giant");
+    }
+
+    @Test
+    @DisplayName("Cannot pay the tap cost while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        Permanent paladin = harness.addToBattlefieldAndReturn(player1, new SouthernPaladin());
+        harness.forceActivePlayer(player1);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        Permanent target = addCreatureReady(player2, new HillGiant());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+
+        assertThat(paladin.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(2);
+        harness.assertOnBattlefield(player2, "Hill Giant");
+    }
+
+    @Test
+    @DisplayName("Ability still resolves after the Paladin leaves the battlefield")
+    void abilityResolvesAfterSourceLeaves() {
+        setupPaladin();
+        Permanent paladin = findPermanent(player1, "Southern Paladin");
+        Permanent target = addCreatureReady(player2, new HillGiant());
+        harness.setHand(player1, List.of(new Boomerang()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.castAndResolveInstant(player1, 0, paladin.getId());
+        harness.assertNotOnBattlefield(player1, "Southern Paladin");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Hill Giant");
+    }
+
+    @Test
+    @DisplayName("A target that leaves and returns is a new permanent")
+    void returnedTargetIsNotDestroyed() {
+        setupPaladin();
+        Permanent target = addCreatureReady(player2, new HillGiant());
+        harness.setHand(player1, List.of(new Boomerang()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.assertNotOnBattlefield(player2, "Hill Giant");
+        harness.addToBattlefield(player2, gd.playerHands.get(player2.getId()).removeFirst());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Hill Giant");
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(findPermanent(player1, "Southern Paladin").isTapped()).isTrue();
     }
 
     private void setupPaladin() {
