@@ -64,4 +64,89 @@ class TombstoneCareerCriminalTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("A legal Villain target must be selected for the enter ability")
+    void cannotDeclineLegalVillainTarget() {
+        DocOcksHenchmen villain = new DocOcksHenchmen();
+        harness.setGraveyard(player1, List.of(villain));
+        harness.setHand(player1, List.of(new TombstoneCareerCriminal()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.handleMultipleCardsChosen(player1, List.of(villain.getId()));
+        harness.passBothPriorities();
+        harness.assertInHand(player1, "Doc Ock's Henchmen");
+    }
+
+    @Test
+    @DisplayName("The enter ability can only target Villains in your own graveyard")
+    void excludesOpponentsGraveyard() {
+        DocOcksHenchmen ownVillain = new DocOcksHenchmen();
+        DocOcksHenchmen opposingVillain = new DocOcksHenchmen();
+        harness.setGraveyard(player1, List.of(ownVillain));
+        harness.setGraveyard(player2, List.of(opposingVillain));
+        harness.setHand(player1, List.of(new TombstoneCareerCriminal()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.validCardIds()).containsExactly(ownVillain.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(ownVillain.getId()));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Doc Ock's Henchmen");
+        harness.assertInGraveyard(player2, "Doc Ock's Henchmen");
+        harness.assertNotInHand(player2, "Doc Ock's Henchmen");
+    }
+
+    @Test
+    @DisplayName("Does not reduce an opponent's Villain spell cost")
+    void doesNotReduceOpponentsVillainSpellCost() {
+        harness.addToBattlefield(player2, new TombstoneCareerCriminal());
+        harness.setHand(player1, List.of(new DocOcksHenchmen()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The Villain cost reduction does not pay colored mana")
+    void doesNotReduceColoredManaCost() {
+        harness.addToBattlefield(player1, new TombstoneCareerCriminal());
+        harness.setHand(player1, List.of(new DocOcksHenchmen()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Tombstone enters normally when there are no legal graveyard targets")
+    void entersWithoutLegalTargets() {
+        harness.setGraveyard(player1, List.of());
+        harness.setHand(player1, List.of(new TombstoneCareerCriminal()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Tombstone, Career Criminal");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
 }
