@@ -84,4 +84,37 @@ class TalismanOfUnityTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
     }
+
+    @Test
+    @DisplayName("After untapping, each activation independently chooses mana and deals damage")
+    void chooseDifferentColorsAfterUntapping() {
+        harness.setLife(player1, 20);
+        Permanent talisman = harness.addToBattlefieldAndReturn(player1, new TalismanOfUnity());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "GREEN");
+        harness.performUntapStep(player1);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "WHITE");
+
+        assertThat(talisman.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Colored mana records damage from the artifact rather than merely losing life")
+    void coloredManaRecordsSourceDamage() {
+        Permanent talisman = harness.addToBattlefieldAndReturn(player1, new TalismanOfUnity());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "WHITE");
+
+        assertThat(gd.damageDealtThisTurnBySource.getOrDefault(talisman.getId(), 0)).isEqualTo(1);
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 20);
+    }
 }
