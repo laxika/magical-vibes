@@ -17,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({StandardBearer.class, AngelfireCrusader.class, DegaDisciple.class, DragonArch.class,
-        Jilt.class, Smash.class})
+        Jilt.class, Smash.class, WoodlandChangeling.class})
 class StandardBearerTest extends BaseCardTest {
 
     @Test
@@ -110,7 +110,6 @@ class StandardBearerTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(WoodlandChangeling.class)
     void changelingCanSatisfyFlagbearerRequirement() {
         addCreatureReady(player1, new StandardBearer());
         Permanent changeling = addCreatureReady(player1, new WoodlandChangeling());
@@ -137,5 +136,69 @@ class StandardBearerTest extends BaseCardTest {
         harness.castInstant(player2, 0, otherCreature.getId());
 
         assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(otherCreature.getId());
+    }
+
+    @Test
+    void kickedSpellMayChooseNonFlagbearerFirstWhenSecondTargetCanSatisfyRequirement() {
+        Permanent standardBearer = addCreatureReady(player1, new StandardBearer());
+        Permanent otherCreature = addCreatureReady(player1, new AngelfireCrusader());
+        Jilt jilt = new Jilt();
+        harness.setHand(player2, List.of(jilt));
+
+        var firstTargets = harness.getValidTargetService().computeValidTargetsForSpell(
+                gd, jilt, player2.getId(), List.of(), null, true);
+
+        assertThat(firstTargets.validPermanentIds())
+                .contains(standardBearer.getId(), otherCreature.getId());
+
+        var secondTargets = harness.getValidTargetService().computeValidTargetsForSpell(
+                gd, jilt, player2.getId(), List.of(otherCreature.getId()), null, true);
+
+        assertThat(secondTargets.validPermanentIds()).containsExactly(standardBearer.getId());
+    }
+
+    @Test
+    void opponentCanSatisfyRequirementWithTheirOwnFlagbearer() {
+        addCreatureReady(player1, new StandardBearer());
+        Permanent ownFlagbearer = addCreatureReady(player2, new StandardBearer());
+        harness.setHand(player2, List.of(new Jilt()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player2, 0, ownFlagbearer.getId());
+
+        harness.assertNotOnBattlefield(player2, "Standard Bearer");
+        harness.assertInHand(player2, "Standard Bearer");
+        harness.assertOnBattlefield(player1, "Standard Bearer");
+    }
+
+    @Test
+    void changelingWithoutRequirementAbilityDoesNotForceTargets() {
+        addCreatureReady(player1, new WoodlandChangeling());
+        Permanent otherCreature = addCreatureReady(player1, new AngelfireCrusader());
+        harness.setHand(player2, List.of(new Jilt()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player2, 0, otherCreature.getId());
+
+        harness.assertInHand(player1, "Angelfire Crusader");
+        harness.assertOnBattlefield(player1, "Woodland Changeling");
+    }
+
+    @Test
+    void standardBearerEnteringAfterCastingDoesNotInvalidateOtherTarget() {
+        Permanent otherCreature = addCreatureReady(player1, new AngelfireCrusader());
+        harness.setHand(player2, List.of(new Jilt()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castInstant(player2, 0, otherCreature.getId());
+
+        addCreatureReady(player1, new StandardBearer());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Angelfire Crusader");
+        harness.assertNotOnBattlefield(player1, "Angelfire Crusader");
+        harness.assertOnBattlefield(player1, "Standard Bearer");
     }
 }
