@@ -145,6 +145,86 @@ class TruthOrTaleTest extends BaseCardTest {
         assertThat(gd.hasPendingInteraction(PendingPileSeparation.class)).isTrue();
     }
 
+    @Test
+    @DisplayName("an empty library resolves without a choice or a card in hand")
+    void emptyLibraryResolvesWithoutChoices() {
+        harness.setLibrary(player1, List.of());
+
+        cast();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("the only library card goes to hand when its pile is chosen")
+    void takesOnlyLibraryCardWithoutReordering() {
+        Card onlyCard = new TruthOrTale();
+        harness.setLibrary(player1, List.of(onlyCard));
+
+        cast();
+        harness.handleMultipleCardsChosen(player1, List.of(onlyCard.getId()));
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handleMultipleCardsChosen(player1, List.of(onlyCard.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(onlyCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("choosing the empty pile returns the only library card to the bottom")
+    void bottomsOnlyLibraryCardWithoutReordering() {
+        Card onlyCard = new TruthOrTale();
+        harness.setLibrary(player1, List.of(onlyCard));
+
+        cast();
+        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(onlyCard);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("only the top five are revealed and the remainder stays above the bottomed cards")
+    void preservesUnrevealedLibraryAboveReorderedCards() {
+        Card first = new TruthOrTale();
+        Card second = new TruthOrTale();
+        Card third = new TruthOrTale();
+        Card fourth = new TruthOrTale();
+        Card fifth = new TruthOrTale();
+        Card sixth = new TruthOrTale();
+        Card seventh = new TruthOrTale();
+        harness.setLibrary(player1, List.of(first, second, third, fourth, fifth, sixth, seventh));
+
+        cast();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)
+                .validCardIds()).containsExactly(
+                first.getId(), second.getId(), third.getId(), fourth.getId(), fifth.getId());
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(sixth, seventh);
+
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handleMultipleCardsChosen(player1, List.of(second.getId()));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(3, 2, 1, 0)));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(second);
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .containsExactly(sixth, seventh, first, fifth, fourth, third);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .noneMatch(card -> card.getId().equals(first.getId())
+                        || card.getId().equals(third.getId())
+                        || card.getId().equals(fourth.getId())
+                        || card.getId().equals(fifth.getId()));
+    }
+
     private void cast() {
         harness.castFromHand(player1, new TruthOrTale(), "{1}{U}");
         harness.passBothPriorities();
