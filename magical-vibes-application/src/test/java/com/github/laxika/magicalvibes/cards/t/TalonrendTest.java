@@ -71,4 +71,58 @@ class TalonrendTest extends BaseCardTest {
         assertThat(talonrend.getPowerModifier()).isEqualTo(0);
         assertThat(talonrend.getToughnessModifier()).isEqualTo(0);
     }
+
+    @Test
+    @DisplayName("The fifth activation puts Talonrend into the graveyard for zero toughness")
+    void diesWhenPumpReducesToughnessToZero() {
+        addCreatureReady(player1, new Talonrend());
+        harness.addMana(player1, ManaColor.BLUE, 5);
+
+        for (int i = 0; i < 4; i++) {
+            harness.activateAbility(player1, 0, null, null);
+            harness.passBothPriorities();
+        }
+        harness.assertOnBattlefield(player1, "Talonrend");
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Talonrend");
+        harness.assertInGraveyard(player1, "Talonrend");
+    }
+
+    @Test
+    @DisplayName("Only the Talonrend whose ability was activated gets the boost")
+    void boostsOnlyItsSource() {
+        Permanent source = addCreatureReady(player1, new Talonrend());
+        Permanent other = addCreatureReady(player1, new Talonrend());
+        Permanent opposing = addCreatureReady(player2, new Talonrend());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(source.getPowerModifier()).isEqualTo(1);
+        assertThat(source.getToughnessModifier()).isEqualTo(-1);
+        assertThat(other.getPowerModifier()).isZero();
+        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(opposing.getPowerModifier()).isZero();
+        assertThat(opposing.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("The ability can be activated while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent talonrend = addCreatureReady(player1, new Talonrend());
+        talonrend.setSummoningSick(true);
+        talonrend.setTapped(true);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(talonrend.getPowerModifier()).isEqualTo(1);
+        assertThat(talonrend.getToughnessModifier()).isEqualTo(-1);
+        assertThat(talonrend.isTapped()).isTrue();
+    }
 }
