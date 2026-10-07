@@ -2,10 +2,13 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.b.BlackCarriage;
 import com.github.laxika.magicalvibes.cards.b.BeastWalkers;
+import com.github.laxika.magicalvibes.cards.b.BindingGrasp;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -15,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SpectralBears.class, BeastWalkers.class, BlackCarriage.class})
+@CardUsed({SpectralBears.class, BeastWalkers.class, BlackCarriage.class, BindingGrasp.class, Card.class})
 class SpectralBearsTest extends BaseCardTest {
 
     @Test
@@ -105,6 +108,62 @@ class SpectralBearsTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(bears.getSkipUntapCount()).isZero();
+    }
+
+    @Test
+    @DisplayName("Losing the defending player's black permanent does not create a missed attack trigger")
+    void blackPermanentLeavingAfterAttackDoesNotCreateTrigger() {
+        Permanent bears = addCreatureReady(player1, new SpectralBears());
+        Permanent carriage = addCreatureReady(player2, new BlackCarriage());
+
+        declareAttackers(player1, List.of(0));
+        assertThat(gd.stack).isEmpty();
+        gd.playerBattlefields.get(player2.getId()).remove(carriage);
+        gd.playerGraveyards.get(player2.getId()).add(carriage.getCard());
+        resolveAllTriggers();
+
+        harness.performUntapStep(player1);
+        assertThat(bears.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Changing control after resolution does not restrict the new controller's untap step")
+    void newControllerCanUntapBearsBeforeOriginalControllersNextUntap() {
+        Permanent bears = attackThenStealBears();
+
+        harness.performUntapStep(player1);
+
+        assertThat(bears.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The restriction expires at the original controller's next untap even while Bears are stolen")
+    void restrictionExpiresWhileAnotherPlayerControlsBears() {
+        Permanent bears = attackThenStealBears();
+
+        harness.performUntapStep(player2);
+        assertThat(bears.isTapped()).isTrue();
+        harness.performUntapStep(player1);
+
+        assertThat(bears.isTapped()).isFalse();
+    }
+
+    private Permanent attackThenStealBears() {
+        Permanent bears = addCreatureReady(player2, new SpectralBears());
+        declareAttackers(player2, List.of(0));
+        resolveAllTriggers();
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new BindingGrasp()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(bears);
+        assertThat(bears.isTapped()).isTrue();
+        return bears;
     }
 
     private static Card createCreature(String name, int power, int toughness, CardColor color) {
