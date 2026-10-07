@@ -5,7 +5,9 @@ import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.g.GiantCindermaw;
 import com.github.laxika.magicalvibes.cards.k.KnightOfStromgald;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.r.RainOfGore;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -17,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SwordsToPlowshares.class, BalduvianBears.class, BalduvianBarbarians.class, GiantCindermaw.class, KnightOfStromgald.class, Plains.class})
+@CardUsed({SwordsToPlowshares.class, BalduvianBears.class, BalduvianBarbarians.class, GiantCindermaw.class, KnightOfStromgald.class, Plains.class, RainOfGore.class})
 class SwordsToPlowsharesTest extends BaseCardTest {
 
     private void giveSwords() {
@@ -155,5 +157,78 @@ class SwordsToPlowsharesTest extends BaseCardTest {
         harness.assertLife(player2, 20);
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .noneMatch(card -> card.getName().equals("Balduvian Bears"));
+    }
+
+    @Test
+    @DisplayName("Exiles a zero-power creature without gaining life")
+    void exilesZeroPowerCreature() {
+        Permanent target = addCreatureReady(player2, new BalduvianBears());
+        target.setPowerModifier(-2);
+        harness.setLife(player2, 20);
+        giveSwords();
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertNotOnBattlefield(player2, "Balduvian Bears");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(card -> card.getName().equals("Balduvian Bears"));
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Life gain includes counters in the creature's last battlefield power")
+    void lifeGainIncludesCounters() {
+        Permanent target = addCreatureReady(player2, new BalduvianBears());
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        harness.setLife(player2, 20);
+        giveSwords();
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertNotOnBattlefield(player2, "Balduvian Bears");
+        harness.assertLife(player2, 25);
+    }
+
+    @Test
+    @DisplayName("Exile succeeds when another creature prevents life gain")
+    void remainingCindermawPreventsLifeGain() {
+        Permanent target = addCreatureReady(player2, new BalduvianBears());
+        addCreatureReady(player1, new GiantCindermaw());
+        harness.setLife(player2, 20);
+        giveSwords();
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertNotOnBattlefield(player2, "Balduvian Bears");
+        harness.assertOnBattlefield(player1, "Giant Cindermaw");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Rain of Gore replaces life gained by the spell's controller with life loss")
+    void rainOfGoreReplacesLifeGainForOwnCreature() {
+        harness.addToBattlefield(player2, new RainOfGore());
+        Permanent target = addCreatureReady(player1, new BalduvianBears());
+        harness.setLife(player1, 20);
+        giveSwords();
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Balduvian Bears");
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("Rain of Gore does not replace life gained by the spell controller's opponent")
+    void rainOfGoreDoesNotReplaceOpponentLifeGain() {
+        harness.addToBattlefield(player1, new RainOfGore());
+        Permanent target = addCreatureReady(player2, new BalduvianBears());
+        harness.setLife(player2, 20);
+        giveSwords();
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertNotOnBattlefield(player2, "Balduvian Bears");
+        harness.assertLife(player2, 22);
     }
 }
