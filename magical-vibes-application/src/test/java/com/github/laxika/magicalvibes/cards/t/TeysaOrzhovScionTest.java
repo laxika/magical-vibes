@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.c.CullingSun;
 import com.github.laxika.magicalvibes.cards.g.GhostWarden;
+import com.github.laxika.magicalvibes.cards.m.MourningThrull;
 import com.github.laxika.magicalvibes.cards.m.Mortify;
 import com.github.laxika.magicalvibes.cards.o.OrzhovSignet;
 import com.github.laxika.magicalvibes.cards.p.PlaguedRusalka;
@@ -22,7 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({TeysaOrzhovScion.class, GhostWarden.class, PlaguedRusalka.class,
-        OrzhovSignet.class, Mortify.class})
+        OrzhovSignet.class, Mortify.class, MourningThrull.class, CullingSun.class})
 class TeysaOrzhovScionTest extends BaseCardTest {
 
     @Test
@@ -137,6 +139,63 @@ class TeysaOrzhovScionTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Teysa, Orzhov Scion");
         harness.assertOnBattlefield(player1, "Ghost Warden");
         harness.assertOnBattlefield(player1, "Plagued Rusalka");
+    }
+
+    @Test
+    @DisplayName("Sacrificing Teysa with two white and black creatures creates two Spirits")
+    void triggersForBlackCreaturesSacrificedTogetherWithTeysa() {
+        harness.addToBattlefield(player1, new TeysaOrzhovScion());
+        harness.addToBattlefield(player1, new MourningThrull());
+        harness.addToBattlefield(player1, new MourningThrull());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GhostWarden());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Spirit")).hasSize(2);
+        harness.assertInGraveyard(player1, "Teysa, Orzhov Scion");
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(c -> c.getName().equals("Mourning Thrull")).hasSize(2);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(target.getCard());
+    }
+
+    @Test
+    @DisplayName("Teysa sees other black creatures die simultaneously with it")
+    void triggersForSimultaneousDeathsWithTeysa() {
+        harness.addToBattlefield(player1, new TeysaOrzhovScion());
+        harness.addToBattlefield(player1, new PlaguedRusalka());
+        harness.addToBattlefield(player1, new PlaguedRusalka());
+        harness.addToBattlefield(player1, new GhostWarden());
+        harness.addToBattlefield(player2, new PlaguedRusalka());
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castFromHand(player1, new CullingSun(), "{2}{W}{W}{B}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Spirit")).hasSize(2);
+        harness.assertInGraveyard(player1, "Teysa, Orzhov Scion");
+        assertThat(findPermanents(player2, "Spirit")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can sacrifice the targeted creature and does not refund the cost")
+    void sacrificedTargetIsNotExiledAndCostIsNotRefunded() {
+        Permanent teysa = harness.addToBattlefieldAndReturn(player1, new TeysaOrzhovScion());
+        teysa.setTapped(true);
+        harness.addToBattlefield(player1, new GhostWarden());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GhostWarden());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3).contains(target.getCard());
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
     }
 
     private void destroyWithMortify(Player caster, UUID targetId) {
