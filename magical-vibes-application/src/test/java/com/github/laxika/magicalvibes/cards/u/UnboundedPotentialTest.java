@@ -65,6 +65,73 @@ class UnboundedPotentialTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void counterModeAllowsZeroTargets() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        cast(new int[]{0}, List.of(), false);
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void entwineWithZeroTargetsStillProliferates() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        cast(new int[]{0, 1}, List.of(), true);
+        harness.handleMultiplePermanentsChosen(player1, List.of(creature.getId()));
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    void proliferateAddsEveryCounterKindToChosenPermanentsAndPlayersOnly() {
+        Permanent chosen = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        chosen.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        chosen.setCounterCount(CounterType.CHARGE, 3);
+        Permanent unchosen = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        unchosen.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        gd.playerPoisonCounters.put(player2.getId(), 2);
+        gd.playerEnergyCounters.put(player2.getId(), 3);
+        gd.playerPoisonCounters.put(player1.getId(), 1);
+
+        cast(new int[]{1}, List.of(), false);
+        harness.handleMultiplePermanentsChosen(player1, List.of(chosen.getId(), player2.getId()));
+
+        assertThat(chosen.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(chosen.getCounterCount(CounterType.CHARGE)).isEqualTo(4);
+        assertThat(unchosen.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerPoisonCounters.get(player2.getId())).isEqualTo(3);
+        assertThat(gd.playerEnergyCounters.get(player2.getId())).isEqualTo(4);
+        assertThat(gd.playerPoisonCounters.get(player1.getId())).isEqualTo(1);
+    }
+
+    @Test
+    void proliferateAllowsChoosingNothing() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        cast(new int[]{1}, List.of(), false);
+        harness.handleMultiplePermanentsChosen(player1, List.of());
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotChooseBothModesWithoutManaForEntwine() {
+        harness.setHand(player1, List.of(new UnboundedPotential()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castModalInstantWithModes(
+                player1, 0, 1, 2, new int[]{0, 1}, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
     private void cast(int[] modes, List<java.util.UUID> targetIds, boolean entwined) {
         harness.setHand(player1, List.of(new UnboundedPotential()));
         harness.addMana(player1, ManaColor.WHITE, entwined ? 2 : 1);
