@@ -5,13 +5,16 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.ProdigalSorcerer;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({StonewiseFortifier.class, GrizzlyBears.class, ProdigalSorcerer.class, Forest.class})
 class StonewiseFortifierTest extends BaseCardTest {
 
     @Test
@@ -81,14 +84,75 @@ class StonewiseFortifierTest extends BaseCardTest {
     @DisplayName("Cannot target a non-creature permanent")
     void cannotTargetNonCreature() {
         Permanent fortifier = addCreatureReady(player1, new StonewiseFortifier());
-        harness.addToBattlefield(player2, new Forest());
-        Permanent forest = findPermanent(player2, "Forest");
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, forest.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(fortifier);
+    }
+
+    @Test
+    @DisplayName("Prevention applies to every damage event from the chosen creature this turn")
+    void preventsRepeatedDamageFromSameCreature() {
+        Permanent fortifier = addCreatureReady(player1, new StonewiseFortifier());
+        Permanent sorcerer = addCreatureReady(player2, new ProdigalSorcerer());
+        activateFortifier(fortifier, sorcerer);
+
+        harness.activateAbility(player2, 0, null, fortifier.getId());
+        harness.passBothPriorities();
+        sorcerer.setTapped(false);
+        harness.activateAbility(player2, 0, null, fortifier.getId());
+        harness.passBothPriorities();
+
+        assertThat(fortifier.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(fortifier);
+    }
+
+    @Test
+    @DisplayName("Prevention expires at the end of the turn")
+    void preventionExpiresAtEndOfTurn() {
+        Permanent fortifier = addCreatureReady(player1, new StonewiseFortifier());
+        Permanent sorcerer = addCreatureReady(player2, new ProdigalSorcerer());
+        activateFortifier(fortifier, sorcerer);
+        harness.activateAbility(player2, 0, null, fortifier.getId());
+        harness.passBothPriorities();
+        assertThat(fortifier.getMarkedDamage()).isZero();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.activateAbility(player2, 0, null, fortifier.getId());
+        harness.passBothPriorities();
+
+        assertThat(fortifier.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A tapped summoning-sick Fortifier can activate and target a friendly creature")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent fortifier = harness.addToBattlefieldAndReturn(player1, new StonewiseFortifier());
+        fortifier.setSummoningSick(true);
+        fortifier.setTapped(true);
+        Permanent sorcerer = addCreatureReady(player1, new ProdigalSorcerer());
+        activateFortifier(fortifier, sorcerer);
+
+        harness.activateAbility(player1, 1, null, fortifier.getId());
+        harness.passBothPriorities();
+
+        assertThat(fortifier.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Activation requires five mana including white")
+    void cannotActivateWithoutWhiteMana() {
+        addCreatureReady(player1, new StonewiseFortifier());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
     }
 
     private void activateFortifier(Permanent fortifier, Permanent target) {
