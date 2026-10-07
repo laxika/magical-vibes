@@ -29,7 +29,7 @@ class TreeguardDuoTest extends BaseCardTest {
         harness.setHand(player1, List.of(new TreeguardDuo()));
         addMana();
 
-        harness.getGameService().playCard(gd, player1, 0, 0, target.getId(), null);
+        harness.castCreature(player1, 0, target.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -45,7 +45,7 @@ class TreeguardDuoTest extends BaseCardTest {
         harness.setHand(player1, List.of(new TreeguardDuo()));
         addMana();
 
-        harness.getGameService().playCard(gd, player1, 0, 0, target.getId(), null);
+        harness.castCreature(player1, 0, target.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -66,9 +66,60 @@ class TreeguardDuoTest extends BaseCardTest {
         addMana();
 
         UUID targetId = opponentCreature.getId();
-        assertThatThrownBy(() -> harness.getGameService().playCard(gd, player1, 0, 0, targetId, null))
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, targetId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature you control");
+    }
+
+    @Test
+    @DisplayName("Creature count is determined at resolution and the boost stays fixed afterward")
+    void creatureCountIsDeterminedAtResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new TreeguardDuo());
+        harness.addToBattlefield(player2, new TreeguardDuo());
+        harness.setHand(player1, List.of(new TreeguardDuo()));
+        addMana();
+
+        harness.castCreature(player1, 0, target.getId());
+        harness.passBothPriorities();
+        harness.addToBattlefield(player1, new TreeguardDuo());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(7);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.VIGILANCE)).isTrue();
+
+        harness.addToBattlefield(player1, new TreeguardDuo());
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(7);
+    }
+
+    @Test
+    @DisplayName("The trigger resolves after its source leaves and does not count the departed source")
+    void triggerResolvesAfterSourceLeaves() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new TreeguardDuo());
+        harness.setHand(player1, List.of(new TreeguardDuo()));
+        addMana();
+
+        harness.castCreature(player1, 0, target.getId());
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player1.getId()).removeIf(p -> !p.getId().equals(target.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.VIGILANCE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("ETB cannot target a noncreature permanent")
+    void etbCannotTargetNoncreature() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
+        harness.setHand(player1, List.of(new TreeguardDuo()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, artifact.getId()))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     private void addMana() {
