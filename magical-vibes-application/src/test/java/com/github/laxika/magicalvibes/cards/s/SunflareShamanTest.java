@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.m.MudbuttonClanger;
+import com.github.laxika.magicalvibes.cards.m.MothdustChangeling;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -15,13 +17,13 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SunflareShaman.class, Spitebellows.class, MudbuttonClanger.class})
+@CardUsed({SunflareShaman.class, Spitebellows.class, MudbuttonClanger.class, MothdustChangeling.class})
 class SunflareShamanTest extends BaseCardTest {
 
     @Test
     @DisplayName("Deals X to any target and X to itself, X = Elemental cards in your graveyard")
     void dealsElementalCountToTargetAndSelf() {
-        Permanent shaman = addReadyShaman(player1);
+        addReadyShaman(player1);
         harness.setGraveyard(player1, List.of(new Spitebellows(), new Spitebellows()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -124,8 +126,7 @@ class SunflareShamanTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.addToBattlefield(player2, new MudbuttonClanger());
-        UUID clangerId = harness.getPermanentId(player2, "Mudbutton Clanger");
+        UUID clangerId = harness.addToBattlefieldAndReturn(player2, new MudbuttonClanger()).getId();
 
         harness.activateAbility(player1, 0, null, clangerId);
         harness.passBothPriorities();
@@ -133,6 +134,84 @@ class SunflareShamanTest extends BaseCardTest {
         // X = 2 kills the 1/1 Mudbutton Clanger.
         harness.assertNotOnBattlefield(player2, "Mudbutton Clanger");
         harness.assertInGraveyard(player2, "Mudbutton Clanger");
+    }
+
+    @Test
+    void changelingInGraveyardCountsAsElemental() {
+        addReadyShaman(player1);
+        harness.setGraveyard(player1, List.of(new MothdustChangeling()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+        harness.assertInGraveyard(player1, "Sunflare Shaman");
+    }
+
+    @Test
+    void targetingItselfDealsBothAmounts() {
+        Permanent shaman = addReadyShaman(player1);
+        shaman.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        harness.setGraveyard(player1, List.of(new Spitebellows()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, shaman.getId());
+        harness.passBothPriorities();
+
+        assertThat(shaman.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Sunflare Shaman");
+    }
+
+    @Test
+    void cannotActivateWithSummoningSickness() {
+        harness.addToBattlefield(player1, new SunflareShaman());
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+    }
+
+    @Test
+    void cannotActivateWithoutRedMana() {
+        Permanent shaman = addReadyShaman(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        assertThat(shaman.isTapped()).isFalse();
+    }
+
+    @Test
+    void illegalTargetPreventsSelfDamageToo() {
+        Permanent shaman = addReadyShaman(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new MudbuttonClanger());
+        harness.setGraveyard(player1, List.of(new Spitebellows()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        harness.setGraveyard(player2, List.of(target.getCard()));
+        harness.passBothPriorities();
+
+        assertThat(shaman.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player1, "Sunflare Shaman");
+    }
+
+    @Test
+    void sourceInGraveyardStillDealsDamageAndCountsItself() {
+        Permanent shaman = addReadyShaman(player1);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(shaman);
+        harness.setGraveyard(player1, List.of(shaman.getCard()));
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+        harness.assertInGraveyard(player1, "Sunflare Shaman");
     }
 
     private Permanent addReadyShaman(Player player) {
