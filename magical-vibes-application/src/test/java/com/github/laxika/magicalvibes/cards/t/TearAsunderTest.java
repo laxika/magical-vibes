@@ -67,16 +67,67 @@ class TearAsunderTest extends BaseCardTest {
                 .hasMessageContaining("artifact or enchantment");
     }
 
+    @Test
+    void withoutKickerCanExileYourOwnArtifact() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
+        cast(false, target);
+
+        harness.assertNotOnBattlefield(player1, "Fountain of Youth");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(target.getCard());
+        harness.assertNotInGraveyard(player1, "Fountain of Youth");
+    }
+
+    @Test
+    void kickedExilesAnArtifact() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+        cast(true, target);
+
+        harness.assertNotOnBattlefield(player2, "Fountain of Youth");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(target.getCard());
+    }
+
+    @Test
+    void kickedExilesAnEnchantment() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AngelicChorus());
+        cast(true, target);
+
+        harness.assertNotOnBattlefield(player2, "Angelic Chorus");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(target.getCard());
+    }
+
+    @Test
+    void withoutKickerRejectsALandTarget() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.setHand(player1, List.of(new TearAsunder()));
+        addBaseMana();
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("artifact or enchantment");
+    }
+
+    @Test
+    void kickerCannotBePaidWithOnlyTheBaseMana() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+        harness.setHand(player1, List.of(new TearAsunder()));
+        addBaseMana();
+
+        assertThatThrownBy(() -> harness.castKickedInstant(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).doesNotContain(target.getCard());
+        harness.assertOnBattlefield(player2, "Fountain of Youth");
+    }
+
     private void cast(boolean kicked, Permanent target) {
         harness.setHand(player1, List.of(new TearAsunder()));
         if (kicked) {
             addKickedMana();
             harness.castKickedInstant(player1, 0, target.getId());
+            harness.passBothPriorities();
         } else {
             addBaseMana();
-            harness.castInstant(player1, 0, target.getId());
+            harness.castAndResolveInstant(player1, 0, target.getId());
         }
-        harness.passBothPriorities();
     }
 
     private void addBaseMana() {
