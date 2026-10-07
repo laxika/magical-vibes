@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.r.RagingKavu;
 import com.github.laxika.magicalvibes.cards.z.Zap;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -106,10 +107,8 @@ class TreefolkHealerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         castZapAt(player2.getId());
 
@@ -132,6 +131,65 @@ class TreefolkHealerTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Can prevent damage to itself")
+    void canProtectItself() {
+        Permanent healer = addHealerReady();
+
+        harness.activateAbility(player1, 0, null, healer.getId());
+        harness.passBothPriorities();
+        castZapAt(healer.getId());
+
+        assertThat(healer.getMarkedDamage()).isZero();
+        assertThat(healer.getDamagePreventionShield()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Does not prevent damage before the ability resolves")
+    void shieldStartsOnlyOnResolution() {
+        addHealerReady();
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        castZapAt(player2.getId());
+        harness.assertLife(player2, 19);
+        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
+
+        harness.passBothPriorities();
+        castZapAt(player2.getId());
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Two healers' shields accumulate on the same target")
+    void shieldsAccumulate() {
+        addHealerReady();
+        addHealerReady();
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, null, player2.getId());
+        harness.passBothPriorities();
+
+        for (int i = 0; i < 4; i++) {
+            castZapAt(player2.getId());
+        }
+        harness.assertLife(player2, 20);
+        castZapAt(player2.getId());
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Cannot pay the tap cost while summoning sick")
+    void requiresNoSummoningSickness() {
+        harness.addToBattlefield(player1, new TreefolkHealer());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
     @Test
     @DisplayName("Cannot target a land")
     void cannotTargetLand() {
