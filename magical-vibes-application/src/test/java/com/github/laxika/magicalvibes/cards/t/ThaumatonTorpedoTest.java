@@ -62,6 +62,52 @@ class ThaumatonTorpedoTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Cannot activate for three mana before a Spacecraft attacks")
+    void requiresFullCostBeforeSpacecraftAttacks() {
+        Permanent torpedo = harness.addToBattlefieldAndReturn(player1, new ThaumatonTorpedo());
+        harness.addToBattlefield(player1, new ExtinguisherBattleship());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ThaumatonTorpedo());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, battlefieldIndex(torpedo), null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Thaumaton Torpedo");
+        harness.assertOnBattlefield(player2, "Thaumaton Torpedo");
+    }
+
+    @Test
+    @DisplayName("Cannot activate while tapped even with sufficient mana")
+    void cannotActivateWhileTapped() {
+        Permanent torpedo = harness.addToBattlefieldAndReturn(player1, new ThaumatonTorpedo());
+        torpedo.setTapped(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ThaumatonTorpedo());
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, battlefieldIndex(torpedo), null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Thaumaton Torpedo");
+        harness.assertOnBattlefield(player2, "Thaumaton Torpedo");
+    }
+
+    @Test
+    @DisplayName("Can destroy another noncreature artifact its controller owns")
+    void destroysOwnNoncreatureArtifact() {
+        Permanent torpedo = harness.addToBattlefieldAndReturn(player1, new ThaumatonTorpedo());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new ExtinguisherBattleship());
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.activateAbility(player1, battlefieldIndex(torpedo), null, target.getId());
+        harness.assertInGraveyard(player1, "Thaumaton Torpedo");
+        harness.assertOnBattlefield(player1, "Extinguisher Battleship");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Extinguisher Battleship");
+    }
     private int battlefieldIndex(Permanent permanent) {
         return gd.playerBattlefields.get(player1.getId()).indexOf(permanent);
     }
