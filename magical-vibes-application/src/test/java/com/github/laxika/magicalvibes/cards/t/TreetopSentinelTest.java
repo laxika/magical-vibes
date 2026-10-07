@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.a.AvenFisher;
 import com.github.laxika.magicalvibes.cards.d.DwarvenGrunt;
 import com.github.laxika.magicalvibes.cards.f.Firebolt;
 import com.github.laxika.magicalvibes.cards.m.MuscleBurst;
@@ -21,7 +22,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TreetopSentinel.class, DwarvenGrunt.class, Firebolt.class, MuscleBurst.class,
+@CardUsed({TreetopSentinel.class, AvenFisher.class, DwarvenGrunt.class, Firebolt.class, MuscleBurst.class,
         NantukoDisciple.class, SetonsDesire.class, WoodlandDruid.class})
 class TreetopSentinelTest extends BaseCardTest {
 
@@ -91,8 +92,7 @@ class TreetopSentinelTest extends BaseCardTest {
         addCreatureReady(player1, new WoodlandDruid());
         Permanent sentinel = addCreatureReady(player2, new TreetopSentinel());
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat(player1);
 
@@ -129,5 +129,30 @@ class TreetopSentinelTest extends BaseCardTest {
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("flying");
+    }
+
+    @Test
+    @DisplayName("A blue flying creature can block Treetop Sentinel")
+    void blueFlyingCreatureCanBlock() {
+        addCreatureReady(player1, new TreetopSentinel());
+        Permanent blocker = addCreatureReady(player2, new AvenFisher());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.getBlockingTargets()).contains(0);
+    }
+
+    @Test
+    @DisplayName("Cannot be targeted by its controller's green spell")
+    void cannotBeTargetedByOwnGreenSpell() {
+        Permanent sentinel = addCreatureReady(player1, new TreetopSentinel());
+        harness.setHand(player1, List.of(new MuscleBurst()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, sentinel.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection from green");
     }
 }
