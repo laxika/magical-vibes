@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.b.BloodstoneGoblin;
 import com.github.laxika.magicalvibes.cards.m.MaggotCarrier;
 import com.github.laxika.magicalvibes.cards.p.PhyrexianTyranny;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,16 +16,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ThunderscapeBattlemage.class, MaggotCarrier.class, PhyrexianTyranny.class})
+@CardUsed({ThunderscapeBattlemage.class, MaggotCarrier.class, PhyrexianTyranny.class, BloodstoneGoblin.class})
 class ThunderscapeBattlemageTest extends BaseCardTest {
 
     @Test
     @DisplayName("Without either kicker, neither ability resolves")
     void noKicker() {
-        harness.setHand(player1, List.of(new ThunderscapeBattlemage()));
-        addMana(2, ManaColor.RED);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new ThunderscapeBattlemage(), "{2}{R}");
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Thunderscape Battlemage");
@@ -85,15 +84,99 @@ class ThunderscapeBattlemageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.handlePermanentChosen(player1, enchantment.getId());
-        harness.passBothPriorities();
-
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
-        harness.handleCardChosen(player2, 0);
-        harness.handleCardChosen(player2, 0);
+        while (!gd.stack.isEmpty()) {
+            harness.passBothPriorities();
+            if (gd.interaction.activeInteraction() instanceof PendingInteraction.DiscardChoice) {
+                harness.handleCardChosen(player2, 0);
+                harness.handleCardChosen(player2, 0);
+            }
+        }
 
         harness.assertNotOnBattlefield(player2, "Phyrexian Tyranny");
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("Paying both kickers creates two separate triggered abilities")
+    void bothKickersCreateSeparateAbilities() {
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new PhyrexianTyranny());
+        harness.setHand(player2, List.of(new MaggotCarrier(), new MaggotCarrier(), new MaggotCarrier()));
+        harness.setHand(player1, List.of(new ThunderscapeBattlemage()));
+        addMana(3, ManaColor.RED, ManaColor.BLACK, ManaColor.GREEN);
+
+        castWithAdditionalCosts(List.of("{G}"), player2.getId(), true);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, enchantment.getId());
+
+        assertThat(gd.stack).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Paying only the green kicker triggers kicked-spell abilities")
+    void greenKickerCountsAsKickingTheSpell() {
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new BloodstoneGoblin());
+        harness.addToBattlefield(player2, new PhyrexianTyranny());
+        harness.setHand(player1, List.of(new ThunderscapeBattlemage()));
+        addMana(2, ManaColor.RED, ManaColor.GREEN);
+
+        castWithAdditionalCosts(List.of("{G}"));
+        harness.passBothPriorities();
+
+        assertThat(goblin.getPowerModifier()).isEqualTo(1);
+        assertThat(goblin.getToughnessModifier()).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, goblin, Keyword.MENACE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("The black kicker can target its controller")
+    void blackKickerCanTargetController() {
+        harness.setHand(player1, List.of(new ThunderscapeBattlemage(),
+                new MaggotCarrier(), new MaggotCarrier(), new MaggotCarrier()));
+        addMana(3, ManaColor.RED, ManaColor.BLACK);
+
+        harness.castKickedCreature(player1, 0, player1.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The black kicker discards the only card in a short hand")
+    void blackKickerDiscardsOneCardFromShortHand() {
+        harness.setHand(player2, List.of(new MaggotCarrier()));
+        harness.setHand(player1, List.of(new ThunderscapeBattlemage()));
+        addMana(3, ManaColor.RED, ManaColor.BLACK);
+
+        harness.castKickedCreature(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player2, "Maggot Carrier");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The green kicker can destroy its controller's enchantment")
+    void greenKickerCanTargetOwnEnchantment() {
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player1, new PhyrexianTyranny());
+        harness.setHand(player1, List.of(new ThunderscapeBattlemage()));
+        addMana(2, ManaColor.RED, ManaColor.GREEN);
+
+        castWithAdditionalCosts(List.of("{G}"));
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, enchantment.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Phyrexian Tyranny");
+        harness.assertInGraveyard(player1, "Phyrexian Tyranny");
     }
 
     private void addMana(int colorless, ManaColor... colored) {
