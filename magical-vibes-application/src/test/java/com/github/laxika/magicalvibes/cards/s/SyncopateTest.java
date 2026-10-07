@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.cards.g.Guile;
 import com.github.laxika.magicalvibes.cards.w.WoodlandDruid;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -14,20 +15,18 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Syncopate.class, WoodlandDruid.class})
+@CardUsed({Syncopate.class, WoodlandDruid.class, Guile.class})
 class SyncopateTest extends BaseCardTest {
 
     @Test
     @DisplayName("Casting puts it on the stack targeting a spell")
     void castingPutsOnStackTargetingSpell() {
         WoodlandDruid druid = new WoodlandDruid();
-        harness.setHand(player1, List.of(druid));
-        harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.setHand(player2, List.of(new Syncopate()));
         harness.addMana(player2, ManaColor.BLUE, 3); // 1U + X=2
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, druid, "{G}");
         harness.passPriority(player1);
         harness.castInstant(player2, 0, 2, druid.getId());
 
@@ -41,13 +40,11 @@ class SyncopateTest extends BaseCardTest {
     @DisplayName("Counters and exiles spell when opponent has no mana to pay X")
     void countersAndExilesWhenOpponentCannotPay() {
         WoodlandDruid druid = new WoodlandDruid();
-        harness.setHand(player1, List.of(druid));
-        harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.setHand(player2, List.of(new Syncopate()));
         harness.addMana(player2, ManaColor.BLUE, 2); // 1U + X=1
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, druid, "{G}");
         harness.passPriority(player1);
         harness.castInstant(player2, 0, 1, druid.getId());
 
@@ -148,13 +145,11 @@ class SyncopateTest extends BaseCardTest {
     @DisplayName("X=0 offers a zero-mana payment choice before countering and exiling")
     void xEqualsZeroOffersPaymentChoice() {
         WoodlandDruid druid = new WoodlandDruid();
-        harness.setHand(player1, List.of(druid));
-        harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.setHand(player2, List.of(new Syncopate()));
         harness.addMana(player2, ManaColor.BLUE, 1); // U + X=0
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, druid, "{G}");
         harness.passPriority(player1);
         harness.castInstant(player2, 0, 0, druid.getId());
 
@@ -175,13 +170,11 @@ class SyncopateTest extends BaseCardTest {
     @DisplayName("Fizzles if target spell is no longer on the stack")
     void fizzlesIfTargetSpellRemoved() {
         WoodlandDruid druid = new WoodlandDruid();
-        harness.setHand(player1, List.of(druid));
-        harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.setHand(player2, List.of(new Syncopate()));
         harness.addMana(player2, ManaColor.BLUE, 3); // 1U + X=2
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, druid, "{G}");
         harness.passPriority(player1);
         harness.castInstant(player2, 0, 2, druid.getId());
 
@@ -194,16 +187,84 @@ class SyncopateTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Paying zero preserves the target spell without spending mana")
+    void payingZeroPreservesSpell() {
+        WoodlandDruid druid = new WoodlandDruid();
+        harness.castFromHand(player1, druid, "{G}");
+        harness.setHand(player2, List.of(new Syncopate()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, 0, druid.getId());
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Woodland Druid");
+    }
+
+    @Test
+    @DisplayName("Declining payment exiles a spell with a different owner into its owner's collection")
+    void decliningPaymentPreservesSpellOwnership() {
+        WoodlandDruid druid = new WoodlandDruid();
+        harness.castFromHand(player1, druid, "{G}");
+        // Model a spell cast from another player's cards without changing its controller.
+        gd.stack.getLast().setOwnerIdOverride(player2.getId());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.setHand(player2, List.of(new Syncopate()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, 1, druid.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(c -> c.getId().equals(druid.getId()));
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .noneMatch(c -> c.getId().equals(druid.getId()));
+        harness.assertNotInGraveyard(player2, "Woodland Druid");
+    }
+
+    @Test
+    @DisplayName("Guile offers a free play when the target controller declines Syncopate's payment")
+    void guileReplacesCounterAfterPaymentDeclined() {
+        harness.addToBattlefield(player2, new Guile());
+        WoodlandDruid druid = new WoodlandDruid();
+        harness.castFromHand(player1, druid, "{G}");
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.setHand(player2, List.of(new Syncopate()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, 1, druid.getId());
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(c -> c.getId().equals(druid.getId()));
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, true);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Woodland Druid");
+    }
+
+    @Test
     @DisplayName("Syncopate goes to caster's graveyard after resolving")
     void goesToGraveyardAfterResolving() {
         WoodlandDruid druid = new WoodlandDruid();
-        harness.setHand(player1, List.of(druid));
-        harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.setHand(player2, List.of(new Syncopate()));
         harness.addMana(player2, ManaColor.BLUE, 2); // 1U + X=1
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, druid, "{G}");
         harness.passPriority(player1);
         harness.castInstant(player2, 0, 1, druid.getId());
         harness.passBothPriorities();
