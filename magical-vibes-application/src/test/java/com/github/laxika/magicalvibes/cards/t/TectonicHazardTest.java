@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -29,9 +28,8 @@ class TectonicHazardTest extends BaseCardTest {
 
         assertThat(ownCreature.getMarkedDamage()).isZero();
         assertThat(opponentCreature.getMarkedDamage()).isEqualTo(1);
-        GameData game = harness.getGameData();
-        assertThat(game.playerLifeTotals.get(player1.getId())).isEqualTo(20);
-        assertThat(game.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 19);
     }
 
     @Test
@@ -46,10 +44,46 @@ class TectonicHazardTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Fugitive Wizard");
     }
 
+    @Test
+    @DisplayName("Damages the opponent even when no creatures are on the battlefield")
+    void damagesOpponentOnEmptyBattlefield() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        cast();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 19);
+        harness.assertInGraveyard(player1, "Tectonic Hazard");
+    }
+
+    @Test
+    @DisplayName("Damages every opposing creature while sparing every friendly creature")
+    void damagesAllOpposingCreatures() {
+        Permanent ownBear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent ownWizard = harness.addToBattlefieldAndReturn(player1, new FugitiveWizard());
+        Permanent firstOpponentBear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent secondOpponentBear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new FugitiveWizard());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        cast();
+
+        assertThat(ownBear.getMarkedDamage()).isZero();
+        assertThat(ownWizard.getMarkedDamage()).isZero();
+        assertThat(firstOpponentBear.getMarkedDamage()).isEqualTo(1);
+        assertThat(secondOpponentBear.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Fugitive Wizard");
+        harness.assertNotOnBattlefield(player2, "Fugitive Wizard");
+        harness.assertInGraveyard(player2, "Fugitive Wizard");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 19);
+    }
+
     private void cast() {
         harness.setHand(player1, List.of(new TectonicHazard()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
     }
 }
