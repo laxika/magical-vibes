@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.j.JhoirasFamiliar;
+import com.github.laxika.magicalvibes.cards.b.BusterSword;
+import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.s.SazhsChocobo;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,17 +16,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TheEarthCrystal.class, GrizzlyBears.class, JhoirasFamiliar.class})
+@CardUsed({TheEarthCrystal.class, TravelingChocobo.class, BusterSword.class, SazhsChocobo.class, Forest.class})
 class TheEarthCrystalTest extends BaseCardTest {
 
     @Test
     @DisplayName("reduces the cost of green spells you cast")
     void reducesGreenSpellCost() {
         harness.addToBattlefield(player1, new TheEarthCrystal());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new TravelingChocobo(), "{1}{G}");
 
         assertThat(gd.stack).hasSize(1);
     }
@@ -34,10 +32,7 @@ class TheEarthCrystalTest extends BaseCardTest {
     @DisplayName("does not reduce colorless spell costs")
     void doesNotReduceColorlessSpellCost() {
         harness.addToBattlefield(player1, new TheEarthCrystal());
-        harness.setHand(player1, List.of(new JhoirasFamiliar()));
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-
-        assertThatThrownBy(() -> harness.castArtifact(player1, 0))
+        assertThatThrownBy(() -> harness.castFromHand(player1, new BusterSword(), "{2}"))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -45,7 +40,7 @@ class TheEarthCrystalTest extends BaseCardTest {
     @DisplayName("doubles counters distributed to one creature")
     void doublesCountersOnOneCreature() {
         harness.addToBattlefield(player1, new TheEarthCrystal());
-        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new TravelingChocobo());
         addAbilityMana();
 
         harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(creature.getId()));
@@ -58,8 +53,8 @@ class TheEarthCrystalTest extends BaseCardTest {
     @DisplayName("distributes and doubles counters across two creatures")
     void distributesCountersAcrossTwoCreatures() {
         harness.addToBattlefield(player1, new TheEarthCrystal());
-        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new TravelingChocobo());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new TravelingChocobo());
         addAbilityMana();
 
         harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(first.getId(), second.getId()));
@@ -73,12 +68,111 @@ class TheEarthCrystalTest extends BaseCardTest {
     @DisplayName("can target only creatures you control")
     void cannotTargetOpponentCreature() {
         harness.addToBattlefield(player1, new TheEarthCrystal());
-        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new TravelingChocobo());
         addAbilityMana();
 
         assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(
                 player1, 0, 0, List.of(opponentCreature.getId())))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void doesNotReduceOpponentsGreenSpells() {
+        harness.addToBattlefield(player2, new TheEarthCrystal());
+
+        assertThatThrownBy(() -> harness.castFromHand(player1, new TravelingChocobo(), "{1}{G}"))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void doesNotReduceColoredMana() {
+        harness.addToBattlefield(player1, new TheEarthCrystal());
+
+        assertThatThrownBy(() -> harness.castFromHand(player1, new SazhsChocobo(), ""))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void doublesCountersFromAnotherAbility() {
+        harness.addToBattlefield(player1, new TheEarthCrystal());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new SazhsChocobo());
+        harness.setHand(player1, List.of(new Forest()));
+
+        harness.playLand(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void doesNotDoubleOpponentsCounters() {
+        harness.addToBattlefield(player1, new TheEarthCrystal());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new SazhsChocobo());
+        harness.enterBattlefieldAndReturn(player2, new Forest());
+        harness.passBothPriorities();
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void sourceLeavingDoesNotCounterAbilityOrDoubleCounters() {
+        Permanent crystal = harness.addToBattlefieldAndReturn(player1, new TheEarthCrystal());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new TravelingChocobo());
+        addAbilityMana();
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(creature.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(crystal);
+        gd.playerGraveyards.get(player1.getId()).add(crystal.getCard());
+
+        harness.passBothPriorities();
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void doesNotRedistributeCountersWhenOneTargetLeaves() {
+        harness.addToBattlefield(player1, new TheEarthCrystal());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new TravelingChocobo());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new TravelingChocobo());
+        addAbilityMana();
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(first.getId(), second.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(second);
+        gd.playerGraveyards.get(player1.getId()).add(second.getCard());
+
+        harness.passBothPriorities();
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void targetChangingControllersBecomesIllegal() {
+        harness.addToBattlefield(player1, new TheEarthCrystal());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new TravelingChocobo());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new TravelingChocobo());
+        addAbilityMana();
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(first.getId(), second.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(second);
+        gd.playerBattlefields.get(player2.getId()).add(second);
+
+        harness.passBothPriorities();
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void activationPaysManaAndTapsCrystal() {
+        Permanent crystal = harness.addToBattlefieldAndReturn(player1, new TheEarthCrystal());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new TravelingChocobo());
+        addAbilityMana();
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(creature.getId()));
+
+        assertThat(crystal.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.passBothPriorities();
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
     }
 
     private void addAbilityMana() {
