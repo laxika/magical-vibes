@@ -25,9 +25,8 @@ class SpittingDilophosaurusTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        gs.playCard(gd, player1, 0, 0, target.getId(), null);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.castCreature(player1, 0, target.getId());
+        resolveAllTriggers();
 
         assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
     }
@@ -79,5 +78,74 @@ class SpittingDilophosaurusTest extends BaseCardTest {
         declareAttackers(player2, List.of(0));
 
         assertThat(attacker.isAttacking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The entering creature may choose no target even when creatures are available")
+    void etbMayChooseNoTarget() {
+        Permanent target = addCreatureReady(player2, new SpittingDilophosaurus());
+        harness.setHand(player1, List.of(new SpittingDilophosaurus()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        harness.handlePermanentChosen(player1, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        assertThat(findPermanent(player1, "Spitting Dilophosaurus")
+                .getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The attack trigger may choose no target")
+    void attackMayChooseNoTarget() {
+        Permanent source = addCreatureReady(player1, new SpittingDilophosaurus());
+        Permanent target = addCreatureReady(player2, new SpittingDilophosaurus());
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(source.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The entering creature can target itself")
+    void etbCanTargetItself() {
+        harness.setHand(player1, List.of(new SpittingDilophosaurus()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        Permanent source = findPermanent(player1, "Spitting Dilophosaurus");
+        harness.handlePermanentChosen(player1, source.getId());
+        resolveAllTriggers();
+
+        assertThat(source.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Spitting Dilophosaurus");
+    }
+
+    @Test
+    @DisplayName("The blocking restriction ends when its source leaves the battlefield")
+    void blockingRestrictionEndsWhenSourceLeaves() {
+        Permanent source = addCreatureReady(player1, new SpittingDilophosaurus());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new SpittingDilophosaurus());
+        blocker.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+
+        assertThat(bls.canBlockAttacker(gd, blocker, attacker,
+                gd.playerBattlefields.get(player2.getId()))).isFalse();
+
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+
+        assertThat(bls.canBlockAttacker(gd, blocker, attacker,
+                gd.playerBattlefields.get(player2.getId()))).isTrue();
     }
 }
