@@ -69,4 +69,66 @@ class StrongarmMonkTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(2);
     }
+
+    @Test
+    void opponentNoncreatureSpellDoesNotTrigger() {
+        Permanent monk = addCreatureReady(player1, new StrongarmMonk());
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, monk)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, monk)).isEqualTo(3);
+    }
+
+    @Test
+    void multipleNoncreatureSpellsGiveCumulativeBoosts() {
+        Permanent monk = addCreatureReady(player1, new StrongarmMonk());
+        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+        harness.castInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, monk)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, monk)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(4);
+    }
+
+    @Test
+    void creaturesEnteringAfterResolutionDoNotReceiveBoost() {
+        Permanent monk = addCreatureReady(player1, new StrongarmMonk());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+        Permanent lateCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(gqs.getEffectivePower(gd, monk)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, monk)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, lateCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, lateCreature)).isEqualTo(2);
+    }
+
+    @Test
+    void triggerResolvesBeforeTheNoncreatureSpell() {
+        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new StrongarmMonk());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, ownCreature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(3);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(ownCreature);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(3);
+    }
 }
