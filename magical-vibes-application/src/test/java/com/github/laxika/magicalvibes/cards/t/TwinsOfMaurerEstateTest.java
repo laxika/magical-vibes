@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({TwinsOfMaurerEstate.class, RavensCrime.class})
 class TwinsOfMaurerEstateTest extends BaseCardTest {
 
     private TwinsOfMaurerEstate discardViaRavensCrime() {
@@ -22,8 +24,7 @@ class TwinsOfMaurerEstateTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castSorcery(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player2, 0, player1.getId());
         harness.handleCardChosen(player1, 0);
         return twins;
     }
@@ -69,5 +70,58 @@ class TwinsOfMaurerEstateTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getId().equals(twins.getId()));
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Insufficient generic mana leaves the discarded Twins in the graveyard without paying mana")
+    void insufficientManaDoesNotCastCreature() {
+        TwinsOfMaurerEstate twins = discardViaRavensCrime();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .noneMatch(c -> c.getId().equals(twins.getId()));
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(c -> c.getId().equals(twins.getId()));
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Colorless mana cannot pay the black component of the madness cost")
+    void madnessRequiresBlackMana() {
+        TwinsOfMaurerEstate twins = discardViaRavensCrime();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .noneMatch(c -> c.getId().equals(twins.getId()));
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(c -> c.getId().equals(twins.getId()));
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
+    }
+
+    @Test
+    @CardUsed({TwinsOfMaurerEstate.class})
+    @DisplayName("Twins can be cast normally from hand without a madness choice")
+    void castsNormallyFromHand() {
+        TwinsOfMaurerEstate twins = new TwinsOfMaurerEstate();
+        harness.castFromHand(player1, twins, "{4}{B}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getCard().getId().equals(twins.getId()));
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
     }
 }
