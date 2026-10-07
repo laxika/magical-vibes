@@ -163,4 +163,50 @@ class TolarianSentinelTest extends BaseCardTest {
         assertThat(gameLogContains("fizzles")).isTrue();
     }
 
+    @Test
+    @DisplayName("A permanent controlled by you but owned by an opponent returns to its owner's hand")
+    void returnsBorrowedPermanentToOwnersHand() {
+        addCreatureReady(player1, new TolarianSentinel());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AshcoatBear());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerBattlefields.get(player1.getId()).add(target);
+        gd.stolenCreatures.put(target.getId(), player2.getId());
+        harness.setHand(player1, List.of(new Island()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Ashcoat Bear");
+        harness.assertNotInHand(player1, "Ashcoat Bear");
+        harness.assertNotOnBattlefield(player1, "Ashcoat Bear");
+        harness.assertInGraveyard(player1, "Island");
+    }
+
+    @Test
+    @DisplayName("An activated ability still resolves after Tolarian Sentinel leaves the battlefield")
+    void resolvesAfterSourceLeavesBattlefield() {
+        Permanent firstSentinel = addCreatureReady(player1, new TolarianSentinel());
+        addCreatureReady(player1, new TolarianSentinel());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Island());
+        harness.setHand(player1, List.of(new AshcoatBear(), new AshcoatBear()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.activateAbility(player1, 1, null, firstSentinel.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Tolarian Sentinel");
+        harness.assertOnBattlefield(player1, "Island");
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Island");
+        harness.assertNotOnBattlefield(player1, "Island");
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+    }
+
 }
