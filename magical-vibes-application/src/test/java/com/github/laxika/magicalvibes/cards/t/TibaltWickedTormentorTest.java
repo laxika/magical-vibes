@@ -104,8 +104,7 @@ class TibaltWickedTormentorTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 2);
-        harness.castInstant(player1, 0, devil.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, devil.getId());
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
@@ -122,20 +121,94 @@ class TibaltWickedTormentorTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("The target controller can take damage without forcing Tibalt's controller to rummage")
+    void mayDeclineRummageAfterControllerTakesDamage() {
+        addReadyTibalt(player1, 3);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Card kept = new GrizzlyBears();
+        Card undrawn = new Shock();
+        harness.setHand(player1, List.of(kept));
+        harness.setLibrary(player1, List.of(undrawn));
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertLife(player2, 16);
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(kept);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(undrawn);
+    }
+
+    @Test
+    @DisplayName("Accepting rummage with an empty hand does not draw a card")
+    void cannotDrawWithoutDiscarding() {
+        addReadyTibalt(player1, 3);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Card undrawn = new Shock();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(undrawn));
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(undrawn);
+    }
+
+    @Test
+    @DisplayName("The second +1 removes loyalty from a planeswalker whose controller declines")
+    void secondPlusOneDamagesPlaneswalker() {
+        Permanent target = addReadyTibalt(player2, 6);
+        addReadyTibalt(player1, 3);
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(target.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("-X resolves even when its cost removes Tibalt's last loyalty counter")
+    void minusXResolvesAfterTibaltDies() {
+        addReadyTibalt(player1, 3);
+
+        harness.activateAbility(player1, 0, 2, 3, null);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Tibalt, Wicked Tormentor");
+        harness.assertInGraveyard(player1, "Tibalt, Wicked Tormentor");
+        assertThat(findPermanents(player1, "Devil")).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("-X may choose zero and cannot spend more loyalty than Tibalt has")
+    void minusXAllowsZeroButRejectsExcessLoyalty() {
+        Permanent tibalt = addReadyTibalt(player1, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, 4, null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.activateAbility(player1, 0, 2, 0, null);
+        harness.passBothPriorities();
+
+        assertThat(tibalt.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
+        assertThat(findPermanents(player1, "Devil")).isEmpty();
+    }
+
     private Permanent addReadyTibalt(Player player, int loyalty) {
-        Permanent tibalt = new Permanent(new TibaltWickedTormentor());
+        Permanent tibalt = harness.addToBattlefieldAndReturn(player, new TibaltWickedTormentor());
         tibalt.setCounterCount(CounterType.LOYALTY, loyalty);
         tibalt.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(tibalt);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return tibalt;
     }
 
-    protected Permanent addCreatureReady(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
-    }
 }
