@@ -22,14 +22,12 @@ class TransmutationTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Transmutation switches a target creature's power and toughness")
     void switchesPowerAndToughness() {
-        harness.addToBattlefield(player1, new WallOfHeat());
-        Permanent wall = findPermanent(player1, "Wall of Heat");
+        Permanent wall = harness.addToBattlefieldAndReturn(player1, new WallOfHeat());
         harness.setHand(player1, List.of(new Transmutation()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
         UUID wallId = harness.getPermanentId(player1, "Wall of Heat");
-        harness.castInstant(player1, 0, wallId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, wallId);
 
         assertThat(gqs.getEffectivePower(gd, wall)).isEqualTo(6);
         assertThat(gqs.getEffectiveToughness(gd, wall)).isEqualTo(2);
@@ -38,14 +36,12 @@ class TransmutationTest extends BaseCardTest {
     @Test
     @DisplayName("Transmutation's switch wears off at cleanup")
     void switchWearsOffAtCleanup() {
-        harness.addToBattlefield(player1, new WallOfHeat());
-        Permanent wall = findPermanent(player1, "Wall of Heat");
+        Permanent wall = harness.addToBattlefieldAndReturn(player1, new WallOfHeat());
         harness.setHand(player1, List.of(new Transmutation()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
         UUID wallId = harness.getPermanentId(player1, "Wall of Heat");
-        harness.castInstant(player1, 0, wallId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, wallId);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -71,16 +67,56 @@ class TransmutationTest extends BaseCardTest {
     @Test
     @DisplayName("Transmutation can target a creature controlled by an opponent")
     void switchesOpponentCreature() {
-        harness.addToBattlefield(player2, new WallOfHeat());
-        Permanent wall = findPermanent(player2, "Wall of Heat");
+        Permanent wall = harness.addToBattlefieldAndReturn(player2, new WallOfHeat());
         harness.setHand(player1, List.of(new Transmutation()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
         UUID wallId = harness.getPermanentId(player2, "Wall of Heat");
-        harness.castInstant(player1, 0, wallId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, wallId);
 
         assertThat(gqs.getEffectivePower(gd, wall)).isEqualTo(6);
         assertThat(gqs.getEffectiveToughness(gd, wall)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Two Transmutations on the same creature cancel each other's switches")
+    void twoSwitchesCancel() {
+        Permanent wall = harness.addToBattlefieldAndReturn(player1, new WallOfHeat());
+        harness.setHand(player1, List.of(new Transmutation(), new Transmutation()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castAndResolveInstant(player1, 0, wall.getId());
+        assertThat(gqs.getEffectivePower(gd, wall)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, wall)).isEqualTo(2);
+
+        harness.castAndResolveInstant(player1, 0, wall.getId());
+
+        assertThat(gqs.getEffectivePower(gd, wall)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, wall)).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("Transmutation switches values including counters and retains later counter changes")
+    void switchesCounterModifiedValues() {
+        Permanent wall = harness.addToBattlefieldAndReturn(player1, new WallOfHeat());
+        wall.setPlusOnePlusOneCounters(1);
+        harness.setHand(player1, List.of(new Transmutation()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveInstant(player1, 0, wall.getId());
+
+        assertThat(gqs.getEffectivePower(gd, wall)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, wall)).isEqualTo(3);
+
+        wall.setPlusOnePlusOneCounters(2);
+        assertThat(gqs.getEffectivePower(gd, wall)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, wall)).isEqualTo(4);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, wall)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, wall)).isEqualTo(8);
     }
 }
