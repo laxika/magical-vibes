@@ -20,12 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({Stasis.class, GrizzlyBears.class, Forest.class, Breezekeeper.class})
 class StasisTest extends BaseCardTest {
 
-    private Permanent addReady(Player player, com.github.laxika.magicalvibes.model.Card card) {
-        Permanent perm = harness.addToBattlefieldAndReturn(player, card);
-        perm.setSummoningSick(false);
-        return perm;
-    }
-
     private void advanceToNextTurn(Player currentActivePlayer) {
         harness.forceActivePlayer(currentActivePlayer);
         harness.setHand(player1, List.of());
@@ -37,14 +31,12 @@ class StasisTest extends BaseCardTest {
         harness.passBothPriorities(); // CLEANUP -> next turn (untap step)
     }
 
-    // ===== Players skip their untap steps =====
-
     @Test
     @DisplayName("Controller's tapped permanents stay tapped through their untap step")
     void controllerPermanentsStayTapped() {
-        addReady(player1, new Stasis());
-        Permanent bears = addReady(player1, new GrizzlyBears());
-        Permanent forest = addReady(player1, new Forest());
+        addCreatureReady(player1, new Stasis());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent forest = addCreatureReady(player1, new Forest());
         bears.tap();
         forest.tap();
 
@@ -57,8 +49,8 @@ class StasisTest extends BaseCardTest {
     @Test
     @DisplayName("Opponent's tapped permanents stay tapped through their untap step")
     void opponentPermanentsStayTapped() {
-        addReady(player1, new Stasis());
-        Permanent oppBears = addReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new Stasis());
+        Permanent oppBears = addCreatureReady(player2, new GrizzlyBears());
         oppBears.tap();
 
         advanceToNextTurn(player1); // player2's untap step
@@ -68,8 +60,8 @@ class StasisTest extends BaseCardTest {
 
     @Test
     void skipPreventsPhasing() {
-        addReady(player1, new Stasis());
-        Permanent keeper = addReady(player1, new Breezekeeper());
+        addCreatureReady(player1, new Stasis());
+        Permanent keeper = addCreatureReady(player1, new Breezekeeper());
 
         advanceToNextTurn(player2);
 
@@ -81,8 +73,8 @@ class StasisTest extends BaseCardTest {
     @Test
     @DisplayName("Once Stasis leaves, permanents untap again")
     void untapsAfterStasisLeaves() {
-        Permanent stasis = addReady(player1, new Stasis());
-        Permanent bears = addReady(player1, new GrizzlyBears());
+        Permanent stasis = addCreatureReady(player1, new Stasis());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         bears.tap();
 
         gd.playerBattlefields.get(player1.getId()).remove(stasis);
@@ -92,12 +84,10 @@ class StasisTest extends BaseCardTest {
         assertThat(bears.isTapped()).isFalse();
     }
 
-    // ===== Upkeep sacrifice-unless-pay {U} =====
-
     @Test
     @DisplayName("Declining to pay {U} sacrifices Stasis")
     void decliningPaymentSacrificesStasis() {
-        addReady(player1, new Stasis());
+        addCreatureReady(player1, new Stasis());
 
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve trigger -> may-pay prompt
@@ -112,7 +102,7 @@ class StasisTest extends BaseCardTest {
     @Test
     @DisplayName("Paying {U} keeps Stasis on the battlefield")
     void payingKeepsStasis() {
-        addReady(player1, new Stasis());
+        addCreatureReady(player1, new Stasis());
 
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve trigger -> may-pay prompt
@@ -126,11 +116,51 @@ class StasisTest extends BaseCardTest {
     @Test
     @DisplayName("Does not trigger during the opponent's upkeep")
     void doesNotTriggerDuringOpponentUpkeep() {
-        addReady(player1, new Stasis());
+        addCreatureReady(player1, new Stasis());
 
         advanceToUpkeep(player2);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Stasis");
+    }
+
+    @Test
+    void cannotPayUpkeepWithGreenMana() {
+        harness.addToBattlefield(player1, new Stasis());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "Stasis");
+        harness.assertInGraveyard(player1, "Stasis");
+    }
+
+    @Test
+    void mayDeclineUpkeepEvenWithBlueManaAvailable() {
+        harness.addToBattlefield(player1, new Stasis());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertNotOnBattlefield(player1, "Stasis");
+        harness.assertInGraveyard(player1, "Stasis");
+    }
+
+    @Test
+    void sacrificingDuringUpkeepDoesNotRetroactivelyUntapPermanents() {
+        harness.addToBattlefield(player1, new Stasis());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        bears.tap();
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInGraveyard(player1, "Stasis");
+        assertThat(bears.isTapped()).isTrue();
     }
 }
