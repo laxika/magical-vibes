@@ -1,13 +1,15 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
 import com.github.laxika.magicalvibes.cards.b.Boomerang;
+import com.github.laxika.magicalvibes.cards.c.ConeOfFlame;
 import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LavaAxe;
+import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,18 +18,16 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Spellskite.class, Boomerang.class, CounselOfTheSoratami.class, GrizzlyBears.class,
+        LavaAxe.class, ConeOfFlame.class, RodOfRuin.class})
 class SpellskiteTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Spellskite redirects a targeted spell to itself")
     void redirectsTargetedSpellToSelf() {
         Spellskite spellskite = new Spellskite();
-        GrizzlyBears bears = new GrizzlyBears();
         harness.addToBattlefield(player1, spellskite);
-        harness.addToBattlefield(player1, bears);
-        UUID bearsPermId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID bearsPermId = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears()).getId();
 
         // Make player2 the active player so they can cast spells
         harness.forceActivePlayer(player2);
@@ -42,11 +42,7 @@ class SpellskiteTest extends BaseCardTest {
         // Player1 activates Spellskite's ability targeting Boomerang, paying blue mana
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.activateAbility(player1, 0, null, boomerang.getId());
-        harness.passBothPriorities();
-
-        // Spellskite's ability resolves — Boomerang now targets Spellskite
-        // Resolve Boomerang
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         // Spellskite should be bounced, bears should remain
         harness.assertNotOnBattlefield(player1, "Spellskite");
@@ -57,10 +53,8 @@ class SpellskiteTest extends BaseCardTest {
     @DisplayName("Spellskite can pay with 2 life instead of blue mana")
     void canPayWithLife() {
         Spellskite spellskite = new Spellskite();
-        GrizzlyBears bears = new GrizzlyBears();
         harness.addToBattlefield(player1, spellskite);
-        harness.addToBattlefield(player1, bears);
-        UUID bearsPermId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID bearsPermId = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears()).getId();
 
         harness.forceActivePlayer(player2);
         Boomerang boomerang = new Boomerang();
@@ -73,10 +67,7 @@ class SpellskiteTest extends BaseCardTest {
 
         // Activate paying with life (no mana added)
         harness.activateAbility(player1, 0, null, boomerang.getId());
-        harness.passBothPriorities();
-
-        // Spellskite's ability resolves
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         // Paid 2 life
         harness.assertLife(player1, 18);
@@ -91,7 +82,7 @@ class SpellskiteTest extends BaseCardTest {
         Spellskite spellskite = new Spellskite();
         harness.addToBattlefield(player1, spellskite);
 
-        // Lava Axe targets "target player" — Spellskite is not a player
+        // Lava Axe targets a player or planeswalker; Spellskite is neither.
         harness.forceActivePlayer(player2);
         LavaAxe lavaAxe = new LavaAxe();
         harness.setHand(player2, List.of(lavaAxe));
@@ -104,11 +95,7 @@ class SpellskiteTest extends BaseCardTest {
         // Activate Spellskite targeting Lava Axe
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.activateAbility(player1, 0, null, lavaAxe.getId());
-        harness.passBothPriorities();
-
-        // Spellskite's ability resolves, but Spellskite is not a legal target for Lava Axe
-        // Resolve Lava Axe — it still targets player1
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertLife(player1, 15);
     }
@@ -135,7 +122,7 @@ class SpellskiteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Spellskite's ability resolves but does nothing (spell has no targets)
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("has no targets"));
+        assertThat(gameLogContains("has no targets")).isTrue();
 
         // Counsel of the Soratami still resolves normally
         harness.passBothPriorities();
@@ -166,6 +153,70 @@ class SpellskiteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Spellskite");
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("already targets"));
+        assertThat(gameLogContains("already targets")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Spellskite offers a choice of which target of a multi-target spell to change")
+    void choosesOneTargetOfMultiTargetSpell() {
+        harness.addToBattlefield(player1, new Spellskite());
+        UUID bearsId = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears()).getId();
+        harness.forceActivePlayer(player2);
+        ConeOfFlame cone = new ConeOfFlame();
+        harness.setHand(player2, List.of(cone));
+        harness.addMana(player2, ManaColor.RED, 5);
+        harness.castSorcery(player2, 0, List.of(player2.getId(), bearsId, player1.getId()));
+        harness.passPriority(player2);
+
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, 0, null, cone.getId());
+        harness.passBothPriorities();
+
+        // All three targets can legally be changed; the ability's controller must choose one.
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Spellskite redirects an activated ability using its stack identity")
+    void redirectsActivatedAbility() {
+        Permanent spellskite = harness.addToBattlefieldAndReturn(player1, new Spellskite());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new RodOfRuin());
+        harness.forceActivePlayer(player2);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player2, 0, null, bears.getId());
+        UUID abilityId = gd.stack.getLast().getTargetableId();
+        harness.passPriority(player2);
+
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, 0, null, abilityId);
+        resolveAllTriggers();
+
+        assertThat(spellskite.getMarkedDamage()).isEqualTo(1);
+        assertThat(bears.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("No target changes if Spellskite leaves before its ability resolves")
+    void doesNotRedirectAfterLeavingBattlefield() {
+        Permanent spellskite = harness.addToBattlefieldAndReturn(player1, new Spellskite());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.forceActivePlayer(player2);
+        Boomerang original = new Boomerang();
+        harness.setHand(player2, List.of(original, new Boomerang()));
+        harness.addMana(player2, ManaColor.BLUE, 4);
+        harness.castInstant(player2, 0, bears.getId());
+        harness.passPriority(player2);
+
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, 0, null, original.getId());
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, spellskite.getId());
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Spellskite");
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
     }
 }
