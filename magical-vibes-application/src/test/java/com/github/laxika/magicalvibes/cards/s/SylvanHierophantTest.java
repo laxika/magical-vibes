@@ -117,4 +117,76 @@ class SylvanHierophantTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .anyMatch(c -> c.getId().equals(target.getId()));
     }
+
+    @Test
+    @DisplayName("A Hierophant owned by the opponent is exiled from its owner's graveyard")
+    void opponentOwnedHierophantIsExiled() {
+        Card target = new StripedBears();
+        harness.setGraveyard(player1, List.of(target));
+        harness.addToBattlefield(player1, new AetherFlash());
+        Card hierophant = new SylvanHierophant();
+        hierophant.setOwnerId(player2.getId());
+        harness.enterBattlefieldAndReturn(player1, hierophant);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(hierophant);
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(target);
+        assertThat(gd.playerGraveyards.get(player2.getId())).doesNotContain(hierophant);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(hierophant);
+    }
+
+    @Test
+    @DisplayName("The creature still returns if the Hierophant has already left the graveyard")
+    void missingSourceDoesNotPreventReturn() {
+        Card target = new StripedBears();
+        harness.setGraveyard(player1, List.of(target));
+        Card hierophant = enterAndKillHierophant();
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.setGraveyard(player1, List.of(target));
+        harness.setHand(player1, List.of(hierophant));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(target, hierophant);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(hierophant);
+    }
+
+    @Test
+    @DisplayName("An old trigger cannot exile a Hierophant that left and reentered the graveyard")
+    void reenteredSourceIsNotExiledByOldTrigger() {
+        Card target = new StripedBears();
+        harness.setGraveyard(player1, List.of(target));
+        Card hierophant = enterAndKillHierophant();
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.setGraveyard(player1, List.of(target));
+        harness.setHand(player1, List.of(hierophant));
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of(target, hierophant));
+        gd.markGraveyardEntry(hierophant);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(target);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(hierophant);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(hierophant);
+    }
+
+    @Test
+    @DisplayName("A noncreature card is excluded while another Hierophant is a legal target")
+    void noncreatureExcludedAndOtherHierophantAllowed() {
+        Card noncreature = new AetherFlash();
+        Card otherHierophant = new SylvanHierophant();
+        harness.setGraveyard(player1, List.of(noncreature, otherHierophant));
+        Card hierophant = enterAndKillHierophant();
+
+        var choice = gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.validCardIds()).containsExactly(otherHierophant.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(otherHierophant.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(otherHierophant);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(noncreature);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(hierophant);
+    }
 }
