@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,9 +16,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ToxicNim.class, GrizzlyBears.class})
 class ToxicNimTest extends BaseCardTest {
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting Toxic Nim puts it on the stack")
@@ -43,8 +43,6 @@ class ToxicNimTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Toxic Nim");
     }
-
-    // ===== Regeneration ability =====
 
     @Test
     @DisplayName("Activating regeneration ability puts it on the stack")
@@ -75,8 +73,6 @@ class ToxicNimTest extends BaseCardTest {
         assertThat(nim.getRegenerationShield()).isEqualTo(1);
     }
 
-    // ===== Infect: combat damage deals poison to player =====
-
     @Test
     @DisplayName("Unblocked Toxic Nim deals poison counters instead of life loss")
     void dealsPoisonCountersWhenUnblocked() {
@@ -96,15 +92,12 @@ class ToxicNimTest extends BaseCardTest {
         assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(4);
     }
 
-    // ===== Infect: combat damage deals -1/-1 counters to creatures =====
-
     @Test
     @DisplayName("Toxic Nim deals -1/-1 counters to blocking creature")
     void dealsMinusCountersToBlocker() {
         // Grizzly Bears is 2/2
-        Permanent blockerPerm = new Permanent(new GrizzlyBears());
+        Permanent blockerPerm = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         blockerPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blockerPerm);
 
         // Toxic Nim is 4/1
         Permanent atkPerm = addToxicNimReady(player1);
@@ -133,8 +126,6 @@ class ToxicNimTest extends BaseCardTest {
         assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(0);
     }
 
-    // ===== Regeneration saves from lethal combat damage =====
-
     @Test
     @DisplayName("Regeneration shield saves Toxic Nim from lethal combat damage")
     void regenerationSavesFromLethalCombatDamage() {
@@ -144,10 +135,9 @@ class ToxicNimTest extends BaseCardTest {
         nimPerm.setBlocking(true);
         nimPerm.addBlockingTarget(0);
 
-        Permanent attacker = new Permanent(new GrizzlyBears());
+        Permanent attacker = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player2.getId()).add(attacker);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -174,10 +164,9 @@ class ToxicNimTest extends BaseCardTest {
         nimPerm.setBlocking(true);
         nimPerm.addBlockingTarget(0);
 
-        Permanent attacker = new Permanent(new GrizzlyBears());
+        Permanent attacker = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player2.getId()).add(attacker);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -189,13 +178,52 @@ class ToxicNimTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Toxic Nim");
     }
 
-    // ===== Helper methods =====
+    @Test
+    @DisplayName("Regeneration can be activated repeatedly while tapped and summoning sick")
+    void canRegenerateWhileTappedAndSummoningSick() {
+        Permanent nim = harness.addToBattlefieldAndReturn(player1, new ToxicNim());
+        nim.setSummoningSick(true);
+        nim.setTapped(true);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(nim.getRegenerationShield()).isEqualTo(2);
+        assertThat(nim.isTapped()).isTrue();
+        harness.assertOnBattlefield(player1, "Toxic Nim");
+    }
+
+    @Test
+    @DisplayName("Regeneration cannot save Toxic Nim from lethal infect counters")
+    void regenerationDoesNotPreventDeathFromInfectCounters() {
+        Permanent blocker = addToxicNimReady(player1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(blocker.getRegenerationShield()).isEqualTo(1);
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+
+        Permanent attacker = addToxicNimReady(player2);
+        attacker.setAttacking(true);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Toxic Nim");
+        harness.assertInGraveyard(player1, "Toxic Nim");
+        harness.assertNotOnBattlefield(player2, "Toxic Nim");
+        harness.assertInGraveyard(player2, "Toxic Nim");
+        assertThat(gd.playerPoisonCounters.getOrDefault(player1.getId(), 0)).isZero();
+    }
 
     private Permanent addToxicNimReady(Player player) {
-        ToxicNim card = new ToxicNim();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new ToxicNim());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }
