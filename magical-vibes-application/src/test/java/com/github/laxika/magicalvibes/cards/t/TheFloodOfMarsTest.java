@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.d.DryadArbor;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TheFloodOfMars.class, Forest.class, GrizzlyBears.class})
+@CardUsed({TheFloodOfMars.class, Forest.class, GrizzlyBears.class, DryadArbor.class})
 class TheFloodOfMarsTest extends BaseCardTest {
 
     @Test
@@ -62,5 +63,93 @@ class TheFloodOfMarsTest extends BaseCardTest {
         assertThat(target.getCounterCount(CounterType.FLOOD)).isEqualTo(1);
         assertThat(gqs.effectiveLandTypes(gd, target))
                 .contains(CardSubtype.FOREST, CardSubtype.ISLAND);
+    }
+
+    @Test
+    @DisplayName("A flooded land remains an Island after its flood counter is removed")
+    void islandEffectDoesNotDependOnFloodCounter() {
+        addCreatureReady(player1, new TheFloodOfMars());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        target.setCounterCount(CounterType.FLOOD, 0);
+
+        assertThat(gqs.effectiveLandTypes(gd, target))
+                .contains(CardSubtype.FOREST, CardSubtype.ISLAND);
+    }
+
+    @Test
+    @DisplayName("A creature land becomes a copy without also becoming an Island")
+    void creatureLandCopiesBeforeLandConditionIsChecked() {
+        addCreatureReady(player1, new TheFloodOfMars());
+        Permanent target = addCreatureReady(player2, new DryadArbor());
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.FLOOD)).isEqualTo(1);
+        assertThat(target.getCard().getName()).isEqualTo("The Flood of Mars");
+        assertThat(gqs.isLand(gd, target)).isFalse();
+        assertThat(gqs.effectiveLandTypes(gd, target)).doesNotContain(CardSubtype.ISLAND);
+    }
+
+    @Test
+    @DisplayName("The target copies the source even if the source leaves before resolution")
+    void copiesSourceUsingLastKnownInformation() {
+        Permanent source = addCreatureReady(player1, new TheFloodOfMars());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        gd.playerGraveyards.get(player1.getId()).add(source.getOriginalCard());
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.FLOOD)).isEqualTo(1);
+        assertThat(target.getCard().getName()).isEqualTo("The Flood of Mars");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+    }
+
+    @Test
+    @DisplayName("Flooding a defending land enables islandwalk")
+    void floodedDefendingLandPreventsBlocking() {
+        Permanent source = addCreatureReady(player1, new TheFloodOfMars());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+
+        assertThat(bls.canBlockAttacker(gd, blocker, source,
+                gd.playerBattlefields.get(player2.getId()))).isTrue();
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, land.getId());
+        harness.passBothPriorities();
+
+        assertThat(bls.canBlockAttacker(gd, blocker, source,
+                gd.playerBattlefields.get(player2.getId()))).isFalse();
+    }
+
+    @Test
+    @DisplayName("A copied creature retains the copy and can spread it after losing its flood counter")
+    void copiedCreatureCanSpreadCopyWithoutCounter() {
+        Permanent source = addCreatureReady(player1, new TheFloodOfMars());
+        Permanent copied = addCreatureReady(player1, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, copied.getId());
+        harness.passBothPriorities();
+        copied.setCounterCount(CounterType.FLOOD, 0);
+        source.setTapped(true);
+
+        declareAttackers(List.of(1));
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(copied.getCard().getName()).isEqualTo("The Flood of Mars");
+        assertThat(target.getCounterCount(CounterType.FLOOD)).isEqualTo(1);
+        assertThat(target.getCard().getName()).isEqualTo("The Flood of Mars");
     }
 }
