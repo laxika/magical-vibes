@@ -9,8 +9,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -43,9 +41,7 @@ class TrainingCompoundTest extends BaseCardTest {
     @Test
     @DisplayName("A Training Compound that entered this turn can produce red or green mana")
     void newlyEnteredCompoundProducesChosenMana() {
-        Permanent compound = harness.addToBattlefieldAndReturn(player1, new TrainingCompound());
-        gd.permanentsEnteredBattlefieldThisTurn.put(
-                player1.getId(), new ArrayList<>(List.of(compound.getCard())));
+        Permanent compound = harness.enterBattlefieldAndReturn(player1, new TrainingCompound());
 
         harness.activateAbility(player1, 0, 1, null, null);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
@@ -70,10 +66,60 @@ class TrainingCompoundTest extends BaseCardTest {
         assertThat(compound.isTapped()).isTrue();
     }
 
+    @Test
+    @DisplayName("An opponent's basic land does not enable colored mana")
+    void opponentsBasicLandDoesNotEnableColoredMana() {
+        Permanent compound = addReadyCompound();
+        harness.addToBattlefield(player2, new Forest());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("entered this turn or if you control a basic land");
+        assertThat(compound.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Another Training Compound entering does not enable an older one")
+    void anotherLandEnteringDoesNotEnableColoredMana() {
+        Permanent compound = addReadyCompound();
+        harness.enterBattlefieldAndReturn(player1, new TrainingCompound());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("entered this turn or if you control a basic land");
+        assertThat(compound.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Colored mana stops being available when the basic land leaves")
+    void losingBasicLandDisablesColoredMana() {
+        Permanent compound = addReadyCompound();
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "RED");
+        gd.playerBattlefields.get(player1.getId()).remove(forest);
+        compound.setTapped(false);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("entered this turn or if you control a basic land");
+        assertThat(compound.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The entered-this-turn permission expires on a later turn")
+    void enteredThisTurnPermissionExpires() {
+        Permanent compound = harness.enterBattlefieldAndReturn(player1, new TrainingCompound());
+        gd.permanentsEnteredBattlefieldThisTurn.clear();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("entered this turn or if you control a basic land");
+        assertThat(compound.isTapped()).isFalse();
+    }
+
     private Permanent addReadyCompound() {
-        Permanent compound = new Permanent(new TrainingCompound());
-        compound.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(compound);
-        return compound;
+        return harness.addToBattlefieldAndReturn(player1, new TrainingCompound());
     }
 }
