@@ -58,10 +58,60 @@ class ThunderingFallsTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("Surveil may leave the top card in the library")
+    void mayKeepTopCard() {
+        Card topCard = new ThunderingFalls();
+        Card nextCard = new ThunderingFalls();
+        harness.setLibrary(player1, List.of(topCard, nextCard));
+        harness.setHand(player1, List.of(new ThunderingFalls()));
+
+        harness.playLand(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard, nextCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Surveil with an empty library finishes without a choice")
+    void surveilsEmptyLibrary() {
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new ThunderingFalls()));
+
+        harness.playLand(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanent(player1, "Thundering Falls").isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Entering without being played still enters tapped and surveils only the top card")
+    void entryWithoutPlayingSurveilsOne() {
+        Card topCard = new ThunderingFalls();
+        Card nextCard = new ThunderingFalls();
+        Card opponentTopCard = new ThunderingFalls();
+        harness.setLibrary(player1, List.of(topCard, nextCard));
+        harness.setLibrary(player2, List.of(opponentTopCard));
+
+        Permanent falls = harness.enterBattlefieldAndReturn(player1, new ThunderingFalls());
+        assertThat(falls.isTapped()).isTrue();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nextCard);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentTopCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
     private Permanent addReadyFalls() {
-        Permanent falls = new Permanent(new ThunderingFalls());
-        falls.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(falls);
-        return falls;
+        return addCreatureReady(player1, new ThunderingFalls());
     }
 }
